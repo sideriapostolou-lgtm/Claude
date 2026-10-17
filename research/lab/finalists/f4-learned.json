@@ -1,0 +1,3241 @@
+[
+ {
+  "name": "F4_farm_climb_gbt_tp30_sl15_h15_q98",
+  "strategy_class": "F4Learned",
+  "module": "research/lab/strategies/f4-learned.py",
+  "verdict": "REJECTED - fails: validation_ci_above_0, validation_wick_worst_portfolio_positive",
+  "recommend_test": false,
+  "params": {
+   "label": "tp30_sl15_h15",
+   "model": "gbt",
+   "variant": "all",
+   "q": 0.98,
+   "model_file": "LAB/f4/models/tp30_sl15_h15_gbt.pkl",
+   "scorer": "ModelScorer(FoldEnsemble.load(model_file), F4Params.gate)",
+   "strategy": {
+    "threshold": 0.7390078621388908,
+    "tp": 0.3,
+    "sl": 0.15,
+    "hold_min": 15.0,
+    "max_entries": 1,
+    "max_age_min": 360.0,
+    "min_vol10_usd": 1000.0,
+    "min_mcap_sol": 30.0
+   }
+  },
+  "configs_tried": {
+   "train": 240,
+   "train_stage_A_all_rows": 120,
+   "train_stage_B_nofarm": 120,
+   "validation": 5,
+   "note": "every config is in LAB/f4/runs.jsonl; robustness variants are not selection tries"
+  },
+  "gates": {
+   "train_avg_positive": true,
+   "train_ci_above_0": true,
+   "train_portfolio_positive": true,
+   "validation_avg_positive": true,
+   "validation_ci_above_0": false,
+   "validation_at_least_15_trades": true,
+   "validation_portfolio_positive": true,
+   "validation_without_best_coin_positive": true,
+   "validation_without_top3_positive": true,
+   "validation_costs_x2_positive": true,
+   "validation_wick_worst_positive": true,
+   "validation_wick_worst_portfolio_positive": false,
+   "validation_rug_aware_fills_positive": true,
+   "audit_lookahead_clean": true,
+   "live_scorer_equals_search_table": true
+  },
+  "train_metrics": {
+   "per_coin": {
+    "trades": 27,
+    "coins_traded": 27,
+    "win_rate_pct": 85.1852,
+    "avg_ret_pct": 13.9876,
+    "median_ret_pct": 26.2495,
+    "exp_ci95_pct": [
+     1.859,
+     23.307
+    ],
+    "expectancy_usd": 2.7975,
+    "profit_factor": 2.6737,
+    "total_return_pct": null,
+    "max_drawdown_pct": null,
+    "best_coin_share_pct": 6.954,
+    "top3_share_pct": 20.8613,
+    "pnl_without_best_coin_usd": 70.2807,
+    "pnl_without_top3_usd": 59.7761,
+    "avg_ret_pct_wo_best": 13.5155,
+    "avg_ret_pct_wo_top3": 12.4533,
+    "exit_reasons": {
+     "stop": 4,
+     "take_profit": 23
+    }
+   },
+   "portfolio": {
+    "trades": 27,
+    "coins_traded": 27,
+    "win_rate_pct": 85.1852,
+    "avg_ret_pct": 14.0003,
+    "median_ret_pct": 26.2567,
+    "exp_ci95_pct": [
+     1.762,
+     23.31
+    ],
+    "expectancy_usd": 3.343,
+    "profit_factor": 2.6011,
+    "total_return_pct": 90.26,
+    "max_drawdown_pct": 11.8578,
+    "best_coin_share_pct": 7.2775,
+    "top3_share_pct": 21.8317,
+    "pnl_without_best_coin_usd": 83.6913,
+    "pnl_without_top3_usd": 70.5547,
+    "avg_ret_pct_wo_best": 13.5283,
+    "avg_ret_pct_wo_top3": 12.4662,
+    "exit_reasons": {
+     "stop": 4,
+     "take_profit": 23
+    }
+   },
+   "note": "out-of-fold scores (5 time-blocked, coin-grouped folds)"
+  },
+  "validation_metrics": {
+   "per_coin": {
+    "trades": 24,
+    "coins_traded": 24,
+    "win_rate_pct": 79.1667,
+    "avg_ret_pct": 9.1669,
+    "median_ret_pct": 26.2467,
+    "exp_ci95_pct": [
+     -4.83,
+     19.715
+    ],
+    "expectancy_usd": 1.8334,
+    "profit_factor": 1.7898,
+    "total_return_pct": null,
+    "max_drawdown_pct": null,
+    "best_coin_share_pct": 11.9369,
+    "top3_share_pct": 35.8074,
+    "pnl_without_best_coin_usd": 38.7488,
+    "pnl_without_top3_usd": 28.2455,
+    "avg_ret_pct_wo_best": 8.4237,
+    "avg_ret_pct_wo_top3": 6.7251,
+    "exit_reasons": {
+     "stop": 5,
+     "take_profit": 19
+    }
+   },
+   "portfolio": {
+    "trades": 24,
+    "coins_traded": 24,
+    "win_rate_pct": 79.1667,
+    "avg_ret_pct": 9.1776,
+    "median_ret_pct": 26.2519,
+    "exp_ci95_pct": [
+     -4.815,
+     19.722
+    ],
+    "expectancy_usd": 1.9318,
+    "profit_factor": 1.69,
+    "total_return_pct": 46.3641,
+    "max_drawdown_pct": 14.6687,
+    "best_coin_share_pct": 14.1623,
+    "top3_share_pct": 42.4844,
+    "pnl_without_best_coin_usd": 39.7979,
+    "pnl_without_top3_usd": 26.6666,
+    "avg_ret_pct_wo_best": 8.4346,
+    "avg_ret_pct_wo_top3": 6.7367,
+    "exit_reasons": {
+     "stop": 5,
+     "take_profit": 19
+    }
+   },
+   "clusters": {
+    "farm": {
+     "trades": 24,
+     "pnl_usd": 44.001,
+     "avg_ret_pct": 9.167
+    }
+   }
+  },
+  "robustness": {
+   "validation": {
+    "base": {
+     "per_coin": {
+      "trades": 24,
+      "coins_traded": 24,
+      "win_rate_pct": 79.1667,
+      "avg_ret_pct": 9.1669,
+      "median_ret_pct": 26.2467,
+      "exp_ci95_pct": [
+       -4.83,
+       19.715
+      ],
+      "expectancy_usd": 1.8334,
+      "profit_factor": 1.7898,
+      "total_return_pct": null,
+      "max_drawdown_pct": null,
+      "best_coin_share_pct": 11.9369,
+      "top3_share_pct": 35.8074,
+      "pnl_without_best_coin_usd": 38.7488,
+      "pnl_without_top3_usd": 28.2455,
+      "avg_ret_pct_wo_best": 8.4237,
+      "avg_ret_pct_wo_top3": 6.7251,
+      "exit_reasons": {
+       "stop": 5,
+       "take_profit": 19
+      }
+     },
+     "portfolio": {
+      "trades": 24,
+      "coins_traded": 24,
+      "win_rate_pct": 79.1667,
+      "avg_ret_pct": 9.1776,
+      "median_ret_pct": 26.2519,
+      "exp_ci95_pct": [
+       -4.815,
+       19.722
+      ],
+      "expectancy_usd": 1.9318,
+      "profit_factor": 1.69,
+      "total_return_pct": 46.3641,
+      "max_drawdown_pct": 14.6687,
+      "best_coin_share_pct": 14.1623,
+      "top3_share_pct": 42.4844,
+      "pnl_without_best_coin_usd": 39.7979,
+      "pnl_without_top3_usd": 26.6666,
+      "avg_ret_pct_wo_best": 8.4346,
+      "avg_ret_pct_wo_top3": 6.7367,
+      "exit_reasons": {
+       "stop": 5,
+       "take_profit": 19
+      }
+     }
+    },
+    "costs_x1.5": {
+     "per_coin": {
+      "trades": 24,
+      "coins_traded": 24,
+      "win_rate_pct": 79.1667,
+      "avg_ret_pct": 7.547,
+      "median_ret_pct": 24.3944,
+      "exp_ci95_pct": [
+       -6.261,
+       17.953
+      ],
+      "expectancy_usd": 1.5094,
+      "profit_factor": 1.6416,
+      "total_return_pct": null,
+      "max_drawdown_pct": null,
+      "best_coin_share_pct": 13.4802,
+      "top3_share_pct": 40.4349,
+      "pnl_without_best_coin_usd": 31.3424,
+      "pnl_without_top3_usd": 21.5779,
+      "avg_ret_pct_wo_best": 6.8136,
+      "avg_ret_pct_wo_top3": 5.1376,
+      "exit_reasons": {
+       "stop": 5,
+       "take_profit": 19
+      }
+     },
+     "portfolio": {
+      "trades": 24,
+      "coins_traded": 24,
+      "win_rate_pct": 79.1667,
+      "avg_ret_pct": 7.5616,
+      "median_ret_pct": 24.402,
+      "exp_ci95_pct": [
+       -6.241,
+       17.962
+      ],
+      "expectancy_usd": 1.4957,
+      "profit_factor": 1.5352,
+      "total_return_pct": 35.8962,
+      "max_drawdown_pct": 16.1485,
+      "best_coin_share_pct": 17.0088,
+      "top3_share_pct": 50.5007,
+      "pnl_without_best_coin_usd": 29.7907,
+      "pnl_without_top3_usd": 17.7684,
+      "avg_ret_pct_wo_best": 6.8286,
+      "avg_ret_pct_wo_top3": 5.1543,
+      "exit_reasons": {
+       "stop": 5,
+       "take_profit": 19
+      }
+     }
+    },
+    "costs_x2": {
+     "per_coin": {
+      "trades": 24,
+      "coins_traded": 24,
+      "win_rate_pct": 79.1667,
+      "avg_ret_pct": 5.9393,
+      "median_ret_pct": 22.5563,
+      "exp_ci95_pct": [
+       -7.681,
+       16.204
+      ],
+      "expectancy_usd": 1.1879,
+      "profit_factor": 1.4984,
+      "total_return_pct": null,
+      "max_drawdown_pct": null,
+      "best_coin_share_pct": 15.8443,
+      "top3_share_pct": 47.5233,
+      "pnl_without_best_coin_usd": 23.9917,
+      "pnl_without_top3_usd": 14.9604,
+      "avg_ret_pct_wo_best": 5.2156,
+      "avg_ret_pct_wo_top3": 3.562,
+      "exit_reasons": {
+       "stop": 5,
+       "take_profit": 19
+      }
+     },
+     "portfolio": {
+      "trades": 24,
+      "coins_traded": 24,
+      "win_rate_pct": 79.1667,
+      "avg_ret_pct": 5.956,
+      "median_ret_pct": 22.5646,
+      "exp_ci95_pct": [
+       -7.659,
+       16.214
+      ],
+      "expectancy_usd": 1.0847,
+      "profit_factor": 1.3916,
+      "total_return_pct": 26.0328,
+      "max_drawdown_pct": 17.6015,
+      "best_coin_share_pct": 21.6684,
+      "top3_share_pct": 62.464,
+      "pnl_without_best_coin_usd": 20.3919,
+      "pnl_without_top3_usd": 9.7717,
+      "avg_ret_pct_wo_best": 5.2339,
+      "avg_ret_pct_wo_top3": 3.5809,
+      "exit_reasons": {
+       "stop": 5,
+       "take_profit": 19
+      }
+     }
+    },
+    "latency_+1bar": {
+     "per_coin": {
+      "trades": 24,
+      "coins_traded": 24,
+      "win_rate_pct": 79.1667,
+      "avg_ret_pct": 11.1001,
+      "median_ret_pct": 26.2477,
+      "exp_ci95_pct": [
+       -2.379,
+       22.651
+      ],
+      "expectancy_usd": 2.22,
+      "profit_factor": 2.15,
+      "total_return_pct": null,
+      "max_drawdown_pct": null,
+      "best_coin_share_pct": 9.8588,
+      "top3_share_pct": 29.5738,
+      "pnl_without_best_coin_usd": 48.0276,
+      "pnl_without_top3_usd": 37.5234,
+      "avg_ret_pct_wo_best": 10.4408,
+      "avg_ret_pct_wo_top3": 8.9341,
+      "exit_reasons": {
+       "stop": 4,
+       "take_profit": 19,
+       "time_stop": 1
+      }
+     },
+     "portfolio": {
+      "trades": 24,
+      "coins_traded": 24,
+      "win_rate_pct": 79.1667,
+      "avg_ret_pct": 11.0913,
+      "median_ret_pct": 26.2532,
+      "exp_ci95_pct": [
+       -2.384,
+       22.654
+      ],
+      "expectancy_usd": 2.5157,
+      "profit_factor": 2.0779,
+      "total_return_pct": 60.3777,
+      "max_drawdown_pct": 14.7267,
+      "best_coin_share_pct": 10.8769,
+      "top3_share_pct": 32.6289,
+      "pnl_without_best_coin_usd": 53.8107,
+      "pnl_without_top3_usd": 40.6773,
+      "avg_ret_pct_wo_best": 10.4314,
+      "avg_ret_pct_wo_top3": 8.9233,
+      "exit_reasons": {
+       "stop": 4,
+       "take_profit": 19,
+       "time_stop": 1
+      }
+     }
+    },
+    "size_$10": {
+     "per_coin": {
+      "trades": 24,
+      "coins_traded": 24,
+      "win_rate_pct": 79.1667,
+      "avg_ret_pct": 8.9998,
+      "median_ret_pct": 26.0959,
+      "exp_ci95_pct": [
+       -5.006,
+       19.556
+      ],
+      "expectancy_usd": 0.9,
+      "profit_factor": 1.7724,
+      "total_return_pct": null,
+      "max_drawdown_pct": null,
+      "best_coin_share_pct": 12.0864,
+      "top3_share_pct": 36.257,
+      "pnl_without_best_coin_usd": 18.989,
+      "pnl_without_top3_usd": 13.7682,
+      "avg_ret_pct_wo_best": 8.2561,
+      "avg_ret_pct_wo_top3": 6.5563,
+      "exit_reasons": {
+       "stop": 5,
+       "take_profit": 19
+      }
+     },
+     "portfolio": {
+      "trades": 24,
+      "coins_traded": 24,
+      "win_rate_pct": 79.1667,
+      "avg_ret_pct": 8.9998,
+      "median_ret_pct": 26.0959,
+      "exp_ci95_pct": [
+       -5.006,
+       19.556
+      ],
+      "expectancy_usd": 0.9,
+      "profit_factor": 1.7724,
+      "total_return_pct": 21.5996,
+      "max_drawdown_pct": 6.5175,
+      "best_coin_share_pct": 12.0864,
+      "top3_share_pct": 36.257,
+      "pnl_without_best_coin_usd": 18.989,
+      "pnl_without_top3_usd": 13.7682,
+      "avg_ret_pct_wo_best": 8.2561,
+      "avg_ret_pct_wo_top3": 6.5563,
+      "exit_reasons": {
+       "stop": 5,
+       "take_profit": 19
+      }
+     }
+    },
+    "size_$40": {
+     "per_coin": {
+      "trades": 24,
+      "coins_traded": 24,
+      "win_rate_pct": 79.1667,
+      "avg_ret_pct": 9.1516,
+      "median_ret_pct": 26.2005,
+      "exp_ci95_pct": [
+       -4.826,
+       19.683
+      ],
+      "expectancy_usd": 3.6606,
+      "profit_factor": 1.7895,
+      "total_return_pct": null,
+      "max_drawdown_pct": null,
+      "best_coin_share_pct": 11.945,
+      "top3_share_pct": 35.8283,
+      "pnl_without_best_coin_usd": 77.361,
+      "pnl_without_top3_usd": 56.3783,
+      "avg_ret_pct_wo_best": 8.4088,
+      "avg_ret_pct_wo_top3": 6.7117,
+      "exit_reasons": {
+       "stop": 5,
+       "take_profit": 19
+      }
+     },
+     "portfolio": {
+      "trades": 22,
+      "coins_traded": 22,
+      "win_rate_pct": 81.8182,
+      "avg_ret_pct": 11.3624,
+      "median_ret_pct": 26.2053,
+      "exp_ci95_pct": [
+       -3.186,
+       22.647
+      ],
+      "expectancy_usd": 4.545,
+      "profit_factor": 2.1277,
+      "total_return_pct": 99.9892,
+      "max_drawdown_pct": 19.3323,
+      "best_coin_share_pct": 10.4955,
+      "top3_share_pct": 31.4804,
+      "pnl_without_best_coin_usd": 89.4949,
+      "pnl_without_top3_usd": 68.5122,
+      "avg_ret_pct_wo_best": 10.6542,
+      "avg_ret_pct_wo_top3": 9.0148,
+      "exit_reasons": {
+       "stop": 4,
+       "take_profit": 18
+      },
+      "rejected": {
+       "cash": 2
+      }
+     }
+    },
+    "wick_worst": {
+     "per_coin": {
+      "trades": 24,
+      "coins_traded": 24,
+      "win_rate_pct": 79.1667,
+      "avg_ret_pct": 1.2194,
+      "median_ret_pct": 26.2467,
+      "exp_ci95_pct": [
+       -19.464,
+       16.831
+      ],
+      "expectancy_usd": 0.2439,
+      "profit_factor": 1.0624,
+      "total_return_pct": null,
+      "max_drawdown_pct": null,
+      "best_coin_share_pct": 89.7394,
+      "top3_share_pct": 269.1933,
+      "pnl_without_best_coin_usd": 0.6005,
+      "pnl_without_top3_usd": -9.9028,
+      "avg_ret_pct_wo_best": 0.1306,
+      "avg_ret_pct_wo_top3": -2.3578,
+      "exit_reasons": {
+       "stop": 5,
+       "take_profit": 19
+      }
+     },
+     "portfolio": {
+      "trades": 24,
+      "coins_traded": 24,
+      "win_rate_pct": 79.1667,
+      "avg_ret_pct": 1.2142,
+      "median_ret_pct": 26.2369,
+      "exp_ci95_pct": [
+       -19.47,
+       16.822
+      ],
+      "expectancy_usd": -0.2947,
+      "profit_factor": 0.9288,
+      "total_return_pct": -7.0733,
+      "max_drawdown_pct": 35.9586,
+      "best_coin_share_pct": null,
+      "top3_share_pct": null,
+      "pnl_without_best_coin_usd": -12.9855,
+      "pnl_without_top3_usd": -24.0559,
+      "avg_ret_pct_wo_best": 0.1258,
+      "avg_ret_pct_wo_top3": -2.3627,
+      "exit_reasons": {
+       "stop": 5,
+       "take_profit": 19
+      }
+     }
+    },
+    "wick_touch": {
+     "per_coin": {
+      "trades": 24,
+      "coins_traded": 24,
+      "win_rate_pct": 79.1667,
+      "avg_ret_pct": 17.1321,
+      "median_ret_pct": 26.2489,
+      "exp_ci95_pct": [
+       9.833,
+       22.609
+      ],
+      "expectancy_usd": 3.4264,
+      "profit_factor": 5.692,
+      "total_return_pct": null,
+      "max_drawdown_pct": null,
+      "best_coin_share_pct": 6.3885,
+      "top3_share_pct": 19.1619,
+      "pnl_without_best_coin_usd": 76.9807,
+      "pnl_without_top3_usd": 66.4766,
+      "avg_ret_pct_wo_best": 16.7349,
+      "avg_ret_pct_wo_top3": 15.8278,
+      "exit_reasons": {
+       "stop": 5,
+       "take_profit": 19
+      }
+     },
+     "portfolio": {
+      "trades": 24,
+      "coins_traded": 24,
+      "win_rate_pct": 79.1667,
+      "avg_ret_pct": 17.1423,
+      "median_ret_pct": 26.2558,
+      "exp_ci95_pct": [
+       9.845,
+       22.617
+      ],
+      "expectancy_usd": 4.1004,
+      "profit_factor": 5.5269,
+      "total_return_pct": 98.4104,
+      "max_drawdown_pct": 6.016,
+      "best_coin_share_pct": 6.6759,
+      "top3_share_pct": 20.0217,
+      "pnl_without_best_coin_usd": 91.8406,
+      "pnl_without_top3_usd": 78.7069,
+      "avg_ret_pct_wo_best": 16.7451,
+      "avg_ret_pct_wo_top3": 15.8382,
+      "exit_reasons": {
+       "stop": 5,
+       "take_profit": 19
+      }
+     }
+    },
+    "rug_aware_fills": {
+     "per_coin": {
+      "trades": 24,
+      "coins_traded": 24,
+      "win_rate_pct": 79.1667,
+      "avg_ret_pct": 1.3266,
+      "median_ret_pct": 26.2467,
+      "exp_ci95_pct": [
+       -19.297,
+       16.949
+      ],
+      "expectancy_usd": 0.2653,
+      "profit_factor": 1.0682,
+      "total_return_pct": null,
+      "max_drawdown_pct": null,
+      "best_coin_share_pct": 82.484,
+      "top3_share_pct": 247.4289,
+      "pnl_without_best_coin_usd": 1.1154,
+      "pnl_without_top3_usd": -9.3879,
+      "avg_ret_pct_wo_best": 0.2425,
+      "avg_ret_pct_wo_top3": -2.2352,
+      "exit_reasons": {
+       "stop": 5,
+       "take_profit": 19
+      }
+     },
+     "portfolio": {
+      "trades": 24,
+      "coins_traded": 24,
+      "win_rate_pct": 79.1667,
+      "avg_ret_pct": 1.3219,
+      "median_ret_pct": 26.2374,
+      "exp_ci95_pct": [
+       -19.302,
+       16.941
+      ],
+      "expectancy_usd": -0.2712,
+      "profit_factor": 0.9344,
+      "total_return_pct": -6.5091,
+      "max_drawdown_pct": 35.6146,
+      "best_coin_share_pct": null,
+      "top3_share_pct": null,
+      "pnl_without_best_coin_usd": -12.4214,
+      "pnl_without_top3_usd": -23.4918,
+      "avg_ret_pct_wo_best": 0.2382,
+      "avg_ret_pct_wo_top3": -2.2396,
+      "exit_reasons": {
+       "stop": 5,
+       "take_profit": 19
+      }
+     }
+    },
+    "without_best_coin": {
+     "per_coin": {
+      "trades": 23,
+      "coins_traded": 23,
+      "win_rate_pct": 78.2609,
+      "avg_ret_pct": 8.4237,
+      "median_ret_pct": 26.2462,
+      "exp_ci95_pct": [
+       -5.884,
+       22.532
+      ],
+      "expectancy_usd": 1.6847,
+      "profit_factor": 1.6955,
+      "total_return_pct": null,
+      "max_drawdown_pct": null,
+      "best_coin_share_pct": 13.5533,
+      "top3_share_pct": 40.659,
+      "pnl_without_best_coin_usd": 33.4971,
+      "pnl_without_top3_usd": 22.9939,
+      "avg_ret_pct_wo_best": 7.613,
+      "avg_ret_pct_wo_top3": 5.7485,
+      "exit_reasons": {
+       "stop": 5,
+       "take_profit": 18
+      }
+     },
+     "portfolio": {
+      "trades": 23,
+      "coins_traded": 23,
+      "win_rate_pct": 78.2609,
+      "avg_ret_pct": 8.4322,
+      "median_ret_pct": 26.2513,
+      "exp_ci95_pct": [
+       -5.87,
+       22.538
+      ],
+      "expectancy_usd": 1.6885,
+      "profit_factor": 1.5979,
+      "total_return_pct": 38.8358,
+      "max_drawdown_pct": 14.6751,
+      "best_coin_share_pct": 16.9077,
+      "top3_share_pct": 50.3122,
+      "pnl_without_best_coin_usd": 32.2696,
+      "pnl_without_top3_usd": 19.2967,
+      "avg_ret_pct_wo_best": 7.6216,
+      "avg_ret_pct_wo_top3": 5.7581,
+      "exit_reasons": {
+       "stop": 5,
+       "take_profit": 18
+      }
+     },
+     "removed": "FOMO"
+    },
+    "first_half": {
+     "per_coin": {
+      "trades": 14,
+      "coins_traded": 14,
+      "win_rate_pct": 78.5714,
+      "avg_ret_pct": 8.6421,
+      "median_ret_pct": 26.2448,
+      "exp_ci95_pct": [
+       -9.275,
+       26.224
+      ],
+      "expectancy_usd": 1.7284,
+      "profit_factor": 1.722,
+      "total_return_pct": null,
+      "max_drawdown_pct": null,
+      "best_coin_share_pct": 21.7059,
+      "top3_share_pct": 65.1116,
+      "pnl_without_best_coin_usd": 18.9455,
+      "pnl_without_top3_usd": 8.4423,
+      "avg_ret_pct_wo_best": 7.2867,
+      "avg_ret_pct_wo_top3": 3.8374,
+      "exit_reasons": {
+       "stop": 3,
+       "take_profit": 11
+      }
+     },
+     "portfolio": {
+      "trades": 14,
+      "coins_traded": 14,
+      "win_rate_pct": 78.5714,
+      "avg_ret_pct": 8.6518,
+      "median_ret_pct": 26.2492,
+      "exp_ci95_pct": [
+       -9.261,
+       26.228
+      ],
+      "expectancy_usd": 1.6206,
+      "profit_factor": 1.5749,
+      "total_return_pct": 22.6878,
+      "max_drawdown_pct": 14.6687,
+      "best_coin_share_pct": 26.0593,
+      "top3_share_pct": 77.6741,
+      "pnl_without_best_coin_usd": 16.7755,
+      "pnl_without_top3_usd": 5.0652,
+      "avg_ret_pct_wo_best": 7.2982,
+      "avg_ret_pct_wo_top3": 3.851,
+      "exit_reasons": {
+       "stop": 3,
+       "take_profit": 11
+      }
+     }
+    },
+    "second_half": {
+     "per_coin": {
+      "trades": 10,
+      "coins_traded": 10,
+      "win_rate_pct": 80.0,
+      "avg_ret_pct": 9.9016,
+      "median_ret_pct": 26.2493,
+      "exp_ci95_pct": [
+       -14.299,
+       26.253
+      ],
+      "expectancy_usd": 1.9803,
+      "profit_factor": 1.892,
+      "total_return_pct": null,
+      "max_drawdown_pct": null,
+      "best_coin_share_pct": 26.5187,
+      "top3_share_pct": 79.5538,
+      "pnl_without_best_coin_usd": 14.5517,
+      "pnl_without_top3_usd": 4.049,
+      "avg_ret_pct_wo_best": 8.0843,
+      "avg_ret_pct_wo_top3": 2.8922,
+      "exit_reasons": {
+       "stop": 2,
+       "take_profit": 8
+      }
+     },
+     "portfolio": {
+      "trades": 10,
+      "coins_traded": 10,
+      "win_rate_pct": 80.0,
+      "avg_ret_pct": 9.9066,
+      "median_ret_pct": 26.2505,
+      "exp_ci95_pct": [
+       -14.286,
+       26.255
+      ],
+      "expectancy_usd": 1.8131,
+      "profit_factor": 1.7133,
+      "total_return_pct": 18.1306,
+      "max_drawdown_pct": 11.7519,
+      "best_coin_share_pct": 34.4682,
+      "top3_share_pct": 97.3127,
+      "pnl_without_best_coin_usd": 11.8813,
+      "pnl_without_top3_usd": 0.4872,
+      "avg_ret_pct_wo_best": 8.0907,
+      "avg_ret_pct_wo_top3": 2.8991,
+      "exit_reasons": {
+       "stop": 2,
+       "take_profit": 8
+      }
+     }
+    }
+   },
+   "validation_trades": [
+    {
+     "symbol": "FOMO",
+     "entry_min_after_grad": 14.8,
+     "grad_delay_s": 0.0,
+     "entry_mcap": 678225,
+     "ret_pct": 26.26,
+     "exit": "take_profit",
+     "tag": "p=0.806",
+     "cluster": "farm"
+    },
+    {
+     "symbol": "Anthropic",
+     "entry_min_after_grad": 14.7,
+     "grad_delay_s": 0.0,
+     "entry_mcap": 540002,
+     "ret_pct": 26.24,
+     "exit": "take_profit",
+     "tag": "p=0.746",
+     "cluster": "farm"
+    },
+    {
+     "symbol": "Tesla",
+     "entry_min_after_grad": 13.0,
+     "grad_delay_s": 0.0,
+     "entry_mcap": 639479,
+     "ret_pct": 26.26,
+     "exit": "take_profit",
+     "tag": "p=0.748",
+     "cluster": "farm"
+    },
+    {
+     "symbol": "SOLCAT",
+     "entry_min_after_grad": 13.5,
+     "grad_delay_s": 0.0,
+     "entry_mcap": 525238,
+     "ret_pct": 26.24,
+     "exit": "take_profit",
+     "tag": "p=0.777",
+     "cluster": "farm"
+    },
+    {
+     "symbol": "Grok",
+     "entry_min_after_grad": 13.7,
+     "grad_delay_s": 0.0,
+     "entry_mcap": 622265,
+     "ret_pct": -58.77,
+     "exit": "stop",
+     "tag": "p=0.755",
+     "cluster": "farm"
+    },
+    {
+     "symbol": "LEGO",
+     "entry_min_after_grad": 15.0,
+     "grad_delay_s": 0.0,
+     "entry_mcap": 552235,
+     "ret_pct": 26.17,
+     "exit": "take_profit",
+     "tag": "p=0.742",
+     "cluster": "farm"
+    },
+    {
+     "symbol": "Claude",
+     "entry_min_after_grad": 13.1,
+     "grad_delay_s": 0.0,
+     "entry_mcap": 643141,
+     "ret_pct": 26.26,
+     "exit": "take_profit",
+     "tag": "p=0.772",
+     "cluster": "farm"
+    },
+    {
+     "symbol": "BUNKER",
+     "entry_min_after_grad": 13.3,
+     "grad_delay_s": 0.0,
+     "entry_mcap": 674765,
+     "ret_pct": -56.61,
+     "exit": "stop",
+     "tag": "p=0.769",
+     "cluster": "farm"
+    },
+    {
+     "symbol": "FOMO",
+     "entry_min_after_grad": 13.5,
+     "grad_delay_s": 0.0,
+     "entry_mcap": 578813,
+     "ret_pct": 26.25,
+     "exit": "take_profit",
+     "tag": "p=0.775",
+     "cluster": "farm"
+    },
+    {
+     "symbol": "BUNKER",
+     "entry_min_after_grad": 13.4,
+     "grad_delay_s": 0.0,
+     "entry_mcap": 646012,
+     "ret_pct": 26.26,
+     "exit": "take_profit",
+     "tag": "p=0.781",
+     "cluster": "farm"
+    },
+    {
+     "symbol": "Haaland",
+     "entry_min_after_grad": 22.0,
+     "grad_delay_s": 0.0,
+     "entry_mcap": 670551,
+     "ret_pct": -52.18,
+     "exit": "stop",
+     "tag": "p=0.754",
+     "cluster": "farm"
+    },
+    {
+     "symbol": "NVIDIA",
+     "entry_min_after_grad": 14.5,
+     "grad_delay_s": 0.0,
+     "entry_mcap": 719678,
+     "ret_pct": 26.11,
+     "exit": "take_profit",
+     "tag": "p=0.752",
+     "cluster": "farm"
+    },
+    {
+     "symbol": "Google",
+     "entry_min_after_grad": 13.6,
+     "grad_delay_s": 0.0,
+     "entry_mcap": 614146,
+     "ret_pct": 26.26,
+     "exit": "take_profit",
+     "tag": "p=0.776",
+     "cluster": "farm"
+    },
+    {
+     "symbol": "Taylor",
+     "entry_min_after_grad": 15.2,
+     "grad_delay_s": 0.0,
+     "entry_mcap": 530757,
+     "ret_pct": 26.25,
+     "exit": "take_profit",
+     "tag": "p=0.744",
+     "cluster": "farm"
+    },
+    {
+     "symbol": "Anthropic",
+     "entry_min_after_grad": 14.5,
+     "grad_delay_s": 0.0,
+     "entry_mcap": 571435,
+     "ret_pct": 26.25,
+     "exit": "take_profit",
+     "tag": "p=0.777",
+     "cluster": "farm"
+    },
+    {
+     "symbol": "Odyssey",
+     "entry_min_after_grad": 15.8,
+     "grad_delay_s": 0.0,
+     "entry_mcap": 605631,
+     "ret_pct": -58.77,
+     "exit": "stop",
+     "tag": "p=0.742",
+     "cluster": "farm"
+    },
+    {
+     "symbol": "FOMO",
+     "entry_min_after_grad": 17.1,
+     "grad_delay_s": 0.0,
+     "entry_mcap": 614676,
+     "ret_pct": 26.26,
+     "exit": "take_profit",
+     "tag": "p=0.762",
+     "cluster": "farm"
+    },
+    {
+     "symbol": "Google AI",
+     "entry_min_after_grad": 13.8,
+     "grad_delay_s": 0.0,
+     "entry_mcap": 538954,
+     "ret_pct": 26.25,
+     "exit": "take_profit",
+     "tag": "p=0.758",
+     "cluster": "farm"
+    },
+    {
+     "symbol": "BBC",
+     "entry_min_after_grad": 15.2,
+     "grad_delay_s": 0.0,
+     "entry_mcap": 590438,
+     "ret_pct": 26.26,
+     "exit": "take_profit",
+     "tag": "p=0.742",
+     "cluster": "farm"
+    },
+    {
+     "symbol": "4206066",
+     "entry_min_after_grad": 13.4,
+     "grad_delay_s": 0.0,
+     "entry_mcap": 526451,
+     "ret_pct": 26.25,
+     "exit": "take_profit",
+     "tag": "p=0.759",
+     "cluster": "farm"
+    },
+    {
+     "symbol": "SpaceX",
+     "entry_min_after_grad": 13.3,
+     "grad_delay_s": 0.0,
+     "entry_mcap": 592822,
+     "ret_pct": 26.26,
+     "exit": "take_profit",
+     "tag": "p=0.783",
+     "cluster": "farm"
+    },
+    {
+     "symbol": "Nike",
+     "entry_min_after_grad": 14.7,
+     "grad_delay_s": 0.0,
+     "entry_mcap": 519387,
+     "ret_pct": 26.24,
+     "exit": "take_profit",
+     "tag": "p=0.749",
+     "cluster": "farm"
+    },
+    {
+     "symbol": "GTA 6 Coin",
+     "entry_min_after_grad": 15.1,
+     "grad_delay_s": 0.0,
+     "entry_mcap": 530425,
+     "ret_pct": -52.23,
+     "exit": "stop",
+     "tag": "p=0.741",
+     "cluster": "farm"
+    },
+    {
+     "symbol": "FOMO",
+     "entry_min_after_grad": 13.3,
+     "grad_delay_s": 0.0,
+     "entry_mcap": 604392,
+     "ret_pct": 26.26,
+     "exit": "take_profit",
+     "tag": "p=0.748",
+     "cluster": "farm"
+    }
+   ],
+   "train": {
+    "base": {
+     "per_coin": {
+      "trades": 27,
+      "coins_traded": 27,
+      "win_rate_pct": 85.1852,
+      "avg_ret_pct": 13.9876,
+      "median_ret_pct": 26.2495,
+      "exp_ci95_pct": [
+       1.859,
+       23.307
+      ],
+      "expectancy_usd": 2.7975,
+      "profit_factor": 2.6737,
+      "total_return_pct": null,
+      "max_drawdown_pct": null,
+      "best_coin_share_pct": 6.954,
+      "top3_share_pct": 20.8613,
+      "pnl_without_best_coin_usd": 70.2807,
+      "pnl_without_top3_usd": 59.7761,
+      "avg_ret_pct_wo_best": 13.5155,
+      "avg_ret_pct_wo_top3": 12.4533,
+      "exit_reasons": {
+       "stop": 4,
+       "take_profit": 23
+      }
+     },
+     "portfolio": {
+      "trades": 27,
+      "coins_traded": 27,
+      "win_rate_pct": 85.1852,
+      "avg_ret_pct": 14.0003,
+      "median_ret_pct": 26.2567,
+      "exp_ci95_pct": [
+       1.762,
+       23.31
+      ],
+      "expectancy_usd": 3.343,
+      "profit_factor": 2.6011,
+      "total_return_pct": 90.26,
+      "max_drawdown_pct": 11.8578,
+      "best_coin_share_pct": 7.2775,
+      "top3_share_pct": 21.8317,
+      "pnl_without_best_coin_usd": 83.6913,
+      "pnl_without_top3_usd": 70.5547,
+      "avg_ret_pct_wo_best": 13.5283,
+      "avg_ret_pct_wo_top3": 12.4662,
+      "exit_reasons": {
+       "stop": 4,
+       "take_profit": 23
+      }
+     }
+    },
+    "costs_x1.5": {
+     "per_coin": {
+      "trades": 27,
+      "coins_traded": 27,
+      "win_rate_pct": 85.1852,
+      "avg_ret_pct": 12.3017,
+      "median_ret_pct": 24.3983,
+      "exp_ci95_pct": [
+       0.337,
+       21.492
+      ],
+      "expectancy_usd": 2.4603,
+      "profit_factor": 2.453,
+      "total_return_pct": null,
+      "max_drawdown_pct": null,
+      "best_coin_share_pct": 7.3516,
+      "top3_share_pct": 22.0536,
+      "pnl_without_best_coin_usd": 61.5458,
+      "pnl_without_top3_usd": 51.7793,
+      "avg_ret_pct_wo_best": 11.8357,
+      "avg_ret_pct_wo_top3": 10.7874,
+      "exit_reasons": {
+       "stop": 4,
+       "take_profit": 23
+      }
+     },
+     "portfolio": {
+      "trades": 27,
+      "coins_traded": 27,
+      "win_rate_pct": 85.1852,
+      "avg_ret_pct": 12.3211,
+      "median_ret_pct": 24.4111,
+      "exp_ci95_pct": [
+       0.25,
+       21.504
+      ],
+      "expectancy_usd": 2.9206,
+      "profit_factor": 2.3813,
+      "total_return_pct": 78.8573,
+      "max_drawdown_pct": 12.5206,
+      "best_coin_share_pct": 7.747,
+      "top3_share_pct": 23.2396,
+      "pnl_without_best_coin_usd": 72.7482,
+      "pnl_without_top3_usd": 60.5312,
+      "avg_ret_pct_wo_best": 11.8551,
+      "avg_ret_pct_wo_top3": 10.8069,
+      "exit_reasons": {
+       "stop": 4,
+       "take_profit": 23
+      }
+     }
+    },
+    "costs_x2": {
+     "per_coin": {
+      "trades": 27,
+      "coins_traded": 27,
+      "win_rate_pct": 85.1852,
+      "avg_ret_pct": 10.6285,
+      "median_ret_pct": 22.5617,
+      "exp_ci95_pct": [
+       -1.173,
+       19.694
+      ],
+      "expectancy_usd": 2.1257,
+      "profit_factor": 2.2396,
+      "total_return_pct": null,
+      "max_drawdown_pct": null,
+      "best_coin_share_pct": 7.8708,
+      "top3_share_pct": 23.6108,
+      "pnl_without_best_coin_usd": 52.8765,
+      "pnl_without_top3_usd": 43.8427,
+      "avg_ret_pct_wo_best": 10.1686,
+      "avg_ret_pct_wo_top3": 9.1339,
+      "exit_reasons": {
+       "stop": 4,
+       "take_profit": 23
+      }
+     },
+     "portfolio": {
+      "trades": 27,
+      "coins_traded": 27,
+      "win_rate_pct": 85.1852,
+      "avg_ret_pct": 10.655,
+      "median_ret_pct": 22.5797,
+      "exp_ci95_pct": [
+       -1.25,
+       19.71
+      ],
+      "expectancy_usd": 2.4955,
+      "profit_factor": 2.1657,
+      "total_return_pct": 67.3774,
+      "max_drawdown_pct": 13.2412,
+      "best_coin_share_pct": 8.3902,
+      "top3_share_pct": 25.1684,
+      "pnl_without_best_coin_usd": 61.7243,
+      "pnl_without_top3_usd": 50.4196,
+      "avg_ret_pct_wo_best": 10.1951,
+      "avg_ret_pct_wo_top3": 9.1605,
+      "exit_reasons": {
+       "stop": 4,
+       "take_profit": 23
+      }
+     }
+    },
+    "latency_+1bar": {
+     "per_coin": {
+      "trades": 27,
+      "coins_traded": 27,
+      "win_rate_pct": 85.1852,
+      "avg_ret_pct": 14.0052,
+      "median_ret_pct": 26.2509,
+      "exp_ci95_pct": [
+       1.861,
+       23.32
+      ],
+      "expectancy_usd": 2.801,
+      "profit_factor": 2.6764,
+      "total_return_pct": null,
+      "max_drawdown_pct": null,
+      "best_coin_share_pct": 6.9461,
+      "top3_share_pct": 20.8373,
+      "pnl_without_best_coin_usd": 70.375,
+      "pnl_without_top3_usd": 59.8694,
+      "avg_ret_pct_wo_best": 13.5337,
+      "avg_ret_pct_wo_top3": 12.4728,
+      "exit_reasons": {
+       "stop": 4,
+       "take_profit": 23
+      }
+     },
+     "portfolio": {
+      "trades": 27,
+      "coins_traded": 27,
+      "win_rate_pct": 85.1852,
+      "avg_ret_pct": 14.0175,
+      "median_ret_pct": 26.2594,
+      "exp_ci95_pct": [
+       1.771,
+       23.328
+      ],
+      "expectancy_usd": 3.3416,
+      "profit_factor": 2.6008,
+      "total_return_pct": 90.2233,
+      "max_drawdown_pct": 11.3346,
+      "best_coin_share_pct": 7.2815,
+      "top3_share_pct": 21.8434,
+      "pnl_without_best_coin_usd": 83.6538,
+      "pnl_without_top3_usd": 70.5156,
+      "avg_ret_pct_wo_best": 13.5459,
+      "avg_ret_pct_wo_top3": 12.4851,
+      "exit_reasons": {
+       "stop": 4,
+       "take_profit": 23
+      }
+     }
+    },
+    "size_$10": {
+     "per_coin": {
+      "trades": 27,
+      "coins_traded": 27,
+      "win_rate_pct": 85.1852,
+      "avg_ret_pct": 13.8188,
+      "median_ret_pct": 26.0892,
+      "exp_ci95_pct": [
+       1.682,
+       23.145
+      ],
+      "expectancy_usd": 1.3819,
+      "profit_factor": 2.6471,
+      "total_return_pct": null,
+      "max_drawdown_pct": null,
+      "best_coin_share_pct": 6.9947,
+      "top3_share_pct": 20.9839,
+      "pnl_without_best_coin_usd": 34.701,
+      "pnl_without_top3_usd": 29.4815,
+      "avg_ret_pct_wo_best": 13.3465,
+      "avg_ret_pct_wo_top3": 12.284,
+      "exit_reasons": {
+       "stop": 4,
+       "take_profit": 23
+      }
+     },
+     "portfolio": {
+      "trades": 27,
+      "coins_traded": 27,
+      "win_rate_pct": 85.1852,
+      "avg_ret_pct": 13.8188,
+      "median_ret_pct": 26.0892,
+      "exp_ci95_pct": [
+       1.568,
+       23.138
+      ],
+      "expectancy_usd": 1.3819,
+      "profit_factor": 2.6471,
+      "total_return_pct": 37.3108,
+      "max_drawdown_pct": 6.1615,
+      "best_coin_share_pct": 6.9947,
+      "top3_share_pct": 20.9839,
+      "pnl_without_best_coin_usd": 34.701,
+      "pnl_without_top3_usd": 29.4815,
+      "avg_ret_pct_wo_best": 13.3465,
+      "avg_ret_pct_wo_top3": 12.284,
+      "exit_reasons": {
+       "stop": 4,
+       "take_profit": 23
+      }
+     }
+    },
+    "size_$40": {
+     "per_coin": {
+      "trades": 27,
+      "coins_traded": 27,
+      "win_rate_pct": 85.1852,
+      "avg_ret_pct": 13.97,
+      "median_ret_pct": 26.2121,
+      "exp_ci95_pct": [
+       1.858,
+       23.274
+      ],
+      "expectancy_usd": 5.588,
+      "profit_factor": 2.6739,
+      "total_return_pct": null,
+      "max_drawdown_pct": null,
+      "best_coin_share_pct": 6.9565,
+      "top3_share_pct": 20.8684,
+      "pnl_without_best_coin_usd": 140.3806,
+      "pnl_without_top3_usd": 119.391,
+      "avg_ret_pct_wo_best": 13.4981,
+      "avg_ret_pct_wo_top3": 12.4366,
+      "exit_reasons": {
+       "stop": 4,
+       "take_profit": 23
+      }
+     },
+     "portfolio": {
+      "trades": 27,
+      "coins_traded": 27,
+      "win_rate_pct": 85.1852,
+      "avg_ret_pct": 13.97,
+      "median_ret_pct": 26.2121,
+      "exp_ci95_pct": [
+       1.743,
+       23.269
+      ],
+      "expectancy_usd": 5.588,
+      "profit_factor": 2.6739,
+      "total_return_pct": 150.8764,
+      "max_drawdown_pct": 14.8656,
+      "best_coin_share_pct": 6.9565,
+      "top3_share_pct": 20.8684,
+      "pnl_without_best_coin_usd": 140.3806,
+      "pnl_without_top3_usd": 119.391,
+      "avg_ret_pct_wo_best": 13.4981,
+      "avg_ret_pct_wo_top3": 12.4366,
+      "exit_reasons": {
+       "stop": 4,
+       "take_profit": 23
+      }
+     }
+    },
+    "wick_worst": {
+     "per_coin": {
+      "trades": 27,
+      "coins_traded": 27,
+      "win_rate_pct": 85.1852,
+      "avg_ret_pct": 8.2221,
+      "median_ret_pct": 26.2495,
+      "exp_ci95_pct": [
+       -9.539,
+       21.995
+      ],
+      "expectancy_usd": 1.6444,
+      "profit_factor": 1.5828,
+      "total_return_pct": null,
+      "max_drawdown_pct": null,
+      "best_coin_share_pct": 11.8303,
+      "top3_share_pct": 35.4897,
+      "pnl_without_best_coin_usd": 39.1469,
+      "pnl_without_top3_usd": 28.6422,
+      "avg_ret_pct_wo_best": 7.5282,
+      "avg_ret_pct_wo_top3": 5.9671,
+      "exit_reasons": {
+       "stop": 4,
+       "take_profit": 23
+      }
+     },
+     "portfolio": {
+      "trades": 27,
+      "coins_traded": 27,
+      "win_rate_pct": 85.1852,
+      "avg_ret_pct": 8.236,
+      "median_ret_pct": 26.2567,
+      "exp_ci95_pct": [
+       -9.745,
+       21.984
+      ],
+      "expectancy_usd": 1.8355,
+      "profit_factor": 1.5207,
+      "total_return_pct": 49.5584,
+      "max_drawdown_pct": 21.0009,
+      "best_coin_share_pct": 13.2544,
+      "top3_share_pct": 39.7618,
+      "pnl_without_best_coin_usd": 42.9897,
+      "pnl_without_top3_usd": 29.8531,
+      "avg_ret_pct_wo_best": 7.5422,
+      "avg_ret_pct_wo_top3": 5.9813,
+      "exit_reasons": {
+       "stop": 4,
+       "take_profit": 23
+      }
+     }
+    },
+    "wick_touch": {
+     "per_coin": {
+      "trades": 27,
+      "coins_traded": 27,
+      "win_rate_pct": 85.1852,
+      "avg_ret_pct": 19.7617,
+      "median_ret_pct": 26.25,
+      "exp_ci95_pct": [
+       13.275,
+       24.631
+      ],
+      "expectancy_usd": 3.9523,
+      "profit_factor": 8.6054,
+      "total_return_pct": null,
+      "max_drawdown_pct": null,
+      "best_coin_share_pct": 4.9221,
+      "top3_share_pct": 14.766,
+      "pnl_without_best_coin_usd": 101.4604,
+      "pnl_without_top3_usd": 90.9558,
+      "avg_ret_pct_wo_best": 19.5116,
+      "avg_ret_pct_wo_top3": 18.9491,
+      "exit_reasons": {
+       "stop": 4,
+       "take_profit": 23
+      }
+     },
+     "portfolio": {
+      "trades": 27,
+      "coins_traded": 27,
+      "win_rate_pct": 85.1852,
+      "avg_ret_pct": 19.7727,
+      "median_ret_pct": 26.2577,
+      "exp_ci95_pct": [
+       13.288,
+       24.64
+      ],
+      "expectancy_usd": 4.7944,
+      "profit_factor": 8.3915,
+      "total_return_pct": 129.448,
+      "max_drawdown_pct": 5.259,
+      "best_coin_share_pct": 5.0744,
+      "top3_share_pct": 15.2226,
+      "pnl_without_best_coin_usd": 122.8793,
+      "pnl_without_top3_usd": 109.7427,
+      "avg_ret_pct_wo_best": 19.5226,
+      "avg_ret_pct_wo_top3": 18.96,
+      "exit_reasons": {
+       "stop": 4,
+       "take_profit": 23
+      }
+     }
+    },
+    "rug_aware_fills": {
+     "per_coin": {
+      "trades": 27,
+      "coins_traded": 27,
+      "win_rate_pct": 85.1852,
+      "avg_ret_pct": 8.3796,
+      "median_ret_pct": 26.2495,
+      "exp_ci95_pct": [
+       -9.171,
+       22.124
+      ],
+      "expectancy_usd": 1.6759,
+      "profit_factor": 1.6,
+      "total_return_pct": null,
+      "max_drawdown_pct": null,
+      "best_coin_share_pct": 11.6079,
+      "top3_share_pct": 34.8227,
+      "pnl_without_best_coin_usd": 39.9973,
+      "pnl_without_top3_usd": 29.4927,
+      "avg_ret_pct_wo_best": 7.6918,
+      "avg_ret_pct_wo_top3": 6.1443,
+      "exit_reasons": {
+       "stop": 4,
+       "take_profit": 23
+      }
+     },
+     "portfolio": {
+      "trades": 27,
+      "coins_traded": 27,
+      "win_rate_pct": 85.1852,
+      "avg_ret_pct": 8.3934,
+      "median_ret_pct": 26.2567,
+      "exp_ci95_pct": [
+       -9.42,
+       22.127
+      ],
+      "expectancy_usd": 1.8782,
+      "profit_factor": 1.5382,
+      "total_return_pct": 50.7124,
+      "max_drawdown_pct": 20.483,
+      "best_coin_share_pct": 12.9528,
+      "top3_share_pct": 38.857,
+      "pnl_without_best_coin_usd": 44.1437,
+      "pnl_without_top3_usd": 31.0071,
+      "avg_ret_pct_wo_best": 7.7057,
+      "avg_ret_pct_wo_top3": 6.1584,
+      "exit_reasons": {
+       "stop": 4,
+       "take_profit": 23
+      }
+     }
+    },
+    "without_best_coin": {
+     "per_coin": {
+      "trades": 26,
+      "coins_traded": 26,
+      "win_rate_pct": 84.6154,
+      "avg_ret_pct": 13.5155,
+      "median_ret_pct": 26.2487,
+      "exp_ci95_pct": [
+       0.917,
+       23.099
+      ],
+      "expectancy_usd": 2.7031,
+      "profit_factor": 2.5573,
+      "total_return_pct": null,
+      "max_drawdown_pct": null,
+      "best_coin_share_pct": 7.4734,
+      "top3_share_pct": 22.4198,
+      "pnl_without_best_coin_usd": 65.0283,
+      "pnl_without_top3_usd": 54.5239,
+      "avg_ret_pct_wo_best": 13.0057,
+      "avg_ret_pct_wo_top3": 11.853,
+      "exit_reasons": {
+       "stop": 4,
+       "take_profit": 22
+      }
+     },
+     "portfolio": {
+      "trades": 26,
+      "coins_traded": 26,
+      "win_rate_pct": 84.6154,
+      "avg_ret_pct": 13.5283,
+      "median_ret_pct": 26.2555,
+      "exp_ci95_pct": [
+       0.831,
+       23.197
+      ],
+      "expectancy_usd": 3.2189,
+      "profit_factor": 2.4845,
+      "total_return_pct": 83.6913,
+      "max_drawdown_pct": 11.8578,
+      "best_coin_share_pct": 7.8485,
+      "top3_share_pct": 23.5442,
+      "pnl_without_best_coin_usd": 77.1228,
+      "pnl_without_top3_usd": 63.9868,
+      "avg_ret_pct_wo_best": 13.0184,
+      "avg_ret_pct_wo_top3": 11.8659,
+      "exit_reasons": {
+       "stop": 4,
+       "take_profit": 22
+      }
+     },
+     "removed": "Uber"
+    },
+    "first_half": {
+     "per_coin": {
+      "trades": 3,
+      "coins_traded": 3,
+      "win_rate_pct": 100.0,
+      "avg_ret_pct": 26.2468,
+      "median_ret_pct": 26.2479,
+      "exp_ci95_pct": [
+       26.242,
+       26.25
+      ],
+      "expectancy_usd": 5.2494,
+      "profit_factor": null,
+      "total_return_pct": null,
+      "max_drawdown_pct": null,
+      "best_coin_share_pct": 33.3374,
+      "top3_share_pct": 100.0,
+      "pnl_without_best_coin_usd": 10.4981,
+      "pnl_without_top3_usd": 0.0,
+      "avg_ret_pct_wo_best": 26.2452,
+      "avg_ret_pct_wo_top3": null,
+      "exit_reasons": {
+       "take_profit": 3
+      }
+     },
+     "portfolio": {
+      "trades": 3,
+      "coins_traded": 3,
+      "win_rate_pct": 100.0,
+      "avg_ret_pct": 26.2502,
+      "median_ret_pct": 26.2515,
+      "exp_ci95_pct": [
+       26.242,
+       26.257
+      ],
+      "expectancy_usd": 5.5305,
+      "profit_factor": null,
+      "total_return_pct": 16.5915,
+      "max_drawdown_pct": 0.2763,
+      "best_coin_share_pct": 35.0609,
+      "top3_share_pct": 100.0,
+      "pnl_without_best_coin_usd": 10.7744,
+      "pnl_without_top3_usd": 0.0,
+      "avg_ret_pct_wo_best": 26.247,
+      "avg_ret_pct_wo_top3": null,
+      "exit_reasons": {
+       "take_profit": 3
+      }
+     }
+    },
+    "second_half": {
+     "per_coin": {
+      "trades": 24,
+      "coins_traded": 24,
+      "win_rate_pct": 83.3333,
+      "avg_ret_pct": 12.4553,
+      "median_ret_pct": 26.2506,
+      "exp_ci95_pct": [
+       -1.351,
+       22.821
+      ],
+      "expectancy_usd": 2.4911,
+      "profit_factor": 2.3247,
+      "total_return_pct": null,
+      "max_drawdown_pct": null,
+      "best_coin_share_pct": 8.7857,
+      "top3_share_pct": 26.3564,
+      "pnl_without_best_coin_usd": 54.5326,
+      "pnl_without_top3_usd": 44.028,
+      "avg_ret_pct_wo_best": 11.8549,
+      "avg_ret_pct_wo_top3": 10.4829,
+      "exit_reasons": {
+       "stop": 4,
+       "take_profit": 20
+      }
+     },
+     "portfolio": {
+      "trades": 24,
+      "coins_traded": 24,
+      "win_rate_pct": 83.3333,
+      "avg_ret_pct": 12.4674,
+      "median_ret_pct": 26.256,
+      "exp_ci95_pct": [
+       -1.328,
+       22.83
+      ],
+      "expectancy_usd": 2.8949,
+      "profit_factor": 2.2546,
+      "total_return_pct": 69.477,
+      "max_drawdown_pct": 13.568,
+      "best_coin_share_pct": 9.4545,
+      "top3_share_pct": 28.3624,
+      "pnl_without_best_coin_usd": 62.9083,
+      "pnl_without_top3_usd": 49.7717,
+      "avg_ret_pct_wo_best": 11.8671,
+      "avg_ret_pct_wo_top3": 10.4951,
+      "exit_reasons": {
+       "stop": 4,
+       "take_profit": 20
+      }
+     }
+    }
+   }
+  },
+  "audit": {
+   "live_equals_table_decisions": true,
+   "live_equals_table_trades": true,
+   "audit_validation_problems": [],
+   "audit_train_problems": [],
+   "audit_coins": {
+    "validation": 150,
+    "train": 448
+   }
+  }
+ },
+ {
+  "name": "F4_farm_climb_gbt_tp30_sl15_h15_q99",
+  "strategy_class": "F4Learned",
+  "module": "research/lab/strategies/f4-learned.py",
+  "verdict": "REJECTED - fails: validation_ci_above_0, validation_at_least_15_trades",
+  "recommend_test": false,
+  "params": {
+   "label": "tp30_sl15_h15",
+   "model": "gbt",
+   "variant": "all",
+   "q": 0.99,
+   "model_file": "LAB/f4/models/tp30_sl15_h15_gbt.pkl",
+   "scorer": "ModelScorer(FoldEnsemble.load(model_file), F4Params.gate)",
+   "strategy": {
+    "threshold": 0.7783890001619868,
+    "tp": 0.3,
+    "sl": 0.15,
+    "hold_min": 15.0,
+    "max_entries": 1,
+    "max_age_min": 360.0,
+    "min_vol10_usd": 1000.0,
+    "min_mcap_sol": 30.0
+   }
+  },
+  "configs_tried": {
+   "train": 240,
+   "train_stage_A_all_rows": 120,
+   "train_stage_B_nofarm": 120,
+   "validation": 5,
+   "note": "every config is in LAB/f4/runs.jsonl; robustness variants are not selection tries"
+  },
+  "gates": {
+   "train_avg_positive": true,
+   "train_ci_above_0": true,
+   "train_portfolio_positive": true,
+   "validation_avg_positive": true,
+   "validation_ci_above_0": false,
+   "validation_at_least_15_trades": false,
+   "validation_portfolio_positive": true,
+   "validation_without_best_coin_positive": true,
+   "validation_without_top3_positive": true,
+   "validation_costs_x2_positive": true,
+   "validation_wick_worst_positive": true,
+   "validation_wick_worst_portfolio_positive": true,
+   "validation_rug_aware_fills_positive": true,
+   "audit_lookahead_clean": true,
+   "live_scorer_equals_search_table": true
+  },
+  "train_metrics": {
+   "per_coin": {
+    "trades": 23,
+    "coins_traded": 23,
+    "win_rate_pct": 91.3043,
+    "avg_ret_pct": 18.9865,
+    "median_ret_pct": 26.2554,
+    "exp_ci95_pct": [
+     8.037,
+     26.252
+    ],
+    "expectancy_usd": 3.7973,
+    "profit_factor": 4.8147,
+    "total_return_pct": null,
+    "max_drawdown_pct": null,
+    "best_coin_share_pct": 6.0163,
+    "top3_share_pct": 18.0463,
+    "pnl_without_best_coin_usd": 82.0832,
+    "pnl_without_top3_usd": 71.5765,
+    "avg_ret_pct_wo_best": 18.6553,
+    "avg_ret_pct_wo_top3": 17.8941,
+    "exit_reasons": {
+     "stop": 2,
+     "take_profit": 21
+    }
+   },
+   "portfolio": {
+    "trades": 23,
+    "coins_traded": 23,
+    "win_rate_pct": 91.3043,
+    "avg_ret_pct": 18.998,
+    "median_ret_pct": 26.266,
+    "exp_ci95_pct": [
+     8.048,
+     26.261
+    ],
+    "expectancy_usd": 4.5624,
+    "profit_factor": 4.6692,
+    "total_return_pct": 104.9362,
+    "max_drawdown_pct": 11.1436,
+    "best_coin_share_pct": 6.2625,
+    "top3_share_pct": 18.7843,
+    "pnl_without_best_coin_usd": 98.3646,
+    "pnl_without_top3_usd": 85.2247,
+    "avg_ret_pct_wo_best": 18.6667,
+    "avg_ret_pct_wo_top3": 17.9054,
+    "exit_reasons": {
+     "stop": 2,
+     "take_profit": 21
+    }
+   },
+   "note": "out-of-fold scores (5 time-blocked, coin-grouped folds)"
+  },
+  "validation_metrics": {
+   "per_coin": {
+    "trades": 14,
+    "coins_traded": 14,
+    "win_rate_pct": 85.7143,
+    "avg_ret_pct": 14.2572,
+    "median_ret_pct": 26.2561,
+    "exp_ci95_pct": [
+     -3.816,
+     26.258
+    ],
+    "expectancy_usd": 2.8514,
+    "profit_factor": 2.7285,
+    "total_return_pct": null,
+    "max_drawdown_pct": null,
+    "best_coin_share_pct": 13.161,
+    "top3_share_pct": 39.4746,
+    "pnl_without_best_coin_usd": 34.6663,
+    "pnl_without_top3_usd": 24.1619,
+    "avg_ret_pct_wo_best": 13.3332,
+    "avg_ret_pct_wo_top3": 10.9827,
+    "exit_reasons": {
+     "stop": 2,
+     "take_profit": 12
+    }
+   },
+   "portfolio": {
+    "trades": 14,
+    "coins_traded": 14,
+    "win_rate_pct": 85.7143,
+    "avg_ret_pct": 14.263,
+    "median_ret_pct": 26.261,
+    "exp_ci95_pct": [
+     -3.807,
+     26.262
+    ],
+    "expectancy_usd": 3.1452,
+    "profit_factor": 2.7298,
+    "total_return_pct": 44.0334,
+    "max_drawdown_pct": 18.7426,
+    "best_coin_share_pct": 14.9114,
+    "top3_share_pct": 44.6221,
+    "pnl_without_best_coin_usd": 37.4674,
+    "pnl_without_top3_usd": 24.3848,
+    "avg_ret_pct_wo_best": 13.3398,
+    "avg_ret_pct_wo_top3": 10.9911,
+    "exit_reasons": {
+     "stop": 2,
+     "take_profit": 12
+    }
+   },
+   "clusters": {
+    "farm": {
+     "trades": 14,
+     "pnl_usd": 39.92,
+     "avg_ret_pct": 14.257
+    }
+   }
+  },
+  "robustness": {
+   "validation": {
+    "base": {
+     "per_coin": {
+      "trades": 14,
+      "coins_traded": 14,
+      "win_rate_pct": 85.7143,
+      "avg_ret_pct": 14.2572,
+      "median_ret_pct": 26.2561,
+      "exp_ci95_pct": [
+       -3.816,
+       26.258
+      ],
+      "expectancy_usd": 2.8514,
+      "profit_factor": 2.7285,
+      "total_return_pct": null,
+      "max_drawdown_pct": null,
+      "best_coin_share_pct": 13.161,
+      "top3_share_pct": 39.4746,
+      "pnl_without_best_coin_usd": 34.6663,
+      "pnl_without_top3_usd": 24.1619,
+      "avg_ret_pct_wo_best": 13.3332,
+      "avg_ret_pct_wo_top3": 10.9827,
+      "exit_reasons": {
+       "stop": 2,
+       "take_profit": 12
+      }
+     },
+     "portfolio": {
+      "trades": 14,
+      "coins_traded": 14,
+      "win_rate_pct": 85.7143,
+      "avg_ret_pct": 14.263,
+      "median_ret_pct": 26.261,
+      "exp_ci95_pct": [
+       -3.807,
+       26.262
+      ],
+      "expectancy_usd": 3.1452,
+      "profit_factor": 2.7298,
+      "total_return_pct": 44.0334,
+      "max_drawdown_pct": 18.7426,
+      "best_coin_share_pct": 14.9114,
+      "top3_share_pct": 44.6221,
+      "pnl_without_best_coin_usd": 37.4674,
+      "pnl_without_top3_usd": 24.3848,
+      "avg_ret_pct_wo_best": 13.3398,
+      "avg_ret_pct_wo_top3": 10.9911,
+      "exit_reasons": {
+       "stop": 2,
+       "take_profit": 12
+      }
+     }
+    },
+    "costs_x1.5": {
+     "per_coin": {
+      "trades": 14,
+      "coins_traded": 14,
+      "win_rate_pct": 85.7143,
+      "avg_ret_pct": 12.5708,
+      "median_ret_pct": 24.4081,
+      "exp_ci95_pct": [
+       -5.26,
+       24.41
+      ],
+      "expectancy_usd": 2.5142,
+      "profit_factor": 2.5053,
+      "total_return_pct": null,
+      "max_drawdown_pct": null,
+      "best_coin_share_pct": 13.88,
+      "top3_share_pct": 41.6262,
+      "pnl_without_best_coin_usd": 30.3127,
+      "pnl_without_top3_usd": 20.5466,
+      "avg_ret_pct_wo_best": 11.6587,
+      "avg_ret_pct_wo_top3": 9.3394,
+      "exit_reasons": {
+       "stop": 2,
+       "take_profit": 12
+      }
+     },
+     "portfolio": {
+      "trades": 14,
+      "coins_traded": 14,
+      "win_rate_pct": 85.7143,
+      "avg_ret_pct": 12.5783,
+      "median_ret_pct": 24.4148,
+      "exp_ci95_pct": [
+       -5.248,
+       24.415
+      ],
+      "expectancy_usd": 2.7133,
+      "profit_factor": 2.4917,
+      "total_return_pct": 37.9861,
+      "max_drawdown_pct": 19.0164,
+      "best_coin_share_pct": 16.0721,
+      "top3_share_pct": 46.9757,
+      "pnl_without_best_coin_usd": 31.8809,
+      "pnl_without_top3_usd": 20.1419,
+      "avg_ret_pct_wo_best": 11.6673,
+      "avg_ret_pct_wo_top3": 9.3502,
+      "exit_reasons": {
+       "stop": 2,
+       "take_profit": 12
+      }
+     }
+    },
+    "costs_x2": {
+     "per_coin": {
+      "trades": 14,
+      "coins_traded": 14,
+      "win_rate_pct": 85.7143,
+      "avg_ret_pct": 10.8971,
+      "median_ret_pct": 22.5742,
+      "exp_ci95_pct": [
+       -6.693,
+       22.577
+      ],
+      "expectancy_usd": 2.1794,
+      "profit_factor": 2.2891,
+      "total_return_pct": null,
+      "max_drawdown_pct": null,
+      "best_coin_share_pct": 14.8137,
+      "top3_share_pct": 44.42,
+      "pnl_without_best_coin_usd": 25.9919,
+      "pnl_without_top3_usd": 16.9585,
+      "avg_ret_pct_wo_best": 9.9969,
+      "avg_ret_pct_wo_top3": 7.7084,
+      "exit_reasons": {
+       "stop": 2,
+       "take_profit": 12
+      }
+     },
+     "portfolio": {
+      "trades": 14,
+      "coins_traded": 14,
+      "win_rate_pct": 85.7143,
+      "avg_ret_pct": 10.9052,
+      "median_ret_pct": 22.5812,
+      "exp_ci95_pct": [
+       -6.679,
+       22.583
+      ],
+      "expectancy_usd": 2.2987,
+      "profit_factor": 2.2635,
+      "total_return_pct": 32.1818,
+      "max_drawdown_pct": 19.3623,
+      "best_coin_share_pct": 17.5503,
+      "top3_share_pct": 50.1168,
+      "pnl_without_best_coin_usd": 26.5338,
+      "pnl_without_top3_usd": 16.0533,
+      "avg_ret_pct_wo_best": 10.0062,
+      "avg_ret_pct_wo_top3": 7.7203,
+      "exit_reasons": {
+       "stop": 2,
+       "take_profit": 12
+      }
+     }
+    },
+    "latency_+1bar": {
+     "per_coin": {
+      "trades": 14,
+      "coins_traded": 14,
+      "win_rate_pct": 85.7143,
+      "avg_ret_pct": 14.144,
+      "median_ret_pct": 26.2575,
+      "exp_ci95_pct": [
+       -3.903,
+       26.249
+      ],
+      "expectancy_usd": 2.8288,
+      "profit_factor": 2.7138,
+      "total_return_pct": null,
+      "max_drawdown_pct": null,
+      "best_coin_share_pct": 13.2676,
+      "top3_share_pct": 39.7941,
+      "pnl_without_best_coin_usd": 34.3489,
+      "pnl_without_top3_usd": 23.8435,
+      "avg_ret_pct_wo_best": 13.2111,
+      "avg_ret_pct_wo_top3": 10.838,
+      "exit_reasons": {
+       "stop": 2,
+       "take_profit": 11,
+       "time_stop": 1
+      }
+     },
+     "portfolio": {
+      "trades": 14,
+      "coins_traded": 14,
+      "win_rate_pct": 85.7143,
+      "avg_ret_pct": 14.1499,
+      "median_ret_pct": 26.2614,
+      "exp_ci95_pct": [
+       -3.895,
+       26.253
+      ],
+      "expectancy_usd": 3.118,
+      "profit_factor": 2.7195,
+      "total_return_pct": 43.6517,
+      "max_drawdown_pct": 18.8874,
+      "best_coin_share_pct": 15.0432,
+      "top3_share_pct": 44.2061,
+      "pnl_without_best_coin_usd": 37.0851,
+      "pnl_without_top3_usd": 24.355,
+      "avg_ret_pct_wo_best": 13.2179,
+      "avg_ret_pct_wo_top3": 10.8506,
+      "exit_reasons": {
+       "stop": 2,
+       "take_profit": 11,
+       "time_stop": 1
+      }
+     }
+    },
+    "size_$10": {
+     "per_coin": {
+      "trades": 14,
+      "coins_traded": 14,
+      "win_rate_pct": 85.7143,
+      "avg_ret_pct": 14.0912,
+      "median_ret_pct": 26.0979,
+      "exp_ci95_pct": [
+       -3.995,
+       26.1
+      ],
+      "expectancy_usd": 1.4091,
+      "profit_factor": 2.702,
+      "total_return_pct": null,
+      "max_drawdown_pct": null,
+      "best_coin_share_pct": 13.2336,
+      "top3_share_pct": 39.6973,
+      "pnl_without_best_coin_usd": 17.117,
+      "pnl_without_top3_usd": 11.8963,
+      "avg_ret_pct_wo_best": 13.1669,
+      "avg_ret_pct_wo_top3": 10.8148,
+      "exit_reasons": {
+       "stop": 2,
+       "take_profit": 12
+      }
+     },
+     "portfolio": {
+      "trades": 14,
+      "coins_traded": 14,
+      "win_rate_pct": 85.7143,
+      "avg_ret_pct": 14.0912,
+      "median_ret_pct": 26.0979,
+      "exp_ci95_pct": [
+       -3.995,
+       26.1
+      ],
+      "expectancy_usd": 1.4091,
+      "profit_factor": 2.702,
+      "total_return_pct": 19.7277,
+      "max_drawdown_pct": 9.1148,
+      "best_coin_share_pct": 13.2336,
+      "top3_share_pct": 39.6973,
+      "pnl_without_best_coin_usd": 17.117,
+      "pnl_without_top3_usd": 11.8963,
+      "avg_ret_pct_wo_best": 13.1669,
+      "avg_ret_pct_wo_top3": 10.8148,
+      "exit_reasons": {
+       "stop": 2,
+       "take_profit": 12
+      }
+     }
+    },
+    "size_$40": {
+     "per_coin": {
+      "trades": 14,
+      "coins_traded": 14,
+      "win_rate_pct": 85.7143,
+      "avg_ret_pct": 14.2388,
+      "median_ret_pct": 26.2161,
+      "exp_ci95_pct": [
+       -3.81,
+       26.224
+      ],
+      "expectancy_usd": 5.6955,
+      "profit_factor": 2.7286,
+      "total_return_pct": null,
+      "max_drawdown_pct": null,
+      "best_coin_share_pct": 13.1663,
+      "top3_share_pct": 39.4869,
+      "pnl_without_best_coin_usd": 69.2388,
+      "pnl_without_top3_usd": 48.2515,
+      "avg_ret_pct_wo_best": 13.3152,
+      "avg_ret_pct_wo_top3": 10.9662,
+      "exit_reasons": {
+       "stop": 2,
+       "take_profit": 12
+      }
+     },
+     "portfolio": {
+      "trades": 14,
+      "coins_traded": 14,
+      "win_rate_pct": 85.7143,
+      "avg_ret_pct": 14.2388,
+      "median_ret_pct": 26.2161,
+      "exp_ci95_pct": [
+       -3.81,
+       26.224
+      ],
+      "expectancy_usd": 5.6955,
+      "profit_factor": 2.7286,
+      "total_return_pct": 79.7372,
+      "max_drawdown_pct": 29.5589,
+      "best_coin_share_pct": 13.1663,
+      "top3_share_pct": 39.4869,
+      "pnl_without_best_coin_usd": 69.2388,
+      "pnl_without_top3_usd": 48.2515,
+      "avg_ret_pct_wo_best": 13.3152,
+      "avg_ret_pct_wo_top3": 10.9662,
+      "exit_reasons": {
+       "stop": 2,
+       "take_profit": 12
+      }
+     }
+    },
+    "wick_worst": {
+     "per_coin": {
+      "trades": 14,
+      "coins_traded": 14,
+      "win_rate_pct": 85.7143,
+      "avg_ret_pct": 8.524,
+      "median_ret_pct": 26.2561,
+      "exp_ci95_pct": [
+       -18.222,
+       26.258
+      ],
+      "expectancy_usd": 1.7048,
+      "profit_factor": 1.6097,
+      "total_return_pct": null,
+      "max_drawdown_pct": null,
+      "best_coin_share_pct": 22.0129,
+      "top3_share_pct": 66.0248,
+      "pnl_without_best_coin_usd": 18.6134,
+      "pnl_without_top3_usd": 8.109,
+      "avg_ret_pct_wo_best": 7.159,
+      "avg_ret_pct_wo_top3": 3.6859,
+      "exit_reasons": {
+       "stop": 2,
+       "take_profit": 12
+      }
+     },
+     "portfolio": {
+      "trades": 14,
+      "coins_traded": 14,
+      "win_rate_pct": 85.7143,
+      "avg_ret_pct": 8.5209,
+      "median_ret_pct": 26.2509,
+      "exp_ci95_pct": [
+       -18.219,
+       26.254
+      ],
+      "expectancy_usd": 1.4375,
+      "profit_factor": 1.4872,
+      "total_return_pct": 20.1253,
+      "max_drawdown_pct": 32.6074,
+      "best_coin_share_pct": 29.7877,
+      "top3_share_pct": 85.7275,
+      "pnl_without_best_coin_usd": 14.1304,
+      "pnl_without_top3_usd": 2.8724,
+      "avg_ret_pct_wo_best": 7.1561,
+      "avg_ret_pct_wo_top3": 3.6832,
+      "exit_reasons": {
+       "stop": 2,
+       "take_profit": 12
+      }
+     }
+    },
+    "wick_touch": {
+     "per_coin": {
+      "trades": 14,
+      "coins_traded": 14,
+      "win_rate_pct": 85.7143,
+      "avg_ret_pct": 20.0033,
+      "median_ret_pct": 26.2561,
+      "exp_ci95_pct": [
+       10.623,
+       26.258
+      ],
+      "expectancy_usd": 4.0007,
+      "profit_factor": 8.9937,
+      "total_return_pct": null,
+      "max_drawdown_pct": null,
+      "best_coin_share_pct": 9.3804,
+      "top3_share_pct": 28.1353,
+      "pnl_without_best_coin_usd": 50.7553,
+      "pnl_without_top3_usd": 40.2509,
+      "avg_ret_pct_wo_best": 19.5213,
+      "avg_ret_pct_wo_top3": 18.2958,
+      "exit_reasons": {
+       "stop": 2,
+       "take_profit": 12
+      }
+     },
+     "portfolio": {
+      "trades": 14,
+      "coins_traded": 14,
+      "win_rate_pct": 85.7143,
+      "avg_ret_pct": 20.0116,
+      "median_ret_pct": 26.2623,
+      "exp_ci95_pct": [
+       10.633,
+       26.265
+      ],
+      "expectancy_usd": 4.7062,
+      "profit_factor": 9.1862,
+      "total_return_pct": 65.8867,
+      "max_drawdown_pct": 5.3006,
+      "best_coin_share_pct": 9.972,
+      "top3_share_pct": 29.9051,
+      "pnl_without_best_coin_usd": 59.3164,
+      "pnl_without_top3_usd": 46.1832,
+      "avg_ret_pct_wo_best": 19.5293,
+      "avg_ret_pct_wo_top3": 18.3044,
+      "exit_reasons": {
+       "stop": 2,
+       "take_profit": 12
+      }
+     }
+    },
+    "rug_aware_fills": {
+     "per_coin": {
+      "trades": 14,
+      "coins_traded": 14,
+      "win_rate_pct": 85.7143,
+      "avg_ret_pct": 8.5678,
+      "median_ret_pct": 26.2561,
+      "exp_ci95_pct": [
+       -18.134,
+       26.258
+      ],
+      "expectancy_usd": 1.7136,
+      "profit_factor": 1.6147,
+      "total_return_pct": null,
+      "max_drawdown_pct": null,
+      "best_coin_share_pct": 21.9003,
+      "top3_share_pct": 65.6872,
+      "pnl_without_best_coin_usd": 18.7361,
+      "pnl_without_top3_usd": 8.2316,
+      "avg_ret_pct_wo_best": 7.2062,
+      "avg_ret_pct_wo_top3": 3.7417,
+      "exit_reasons": {
+       "stop": 2,
+       "take_profit": 12
+      }
+     },
+     "portfolio": {
+      "trades": 14,
+      "coins_traded": 14,
+      "win_rate_pct": 85.7143,
+      "avg_ret_pct": 8.5648,
+      "median_ret_pct": 26.2509,
+      "exp_ci95_pct": [
+       -18.132,
+       26.254
+      ],
+      "expectancy_usd": 1.4499,
+      "profit_factor": 1.4928,
+      "total_return_pct": 20.2987,
+      "max_drawdown_pct": 32.5089,
+      "best_coin_share_pct": 29.5759,
+      "top3_share_pct": 85.0379,
+      "pnl_without_best_coin_usd": 14.2952,
+      "pnl_without_top3_usd": 3.0371,
+      "avg_ret_pct_wo_best": 7.2034,
+      "avg_ret_pct_wo_top3": 3.739,
+      "exit_reasons": {
+       "stop": 2,
+       "take_profit": 12
+      }
+     }
+    },
+    "without_best_coin": {
+     "per_coin": {
+      "trades": 13,
+      "coins_traded": 13,
+      "win_rate_pct": 84.6154,
+      "avg_ret_pct": 13.3332,
+      "median_ret_pct": 26.2556,
+      "exp_ci95_pct": [
+       -6.13,
+       26.256
+      ],
+      "expectancy_usd": 2.6666,
+      "profit_factor": 2.501,
+      "total_return_pct": null,
+      "max_drawdown_pct": null,
+      "best_coin_share_pct": 15.1513,
+      "top3_share_pct": 45.4516,
+      "pnl_without_best_coin_usd": 29.4139,
+      "pnl_without_top3_usd": 18.9099,
+      "avg_ret_pct_wo_best": 12.2558,
+      "avg_ret_pct_wo_top3": 9.4549,
+      "exit_reasons": {
+       "stop": 2,
+       "take_profit": 11
+      }
+     },
+     "portfolio": {
+      "trades": 13,
+      "coins_traded": 13,
+      "win_rate_pct": 84.6154,
+      "avg_ret_pct": 13.3387,
+      "median_ret_pct": 26.2592,
+      "exp_ci95_pct": [
+       -6.12,
+       26.26
+      ],
+      "expectancy_usd": 2.8592,
+      "profit_factor": 2.4602,
+      "total_return_pct": 37.1693,
+      "max_drawdown_pct": 18.7426,
+      "best_coin_share_pct": 17.6651,
+      "top3_share_pct": 51.1052,
+      "pnl_without_best_coin_usd": 30.6033,
+      "pnl_without_top3_usd": 18.1739,
+      "avg_ret_pct_wo_best": 12.2616,
+      "avg_ret_pct_wo_top3": 9.4624,
+      "exit_reasons": {
+       "stop": 2,
+       "take_profit": 11
+      }
+     },
+     "removed": "Anthropic"
+    },
+    "first_half": {
+     "per_coin": {
+      "trades": 9,
+      "coins_traded": 9,
+      "win_rate_pct": 77.7778,
+      "avg_ret_pct": 7.591,
+      "median_ret_pct": 26.2586,
+      "exp_ci95_pct": [
+       -20.291,
+       26.258
+      ],
+      "expectancy_usd": 1.5182,
+      "profit_factor": 1.5916,
+      "total_return_pct": null,
+      "max_drawdown_pct": null,
+      "best_coin_share_pct": 38.4401,
+      "top3_share_pct": 115.3148,
+      "pnl_without_best_coin_usd": 8.4114,
+      "pnl_without_top3_usd": -2.0926,
+      "avg_ret_pct_wo_best": 5.2571,
+      "avg_ret_pct_wo_top3": -1.7438,
+      "exit_reasons": {
+       "stop": 2,
+       "take_profit": 7
+      }
+     },
+     "portfolio": {
+      "trades": 9,
+      "coins_traded": 9,
+      "win_rate_pct": 77.7778,
+      "avg_ret_pct": 7.5961,
+      "median_ret_pct": 26.2569,
+      "exp_ci95_pct": [
+       -20.281,
+       26.26
+      ],
+      "expectancy_usd": 1.3641,
+      "profit_factor": 1.4823,
+      "total_return_pct": 12.2772,
+      "max_drawdown_pct": 18.7426,
+      "best_coin_share_pct": 46.6657,
+      "top3_share_pct": 137.3393,
+      "pnl_without_best_coin_usd": 6.548,
+      "pnl_without_top3_usd": -4.5842,
+      "avg_ret_pct_wo_best": 5.2643,
+      "avg_ret_pct_wo_top3": -1.7357,
+      "exit_reasons": {
+       "stop": 2,
+       "take_profit": 7
+      }
+     }
+    },
+    "second_half": {
+     "per_coin": {
+      "trades": 5,
+      "coins_traded": 5,
+      "win_rate_pct": 100.0,
+      "avg_ret_pct": 26.2564,
+      "median_ret_pct": 26.2556,
+      "exp_ci95_pct": [
+       26.251,
+       26.264
+      ],
+      "expectancy_usd": 5.2513,
+      "profit_factor": null,
+      "total_return_pct": null,
+      "max_drawdown_pct": null,
+      "best_coin_share_pct": 20.0099,
+      "top3_share_pct": 60.0095,
+      "pnl_without_best_coin_usd": 21.0025,
+      "pnl_without_top3_usd": 10.5001,
+      "avg_ret_pct_wo_best": 26.2531,
+      "avg_ret_pct_wo_top3": 26.2502,
+      "exit_reasons": {
+       "take_profit": 5
+      }
+     },
+     "portfolio": {
+      "trades": 5,
+      "coins_traded": 5,
+      "win_rate_pct": 100.0,
+      "avg_ret_pct": 26.2606,
+      "median_ret_pct": 26.2613,
+      "exp_ci95_pct": [
+       26.256,
+       26.266
+      ],
+      "expectancy_usd": 5.7727,
+      "profit_factor": null,
+      "total_return_pct": 28.8636,
+      "max_drawdown_pct": 0.1234,
+      "best_coin_share_pct": 22.2812,
+      "top3_share_pct": 62.6482,
+      "pnl_without_best_coin_usd": 22.4324,
+      "pnl_without_top3_usd": 10.7811,
+      "avg_ret_pct_wo_best": 26.2598,
+      "avg_ret_pct_wo_top3": 26.2629,
+      "exit_reasons": {
+       "take_profit": 5
+      }
+     }
+    }
+   },
+   "validation_trades": [
+    {
+     "symbol": "FOMO",
+     "entry_min_after_grad": 14.8,
+     "grad_delay_s": 0.0,
+     "entry_mcap": 678225,
+     "ret_pct": 26.26,
+     "exit": "take_profit",
+     "tag": "p=0.806",
+     "cluster": "farm"
+    },
+    {
+     "symbol": "Tesla",
+     "entry_min_after_grad": 14.0,
+     "grad_delay_s": 0.0,
+     "entry_mcap": 662899,
+     "ret_pct": 26.26,
+     "exit": "take_profit",
+     "tag": "p=0.798",
+     "cluster": "farm"
+    },
+    {
+     "symbol": "SOLCAT",
+     "entry_min_after_grad": 14.5,
+     "grad_delay_s": 0.0,
+     "entry_mcap": 542146,
+     "ret_pct": 26.25,
+     "exit": "take_profit",
+     "tag": "p=0.808",
+     "cluster": "farm"
+    },
+    {
+     "symbol": "Grok",
+     "entry_min_after_grad": 14.7,
+     "grad_delay_s": 0.0,
+     "entry_mcap": 642578,
+     "ret_pct": -58.78,
+     "exit": "stop",
+     "tag": "p=0.788",
+     "cluster": "farm"
+    },
+    {
+     "symbol": "Claude",
+     "entry_min_after_grad": 14.1,
+     "grad_delay_s": 0.0,
+     "entry_mcap": 661332,
+     "ret_pct": 26.26,
+     "exit": "take_profit",
+     "tag": "p=0.809",
+     "cluster": "farm"
+    },
+    {
+     "symbol": "BUNKER",
+     "entry_min_after_grad": 14.3,
+     "grad_delay_s": 0.0,
+     "entry_mcap": 702404,
+     "ret_pct": -56.7,
+     "exit": "stop",
+     "tag": "p=0.792",
+     "cluster": "farm"
+    },
+    {
+     "symbol": "FOMO",
+     "entry_min_after_grad": 14.5,
+     "grad_delay_s": 0.0,
+     "entry_mcap": 589889,
+     "ret_pct": 26.25,
+     "exit": "take_profit",
+     "tag": "p=0.806",
+     "cluster": "farm"
+    },
+    {
+     "symbol": "BUNKER",
+     "entry_min_after_grad": 13.4,
+     "grad_delay_s": 0.0,
+     "entry_mcap": 646012,
+     "ret_pct": 26.26,
+     "exit": "take_profit",
+     "tag": "p=0.781",
+     "cluster": "farm"
+    },
+    {
+     "symbol": "Google",
+     "entry_min_after_grad": 14.6,
+     "grad_delay_s": 0.0,
+     "entry_mcap": 638540,
+     "ret_pct": 26.26,
+     "exit": "take_profit",
+     "tag": "p=0.802",
+     "cluster": "farm"
+    },
+    {
+     "symbol": "Anthropic",
+     "entry_min_after_grad": 20.5,
+     "grad_delay_s": 0.0,
+     "entry_mcap": 730551,
+     "ret_pct": 26.27,
+     "exit": "take_profit",
+     "tag": "p=0.784",
+     "cluster": "farm"
+    },
+    {
+     "symbol": "Google AI",
+     "entry_min_after_grad": 15.8,
+     "grad_delay_s": 0.0,
+     "entry_mcap": 580073,
+     "ret_pct": 26.25,
+     "exit": "take_profit",
+     "tag": "p=0.782",
+     "cluster": "farm"
+    },
+    {
+     "symbol": "4206066",
+     "entry_min_after_grad": 14.4,
+     "grad_delay_s": 0.0,
+     "entry_mcap": 535290,
+     "ret_pct": 26.25,
+     "exit": "take_profit",
+     "tag": "p=0.784",
+     "cluster": "farm"
+    },
+    {
+     "symbol": "SpaceX",
+     "entry_min_after_grad": 13.3,
+     "grad_delay_s": 0.0,
+     "entry_mcap": 592822,
+     "ret_pct": 26.26,
+     "exit": "take_profit",
+     "tag": "p=0.783",
+     "cluster": "farm"
+    },
+    {
+     "symbol": "Nike",
+     "entry_min_after_grad": 19.7,
+     "grad_delay_s": 0.0,
+     "entry_mcap": 601588,
+     "ret_pct": 26.26,
+     "exit": "take_profit",
+     "tag": "p=0.786",
+     "cluster": "farm"
+    }
+   ],
+   "train": {
+    "base": {
+     "per_coin": {
+      "trades": 23,
+      "coins_traded": 23,
+      "win_rate_pct": 91.3043,
+      "avg_ret_pct": 18.9865,
+      "median_ret_pct": 26.2554,
+      "exp_ci95_pct": [
+       8.037,
+       26.252
+      ],
+      "expectancy_usd": 3.7973,
+      "profit_factor": 4.8147,
+      "total_return_pct": null,
+      "max_drawdown_pct": null,
+      "best_coin_share_pct": 6.0163,
+      "top3_share_pct": 18.0463,
+      "pnl_without_best_coin_usd": 82.0832,
+      "pnl_without_top3_usd": 71.5765,
+      "avg_ret_pct_wo_best": 18.6553,
+      "avg_ret_pct_wo_top3": 17.8941,
+      "exit_reasons": {
+       "stop": 2,
+       "take_profit": 21
+      }
+     },
+     "portfolio": {
+      "trades": 23,
+      "coins_traded": 23,
+      "win_rate_pct": 91.3043,
+      "avg_ret_pct": 18.998,
+      "median_ret_pct": 26.266,
+      "exp_ci95_pct": [
+       8.048,
+       26.261
+      ],
+      "expectancy_usd": 4.5624,
+      "profit_factor": 4.6692,
+      "total_return_pct": 104.9362,
+      "max_drawdown_pct": 11.1436,
+      "best_coin_share_pct": 6.2625,
+      "top3_share_pct": 18.7843,
+      "pnl_without_best_coin_usd": 98.3646,
+      "pnl_without_top3_usd": 85.2247,
+      "avg_ret_pct_wo_best": 18.6667,
+      "avg_ret_pct_wo_top3": 17.9054,
+      "exit_reasons": {
+       "stop": 2,
+       "take_profit": 21
+      }
+     }
+    },
+    "costs_x1.5": {
+     "per_coin": {
+      "trades": 23,
+      "coins_traded": 23,
+      "win_rate_pct": 91.3043,
+      "avg_ret_pct": 17.2348,
+      "median_ret_pct": 24.4069,
+      "exp_ci95_pct": [
+       6.434,
+       24.403
+      ],
+      "expectancy_usd": 3.447,
+      "profit_factor": 4.4199,
+      "total_return_pct": null,
+      "max_drawdown_pct": null,
+      "best_coin_share_pct": 6.1635,
+      "top3_share_pct": 18.4862,
+      "pnl_without_best_coin_usd": 74.3937,
+      "pnl_without_top3_usd": 64.6243,
+      "avg_ret_pct_wo_best": 16.9077,
+      "avg_ret_pct_wo_top3": 16.1561,
+      "exit_reasons": {
+       "stop": 2,
+       "take_profit": 21
+      }
+     },
+     "portfolio": {
+      "trades": 23,
+      "coins_traded": 23,
+      "win_rate_pct": 91.3043,
+      "avg_ret_pct": 17.2524,
+      "median_ret_pct": 24.423,
+      "exp_ci95_pct": [
+       6.453,
+       24.418
+      ],
+      "expectancy_usd": 4.1323,
+      "profit_factor": 4.2831,
+      "total_return_pct": 95.0422,
+      "max_drawdown_pct": 11.4556,
+      "best_coin_share_pct": 6.4323,
+      "top3_share_pct": 19.2917,
+      "pnl_without_best_coin_usd": 88.9288,
+      "pnl_without_top3_usd": 76.707,
+      "avg_ret_pct_wo_best": 16.9251,
+      "avg_ret_pct_wo_top3": 16.1732,
+      "exit_reasons": {
+       "stop": 2,
+       "take_profit": 21
+      }
+     }
+    },
+    "costs_x2": {
+     "per_coin": {
+      "trades": 23,
+      "coins_traded": 23,
+      "win_rate_pct": 91.3043,
+      "avg_ret_pct": 15.4963,
+      "median_ret_pct": 22.5724,
+      "exp_ci95_pct": [
+       4.844,
+       22.568
+      ],
+      "expectancy_usd": 3.0993,
+      "profit_factor": 4.0375,
+      "total_return_pct": null,
+      "max_drawdown_pct": null,
+      "best_coin_share_pct": 6.3425,
+      "top3_share_pct": 19.0211,
+      "pnl_without_best_coin_usd": 66.762,
+      "pnl_without_top3_usd": 57.7243,
+      "avg_ret_pct_wo_best": 15.1732,
+      "avg_ret_pct_wo_top3": 14.4311,
+      "exit_reasons": {
+       "stop": 2,
+       "take_profit": 21
+      }
+     },
+     "portfolio": {
+      "trades": 23,
+      "coins_traded": 23,
+      "win_rate_pct": 91.3043,
+      "avg_ret_pct": 15.5205,
+      "median_ret_pct": 22.5935,
+      "exp_ci95_pct": [
+       4.87,
+       22.59
+      ],
+      "expectancy_usd": 3.705,
+      "profit_factor": 3.9087,
+      "total_return_pct": 85.2157,
+      "max_drawdown_pct": 11.7845,
+      "best_coin_share_pct": 6.6405,
+      "top3_share_pct": 19.9138,
+      "pnl_without_best_coin_usd": 79.5569,
+      "pnl_without_top3_usd": 68.246,
+      "avg_ret_pct_wo_best": 15.1971,
+      "avg_ret_pct_wo_top3": 14.4547,
+      "exit_reasons": {
+       "stop": 2,
+       "take_profit": 21
+      }
+     }
+    },
+    "latency_+1bar": {
+     "per_coin": {
+      "trades": 23,
+      "coins_traded": 23,
+      "win_rate_pct": 91.3043,
+      "avg_ret_pct": 18.9971,
+      "median_ret_pct": 26.2512,
+      "exp_ci95_pct": [
+       8.063,
+       26.249
+      ],
+      "expectancy_usd": 3.7994,
+      "profit_factor": 4.8269,
+      "total_return_pct": null,
+      "max_drawdown_pct": null,
+      "best_coin_share_pct": 6.0129,
+      "top3_share_pct": 18.0355,
+      "pnl_without_best_coin_usd": 82.1322,
+      "pnl_without_top3_usd": 71.626,
+      "avg_ret_pct_wo_best": 18.6664,
+      "avg_ret_pct_wo_top3": 17.9065,
+      "exit_reasons": {
+       "stop": 2,
+       "take_profit": 21
+      }
+     },
+     "portfolio": {
+      "trades": 23,
+      "coins_traded": 23,
+      "win_rate_pct": 91.3043,
+      "avg_ret_pct": 19.008,
+      "median_ret_pct": 26.2578,
+      "exp_ci95_pct": [
+       8.069,
+       26.258
+      ],
+      "expectancy_usd": 4.5616,
+      "profit_factor": 4.6774,
+      "total_return_pct": 104.9166,
+      "max_drawdown_pct": 10.7647,
+      "best_coin_share_pct": 6.2638,
+      "top3_share_pct": 18.7869,
+      "pnl_without_best_coin_usd": 98.3448,
+      "pnl_without_top3_usd": 85.206,
+      "avg_ret_pct_wo_best": 18.6772,
+      "avg_ret_pct_wo_top3": 17.9171,
+      "exit_reasons": {
+       "stop": 2,
+       "take_profit": 21
+      }
+     }
+    },
+    "size_$10": {
+     "per_coin": {
+      "trades": 23,
+      "coins_traded": 23,
+      "win_rate_pct": 91.3043,
+      "avg_ret_pct": 18.8194,
+      "median_ret_pct": 26.0927,
+      "exp_ci95_pct": [
+       7.862,
+       26.089
+      ],
+      "expectancy_usd": 1.8819,
+      "profit_factor": 4.7667,
+      "total_return_pct": null,
+      "max_drawdown_pct": null,
+      "best_coin_share_pct": 6.0306,
+      "top3_share_pct": 18.0897,
+      "pnl_without_best_coin_usd": 40.6742,
+      "pnl_without_top3_usd": 35.4545,
+      "avg_ret_pct_wo_best": 18.4883,
+      "avg_ret_pct_wo_top3": 17.7272,
+      "exit_reasons": {
+       "stop": 2,
+       "take_profit": 21
+      }
+     },
+     "portfolio": {
+      "trades": 23,
+      "coins_traded": 23,
+      "win_rate_pct": 91.3043,
+      "avg_ret_pct": 18.8194,
+      "median_ret_pct": 26.0927,
+      "exp_ci95_pct": [
+       7.858,
+       26.09
+      ],
+      "expectancy_usd": 1.8819,
+      "profit_factor": 4.7667,
+      "total_return_pct": 43.2845,
+      "max_drawdown_pct": 5.8055,
+      "best_coin_share_pct": 6.0306,
+      "top3_share_pct": 18.0897,
+      "pnl_without_best_coin_usd": 40.6742,
+      "pnl_without_top3_usd": 35.4545,
+      "avg_ret_pct_wo_best": 18.4883,
+      "avg_ret_pct_wo_top3": 17.7272,
+      "exit_reasons": {
+       "stop": 2,
+       "take_profit": 21
+      }
+     }
+    },
+    "size_$40": {
+     "per_coin": {
+      "trades": 23,
+      "coins_traded": 23,
+      "win_rate_pct": 91.3043,
+      "avg_ret_pct": 18.9653,
+      "median_ret_pct": 26.2265,
+      "exp_ci95_pct": [
+       8.031,
+       26.222
+      ],
+      "expectancy_usd": 7.5861,
+      "profit_factor": 4.816,
+      "total_return_pct": null,
+      "max_drawdown_pct": null,
+      "best_coin_share_pct": 6.0196,
+      "top3_share_pct": 18.0543,
+      "pnl_without_best_coin_usd": 163.9781,
+      "pnl_without_top3_usd": 142.9798,
+      "avg_ret_pct_wo_best": 18.6339,
+      "avg_ret_pct_wo_top3": 17.8725,
+      "exit_reasons": {
+       "stop": 2,
+       "take_profit": 21
+      }
+     },
+     "portfolio": {
+      "trades": 23,
+      "coins_traded": 23,
+      "win_rate_pct": 91.3043,
+      "avg_ret_pct": 18.9653,
+      "median_ret_pct": 26.2265,
+      "exp_ci95_pct": [
+       8.027,
+       26.223
+      ],
+      "expectancy_usd": 7.5861,
+      "profit_factor": 4.816,
+      "total_return_pct": 174.4811,
+      "max_drawdown_pct": 13.9182,
+      "best_coin_share_pct": 6.0196,
+      "top3_share_pct": 18.0543,
+      "pnl_without_best_coin_usd": 163.9781,
+      "pnl_without_top3_usd": 142.9798,
+      "avg_ret_pct_wo_best": 18.6339,
+      "avg_ret_pct_wo_top3": 17.8725,
+      "exit_reasons": {
+       "stop": 2,
+       "take_profit": 21
+      }
+     }
+    },
+    "wick_worst": {
+     "per_coin": {
+      "trades": 23,
+      "coins_traded": 23,
+      "win_rate_pct": 91.3043,
+      "avg_ret_pct": 15.5325,
+      "median_ret_pct": 26.2554,
+      "exp_ci95_pct": [
+       -0.649,
+       26.25
+      ],
+      "expectancy_usd": 3.1065,
+      "profit_factor": 2.8435,
+      "total_return_pct": null,
+      "max_drawdown_pct": null,
+      "best_coin_share_pct": 7.3542,
+      "top3_share_pct": 22.0592,
+      "pnl_without_best_coin_usd": 66.195,
+      "pnl_without_top3_usd": 55.6883,
+      "avg_ret_pct_wo_best": 15.0443,
+      "avg_ret_pct_wo_top3": 13.9221,
+      "exit_reasons": {
+       "stop": 2,
+       "take_profit": 21
+      }
+     },
+     "portfolio": {
+      "trades": 23,
+      "coins_traded": 23,
+      "win_rate_pct": 91.3043,
+      "avg_ret_pct": 15.5447,
+      "median_ret_pct": 26.266,
+      "exp_ci95_pct": [
+       -0.638,
+       26.261
+      ],
+      "expectancy_usd": 3.6991,
+      "profit_factor": 2.757,
+      "total_return_pct": 85.08,
+      "max_drawdown_pct": 17.3229,
+      "best_coin_share_pct": 7.7241,
+      "top3_share_pct": 23.1682,
+      "pnl_without_best_coin_usd": 78.5084,
+      "pnl_without_top3_usd": 65.3685,
+      "avg_ret_pct_wo_best": 15.0565,
+      "avg_ret_pct_wo_top3": 13.9341,
+      "exit_reasons": {
+       "stop": 2,
+       "take_profit": 21
+      }
+     }
+    },
+    "wick_touch": {
+     "per_coin": {
+      "trades": 23,
+      "coins_traded": 23,
+      "win_rate_pct": 91.3043,
+      "avg_ret_pct": 22.4464,
+      "median_ret_pct": 26.2554,
+      "exp_ci95_pct": [
+       16.738,
+       26.256
+      ],
+      "expectancy_usd": 4.4893,
+      "profit_factor": 15.7418,
+      "total_return_pct": null,
+      "max_drawdown_pct": null,
+      "best_coin_share_pct": 5.089,
+      "top3_share_pct": 15.2646,
+      "pnl_without_best_coin_usd": 97.999,
+      "pnl_without_top3_usd": 87.4924,
+      "avg_ret_pct_wo_best": 22.2725,
+      "avg_ret_pct_wo_top3": 21.8731,
+      "exit_reasons": {
+       "stop": 2,
+       "take_profit": 21
+      }
+     },
+     "portfolio": {
+      "trades": 23,
+      "coins_traded": 23,
+      "win_rate_pct": 91.3043,
+      "avg_ret_pct": 22.457,
+      "median_ret_pct": 26.266,
+      "exp_ci95_pct": [
+       16.75,
+       26.266
+      ],
+      "expectancy_usd": 5.4272,
+      "profit_factor": 15.28,
+      "total_return_pct": 124.8256,
+      "max_drawdown_pct": 4.95,
+      "best_coin_share_pct": 5.2647,
+      "top3_share_pct": 15.7912,
+      "pnl_without_best_coin_usd": 118.254,
+      "pnl_without_top3_usd": 105.1141,
+      "avg_ret_pct_wo_best": 22.2829,
+      "avg_ret_pct_wo_top3": 21.8832,
+      "exit_reasons": {
+       "stop": 2,
+       "take_profit": 21
+      }
+     }
+    },
+    "rug_aware_fills": {
+     "per_coin": {
+      "trades": 23,
+      "coins_traded": 23,
+      "win_rate_pct": 91.3043,
+      "avg_ret_pct": 15.5711,
+      "median_ret_pct": 26.2554,
+      "exp_ci95_pct": [
+       -0.583,
+       26.252
+      ],
+      "expectancy_usd": 3.1142,
+      "profit_factor": 2.8554,
+      "total_return_pct": null,
+      "max_drawdown_pct": null,
+      "best_coin_share_pct": 7.336,
+      "top3_share_pct": 22.0046,
+      "pnl_without_best_coin_usd": 66.3725,
+      "pnl_without_top3_usd": 55.8658,
+      "avg_ret_pct_wo_best": 15.0847,
+      "avg_ret_pct_wo_top3": 13.9665,
+      "exit_reasons": {
+       "stop": 2,
+       "take_profit": 21
+      }
+     },
+     "portfolio": {
+      "trades": 23,
+      "coins_traded": 23,
+      "win_rate_pct": 91.3043,
+      "avg_ret_pct": 15.5833,
+      "median_ret_pct": 26.266,
+      "exp_ci95_pct": [
+       -0.57,
+       26.261
+      ],
+      "expectancy_usd": 3.7088,
+      "profit_factor": 2.7685,
+      "total_return_pct": 85.3019,
+      "max_drawdown_pct": 17.3197,
+      "best_coin_share_pct": 7.704,
+      "top3_share_pct": 23.1079,
+      "pnl_without_best_coin_usd": 78.7303,
+      "pnl_without_top3_usd": 65.5904,
+      "avg_ret_pct_wo_best": 15.0968,
+      "avg_ret_pct_wo_top3": 13.9785,
+      "exit_reasons": {
+       "stop": 2,
+       "take_profit": 21
+      }
+     }
+    },
+    "without_best_coin": {
+     "per_coin": {
+      "trades": 22,
+      "coins_traded": 22,
+      "win_rate_pct": 90.9091,
+      "avg_ret_pct": 18.6553,
+      "median_ret_pct": 26.2553,
+      "exp_ci95_pct": [
+       7.202,
+       26.251
+      ],
+      "expectancy_usd": 3.7311,
+      "profit_factor": 4.5852,
+      "total_return_pct": null,
+      "max_drawdown_pct": null,
+      "best_coin_share_pct": 6.4009,
+      "top3_share_pct": 19.1991,
+      "pnl_without_best_coin_usd": 76.8291,
+      "pnl_without_top3_usd": 66.324,
+      "avg_ret_pct_wo_best": 18.2926,
+      "avg_ret_pct_wo_top3": 17.4537,
+      "exit_reasons": {
+       "stop": 2,
+       "take_profit": 20
+      }
+     },
+     "portfolio": {
+      "trades": 22,
+      "coins_traded": 22,
+      "win_rate_pct": 90.9091,
+      "avg_ret_pct": 18.6667,
+      "median_ret_pct": 26.2654,
+      "exp_ci95_pct": [
+       7.222,
+       26.261
+      ],
+      "expectancy_usd": 4.4711,
+      "profit_factor": 4.4394,
+      "total_return_pct": 98.3646,
+      "max_drawdown_pct": 11.583,
+      "best_coin_share_pct": 6.6804,
+      "top3_share_pct": 20.0362,
+      "pnl_without_best_coin_usd": 91.7934,
+      "pnl_without_top3_usd": 78.656,
+      "avg_ret_pct_wo_best": 18.3039,
+      "avg_ret_pct_wo_top3": 17.4649,
+      "exit_reasons": {
+       "stop": 2,
+       "take_profit": 20
+      }
+     },
+     "removed": "USDUC"
+    },
+    "first_half": {
+     "per_coin": {
+      "trades": 3,
+      "coins_traded": 3,
+      "win_rate_pct": 100.0,
+      "avg_ret_pct": 26.2527,
+      "median_ret_pct": 26.2501,
+      "exp_ci95_pct": [
+       26.248,
+       26.26
+      ],
+      "expectancy_usd": 5.2505,
+      "profit_factor": null,
+      "total_return_pct": null,
+      "max_drawdown_pct": null,
+      "best_coin_share_pct": 33.3421,
+      "top3_share_pct": 100.0,
+      "pnl_without_best_coin_usd": 10.4997,
+      "pnl_without_top3_usd": 0.0,
+      "avg_ret_pct_wo_best": 26.2493,
+      "avg_ret_pct_wo_top3": null,
+      "exit_reasons": {
+       "take_profit": 3
+      }
+     },
+     "portfolio": {
+      "trades": 3,
+      "coins_traded": 3,
+      "win_rate_pct": 100.0,
+      "avg_ret_pct": 26.2565,
+      "median_ret_pct": 26.2538,
+      "exp_ci95_pct": [
+       26.248,
+       26.267
+      ],
+      "expectancy_usd": 5.5319,
+      "profit_factor": null,
+      "total_return_pct": 16.5957,
+      "max_drawdown_pct": 0.3827,
+      "best_coin_share_pct": 35.0668,
+      "top3_share_pct": 100.0,
+      "pnl_without_best_coin_usd": 10.7761,
+      "pnl_without_top3_usd": 0.0,
+      "avg_ret_pct_wo_best": 26.2511,
+      "avg_ret_pct_wo_top3": null,
+      "exit_reasons": {
+       "take_profit": 3
+      }
+     }
+    },
+    "second_half": {
+     "per_coin": {
+      "trades": 20,
+      "coins_traded": 20,
+      "win_rate_pct": 90.0,
+      "avg_ret_pct": 17.8965,
+      "median_ret_pct": 26.2569,
+      "exp_ci95_pct": [
+       5.308,
+       26.252
+      ],
+      "expectancy_usd": 3.5793,
+      "profit_factor": 4.1267,
+      "total_return_pct": null,
+      "max_drawdown_pct": null,
+      "best_coin_share_pct": 7.3402,
+      "top3_share_pct": 22.0171,
+      "pnl_without_best_coin_usd": 66.3316,
+      "pnl_without_top3_usd": 55.8249,
+      "avg_ret_pct_wo_best": 17.4557,
+      "avg_ret_pct_wo_top3": 16.4191,
+      "exit_reasons": {
+       "stop": 2,
+       "take_profit": 18
+      }
+     },
+     "portfolio": {
+      "trades": 20,
+      "coins_traded": 20,
+      "win_rate_pct": 90.0,
+      "avg_ret_pct": 17.9083,
+      "median_ret_pct": 26.2654,
+      "exp_ci95_pct": [
+       5.311,
+       26.261
+      ],
+      "expectancy_usd": 4.2812,
+      "profit_factor": 3.9939,
+      "total_return_pct": 85.6231,
+      "max_drawdown_pct": 12.6054,
+      "best_coin_share_pct": 7.6751,
+      "top3_share_pct": 23.0212,
+      "pnl_without_best_coin_usd": 79.0515,
+      "pnl_without_top3_usd": 65.9116,
+      "avg_ret_pct_wo_best": 17.4673,
+      "avg_ret_pct_wo_top3": 16.4306,
+      "exit_reasons": {
+       "stop": 2,
+       "take_profit": 18
+      }
+     }
+    }
+   }
+  },
+  "audit": {
+   "live_equals_table_decisions": true,
+   "live_equals_table_trades": true,
+   "audit_validation_problems": [],
+   "audit_train_problems": [],
+   "audit_coins": {
+    "validation": 150,
+    "train": 448
+   }
+  }
+ }
+]

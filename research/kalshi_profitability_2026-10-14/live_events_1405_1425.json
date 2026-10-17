@@ -1,0 +1,3437 @@
+{
+  "source": "Railway deployment 02907385, bounded log queries 2026-10-14 14:05-14:25 UTC. Order identifiers replaced by local aliases; event at and logged_at may differ. Capture is not an opposing executable orderbook.",
+  "events": [
+    {
+      "event": "speeddesk_live_fill",
+      "logged_at": "2026-10-14T14:08:46.111228700Z",
+      "at": 1791986916.790331,
+      "window": "KXBTC15M-26OCT141015-15",
+      "side": "up",
+      "price": 0.25,
+      "size": 5,
+      "fee_usd": 0,
+      "is_taker": false,
+      "order_ref": "order_1",
+      "venue": "kalshi"
+    },
+    {
+      "event": "speeddesk_live_fill",
+      "logged_at": "2026-10-14T14:11:10.533651375Z",
+      "at": 1791987063.99578,
+      "window": "KXBTC15M-26OCT141015-15",
+      "side": "down",
+      "price": 0.95,
+      "size": 5,
+      "fee_usd": 0.0167,
+      "is_taker": true,
+      "order_ref": "order_2",
+      "venue": "kalshi"
+    },
+    {
+      "event": "speeddesk_live_fill",
+      "logged_at": "2026-10-14T14:15:51.139334299Z",
+      "at": 1791987342.955901,
+      "window": "KXBTC15M-26OCT141030-30",
+      "side": "down",
+      "price": 0.35,
+      "size": 4,
+      "fee_usd": 0,
+      "is_taker": false,
+      "order_ref": "order_3",
+      "venue": "kalshi"
+    },
+    {
+      "event": "speeddesk_live_fill",
+      "logged_at": "2026-10-14T14:19:53.016984221Z",
+      "at": 1791987591.665004,
+      "window": "KXBTC15M-26OCT141030-30",
+      "side": "up",
+      "price": 0.39,
+      "size": 3.98,
+      "fee_usd": 0,
+      "is_taker": false,
+      "order_ref": "order_4",
+      "venue": "kalshi"
+    },
+    {
+      "event": "speeddesk_live_fill",
+      "logged_at": "2026-10-14T14:19:53.016986871Z",
+      "at": 1791987591.63051,
+      "window": "KXBTC15M-26OCT141030-30",
+      "side": "up",
+      "price": 0.39,
+      "size": 0.02,
+      "fee_usd": 0,
+      "is_taker": false,
+      "order_ref": "order_4",
+      "venue": "kalshi"
+    },
+    {
+      "event": "speeddesk_live_fill",
+      "logged_at": "2026-10-14T14:20:53.134918876Z",
+      "at": 1791987649.061241,
+      "window": "KXBTC15M-26OCT141030-30",
+      "side": "up",
+      "price": 0.26,
+      "size": 2,
+      "fee_usd": 0,
+      "is_taker": false,
+      "order_ref": "order_5",
+      "venue": "kalshi"
+    },
+    {
+      "event": "speeddesk_live_fill",
+      "logged_at": "2026-10-14T14:20:56.835638016Z",
+      "at": 1791987654.242238,
+      "window": "KXBTC15M-26OCT141030-30",
+      "side": "down",
+      "price": 0.68,
+      "size": 5,
+      "fee_usd": 0,
+      "is_taker": false,
+      "order_ref": "order_6",
+      "venue": "kalshi"
+    },
+    {
+      "event": "speeddesk_live_fill",
+      "logged_at": "2026-10-14T14:22:09.675518075Z",
+      "at": 1791987708.080072,
+      "window": "KXBTC15M-26OCT141030-30",
+      "side": "down",
+      "price": 0.67,
+      "size": 1,
+      "fee_usd": 0,
+      "is_taker": false,
+      "order_ref": "order_7",
+      "venue": "kalshi"
+    },
+    {
+      "event": "speeddesk_live_fill",
+      "logged_at": "2026-10-14T14:23:03.941705301Z",
+      "at": 1791987779.468276,
+      "window": "KXBTC15M-26OCT141030-30",
+      "side": "up",
+      "price": 0.33,
+      "size": 5,
+      "fee_usd": 0,
+      "is_taker": false,
+      "order_ref": "order_8",
+      "venue": "kalshi"
+    },
+    {
+      "event": "speeddesk_live_fill",
+      "logged_at": "2026-10-14T14:23:06.754764417Z",
+      "at": 1791987785.229923,
+      "window": "KXBTC15M-26OCT141030-30",
+      "side": "up",
+      "price": 0.29,
+      "size": 2,
+      "fee_usd": 0,
+      "is_taker": false,
+      "order_ref": "order_9",
+      "venue": "kalshi"
+    },
+    {
+      "event": "speeddesk_live_fill",
+      "logged_at": "2026-10-14T14:23:11.845116218Z",
+      "at": 1791987790.183482,
+      "window": "KXBTC15M-26OCT141030-30",
+      "side": "up",
+      "price": 0.22,
+      "size": 1,
+      "fee_usd": 0,
+      "is_taker": false,
+      "order_ref": "order_10",
+      "venue": "kalshi"
+    },
+    {
+      "event": "speeddesk_live_settlement",
+      "logged_at": "2026-10-14T14:15:08.893744557Z",
+      "at": 1791987304.182428,
+      "window": "KXBTC15M-26OCT141015-15",
+      "up_wins": false,
+      "up_shares": 5,
+      "down_shares": 5,
+      "cost_usd": 6,
+      "fee_usd": 0.0167,
+      "paired_credit_usd": 5,
+      "net_payout_usd": 0,
+      "payout_usd": 5,
+      "locked_usd": -1.0167000000000004,
+      "direction_usd": 2.220446049250313e-16,
+      "pnl_usd": -1.0167000000000002,
+      "observed_at": 1791987308.457781,
+      "time_source": "venue settled_time",
+      "venue": "kalshi"
+    },
+    {
+      "event": "speeddesk_live_cancel",
+      "logged_at": "2026-10-14T14:06:45.687014063Z",
+      "at": 1791986784.2607315,
+      "window": "KXBTC15M-26OCT141015-15",
+      "reason": "reprice",
+      "state": "requested; reservation retained until fills reconcile",
+      "reduced_by": "5.00",
+      "timing": {
+        "decision_to_ack_ms": 3459.4,
+        "send_to_ack_ms": 3459.4
+      },
+      "order_ref": "order_11"
+    },
+    {
+      "event": "speeddesk_live_cancel",
+      "logged_at": "2026-10-14T14:06:50.828582792Z",
+      "at": 1791986809.0440397,
+      "window": "KXBTC15M-26OCT141015-15",
+      "reason": "reprice",
+      "state": "requested; reservation retained until fills reconcile",
+      "reduced_by": "5.00",
+      "timing": {
+        "decision_to_ack_ms": 197.6,
+        "send_to_ack_ms": 197.5
+      },
+      "order_ref": "order_12"
+    },
+    {
+      "event": "speeddesk_live_cancel",
+      "logged_at": "2026-10-14T14:07:12.078534989Z",
+      "at": 1791986818.4907062,
+      "window": "KXBTC15M-26OCT141015-15",
+      "reason": "reprice",
+      "state": "requested; reservation retained until fills reconcile",
+      "reduced_by": "5.00",
+      "timing": {
+        "decision_to_ack_ms": 3473.7,
+        "send_to_ack_ms": 3473.6
+      },
+      "order_ref": "order_13"
+    },
+    {
+      "event": "speeddesk_live_cancel",
+      "logged_at": "2026-10-14T14:07:44.777834970Z",
+      "at": 1791986862.243003,
+      "window": "KXBTC15M-26OCT141015-15",
+      "reason": "reprice",
+      "state": "requested; reservation retained until fills reconcile",
+      "reduced_by": "5.00",
+      "timing": {
+        "decision_to_ack_ms": 9922,
+        "send_to_ack_ms": 9922
+      },
+      "order_ref": "order_14"
+    },
+    {
+      "event": "speeddesk_live_cancel",
+      "logged_at": "2026-10-14T14:07:44.777838581Z",
+      "at": 1791986862.7311885,
+      "window": "KXBTC15M-26OCT141015-15",
+      "reason": "Bitcoin feed stale",
+      "state": "not resting on Kalshi (404); reservation retained until reconciled",
+      "timing": {
+        "decision_to_ack_ms": 487.9,
+        "send_to_ack_ms": 487.9
+      },
+      "order_ref": "order_14",
+      "venue": "kalshi"
+    },
+    {
+      "event": "speeddesk_live_cancel",
+      "logged_at": "2026-10-14T14:07:47.352905795Z",
+      "at": 1791986865.6162436,
+      "window": "KXBTC15M-26OCT141015-15",
+      "reason": "reprice",
+      "state": "requested; reservation retained until fills reconcile",
+      "reduced_by": "5.00",
+      "timing": {
+        "decision_to_ack_ms": 31,
+        "send_to_ack_ms": 30.9
+      },
+      "order_ref": "order_15"
+    },
+    {
+      "event": "speeddesk_live_cancel",
+      "logged_at": "2026-10-14T14:08:25.138332578Z",
+      "at": 1791986904.5348208,
+      "window": "KXBTC15M-26OCT141015-15",
+      "reason": "reprice",
+      "state": "requested; reservation retained until fills reconcile",
+      "reduced_by": "5.00",
+      "timing": {
+        "decision_to_ack_ms": 37.7,
+        "send_to_ack_ms": 37.6
+      },
+      "order_ref": "order_16"
+    },
+    {
+      "event": "speeddesk_live_cancel",
+      "logged_at": "2026-10-14T14:08:46.111225630Z",
+      "at": 1791986923.742092,
+      "window": "KXBTC15M-26OCT141015-15",
+      "reason": "reprice",
+      "state": "not resting on Kalshi (404); reservation retained until reconciled",
+      "timing": {
+        "decision_to_ack_ms": 5407,
+        "send_to_ack_ms": 5406.9
+      },
+      "order_ref": "order_1",
+      "venue": "kalshi"
+    },
+    {
+      "event": "speeddesk_live_cancel",
+      "logged_at": "2026-10-14T14:15:15.801536417Z",
+      "at": 1791987314.9968204,
+      "window": "KXBTC15M-26OCT141030-30",
+      "reason": "reprice",
+      "state": "requested; reservation retained until fills reconcile",
+      "reduced_by": "4.00",
+      "timing": {
+        "decision_to_ack_ms": 31.5,
+        "send_to_ack_ms": 31.5
+      },
+      "order_ref": "order_17"
+    },
+    {
+      "event": "speeddesk_live_cancel",
+      "logged_at": "2026-10-14T14:15:22.345952775Z",
+      "at": 1791987317.4185429,
+      "window": "KXBTC15M-26OCT141030-30",
+      "reason": "reprice",
+      "state": "requested; reservation retained until fills reconcile",
+      "reduced_by": "4.00",
+      "timing": {
+        "decision_to_ack_ms": 102.1,
+        "send_to_ack_ms": 102
+      },
+      "order_ref": "order_18"
+    },
+    {
+      "event": "speeddesk_live_cancel",
+      "logged_at": "2026-10-14T14:15:43.666838835Z",
+      "at": 1791987339.2993884,
+      "window": "KXBTC15M-26OCT141030-30",
+      "reason": "reprice",
+      "state": "requested; reservation retained until fills reconcile",
+      "reduced_by": "4.00",
+      "timing": {
+        "decision_to_ack_ms": 985.1,
+        "send_to_ack_ms": 985
+      },
+      "order_ref": "order_19"
+    },
+    {
+      "event": "speeddesk_live_cancel",
+      "logged_at": "2026-10-14T14:15:51.139331769Z",
+      "at": 1791987349.9148388,
+      "window": "KXBTC15M-26OCT141030-30",
+      "reason": "reprice",
+      "state": "not resting on Kalshi (404); reservation retained until reconciled",
+      "timing": {
+        "decision_to_ack_ms": 4854,
+        "send_to_ack_ms": 4853.9
+      },
+      "order_ref": "order_3",
+      "venue": "kalshi"
+    },
+    {
+      "event": "speeddesk_live_cancel",
+      "logged_at": "2026-10-14T14:15:52.763717094Z",
+      "at": 1791987352.2494287,
+      "window": "KXBTC15M-26OCT141030-30",
+      "reason": "reprice",
+      "state": "requested; reservation retained until fills reconcile",
+      "reduced_by": "4.00",
+      "timing": {
+        "decision_to_ack_ms": 33.6,
+        "send_to_ack_ms": 33.5
+      },
+      "order_ref": "order_20"
+    },
+    {
+      "event": "speeddesk_live_cancel",
+      "logged_at": "2026-10-14T14:16:21.951549363Z",
+      "at": 1791987362.237693,
+      "window": "KXBTC15M-26OCT141030-30",
+      "reason": "reprice",
+      "state": "requested; reservation retained until fills reconcile",
+      "reduced_by": "4.00",
+      "timing": {
+        "decision_to_ack_ms": 6223.8,
+        "send_to_ack_ms": 6223.7
+      },
+      "order_ref": "order_21"
+    },
+    {
+      "event": "speeddesk_live_cancel",
+      "logged_at": "2026-10-14T14:16:23.596845534Z",
+      "at": 1791987382.9671707,
+      "window": "KXBTC15M-26OCT141030-30",
+      "reason": "reprice",
+      "state": "requested; reservation retained until fills reconcile",
+      "reduced_by": "4.00",
+      "timing": {
+        "decision_to_ack_ms": 2445.4,
+        "send_to_ack_ms": 2445.4
+      },
+      "order_ref": "order_22"
+    },
+    {
+      "event": "speeddesk_live_cancel",
+      "logged_at": "2026-10-14T14:17:22.141709519Z",
+      "at": 1791987425.0757642,
+      "window": "KXBTC15M-26OCT141030-30",
+      "reason": "reprice",
+      "state": "requested; reservation retained until fills reconcile",
+      "reduced_by": "4.00",
+      "timing": {
+        "decision_to_ack_ms": 87.3,
+        "send_to_ack_ms": 87.2
+      },
+      "order_ref": "order_23"
+    },
+    {
+      "event": "speeddesk_live_cancel",
+      "logged_at": "2026-10-14T14:18:02.949950492Z",
+      "at": 1791987482.061435,
+      "window": "KXBTC15M-26OCT141030-30",
+      "reason": "reprice",
+      "state": "requested; reservation retained until fills reconcile",
+      "reduced_by": "4.00",
+      "timing": {
+        "decision_to_ack_ms": 144.1,
+        "send_to_ack_ms": 144
+      },
+      "order_ref": "order_24"
+    },
+    {
+      "event": "speeddesk_live_cancel",
+      "logged_at": "2026-10-14T14:18:26.768789776Z",
+      "at": 1791987503.546017,
+      "window": "KXBTC15M-26OCT141030-30",
+      "reason": "reprice",
+      "state": "requested; reservation retained until fills reconcile",
+      "reduced_by": "4.00",
+      "timing": {
+        "decision_to_ack_ms": 1076.3,
+        "send_to_ack_ms": 1076.2
+      },
+      "order_ref": "order_25"
+    },
+    {
+      "event": "speeddesk_live_cancel",
+      "logged_at": "2026-10-14T14:18:30.905435661Z",
+      "at": 1791987506.891916,
+      "window": "KXBTC15M-26OCT141030-30",
+      "reason": "reprice",
+      "state": "requested; reservation retained until fills reconcile",
+      "reduced_by": "4.00",
+      "timing": {
+        "decision_to_ack_ms": 51.1,
+        "send_to_ack_ms": 51.1
+      },
+      "order_ref": "order_26"
+    },
+    {
+      "event": "speeddesk_live_cancel",
+      "logged_at": "2026-10-14T14:18:43.744724691Z",
+      "at": 1791987517.1654787,
+      "window": "KXBTC15M-26OCT141030-30",
+      "reason": "reprice",
+      "state": "requested; reservation retained until fills reconcile",
+      "reduced_by": "4.00",
+      "timing": {
+        "decision_to_ack_ms": 52.9,
+        "send_to_ack_ms": 52.8
+      },
+      "order_ref": "order_27"
+    },
+    {
+      "event": "speeddesk_live_cancel",
+      "logged_at": "2026-10-14T14:19:00.083143283Z",
+      "at": 1791987538.918004,
+      "window": "KXBTC15M-26OCT141030-30",
+      "reason": "reprice",
+      "state": "requested; reservation retained until fills reconcile",
+      "reduced_by": "4.00",
+      "timing": {
+        "decision_to_ack_ms": 43,
+        "send_to_ack_ms": 42.9
+      },
+      "order_ref": "order_28"
+    },
+    {
+      "event": "speeddesk_live_cancel",
+      "logged_at": "2026-10-14T14:19:10.586426470Z",
+      "at": 1791987549.7736797,
+      "window": "KXBTC15M-26OCT141030-30",
+      "reason": "Bitcoin feed stale",
+      "state": "not resting on Kalshi (404); reservation retained until reconciled",
+      "timing": {
+        "decision_to_ack_ms": 6383.8,
+        "send_to_ack_ms": 6383.8
+      },
+      "order_ref": "order_28",
+      "venue": "kalshi"
+    },
+    {
+      "event": "speeddesk_live_cancel",
+      "logged_at": "2026-10-14T14:19:14.056080445Z",
+      "at": 1791987553.0667186,
+      "window": "KXBTC15M-26OCT141030-30",
+      "reason": "reprice",
+      "state": "requested; reservation retained until fills reconcile",
+      "reduced_by": "4.00",
+      "timing": {
+        "decision_to_ack_ms": 88.1,
+        "send_to_ack_ms": 88.1
+      },
+      "order_ref": "order_29"
+    },
+    {
+      "event": "speeddesk_live_cancel",
+      "logged_at": "2026-10-14T14:19:22.769484899Z",
+      "at": 1791987560.7065818,
+      "window": "KXBTC15M-26OCT141030-30",
+      "reason": "reprice",
+      "state": "requested; reservation retained until fills reconcile",
+      "reduced_by": "4.00",
+      "timing": {
+        "decision_to_ack_ms": 2835.4,
+        "send_to_ack_ms": 2835.4
+      },
+      "order_ref": "order_30"
+    },
+    {
+      "event": "speeddesk_live_cancel",
+      "logged_at": "2026-10-14T14:19:42.758531301Z",
+      "at": 1791987566.8091862,
+      "window": "KXBTC15M-26OCT141030-30",
+      "reason": "reprice",
+      "state": "requested; reservation retained until fills reconcile",
+      "reduced_by": "4.00",
+      "timing": {
+        "decision_to_ack_ms": 2364,
+        "send_to_ack_ms": 2363.9
+      },
+      "order_ref": "order_31"
+    },
+    {
+      "event": "speeddesk_live_cancel",
+      "logged_at": "2026-10-14T14:19:43.422647824Z",
+      "at": 1791987581.7056723,
+      "window": "KXBTC15M-26OCT141030-30",
+      "reason": "reprice",
+      "state": "requested; reservation retained until fills reconcile",
+      "reduced_by": "4.00",
+      "timing": {
+        "decision_to_ack_ms": 158,
+        "send_to_ack_ms": 158
+      },
+      "order_ref": "order_32"
+    },
+    {
+      "event": "speeddesk_live_cancel",
+      "logged_at": "2026-10-14T14:19:47.635989651Z",
+      "at": 1791987586.8270142,
+      "window": "KXBTC15M-26OCT141030-30",
+      "reason": "reprice",
+      "state": "requested; reservation retained until fills reconcile",
+      "reduced_by": "4.00",
+      "timing": {
+        "decision_to_ack_ms": 668.9,
+        "send_to_ack_ms": 668.8
+      },
+      "order_ref": "order_33"
+    },
+    {
+      "event": "speeddesk_live_cancel",
+      "logged_at": "2026-10-14T14:19:49.266391192Z",
+      "at": 1791987588.719927,
+      "window": "KXBTC15M-26OCT141030-30",
+      "reason": "reprice",
+      "state": "requested; reservation retained until fills reconcile",
+      "reduced_by": "4.00",
+      "timing": {
+        "decision_to_ack_ms": 55.9,
+        "send_to_ack_ms": 55.8
+      },
+      "order_ref": "order_34"
+    },
+    {
+      "event": "speeddesk_live_cancel",
+      "logged_at": "2026-10-14T14:19:53.016981231Z",
+      "at": 1791987592.6014154,
+      "window": "KXBTC15M-26OCT141030-30",
+      "reason": "reprice",
+      "state": "not resting on Kalshi (404); reservation retained until reconciled",
+      "timing": {
+        "decision_to_ack_ms": 765,
+        "send_to_ack_ms": 765
+      },
+      "order_ref": "order_4",
+      "venue": "kalshi"
+    },
+    {
+      "event": "speeddesk_live_cancel",
+      "logged_at": "2026-10-14T14:19:56.014843571Z",
+      "at": 1791987593.215974,
+      "window": "KXBTC15M-26OCT141030-30",
+      "reason": "reprice",
+      "state": "requested; reservation retained until fills reconcile",
+      "reduced_by": "2.00",
+      "timing": {
+        "decision_to_ack_ms": 134.3,
+        "send_to_ack_ms": 134.2
+      },
+      "order_ref": "order_35"
+    },
+    {
+      "event": "speeddesk_live_cancel",
+      "logged_at": "2026-10-14T14:19:58.620446380Z",
+      "at": 1791987597.8671234,
+      "window": "KXBTC15M-26OCT141030-30",
+      "reason": "reprice",
+      "state": "requested; reservation retained until fills reconcile",
+      "reduced_by": "2.00",
+      "timing": {
+        "decision_to_ack_ms": 920.4,
+        "send_to_ack_ms": 920.4
+      },
+      "order_ref": "order_36"
+    },
+    {
+      "event": "speeddesk_live_cancel",
+      "logged_at": "2026-10-14T14:20:10.169389953Z",
+      "at": 1791987608.7894871,
+      "window": "KXBTC15M-26OCT141030-30",
+      "reason": "reprice",
+      "state": "requested; reservation retained until fills reconcile",
+      "reduced_by": "2.00",
+      "timing": {
+        "decision_to_ack_ms": 7381.4,
+        "send_to_ack_ms": 7381.4
+      },
+      "order_ref": "order_37"
+    },
+    {
+      "event": "speeddesk_live_cancel",
+      "logged_at": "2026-10-14T14:20:12.029889450Z",
+      "at": 1791987611.7051775,
+      "window": "KXBTC15M-26OCT141030-30",
+      "reason": "reprice",
+      "state": "requested; reservation retained until fills reconcile",
+      "reduced_by": "2.00",
+      "timing": {
+        "decision_to_ack_ms": 48.8,
+        "send_to_ack_ms": 48.7
+      },
+      "order_ref": "order_38"
+    },
+    {
+      "event": "speeddesk_live_cancel",
+      "logged_at": "2026-10-14T14:20:25.857332509Z",
+      "at": 1791987625.6415005,
+      "window": "KXBTC15M-26OCT141030-30",
+      "reason": "reprice",
+      "state": "requested; reservation retained until fills reconcile",
+      "reduced_by": "2.00",
+      "timing": {
+        "decision_to_ack_ms": 5543.3,
+        "send_to_ack_ms": 5543.3
+      },
+      "order_ref": "order_39"
+    },
+    {
+      "event": "speeddesk_live_cancel",
+      "logged_at": "2026-10-14T14:20:25.857337559Z",
+      "at": 1791987625.7014956,
+      "window": "KXBTC15M-26OCT141030-30",
+      "reason": "Kalshi book stale",
+      "state": "not resting on Kalshi (404); reservation retained until reconciled",
+      "timing": {
+        "decision_to_ack_ms": 59.6,
+        "send_to_ack_ms": 59.6
+      },
+      "order_ref": "order_39",
+      "venue": "kalshi"
+    },
+    {
+      "event": "speeddesk_live_cancel",
+      "logged_at": "2026-10-14T14:20:47.788606871Z",
+      "at": 1791987627.9877238,
+      "window": "KXBTC15M-26OCT141030-30",
+      "reason": "reprice",
+      "state": "requested; reservation retained until fills reconcile",
+      "reduced_by": "2.00",
+      "timing": {
+        "decision_to_ack_ms": 40.5,
+        "send_to_ack_ms": 40.4
+      },
+      "order_ref": "order_40"
+    },
+    {
+      "event": "speeddesk_live_cancel",
+      "logged_at": "2026-10-14T14:20:47.788611261Z",
+      "at": 1791987628.0250206,
+      "window": "KXBTC15M-26OCT141030-30",
+      "reason": "reprice",
+      "state": "requested; reservation retained until fills reconcile",
+      "reduced_by": "2.00",
+      "timing": {
+        "decision_to_ack_ms": 37,
+        "send_to_ack_ms": 37
+      },
+      "order_ref": "order_41"
+    },
+    {
+      "event": "speeddesk_live_cancel",
+      "logged_at": "2026-10-14T14:20:47.788850108Z",
+      "at": 1791987642.7312002,
+      "window": "KXBTC15M-26OCT141030-30",
+      "reason": "reprice",
+      "state": "requested; reservation retained until fills reconcile",
+      "reduced_by": "2.00",
+      "timing": {
+        "decision_to_ack_ms": 886.8,
+        "send_to_ack_ms": 886.7
+      },
+      "order_ref": "order_42"
+    },
+    {
+      "event": "speeddesk_live_cancel",
+      "logged_at": "2026-10-14T14:20:47.789538583Z",
+      "at": 1791987645.3996394,
+      "window": "KXBTC15M-26OCT141030-30",
+      "reason": "reprice",
+      "state": "requested; reservation retained until fills reconcile",
+      "reduced_by": "2.00",
+      "timing": {
+        "decision_to_ack_ms": 874.3,
+        "send_to_ack_ms": 874.2
+      },
+      "order_ref": "order_43"
+    },
+    {
+      "event": "speeddesk_live_cancel",
+      "logged_at": "2026-10-14T14:20:50.310528761Z",
+      "at": 1791987650.126442,
+      "window": "KXBTC15M-26OCT141030-30",
+      "reason": "reprice",
+      "state": "not resting on Kalshi (404); reservation retained until reconciled",
+      "timing": {
+        "decision_to_ack_ms": 263,
+        "send_to_ack_ms": 263
+      },
+      "order_ref": "order_5",
+      "venue": "kalshi"
+    },
+    {
+      "event": "speeddesk_live_cancel",
+      "logged_at": "2026-10-14T14:20:50.310531841Z",
+      "at": 1791987650.2043293,
+      "window": "KXBTC15M-26OCT141030-30",
+      "reason": "reprice",
+      "state": "requested; reservation retained until fills reconcile",
+      "reduced_by": "2.00",
+      "timing": {
+        "decision_to_ack_ms": 77.6,
+        "send_to_ack_ms": 77.6
+      },
+      "order_ref": "order_44"
+    },
+    {
+      "event": "speeddesk_live_cancel",
+      "logged_at": "2026-10-14T14:20:56.835632546Z",
+      "at": 1791987654.5997355,
+      "window": "KXBTC15M-26OCT141030-30",
+      "reason": "reprice",
+      "state": "not resting on Kalshi (404); reservation retained until reconciled",
+      "timing": {
+        "decision_to_ack_ms": 511,
+        "send_to_ack_ms": 511
+      },
+      "order_ref": "order_6",
+      "venue": "kalshi"
+    },
+    {
+      "event": "speeddesk_live_cancel",
+      "logged_at": "2026-10-14T14:21:10.725363795Z",
+      "at": 1791987667.73741,
+      "window": "KXBTC15M-26OCT141030-30",
+      "reason": "reprice",
+      "state": "requested; reservation retained until fills reconcile",
+      "reduced_by": "5.00",
+      "timing": {
+        "decision_to_ack_ms": 632.9,
+        "send_to_ack_ms": 632.9
+      },
+      "order_ref": "order_45"
+    },
+    {
+      "event": "speeddesk_live_cancel",
+      "logged_at": "2026-10-14T14:22:09.675513815Z",
+      "at": 1791987717.806928,
+      "window": "KXBTC15M-26OCT141030-30",
+      "reason": "reprice",
+      "state": "not resting on Kalshi (404); reservation retained until reconciled",
+      "timing": {
+        "decision_to_ack_ms": 7023,
+        "send_to_ack_ms": 7022.9
+      },
+      "order_ref": "order_7",
+      "venue": "kalshi"
+    },
+    {
+      "event": "speeddesk_live_cancel",
+      "logged_at": "2026-10-14T14:22:32.407395513Z",
+      "at": 1791987750.6088939,
+      "window": "KXBTC15M-26OCT141030-30",
+      "reason": "reprice",
+      "state": "requested; reservation retained until fills reconcile",
+      "reduced_by": "5.00",
+      "timing": {
+        "decision_to_ack_ms": 1660.7,
+        "send_to_ack_ms": 1660.7
+      },
+      "order_ref": "order_46"
+    },
+    {
+      "event": "speeddesk_live_cancel",
+      "logged_at": "2026-10-14T14:22:35.550827104Z",
+      "at": 1791987755.0133758,
+      "window": "KXBTC15M-26OCT141030-30",
+      "reason": "reprice",
+      "state": "requested; reservation retained until fills reconcile",
+      "reduced_by": "5.00",
+      "timing": {
+        "decision_to_ack_ms": 977.3,
+        "send_to_ack_ms": 977.2
+      },
+      "order_ref": "order_47"
+    },
+    {
+      "event": "speeddesk_live_cancel",
+      "logged_at": "2026-10-14T14:22:37.357421016Z",
+      "at": 1791987756.9144037,
+      "window": "KXBTC15M-26OCT141030-30",
+      "reason": "reprice",
+      "state": "requested; reservation retained until fills reconcile",
+      "reduced_by": "5.00",
+      "timing": {
+        "decision_to_ack_ms": 182.2,
+        "send_to_ack_ms": 182.2
+      },
+      "order_ref": "order_48"
+    },
+    {
+      "event": "speeddesk_live_cancel",
+      "logged_at": "2026-10-14T14:22:57.310066533Z",
+      "at": 1791987770.1547868,
+      "window": "KXBTC15M-26OCT141030-30",
+      "reason": "reprice",
+      "state": "requested; reservation retained until fills reconcile",
+      "reduced_by": "5.00",
+      "timing": {
+        "decision_to_ack_ms": 428.3,
+        "send_to_ack_ms": 428.3
+      },
+      "order_ref": "order_49"
+    },
+    {
+      "event": "speeddesk_live_cancel",
+      "logged_at": "2026-10-14T14:22:57.312589292Z",
+      "at": 1791987773.7380044,
+      "window": "KXBTC15M-26OCT141030-30",
+      "reason": "reprice",
+      "state": "requested; reservation retained until fills reconcile",
+      "reduced_by": "5.00",
+      "timing": {
+        "decision_to_ack_ms": 307.3,
+        "send_to_ack_ms": 307.3
+      },
+      "order_ref": "order_50"
+    },
+    {
+      "event": "speeddesk_live_cancel",
+      "logged_at": "2026-10-14T14:23:03.486366741Z",
+      "at": 1791987782.7043993,
+      "window": "KXBTC15M-26OCT141030-30",
+      "reason": "reprice",
+      "state": "not resting on Kalshi (404); reservation retained until reconciled",
+      "timing": {
+        "decision_to_ack_ms": 1539.5,
+        "send_to_ack_ms": 1539.5
+      },
+      "order_ref": "order_8",
+      "venue": "kalshi"
+    },
+    {
+      "event": "speeddesk_live_cancel",
+      "logged_at": "2026-10-14T14:23:11.213197549Z",
+      "at": 1791987790.9176362,
+      "window": "KXBTC15M-26OCT141030-30",
+      "reason": "reprice",
+      "state": "not resting on Kalshi (404); reservation retained until reconciled",
+      "timing": {
+        "decision_to_ack_ms": 43.1,
+        "send_to_ack_ms": 43.1
+      },
+      "order_ref": "order_10",
+      "venue": "kalshi"
+    },
+    {
+      "event": "speeddesk_live_order",
+      "logged_at": "2026-10-14T14:06:17.764744800Z",
+      "at": 1791986776.4394932,
+      "window": "KXBTC15M-26OCT141015-15",
+      "side": "down",
+      "kind": "rest",
+      "price": 0.69,
+      "size": 5,
+      "fair": 0.7290340003461264,
+      "state": "durable intent",
+      "timing": [
+        {
+          "metric": "btc_exchange_to_decision",
+          "scope": "real_kalshi",
+          "at": 1791986776.4393172,
+          "value_ms": 320.3684980981052,
+          "status": "ok"
+        },
+        {
+          "metric": "btc_receipt_to_decision",
+          "scope": "real_kalshi",
+          "at": 1791986776.4393172,
+          "value_ms": 176.60590959712863,
+          "status": "ok"
+        }
+      ],
+      "order_ref": "order_51",
+      "venue": "kalshi"
+    },
+    {
+      "event": "speeddesk_live_order",
+      "logged_at": "2026-10-14T14:06:17.764755000Z",
+      "at": 1791986777.643149,
+      "window": "KXBTC15M-26OCT141015-15",
+      "state": "not sent; prices moved before send",
+      "order_ref": "order_51",
+      "venue": "kalshi"
+    },
+    {
+      "event": "speeddesk_live_order",
+      "logged_at": "2026-10-14T14:06:18.911615063Z",
+      "at": 1791986778.7486353,
+      "window": "KXBTC15M-26OCT141015-15",
+      "side": "up",
+      "kind": "rest",
+      "price": 0.24,
+      "size": 5,
+      "fair": 0.2776906663458264,
+      "state": "durable intent",
+      "timing": [
+        {
+          "metric": "btc_exchange_to_decision",
+          "scope": "real_kalshi",
+          "at": 1791986778.7485087,
+          "value_ms": 160.86768126115203,
+          "status": "ok"
+        },
+        {
+          "metric": "btc_receipt_to_decision",
+          "scope": "real_kalshi",
+          "at": 1791986778.7485087,
+          "value_ms": 108.14522719010711,
+          "status": "ok"
+        }
+      ],
+      "order_ref": "order_11",
+      "venue": "kalshi"
+    },
+    {
+      "event": "speeddesk_live_order",
+      "logged_at": "2026-10-14T14:06:18.911621373Z",
+      "at": 1791986778.8316908,
+      "window": "KXBTC15M-26OCT141015-15",
+      "state": "accepted; waiting for real fills",
+      "timing": {
+        "metric": "decision_to_ack",
+        "scope": "real_kalshi",
+        "at": 1791986778.7485087,
+        "value_ms": 83.08580284938216,
+        "status": "ok"
+      },
+      "stages": {
+        "save_ms": 32.51434164121747,
+        "decision_to_send_ms": 37.70061768591404,
+        "send_to_ack_ms": 45.38518516346812
+      },
+      "order_ref": "order_11"
+    },
+    {
+      "event": "speeddesk_live_order",
+      "logged_at": "2026-10-14T14:06:47.252757973Z",
+      "at": 1791986806.8538988,
+      "window": "KXBTC15M-26OCT141015-15",
+      "side": "up",
+      "kind": "rest",
+      "price": 0.11,
+      "size": 5,
+      "fair": 0.14998391518295529,
+      "state": "durable intent",
+      "timing": [
+        {
+          "metric": "btc_exchange_to_decision",
+          "scope": "real_kalshi",
+          "at": 1791986806.8537822,
+          "value_ms": 47.50399198383093,
+          "status": "ok"
+        },
+        {
+          "metric": "btc_receipt_to_decision",
+          "scope": "real_kalshi",
+          "at": 1791986806.8537822,
+          "value_ms": 34.29798688739538,
+          "status": "ok"
+        }
+      ],
+      "order_ref": "order_12",
+      "venue": "kalshi"
+    },
+    {
+      "event": "speeddesk_live_order",
+      "logged_at": "2026-10-14T14:06:47.252772233Z",
+      "at": 1791986806.9543555,
+      "window": "KXBTC15M-26OCT141015-15",
+      "state": "accepted; waiting for real fills",
+      "timing": {
+        "metric": "decision_to_ack",
+        "scope": "real_kalshi",
+        "at": 1791986806.8537822,
+        "value_ms": 100.48171039670706,
+        "status": "ok"
+      },
+      "stages": {
+        "save_ms": 40.77478311955929,
+        "decision_to_send_ms": 41.6054162196815,
+        "send_to_ack_ms": 58.87629417702556
+      },
+      "order_ref": "order_12"
+    },
+    {
+      "event": "speeddesk_live_order",
+      "logged_at": "2026-10-14T14:06:54.498767301Z",
+      "at": 1791986812.477677,
+      "window": "KXBTC15M-26OCT141015-15",
+      "side": "down",
+      "kind": "rest",
+      "price": 0.84,
+      "size": 5,
+      "fair": 0.8772601779187787,
+      "state": "durable intent",
+      "timing": [
+        {
+          "metric": "btc_exchange_to_decision",
+          "scope": "real_kalshi",
+          "at": 1791986812.4775596,
+          "value_ms": 649.8918570578098,
+          "status": "ok"
+        },
+        {
+          "metric": "btc_receipt_to_decision",
+          "scope": "real_kalshi",
+          "at": 1791986812.4775596,
+          "value_ms": 320.01829519867897,
+          "status": "ok"
+        }
+      ],
+      "order_ref": "order_13",
+      "venue": "kalshi"
+    },
+    {
+      "event": "speeddesk_live_order",
+      "logged_at": "2026-10-14T14:06:54.498774680Z",
+      "at": 1791986814.3802953,
+      "window": "KXBTC15M-26OCT141015-15",
+      "state": "accepted; waiting for real fills",
+      "timing": {
+        "metric": "decision_to_ack",
+        "scope": "real_kalshi",
+        "at": 1791986812.4775596,
+        "value_ms": 1902.614795602858,
+        "status": "ok"
+      },
+      "stages": {
+        "save_ms": 23.057679180055857,
+        "decision_to_send_ms": 228.96709758788347,
+        "send_to_ack_ms": 1673.6476980149746
+      },
+      "order_ref": "order_13"
+    },
+    {
+      "event": "speeddesk_live_order",
+      "logged_at": "2026-10-14T14:07:24.782736236Z",
+      "at": 1791986844.6762922,
+      "window": "KXBTC15M-26OCT141015-15",
+      "side": "up",
+      "kind": "rest",
+      "price": 0.18,
+      "size": 5,
+      "fair": 0.2198775275903433,
+      "state": "durable intent",
+      "timing": [
+        {
+          "metric": "btc_exchange_to_decision",
+          "scope": "real_kalshi",
+          "at": 1791986844.6761653,
+          "value_ms": 302.6974704116583,
+          "status": "ok"
+        },
+        {
+          "metric": "btc_receipt_to_decision",
+          "scope": "real_kalshi",
+          "at": 1791986844.6761653,
+          "value_ms": 9.908488020300865,
+          "status": "ok"
+        }
+      ],
+      "order_ref": "order_14",
+      "venue": "kalshi"
+    },
+    {
+      "event": "speeddesk_live_order",
+      "logged_at": "2026-10-14T14:07:24.782749276Z",
+      "at": 1791986844.7343798,
+      "window": "KXBTC15M-26OCT141015-15",
+      "state": "accepted; waiting for real fills",
+      "timing": {
+        "metric": "decision_to_ack",
+        "scope": "real_kalshi",
+        "at": 1791986844.6761653,
+        "value_ms": 58.120109140872955,
+        "status": "ok"
+      },
+      "stages": {
+        "save_ms": 16.908579971641302,
+        "decision_to_send_ms": 20.341982133686543,
+        "send_to_ack_ms": 37.77812700718641
+      },
+      "order_ref": "order_14"
+    },
+    {
+      "event": "speeddesk_live_order",
+      "logged_at": "2026-10-14T14:07:44.777849711Z",
+      "at": 1791986864.4600158,
+      "window": "KXBTC15M-26OCT141015-15",
+      "side": "up",
+      "kind": "rest",
+      "price": 0.16,
+      "size": 5,
+      "fair": 0.19807433531248692,
+      "state": "durable intent",
+      "timing": [
+        {
+          "metric": "btc_exchange_to_decision",
+          "scope": "real_kalshi",
+          "at": 1791986864.459878,
+          "value_ms": 53.93411731347442,
+          "status": "ok"
+        },
+        {
+          "metric": "btc_receipt_to_decision",
+          "scope": "real_kalshi",
+          "at": 1791986864.459878,
+          "value_ms": 22.531052585691214,
+          "status": "ok"
+        }
+      ],
+      "order_ref": "order_15",
+      "venue": "kalshi"
+    },
+    {
+      "event": "speeddesk_live_order",
+      "logged_at": "2026-10-14T14:07:44.778084189Z",
+      "at": 1791986864.5518198,
+      "window": "KXBTC15M-26OCT141015-15",
+      "state": "accepted; waiting for real fills",
+      "timing": {
+        "metric": "decision_to_ack",
+        "scope": "real_kalshi",
+        "at": 1791986864.459878,
+        "value_ms": 91.84102108702064,
+        "status": "ok"
+      },
+      "stages": {
+        "save_ms": 27.945728972554207,
+        "decision_to_send_ms": 30.997113324701786,
+        "send_to_ack_ms": 60.84390776231885
+      },
+      "order_ref": "order_15"
+    },
+    {
+      "event": "speeddesk_live_order",
+      "logged_at": "2026-10-14T14:08:23.964993119Z",
+      "at": 1791986903.7208416,
+      "window": "KXBTC15M-26OCT141015-15",
+      "side": "up",
+      "kind": "rest",
+      "price": 0.25,
+      "size": 5,
+      "fair": 0.2868964486352237,
+      "state": "durable intent",
+      "timing": [
+        {
+          "metric": "btc_exchange_to_decision",
+          "scope": "real_kalshi",
+          "at": 1791986903.7207124,
+          "value_ms": 333.2855962216854,
+          "status": "ok"
+        },
+        {
+          "metric": "btc_receipt_to_decision",
+          "scope": "real_kalshi",
+          "at": 1791986903.7207124,
+          "value_ms": 296.5595982968807,
+          "status": "ok"
+        }
+      ],
+      "order_ref": "order_16",
+      "venue": "kalshi"
+    },
+    {
+      "event": "speeddesk_live_order",
+      "logged_at": "2026-10-14T14:08:23.965004739Z",
+      "at": 1791986903.8136923,
+      "window": "KXBTC15M-26OCT141015-15",
+      "state": "accepted; waiting for real fills",
+      "timing": {
+        "metric": "decision_to_ack",
+        "scope": "real_kalshi",
+        "at": 1791986903.7207124,
+        "value_ms": 92.8565920330584,
+        "status": "ok"
+      },
+      "stages": {
+        "save_ms": 17.050710041075945,
+        "decision_to_send_ms": 25.693476665765047,
+        "send_to_ack_ms": 67.16311536729336
+      },
+      "order_ref": "order_16"
+    },
+    {
+      "event": "speeddesk_live_order",
+      "logged_at": "2026-10-14T14:08:45.209868043Z",
+      "at": 1791986916.4871926,
+      "window": "KXBTC15M-26OCT141015-15",
+      "side": "up",
+      "kind": "rest",
+      "price": 0.25,
+      "size": 5,
+      "fair": 0.2883579508608527,
+      "state": "durable intent",
+      "timing": [
+        {
+          "metric": "btc_exchange_to_decision",
+          "scope": "real_kalshi",
+          "at": 1791986916.4870646,
+          "value_ms": 1056.1961764469743,
+          "status": "ok"
+        },
+        {
+          "metric": "btc_receipt_to_decision",
+          "scope": "real_kalshi",
+          "at": 1791986916.4870646,
+          "value_ms": 852.9910678043962,
+          "status": "ok"
+        }
+      ],
+      "order_ref": "order_1",
+      "venue": "kalshi"
+    },
+    {
+      "event": "speeddesk_live_order",
+      "logged_at": "2026-10-14T14:08:45.209874443Z",
+      "at": 1791986917.8036659,
+      "window": "KXBTC15M-26OCT141015-15",
+      "state": "accepted; waiting for real fills",
+      "timing": {
+        "metric": "decision_to_ack",
+        "scope": "real_kalshi",
+        "at": 1791986916.4870646,
+        "value_ms": 1316.454536281526,
+        "status": "ok"
+      },
+      "stages": {
+        "save_ms": 9.856909047812223,
+        "decision_to_send_ms": 11.347066145390272,
+        "send_to_ack_ms": 1305.1074701361358
+      },
+      "order_ref": "order_1"
+    },
+    {
+      "event": "speeddesk_live_order",
+      "logged_at": "2026-10-14T14:11:10.533643685Z",
+      "at": 1791987063.9637468,
+      "window": "KXBTC15M-26OCT141015-15",
+      "side": "down",
+      "kind": "lock",
+      "price": 0.95,
+      "size": 5,
+      "state": "durable intent; completing a half-filled pair",
+      "order_ref": "order_2",
+      "venue": "kalshi"
+    },
+    {
+      "event": "speeddesk_live_order",
+      "logged_at": "2026-10-14T14:11:10.533648485Z",
+      "at": 1791987064.0150328,
+      "window": "KXBTC15M-26OCT141015-15",
+      "state": "accepted; waiting for real fills",
+      "timing": null,
+      "stages": {
+        "save_ms": null,
+        "decision_to_send_ms": 13.07055214419961,
+        "send_to_ack_ms": 38.25383307412267
+      },
+      "order_ref": "order_2"
+    },
+    {
+      "event": "speeddesk_live_order",
+      "logged_at": "2026-10-14T14:15:14.769603688Z",
+      "at": 1791987314.3942513,
+      "window": "KXBTC15M-26OCT141030-30",
+      "side": "down",
+      "kind": "rest",
+      "price": 0.46,
+      "size": 4,
+      "fair": 0.4990835972381048,
+      "state": "durable intent",
+      "timing": [
+        {
+          "metric": "btc_exchange_to_decision",
+          "scope": "real_kalshi",
+          "at": 1791987314.3941076,
+          "value_ms": 224.7017757035792,
+          "status": "ok"
+        },
+        {
+          "metric": "btc_receipt_to_decision",
+          "scope": "real_kalshi",
+          "at": 1791987314.3941076,
+          "value_ms": 3.16442409530282,
+          "status": "ok"
+        }
+      ],
+      "order_ref": "order_17",
+      "venue": "kalshi"
+    },
+    {
+      "event": "speeddesk_live_order",
+      "logged_at": "2026-10-14T14:15:14.769614328Z",
+      "at": 1791987314.4594448,
+      "window": "KXBTC15M-26OCT141030-30",
+      "state": "accepted; waiting for real fills",
+      "timing": {
+        "metric": "decision_to_ack",
+        "scope": "real_kalshi",
+        "at": 1791987314.3941076,
+        "value_ms": 65.11688092723489,
+        "status": "ok"
+      },
+      "stages": {
+        "save_ms": 17.964822240173817,
+        "decision_to_send_ms": 25.403198786079884,
+        "send_to_ack_ms": 39.713682141155005
+      },
+      "order_ref": "order_17"
+    },
+    {
+      "event": "speeddesk_live_order",
+      "logged_at": "2026-10-14T14:15:17.109247214Z",
+      "at": 1791987316.572209,
+      "window": "KXBTC15M-26OCT141030-30",
+      "side": "up",
+      "kind": "rest",
+      "price": 0.52,
+      "size": 4,
+      "fair": 0.5561019292602496,
+      "state": "durable intent",
+      "timing": [
+        {
+          "metric": "btc_exchange_to_decision",
+          "scope": "real_kalshi",
+          "at": 1791987316.5720525,
+          "value_ms": 32.85442152991891,
+          "status": "ok"
+        },
+        {
+          "metric": "btc_receipt_to_decision",
+          "scope": "real_kalshi",
+          "at": 1791987316.5720525,
+          "value_ms": 8.000715170055628,
+          "status": "ok"
+        }
+      ],
+      "order_ref": "order_18",
+      "venue": "kalshi"
+    },
+    {
+      "event": "speeddesk_live_order",
+      "logged_at": "2026-10-14T14:15:17.109255614Z",
+      "at": 1791987316.6835794,
+      "window": "KXBTC15M-26OCT141030-30",
+      "state": "accepted; waiting for real fills",
+      "timing": {
+        "metric": "decision_to_ack",
+        "scope": "real_kalshi",
+        "at": 1791987316.5720525,
+        "value_ms": 111.38872802257538,
+        "status": "ok"
+      },
+      "stages": {
+        "save_ms": 19.863935187458992,
+        "decision_to_send_ms": 34.73228169605136,
+        "send_to_ack_ms": 76.65644632652402
+      },
+      "order_ref": "order_18"
+    },
+    {
+      "event": "speeddesk_live_order",
+      "logged_at": "2026-10-14T14:15:35.459377744Z",
+      "at": 1791987335.1255805,
+      "window": "KXBTC15M-26OCT141030-30",
+      "side": "up",
+      "kind": "rest",
+      "price": 0.54,
+      "size": 4,
+      "fair": 0.577783167340303,
+      "state": "durable intent",
+      "timing": [
+        {
+          "metric": "btc_exchange_to_decision",
+          "scope": "real_kalshi",
+          "at": 1791987335.1254625,
+          "value_ms": 205.16726188361645,
+          "status": "ok"
+        },
+        {
+          "metric": "btc_receipt_to_decision",
+          "scope": "real_kalshi",
+          "at": 1791987335.1254625,
+          "value_ms": 142.05333404242992,
+          "status": "ok"
+        }
+      ],
+      "order_ref": "order_19",
+      "venue": "kalshi"
+    },
+    {
+      "event": "speeddesk_live_order",
+      "logged_at": "2026-10-14T14:15:35.459383304Z",
+      "at": 1791987335.3966153,
+      "window": "KXBTC15M-26OCT141030-30",
+      "state": "accepted; waiting for real fills",
+      "timing": {
+        "metric": "decision_to_ack",
+        "scope": "real_kalshi",
+        "at": 1791987335.1254625,
+        "value_ms": 271.0581971332431,
+        "status": "ok"
+      },
+      "stages": {
+        "save_ms": 7.836055010557175,
+        "decision_to_send_ms": 13.894384261220694,
+        "send_to_ack_ms": 257.1638128720224
+      },
+      "order_ref": "order_19"
+    },
+    {
+      "event": "speeddesk_live_order",
+      "logged_at": "2026-10-14T14:15:43.666844245Z",
+      "at": 1791987340.923057,
+      "window": "KXBTC15M-26OCT141030-30",
+      "side": "down",
+      "kind": "rest",
+      "price": 0.35,
+      "size": 4,
+      "fair": 0.38633071478474323,
+      "state": "durable intent",
+      "timing": [
+        {
+          "metric": "btc_exchange_to_decision",
+          "scope": "real_kalshi",
+          "at": 1791987340.9229133,
+          "value_ms": 644.1214866936207,
+          "status": "ok"
+        },
+        {
+          "metric": "btc_receipt_to_decision",
+          "scope": "real_kalshi",
+          "at": 1791987340.9229133,
+          "value_ms": 38.694459944963455,
+          "status": "ok"
+        }
+      ],
+      "order_ref": "order_3",
+      "venue": "kalshi"
+    },
+    {
+      "event": "speeddesk_live_order",
+      "logged_at": "2026-10-14T14:15:43.667146053Z",
+      "at": 1791987343.5568368,
+      "window": "KXBTC15M-26OCT141030-30",
+      "state": "accepted; waiting for real fills",
+      "timing": {
+        "metric": "decision_to_ack",
+        "scope": "real_kalshi",
+        "at": 1791987340.9229133,
+        "value_ms": 2633.7900608778,
+        "status": "ok"
+      },
+      "stages": {
+        "save_ms": 7.695955689996481,
+        "decision_to_send_ms": 723.8110890612006,
+        "send_to_ack_ms": 1909.9789718165994
+      },
+      "order_ref": "order_3"
+    },
+    {
+      "event": "speeddesk_live_order",
+      "logged_at": "2026-10-14T14:15:52.763377107Z",
+      "at": 1791987351.1252427,
+      "window": "KXBTC15M-26OCT141030-30",
+      "side": "up",
+      "kind": "rest",
+      "price": 0.55,
+      "size": 4,
+      "fair": 0.5874375814145606,
+      "state": "durable intent",
+      "timing": [
+        {
+          "metric": "btc_exchange_to_decision",
+          "scope": "real_kalshi",
+          "at": 1791987351.1251173,
+          "value_ms": 321.6700376942754,
+          "status": "ok"
+        },
+        {
+          "metric": "btc_receipt_to_decision",
+          "scope": "real_kalshi",
+          "at": 1791987351.1251173,
+          "value_ms": 312.2401060536504,
+          "status": "ok"
+        }
+      ],
+      "order_ref": "order_20",
+      "venue": "kalshi"
+    },
+    {
+      "event": "speeddesk_live_order",
+      "logged_at": "2026-10-14T14:15:52.763382677Z",
+      "at": 1791987351.197556,
+      "window": "KXBTC15M-26OCT141030-30",
+      "state": "accepted; waiting for real fills",
+      "timing": {
+        "metric": "decision_to_ack",
+        "scope": "real_kalshi",
+        "at": 1791987351.1251173,
+        "value_ms": 72.31744099408388,
+        "status": "ok"
+      },
+      "stages": {
+        "save_ms": 21.007265895605087,
+        "decision_to_send_ms": 30.140120070427656,
+        "send_to_ack_ms": 42.177320923656225
+      },
+      "order_ref": "order_20"
+    },
+    {
+      "event": "speeddesk_live_order",
+      "logged_at": "2026-10-14T14:15:55.845991614Z",
+      "at": 1791987354.5444894,
+      "window": "KXBTC15M-26OCT141030-30",
+      "side": "up",
+      "kind": "rest",
+      "price": 0.52,
+      "size": 4,
+      "fair": 0.5532060129211332,
+      "state": "durable intent",
+      "timing": [
+        {
+          "metric": "btc_exchange_to_decision",
+          "scope": "real_kalshi",
+          "at": 1791987354.5444045,
+          "value_ms": 348.48534082993865,
+          "status": "ok"
+        },
+        {
+          "metric": "btc_receipt_to_decision",
+          "scope": "real_kalshi",
+          "at": 1791987354.5444045,
+          "value_ms": 254.71555208787322,
+          "status": "ok"
+        }
+      ],
+      "order_ref": "order_21",
+      "venue": "kalshi"
+    },
+    {
+      "event": "speeddesk_live_order",
+      "logged_at": "2026-10-14T14:15:55.845998744Z",
+      "at": 1791987355.5296934,
+      "window": "KXBTC15M-26OCT141030-30",
+      "state": "accepted; waiting for real fills",
+      "timing": {
+        "metric": "decision_to_ack",
+        "scope": "real_kalshi",
+        "at": 1791987354.5444045,
+        "value_ms": 985.1915361359715,
+        "status": "ok"
+      },
+      "stages": {
+        "save_ms": 17.270297277718782,
+        "decision_to_send_ms": 49.40746119245887,
+        "send_to_ack_ms": 935.7840749435127
+      },
+      "order_ref": "order_21"
+    },
+    {
+      "event": "speeddesk_live_order",
+      "logged_at": "2026-10-14T14:16:21.951556683Z",
+      "at": 1791987374.03069,
+      "window": "KXBTC15M-26OCT141030-30",
+      "side": "up",
+      "kind": "rest",
+      "price": 0.49,
+      "size": 4,
+      "fair": 0.5249993385899184,
+      "state": "durable intent",
+      "timing": [
+        {
+          "metric": "btc_exchange_to_decision",
+          "scope": "real_kalshi",
+          "at": 1791987374.0306015,
+          "value_ms": 40.30612390488386,
+          "status": "ok"
+        },
+        {
+          "metric": "btc_receipt_to_decision",
+          "scope": "real_kalshi",
+          "at": 1791987374.0306015,
+          "value_ms": 13.118061237037182,
+          "status": "ok"
+        }
+      ],
+      "order_ref": "order_22",
+      "venue": "kalshi"
+    },
+    {
+      "event": "speeddesk_live_order",
+      "logged_at": "2026-10-14T14:16:21.952163377Z",
+      "at": 1791987374.1034431,
+      "window": "KXBTC15M-26OCT141030-30",
+      "state": "accepted; waiting for real fills",
+      "timing": {
+        "metric": "decision_to_ack",
+        "scope": "real_kalshi",
+        "at": 1791987374.0306015,
+        "value_ms": 72.77726801112294,
+        "status": "ok"
+      },
+      "stages": {
+        "save_ms": 23.989421781152487,
+        "decision_to_send_ms": 30.43803758919239,
+        "send_to_ack_ms": 42.33923042193055
+      },
+      "order_ref": "order_22"
+    },
+    {
+      "event": "speeddesk_live_order",
+      "logged_at": "2026-10-14T14:17:02.120820583Z",
+      "at": 1791987419.7971406,
+      "window": "KXBTC15M-26OCT141030-30",
+      "side": "up",
+      "kind": "rest",
+      "price": 0.58,
+      "size": 4,
+      "fair": 0.6177026662297055,
+      "state": "durable intent",
+      "timing": [
+        {
+          "metric": "btc_exchange_to_decision",
+          "scope": "real_kalshi",
+          "at": 1791987419.7970402,
+          "value_ms": 141.21044147759676,
+          "status": "ok"
+        },
+        {
+          "metric": "btc_receipt_to_decision",
+          "scope": "real_kalshi",
+          "at": 1791987419.7970402,
+          "value_ms": 7.629756815731525,
+          "status": "ok"
+        }
+      ],
+      "order_ref": "order_23",
+      "venue": "kalshi"
+    },
+    {
+      "event": "speeddesk_live_order",
+      "logged_at": "2026-10-14T14:17:02.131470655Z",
+      "at": 1791987422.0321534,
+      "window": "KXBTC15M-26OCT141030-30",
+      "state": "accepted; waiting for real fills",
+      "timing": {
+        "metric": "decision_to_ack",
+        "scope": "real_kalshi",
+        "at": 1791987419.7970402,
+        "value_ms": 2235.038738232106,
+        "status": "ok"
+      },
+      "stages": {
+        "save_ms": 33.97432900965214,
+        "decision_to_send_ms": 85.7402691617608,
+        "send_to_ack_ms": 2149.298469070345
+      },
+      "order_ref": "order_23"
+    },
+    {
+      "event": "speeddesk_live_order",
+      "logged_at": "2026-10-14T14:17:59.846165846Z",
+      "at": 1791987478.9199128,
+      "window": "KXBTC15M-26OCT141030-30",
+      "side": "up",
+      "kind": "rest",
+      "price": 0.46,
+      "size": 4,
+      "fair": 0.49618294238062033,
+      "state": "durable intent",
+      "timing": [
+        {
+          "metric": "btc_exchange_to_decision",
+          "scope": "real_kalshi",
+          "at": 1791987478.919788,
+          "value_ms": 316.8151266872883,
+          "status": "ok"
+        },
+        {
+          "metric": "btc_receipt_to_decision",
+          "scope": "real_kalshi",
+          "at": 1791987478.919788,
+          "value_ms": 68.14359501004219,
+          "status": "ok"
+        }
+      ],
+      "order_ref": "order_24",
+      "venue": "kalshi"
+    },
+    {
+      "event": "speeddesk_live_order",
+      "logged_at": "2026-10-14T14:17:59.846174226Z",
+      "at": 1791987479.7070925,
+      "window": "KXBTC15M-26OCT141030-30",
+      "state": "accepted; waiting for real fills",
+      "timing": {
+        "metric": "decision_to_ack",
+        "scope": "real_kalshi",
+        "at": 1791987478.919788,
+        "value_ms": 787.2109143063426,
+        "status": "ok"
+      },
+      "stages": {
+        "save_ms": 39.037896785885096,
+        "decision_to_send_ms": 66.24909210950136,
+        "send_to_ack_ms": 720.9618221968412
+      },
+      "order_ref": "order_24"
+    },
+    {
+      "event": "speeddesk_live_order",
+      "logged_at": "2026-10-14T14:18:22.335615405Z",
+      "at": 1791987501.7312665,
+      "window": "KXBTC15M-26OCT141030-30",
+      "side": "up",
+      "kind": "rest",
+      "price": 0.47,
+      "size": 4,
+      "fair": 0.5038357196392331,
+      "state": "durable intent",
+      "timing": [
+        {
+          "metric": "btc_exchange_to_decision",
+          "scope": "real_kalshi",
+          "at": 1791987501.7311454,
+          "value_ms": 77.10799528285861,
+          "status": "ok"
+        },
+        {
+          "metric": "btc_receipt_to_decision",
+          "scope": "real_kalshi",
+          "at": 1791987501.7311454,
+          "value_ms": 70.73530508205295,
+          "status": "ok"
+        }
+      ],
+      "order_ref": "order_25",
+      "venue": "kalshi"
+    },
+    {
+      "event": "speeddesk_live_order",
+      "logged_at": "2026-10-14T14:18:22.335624035Z",
+      "at": 1791987502.2470472,
+      "window": "KXBTC15M-26OCT141030-30",
+      "state": "accepted; waiting for real fills",
+      "timing": {
+        "metric": "decision_to_ack",
+        "scope": "real_kalshi",
+        "at": 1791987501.7311454,
+        "value_ms": 515.8036798238754,
+        "status": "ok"
+      },
+      "stages": {
+        "save_ms": 13.134911190718412,
+        "decision_to_send_ms": 14.329912140965462,
+        "send_to_ack_ms": 501.47376768290997
+      },
+      "order_ref": "order_25"
+    },
+    {
+      "event": "speeddesk_live_order",
+      "logged_at": "2026-10-14T14:18:26.768792615Z",
+      "at": 1791987505.321996,
+      "window": "KXBTC15M-26OCT141030-30",
+      "side": "up",
+      "kind": "rest",
+      "price": 0.43,
+      "size": 4,
+      "fair": 0.46629864202502985,
+      "state": "durable intent",
+      "timing": [
+        {
+          "metric": "btc_exchange_to_decision",
+          "scope": "real_kalshi",
+          "at": 1791987505.3218713,
+          "value_ms": 562.664458528161,
+          "status": "ok"
+        },
+        {
+          "metric": "btc_receipt_to_decision",
+          "scope": "real_kalshi",
+          "at": 1791987505.3218713,
+          "value_ms": 502.6156399399042,
+          "status": "ok"
+        }
+      ],
+      "order_ref": "order_26",
+      "venue": "kalshi"
+    },
+    {
+      "event": "speeddesk_live_order",
+      "logged_at": "2026-10-14T14:18:26.769113752Z",
+      "at": 1791987506.6932008,
+      "window": "KXBTC15M-26OCT141030-30",
+      "state": "accepted; waiting for real fills",
+      "timing": {
+        "metric": "decision_to_ack",
+        "scope": "real_kalshi",
+        "at": 1791987505.3218713,
+        "value_ms": 1371.2366879917681,
+        "status": "ok"
+      },
+      "stages": {
+        "save_ms": 8.273009676486254,
+        "decision_to_send_ms": 79.93553811684251,
+        "send_to_ack_ms": 1291.3011498749256
+      },
+      "order_ref": "order_26"
+    },
+    {
+      "event": "speeddesk_live_order",
+      "logged_at": "2026-10-14T14:18:36.733956740Z",
+      "at": 1791987516.2320578,
+      "window": "KXBTC15M-26OCT141030-30",
+      "side": "up",
+      "kind": "rest",
+      "price": 0.47,
+      "size": 4,
+      "fair": 0.501204805703954,
+      "state": "durable intent",
+      "timing": [
+        {
+          "metric": "btc_exchange_to_decision",
+          "scope": "real_kalshi",
+          "at": 1791987516.2319682,
+          "value_ms": 459.55440448597074,
+          "status": "ok"
+        },
+        {
+          "metric": "btc_receipt_to_decision",
+          "scope": "real_kalshi",
+          "at": 1791987516.2319682,
+          "value_ms": 426.97593616321683,
+          "status": "ok"
+        }
+      ],
+      "order_ref": "order_27",
+      "venue": "kalshi"
+    },
+    {
+      "event": "speeddesk_live_order",
+      "logged_at": "2026-10-14T14:18:36.733968680Z",
+      "at": 1791987516.3416176,
+      "window": "KXBTC15M-26OCT141030-30",
+      "state": "accepted; waiting for real fills",
+      "timing": {
+        "metric": "decision_to_ack",
+        "scope": "real_kalshi",
+        "at": 1791987516.2319682,
+        "value_ms": 109.5918221399188,
+        "status": "ok"
+      },
+      "stages": {
+        "save_ms": 22.26195577532053,
+        "decision_to_send_ms": 27.541032060980797,
+        "send_to_ack_ms": 82.05079007893801
+      },
+      "order_ref": "order_27"
+    },
+    {
+      "event": "speeddesk_live_order",
+      "logged_at": "2026-10-14T14:18:58.916982227Z",
+      "at": 1791987537.7445874,
+      "window": "KXBTC15M-26OCT141030-30",
+      "side": "up",
+      "kind": "rest",
+      "price": 0.34,
+      "size": 4,
+      "fair": 0.37344960867433163,
+      "state": "durable intent",
+      "timing": [
+        {
+          "metric": "btc_exchange_to_decision",
+          "scope": "real_kalshi",
+          "at": 1791987537.7444894,
+          "value_ms": 476.6729553230107,
+          "status": "ok"
+        },
+        {
+          "metric": "btc_receipt_to_decision",
+          "scope": "real_kalshi",
+          "at": 1791987537.7444894,
+          "value_ms": 469.9180801399052,
+          "status": "ok"
+        }
+      ],
+      "order_ref": "order_28",
+      "venue": "kalshi"
+    },
+    {
+      "event": "speeddesk_live_order",
+      "logged_at": "2026-10-14T14:18:58.916987607Z",
+      "at": 1791987537.8250458,
+      "window": "KXBTC15M-26OCT141030-30",
+      "state": "accepted; waiting for real fills",
+      "timing": {
+        "metric": "decision_to_ack",
+        "scope": "real_kalshi",
+        "at": 1791987537.7444894,
+        "value_ms": 80.4646429605782,
+        "status": "ok"
+      },
+      "stages": {
+        "save_ms": 19.44621978327632,
+        "decision_to_send_ms": 35.94673192128539,
+        "send_to_ack_ms": 44.51791103929281
+      },
+      "order_ref": "order_28"
+    },
+    {
+      "event": "speeddesk_live_order",
+      "logged_at": "2026-10-14T14:19:10.586429270Z",
+      "at": 1791987550.3892117,
+      "window": "KXBTC15M-26OCT141030-30",
+      "side": "up",
+      "kind": "rest",
+      "price": 0.32,
+      "size": 4,
+      "fair": 0.35449238519550536,
+      "state": "durable intent",
+      "timing": [
+        {
+          "metric": "btc_exchange_to_decision",
+          "scope": "real_kalshi",
+          "at": 1791987550.3891132,
+          "value_ms": 54.42658020183444,
+          "status": "ok"
+        },
+        {
+          "metric": "btc_receipt_to_decision",
+          "scope": "real_kalshi",
+          "at": 1791987550.3891132,
+          "value_ms": 30.143171083182096,
+          "status": "ok"
+        }
+      ],
+      "order_ref": "order_29",
+      "venue": "kalshi"
+    },
+    {
+      "event": "speeddesk_live_order",
+      "logged_at": "2026-10-14T14:19:10.586434790Z",
+      "at": 1791987550.4564054,
+      "window": "KXBTC15M-26OCT141030-30",
+      "state": "accepted; waiting for real fills",
+      "timing": {
+        "metric": "decision_to_ack",
+        "scope": "real_kalshi",
+        "at": 1791987550.3891132,
+        "value_ms": 67.22079403698444,
+        "status": "ok"
+      },
+      "stages": {
+        "save_ms": 19.48459865525365,
+        "decision_to_send_ms": 20.81703720614314,
+        "send_to_ack_ms": 46.4037568308413
+      },
+      "order_ref": "order_29"
+    },
+    {
+      "event": "speeddesk_live_order",
+      "logged_at": "2026-10-14T14:19:16.211878578Z",
+      "at": 1791987555.8575315,
+      "window": "KXBTC15M-26OCT141030-30",
+      "side": "up",
+      "kind": "rest",
+      "price": 0.31,
+      "size": 4,
+      "fair": 0.34377215880284967,
+      "state": "durable intent",
+      "timing": [
+        {
+          "metric": "btc_exchange_to_decision",
+          "scope": "real_kalshi",
+          "at": 1791987555.8574362,
+          "value_ms": 130.48992585390806,
+          "status": "ok"
+        },
+        {
+          "metric": "btc_receipt_to_decision",
+          "scope": "real_kalshi",
+          "at": 1791987555.8574362,
+          "value_ms": 93.889812938869,
+          "status": "ok"
+        }
+      ],
+      "order_ref": "order_30",
+      "venue": "kalshi"
+    },
+    {
+      "event": "speeddesk_live_order",
+      "logged_at": "2026-10-14T14:19:16.211889708Z",
+      "at": 1791987555.91498,
+      "window": "KXBTC15M-26OCT141030-30",
+      "state": "accepted; waiting for real fills",
+      "timing": {
+        "metric": "decision_to_ack",
+        "scope": "real_kalshi",
+        "at": 1791987555.8574362,
+        "value_ms": 57.48278368264437,
+        "status": "ok"
+      },
+      "stages": {
+        "save_ms": 10.194815695285797,
+        "decision_to_send_ms": 21.263553760945797,
+        "send_to_ack_ms": 36.21922992169857
+      },
+      "order_ref": "order_30"
+    },
+    {
+      "event": "speeddesk_live_order",
+      "logged_at": "2026-10-14T14:19:22.769489939Z",
+      "at": 1791987562.2823226,
+      "window": "KXBTC15M-26OCT141030-30",
+      "side": "up",
+      "kind": "rest",
+      "price": 0.31,
+      "size": 4,
+      "fair": 0.3447557161025354,
+      "state": "durable intent",
+      "timing": [
+        {
+          "metric": "btc_exchange_to_decision",
+          "scope": "real_kalshi",
+          "at": 1791987562.2822087,
+          "value_ms": 400.97201708704233,
+          "status": "ok"
+        },
+        {
+          "metric": "btc_receipt_to_decision",
+          "scope": "real_kalshi",
+          "at": 1791987562.2822087,
+          "value_ms": 47.09018114954233,
+          "status": "ok"
+        }
+      ],
+      "order_ref": "order_31",
+      "venue": "kalshi"
+    },
+    {
+      "event": "speeddesk_live_order",
+      "logged_at": "2026-10-14T14:19:22.769587298Z",
+      "at": 1791987562.6479924,
+      "window": "KXBTC15M-26OCT141030-30",
+      "state": "accepted; waiting for real fills",
+      "timing": {
+        "metric": "decision_to_ack",
+        "scope": "real_kalshi",
+        "at": 1791987562.2822087,
+        "value_ms": 365.7081318087876,
+        "status": "ok"
+      },
+      "stages": {
+        "save_ms": 16.523882281035185,
+        "decision_to_send_ms": 86.58551285043359,
+        "send_to_ack_ms": 279.122618958354
+      },
+      "order_ref": "order_31"
+    },
+    {
+      "event": "speeddesk_live_order",
+      "logged_at": "2026-10-14T14:19:42.758534121Z",
+      "at": 1791987578.703954,
+      "window": "KXBTC15M-26OCT141030-30",
+      "side": "up",
+      "kind": "rest",
+      "price": 0.35,
+      "size": 4,
+      "fair": 0.38713961925676266,
+      "state": "durable intent",
+      "timing": [
+        {
+          "metric": "btc_exchange_to_decision",
+          "scope": "real_kalshi",
+          "at": 1791987578.7038457,
+          "value_ms": 591.6926171630621,
+          "status": "ok"
+        },
+        {
+          "metric": "btc_receipt_to_decision",
+          "scope": "real_kalshi",
+          "at": 1791987578.7038457,
+          "value_ms": 194.52541135251522,
+          "status": "ok"
+        }
+      ],
+      "order_ref": "order_32",
+      "venue": "kalshi"
+    },
+    {
+      "event": "speeddesk_live_order",
+      "logged_at": "2026-10-14T14:19:42.758540181Z",
+      "at": 1791987578.7833672,
+      "window": "KXBTC15M-26OCT141030-30",
+      "state": "accepted; waiting for real fills",
+      "timing": {
+        "metric": "decision_to_ack",
+        "scope": "real_kalshi",
+        "at": 1791987578.7038457,
+        "value_ms": 79.44806199520826,
+        "status": "ok"
+      },
+      "stages": {
+        "save_ms": 11.348236817866564,
+        "decision_to_send_ms": 12.31347769498825,
+        "send_to_ack_ms": 67.13458430022001
+      },
+      "order_ref": "order_32"
+    },
+    {
+      "event": "speeddesk_live_order",
+      "logged_at": "2026-10-14T14:19:45.680335402Z",
+      "at": 1791987584.8093517,
+      "window": "KXBTC15M-26OCT141030-30",
+      "side": "up",
+      "kind": "rest",
+      "price": 0.36,
+      "size": 4,
+      "fair": 0.3959471879699738,
+      "state": "durable intent",
+      "timing": [
+        {
+          "metric": "btc_exchange_to_decision",
+          "scope": "real_kalshi",
+          "at": 1791987584.8092408,
+          "value_ms": 303.97523706778884,
+          "status": "ok"
+        },
+        {
+          "metric": "btc_receipt_to_decision",
+          "scope": "real_kalshi",
+          "at": 1791987584.8092408,
+          "value_ms": 225.72602098807693,
+          "status": "ok"
+        }
+      ],
+      "order_ref": "order_33",
+      "venue": "kalshi"
+    },
+    {
+      "event": "speeddesk_live_order",
+      "logged_at": "2026-10-14T14:19:45.680341602Z",
+      "at": 1791987585.4537385,
+      "window": "KXBTC15M-26OCT141030-30",
+      "state": "accepted; waiting for real fills",
+      "timing": {
+        "metric": "decision_to_ack",
+        "scope": "real_kalshi",
+        "at": 1791987584.8092408,
+        "value_ms": 644.3883748725057,
+        "status": "ok"
+      },
+      "stages": {
+        "save_ms": 26.034384965896606,
+        "decision_to_send_ms": 79.0725159458816,
+        "send_to_ack_ms": 565.3158589266241
+      },
+      "order_ref": "order_33"
+    },
+    {
+      "event": "speeddesk_live_order",
+      "logged_at": "2026-10-14T14:19:47.635993231Z",
+      "at": 1791987587.406516,
+      "window": "KXBTC15M-26OCT141030-30",
+      "side": "up",
+      "kind": "rest",
+      "price": 0.39,
+      "size": 4,
+      "fair": 0.42210445746961456,
+      "state": "durable intent",
+      "timing": [
+        {
+          "metric": "btc_exchange_to_decision",
+          "scope": "real_kalshi",
+          "at": 1791987587.4063933,
+          "value_ms": 947.9048494249582,
+          "status": "ok"
+        },
+        {
+          "metric": "btc_receipt_to_decision",
+          "scope": "real_kalshi",
+          "at": 1791987587.4063933,
+          "value_ms": 778.7823919206858,
+          "status": "ok"
+        }
+      ],
+      "order_ref": "order_34",
+      "venue": "kalshi"
+    },
+    {
+      "event": "speeddesk_live_order",
+      "logged_at": "2026-10-14T14:19:47.636128590Z",
+      "at": 1791987587.4824708,
+      "window": "KXBTC15M-26OCT141030-30",
+      "state": "accepted; waiting for real fills",
+      "timing": {
+        "metric": "decision_to_ack",
+        "scope": "real_kalshi",
+        "at": 1791987587.4063933,
+        "value_ms": 76.00132096558809,
+        "status": "ok"
+      },
+      "stages": {
+        "save_ms": 10.50883298739791,
+        "decision_to_send_ms": 20.921077113598585,
+        "send_to_ack_ms": 55.08024385198951
+      },
+      "order_ref": "order_34"
+    },
+    {
+      "event": "speeddesk_live_order",
+      "logged_at": "2026-10-14T14:19:51.746636718Z",
+      "at": 1791987590.465541,
+      "window": "KXBTC15M-26OCT141030-30",
+      "side": "up",
+      "kind": "rest",
+      "price": 0.39,
+      "size": 4,
+      "fair": 0.42978058029845245,
+      "state": "durable intent",
+      "timing": [
+        {
+          "metric": "btc_exchange_to_decision",
+          "scope": "real_kalshi",
+          "at": 1791987590.4654312,
+          "value_ms": 296.674117911607,
+          "status": "ok"
+        },
+        {
+          "metric": "btc_receipt_to_decision",
+          "scope": "real_kalshi",
+          "at": 1791987590.4654312,
+          "value_ms": 258.56433855369687,
+          "status": "ok"
+        }
+      ],
+      "order_ref": "order_4",
+      "venue": "kalshi"
+    },
+    {
+      "event": "speeddesk_live_order",
+      "logged_at": "2026-10-14T14:19:51.746641988Z",
+      "at": 1791987591.5834808,
+      "window": "KXBTC15M-26OCT141030-30",
+      "state": "accepted; waiting for real fills",
+      "timing": {
+        "metric": "decision_to_ack",
+        "scope": "real_kalshi",
+        "at": 1791987590.4654312,
+        "value_ms": 1117.9364854469895,
+        "status": "ok"
+      },
+      "stages": {
+        "save_ms": 21.267665084451437,
+        "decision_to_send_ms": 26.89389744773507,
+        "send_to_ack_ms": 1091.0425879992545
+      },
+      "order_ref": "order_4"
+    },
+    {
+      "event": "speeddesk_live_order",
+      "logged_at": "2026-10-14T14:19:56.014828802Z",
+      "at": 1791987592.9306867,
+      "window": "KXBTC15M-26OCT141030-30",
+      "side": "up",
+      "kind": "rest",
+      "price": 0.34,
+      "size": 2,
+      "fair": 0.3765456292617562,
+      "state": "durable intent",
+      "timing": [
+        {
+          "metric": "btc_exchange_to_decision",
+          "scope": "real_kalshi",
+          "at": 1791987592.9305928,
+          "value_ms": 528.9512034505606,
+          "status": "ok"
+        },
+        {
+          "metric": "btc_receipt_to_decision",
+          "scope": "real_kalshi",
+          "at": 1791987592.9305928,
+          "value_ms": 348.9625807851553,
+          "status": "ok"
+        }
+      ],
+      "order_ref": "order_35",
+      "venue": "kalshi"
+    },
+    {
+      "event": "speeddesk_live_order",
+      "logged_at": "2026-10-14T14:19:56.014835501Z",
+      "at": 1791987592.984492,
+      "window": "KXBTC15M-26OCT141030-30",
+      "state": "accepted; waiting for real fills",
+      "timing": {
+        "metric": "decision_to_ack",
+        "scope": "real_kalshi",
+        "at": 1791987592.9305928,
+        "value_ms": 53.839005064219236,
+        "status": "ok"
+      },
+      "stages": {
+        "save_ms": 19.733945839107037,
+        "decision_to_send_ms": 21.252053789794445,
+        "send_to_ack_ms": 32.58695127442479
+      },
+      "order_ref": "order_35"
+    },
+    {
+      "event": "speeddesk_live_order",
+      "logged_at": "2026-10-14T14:19:56.801226671Z",
+      "at": 1791987596.2312016,
+      "window": "KXBTC15M-26OCT141030-30",
+      "side": "up",
+      "kind": "rest",
+      "price": 0.34,
+      "size": 2,
+      "fair": 0.3757299651747229,
+      "state": "durable intent",
+      "timing": [
+        {
+          "metric": "btc_exchange_to_decision",
+          "scope": "real_kalshi",
+          "at": 1791987596.231106,
+          "value_ms": 80.20208636298776,
+          "status": "ok"
+        },
+        {
+          "metric": "btc_receipt_to_decision",
+          "scope": "real_kalshi",
+          "at": 1791987596.231106,
+          "value_ms": 58.46975604072213,
+          "status": "ok"
+        }
+      ],
+      "order_ref": "order_36",
+      "venue": "kalshi"
+    },
+    {
+      "event": "speeddesk_live_order",
+      "logged_at": "2026-10-14T14:19:56.801232811Z",
+      "at": 1791987596.7217479,
+      "window": "KXBTC15M-26OCT141030-30",
+      "state": "accepted; waiting for real fills",
+      "timing": {
+        "metric": "decision_to_ack",
+        "scope": "real_kalshi",
+        "at": 1791987596.231106,
+        "value_ms": 490.55343866348267,
+        "status": "ok"
+      },
+      "stages": {
+        "save_ms": 15.391912776976824,
+        "decision_to_send_ms": 26.483429595828056,
+        "send_to_ack_ms": 464.0700090676546
+      },
+      "order_ref": "order_36"
+    },
+    {
+      "event": "speeddesk_live_order",
+      "logged_at": "2026-10-14T14:19:58.620450420Z",
+      "at": 1791987598.1274626,
+      "window": "KXBTC15M-26OCT141030-30",
+      "side": "down",
+      "kind": "rest",
+      "price": 0.61,
+      "size": 2,
+      "fair": 0.6467551044876498,
+      "state": "durable intent",
+      "timing": [
+        {
+          "metric": "btc_exchange_to_decision",
+          "scope": "real_kalshi",
+          "at": 1791987598.127319,
+          "value_ms": 98.06264471262693,
+          "status": "ok"
+        },
+        {
+          "metric": "btc_receipt_to_decision",
+          "scope": "real_kalshi",
+          "at": 1791987598.127319,
+          "value_ms": 53.32029890269041,
+          "status": "ok"
+        }
+      ],
+      "order_ref": "order_37",
+      "venue": "kalshi"
+    },
+    {
+      "event": "speeddesk_live_order",
+      "logged_at": "2026-10-14T14:19:58.621211613Z",
+      "at": 1791987598.2069428,
+      "window": "KXBTC15M-26OCT141030-30",
+      "state": "accepted; waiting for real fills",
+      "timing": {
+        "metric": "decision_to_ack",
+        "scope": "real_kalshi",
+        "at": 1791987598.127319,
+        "value_ms": 79.53541120514274,
+        "status": "ok"
+      },
+      "stages": {
+        "save_ms": 18.62903591245413,
+        "decision_to_send_ms": 23.92860082909465,
+        "send_to_ack_ms": 55.60681037604809
+      },
+      "order_ref": "order_37"
+    },
+    {
+      "event": "speeddesk_live_order",
+      "logged_at": "2026-10-14T14:20:12.029678462Z",
+      "at": 1791987611.106175,
+      "window": "KXBTC15M-26OCT141030-30",
+      "side": "down",
+      "kind": "rest",
+      "price": 0.74,
+      "size": 2,
+      "fair": 0.7784678206457499,
+      "state": "durable intent",
+      "timing": [
+        {
+          "metric": "btc_exchange_to_decision",
+          "scope": "real_kalshi",
+          "at": 1791987611.1060789,
+          "value_ms": 132.79680768027902,
+          "status": "ok"
+        },
+        {
+          "metric": "btc_receipt_to_decision",
+          "scope": "real_kalshi",
+          "at": 1791987611.1060789,
+          "value_ms": 117.33607808128,
+          "status": "ok"
+        }
+      ],
+      "order_ref": "order_38",
+      "venue": "kalshi"
+    },
+    {
+      "event": "speeddesk_live_order",
+      "logged_at": "2026-10-14T14:20:12.029684642Z",
+      "at": 1791987611.2277293,
+      "window": "KXBTC15M-26OCT141030-30",
+      "state": "accepted; waiting for real fills",
+      "timing": {
+        "metric": "decision_to_ack",
+        "scope": "real_kalshi",
+        "at": 1791987611.1060789,
+        "value_ms": 121.5820130892098,
+        "status": "ok"
+      },
+      "stages": {
+        "save_ms": 34.60276406258345,
+        "decision_to_send_ms": 39.526423905044794,
+        "send_to_ack_ms": 82.055589184165
+      },
+      "order_ref": "order_38"
+    },
+    {
+      "event": "speeddesk_live_order",
+      "logged_at": "2026-10-14T14:20:15.826948973Z",
+      "at": 1791987615.5711102,
+      "window": "KXBTC15M-26OCT141030-30",
+      "side": "up",
+      "kind": "rest",
+      "price": 0.17,
+      "size": 2,
+      "fair": 0.20732376590845308,
+      "state": "durable intent",
+      "timing": [
+        {
+          "metric": "btc_exchange_to_decision",
+          "scope": "real_kalshi",
+          "at": 1791987615.5710094,
+          "value_ms": 190.34855579957366,
+          "status": "ok"
+        },
+        {
+          "metric": "btc_receipt_to_decision",
+          "scope": "real_kalshi",
+          "at": 1791987615.5710094,
+          "value_ms": 129.4116280041635,
+          "status": "ok"
+        }
+      ],
+      "order_ref": "order_39",
+      "venue": "kalshi"
+    },
+    {
+      "event": "speeddesk_live_order",
+      "logged_at": "2026-10-14T14:20:15.826969253Z",
+      "at": 1791987615.7249565,
+      "window": "KXBTC15M-26OCT141030-30",
+      "state": "accepted; waiting for real fills",
+      "timing": {
+        "metric": "decision_to_ack",
+        "scope": "real_kalshi",
+        "at": 1791987615.5710094,
+        "value_ms": 153.88183714821935,
+        "status": "ok"
+      },
+      "stages": {
+        "save_ms": 8.386861067265272,
+        "decision_to_send_ms": 30.616626143455505,
+        "send_to_ack_ms": 123.26521100476384
+      },
+      "order_ref": "order_39"
+    },
+    {
+      "event": "speeddesk_live_order",
+      "logged_at": "2026-10-14T14:20:27.838259179Z",
+      "at": 1791987626.9342473,
+      "window": "KXBTC15M-26OCT141030-30",
+      "side": "up",
+      "kind": "rest",
+      "price": 0.25,
+      "size": 2,
+      "fair": 0.2869337533383446,
+      "state": "durable intent",
+      "timing": [
+        {
+          "metric": "btc_exchange_to_decision",
+          "scope": "real_kalshi",
+          "at": 1791987626.9340985,
+          "value_ms": 177.68855998292565,
+          "status": "ok"
+        },
+        {
+          "metric": "btc_receipt_to_decision",
+          "scope": "real_kalshi",
+          "at": 1791987626.9340985,
+          "value_ms": 169.11169001832604,
+          "status": "ok"
+        }
+      ],
+      "order_ref": "order_40",
+      "venue": "kalshi"
+    },
+    {
+      "event": "speeddesk_live_order",
+      "logged_at": "2026-10-14T14:20:27.838268269Z",
+      "at": 1791987627.0034027,
+      "window": "KXBTC15M-26OCT141030-30",
+      "state": "accepted; waiting for real fills",
+      "timing": {
+        "metric": "decision_to_ack",
+        "scope": "real_kalshi",
+        "at": 1791987626.9340985,
+        "value_ms": 69.1820471547544,
+        "status": "ok"
+      },
+      "stages": {
+        "save_ms": 16.889370046555996,
+        "decision_to_send_ms": 21.06459718197584,
+        "send_to_ack_ms": 48.11744997277856
+      },
+      "order_ref": "order_40"
+    },
+    {
+      "event": "speeddesk_live_order",
+      "logged_at": "2026-10-14T14:20:27.838271869Z",
+      "at": 1791987627.578675,
+      "window": "KXBTC15M-26OCT141030-30",
+      "side": "down",
+      "kind": "rest",
+      "price": 0.67,
+      "size": 2,
+      "fair": 0.7085807718215354,
+      "state": "durable intent",
+      "timing": [
+        {
+          "metric": "btc_exchange_to_decision",
+          "scope": "real_kalshi",
+          "at": 1791987627.5785055,
+          "value_ms": 123.10101464390755,
+          "status": "ok"
+        },
+        {
+          "metric": "btc_receipt_to_decision",
+          "scope": "real_kalshi",
+          "at": 1791987627.5785055,
+          "value_ms": 96.7726893723011,
+          "status": "ok"
+        }
+      ],
+      "order_ref": "order_41",
+      "venue": "kalshi"
+    },
+    {
+      "event": "speeddesk_live_order",
+      "logged_at": "2026-10-14T14:20:27.838673905Z",
+      "at": 1791987627.7203996,
+      "window": "KXBTC15M-26OCT141030-30",
+      "state": "accepted; waiting for real fills",
+      "timing": {
+        "metric": "decision_to_ack",
+        "scope": "real_kalshi",
+        "at": 1791987627.5785055,
+        "value_ms": 141.77018590271473,
+        "status": "ok"
+      },
+      "stages": {
+        "save_ms": 27.207054663449526,
+        "decision_to_send_ms": 28.591282665729523,
+        "send_to_ack_ms": 113.1789032369852
+      },
+      "order_ref": "order_41"
+    },
+    {
+      "event": "speeddesk_live_order",
+      "logged_at": "2026-10-14T14:20:47.788614831Z",
+      "at": 1791987640.1247342,
+      "window": "KXBTC15M-26OCT141030-30",
+      "side": "down",
+      "kind": "rest",
+      "price": 0.68,
+      "size": 2,
+      "fair": 0.7199049144278883,
+      "state": "durable intent",
+      "timing": [
+        {
+          "metric": "btc_exchange_to_decision",
+          "scope": "real_kalshi",
+          "at": 1791987640.1246302,
+          "value_ms": 83.85402103886008,
+          "status": "ok"
+        },
+        {
+          "metric": "btc_receipt_to_decision",
+          "scope": "real_kalshi",
+          "at": 1791987640.1246302,
+          "value_ms": 6.667674984782934,
+          "status": "ok"
+        }
+      ],
+      "order_ref": "order_42",
+      "venue": "kalshi"
+    },
+    {
+      "event": "speeddesk_live_order",
+      "logged_at": "2026-10-14T14:20:47.788839239Z",
+      "at": 1791987640.302786,
+      "window": "KXBTC15M-26OCT141030-30",
+      "state": "accepted; waiting for real fills",
+      "timing": {
+        "metric": "decision_to_ack",
+        "scope": "real_kalshi",
+        "at": 1791987640.1246302,
+        "value_ms": 178.0881560407579,
+        "status": "ok"
+      },
+      "stages": {
+        "save_ms": 21.238744724541903,
+        "decision_to_send_ms": 46.029139310121536,
+        "send_to_ack_ms": 132.05901673063636
+      },
+      "order_ref": "order_42"
+    },
+    {
+      "event": "speeddesk_live_order",
+      "logged_at": "2026-10-14T14:20:47.788998568Z",
+      "at": 1791987643.082091,
+      "window": "KXBTC15M-26OCT141030-30",
+      "side": "up",
+      "kind": "rest",
+      "price": 0.26,
+      "size": 2,
+      "fair": 0.29807799965431797,
+      "state": "durable intent",
+      "timing": [
+        {
+          "metric": "btc_exchange_to_decision",
+          "scope": "real_kalshi",
+          "at": 1791987643.081986,
+          "value_ms": 110.75669573619962,
+          "status": "ok"
+        },
+        {
+          "metric": "btc_receipt_to_decision",
+          "scope": "real_kalshi",
+          "at": 1791987643.081986,
+          "value_ms": 77.54045771434903,
+          "status": "ok"
+        }
+      ],
+      "order_ref": "order_43",
+      "venue": "kalshi"
+    },
+    {
+      "event": "speeddesk_live_order",
+      "logged_at": "2026-10-14T14:20:47.789005398Z",
+      "at": 1791987644.0730374,
+      "window": "KXBTC15M-26OCT141030-30",
+      "state": "accepted; waiting for real fills",
+      "timing": {
+        "metric": "decision_to_ack",
+        "scope": "real_kalshi",
+        "at": 1791987643.081986,
+        "value_ms": 990.9452060237527,
+        "status": "ok"
+      },
+      "stages": {
+        "save_ms": 14.912386424839497,
+        "decision_to_send_ms": 44.67404028400779,
+        "send_to_ack_ms": 946.2711657397449
+      },
+      "order_ref": "order_43"
+    },
+    {
+      "event": "speeddesk_live_order",
+      "logged_at": "2026-10-14T14:20:47.789542103Z",
+      "at": 1791987646.1493542,
+      "window": "KXBTC15M-26OCT141030-30",
+      "side": "up",
+      "kind": "rest",
+      "price": 0.26,
+      "size": 2,
+      "fair": 0.2995739017146506,
+      "state": "durable intent",
+      "timing": [
+        {
+          "metric": "btc_exchange_to_decision",
+          "scope": "real_kalshi",
+          "at": 1791987646.1492531,
+          "value_ms": 297.5616119801998,
+          "status": "ok"
+        },
+        {
+          "metric": "btc_receipt_to_decision",
+          "scope": "real_kalshi",
+          "at": 1791987646.1492531,
+          "value_ms": 230.3139828145504,
+          "status": "ok"
+        }
+      ],
+      "order_ref": "order_5",
+      "venue": "kalshi"
+    },
+    {
+      "event": "speeddesk_live_order",
+      "logged_at": "2026-10-14T14:20:47.789549433Z",
+      "at": 1791987646.354028,
+      "window": "KXBTC15M-26OCT141030-30",
+      "state": "accepted; waiting for real fills",
+      "timing": {
+        "metric": "decision_to_ack",
+        "scope": "real_kalshi",
+        "at": 1791987646.1492531,
+        "value_ms": 204.7034353017807,
+        "status": "ok"
+      },
+      "stages": {
+        "save_ms": 12.696994934231043,
+        "decision_to_send_ms": 103.77043019980192,
+        "send_to_ack_ms": 100.93300510197878
+      },
+      "order_ref": "order_5"
+    },
+    {
+      "event": "speeddesk_live_order",
+      "logged_at": "2026-10-14T14:20:50.306701623Z",
+      "at": 1791987646.8180938,
+      "window": "KXBTC15M-26OCT141030-30",
+      "side": "down",
+      "kind": "rest",
+      "price": 0.67,
+      "size": 2,
+      "fair": 0.7005449316764837,
+      "state": "durable intent",
+      "timing": [
+        {
+          "metric": "btc_exchange_to_decision",
+          "scope": "real_kalshi",
+          "at": 1791987646.817982,
+          "value_ms": 40.82751786336303,
+          "status": "ok"
+        },
+        {
+          "metric": "btc_receipt_to_decision",
+          "scope": "real_kalshi",
+          "at": 1791987646.817982,
+          "value_ms": 7.800345774739981,
+          "status": "ok"
+        }
+      ],
+      "order_ref": "order_44",
+      "venue": "kalshi"
+    },
+    {
+      "event": "speeddesk_live_order",
+      "logged_at": "2026-10-14T14:20:50.310521551Z",
+      "at": 1791987646.8772664,
+      "window": "KXBTC15M-26OCT141030-30",
+      "state": "accepted; waiting for real fills",
+      "timing": {
+        "metric": "decision_to_ack",
+        "scope": "real_kalshi",
+        "at": 1791987646.817982,
+        "value_ms": 59.209940023720264,
+        "status": "ok"
+      },
+      "stages": {
+        "save_ms": 12.57222704589367,
+        "decision_to_send_ms": 20.657779183238745,
+        "send_to_ack_ms": 38.55216084048152
+      },
+      "order_ref": "order_44"
+    },
+    {
+      "event": "speeddesk_live_order",
+      "logged_at": "2026-10-14T14:20:56.835612766Z",
+      "at": 1791987653.1396513,
+      "window": "KXBTC15M-26OCT141030-30",
+      "side": "down",
+      "kind": "rest",
+      "price": 0.68,
+      "size": 5,
+      "fair": 0.7127003934843532,
+      "state": "durable intent",
+      "timing": [
+        {
+          "metric": "btc_exchange_to_decision",
+          "scope": "real_kalshi",
+          "at": 1791987653.1395047,
+          "value_ms": 813.62543720752,
+          "status": "ok"
+        },
+        {
+          "metric": "btc_receipt_to_decision",
+          "scope": "real_kalshi",
+          "at": 1791987653.1395047,
+          "value_ms": 580.3001942113042,
+          "status": "ok"
+        }
+      ],
+      "order_ref": "order_6",
+      "venue": "kalshi"
+    },
+    {
+      "event": "speeddesk_live_order",
+      "logged_at": "2026-10-14T14:20:56.835624466Z",
+      "at": 1791987653.7658274,
+      "window": "KXBTC15M-26OCT141030-30",
+      "state": "accepted; waiting for real fills",
+      "timing": {
+        "metric": "decision_to_ack",
+        "scope": "real_kalshi",
+        "at": 1791987653.1395047,
+        "value_ms": 626.2210756540298,
+        "status": "ok"
+      },
+      "stages": {
+        "save_ms": 18.267348874360323,
+        "decision_to_send_ms": 60.67575793713331,
+        "send_to_ack_ms": 565.5453177168965
+      },
+      "order_ref": "order_6"
+    },
+    {
+      "event": "speeddesk_live_order",
+      "logged_at": "2026-10-14T14:21:05.278470053Z",
+      "at": 1791987665.128437,
+      "window": "KXBTC15M-26OCT141030-30",
+      "side": "up",
+      "kind": "rest",
+      "price": 0.23,
+      "size": 5,
+      "fair": 0.2695652681876861,
+      "state": "durable intent",
+      "timing": [
+        {
+          "metric": "btc_exchange_to_decision",
+          "scope": "real_kalshi",
+          "at": 1791987665.1282616,
+          "value_ms": 381.60679070279,
+          "status": "ok"
+        },
+        {
+          "metric": "btc_receipt_to_decision",
+          "scope": "real_kalshi",
+          "at": 1791987665.1282616,
+          "value_ms": 362.556669395417,
+          "status": "ok"
+        }
+      ],
+      "order_ref": "order_45",
+      "venue": "kalshi"
+    },
+    {
+      "event": "speeddesk_live_order",
+      "logged_at": "2026-10-14T14:21:05.278474893Z",
+      "at": 1791987665.2185736,
+      "window": "KXBTC15M-26OCT141030-30",
+      "state": "accepted; waiting for real fills",
+      "timing": {
+        "metric": "decision_to_ack",
+        "scope": "real_kalshi",
+        "at": 1791987665.1282616,
+        "value_ms": 90.19584255293012,
+        "status": "ok"
+      },
+      "stages": {
+        "save_ms": 28.502493631094694,
+        "decision_to_send_ms": 54.25452999770641,
+        "send_to_ack_ms": 35.9413125552237
+      },
+      "order_ref": "order_45"
+    },
+    {
+      "event": "speeddesk_live_order",
+      "logged_at": "2026-10-14T14:21:47.314335026Z",
+      "at": 1791987706.193807,
+      "window": "KXBTC15M-26OCT141030-30",
+      "side": "down",
+      "kind": "rest",
+      "price": 0.67,
+      "size": 1,
+      "fair": 0.7061717667571837,
+      "state": "durable intent",
+      "timing": [
+        {
+          "metric": "btc_exchange_to_decision",
+          "scope": "real_kalshi",
+          "at": 1791987706.1936603,
+          "value_ms": 550.8085857145488,
+          "status": "ok"
+        },
+        {
+          "metric": "btc_receipt_to_decision",
+          "scope": "real_kalshi",
+          "at": 1791987706.1936603,
+          "value_ms": 12.104190420359373,
+          "status": "ok"
+        }
+      ],
+      "order_ref": "order_7",
+      "venue": "kalshi"
+    },
+    {
+      "event": "speeddesk_live_order",
+      "logged_at": "2026-10-14T14:21:47.314343536Z",
+      "at": 1791987707.2023187,
+      "window": "KXBTC15M-26OCT141030-30",
+      "state": "accepted; waiting for real fills",
+      "timing": {
+        "metric": "decision_to_ack",
+        "scope": "real_kalshi",
+        "at": 1791987706.1936603,
+        "value_ms": 1008.5398186929524,
+        "status": "ok"
+      },
+      "stages": {
+        "save_ms": 10.049037169665098,
+        "decision_to_send_ms": 223.99886371567845,
+        "send_to_ack_ms": 784.5409549772739
+      },
+      "order_ref": "order_7"
+    },
+    {
+      "event": "speeddesk_live_order",
+      "logged_at": "2026-10-14T14:22:20.749604811Z",
+      "at": 1791987739.682815,
+      "window": "KXBTC15M-26OCT141030-30",
+      "side": "up",
+      "kind": "rest",
+      "price": 0.4,
+      "size": 5,
+      "fair": 0.4325109839971663,
+      "state": "durable intent",
+      "timing": [
+        {
+          "metric": "btc_exchange_to_decision",
+          "scope": "real_kalshi",
+          "at": 1791987739.6826677,
+          "value_ms": 371.99245765805244,
+          "status": "ok"
+        },
+        {
+          "metric": "btc_receipt_to_decision",
+          "scope": "real_kalshi",
+          "at": 1791987739.6826677,
+          "value_ms": 304.9837239086628,
+          "status": "ok"
+        }
+      ],
+      "order_ref": "order_52",
+      "venue": "kalshi"
+    },
+    {
+      "event": "speeddesk_live_order",
+      "logged_at": "2026-10-14T14:22:20.749609741Z",
+      "at": 1791987740.6450508,
+      "window": "KXBTC15M-26OCT141030-30",
+      "state": "not sent; prices moved before send",
+      "order_ref": "order_52",
+      "venue": "kalshi"
+    },
+    {
+      "event": "speeddesk_live_order",
+      "logged_at": "2026-10-14T14:22:26.583521846Z",
+      "at": 1791987746.3803806,
+      "window": "KXBTC15M-26OCT141030-30",
+      "side": "up",
+      "kind": "rest",
+      "price": 0.29,
+      "size": 5,
+      "fair": 0.32877654489677843,
+      "state": "durable intent",
+      "timing": [
+        {
+          "metric": "btc_exchange_to_decision",
+          "scope": "real_kalshi",
+          "at": 1791987746.3802156,
+          "value_ms": 383.41867458075285,
+          "status": "ok"
+        },
+        {
+          "metric": "btc_receipt_to_decision",
+          "scope": "real_kalshi",
+          "at": 1791987746.3802156,
+          "value_ms": 236.3456441089511,
+          "status": "ok"
+        }
+      ],
+      "order_ref": "order_46",
+      "venue": "kalshi"
+    },
+    {
+      "event": "speeddesk_live_order",
+      "logged_at": "2026-10-14T14:22:26.583525276Z",
+      "at": 1791987746.4736416,
+      "window": "KXBTC15M-26OCT141030-30",
+      "state": "accepted; waiting for real fills",
+      "timing": {
+        "metric": "decision_to_ack",
+        "scope": "real_kalshi",
+        "at": 1791987746.3802156,
+        "value_ms": 93.31100713461637,
+        "status": "ok"
+      },
+      "stages": {
+        "save_ms": 14.451561030000448,
+        "decision_to_send_ms": 25.948634836822748,
+        "send_to_ack_ms": 67.36237229779363
+      },
+      "order_ref": "order_46"
+    },
+    {
+      "event": "speeddesk_live_order",
+      "logged_at": "2026-10-14T14:22:32.407401113Z",
+      "at": 1791987752.2020478,
+      "window": "KXBTC15M-26OCT141030-30",
+      "side": "up",
+      "kind": "rest",
+      "price": 0.28,
+      "size": 5,
+      "fair": 0.3109100863630389,
+      "state": "durable intent",
+      "timing": [
+        {
+          "metric": "btc_exchange_to_decision",
+          "scope": "real_kalshi",
+          "at": 1791987752.201944,
+          "value_ms": 260.7554728165269,
+          "status": "ok"
+        },
+        {
+          "metric": "btc_receipt_to_decision",
+          "scope": "real_kalshi",
+          "at": 1791987752.201944,
+          "value_ms": 160.0930029526353,
+          "status": "ok"
+        }
+      ],
+      "order_ref": "order_47",
+      "venue": "kalshi"
+    },
+    {
+      "event": "speeddesk_live_order",
+      "logged_at": "2026-10-14T14:22:32.407405353Z",
+      "at": 1791987752.3064563,
+      "window": "KXBTC15M-26OCT141030-30",
+      "state": "accepted; waiting for real fills",
+      "timing": {
+        "metric": "decision_to_ack",
+        "scope": "real_kalshi",
+        "at": 1791987752.201944,
+        "value_ms": 104.44102576002479,
+        "status": "ok"
+      },
+      "stages": {
+        "save_ms": 22.838491015136242,
+        "decision_to_send_ms": 52.59607592597604,
+        "send_to_ack_ms": 51.84494983404875
+      },
+      "order_ref": "order_47"
+    },
+    {
+      "event": "speeddesk_live_order",
+      "logged_at": "2026-10-14T14:22:35.550832964Z",
+      "at": 1791987755.362973,
+      "window": "KXBTC15M-26OCT141030-30",
+      "side": "up",
+      "kind": "rest",
+      "price": 0.29,
+      "size": 5,
+      "fair": 0.32868373611537466,
+      "state": "durable intent",
+      "timing": [
+        {
+          "metric": "btc_exchange_to_decision",
+          "scope": "real_kalshi",
+          "at": 1791987755.3626797,
+          "value_ms": 424.4561758823693,
+          "status": "ok"
+        },
+        {
+          "metric": "btc_receipt_to_decision",
+          "scope": "real_kalshi",
+          "at": 1791987755.3626797,
+          "value_ms": 355.57442577555776,
+          "status": "ok"
+        }
+      ],
+      "order_ref": "order_48",
+      "venue": "kalshi"
+    },
+    {
+      "event": "speeddesk_live_order",
+      "logged_at": "2026-10-14T14:22:35.550838464Z",
+      "at": 1791987755.490405,
+      "window": "KXBTC15M-26OCT141030-30",
+      "state": "accepted; waiting for real fills",
+      "timing": {
+        "metric": "decision_to_ack",
+        "scope": "real_kalshi",
+        "at": 1791987755.3626797,
+        "value_ms": 127.62152403593063,
+        "status": "ok"
+      },
+      "stages": {
+        "save_ms": 15.251453034579754,
+        "decision_to_send_ms": 26.52313094586134,
+        "send_to_ack_ms": 101.0983930900693
+      },
+      "order_ref": "order_48"
+    },
+    {
+      "event": "speeddesk_live_order",
+      "logged_at": "2026-10-14T14:22:57.310060453Z",
+      "at": 1791987767.971487,
+      "window": "KXBTC15M-26OCT141030-30",
+      "side": "up",
+      "kind": "rest",
+      "price": 0.27,
+      "size": 5,
+      "fair": 0.30624940220393015,
+      "state": "durable intent",
+      "timing": [
+        {
+          "metric": "btc_exchange_to_decision",
+          "scope": "real_kalshi",
+          "at": 1791987767.971311,
+          "value_ms": 286.2533829174936,
+          "status": "ok"
+        },
+        {
+          "metric": "btc_receipt_to_decision",
+          "scope": "real_kalshi",
+          "at": 1791987767.971311,
+          "value_ms": 250.03617024049163,
+          "status": "ok"
+        }
+      ],
+      "order_ref": "order_49",
+      "venue": "kalshi"
+    },
+    {
+      "event": "speeddesk_live_order",
+      "logged_at": "2026-10-14T14:22:57.310063533Z",
+      "at": 1791987768.045701,
+      "window": "KXBTC15M-26OCT141030-30",
+      "state": "accepted; waiting for real fills",
+      "timing": {
+        "metric": "decision_to_ack",
+        "scope": "real_kalshi",
+        "at": 1791987767.971311,
+        "value_ms": 74.26705490797758,
+        "status": "ok"
+      },
+      "stages": {
+        "save_ms": 13.368480373173952,
+        "decision_to_send_ms": 31.755666714161634,
+        "send_to_ack_ms": 42.51138819381595
+      },
+      "order_ref": "order_49"
+    },
+    {
+      "event": "speeddesk_live_order",
+      "logged_at": "2026-10-14T14:22:57.310069943Z",
+      "at": 1791987770.6523058,
+      "window": "KXBTC15M-26OCT141030-30",
+      "side": "up",
+      "kind": "rest",
+      "price": 0.28,
+      "size": 5,
+      "fair": 0.3197943744258738,
+      "state": "durable intent",
+      "timing": [
+        {
+          "metric": "btc_exchange_to_decision",
+          "scope": "real_kalshi",
+          "at": 1791987770.6521325,
+          "value_ms": 222.1291270107031,
+          "status": "ok"
+        },
+        {
+          "metric": "btc_receipt_to_decision",
+          "scope": "real_kalshi",
+          "at": 1791987770.6521325,
+          "value_ms": 168.48971508443356,
+          "status": "ok"
+        }
+      ],
+      "order_ref": "order_50",
+      "venue": "kalshi"
+    },
+    {
+      "event": "speeddesk_live_order",
+      "logged_at": "2026-10-14T14:22:57.312581202Z",
+      "at": 1791987771.17871,
+      "window": "KXBTC15M-26OCT141030-30",
+      "state": "accepted; waiting for real fills",
+      "timing": {
+        "metric": "decision_to_ack",
+        "scope": "real_kalshi",
+        "at": 1791987770.6521325,
+        "value_ms": 526.4518111944199,
+        "status": "ok"
+      },
+      "stages": {
+        "save_ms": 11.745423078536987,
+        "decision_to_send_ms": 19.75018624216318,
+        "send_to_ack_ms": 506.7016249522567
+      },
+      "order_ref": "order_50"
+    },
+    {
+      "event": "speeddesk_live_order",
+      "logged_at": "2026-10-14T14:22:58.645375356Z",
+      "at": 1791987777.6062715,
+      "window": "KXBTC15M-26OCT141030-30",
+      "side": "up",
+      "kind": "rest",
+      "price": 0.33,
+      "size": 5,
+      "fair": 0.369061634504008,
+      "state": "durable intent",
+      "timing": [
+        {
+          "metric": "btc_exchange_to_decision",
+          "scope": "real_kalshi",
+          "at": 1791987777.6060975,
+          "value_ms": 111.49167269468307,
+          "status": "ok"
+        },
+        {
+          "metric": "btc_receipt_to_decision",
+          "scope": "real_kalshi",
+          "at": 1791987777.6060975,
+          "value_ms": 19.394628703594208,
+          "status": "ok"
+        }
+      ],
+      "order_ref": "order_8",
+      "venue": "kalshi"
+    },
+    {
+      "event": "speeddesk_live_order",
+      "logged_at": "2026-10-14T14:22:58.645378946Z",
+      "at": 1791987778.4970708,
+      "window": "KXBTC15M-26OCT141030-30",
+      "state": "accepted; waiting for real fills",
+      "timing": {
+        "metric": "decision_to_ack",
+        "scope": "real_kalshi",
+        "at": 1791987777.6060975,
+        "value_ms": 890.8429639413953,
+        "status": "ok"
+      },
+      "stages": {
+        "save_ms": 15.092785935848951,
+        "decision_to_send_ms": 308.3406570367515,
+        "send_to_ack_ms": 582.5023069046438
+      },
+      "order_ref": "order_8"
+    },
+    {
+      "event": "speeddesk_live_order",
+      "logged_at": "2026-10-14T14:23:05.162289544Z",
+      "at": 1791987784.0272567,
+      "window": "KXBTC15M-26OCT141030-30",
+      "state": "accepted; waiting for real fills",
+      "timing": {
+        "metric": "decision_to_ack",
+        "scope": "real_kalshi",
+        "at": 1791987783.8829048,
+        "value_ms": 144.28179617971182,
+        "status": "ok"
+      },
+      "stages": {
+        "save_ms": 28.70118198916316,
+        "decision_to_send_ms": 31.874835956841707,
+        "send_to_ack_ms": 112.40696022287011
+      },
+      "order_ref": "order_9"
+    },
+    {
+      "event": "speeddesk_live_order",
+      "logged_at": "2026-10-14T14:23:05.162342134Z",
+      "at": 1791987783.883035,
+      "window": "KXBTC15M-26OCT141030-30",
+      "side": "up",
+      "kind": "rest",
+      "price": 0.29,
+      "size": 2,
+      "fair": 0.325824960068582,
+      "state": "durable intent",
+      "timing": [
+        {
+          "metric": "btc_exchange_to_decision",
+          "scope": "real_kalshi",
+          "at": 1791987783.8829048,
+          "value_ms": 328.6776808090508,
+          "status": "ok"
+        },
+        {
+          "metric": "btc_receipt_to_decision",
+          "scope": "real_kalshi",
+          "at": 1791987783.8829048,
+          "value_ms": 320.52233489230275,
+          "status": "ok"
+        }
+      ],
+      "order_ref": "order_9",
+      "venue": "kalshi"
+    },
+    {
+      "event": "speeddesk_live_order",
+      "logged_at": "2026-10-14T14:23:09.942342943Z",
+      "at": 1791987789.765487,
+      "window": "KXBTC15M-26OCT141030-30",
+      "side": "up",
+      "kind": "rest",
+      "price": 0.22,
+      "size": 1,
+      "fair": 0.2507658563944536,
+      "state": "durable intent",
+      "timing": [
+        {
+          "metric": "btc_exchange_to_decision",
+          "scope": "real_kalshi",
+          "at": 1791987789.7653725,
+          "value_ms": 440.8958298154175,
+          "status": "ok"
+        },
+        {
+          "metric": "btc_receipt_to_decision",
+          "scope": "real_kalshi",
+          "at": 1791987789.7653725,
+          "value_ms": 196.72564091160893,
+          "status": "ok"
+        }
+      ],
+      "order_ref": "order_10",
+      "venue": "kalshi"
+    },
+    {
+      "event": "speeddesk_live_order",
+      "logged_at": "2026-10-14T14:23:09.942346753Z",
+      "at": 1791987789.8606339,
+      "window": "KXBTC15M-26OCT141030-30",
+      "state": "accepted; waiting for real fills",
+      "timing": {
+        "metric": "decision_to_ack",
+        "scope": "real_kalshi",
+        "at": 1791987789.7653725,
+        "value_ms": 95.19399190321565,
+        "status": "ok"
+      },
+      "stages": {
+        "save_ms": 11.717212852090597,
+        "decision_to_send_ms": 34.31640611961484,
+        "send_to_ack_ms": 60.87758578360081
+      },
+      "order_ref": "order_10"
+    }
+  ]
+}

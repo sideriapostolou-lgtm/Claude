@@ -1,0 +1,2578 @@
+{
+  "fixtures": {
+    "zero": {
+      "variants": {
+        "baseline": {
+          "operations": {
+            "checkpoint": {
+              "wall_ms": {
+                "n": 15,
+                "median": 1.752094,
+                "p95_nearest_rank": 2.190869,
+                "min": 1.671372,
+                "max": 2.190869
+              },
+              "thread_cpu_ms": {
+                "n": 15,
+                "median": 1.752252,
+                "p95_nearest_rank": 2.096385,
+                "min": 1.671441,
+                "max": 2.096385
+              }
+            },
+            "daily_reports": {
+              "wall_ms": {
+                "n": 15,
+                "median": 0.239521,
+                "p95_nearest_rank": 0.313119,
+                "min": 0.188655,
+                "max": 0.313119
+              },
+              "thread_cpu_ms": {
+                "n": 15,
+                "median": 0.239557,
+                "p95_nearest_rank": 0.300431,
+                "min": 0.188793,
+                "max": 0.300431
+              }
+            },
+            "summary": {
+              "wall_ms": {
+                "n": 15,
+                "median": 0.195217,
+                "p95_nearest_rank": 0.28712,
+                "min": 0.160141,
+                "max": 0.28712
+              },
+              "thread_cpu_ms": {
+                "n": 15,
+                "median": 0.195876,
+                "p95_nearest_rank": 0.287617,
+                "min": 0.16038,
+                "max": 0.287617
+              }
+            }
+          },
+          "first_full_checkpoint": {
+            "wall_ms": {
+              "n": 3,
+              "median": 5.728089,
+              "p95_nearest_rank": 6.121639,
+              "min": 5.566766,
+              "max": 6.121639
+            },
+            "thread_cpu_ms": {
+              "n": 3,
+              "median": 4.944192,
+              "p95_nearest_rank": 5.426051,
+              "min": 4.914798,
+              "max": 5.426051
+            }
+          },
+          "correction_checkpoint": {
+            "wall_ms": {
+              "n": 3,
+              "median": 2.801567,
+              "p95_nearest_rank": 2.81315,
+              "min": 2.595409,
+              "max": 2.81315
+            },
+            "thread_cpu_ms": {
+              "n": 3,
+              "median": 2.772658,
+              "p95_nearest_rank": 2.801141,
+              "min": 2.595126,
+              "max": 2.801141
+            }
+          },
+          "max_RSS_kib": 50208,
+          "runtime_forbidden_attempts": 0,
+          "blocked_import_probes": 3,
+          "mirror_bytes": 32786,
+          "kv_bytes": 32786,
+          "receipts": {
+            "chain_valid": true,
+            "count": 12,
+            "kinds": {
+              "speeddesk_daily": 1,
+              "speeddesk_daily_correction": 1,
+              "speeddesk_fill": 6,
+              "speeddesk_rest": 4
+            },
+            "payload_bytes": 20173,
+            "tail_hash": "5e9335190a688e2d58606e5577cfd13e7dfc01294cd73b98c04f89a0a627550a"
+          }
+        },
+        "candidate": {
+          "operations": {
+            "checkpoint": {
+              "wall_ms": {
+                "n": 15,
+                "median": 1.84051,
+                "p95_nearest_rank": 2.430811,
+                "min": 1.786278,
+                "max": 2.430811
+              },
+              "thread_cpu_ms": {
+                "n": 15,
+                "median": 1.827903,
+                "p95_nearest_rank": 2.42026,
+                "min": 1.774724,
+                "max": 2.42026
+              }
+            },
+            "daily_reports": {
+              "wall_ms": {
+                "n": 15,
+                "median": 0.255801,
+                "p95_nearest_rank": 0.377279,
+                "min": 0.190819,
+                "max": 0.377279
+              },
+              "thread_cpu_ms": {
+                "n": 15,
+                "median": 0.255597,
+                "p95_nearest_rank": 0.377495,
+                "min": 0.190986,
+                "max": 0.377495
+              }
+            },
+            "summary": {
+              "wall_ms": {
+                "n": 15,
+                "median": 0.176682,
+                "p95_nearest_rank": 0.269857,
+                "min": 0.160442,
+                "max": 0.269857
+              },
+              "thread_cpu_ms": {
+                "n": 15,
+                "median": 0.177081,
+                "p95_nearest_rank": 0.271086,
+                "min": 0.16082,
+                "max": 0.271086
+              }
+            }
+          },
+          "first_full_checkpoint": {
+            "wall_ms": {
+              "n": 3,
+              "median": 5.46256,
+              "p95_nearest_rank": 5.846361,
+              "min": 5.307338,
+              "max": 5.846361
+            },
+            "thread_cpu_ms": {
+              "n": 3,
+              "median": 4.661676,
+              "p95_nearest_rank": 5.109251,
+              "min": 4.51473,
+              "max": 5.109251
+            }
+          },
+          "correction_checkpoint": {
+            "wall_ms": {
+              "n": 3,
+              "median": 2.742206,
+              "p95_nearest_rank": 2.961467,
+              "min": 2.704875,
+              "max": 2.961467
+            },
+            "thread_cpu_ms": {
+              "n": 3,
+              "median": 2.74168,
+              "p95_nearest_rank": 2.961009,
+              "min": 2.70438,
+              "max": 2.961009
+            }
+          },
+          "max_RSS_kib": 48220,
+          "runtime_forbidden_attempts": 0,
+          "blocked_import_probes": 3,
+          "mirror_bytes": 32786,
+          "kv_bytes": 32786,
+          "receipts": {
+            "chain_valid": true,
+            "count": 12,
+            "kinds": {
+              "speeddesk_daily": 1,
+              "speeddesk_daily_correction": 1,
+              "speeddesk_fill": 6,
+              "speeddesk_rest": 4
+            },
+            "payload_bytes": 20173,
+            "tail_hash": "5e9335190a688e2d58606e5577cfd13e7dfc01294cd73b98c04f89a0a627550a"
+          }
+        }
+      },
+      "byte_comparisons": {
+        "fixture": "zero",
+        "checks": [
+          {
+            "phase": "first",
+            "kind": "kv",
+            "bytes": 32004,
+            "sha256": "3f4516ccf9800c3baaa976a1cf05ab44bf0211d5562a46da51fbbde2a512e8f3",
+            "byte_equal": true
+          },
+          {
+            "phase": "first",
+            "kind": "mirror",
+            "bytes": 32004,
+            "sha256": "3f4516ccf9800c3baaa976a1cf05ab44bf0211d5562a46da51fbbde2a512e8f3",
+            "byte_equal": true
+          },
+          {
+            "phase": "first",
+            "kind": "receipts",
+            "bytes": 12914,
+            "sha256": "60375a82fb05e6de8ceee0388492fdb439f8431c59e48050ae5268d6ebc42db3",
+            "byte_equal": true
+          },
+          {
+            "phase": "correction",
+            "kind": "kv",
+            "bytes": 32786,
+            "sha256": "cc5d02f6b6631b93f03ddcef18f2eed9de5aa9ca7ae584bcbe6705180aa22ea2",
+            "byte_equal": true
+          },
+          {
+            "phase": "correction",
+            "kind": "mirror",
+            "bytes": 32786,
+            "sha256": "cc5d02f6b6631b93f03ddcef18f2eed9de5aa9ca7ae584bcbe6705180aa22ea2",
+            "byte_equal": true
+          },
+          {
+            "phase": "correction",
+            "kind": "receipts",
+            "bytes": 22782,
+            "sha256": "25c2b5aa823a3a757e741708cb2291ff15c1306cbe37201c38d9c4af389194fa",
+            "byte_equal": true
+          },
+          {
+            "phase": "steady",
+            "kind": "kv",
+            "bytes": 32786,
+            "sha256": "cc5d02f6b6631b93f03ddcef18f2eed9de5aa9ca7ae584bcbe6705180aa22ea2",
+            "byte_equal": true
+          },
+          {
+            "phase": "steady",
+            "kind": "mirror",
+            "bytes": 32786,
+            "sha256": "cc5d02f6b6631b93f03ddcef18f2eed9de5aa9ca7ae584bcbe6705180aa22ea2",
+            "byte_equal": true
+          },
+          {
+            "phase": "steady",
+            "kind": "receipts",
+            "bytes": 22782,
+            "sha256": "25c2b5aa823a3a757e741708cb2291ff15c1306cbe37201c38d9c4af389194fa",
+            "byte_equal": true
+          }
+        ]
+      },
+      "counts": {
+        "evidence_fills": 4,
+        "settlements": 0,
+        "unresolved": 4,
+        "windows": 4
+      },
+      "paired_process_median_ratios": {
+        "wall_ms": [
+          1.2128166415420247,
+          0.9159261057543143,
+          1.0649302305919157
+        ],
+        "wall_ms_repeatable_gt_5pct": true,
+        "thread_cpu_ms": [
+          1.2131645237683606,
+          0.9497850835821083,
+          1.0569490832854365
+        ],
+        "thread_cpu_ms_repeatable_gt_5pct": true
+      },
+      "checkpoint_median_percent_change": {
+        "wall_ms": 5.046304593246709,
+        "thread_cpu_ms": 4.317358462139009
+      },
+      "max_RSS_percent_change": -3.95952836201402,
+      "regression_gate_passed": false
+    },
+    "one": {
+      "variants": {
+        "baseline": {
+          "operations": {
+            "checkpoint": {
+              "wall_ms": {
+                "n": 15,
+                "median": 1.942091,
+                "p95_nearest_rank": 2.108384,
+                "min": 1.771581,
+                "max": 2.108384
+              },
+              "thread_cpu_ms": {
+                "n": 15,
+                "median": 1.931847,
+                "p95_nearest_rank": 2.097838,
+                "min": 1.76182,
+                "max": 2.097838
+              }
+            },
+            "daily_reports": {
+              "wall_ms": {
+                "n": 15,
+                "median": 0.241545,
+                "p95_nearest_rank": 0.389732,
+                "min": 0.200827,
+                "max": 0.389732
+              },
+              "thread_cpu_ms": {
+                "n": 15,
+                "median": 0.241762,
+                "p95_nearest_rank": 0.379328,
+                "min": 0.200924,
+                "max": 0.379328
+              }
+            },
+            "summary": {
+              "wall_ms": {
+                "n": 15,
+                "median": 0.184978,
+                "p95_nearest_rank": 0.234251,
+                "min": 0.168727,
+                "max": 0.234251
+              },
+              "thread_cpu_ms": {
+                "n": 15,
+                "median": 0.185045,
+                "p95_nearest_rank": 0.234928,
+                "min": 0.169116,
+                "max": 0.234928
+              }
+            }
+          },
+          "first_full_checkpoint": {
+            "wall_ms": {
+              "n": 3,
+              "median": 5.966347,
+              "p95_nearest_rank": 6.126118,
+              "min": 5.665161,
+              "max": 6.126118
+            },
+            "thread_cpu_ms": {
+              "n": 3,
+              "median": 5.153704,
+              "p95_nearest_rank": 5.335472,
+              "min": 4.873252,
+              "max": 5.335472
+            }
+          },
+          "correction_checkpoint": {
+            "wall_ms": {
+              "n": 3,
+              "median": 2.915692,
+              "p95_nearest_rank": 3.222148,
+              "min": 2.752646,
+              "max": 3.222148
+            },
+            "thread_cpu_ms": {
+              "n": 3,
+              "median": 2.915223,
+              "p95_nearest_rank": 3.221736,
+              "min": 2.75248,
+              "max": 3.221736
+            }
+          },
+          "max_RSS_kib": 50320,
+          "runtime_forbidden_attempts": 0,
+          "blocked_import_probes": 3,
+          "mirror_bytes": 33336,
+          "kv_bytes": 33336,
+          "receipts": {
+            "chain_valid": true,
+            "count": 13,
+            "kinds": {
+              "speeddesk_daily": 1,
+              "speeddesk_daily_correction": 1,
+              "speeddesk_fill": 6,
+              "speeddesk_rest": 4,
+              "speeddesk_window": 1
+            },
+            "payload_bytes": 20701,
+            "tail_hash": "2dc73a9627404c96134d97591945a58b2c78e7aaf7a91571798bb768571f26d4"
+          }
+        },
+        "candidate": {
+          "operations": {
+            "checkpoint": {
+              "wall_ms": {
+                "n": 15,
+                "median": 1.835621,
+                "p95_nearest_rank": 2.230824,
+                "min": 1.78185,
+                "max": 2.230824
+              },
+              "thread_cpu_ms": {
+                "n": 15,
+                "median": 1.835678,
+                "p95_nearest_rank": 2.218042,
+                "min": 1.775245,
+                "max": 2.218042
+              }
+            },
+            "daily_reports": {
+              "wall_ms": {
+                "n": 15,
+                "median": 0.240342,
+                "p95_nearest_rank": 0.449474,
+                "min": 0.203723,
+                "max": 0.449474
+              },
+              "thread_cpu_ms": {
+                "n": 15,
+                "median": 0.240249,
+                "p95_nearest_rank": 0.449599,
+                "min": 0.20378,
+                "max": 0.449599
+              }
+            },
+            "summary": {
+              "wall_ms": {
+                "n": 15,
+                "median": 0.17544,
+                "p95_nearest_rank": 0.525187,
+                "min": 0.167224,
+                "max": 0.525187
+              },
+              "thread_cpu_ms": {
+                "n": 15,
+                "median": 0.175978,
+                "p95_nearest_rank": 0.526603,
+                "min": 0.167793,
+                "max": 0.526603
+              }
+            }
+          },
+          "first_full_checkpoint": {
+            "wall_ms": {
+              "n": 3,
+              "median": 5.851582,
+              "p95_nearest_rank": 7.485053,
+              "min": 5.351922,
+              "max": 7.485053
+            },
+            "thread_cpu_ms": {
+              "n": 3,
+              "median": 5.092759,
+              "p95_nearest_rank": 6.72634,
+              "min": 4.610129,
+              "max": 6.72634
+            }
+          },
+          "correction_checkpoint": {
+            "wall_ms": {
+              "n": 3,
+              "median": 2.75491,
+              "p95_nearest_rank": 3.65958,
+              "min": 2.574751,
+              "max": 3.65958
+            },
+            "thread_cpu_ms": {
+              "n": 3,
+              "median": 2.754464,
+              "p95_nearest_rank": 3.434172,
+              "min": 2.573776,
+              "max": 3.434172
+            }
+          },
+          "max_RSS_kib": 47200,
+          "runtime_forbidden_attempts": 0,
+          "blocked_import_probes": 3,
+          "mirror_bytes": 33336,
+          "kv_bytes": 33336,
+          "receipts": {
+            "chain_valid": true,
+            "count": 13,
+            "kinds": {
+              "speeddesk_daily": 1,
+              "speeddesk_daily_correction": 1,
+              "speeddesk_fill": 6,
+              "speeddesk_rest": 4,
+              "speeddesk_window": 1
+            },
+            "payload_bytes": 20701,
+            "tail_hash": "2dc73a9627404c96134d97591945a58b2c78e7aaf7a91571798bb768571f26d4"
+          }
+        }
+      },
+      "byte_comparisons": {
+        "fixture": "one",
+        "checks": [
+          {
+            "phase": "first",
+            "kind": "kv",
+            "bytes": 32554,
+            "sha256": "6c134fc22a1f96e5732d561711ed485a46869367fa1e9c37ea0138f0459f6e4e",
+            "byte_equal": true
+          },
+          {
+            "phase": "first",
+            "kind": "mirror",
+            "bytes": 32554,
+            "sha256": "6c134fc22a1f96e5732d561711ed485a46869367fa1e9c37ea0138f0459f6e4e",
+            "byte_equal": true
+          },
+          {
+            "phase": "first",
+            "kind": "receipts",
+            "bytes": 13541,
+            "sha256": "7d63fcc1c7678717944f030cc43a708a1f4d7a5766591de92f81f94ec7fd2f2c",
+            "byte_equal": true
+          },
+          {
+            "phase": "correction",
+            "kind": "kv",
+            "bytes": 33336,
+            "sha256": "966573bad9fd0f3aab43d9d5b188cced47d3097f2bb0fe9dafa57f45e916b4f0",
+            "byte_equal": true
+          },
+          {
+            "phase": "correction",
+            "kind": "mirror",
+            "bytes": 33336,
+            "sha256": "966573bad9fd0f3aab43d9d5b188cced47d3097f2bb0fe9dafa57f45e916b4f0",
+            "byte_equal": true
+          },
+          {
+            "phase": "correction",
+            "kind": "receipts",
+            "bytes": 23529,
+            "sha256": "a984c5a145dc5eae1012fcc018ad09b2f42d04458c1d7e1613cbd8f1c8566670",
+            "byte_equal": true
+          },
+          {
+            "phase": "steady",
+            "kind": "kv",
+            "bytes": 33336,
+            "sha256": "966573bad9fd0f3aab43d9d5b188cced47d3097f2bb0fe9dafa57f45e916b4f0",
+            "byte_equal": true
+          },
+          {
+            "phase": "steady",
+            "kind": "mirror",
+            "bytes": 33336,
+            "sha256": "966573bad9fd0f3aab43d9d5b188cced47d3097f2bb0fe9dafa57f45e916b4f0",
+            "byte_equal": true
+          },
+          {
+            "phase": "steady",
+            "kind": "receipts",
+            "bytes": 23529,
+            "sha256": "a984c5a145dc5eae1012fcc018ad09b2f42d04458c1d7e1613cbd8f1c8566670",
+            "byte_equal": true
+          }
+        ]
+      },
+      "counts": {
+        "evidence_fills": 4,
+        "settlements": 1,
+        "unresolved": 3,
+        "windows": 4
+      },
+      "paired_process_median_ratios": {
+        "wall_ms": [
+          1.0012560660760388,
+          0.9791061938144499,
+          0.8960498628929927
+        ],
+        "wall_ms_repeatable_gt_5pct": false,
+        "thread_cpu_ms": [
+          1.0016105742827828,
+          0.9775968029721855,
+          0.9011966384263473
+        ],
+        "thread_cpu_ms_repeatable_gt_5pct": false
+      },
+      "checkpoint_median_percent_change": {
+        "wall_ms": -5.482235384438738,
+        "thread_cpu_ms": -4.978085738673932
+      },
+      "max_RSS_percent_change": -6.200317965023849,
+      "regression_gate_passed": true
+    },
+    "1day": {
+      "variants": {
+        "baseline": {
+          "operations": {
+            "checkpoint": {
+              "wall_ms": {
+                "n": 15,
+                "median": 4.730555,
+                "p95_nearest_rank": 6.457942,
+                "min": 4.55295,
+                "max": 6.457942
+              },
+              "thread_cpu_ms": {
+                "n": 15,
+                "median": 4.730664,
+                "p95_nearest_rank": 6.44811,
+                "min": 4.543344,
+                "max": 6.44811
+              },
+              "calls_per_operation": {
+                "complete_kalshi_day": 2.0,
+                "coverage": 4.0,
+                "daily_reports": 1.0,
+                "panel": 1.0,
+                "speeddesk.asdict:Settlement": 184.0,
+                "speeddesk.asdict:Window": 100.0,
+                "speeddesk_model.asdict:Inventory": 50.0,
+                "speeddesk_model.asdict:PracticeOrder": 2.0,
+                "speeddesk_model.asdict:Settlement": 46.0,
+                "speeddesk_model.asdict:Window": 50.0,
+                "sql:BEGIN": 1.0,
+                "sql:COMMIT": 1.0,
+                "sql:INSERT": 1.0,
+                "sql:RELEASE": 1.0,
+                "sql:SAVEPOINT": 1.0,
+                "summary": 5.0,
+                "window_scorecard": 4.0
+              },
+              "instrumentation_count_wall_ratio": 1.2007280329686474,
+              "allocation_current_peak_bytes": [
+                77489,
+                348386
+              ],
+              "instrumentation_allocation_wall_ratio": 6.50782667150049
+            },
+            "daily_reports": {
+              "wall_ms": {
+                "n": 15,
+                "median": 1.065253,
+                "p95_nearest_rank": 1.761241,
+                "min": 0.964754,
+                "max": 1.761241
+              },
+              "thread_cpu_ms": {
+                "n": 15,
+                "median": 1.06559,
+                "p95_nearest_rank": 1.76181,
+                "min": 0.965002,
+                "max": 1.76181
+              },
+              "calls_per_operation": {
+                "complete_kalshi_day": 1.0,
+                "coverage": 2.0,
+                "daily_reports": 1.0,
+                "speeddesk.asdict:Settlement": 92.0,
+                "speeddesk.asdict:Window": 50.0,
+                "summary": 2.0,
+                "window_scorecard": 2.0
+              },
+              "instrumentation_count_wall_ratio": 1.2134018866879512,
+              "allocation_current_peak_bytes": [
+                21282,
+                70051
+              ],
+              "instrumentation_allocation_wall_ratio": 8.185326866012112
+            },
+            "summary": {
+              "wall_ms": {
+                "n": 15,
+                "median": 0.733839,
+                "p95_nearest_rank": 0.815964,
+                "min": 0.667836,
+                "max": 0.815964
+              },
+              "thread_cpu_ms": {
+                "n": 15,
+                "median": 0.734642,
+                "p95_nearest_rank": 0.816955,
+                "min": 0.668318,
+                "max": 0.816955
+              },
+              "calls_per_operation": {
+                "complete_kalshi_day": 1.0,
+                "coverage": 2.0,
+                "speeddesk.asdict:Settlement": 92.0,
+                "speeddesk.asdict:Window": 50.0,
+                "summary": 3.0,
+                "window_scorecard": 2.0
+              },
+              "instrumentation_count_wall_ratio": 1.3590801252045748,
+              "allocation_current_peak_bytes": [
+                28030,
+                60698
+              ],
+              "instrumentation_allocation_wall_ratio": 4.811447742624745
+            }
+          },
+          "first_full_checkpoint": {
+            "wall_ms": {
+              "n": 3,
+              "median": 14.80735,
+              "p95_nearest_rank": 14.836795,
+              "min": 14.738291,
+              "max": 14.836795
+            },
+            "thread_cpu_ms": {
+              "n": 3,
+              "median": 13.941814,
+              "p95_nearest_rank": 14.083439,
+              "min": 13.935543,
+              "max": 14.083439
+            }
+          },
+          "correction_checkpoint": {
+            "wall_ms": {
+              "n": 3,
+              "median": 5.476357,
+              "p95_nearest_rank": 6.062579,
+              "min": 5.442082,
+              "max": 6.062579
+            },
+            "thread_cpu_ms": {
+              "n": 3,
+              "median": 5.475886,
+              "p95_nearest_rank": 6.06196,
+              "min": 5.441621,
+              "max": 6.06196
+            }
+          },
+          "max_RSS_kib": 51236,
+          "runtime_forbidden_attempts": 0,
+          "blocked_import_probes": 5,
+          "mirror_bytes": 68590,
+          "kv_bytes": 68590,
+          "receipts": {
+            "chain_valid": true,
+            "count": 116,
+            "kinds": {
+              "speeddesk_cancel": 16,
+              "speeddesk_daily": 1,
+              "speeddesk_daily_correction": 1,
+              "speeddesk_fill": 34,
+              "speeddesk_rest": 18,
+              "speeddesk_window": 46
+            },
+            "payload_bytes": 49791,
+            "tail_hash": "7991cf23036398c7334795c7169951a8c968435aaad1a9076d35a2d02f60a1be"
+          }
+        },
+        "candidate": {
+          "operations": {
+            "checkpoint": {
+              "wall_ms": {
+                "n": 15,
+                "median": 4.711168,
+                "p95_nearest_rank": 6.707691,
+                "min": 4.417585,
+                "max": 6.707691
+              },
+              "thread_cpu_ms": {
+                "n": 15,
+                "median": 4.710907,
+                "p95_nearest_rank": 6.68382,
+                "min": 4.406978,
+                "max": 6.68382
+              },
+              "calls_per_operation": {
+                "complete_kalshi_day": 2.0,
+                "coverage": 4.0,
+                "daily_reports": 1.0,
+                "panel": 1.0,
+                "speeddesk.asdict:Settlement": 46.0,
+                "speeddesk.asdict:Window": 100.0,
+                "speeddesk_model.asdict:Inventory": 50.0,
+                "speeddesk_model.asdict:PracticeOrder": 2.0,
+                "speeddesk_model.asdict:Settlement": 46.0,
+                "speeddesk_model.asdict:Window": 50.0,
+                "sql:BEGIN": 1.0,
+                "sql:COMMIT": 1.0,
+                "sql:INSERT": 1.0,
+                "sql:RELEASE": 1.0,
+                "sql:SAVEPOINT": 1.0,
+                "summary": 5.0,
+                "window_scorecard": 4.0
+              },
+              "instrumentation_count_wall_ratio": 1.1575967997744934,
+              "allocation_current_peak_bytes": [
+                59793,
+                355802
+              ],
+              "instrumentation_allocation_wall_ratio": 6.516547913383687
+            },
+            "daily_reports": {
+              "wall_ms": {
+                "n": 15,
+                "median": 1.008867,
+                "p95_nearest_rank": 1.81444,
+                "min": 0.95699,
+                "max": 1.81444
+              },
+              "thread_cpu_ms": {
+                "n": 15,
+                "median": 1.008974,
+                "p95_nearest_rank": 1.814887,
+                "min": 0.957178,
+                "max": 1.814887
+              },
+              "calls_per_operation": {
+                "complete_kalshi_day": 1.0,
+                "coverage": 2.0,
+                "daily_reports": 1.0,
+                "speeddesk.asdict:Settlement": 92.0,
+                "speeddesk.asdict:Window": 50.0,
+                "summary": 2.0,
+                "window_scorecard": 2.0
+              },
+              "instrumentation_count_wall_ratio": 1.2648535436286448,
+              "allocation_current_peak_bytes": [
+                21218,
+                70051
+              ],
+              "instrumentation_allocation_wall_ratio": 8.216599413004886
+            },
+            "summary": {
+              "wall_ms": {
+                "n": 15,
+                "median": 0.732086,
+                "p95_nearest_rank": 0.952651,
+                "min": 0.686882,
+                "max": 0.952651
+              },
+              "thread_cpu_ms": {
+                "n": 15,
+                "median": 0.732828,
+                "p95_nearest_rank": 0.953721,
+                "min": 0.687333,
+                "max": 0.953721
+              },
+              "calls_per_operation": {
+                "complete_kalshi_day": 1.0,
+                "coverage": 2.0,
+                "speeddesk.asdict:Settlement": 92.0,
+                "speeddesk.asdict:Window": 50.0,
+                "summary": 3.0,
+                "window_scorecard": 2.0
+              },
+              "instrumentation_count_wall_ratio": 1.3336629849498556,
+              "allocation_current_peak_bytes": [
+                28030,
+                60698
+              ],
+              "instrumentation_allocation_wall_ratio": 4.968499602505717
+            }
+          },
+          "first_full_checkpoint": {
+            "wall_ms": {
+              "n": 3,
+              "median": 15.421324,
+              "p95_nearest_rank": 16.149674,
+              "min": 14.907408,
+              "max": 16.149674
+            },
+            "thread_cpu_ms": {
+              "n": 3,
+              "median": 14.591217,
+              "p95_nearest_rank": 15.200615,
+              "min": 14.062539,
+              "max": 15.200615
+            }
+          },
+          "correction_checkpoint": {
+            "wall_ms": {
+              "n": 3,
+              "median": 6.20701,
+              "p95_nearest_rank": 6.777332,
+              "min": 5.869686,
+              "max": 6.777332
+            },
+            "thread_cpu_ms": {
+              "n": 3,
+              "median": 6.206249,
+              "p95_nearest_rank": 6.777456,
+              "min": 5.86911,
+              "max": 6.777456
+            }
+          },
+          "max_RSS_kib": 49576,
+          "runtime_forbidden_attempts": 0,
+          "blocked_import_probes": 5,
+          "mirror_bytes": 68590,
+          "kv_bytes": 68590,
+          "receipts": {
+            "chain_valid": true,
+            "count": 116,
+            "kinds": {
+              "speeddesk_cancel": 16,
+              "speeddesk_daily": 1,
+              "speeddesk_daily_correction": 1,
+              "speeddesk_fill": 34,
+              "speeddesk_rest": 18,
+              "speeddesk_window": 46
+            },
+            "payload_bytes": 49791,
+            "tail_hash": "7991cf23036398c7334795c7169951a8c968435aaad1a9076d35a2d02f60a1be"
+          }
+        }
+      },
+      "byte_comparisons": {
+        "fixture": "1day",
+        "checks": [
+          {
+            "phase": "first",
+            "kind": "kv",
+            "bytes": 67916,
+            "sha256": "b77b5bd3c809934d7488faa9be85aacab2a8a441be98f1a907bca92046298c26",
+            "byte_equal": true
+          },
+          {
+            "phase": "first",
+            "kind": "mirror",
+            "bytes": 67916,
+            "sha256": "b77b5bd3c809934d7488faa9be85aacab2a8a441be98f1a907bca92046298c26",
+            "byte_equal": true
+          },
+          {
+            "phase": "first",
+            "kind": "receipts",
+            "bytes": 65041,
+            "sha256": "9938d3e1dce7000594a35ec32551178a01a666dd3b4ff2bc800cf2bdebb2abbe",
+            "byte_equal": true
+          },
+          {
+            "phase": "correction",
+            "kind": "kv",
+            "bytes": 68590,
+            "sha256": "b64493d948250aa978474e37d6f8f8e1f11f623cb168c2cebd717e43248d31dc",
+            "byte_equal": true
+          },
+          {
+            "phase": "correction",
+            "kind": "mirror",
+            "bytes": 68590,
+            "sha256": "b64493d948250aa978474e37d6f8f8e1f11f623cb168c2cebd717e43248d31dc",
+            "byte_equal": true
+          },
+          {
+            "phase": "correction",
+            "kind": "receipts",
+            "bytes": 75109,
+            "sha256": "4331b6d74eb81ab5e26a6de0b1ff72aad8c51c9fa4be9e7ebb3abea08e0b44e9",
+            "byte_equal": true
+          },
+          {
+            "phase": "steady",
+            "kind": "kv",
+            "bytes": 68590,
+            "sha256": "b64493d948250aa978474e37d6f8f8e1f11f623cb168c2cebd717e43248d31dc",
+            "byte_equal": true
+          },
+          {
+            "phase": "steady",
+            "kind": "mirror",
+            "bytes": 68590,
+            "sha256": "b64493d948250aa978474e37d6f8f8e1f11f623cb168c2cebd717e43248d31dc",
+            "byte_equal": true
+          },
+          {
+            "phase": "steady",
+            "kind": "receipts",
+            "bytes": 75109,
+            "sha256": "4331b6d74eb81ab5e26a6de0b1ff72aad8c51c9fa4be9e7ebb3abea08e0b44e9",
+            "byte_equal": true
+          }
+        ]
+      },
+      "counts": {
+        "evidence_fills": 32,
+        "settlements": 46,
+        "unresolved": 4,
+        "windows": 50
+      },
+      "paired_process_median_ratios": {
+        "wall_ms": [
+          0.9685807484318263,
+          0.9949663414822826,
+          1.0317225930298763
+        ],
+        "wall_ms_repeatable_gt_5pct": false,
+        "thread_cpu_ms": [
+          0.9673319370397255,
+          0.9968659957325472,
+          1.033776877001708
+        ],
+        "thread_cpu_ms_repeatable_gt_5pct": false
+      },
+      "checkpoint_median_percent_change": {
+        "wall_ms": -0.4098250628097544,
+        "thread_cpu_ms": -0.41763693215159936
+      },
+      "max_RSS_percent_change": -3.2399094386759364,
+      "regression_gate_passed": true
+    },
+    "fixed7days": {
+      "variants": {
+        "baseline": {
+          "operations": {
+            "checkpoint": {
+              "wall_ms": {
+                "n": 15,
+                "median": 10.267955,
+                "p95_nearest_rank": 12.362925,
+                "min": 9.971889,
+                "max": 12.362925
+              },
+              "thread_cpu_ms": {
+                "n": 15,
+                "median": 10.267833,
+                "p95_nearest_rank": 12.320057,
+                "min": 9.961712,
+                "max": 12.320057
+              }
+            },
+            "daily_reports": {
+              "wall_ms": {
+                "n": 15,
+                "median": 5.20707,
+                "p95_nearest_rank": 7.114456,
+                "min": 5.015721,
+                "max": 7.114456
+              },
+              "thread_cpu_ms": {
+                "n": 15,
+                "median": 5.196194,
+                "p95_nearest_rank": 7.114766,
+                "min": 5.010878,
+                "max": 7.114766
+              }
+            },
+            "summary": {
+              "wall_ms": {
+                "n": 15,
+                "median": 0.740643,
+                "p95_nearest_rank": 1.334058,
+                "min": 0.680569,
+                "max": 1.334058
+              },
+              "thread_cpu_ms": {
+                "n": 15,
+                "median": 0.741324,
+                "p95_nearest_rank": 1.335414,
+                "min": 0.681202,
+                "max": 1.335414
+              }
+            }
+          },
+          "first_full_checkpoint": {
+            "wall_ms": {
+              "n": 3,
+              "median": 25.617334,
+              "p95_nearest_rank": 28.012658,
+              "min": 25.254372,
+              "max": 28.012658
+            },
+            "thread_cpu_ms": {
+              "n": 3,
+              "median": 24.485714,
+              "p95_nearest_rank": 26.680822,
+              "min": 24.306267,
+              "max": 26.680822
+            }
+          },
+          "correction_checkpoint": {
+            "wall_ms": {
+              "n": 3,
+              "median": 11.478252,
+              "p95_nearest_rank": 11.868404,
+              "min": 11.097706,
+              "max": 11.868404
+            },
+            "thread_cpu_ms": {
+              "n": 3,
+              "median": 11.477593,
+              "p95_nearest_rank": 11.867771,
+              "min": 11.097212,
+              "max": 11.867771
+            }
+          },
+          "max_RSS_kib": 52616,
+          "runtime_forbidden_attempts": 0,
+          "blocked_import_probes": 3,
+          "mirror_bytes": 172390,
+          "kv_bytes": 172390,
+          "receipts": {
+            "chain_valid": true,
+            "count": 122,
+            "kinds": {
+              "speeddesk_cancel": 16,
+              "speeddesk_daily": 7,
+              "speeddesk_daily_correction": 1,
+              "speeddesk_fill": 34,
+              "speeddesk_rest": 18,
+              "speeddesk_window": 46
+            },
+            "payload_bytes": 101607,
+            "tail_hash": "2917d005b7537e19efd051dc60905ff6ff08eb7050576658d99f787f6ea5e5d0"
+          }
+        },
+        "candidate": {
+          "operations": {
+            "checkpoint": {
+              "wall_ms": {
+                "n": 15,
+                "median": 9.418969,
+                "p95_nearest_rank": 9.957231,
+                "min": 9.218231,
+                "max": 9.957231
+              },
+              "thread_cpu_ms": {
+                "n": 15,
+                "median": 9.368513,
+                "p95_nearest_rank": 9.956592,
+                "min": 9.209889,
+                "max": 9.956592
+              }
+            },
+            "daily_reports": {
+              "wall_ms": {
+                "n": 15,
+                "median": 5.253748,
+                "p95_nearest_rank": 6.017794,
+                "min": 5.029707,
+                "max": 6.017794
+              },
+              "thread_cpu_ms": {
+                "n": 15,
+                "median": 5.254011,
+                "p95_nearest_rank": 6.018098,
+                "min": 5.029713,
+                "max": 6.018098
+              }
+            },
+            "summary": {
+              "wall_ms": {
+                "n": 15,
+                "median": 0.740973,
+                "p95_nearest_rank": 0.934958,
+                "min": 0.713361,
+                "max": 0.934958
+              },
+              "thread_cpu_ms": {
+                "n": 15,
+                "median": 0.741955,
+                "p95_nearest_rank": 0.936128,
+                "min": 0.713583,
+                "max": 0.936128
+              }
+            }
+          },
+          "first_full_checkpoint": {
+            "wall_ms": {
+              "n": 3,
+              "median": 22.385348,
+              "p95_nearest_rank": 23.174061,
+              "min": 22.016724,
+              "max": 23.174061
+            },
+            "thread_cpu_ms": {
+              "n": 3,
+              "median": 21.411964,
+              "p95_nearest_rank": 21.953154,
+              "min": 21.189628,
+              "max": 21.953154
+            }
+          },
+          "correction_checkpoint": {
+            "wall_ms": {
+              "n": 3,
+              "median": 10.516994,
+              "p95_nearest_rank": 10.930681,
+              "min": 10.423388,
+              "max": 10.930681
+            },
+            "thread_cpu_ms": {
+              "n": 3,
+              "median": 10.516619,
+              "p95_nearest_rank": 10.930471,
+              "min": 10.422573,
+              "max": 10.930471
+            }
+          },
+          "max_RSS_kib": 50828,
+          "runtime_forbidden_attempts": 0,
+          "blocked_import_probes": 3,
+          "mirror_bytes": 172390,
+          "kv_bytes": 172390,
+          "receipts": {
+            "chain_valid": true,
+            "count": 122,
+            "kinds": {
+              "speeddesk_cancel": 16,
+              "speeddesk_daily": 7,
+              "speeddesk_daily_correction": 1,
+              "speeddesk_fill": 34,
+              "speeddesk_rest": 18,
+              "speeddesk_window": 46
+            },
+            "payload_bytes": 101607,
+            "tail_hash": "2917d005b7537e19efd051dc60905ff6ff08eb7050576658d99f787f6ea5e5d0"
+          }
+        }
+      },
+      "byte_comparisons": {
+        "fixture": "fixed7days",
+        "checks": [
+          {
+            "phase": "first",
+            "kind": "kv",
+            "bytes": 171716,
+            "sha256": "dc5412fda58782f85cd2e15e208bd6ebccb26e47f5817958ff2b46400c264e9a",
+            "byte_equal": true
+          },
+          {
+            "phase": "first",
+            "kind": "mirror",
+            "bytes": 171716,
+            "sha256": "dc5412fda58782f85cd2e15e208bd6ebccb26e47f5817958ff2b46400c264e9a",
+            "byte_equal": true
+          },
+          {
+            "phase": "first",
+            "kind": "receipts",
+            "bytes": 118171,
+            "sha256": "e99345e2060d97d4ae61af82b7a6cdedeacf58b979d4b810bfa7d24e26d8193d",
+            "byte_equal": true
+          },
+          {
+            "phase": "correction",
+            "kind": "kv",
+            "bytes": 172390,
+            "sha256": "f5a234bc7878bd11b65b6e398f20254f8890be8875f7ceafbdddbfbfe2e40d10",
+            "byte_equal": true
+          },
+          {
+            "phase": "correction",
+            "kind": "mirror",
+            "bytes": 172390,
+            "sha256": "f5a234bc7878bd11b65b6e398f20254f8890be8875f7ceafbdddbfbfe2e40d10",
+            "byte_equal": true
+          },
+          {
+            "phase": "correction",
+            "kind": "receipts",
+            "bytes": 128239,
+            "sha256": "826d9a8a7c1e2f8f14802d5669bcd9fe4be4bf14cb268f5e034ae76a7e4effcd",
+            "byte_equal": true
+          },
+          {
+            "phase": "steady",
+            "kind": "kv",
+            "bytes": 172390,
+            "sha256": "f5a234bc7878bd11b65b6e398f20254f8890be8875f7ceafbdddbfbfe2e40d10",
+            "byte_equal": true
+          },
+          {
+            "phase": "steady",
+            "kind": "mirror",
+            "bytes": 172390,
+            "sha256": "f5a234bc7878bd11b65b6e398f20254f8890be8875f7ceafbdddbfbfe2e40d10",
+            "byte_equal": true
+          },
+          {
+            "phase": "steady",
+            "kind": "receipts",
+            "bytes": 128239,
+            "sha256": "826d9a8a7c1e2f8f14802d5669bcd9fe4be4bf14cb268f5e034ae76a7e4effcd",
+            "byte_equal": true
+          }
+        ]
+      },
+      "counts": {
+        "evidence_fills": 32,
+        "settlements": 46,
+        "unresolved": 4,
+        "windows": 50
+      },
+      "paired_process_median_ratios": {
+        "wall_ms": [
+          0.9227705426847196,
+          0.9078661416557556,
+          0.9017555742871285
+        ],
+        "wall_ms_repeatable_gt_5pct": false,
+        "thread_cpu_ms": [
+          0.9178859406933932,
+          0.9079112640920189,
+          0.9008670832686199
+        ],
+        "thread_cpu_ms_repeatable_gt_5pct": false
+      },
+      "checkpoint_median_percent_change": {
+        "wall_ms": -8.26830659074762,
+        "thread_cpu_ms": -8.758615376779112
+      },
+      "max_RSS_percent_change": -3.3982058689372097,
+      "regression_gate_passed": true
+    },
+    "7days": {
+      "variants": {
+        "baseline": {
+          "operations": {
+            "checkpoint": {
+              "wall_ms": {
+                "n": 15,
+                "median": 49.416842,
+                "p95_nearest_rank": 50.882647,
+                "min": 46.421451,
+                "max": 50.882647
+              },
+              "thread_cpu_ms": {
+                "n": 15,
+                "median": 49.403734,
+                "p95_nearest_rank": 50.882555,
+                "min": 46.408973,
+                "max": 50.882555
+              },
+              "calls_per_operation": {
+                "complete_kalshi_day": 8.0,
+                "coverage": 22.0,
+                "daily_reports": 1.0,
+                "panel": 1.0,
+                "speeddesk.asdict:Settlement": 5152.0,
+                "speeddesk.asdict:Window": 2704.0,
+                "speeddesk_model.asdict:Inventory": 338.0,
+                "speeddesk_model.asdict:PracticeOrder": 2.0,
+                "speeddesk_model.asdict:Settlement": 322.0,
+                "speeddesk_model.asdict:Window": 338.0,
+                "sql:BEGIN": 1.0,
+                "sql:COMMIT": 1.0,
+                "sql:INSERT": 1.0,
+                "sql:RELEASE": 1.0,
+                "sql:SAVEPOINT": 1.0,
+                "summary": 17.0,
+                "window_scorecard": 16.0
+              },
+              "instrumentation_count_wall_ratio": 1.28137619558935,
+              "allocation_current_peak_bytes": [
+                85031,
+                1807875
+              ],
+              "instrumentation_allocation_wall_ratio": 5.459443057895119
+            },
+            "daily_reports": {
+              "wall_ms": {
+                "n": 15,
+                "median": 30.373558,
+                "p95_nearest_rank": 38.290693,
+                "min": 29.094062,
+                "max": 38.290693
+              },
+              "thread_cpu_ms": {
+                "n": 15,
+                "median": 30.373568,
+                "p95_nearest_rank": 38.286265,
+                "min": 29.094038,
+                "max": 38.286265
+              },
+              "calls_per_operation": {
+                "complete_kalshi_day": 7.0,
+                "coverage": 20.0,
+                "daily_reports": 1.0,
+                "speeddesk.asdict:Settlement": 4508.0,
+                "speeddesk.asdict:Window": 2366.0,
+                "summary": 14.0,
+                "window_scorecard": 14.0
+              },
+              "instrumentation_count_wall_ratio": 1.530460474864354,
+              "allocation_current_peak_bytes": [
+                7598,
+                265920
+              ],
+              "instrumentation_allocation_wall_ratio": 4.768433154917182
+            },
+            "summary": {
+              "wall_ms": {
+                "n": 15,
+                "median": 4.003868,
+                "p95_nearest_rank": 4.538303,
+                "min": 3.902146,
+                "max": 4.538303
+              },
+              "thread_cpu_ms": {
+                "n": 15,
+                "median": 4.004708,
+                "p95_nearest_rank": 4.539457,
+                "min": 3.902979,
+                "max": 4.539457
+              },
+              "calls_per_operation": {
+                "complete_kalshi_day": 1.0,
+                "coverage": 2.0,
+                "speeddesk.asdict:Settlement": 644.0,
+                "speeddesk.asdict:Window": 338.0,
+                "summary": 3.0,
+                "window_scorecard": 2.0
+              },
+              "instrumentation_count_wall_ratio": 1.4783776588039366,
+              "allocation_current_peak_bytes": [
+                14334,
+                247770
+              ],
+              "instrumentation_allocation_wall_ratio": 3.997109794828402
+            }
+          },
+          "first_full_checkpoint": {
+            "wall_ms": {
+              "n": 3,
+              "median": 102.721622,
+              "p95_nearest_rank": 104.18873,
+              "min": 98.807654,
+              "max": 104.18873
+            },
+            "thread_cpu_ms": {
+              "n": 3,
+              "median": 101.36814,
+              "p95_nearest_rank": 102.969991,
+              "min": 97.488183,
+              "max": 102.969991
+            }
+          },
+          "correction_checkpoint": {
+            "wall_ms": {
+              "n": 3,
+              "median": 49.193381,
+              "p95_nearest_rank": 51.131195,
+              "min": 48.643338,
+              "max": 51.131195
+            },
+            "thread_cpu_ms": {
+              "n": 3,
+              "median": 49.186579,
+              "p95_nearest_rank": 51.128595,
+              "min": 48.636792,
+              "max": 51.128595
+            }
+          },
+          "max_RSS_kib": 59764,
+          "runtime_forbidden_attempts": 0,
+          "blocked_import_probes": 5,
+          "mirror_bytes": 404638,
+          "kv_bytes": 404638,
+          "receipts": {
+            "chain_valid": true,
+            "count": 782,
+            "kinds": {
+              "speeddesk_cancel": 112,
+              "speeddesk_daily": 7,
+              "speeddesk_daily_correction": 1,
+              "speeddesk_fill": 226,
+              "speeddesk_rest": 114,
+              "speeddesk_window": 322
+            },
+            "payload_bytes": 288302,
+            "tail_hash": "3f19f1bfadf14a0a91a0a892d44fc9e7277e8b60508791b31035589e54980c1a"
+          }
+        },
+        "candidate": {
+          "operations": {
+            "checkpoint": {
+              "wall_ms": {
+                "n": 15,
+                "median": 42.245809,
+                "p95_nearest_rank": 62.7624,
+                "min": 40.727313,
+                "max": 62.7624
+              },
+              "thread_cpu_ms": {
+                "n": 15,
+                "median": 42.244385,
+                "p95_nearest_rank": 62.74294,
+                "min": 40.726912,
+                "max": 62.74294
+              },
+              "calls_per_operation": {
+                "complete_kalshi_day": 8.0,
+                "coverage": 22.0,
+                "daily_reports": 1.0,
+                "panel": 1.0,
+                "speeddesk.asdict:Settlement": 322.0,
+                "speeddesk.asdict:Window": 2704.0,
+                "speeddesk_model.asdict:Inventory": 338.0,
+                "speeddesk_model.asdict:PracticeOrder": 2.0,
+                "speeddesk_model.asdict:Settlement": 322.0,
+                "speeddesk_model.asdict:Window": 338.0,
+                "sql:BEGIN": 1.0,
+                "sql:COMMIT": 1.0,
+                "sql:INSERT": 1.0,
+                "sql:RELEASE": 1.0,
+                "sql:SAVEPOINT": 1.0,
+                "summary": 17.0,
+                "window_scorecard": 16.0
+              },
+              "instrumentation_count_wall_ratio": 1.201231180115405,
+              "allocation_current_peak_bytes": [
+                84911,
+                2017827
+              ],
+              "instrumentation_allocation_wall_ratio": 5.7422901523793755
+            },
+            "daily_reports": {
+              "wall_ms": {
+                "n": 15,
+                "median": 30.616724,
+                "p95_nearest_rank": 35.990437,
+                "min": 29.554457,
+                "max": 35.990437
+              },
+              "thread_cpu_ms": {
+                "n": 15,
+                "median": 30.617023,
+                "p95_nearest_rank": 35.990457,
+                "min": 29.542998,
+                "max": 35.990457
+              },
+              "calls_per_operation": {
+                "complete_kalshi_day": 7.0,
+                "coverage": 20.0,
+                "daily_reports": 1.0,
+                "speeddesk.asdict:Settlement": 4508.0,
+                "speeddesk.asdict:Window": 2366.0,
+                "summary": 14.0,
+                "window_scorecard": 14.0
+              },
+              "instrumentation_count_wall_ratio": 1.4190664879756567,
+              "allocation_current_peak_bytes": [
+                7625,
+                265868
+              ],
+              "instrumentation_allocation_wall_ratio": 4.888319632106949
+            },
+            "summary": {
+              "wall_ms": {
+                "n": 15,
+                "median": 4.125396,
+                "p95_nearest_rank": 5.208653,
+                "min": 3.968252,
+                "max": 5.208653
+              },
+              "thread_cpu_ms": {
+                "n": 15,
+                "median": 4.126967,
+                "p95_nearest_rank": 5.209668,
+                "min": 3.969072,
+                "max": 5.209668
+              },
+              "calls_per_operation": {
+                "complete_kalshi_day": 1.0,
+                "coverage": 2.0,
+                "speeddesk.asdict:Settlement": 644.0,
+                "speeddesk.asdict:Window": 338.0,
+                "summary": 3.0,
+                "window_scorecard": 2.0
+              },
+              "instrumentation_count_wall_ratio": 1.381573065955365,
+              "allocation_current_peak_bytes": [
+                14334,
+                247770
+              ],
+              "instrumentation_allocation_wall_ratio": 3.97250906337234
+            }
+          },
+          "first_full_checkpoint": {
+            "wall_ms": {
+              "n": 3,
+              "median": 93.850593,
+              "p95_nearest_rank": 113.944361,
+              "min": 92.786253,
+              "max": 113.944361
+            },
+            "thread_cpu_ms": {
+              "n": 3,
+              "median": 92.549612,
+              "p95_nearest_rank": 111.769866,
+              "min": 91.432625,
+              "max": 111.769866
+            }
+          },
+          "correction_checkpoint": {
+            "wall_ms": {
+              "n": 3,
+              "median": 43.005728,
+              "p95_nearest_rank": 43.166442,
+              "min": 42.462536,
+              "max": 43.166442
+            },
+            "thread_cpu_ms": {
+              "n": 3,
+              "median": 42.999264,
+              "p95_nearest_rank": 43.159919,
+              "min": 42.453957,
+              "max": 43.159919
+            }
+          },
+          "max_RSS_kib": 59216,
+          "runtime_forbidden_attempts": 0,
+          "blocked_import_probes": 5,
+          "mirror_bytes": 404638,
+          "kv_bytes": 404638,
+          "receipts": {
+            "chain_valid": true,
+            "count": 782,
+            "kinds": {
+              "speeddesk_cancel": 112,
+              "speeddesk_daily": 7,
+              "speeddesk_daily_correction": 1,
+              "speeddesk_fill": 226,
+              "speeddesk_rest": 114,
+              "speeddesk_window": 322
+            },
+            "payload_bytes": 288302,
+            "tail_hash": "3f19f1bfadf14a0a91a0a892d44fc9e7277e8b60508791b31035589e54980c1a"
+          }
+        }
+      },
+      "byte_comparisons": {
+        "fixture": "7days",
+        "checks": [
+          {
+            "phase": "first",
+            "kind": "kv",
+            "bytes": 403960,
+            "sha256": "38003514fb0f2f7df5fef58da2e8b638c83e20e67aca94726db93a14f9e7ae54",
+            "byte_equal": true
+          },
+          {
+            "phase": "first",
+            "kind": "mirror",
+            "bytes": 403960,
+            "sha256": "38003514fb0f2f7df5fef58da2e8b638c83e20e67aca94726db93a14f9e7ae54",
+            "byte_equal": true
+          },
+          {
+            "phase": "first",
+            "kind": "receipts",
+            "bytes": 449488,
+            "sha256": "d3d293419fbeb9acecab880f5364e4439008978ed3a9747186d2a8dc807be0d1",
+            "byte_equal": true
+          },
+          {
+            "phase": "correction",
+            "kind": "kv",
+            "bytes": 404638,
+            "sha256": "1cdf0d46f6b56b8311e3a1b0bc2e4160d6a0052352781b35fe3aa8623b18d257",
+            "byte_equal": true
+          },
+          {
+            "phase": "correction",
+            "kind": "mirror",
+            "bytes": 404638,
+            "sha256": "1cdf0d46f6b56b8311e3a1b0bc2e4160d6a0052352781b35fe3aa8623b18d257",
+            "byte_equal": true
+          },
+          {
+            "phase": "correction",
+            "kind": "receipts",
+            "bytes": 459558,
+            "sha256": "45124a9068e01346305a9420bbb1e9662ab1eefea8c58784199a856b45e92f9e",
+            "byte_equal": true
+          },
+          {
+            "phase": "steady",
+            "kind": "kv",
+            "bytes": 404638,
+            "sha256": "1cdf0d46f6b56b8311e3a1b0bc2e4160d6a0052352781b35fe3aa8623b18d257",
+            "byte_equal": true
+          },
+          {
+            "phase": "steady",
+            "kind": "mirror",
+            "bytes": 404638,
+            "sha256": "1cdf0d46f6b56b8311e3a1b0bc2e4160d6a0052352781b35fe3aa8623b18d257",
+            "byte_equal": true
+          },
+          {
+            "phase": "steady",
+            "kind": "receipts",
+            "bytes": 459558,
+            "sha256": "45124a9068e01346305a9420bbb1e9662ab1eefea8c58784199a856b45e92f9e",
+            "byte_equal": true
+          }
+        ]
+      },
+      "counts": {
+        "evidence_fills": 224,
+        "settlements": 322,
+        "unresolved": 16,
+        "windows": 338
+      },
+      "paired_process_median_ratios": {
+        "wall_ms": [
+          0.8454699426287646,
+          0.927595522603888,
+          0.8726551214090786
+        ],
+        "wall_ms_repeatable_gt_5pct": false,
+        "thread_cpu_ms": [
+          0.8455062280237168,
+          0.92759310252962,
+          0.8727059537718864
+        ],
+        "thread_cpu_ms_repeatable_gt_5pct": false
+      },
+      "checkpoint_median_percent_change": {
+        "wall_ms": -14.511313774360568,
+        "thread_cpu_ms": -14.491513941031254
+      },
+      "max_RSS_percent_change": -0.9169399638578435,
+      "regression_gate_passed": true
+    },
+    "31days": {
+      "variants": {
+        "baseline": {
+          "operations": {
+            "checkpoint": {
+              "wall_ms": {
+                "n": 15,
+                "median": 618.279938,
+                "p95_nearest_rank": 664.684968,
+                "min": 606.794657,
+                "max": 664.684968
+              },
+              "thread_cpu_ms": {
+                "n": 15,
+                "median": 618.232304,
+                "p95_nearest_rank": 664.573348,
+                "min": 606.709846,
+                "max": 664.573348
+              },
+              "calls_per_operation": {
+                "complete_kalshi_day": 32.0,
+                "coverage": 94.0,
+                "daily_reports": 1.0,
+                "panel": 1.0,
+                "speeddesk.asdict:Settlement": 91264.0,
+                "speeddesk.asdict:Window": 47680.0,
+                "speeddesk_model.asdict:Inventory": 1490.0,
+                "speeddesk_model.asdict:PracticeOrder": 2.0,
+                "speeddesk_model.asdict:Settlement": 1426.0,
+                "speeddesk_model.asdict:Window": 1490.0,
+                "sql:BEGIN": 1.0,
+                "sql:COMMIT": 1.0,
+                "sql:INSERT": 1.0,
+                "sql:RELEASE": 1.0,
+                "sql:SAVEPOINT": 1.0,
+                "summary": 65.0,
+                "window_scorecard": 64.0
+              },
+              "instrumentation_count_wall_ratio": 1.3809986359285686,
+              "allocation_current_peak_bytes": [
+                39078,
+                7970917
+              ],
+              "instrumentation_allocation_wall_ratio": 5.036960940498768
+            },
+            "daily_reports": {
+              "wall_ms": {
+                "n": 15,
+                "median": 532.912654,
+                "p95_nearest_rank": 551.80632,
+                "min": 527.795155,
+                "max": 551.80632
+              },
+              "thread_cpu_ms": {
+                "n": 15,
+                "median": 532.84428,
+                "p95_nearest_rank": 551.740201,
+                "min": 527.740545,
+                "max": 551.740201
+              },
+              "calls_per_operation": {
+                "complete_kalshi_day": 31.0,
+                "coverage": 92.0,
+                "daily_reports": 1.0,
+                "speeddesk.asdict:Settlement": 88412.0,
+                "speeddesk.asdict:Window": 46190.0,
+                "summary": 62.0,
+                "window_scorecard": 62.0
+              },
+              "instrumentation_count_wall_ratio": 1.4129794448453838,
+              "allocation_current_peak_bytes": [
+                271507,
+                1369332
+              ],
+              "instrumentation_allocation_wall_ratio": 4.790931751828884
+            },
+            "summary": {
+              "wall_ms": {
+                "n": 15,
+                "median": 16.752851,
+                "p95_nearest_rank": 17.356675,
+                "min": 16.39613,
+                "max": 17.356675
+              },
+              "thread_cpu_ms": {
+                "n": 15,
+                "median": 16.753735,
+                "p95_nearest_rank": 17.338477,
+                "min": 16.397129,
+                "max": 17.338477
+              },
+              "calls_per_operation": {
+                "complete_kalshi_day": 1.0,
+                "coverage": 2.0,
+                "speeddesk.asdict:Settlement": 2852.0,
+                "speeddesk.asdict:Window": 1490.0,
+                "summary": 3.0,
+                "window_scorecard": 2.0
+              },
+              "instrumentation_count_wall_ratio": 1.4059526345694833,
+              "allocation_current_peak_bytes": [
+                14502,
+                1072677
+              ],
+              "instrumentation_allocation_wall_ratio": 4.583124926020055
+            }
+          },
+          "first_full_checkpoint": {
+            "wall_ms": {
+              "n": 3,
+              "median": 855.696685,
+              "p95_nearest_rank": 954.463108,
+              "min": 852.399165,
+              "max": 954.463108
+            },
+            "thread_cpu_ms": {
+              "n": 3,
+              "median": 851.762396,
+              "p95_nearest_rank": 950.663382,
+              "min": 848.418903,
+              "max": 950.663382
+            }
+          },
+          "correction_checkpoint": {
+            "wall_ms": {
+              "n": 3,
+              "median": 625.860213,
+              "p95_nearest_rank": 707.750802,
+              "min": 620.919932,
+              "max": 707.750802
+            },
+            "thread_cpu_ms": {
+              "n": 3,
+              "median": 624.555715,
+              "p95_nearest_rank": 706.901871,
+              "min": 619.869471,
+              "max": 706.901871
+            }
+          },
+          "max_RSS_kib": 82888,
+          "runtime_forbidden_attempts": 0,
+          "blocked_import_probes": 5,
+          "mirror_bytes": 1758496,
+          "kv_bytes": 1758496,
+          "receipts": {
+            "chain_valid": true,
+            "count": 3446,
+            "kinds": {
+              "speeddesk_cancel": 496,
+              "speeddesk_daily": 31,
+              "speeddesk_daily_correction": 1,
+              "speeddesk_fill": 994,
+              "speeddesk_rest": 498,
+              "speeddesk_window": 1426
+            },
+            "payload_bytes": 1245968,
+            "tail_hash": "be95931484a631e299c425bb41627a23c694840c283e1487a4c373b3a0bcca1d"
+          }
+        },
+        "candidate": {
+          "operations": {
+            "checkpoint": {
+              "wall_ms": {
+                "n": 15,
+                "median": 502.983763,
+                "p95_nearest_rank": 555.656841,
+                "min": 481.613332,
+                "max": 555.656841
+              },
+              "thread_cpu_ms": {
+                "n": 15,
+                "median": 502.936555,
+                "p95_nearest_rank": 555.57651,
+                "min": 481.57142,
+                "max": 555.57651
+              },
+              "calls_per_operation": {
+                "complete_kalshi_day": 32.0,
+                "coverage": 94.0,
+                "daily_reports": 1.0,
+                "panel": 1.0,
+                "speeddesk.asdict:Settlement": 1426.0,
+                "speeddesk.asdict:Window": 47680.0,
+                "speeddesk_model.asdict:Inventory": 1490.0,
+                "speeddesk_model.asdict:PracticeOrder": 2.0,
+                "speeddesk_model.asdict:Settlement": 1426.0,
+                "speeddesk_model.asdict:Window": 1490.0,
+                "sql:BEGIN": 1.0,
+                "sql:COMMIT": 1.0,
+                "sql:INSERT": 1.0,
+                "sql:RELEASE": 1.0,
+                "sql:SAVEPOINT": 1.0,
+                "summary": 65.0,
+                "window_scorecard": 64.0
+              },
+              "instrumentation_count_wall_ratio": 1.1661296569527633,
+              "allocation_current_peak_bytes": [
+                500451,
+                9490613
+              ],
+              "instrumentation_allocation_wall_ratio": 4.655785797204749
+            },
+            "daily_reports": {
+              "wall_ms": {
+                "n": 15,
+                "median": 539.669277,
+                "p95_nearest_rank": 571.612238,
+                "min": 533.329934,
+                "max": 571.612238
+              },
+              "thread_cpu_ms": {
+                "n": 15,
+                "median": 539.613866,
+                "p95_nearest_rank": 571.562064,
+                "min": 532.635363,
+                "max": 571.562064
+              },
+              "calls_per_operation": {
+                "complete_kalshi_day": 31.0,
+                "coverage": 92.0,
+                "daily_reports": 1.0,
+                "speeddesk.asdict:Settlement": 88412.0,
+                "speeddesk.asdict:Window": 46190.0,
+                "summary": 62.0,
+                "window_scorecard": 62.0
+              },
+              "instrumentation_count_wall_ratio": 1.390976549884273,
+              "allocation_current_peak_bytes": [
+                16535,
+                1114716
+              ],
+              "instrumentation_allocation_wall_ratio": 4.243329951502872
+            },
+            "summary": {
+              "wall_ms": {
+                "n": 15,
+                "median": 17.016113,
+                "p95_nearest_rank": 20.66414,
+                "min": 16.578653,
+                "max": 20.66414
+              },
+              "thread_cpu_ms": {
+                "n": 15,
+                "median": 17.017307,
+                "p95_nearest_rank": 20.666832,
+                "min": 16.579781,
+                "max": 20.666832
+              },
+              "calls_per_operation": {
+                "complete_kalshi_day": 1.0,
+                "coverage": 2.0,
+                "speeddesk.asdict:Settlement": 2852.0,
+                "speeddesk.asdict:Window": 1490.0,
+                "summary": 3.0,
+                "window_scorecard": 2.0
+              },
+              "instrumentation_count_wall_ratio": 1.5742373713667743,
+              "allocation_current_peak_bytes": [
+                14502,
+                1072677
+              ],
+              "instrumentation_allocation_wall_ratio": 4.08109578256797
+            }
+          },
+          "first_full_checkpoint": {
+            "wall_ms": {
+              "n": 3,
+              "median": 743.425959,
+              "p95_nearest_rank": 752.744182,
+              "min": 735.524163,
+              "max": 752.744182
+            },
+            "thread_cpu_ms": {
+              "n": 3,
+              "median": 739.715745,
+              "p95_nearest_rank": 748.380855,
+              "min": 731.110436,
+              "max": 748.380855
+            }
+          },
+          "correction_checkpoint": {
+            "wall_ms": {
+              "n": 3,
+              "median": 491.64318,
+              "p95_nearest_rank": 587.282388,
+              "min": 486.97693,
+              "max": 587.282388
+            },
+            "thread_cpu_ms": {
+              "n": 3,
+              "median": 489.661319,
+              "p95_nearest_rank": 586.042434,
+              "min": 486.092443,
+              "max": 586.042434
+            }
+          },
+          "max_RSS_kib": 81664,
+          "runtime_forbidden_attempts": 0,
+          "blocked_import_probes": 5,
+          "mirror_bytes": 1758496,
+          "kv_bytes": 1758496,
+          "receipts": {
+            "chain_valid": true,
+            "count": 3446,
+            "kinds": {
+              "speeddesk_cancel": 496,
+              "speeddesk_daily": 31,
+              "speeddesk_daily_correction": 1,
+              "speeddesk_fill": 994,
+              "speeddesk_rest": 498,
+              "speeddesk_window": 1426
+            },
+            "payload_bytes": 1245968,
+            "tail_hash": "be95931484a631e299c425bb41627a23c694840c283e1487a4c373b3a0bcca1d"
+          }
+        }
+      },
+      "byte_comparisons": {
+        "fixture": "31days",
+        "checks": [
+          {
+            "phase": "first",
+            "kind": "kv",
+            "bytes": 1757818,
+            "sha256": "7799a675c6fd02e6d36c1064a8968a2404fe8fddbd6ca544a7c44c9b734af8c7",
+            "byte_equal": true
+          },
+          {
+            "phase": "first",
+            "kind": "mirror",
+            "bytes": 1757818,
+            "sha256": "7799a675c6fd02e6d36c1064a8968a2404fe8fddbd6ca544a7c44c9b734af8c7",
+            "byte_equal": true
+          },
+          {
+            "phase": "first",
+            "kind": "receipts",
+            "bytes": 1993350,
+            "sha256": "8bb600b5f512da211928c5fbbfbe7fa600aa04b4d9c0ef5da44027b7084521ee",
+            "byte_equal": true
+          },
+          {
+            "phase": "correction",
+            "kind": "kv",
+            "bytes": 1758496,
+            "sha256": "c27c52da58150ecbb131e48f6e09589f2c3becba7fb221f5b507929b5325271c",
+            "byte_equal": true
+          },
+          {
+            "phase": "correction",
+            "kind": "mirror",
+            "bytes": 1758496,
+            "sha256": "c27c52da58150ecbb131e48f6e09589f2c3becba7fb221f5b507929b5325271c",
+            "byte_equal": true
+          },
+          {
+            "phase": "correction",
+            "kind": "receipts",
+            "bytes": 2003423,
+            "sha256": "a4606a30bcf9e4a5858975d3ea3699253eee3cbf04d135645a550bb005eb3359",
+            "byte_equal": true
+          },
+          {
+            "phase": "steady",
+            "kind": "kv",
+            "bytes": 1758496,
+            "sha256": "c27c52da58150ecbb131e48f6e09589f2c3becba7fb221f5b507929b5325271c",
+            "byte_equal": true
+          },
+          {
+            "phase": "steady",
+            "kind": "mirror",
+            "bytes": 1758496,
+            "sha256": "c27c52da58150ecbb131e48f6e09589f2c3becba7fb221f5b507929b5325271c",
+            "byte_equal": true
+          },
+          {
+            "phase": "steady",
+            "kind": "receipts",
+            "bytes": 2003423,
+            "sha256": "a4606a30bcf9e4a5858975d3ea3699253eee3cbf04d135645a550bb005eb3359",
+            "byte_equal": true
+          }
+        ]
+      },
+      "counts": {
+        "evidence_fills": 992,
+        "settlements": 1426,
+        "unresolved": 64,
+        "windows": 1490
+      },
+      "paired_process_median_ratios": {
+        "wall_ms": [
+          0.8225733389201679,
+          0.7689498512669879,
+          0.8378545984000408
+        ],
+        "wall_ms_repeatable_gt_5pct": false,
+        "thread_cpu_ms": [
+          0.8226944626094616,
+          0.7690036419143765,
+          0.8378131425764974
+        ],
+        "thread_cpu_ms_repeatable_gt_5pct": false
+      },
+      "checkpoint_median_percent_change": {
+        "wall_ms": -18.647891984488098,
+        "thread_cpu_ms": -18.649259874327107
+      },
+      "max_RSS_percent_change": -1.4766914390502817,
+      "regression_gate_passed": true
+    },
+    "older35days": {
+      "variants": {
+        "baseline": {
+          "operations": {
+            "checkpoint": {
+              "wall_ms": {
+                "n": 15,
+                "median": 261.091925,
+                "p95_nearest_rank": 280.662388,
+                "min": 256.062267,
+                "max": 280.662388
+              },
+              "thread_cpu_ms": {
+                "n": 15,
+                "median": 261.082673,
+                "p95_nearest_rank": 280.636416,
+                "min": 256.036559,
+                "max": 280.636416
+              },
+              "calls_per_operation": {
+                "complete_kalshi_day": 36.0,
+                "coverage": 106.0,
+                "daily_reports": 1.0,
+                "panel": 1.0,
+                "speeddesk.asdict:Settlement": 35280.0,
+                "speeddesk.asdict:Window": 20232.0,
+                "speeddesk_model.asdict:Inventory": 562.0,
+                "speeddesk_model.asdict:PracticeOrder": 2.0,
+                "speeddesk_model.asdict:Settlement": 490.0,
+                "speeddesk_model.asdict:Window": 562.0,
+                "sql:BEGIN": 1.0,
+                "sql:COMMIT": 1.0,
+                "sql:INSERT": 1.0,
+                "sql:RELEASE": 1.0,
+                "sql:SAVEPOINT": 1.0,
+                "summary": 73.0,
+                "window_scorecard": 72.0
+              },
+              "instrumentation_count_wall_ratio": 1.3698537172300522,
+              "allocation_current_peak_bytes": [
+                32128,
+                3734804
+              ],
+              "instrumentation_allocation_wall_ratio": 5.2188084139331385
+            },
+            "daily_reports": {
+              "wall_ms": {
+                "n": 15,
+                "median": 227.09118,
+                "p95_nearest_rank": 260.644104,
+                "min": 219.350967,
+                "max": 260.644104
+              },
+              "thread_cpu_ms": {
+                "n": 15,
+                "median": 227.080839,
+                "p95_nearest_rank": 260.628162,
+                "min": 218.168117,
+                "max": 260.628162
+              },
+              "calls_per_operation": {
+                "complete_kalshi_day": 35.0,
+                "coverage": 104.0,
+                "daily_reports": 1.0,
+                "speeddesk.asdict:Settlement": 34300.0,
+                "speeddesk.asdict:Window": 19670.0,
+                "summary": 70.0,
+                "window_scorecard": 70.0
+              },
+              "instrumentation_count_wall_ratio": 1.5453531748789187,
+              "allocation_current_peak_bytes": [
+                12860,
+                402909
+              ],
+              "instrumentation_allocation_wall_ratio": 4.641627926720887
+            },
+            "summary": {
+              "wall_ms": {
+                "n": 15,
+                "median": 6.233831,
+                "p95_nearest_rank": 6.776432,
+                "min": 5.992037,
+                "max": 6.776432
+              },
+              "thread_cpu_ms": {
+                "n": 15,
+                "median": 6.234872,
+                "p95_nearest_rank": 6.777517,
+                "min": 5.993072,
+                "max": 6.777517
+              },
+              "calls_per_operation": {
+                "complete_kalshi_day": 1.0,
+                "coverage": 2.0,
+                "speeddesk.asdict:Settlement": 980.0,
+                "speeddesk.asdict:Window": 562.0,
+                "summary": 3.0,
+                "window_scorecard": 2.0
+              },
+              "instrumentation_count_wall_ratio": 1.4367280729939582,
+              "allocation_current_peak_bytes": [
+                14502,
+                383442
+              ],
+              "instrumentation_allocation_wall_ratio": 4.019136386597583
+            }
+          },
+          "first_full_checkpoint": {
+            "wall_ms": {
+              "n": 3,
+              "median": 376.989409,
+              "p95_nearest_rank": 389.63785,
+              "min": 374.962508,
+              "max": 389.63785
+            },
+            "thread_cpu_ms": {
+              "n": 3,
+              "median": 375.264811,
+              "p95_nearest_rank": 387.374232,
+              "min": 373.304269,
+              "max": 387.374232
+            }
+          },
+          "correction_checkpoint": {
+            "wall_ms": {
+              "n": 3,
+              "median": 267.218613,
+              "p95_nearest_rank": 271.805116,
+              "min": 266.550828,
+              "max": 271.805116
+            },
+            "thread_cpu_ms": {
+              "n": 3,
+              "median": 267.208571,
+              "p95_nearest_rank": 271.786718,
+              "min": 266.532801,
+              "max": 271.786718
+            }
+          },
+          "max_RSS_kib": 69320,
+          "runtime_forbidden_attempts": 0,
+          "blocked_import_probes": 5,
+          "mirror_bytes": 1096342,
+          "kv_bytes": 1096342,
+          "receipts": {
+            "chain_valid": true,
+            "count": 1370,
+            "kinds": {
+              "speeddesk_cancel": 210,
+              "speeddesk_daily": 35,
+              "speeddesk_daily_correction": 1,
+              "speeddesk_fill": 422,
+              "speeddesk_rest": 212,
+              "speeddesk_window": 490
+            },
+            "payload_bytes": 695915,
+            "tail_hash": "a9b5a5b03b20a66e9f16516dd6a99605b8651428f63d70e552db746936e8ae86"
+          }
+        },
+        "candidate": {
+          "operations": {
+            "checkpoint": {
+              "wall_ms": {
+                "n": 15,
+                "median": 212.406919,
+                "p95_nearest_rank": 225.58522,
+                "min": 208.718784,
+                "max": 225.58522
+              },
+              "thread_cpu_ms": {
+                "n": 15,
+                "median": 212.38188,
+                "p95_nearest_rank": 225.525874,
+                "min": 208.670197,
+                "max": 225.525874
+              },
+              "calls_per_operation": {
+                "complete_kalshi_day": 36.0,
+                "coverage": 106.0,
+                "daily_reports": 1.0,
+                "panel": 1.0,
+                "speeddesk.asdict:Settlement": 490.0,
+                "speeddesk.asdict:Window": 20232.0,
+                "speeddesk_model.asdict:Inventory": 562.0,
+                "speeddesk_model.asdict:PracticeOrder": 2.0,
+                "speeddesk_model.asdict:Settlement": 490.0,
+                "speeddesk_model.asdict:Window": 562.0,
+                "sql:BEGIN": 1.0,
+                "sql:COMMIT": 1.0,
+                "sql:INSERT": 1.0,
+                "sql:RELEASE": 1.0,
+                "sql:SAVEPOINT": 1.0,
+                "summary": 73.0,
+                "window_scorecard": 72.0
+              },
+              "instrumentation_count_wall_ratio": 1.185990857482378,
+              "allocation_current_peak_bytes": [
+                415179,
+                4454875
+              ],
+              "instrumentation_allocation_wall_ratio": 5.038171995706035
+            },
+            "daily_reports": {
+              "wall_ms": {
+                "n": 15,
+                "median": 230.003152,
+                "p95_nearest_rank": 251.767868,
+                "min": 225.233732,
+                "max": 251.767868
+              },
+              "thread_cpu_ms": {
+                "n": 15,
+                "median": 230.000941,
+                "p95_nearest_rank": 251.726642,
+                "min": 225.231646,
+                "max": 251.726642
+              },
+              "calls_per_operation": {
+                "complete_kalshi_day": 35.0,
+                "coverage": 104.0,
+                "daily_reports": 1.0,
+                "speeddesk.asdict:Settlement": 34300.0,
+                "speeddesk.asdict:Window": 19670.0,
+                "summary": 70.0,
+                "window_scorecard": 70.0
+              },
+              "instrumentation_count_wall_ratio": 1.3695191533722981,
+              "allocation_current_peak_bytes": [
+                15961,
+                406027
+              ],
+              "instrumentation_allocation_wall_ratio": 4.309717559870657
+            },
+            "summary": {
+              "wall_ms": {
+                "n": 15,
+                "median": 6.359126,
+                "p95_nearest_rank": 8.348366,
+                "min": 6.245001,
+                "max": 8.348366
+              },
+              "thread_cpu_ms": {
+                "n": 15,
+                "median": 6.360277,
+                "p95_nearest_rank": 8.349552,
+                "min": 6.246114,
+                "max": 8.349552
+              },
+              "calls_per_operation": {
+                "complete_kalshi_day": 1.0,
+                "coverage": 2.0,
+                "speeddesk.asdict:Settlement": 980.0,
+                "speeddesk.asdict:Window": 562.0,
+                "summary": 3.0,
+                "window_scorecard": 2.0
+              },
+              "instrumentation_count_wall_ratio": 1.532730284004437,
+              "allocation_current_peak_bytes": [
+                14402,
+                383342
+              ],
+              "instrumentation_allocation_wall_ratio": 4.10123576730513
+            }
+          },
+          "first_full_checkpoint": {
+            "wall_ms": {
+              "n": 3,
+              "median": 325.794741,
+              "p95_nearest_rank": 328.834706,
+              "min": 324.640587,
+              "max": 328.834706
+            },
+            "thread_cpu_ms": {
+              "n": 3,
+              "median": 324.203049,
+              "p95_nearest_rank": 327.107162,
+              "min": 322.957243,
+              "max": 327.107162
+            }
+          },
+          "correction_checkpoint": {
+            "wall_ms": {
+              "n": 3,
+              "median": 217.951493,
+              "p95_nearest_rank": 218.232693,
+              "min": 211.962236,
+              "max": 218.232693
+            },
+            "thread_cpu_ms": {
+              "n": 3,
+              "median": 217.926586,
+              "p95_nearest_rank": 218.204503,
+              "min": 211.945106,
+              "max": 218.204503
+            }
+          },
+          "max_RSS_kib": 67596,
+          "runtime_forbidden_attempts": 0,
+          "blocked_import_probes": 5,
+          "mirror_bytes": 1096342,
+          "kv_bytes": 1096342,
+          "receipts": {
+            "chain_valid": true,
+            "count": 1370,
+            "kinds": {
+              "speeddesk_cancel": 210,
+              "speeddesk_daily": 35,
+              "speeddesk_daily_correction": 1,
+              "speeddesk_fill": 422,
+              "speeddesk_rest": 212,
+              "speeddesk_window": 490
+            },
+            "payload_bytes": 695915,
+            "tail_hash": "a9b5a5b03b20a66e9f16516dd6a99605b8651428f63d70e552db746936e8ae86"
+          }
+        }
+      },
+      "byte_comparisons": {
+        "fixture": "older35days",
+        "checks": [
+          {
+            "phase": "first",
+            "kind": "kv",
+            "bytes": 1106111,
+            "sha256": "42ed1866d80bb6aa89808cb00cfe6d3a6795b1c82dcf936d0c13e906b4c04fd1",
+            "byte_equal": true
+          },
+          {
+            "phase": "first",
+            "kind": "mirror",
+            "bytes": 1106111,
+            "sha256": "42ed1866d80bb6aa89808cb00cfe6d3a6795b1c82dcf936d0c13e906b4c04fd1",
+            "byte_equal": true
+          },
+          {
+            "phase": "first",
+            "kind": "receipts",
+            "bytes": 986282,
+            "sha256": "11612756b66b7962e06a4744907ab34fa3ea1a17418334b715e2e22eddf5cb52",
+            "byte_equal": true
+          },
+          {
+            "phase": "correction",
+            "kind": "kv",
+            "bytes": 1106897,
+            "sha256": "fc0667edac95ce682e14d40e78ae4ee5767d0fb682e9bd0d227f0cc7d98c580e",
+            "byte_equal": true
+          },
+          {
+            "phase": "correction",
+            "kind": "mirror",
+            "bytes": 1106897,
+            "sha256": "fc0667edac95ce682e14d40e78ae4ee5767d0fb682e9bd0d227f0cc7d98c580e",
+            "byte_equal": true
+          },
+          {
+            "phase": "correction",
+            "kind": "receipts",
+            "bytes": 996286,
+            "sha256": "17885710d4c516ad8c87e1f1992a63fd9f2fca3befbc720d4ed08263464ff234",
+            "byte_equal": true
+          },
+          {
+            "phase": "steady",
+            "kind": "kv",
+            "bytes": 1096342,
+            "sha256": "197a962081db1ea7aa0a7f63d6bb9515fc7d9c0b157c504ccf56cf8a2cc09511",
+            "byte_equal": true
+          },
+          {
+            "phase": "steady",
+            "kind": "mirror",
+            "bytes": 1096342,
+            "sha256": "197a962081db1ea7aa0a7f63d6bb9515fc7d9c0b157c504ccf56cf8a2cc09511",
+            "byte_equal": true
+          },
+          {
+            "phase": "steady",
+            "kind": "receipts",
+            "bytes": 996286,
+            "sha256": "17885710d4c516ad8c87e1f1992a63fd9f2fca3befbc720d4ed08263464ff234",
+            "byte_equal": true
+          }
+        ]
+      },
+      "counts": {
+        "evidence_fills": 420,
+        "settlements": 490,
+        "unresolved": 72,
+        "windows": 562
+      },
+      "paired_process_median_ratios": {
+        "wall_ms": [
+          0.8647071464982997,
+          0.7892497758998435,
+          0.8058791592271572
+        ],
+        "wall_ms_repeatable_gt_5pct": false,
+        "thread_cpu_ms": [
+          0.864586144363971,
+          0.7892490194686982,
+          0.8058078944212433
+        ],
+        "thread_cpu_ms_repeatable_gt_5pct": false
+      },
+      "checkpoint_median_percent_change": {
+        "wall_ms": -18.646691581901663,
+        "thread_cpu_ms": -18.65339910933117
+      },
+      "max_RSS_percent_change": -2.4870167339873017,
+      "regression_gate_passed": true
+    }
+  },
+  "status": "failed_regression_gate",
+  "criteria": {
+    "repeatable_wall_CPU_regression_gt_percent": 5,
+    "max_peak_RSS_growth_percent": 10,
+    "byte_parity": true
+  },
+  "all_children_exit_zero": true,
+  "max_child_elapsed_s": 10.822223800991196,
+  "max_total_experiment_disk_bytes": 15345281,
+  "conventional_complete_patch_sha256": "475dc5aa1177815292b91d16bebb2a093692b1e38b0169578ed66fb3ac040b78",
+  "limitations": [
+    "synthetic sparse histories; actual practice retained size unknown",
+    "inert paper companion panel and empty volatility tape understate full production cost",
+    "15 pooled samples are descriptive, p95 nearest rank equals maximum; no production percentile claim",
+    "count/allocation overhead separately reported; inclusive nested spans never summed",
+    "firstFULL, correction and warm states distinct; no real journal/risk/controller/source-epoch behavior claim",
+    "no production cause/speed/profit measured; no source release"
+  ],
+  "all_full_output_byte_parity": true,
+  "manifest_sha256": "9ce8d1dd2bd2b3304bcdb44d0ad786aafafff39775f5acae8dc596f62ec565f9"
+}

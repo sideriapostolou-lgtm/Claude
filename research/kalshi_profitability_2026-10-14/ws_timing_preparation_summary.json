@@ -1,0 +1,128 @@
+{
+  "sources": [
+    {
+      "path": "/workspace/shared/controller-replay.py",
+      "sha256": "ba4350f10380620df48992a6d5b75e058c0fbf4073f8d7ddb4d1fbd4d813c184"
+    },
+    {
+      "path": "/workspace/shared/controller-replay.json",
+      "sha256": "b2825230060d0d811e5a82f2b0cce747dcf6a0d38cdd9e384f05872052abe86f"
+    },
+    {
+      "path": "/workspace/shared/controller-replay-report.md",
+      "sha256": "d411660b5ac274cf901a7d31eb1d5acdefe57a62ef996c0e81fa8ee3af4f0da6"
+    },
+    {
+      "path": "/workspace/shared/controller-replay.log",
+      "sha256": "a1a42f2f4e991914d47b6a068dd990f7421857aba78a9069b458fbd445b85797"
+    },
+    {
+      "path": "/workspace/shared/controller-replay-attempt2.log",
+      "sha256": "dbf638cee22e2bb27ca0aa7eac5eb1703c90796457f53d9ac923d299f6941ee6"
+    },
+    {
+      "path": "/workspace/shared/controller-replay-attempt3.log",
+      "sha256": "e81290a6c2afecba12be9cba9fb8010836d866aeba684413000f2816ca78a609"
+    },
+    {
+      "path": "/workspace/shared/freshness-resumed-freshlogs.json",
+      "sha256": "0aae85ea0a9faf2d8c773a3c20fe54b25caaaeefdfe2c1a164da0a8d45e4385c"
+    },
+    {
+      "path": "/workspace/shared/freshness-resumed-fresh_result_0.json",
+      "sha256": "d1954fd84dcdbaca82b92e6f4c16362604b5d058113794f95e9aa3ed04b3e498"
+    },
+    {
+      "path": "/workspace/shared/freshness-architecture-review.md",
+      "sha256": "3cde6e18af709575d43379bb368f7439e3a500a8d946216c6146efd70116f803"
+    }
+  ],
+  "replay": {
+    "scenarios": 24,
+    "completed_message_counts": [
+      500,
+      500,
+      500,
+      500,
+      500,
+      500,
+      500,
+      500,
+      500,
+      500,
+      500,
+      500,
+      500,
+      500,
+      500,
+      500,
+      500,
+      500,
+      500,
+      500,
+      500,
+      500,
+      500,
+      500
+    ],
+    "stale_failures": 0,
+    "checkpoint_counts": [
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "limitations": [
+      "Controlled offline synthetic burst; not observed production ingress traffic.",
+      "The report says this shows controller-cycle amplification and scheduling/account-read fairness under these inputs; it does not establish checkpoint amplification, reproduce the earlier surrogate stale failure, attribute production warnings, or choose a fix.",
+      "Quiet state had no fills, intents, or changes requiring immediate save; active-order/history scenarios and complete practice-controller behavior remain untested.",
+      "Fake account and MemoryLedger are test doubles; no live fills, cancellations, guard overrides, policy changes, fallback/reconnect path, fsync, receipt-chain verification, disk cost, or crash recovery were modeled.",
+      "Two reversed-order repeats are setup checks, not statistical production benchmarks; wall times include awaits overlapping feed work and must not be summed as synchronous occupancy or extra CPU.",
+      "Earlier controller-replay.log and controller-replay-attempt2.log contain failed pre-execution attempts; only attempt3 completed successfully."
+    ]
+  },
+  "production": {
+    "start_utc": "2026-10-15T03:30:04.740884765Z",
+    "end_utc": "2026-10-15T03:49:58.271615419Z",
+    "warning_counts": {
+      "source_age": 23,
+      "market_set_changed": 2,
+      "rest_trade_gap": 3
+    },
+    "last_status": {
+      "timestamp": "2026-10-15T03:49:58Z",
+      "cash_usd": 37.9131,
+      "cumulative_settled_pnl_usd": -11.418300000000004,
+      "open_cost_usd": 8.41,
+      "reserved_usd": 1.35,
+      "at_risk_usd": 1.7600000000000002,
+      "caps": {
+        "window_usd": 10.0,
+        "open_usd": 20.0,
+        "day_stop_usd": 6.0,
+        "clip": 5.0,
+        "total_stop_usd": 10.0
+      }
+    }
+  }
+}

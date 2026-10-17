@@ -1,0 +1,143 @@
+{
+ "stage": "train",
+ "version": "s1-v1",
+ "utc": "2026-10-09 07:51:36",
+ "preliminary": false,
+ "rerun_reason": null,
+ "data": {
+  "split": "train",
+  "usable": 3863,
+  "s1_universe": 1420,
+  "b1_covered": 1420,
+  "b1_frac": 1.0,
+  "split_complete": true,
+  "chain_hours_scanned_frac": 1.0,
+  "days_full": 4,
+  "days_expected": 4.0,
+  "b1_file": true,
+  "problems": [],
+  "problems_provisional": []
+ },
+ "n_usable_coins": 3863,
+ "days": 3.997361111111111,
+ "gate": {
+  "10": {
+   "n": 818,
+   "quintiles": [
+    {
+     "q": 1,
+     "n": 164,
+     "rem_min": 0.0,
+     "rem_max": 0.112521616,
+     "mean": -0.5597543399462084,
+     "median": -0.7107442128544932
+    },
+    {
+     "q": 2,
+     "n": 164,
+     "rem_min": 0.112671817,
+     "rem_max": 0.187548994,
+     "mean": -0.37858484415823895,
+     "median": -0.6473735662569351
+    },
+    {
+     "q": 3,
+     "n": 163,
+     "rem_min": 0.188431796,
+     "rem_max": 0.285234876,
+     "mean": -0.5056220110112672,
+     "median": -0.6135444991750946
+    },
+    {
+     "q": 4,
+     "n": 164,
+     "rem_min": 0.28568048,
+     "rem_max": 0.482618774,
+     "mean": -0.4245728139729747,
+     "median": -0.6843430834519025
+    },
+    {
+     "q": 5,
+     "n": 163,
+     "rem_min": 0.483309331,
+     "rem_max": 1.0,
+     "mean": -0.5080549350041331,
+     "median": -0.8885226757711547
+    }
+   ],
+   "inversions": 2,
+   "q1_minus_q5": -0.051699404942075255,
+   "q1_minus_q5_ci95": [
+    -0.21203063779213407,
+    0.11260427871857473
+   ],
+   "n_ties_at_mode": 1,
+   "n_distinct_rem": 818,
+   "wall_s": 12.01
+  },
+  "30": {
+   "n": 496,
+   "quintiles": [
+    {
+     "q": 1,
+     "n": 100,
+     "rem_min": 6.14e-06,
+     "rem_max": 0.098542368,
+     "mean": -0.311879283242686,
+     "median": -0.4541623743458606
+    },
+    {
+     "q": 2,
+     "n": 99,
+     "rem_min": 0.098861563,
+     "rem_max": 0.159524576,
+     "mean": -0.35882727689489424,
+     "median": -0.4620730988848202
+    },
+    {
+     "q": 3,
+     "n": 99,
+     "rem_min": 0.160074413,
+     "rem_max": 0.240737794,
+     "mean": -0.3052257021681448,
+     "median": -0.4390161505497538
+    },
+    {
+     "q": 4,
+     "n": 99,
+     "rem_min": 0.241400499,
+     "rem_max": 0.384561531,
+     "mean": -0.23008478719424727,
+     "median": -0.4058697808954666
+    },
+    {
+     "q": 5,
+     "n": 99,
+     "rem_min": 0.38496591,
+     "rem_max": 0.999776253,
+     "mean": -0.38466192705906643,
+     "median": -0.3714811379861101
+    }
+   ],
+   "inversions": 2,
+   "q1_minus_q5": 0.07278264381638044,
+   "q1_minus_q5_ci95": [
+    -0.06116269504333696,
+    0.21428151224006917
+   ],
+   "n_ties_at_mode": 1,
+   "n_distinct_rem": 496,
+   "wall_s": 14.38
+  }
+ },
+ "gate_verdict": {
+  "status": "GATE_FAIL",
+  "per_checkpoint": {
+   "10": "FAIL",
+   "30": "FAIL"
+  }
+ },
+ "n_trials_total": 2644,
+ "status": "GATE_FAIL",
+ "note": "stop rule 3: S1 is dead (gate failed on TRAIN); the entry grid was not run"
+}

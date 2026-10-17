@@ -1,0 +1,21 @@
+{
+  "at": {
+    "current_time": "2026-10-15 19:29:06 UTC"
+  },
+  "result": {
+    "content": [
+      {
+        "type": "text",
+        "text": "Action completed."
+      }
+    ],
+    "structuredContent": {
+      "content": "{\n  \"declared_at_utc\": \"2026-10-15T19:28:19.590277+00:00\",\n  \"declared_at_pacific\": \"2026-10-15T12:28:19.590277-07:00\",\n  \"source_commit\": \"8c8681a032a6181c49915ba88ba38d0818dc69d3\",\n  \"candidate\": \"4cf0734e7a85a0ac962b3a75825af62a5e714525\",\n  \"deployment_id\": \"2e88601d-c9c7-474f-add8-72c0a13c1a4b\",\n  \"deployment_success_at_utc\": \"2026-10-15T19:22:21.502Z\",\n  \"readiness_original_timestamp\": \"2026-10-15T19:26:26.283880736Z\",\n  \"root_verified_before_start_margin_s\": 100.409723,\n  \"series\": \"KXBTC15M\",\n  \"target_selection\": \"First eligible full 900-second window after exact deployment/startup and root ready status verification, identified by exact start/end; actual ticker must come from original forecast/unknown or verified metadata, not a guessed name.\",\n  \"start_utc\": \"2026-10-15T19:30:00+00:00\",\n  \"end_utc\": \"2026-10-15T19:45:00+00:00\",\n  \"tail_end_utc\": \"2026-10-15T19:47:00+00:00\",\n  \"start\": 1792092600.0,\n  \"end\": 1792093500.0,\n  \"tail_end\": 1792093620.0,\n  \"due_start\": 1792092900.0,\n  \"due_end\": 1792092905.0,\n  \"slot_read_end_utc\": \"2026-10-15T19:35:30+00:00\",\n  \"learner_protocol\": \"kalshi-probability-calibration-v2-h300-g5-b10-prior20\",\n  \"learner_fingerprint\": \"e79897062a3ebbd61fe5dc70617f02c44bb7d29c9dbf51e23940459686653c7c\",\n  \"v1_fingerprint\": \"b6112b7ef8955b20af734157c1e7f5ec533bf98f70e034558f06670578c391f2\",\n  \"frozen_while_capture\": [\n    \"source\",\n    \"model\",\n    \"caps\",\n    \"stops\",\n    \"resume budgets\",\n    \"variables\"\n  ],\n  \"expected_not_guaranteed\": \"One original qualified forecast before outcome and official-label score; if excluded/error/missing report actual reason and a bounded next step, never silently switch windows. First q=p when prior count is zero; one outcome cannot show improved calibration/profitability.\",\n  \"capture_end_is_finite\": true,\n  \"log_query_limit\": 500,\n  \"no_manual_orders_or_measurement_trades\": true,\n  \"limitations\": [\n    \"Local accepted Bitcoin is Coinbase, settlement is Kalshi BRTI; basis risk remains.\",\n    \"Filtered original logs are not full feed continuity or raw durable volume certification.\",\n    \"Broader EXEC and TJR unfinished; this is a new probability estimand, not repair of V1 data-quality exclusions.\"\n  ]\n}\n",
+      "encoding": "utf-8",
+      "sha": "8a2d15f4d92c17b6d21845385f1f69198bbf82bc",
+      "display_url": "https://github.com/sideriapostolou-lgtm/Claude/blob/ac0da27/research/kalshi_probability_learning_2026-10-15/CAPTURE_DECLARATION.json",
+      "display_title": "CAPTURE_DECLARATION.json"
+    },
+    "isError": false
+  }
+}

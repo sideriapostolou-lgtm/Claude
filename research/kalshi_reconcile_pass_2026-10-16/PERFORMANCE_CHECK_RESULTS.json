@@ -1,0 +1,8 @@
+{
+  "reference_reconstruction_ast_equals_actual_base_method": true,
+  "base": "d1ee16f728612275fedb0d08846e127b0ad9b88d",
+  "reconstructed_reference_sha256": "9e114990cdb2be1a0ddff5141d19346bf0ebbc2864b56e20ebb959ebc2e6cc74",
+  "independent_cases": 8,
+  "total_cases_with_candidate_and_history_regressions": 30,
+  "result": "30 passed in 1.87s"
+}

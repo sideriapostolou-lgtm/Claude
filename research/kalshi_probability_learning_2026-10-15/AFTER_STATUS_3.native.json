@@ -1,0 +1,34 @@
+{
+  "before": {
+    "current_time": "2026-10-15 19:23:10 UTC"
+  },
+  "after": {
+    "current_time": "2026-10-15 19:23:11 UTC"
+  },
+  "request": {
+    "projectId": "75750847-85c0-41a3-a2a7-b7f2201a51e9",
+    "environmentId": "17f7b0e0-104c-4903-9484-0106748b3cdb",
+    "deploymentId": "2e88601d-c9c7-474f-add8-72c0a13c1a4b",
+    "startDate": "2026-10-15T19:22:00Z",
+    "endDate": "2026-10-15T19:23:00Z",
+    "limit": 10,
+    "filter": "\"speeddesk_live_status\""
+  },
+  "result": {
+    "content": [
+      {
+        "type": "text",
+        "text": "**Deployment 2e88601d-c9c7-474f-add8-72c0a13c1a4b** [SUCCESS]\nservice: f84d3b52-002f-44cb-931e-bc9e3e097e97, env: 17f7b0e0-104c-4903-9484-0106748b3cdb\n\n### Deploy logs (0)\n(no deploy logs in range)"
+      }
+    ],
+    "structuredContent": {
+      "scope": "deployment",
+      "deploymentId": "2e88601d-c9c7-474f-add8-72c0a13c1a4b",
+      "serviceId": "f84d3b52-002f-44cb-931e-bc9e3e097e97",
+      "environmentId": "17f7b0e0-104c-4903-9484-0106748b3cdb",
+      "status": "SUCCESS",
+      "deploy": []
+    },
+    "isError": false
+  }
+}

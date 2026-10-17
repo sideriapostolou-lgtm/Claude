@@ -1,0 +1,10 @@
+{
+  "at_utc": "2026-10-15T19:29:59.156809+00:00",
+  "commit": "ac0da27",
+  "source_unchanged": true,
+  "declaration_public_read_at_utc": "2026-10-15T19:29:06Z",
+  "public_blob": "8a2d15f4d92c17b6d21845385f1f69198bbf82bc",
+  "declaration_sha256": "7d2fefd9aa603bc3bd00adc0d761084d1a9b46dc92d7415af747772b2fa074a7",
+  "bounded_secret_pattern_findings": [],
+  "scan_timing": "Post-publication verification; exact declaration/plan fields reviewed before commit, no credential source read."
+}

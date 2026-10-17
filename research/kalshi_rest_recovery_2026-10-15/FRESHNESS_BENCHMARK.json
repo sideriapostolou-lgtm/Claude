@@ -1,0 +1,52 @@
+{
+  "local_only": true,
+  "bounds_declared_before_run": {
+    "extra_median_ms": 0.5,
+    "extra_p95_ms": 1
+  },
+  "results": {
+    "baseline": [
+      {
+        "tickers": 2,
+        "samples": 2000,
+        "median_ms": 0.002976,
+        "p95_ms": 0.003096
+      },
+      {
+        "tickers": 512,
+        "samples": 500,
+        "median_ms": 0.286469,
+        "p95_ms": 0.419228
+      }
+    ],
+    "candidate": [
+      {
+        "tickers": 2,
+        "samples": 2000,
+        "median_ms": 0.003907,
+        "p95_ms": 0.004078
+      },
+      {
+        "tickers": 512,
+        "samples": 500,
+        "median_ms": 0.3799695,
+        "p95_ms": 0.443995
+      }
+    ]
+  },
+  "checks": [
+    {
+      "tickers": 2,
+      "extra_median_ms": 0.000931,
+      "extra_p95_ms": 0.0009820000000000002,
+      "pass": true
+    },
+    {
+      "tickers": 512,
+      "extra_median_ms": 0.09350050000000004,
+      "extra_p95_ms": 0.024766999999999983,
+      "pass": true
+    }
+  ],
+  "limitation": "Local frozen-state report microbenchmark, not production latency or historic speed causation."
+}

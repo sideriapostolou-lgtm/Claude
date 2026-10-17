@@ -1,0 +1,196 @@
+{
+  "snapshot_at_utc": "2026-10-14T23:55:00Z",
+  "scope": "Read-only Railway platform and deploy-log metadata snapshot; no raw feed records or TEST outcomes read.",
+  "query_receipts": {
+    "health_query": {
+      "projectId": "75750847-85c0-41a3-a2a7-b7f2201a51e9",
+      "environmentId": "17f7b0e0-104c-4903-9484-0106748b3cdb",
+      "serviceFilter": "*recorder*",
+      "includeSuccessful": true,
+      "hoursBack": 8,
+      "limit": 10
+    },
+    "deployment_query": {
+      "projectId": "75750847-85c0-41a3-a2a7-b7f2201a51e9",
+      "environmentId": "17f7b0e0-104c-4903-9484-0106748b3cdb",
+      "serviceId": "736b1c8a-8311-4ee0-9043-d05f508cd821",
+      "limit": 5
+    },
+    "log_queries": [
+      {
+        "deploymentId": "8453f919-b891-4aa7-8478-6fcf6b9c24ee",
+        "startDate": "2026-10-14T16:38:00.000Z",
+        "endDate": "2026-10-14T16:42:00.000Z",
+        "limit": 500,
+        "returned": [
+          {
+            "timestamp": "2026-10-14T16:38:06.546460093Z",
+            "severity": "info",
+            "message": "Mounting volume on: /var/lib/containers/railwayapp/bind-mounts/14ce2a3e-4bae-41ae-8fef-760db05f0c12/vol_ni70dd6r7p7h5s22"
+          },
+          {
+            "timestamp": "2026-10-14T16:38:07.608411487Z",
+            "severity": "info",
+            "message": "Starting Container"
+          },
+          {
+            "timestamp": "2026-10-14T16:38:07.935425392Z",
+            "severity": "info",
+            "message": "2026-10-14 16:38:07,720 WARNING nightcrawler.kalshi_recorder kalshi_recorder_gap lane=spot cause=restart_partial_segment_recovered"
+          },
+          {
+            "timestamp": "2026-10-14T16:38:07.935431472Z",
+            "severity": "info",
+            "message": "2026-10-14 16:38:07,720 WARNING nightcrawler.kalshi_recorder kalshi_recorder_gap lane=all cause=recorder_not_running"
+          },
+          {
+            "timestamp": "2026-10-14T16:38:07.935436172Z",
+            "severity": "info",
+            "message": "2026-10-14 16:38:07,727 INFO nightcrawler.kalshi_recorder kalshi_recorder_started mode=READ_ONLY_PUBLIC host=railway rate_per_s=1.5 btc15m=True spot=True cap_mb=4608"
+          },
+          {
+            "timestamp": "2026-10-14T16:38:07.935440222Z",
+            "severity": "info",
+            "message": "2026-10-14 16:38:07,736 INFO nightcrawler.kalshi_recorder kalshi_recorder_evidence {\"commit\":\"0713e412b8077a32bced8794b2f26bbb46c59097\",\"coverage\":{\"backfill_jobs_pending\":0,\"btc15m_fresh_minutes\":60,\"btc15m_minutes\":60,\"candidate_book_fresh_share\":1.0,\"minutes_sampled\":60,\"trade_covered_to\":1791993597,\"trade_tape_minutes\":60},\"coverage_certified\":false,\"gaps\":{\"by_cause\":{\"spot_reconnected\":4},\"by_lane\":{\"spot\":4},\"open_ended_records\":0,\"records\":4},\"manifest_sha256\":\"3e418a7c0707ad55627485cb00c804f1de7466e983e5853fafd9151a03184b2a\",\"observed_at\":1791995887.727363,\"order_capability\":false,\"per_venue_spot_ticks_verified\":false,\"period\":{\"from\":1791990000.0,\"partial\":false,\"to\":1791993600},\"read_only\":true,\"rest_lanes\":{\"backfill\":{\"429\":null,\"errors\":null,\"ok\":null,\"requests\":null,\"rtt_ms\":{\"p50\":null,\"p95\":null,\"p99\":null}},\"books\":{\"429\":null,\"errors\":null,\"ok\":2393,\"requests\":2393,\"rtt_ms\":{\"p50\":67.084,\"p95\":118.244,\"p99\":213.644}},\"btc15m_meta\":{\"429\":null,\"errors\":null,\"ok\":12,\"requests\":12,\"rtt_ms\":{\"p50\":65.476,\"p95\":71.969,\"p99\":71.969}},\"discovery\":{\"429\":null,\"errors\":null,\"ok\":680,\"requests\":680,\"rtt_ms\":{\"p50\":66.921,\"p95\":119.492,\"p99\":210.964}},\"fees\":{\"429\":null,\"errors\":null,\"ok\":null,\"requests\":null,\"rtt_ms\":{\"p50\":null,\"p95\":null,\"p99\":null}},\"other\":{\"429\":null,\"errors\":null,\"ok\":null,\"requests\":null,\"rtt_ms\":{\"p50\":null,\"p95\":null,\"p99\":null}},\"settlement\":{\"429\":null,\"errors\":null,\"ok\":4,\"requests\":4,\"rtt_ms\":{\"p50\":63.711,\"p95\":67.431,\"p99\":67.431}},\"sweep\":{\"429\":null,\"errors\":null,\"ok\":24,\"requests\":24,\"rtt_ms\":{\"p50\":70.01,\"p95\":126.188,\"p99\":128.431}},\"trades\":{\"429\":null,\"errors\":null,\"ok\":1465,\"requests\":1465,\"rtt_ms\":{\"p50\":73.878,\"p95\":123.612,\"p99\":222.214}}},\"rows_and_test_outcomes_read\":false,\"schema\":1,\"sealed_lanes\":{\"admissions\":{\"first_append_at\":1791990005.91183,\"gz_bytes\":2477,\"last_append_at\":1791993134.441343,\"record_envelopes\":10,\"segments\":1},\"book_calls\":{\"first_append_at\":1791990001.0800662,\"gz_bytes\":435456,\"last_append_at\":1791993598.938936,\"record_envelopes\":2392,\"segments\":2},\"books\":{\"first_append_at\":1791990002.4313257,\"gz_bytes\":1500435,\"last_append_at\":1791993596.838682,\"record_envelopes\":7282,\"segments\":1},\"books_btc15m\":{\"first_append_at\":1791990001.0800662,\"gz_bytes\":1087232,\"last_append_at\":1791993598.938936,\"record_envelopes\":2396,\"segments\":2},\"btc15m_meta\":{\"first_append_at\":1791990005.2473023,\"gz_bytes\":3988,\"last_append_at\":1791993031.716848,\"record_envelopes\":16,\"segments\":1},\"discovery\":{\"first_append_at\":1791992011.2910526,\"gz_bytes\":62852,\"last_append_at\":1791992121.619355,\"record_envelopes\":70,\"segments\":1},\"gaps\":{\"first_append_at\":1791990661.536015,\"gz_bytes\":382,\"last_append_at\":1791993129.0831819,\"record_envelopes\":4,\"segments\":1},\"markets\":{\"first_append_at\":1791990271.2617197,\"gz_bytes\":4139197,\"last_append_at\":1791993576.060073,\"record_envelopes\":634,\"segments\":6},\"requests\":{\"first_append_at\":1791990001.0800662,\"gz_bytes\":612451,\"last_append_at\":1791993598.938936,\"record_envelopes\":4577,\"segments\":2},\"spot\":{\"first_append_at\":1791990000.7471693,\"gz_bytes\":912664,\"last_append_at\":1791993599.5486903,\"record_envelopes\":5680,\"segments\":2},\"telemetry\":{\"first_append_at\":1791990000.786113,\"gz_bytes\":231,\"last_append_at\":1791990000.786113,\"record_envelopes\":1,\"segments\":1},\"trade_coverage\":{\"first_append_at\":1791990001.7618787,\"gz_bytes\":34806,\"last_append_at\":1791993598.176117,\"record_envelopes\":698,\"segments\":1},\"trades\":{\"first_append_at\":1791990001.7618787,\"gz_bytes\":155729,\"last_append_at\":1791993597.518071,\"record_envelopes\":532,\"segments\":1},\"trades_btc15m\":{\"first_append_at\":1791990001.7618787,\"gz_bytes\":4284075,\"last_append_at\":1791993597.518071,\"record_envelopes\":793,\"segments\":6}},\"sealed_only\":true,\"segment_hash_basis\":\"index_metadata_computed_at_seal_not_rechecked\",\"segment_hashes_reverified\":false,\"session\":\"af203fd8b4424bb981ef42f5fa504aad\",\"session_started_at\":1791988409.5172973,\"source\":\"previous_hour_startup\",\"status\":\"available\",\"storage\":{\"cap_bytes\":4831838208,\"deleted_segments\":0,\"level\":0,\"used_bytes\":217975859},\"trade_receive_lag_s\":{\"p50\":3.492,\"p95\":6.225,\"p99\":7.054}}"
+          }
+        ]
+      },
+      {
+        "deploymentId": "8453f919-b891-4aa7-8478-6fcf6b9c24ee",
+        "startDate": "2026-10-14T21:50:00.000Z",
+        "endDate": "2026-10-14T22:05:00.000Z",
+        "limit": 500,
+        "returned": [
+          {
+            "timestamp": "2026-10-14T21:58:31.484881230Z",
+            "severity": "info",
+            "message": "2026-10-14 21:58:29,927 WARNING nightcrawler.kalshi_recorder kalshi_recorder_spot_disconnected venue=kraken error=ConnectionClosedError"
+          },
+          {
+            "timestamp": "2026-10-14T21:58:35.572480184Z",
+            "severity": "info",
+            "message": "2026-10-14 21:58:35,422 WARNING nightcrawler.kalshi_recorder kalshi_recorder_gap lane=spot cause=spot_reconnected"
+          },
+          {
+            "timestamp": "2026-10-14T22:00:05.453611064Z",
+            "severity": "info",
+            "message": "2026-10-14 22:00:00,936 INFO nightcrawler.kalshi_recorder kalshi_recorder_evidence {\"commit\":\"a0782b743a31369fe25ddf6d2eea96df8511cd8d\",\"coverage\":{\"backfill_jobs_pending\":0,\"btc15m_fresh_minutes\":60,\"btc15m_minutes\":60,\"candidate_book_fresh_share\":1.0,\"minutes_sampled\":60,\"trade_covered_to\":1792015199,\"trade_tape_minutes\":60},\"coverage_certified\":false,\"gaps\":{\"by_cause\":{\"spot_reconnected\":1},\"by_lane\":{\"spot\":1},\"open_ended_records\":0,\"records\":1},\"manifest_sha256\":\"442fe574ac80ae31c4603c5637f56316162dd214fe4298f4503d320816f28930\",\"observed_at\":1792015200.9356287,\"order_capability\":false,\"per_venue_spot_ticks_verified\":false,\"period\":{\"from\":1792011600.0,\"partial\":false,\"to\":1792015200},\"read_only\":true,\"rest_lanes\":{\"backfill\":{\"429\":null,\"errors\":null,\"ok\":null,\"requests\":null,\"rtt_ms\":{\"p50\":null,\"p95\":null,\"p99\":null}},\"books\":{\"429\":null,\"errors\":null,\"ok\":2297,\"requests\":2297,\"rtt_ms\":{\"p50\":67.198,\"p95\":121.978,\"p99\":176.569}},\"btc15m_meta\":{\"429\":null,\"errors\":null,\"ok\":12,\"requests\":12,\"rtt_ms\":{\"p50\":79.68,\"p95\":120.838,\"p99\":120.838}},\"discovery\":{\"429\":null,\"errors\":null,\"ok\":798,\"requests\":798,\"rtt_ms\":{\"p50\":83.472,\"p95\":131.832,\"p99\":216.817}},\"fees\":{\"429\":null,\"errors\":null,\"ok\":2,\"requests\":2,\"rtt_ms\":{\"p50\":79.461,\"p95\":81.441,\"p99\":81.441}},\"other\":{\"429\":null,\"errors\":null,\"ok\":null,\"requests\":null,\"rtt_ms\":{\"p50\":null,\"p95\":null,\"p99\":null}},\"settlement\":{\"429\":null,\"errors\":null,\"ok\":4,\"requests\":4,\"rtt_ms\":{\"p50\":88.773,\"p95\":94.243,\"p99\":94.243}},\"sweep\":{\"429\":null,\"errors\":null,\"ok\":23,\"requests\":23,\"rtt_ms\":{\"p50\":93.275,\"p95\":117.357,\"p99\":146.212}},\"trades\":{\"429\":null,\"errors\":null,\"ok\":1587,\"requests\":1587,\"rtt_ms\":{\"p50\":91.325,\"p95\":144.656,\"p99\":232.14}}},\"rows_and_test_outcomes_read\":false,\"schema\":1,\"sealed_lanes\":{\"admissions\":{\"first_append_at\":1792011608.3760905,\"gz_bytes\":31383,\"last_append_at\":1792015061.299766,\"record_envelopes\":140,\"segments\":1},\"book_calls\":{\"first_append_at\":1792011601.7048414,\"gz_bytes\":407196,\"last_append_at\":1792015198.807511,\"record_envelopes\":2297,\"segments\":2},\"books\":{\"first_append_at\":1792011601.7048414,\"gz_bytes\":812980,\"last_append_at\":1792015196.6616938,\"record_envelopes\":5327,\"segments\":1},\"books_btc15m\":{\"first_append_at\":1792011601.7048414,\"gz_bytes\":1010779,\"last_append_at\":1792015198.807511,\"record_envelopes\":2302,\"segments\":2},\"btc15m_meta\":{\"first_append_at\":1792011606.9869351,\"gz_bytes\":3990,\"last_append_at\":1792014914.5519893,\"record_envelopes\":16,\"segments\":1},\"discovery\":{\"first_append_at\":1792013888.4709475,\"gz_bytes\":61795,\"last_append_at\":1792014010.5051007,\"record_envelopes\":72,\"segments\":1},\"fees\":{\"first_append_at\":1792011879.1910882,\"gz_bytes\":335,\"last_append_at\":1792011881.1895406,\"record_envelopes\":2,\"segments\":1},\"gaps\":{\"first_append_at\":1792015115.4224474,\"gz_bytes\":189,\"last_append_at\":1792015115.4224474,\"record_envelopes\":1,\"segments\":1},\"markets\":{\"first_append_at\":1792011600.379042,\"gz_bytes\":4200433,\"last_append_at\":1792015162.878496,\"record_envelopes\":750,\"segments\":6},\"requests\":{\"first_append_at\":1792011600.379042,\"gz_bytes\":613615,\"last_append_at\":1792015199.4974852,\"record_envelopes\":4723,\"segments\":2},\"settlement\":{\"first_append_at\":1792012212.9821084,\"gz_bytes\":8994,\"last_append_at\":1792014914.5519893,\"record_envelopes\":4,\"segments\":1},\"spot\":{\"first_append_at\":1792011600.0190883,\"gz_bytes\":581649,\"last_append_at\":1792015199.5360198,\"record_envelopes\":4887,\"segments\":1},\"telemetry\":{\"first_append_at\":1792011600.845282,\"gz_bytes\":231,\"last_append_at\":1792011600.845282,\"record_envelopes\":1,\"segments\":1},\"trade_coverage\":{\"first_append_at\":1792011602.3670387,\"gz_bytes\":34633,\"last_append_at\":1792015195.0204928,\"record_envelopes\":691,\"segments\":1},\"trades\":{\"first_append_at\":1792011601.0528166,\"gz_bytes\":225293,\"last_append_at\":1792015199.4974852,\"record_envelopes\":654,\"segments\":1},\"trades_btc15m\":{\"first_append_at\":1792011601.0528166,\"gz_bytes\":5563527,\"last_append_at\":1792015199.4974852,\"record_envelopes\":918,\"segments\":8}},\"sealed_only\":true,\"segment_hash_basis\":\"index_metadata_computed_at_seal_not_rechecked\",\"segment_hashes_reverified\":false,\"session\":\"6196abf087e64f069778dfb2addee131\",\"session_started_at\":1791995887.7187006,\"source\":\"saved_hourly_manifest\",\"status\":\"available\",\"storage\":{\"cap_bytes\":4831838208,\"deleted_segments\":0,\"level\":0,\"used_bytes\":301157546},\"trade_receive_lag_s\":{\"p50\":3.809,\"p95\":7.456,\"p99\":11.989}}"
+          }
+        ]
+      },
+      {
+        "deploymentId": "8453f919-b891-4aa7-8478-6fcf6b9c24ee",
+        "startDate": "2026-10-14T23:00:00.000Z",
+        "endDate": "2026-10-14T23:56:00.000Z",
+        "limit": 500,
+        "returned": [
+          {
+            "timestamp": "2026-10-14T23:00:04.784126955Z",
+            "severity": "info",
+            "message": "2026-10-14 23:00:00,769 INFO nightcrawler.kalshi_recorder kalshi_recorder_evidence {\"commit\":\"a0782b743a31369fe25ddf6d2eea96df8511cd8d\",\"coverage\":{\"backfill_jobs_pending\":0,\"btc15m_fresh_minutes\":60,\"btc15m_minutes\":60,\"candidate_book_fresh_share\":1.0,\"minutes_sampled\":60,\"trade_covered_to\":1792018797,\"trade_tape_minutes\":60},\"coverage_certified\":false,\"gaps\":{\"by_cause\":{},\"by_lane\":{},\"open_ended_records\":0,\"records\":0},\"manifest_sha256\":\"fcddc21c55b93fae936974b606ae79603e0eefb6b7da02c3e4dbe8aa4b15ef8f\",\"observed_at\":1792018800.768101,\"order_capability\":false,\"per_venue_spot_ticks_verified\":false,\"period\":{\"from\":1792015200.0,\"partial\":false,\"to\":1792018800},\"read_only\":true,\"rest_lanes\":{\"backfill\":{\"429\":null,\"errors\":null,\"ok\":null,\"requests\":null,\"rtt_ms\":{\"p50\":null,\"p95\":null,\"p99\":null}},\"books\":{\"429\":null,\"errors\":null,\"ok\":2350,\"requests\":2350,\"rtt_ms\":{\"p50\":66.734,\"p95\":118.364,\"p99\":175.424}},\"btc15m_meta\":{\"429\":null,\"errors\":null,\"ok\":12,\"requests\":12,\"rtt_ms\":{\"p50\":78.726,\"p95\":120.748,\"p99\":120.748}},\"discovery\":{\"429\":null,\"errors\":null,\"ok\":651,\"requests\":651,\"rtt_ms\":{\"p50\":83.924,\"p95\":141.12,\"p99\":234.857}},\"fees\":{\"429\":null,\"errors\":null,\"ok\":3,\"requests\":3,\"rtt_ms\":{\"p50\":84.538,\"p95\":91.374,\"p99\":91.374}},\"other\":{\"429\":null,\"errors\":null,\"ok\":null,\"requests\":null,\"rtt_ms\":{\"p50\":null,\"p95\":null,\"p99\":null}},\"settlement\":{\"429\":null,\"errors\":null,\"ok\":4,\"requests\":4,\"rtt_ms\":{\"p50\":79.059,\"p95\":81.743,\"p99\":81.743}},\"sweep\":{\"429\":null,\"errors\":null,\"ok\":24,\"requests\":24,\"rtt_ms\":{\"p50\":94.089,\"p95\":108.049,\"p99\":118.437}},\"trades\":{\"429\":null,\"errors\":null,\"ok\":1619,\"requests\":1619,\"rtt_ms\":{\"p50\":91.774,\"p95\":143.857,\"p99\":231.328}}},\"rows_and_test_outcomes_read\":false,\"schema\":1,\"sealed_lanes\":{\"admissions\":{\"first_append_at\":1792015207.6662061,\"gz_bytes\":24633,\"last_append_at\":1792018694.2989955,\"record_envelopes\":10,\"segments\":1},\"book_calls\":{\"first_append_at\":1792015201.051004,\"gz_bytes\":422766,\"last_append_at\":1792018799.5024886,\"record_envelopes\":2350,\"segments\":2},\"books\":{\"first_append_at\":1792015205.030042,\"gz_bytes\":815456,\"last_append_at\":1792018798.175883,\"record_envelopes\":4868,\"segments\":1},\"books_btc15m\":{\"first_append_at\":1792015201.051004,\"gz_bytes\":1008009,\"last_append_at\":1792018799.5024886,\"record_envelopes\":2355,\"segments\":2},\"btc15m_meta\":{\"first_append_at\":1792015205.608775,\"gz_bytes\":3992,\"last_append_at\":1792018516.1954987,\"record_envelopes\":16,\"segments\":1},\"discovery\":{\"first_append_at\":1792017488.9532146,\"gz_bytes\":62104,\"last_append_at\":1792017609.98314,\"record_envelopes\":72,\"segments\":1},\"fees\":{\"first_append_at\":1792018740.1723397,\"gz_bytes\":383,\"last_append_at\":1792018744.1766343,\"record_envelopes\":3,\"segments\":1},\"markets\":{\"first_append_at\":1792015462.4857736,\"gz_bytes\":3620291,\"last_append_at\":1792018765.2700183,\"record_envelopes\":603,\"segments\":6},\"requests\":{\"first_append_at\":1792015200.159472,\"gz_bytes\":618313,\"last_append_at\":1792018799.5024886,\"record_envelopes\":4664,\"segments\":2},\"spot\":{\"first_append_at\":1792015200.9175026,\"gz_bytes\":690393,\"last_append_at\":1792018799.1864998,\"record_envelopes\":4879,\"segments\":1},\"telemetry\":{\"first_append_at\":1792015200.9350014,\"gz_bytes\":233,\"last_append_at\":1792015200.9350014,\"record_envelopes\":1,\"segments\":1},\"trade_coverage\":{\"first_append_at\":1792015200.159472,\"gz_bytes\":34804,\"last_append_at\":1792018798.855254,\"record_envelopes\":696,\"segments\":1},\"trades\":{\"first_append_at\":1792015204.3388364,\"gz_bytes\":241986,\"last_append_at\":1792018797.533327,\"record_envelopes\":675,\"segments\":1},\"trades_btc15m\":{\"first_append_at\":1792015204.3388364,\"gz_bytes\":4910425,\"last_append_at\":1792018797.533327,\"record_envelopes\":934,\"segments\":7}},\"sealed_only\":true,\"segment_hash_basis\":\"index_metadata_computed_at_seal_not_rechecked\",\"segment_hashes_reverified\":false,\"session\":\"6196abf087e64f069778dfb2addee131\",\"session_started_at\":1791995887.7187006,\"source\":\"saved_hourly_manifest\",\"status\":\"available\",\"storage\":{\"cap_bytes\":4831838208,\"deleted_segments\":0,\"level\":0,\"used_bytes\":313640667},\"trade_receive_lag_s\":{\"p50\":3.623,\"p95\":6.648,\"p99\":7.929}}"
+          }
+        ]
+      },
+      {
+        "deploymentId": "8453f919-b891-4aa7-8478-6fcf6b9c24ee",
+        "startDate": "2026-10-14T23:45:00.000Z",
+        "endDate": "2026-10-14T23:56:00.000Z",
+        "limit": 500,
+        "returned": []
+      }
+    ]
+  },
+  "platform_health": {
+    "environment": {
+      "id": "17f7b0e0-104c-4903-9484-0106748b3cdb",
+      "name": "production"
+    },
+    "service": {
+      "serviceId": "736b1c8a-8311-4ee0-9043-d05f508cd821",
+      "serviceName": "kalshi-recorder",
+      "state": "online",
+      "statusText": "Online",
+      "activeDeployments": [
+        {
+          "id": "8453f919-b891-4aa7-8478-6fcf6b9c24ee",
+          "status": "SUCCESS",
+          "createdAt": "2026-10-14T16:36:40.384Z",
+          "statusUpdatedAt": "2026-10-14T16:38:15.302Z"
+        }
+      ],
+      "replicaStatus": {
+        "running": 1,
+        "crashed": 0,
+        "total": 1
+      },
+      "cronJob": null,
+      "issues": {
+        "warningCount": 0,
+        "criticalCount": 0
+      },
+      "recentFailures": 0,
+      "recentFailedDeployments": [],
+      "hasIssues": false,
+      "isCronJob": false,
+      "hasVolume": true
+    },
+    "pendingWork": [
+      {
+        "id": "patch:9a84e13c-3caf-4a85-b5f5-d9a2fcb8a021",
+        "kind": "EnvironmentPatch",
+        "status": "staged",
+        "changes": [],
+        "startedAt": "2026-10-12T16:21:53.480Z",
+        "workflowId": "commitChanges/17f7b0e0-104c-4903-9484-0106748b3cdb/9a84e13c-3caf-4a85-b5f5-d9a2fcb8a021"
+      }
+    ],
+    "summary": {
+      "totalServices": 1,
+      "servicesWithIssues": 0,
+      "totalFailures": 0
+    }
+  },
+  "active_deployment": {
+    "id": "8453f919-b891-4aa7-8478-6fcf6b9c24ee",
+    "status": "SUCCESS",
+    "createdAt": "2026-10-14T16:36:40.384Z",
+    "updatedAt": "2026-10-14T16:38:15.303Z",
+    "serviceId": "736b1c8a-8311-4ee0-9043-d05f508cd821",
+    "environmentId": "17f7b0e0-104c-4903-9484-0106748b3cdb",
+    "url": null,
+    "snapshotId": "06b34b50-a125-4877-ba96-3673d9ba48a1",
+    "creator": {
+      "id": "ed8c7ddc-ac1f-4839-a696-9504201a60ee",
+      "name": null,
+      "email": "sideriapostolou@gmail.com"
+    },
+    "canRollback": true,
+    "canRedeploy": true,
+    "regions": [
+      "us-west2"
+    ],
+    "meta": {
+      "reason": "deploy",
+      "commitMessage": "Merge pull request #48 from sideriapostolou-lgtm/codex/kalshi-recorder-evidence\n\nLIVE ON MERGE: verify saved recorder metadata in bounded logs",
+      "commitHash": "a0782b743a31369fe25ddf6d2eea96df8511cd8d",
+      "branch": "claude/kalshi-recorder"
+    }
+  },
+  "latest_deploy_log_at_or_before_snapshot": "2026-10-14T23:00:04.784126955Z",
+  "status_and_storage_assessment": {
+    "platform": "online, 1/1 replicas; zero platform warning/critical notifications and zero failures in queried 8-hour window.",
+    "app_log": "latest bounded evidence event is 2026-10-14T23:00:04.784Z (application timestamp 23:00:00.769); no deploy log rows in 23:45-23:56 window, so no fresh 23:55 heartbeat/storage sample.",
+    "latest_saved_storage_metadata": "2026-10-14T23:00:00.769 UTC application evidence: used_bytes=313640667; cap_bytes=4831838208 (~6.49%); deleted_segments=0; level=0. Timestamp is 55 minutes before requested snapshot and does not establish present disk state.",
+    "warnings": "Latest captured spot disconnect/reconnect warning pair in retained queries at 21:58:29.927/21:58:35.422 UTC (Kraken; ConnectionClosedError then spot_reconnected); evidence at 22:00 reports 1 spot gap. At 23:00 evidence reports zero gaps in that hourly period. No later log rows were returned for 23:00-23:56.",
+    "evidence_limits": "latest evidence coverage_certified=false; per_venue_spot_ticks_verified=false; segment_hashes_reverified=false; hashes based on index metadata at seal. Saved manifest is metadata only, not raw-segment verification."
+  },
+  "runtime_identity": {
+    "branch": "claude/kalshi-recorder",
+    "commit": "a0782b743a31369fe25ddf6d2eea96df8511cd8d",
+    "command": "python -m nightcrawler.kalshi_recorder run",
+    "command_source": "docs/COORDINATION.md:669-678 and docs/HANDOFF_CLAUDE_TO_CODEX_2026-10-14.md:50-54",
+    "startup_log_prefix": "kalshi_recorder_started",
+    "status_log_prefix": "kalshi_recorder_evidence",
+    "identity_note": "Command/log prefixes are from current service docs and observed runtime log messages; source files are absent from this bot branch."
+  }
+}

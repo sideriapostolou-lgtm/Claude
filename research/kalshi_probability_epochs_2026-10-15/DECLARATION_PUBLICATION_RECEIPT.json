@@ -1,0 +1,16 @@
+{
+  "source": "0c30491e0bd101250ee443912e1352f38718af45",
+  "deployment": "66e6e7e4-30d9-4628-a234-f2a8e97dad19",
+  "docsCommit": "ed47d21f24408675ca8da0747fca9985e76aebaa",
+  "docsTree": "df95466b3aa4a656c2a267a578bf6272d264f09f",
+  "publishedAt": {
+    "current_time": "2026-10-15 21:36:26 UTC"
+  },
+  "verifiedAt": {
+    "current_time": "2026-10-15 21:35:22 UTC"
+  },
+  "target": "KXBTC15M-26OCT151800-00",
+  "start": "2026-10-15T21:45:00Z",
+  "end": "2026-10-15T22:00:00Z",
+  "tail": "2026-10-15T22:02:00Z"
+}

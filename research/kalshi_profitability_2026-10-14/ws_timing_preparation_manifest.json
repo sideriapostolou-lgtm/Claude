@@ -1,0 +1,54 @@
+{
+  "archive": "ws-timing-preparation-evidence.zip",
+  "archive_bytes": 243141,
+  "archive_sha256": "a4785396a23f7d6e1657cc041941d68657ece5361668e56e8bcba0332be087b9",
+  "crc_verified": true,
+  "member_equality_verified": true,
+  "members": [
+    {
+      "member": "controller-replay.py",
+      "bytes": 14229,
+      "sha256": "ba4350f10380620df48992a6d5b75e058c0fbf4073f8d7ddb4d1fbd4d813c184"
+    },
+    {
+      "member": "controller-replay.json",
+      "bytes": 528236,
+      "sha256": "b2825230060d0d811e5a82f2b0cce747dcf6a0d38cdd9e384f05872052abe86f"
+    },
+    {
+      "member": "controller-replay-report.md",
+      "bytes": 6355,
+      "sha256": "d411660b5ac274cf901a7d31eb1d5acdefe57a62ef996c0e81fa8ee3af4f0da6"
+    },
+    {
+      "member": "controller-replay.log",
+      "bytes": 1542,
+      "sha256": "a1a42f2f4e991914d47b6a068dd990f7421857aba78a9069b458fbd445b85797"
+    },
+    {
+      "member": "controller-replay-attempt2.log",
+      "bytes": 1541,
+      "sha256": "dbf638cee22e2bb27ca0aa7eac5eb1703c90796457f53d9ac923d299f6941ee6"
+    },
+    {
+      "member": "controller-replay-attempt3.log",
+      "bytes": 7310,
+      "sha256": "e81290a6c2afecba12be9cba9fb8010836d866aeba684413000f2816ca78a609"
+    },
+    {
+      "member": "freshness-resumed-freshlogs.json",
+      "bytes": 521443,
+      "sha256": "0aae85ea0a9faf2d8c773a3c20fe54b25caaaeefdfe2c1a164da0a8d45e4385c"
+    },
+    {
+      "member": "freshness-resumed-fresh_result_0.json",
+      "bytes": 13576,
+      "sha256": "d1954fd84dcdbaca82b92e6f4c16362604b5d058113794f95e9aa3ed04b3e498"
+    },
+    {
+      "member": "freshness-architecture-review.md",
+      "bytes": 22753,
+      "sha256": "3cde6e18af709575d43379bb368f7439e3a500a8d946216c6146efd70116f803"
+    }
+  ]
+}

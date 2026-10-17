@@ -1,0 +1,34 @@
+{
+  "recorded_at_utc": "2026-10-15T18:56:03.992578+00:00",
+  "source_base": "88f8f6f4a695d32d712351d1dc1b2332180d165c",
+  "protocol_docs_commit": "bbe2eadd43303f4f0bc411768c4c653648727f82",
+  "task": "New prospective probability-quality observer beside unchangedV1. Not an upstream continuity repair, live strategy, profitableedge or history migration.",
+  "protected_sha256": {
+    "src/nightcrawler/kalshi_online_learning.py": "16a14ff7d8bb933d4eb8e4251d0fdcf943c81e6f8c6f8f1720ced3d5e14f5fa8",
+    "src/nightcrawler/speeddesk_model.py": "50ba3b4f78c6efd031fdcd8bb1cb1a59ea2988973c341b9ad275345d70de7429",
+    "src/nightcrawler/speeddesk.py": "79a8ad7fc10879035297e2af4d87af1bff758b4f89c2adae3464fe812235477d",
+    "src/nightcrawler/speeddesk_feeds.py": "4a942d649af275cc6ad7b467462236e66c9a629cab0920e1a1adb3c24982dffd",
+    "src/nightcrawler/speeddesk_venues.py": "54f0c2eaea909621f24734d8cd73cdd46f2ea711d885269b6892c564bc9dff51",
+    "src/nightcrawler/speeddesk_kalshi.py": "53727b3d3f2ec6790469d53d8fb330f7501ad1838c558c887ea95c54840d8f82",
+    "src/nightcrawler/speeddesk_kalshi_ws.py": "d76e9dfa6a026f796f11503642a373a5a0f2799da8dabadf078c565591f82112",
+    "src/nightcrawler/speeddesk_live.py": "2471adff4eca63ee6abba73031da75793ae5e1b3cb0468e30e1e2d6b9934efd5",
+    "src/nightcrawler/speeddesk_live_model.py": "689207e3a681b591f64a43f03a359d2dc0dbe424cbc2f74809669866ffab36de",
+    "src/nightcrawler/speeddesk_kalshi_client.py": "03db53e00d0b80321ec14687bc2092346d649d0c2f956a383afe19e49ba03393",
+    "src/nightcrawler/ledger.py": "c9b5268048381293a11dba514d8b66eeff7a7636b1685332fd9464fbf21f358c",
+    "src/nightcrawler/config.py": "b0cf19e2601925d65431cc5943b2fce0aaab3edd741dfc19520865f7ebf9f6da",
+    "src/nightcrawler/polydesk.py": "aafda9a8716ec5a4cd53568ab64f497e433d9e81b39d0933bc95d74579a4acb5",
+    "pyproject.toml": "bd3e8ba6bbf97b332c452e13d6cfe34db3bf64c46d3864d9f5048553f46998e6",
+    "Dockerfile": "720430ae085b53440493b6443c6df136be9ec00b3ca3e75647310d66245c3043",
+    "railway.json": "f208517deac32c9f2313307b7e04c0771bef1e41130b8f0bb482d347174636fc"
+  },
+  "source_scope": [
+    "src/nightcrawler/kalshi_probability_learning.py",
+    "child-only kalshi_arena.py hooks",
+    "pagestate.py optional numeric projection",
+    "focused pure/integration/page regressions"
+  ],
+  "cause_evidence": "Three actual offline source reproductions; none uniquely attributes recorded production gaps. New estimand is current qualified probability inputs, never continuous marketdata coverage.",
+  "proof_required": "Exactsource independent review, originalbaseline regressions, fulltests/mypy/changedRuff, bounded overhead/retention, safe release/exactrestart, then predeclared futurefullwindow forecast/officialscore originalandidentity proof.",
+  "financial_scope": "No variables,caps,stop/resume/daybudget,manualorder,liveprobability/model/risk/Polymarket/ledger/durability changes. Existingrealbots restart onlyvia authorized safe source release. No keysread.",
+  "queue": "BroaderEXEC/rawinputcauses remainopen. TJRmissingdata/costs, paper/liveoff; recorder3:45PMcheckpoint andpreOct20storage review unchanged."
+}

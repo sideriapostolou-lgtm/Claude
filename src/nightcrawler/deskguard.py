@@ -1,0 +1,380 @@
+"""The desks' risk manager: an honest verdict on a desk's settled record, in plain words (owner: O5).
+
+:func:`judge` is PURE (no clock, no files, no network, no randomness): give it one desk's per-settlement P&L for
+the CURRENT rule only (paper and real money judged apart, never added) and it says one of four things:
+
+* ``learning``: fewer than ``min_n`` draws (default :data:`MIN_N` = 30). Nothing is claimed either way, except
+  the EARLY STOP: from :data:`EARLY_N` = 10 draws, a record whose one-sided 99 % UPPER bound is already below the
+  benchmark is ``losing`` at once (a rule that loses most of its tickets is stopped after about 10, not 30).
+* ``losing``: the one-sided 95 % UPPER bound on the mean per draw is below the benchmark: even the best case the
+  record allows loses money. A desk stops new buys on this (:func:`pause_step`).
+* ``winning``: the one-sided 99 % LOWER bound is above the benchmark AND at least ``win_n`` draws (default
+  :data:`WIN_N` = 100) AND at least ``min_losses`` losing draws (default :data:`MIN_LOSSES` = 3) AND the record
+  survives the loss stress test below. A flag for the owner and nothing more: nothing here (or in any caller)
+  switches real money on, and a rule that has not passed its lab is not even called a candidate.
+* ``unclear``: anything else, with the reason it is not proven.
+
+Every verdict carries ``reason``: the count, the losses, the money and the bounds, so a person can check it.
+
+WHAT ONE DRAW IS (``groups``). Settlements that move together are ONE draw, as lab 4 counts them (Amendment 3,
+``research/lab4/core.py`` ``event_bootstrap_ci``: "a multi-market event is one draw"). The Polymarket desk buys
+every match-winner market of a live game (long the leader, short the draw and the trailer: up to three positions
+that settle together on one result), and a crypto or weather ladder's markets end together on one price. Judged
+as independent settlements, such a record looks far better proven than it is: a zero-edge desk watched for 2,000
+settlements is flagged winning in 4.7 % of runs when they are independent, but in 17.5 % with two markets an
+event, 27.5 % with three and 34.7 % with five (and paused in 38-59 % instead of 17 %). Judged per event, the same
+records are flagged in 2.5 %, 1.4 % and 0 % (fewer draws: harder to prove either way). So a caller passes
+``groups`` (one key per settlement: the event, or the category and end time of a ladder); the P&L of a group is
+summed in first-seen order and the method below runs on those sums: ``n`` and the losses count EVENTS, and the
+reason says so.
+
+WHAT ONE DRAW IS WORTH (``stakes``). With ``stakes`` (the money each settlement put at risk), a draw is judged as
+its return on the money at risk, ``sum(pnl) / sum(stake)`` of its group (lab 4 reports "net per $ at risk"), so a
+change of ticket size never mixes scales inside one test; the bounds then read "% of the stake" and only the
+total stays in dollars. Without it, a draw is its P&L in the caller's unit (USD).
+
+WHY THIS METHOD (the payoffs are skewed). A near-certain grind (lab 4, ``research/lab4/READING.md``) wins a few
+cents to a dollar on most settlements and loses most of a ticket on a few: many small wins, rare large losses. The
+textbook intervals behave very differently in the two directions on such a record:
+
+1. The Student-t bound ``mean +/- t(n-1) x s / sqrt(n)``. With rare large losses the sample mean and the sample
+   spread move together: a sample that happened to meet few losses has a HIGH mean and a SMALL spread, so its t
+   statistic runs high; one that met extra losses has a low mean but a LARGE spread, so its t statistic is muted.
+   Hence the t bound is CONSERVATIVE for "losing" (one look at a desk whose true mean is exactly zero calls it
+   losing 0.4-3 % of the time, under the nominal 5 %): a pause needs strong evidence. And it is OPTIMISTIC for
+   "winning": 30 wins of +$0.30 and no loss have zero spread, so the lower bound is +$0.30, although one -$20 loss
+   in 30 settlements is a desk that loses $0.37 a settlement (a bare t lower bound calls such a desk proven 40 % of
+   the time at 30 settlements).
+2. A bootstrap of the mean has the same blind spot (it only resamples the outcomes seen: a record without a loss
+   never produces one), needs random numbers, and is costly every round, so it is not used.
+
+So "losing" is the t upper bound (honest to pause on), and "winning" adds what the skew hides: a minimum count
+of draws, a minimum count of losses (a record that has not lost yet proves nothing), and a STRESS test: the
+loss rate is raised to its one-sided upper bound (the Wilson score bound; with no loss in ``n`` it is about
+``2.7 / n`` at 95 %, lab 4's "rule of three" worst case) and the mean is recomputed with the average win and the
+average loss as seen; it must still beat the benchmark.
+
+WHY 95 % TO PAUSE BUT 99 % TO PROMOTE (the desk looks every round). A verdict that is re-checked as the record
+grows gets many chances to be wrong. Measured on the Polymarket desk's OWN payoff shape ($20 paper tickets bought at
+0.975 with the venue's taker fee: +$0.48 a win, -$20.03 a loss), the verdict re-checked after every draw, 4,000
+seeded paths on each of two seeds, by 1,000 and by 2,000 draws (``tests/test_deskguard.py`` re-measures them on
+2,000 paths with a numpy copy of the method that it first checks against :func:`judge` itself; the ranges below
+cover all three runs):
+
+* the pause (95 %, and the 99 % early stop before 30 draws) stops a desk with exactly zero edge at some point in
+  13-14 % of runs by 1,000 draws and 17-18 % by 2,000; a desk that truly makes 0.3 % of its ticket a draw in 5-6 %
+  / 6 %, one that makes 0.9 % in under 1 %; one that loses 0.5 % of its ticket in 38-39 % / 57-58 %, 1.5 % in 90 %
+  / 99 %. Stopping a no-edge PAPER desk costs nothing (a rule without an edge after fees is not worth running), so
+  the pause keeps the plain 95 % bar. The early stop never fired on a zero-edge or a +0.9 % desk (0 of 4,000 runs
+  each) and stopped a rule that loses 60 % of its tickets in every run, after 10 draws at the median, 24 at most;
+* the winning flag is the costly mistake (it points the owner at real money), so it uses the stricter 99 % bar for
+  both the bound and the stress test: a zero-edge desk is flagged in 2.5-2.7 % of runs by 1,000 draws and 3.8-4.4 %
+  by 2,000; one that loses 0.25 % of its ticket in 0.7 % / 1.1 %, 0.5 % in 0.1-0.6 % / 0.3-0.7 % (rare, not never:
+  rare large losses can hide for a while); and a desk that truly makes 0.9 % of its ticket a draw in only 41-42 % /
+  75 % (a thin edge on these payoffs takes about 2,000 draws to show).
+
+``benchmark`` (optional): ``None`` or a number is a hurdle per draw, in the judged unit (0: "makes money"); a list
+of the same length as ``pnls`` is a paired benchmark per settlement (e.g. what holding would have made on the same
+trade), grouped and scaled like the P&L, and the excess is judged. A "loss" is then a draw behind the benchmark.
+A settlement with a non-finite value (or a stake that is not positive) is dropped.
+
+FOR ANOTHER DESK (e.g. a trend desk): keep each settled trade's P&L, its money at risk and its group key per rule
+(a rule id that changes whenever any setting of the rule changes) and book; call ``judge(pnls, groups=keys,
+stakes=costs)`` every round (a trend desk groups by entry day and asset regime: its trades are correlated through
+the market), and feed the verdict to :func:`pause_step` with that desk's own pause record; refuse new buys while
+the pause is set, keep the open book small while the verdict is not ``winning``, let open positions settle, and
+never let a verdict switch real money on (a winning verdict is a flag for the owner, nothing more).
+"""
+
+from __future__ import annotations
+
+import math
+from collections.abc import Iterable, Mapping, Sequence
+from dataclasses import asdict, dataclass
+from decimal import Decimal
+from statistics import NormalDist
+from typing import Any
+
+__all__ = [
+    "CONFIDENCE",
+    "EARLY_N",
+    "LEARNING",
+    "LOSING",
+    "MIN_LOSSES",
+    "MIN_N",
+    "PHRASES",
+    "UNCLEAR",
+    "VERDICTS",
+    "WINNING",
+    "WIN_CONFIDENCE",
+    "WIN_N",
+    "Verdict",
+    "judge",
+    "loss_rate_upper",
+    "pause_step",
+    "t_quantile",
+]
+
+LEARNING = "learning"
+LOSING = "losing"
+WINNING = "winning"
+UNCLEAR = "unclear"
+VERDICTS = (LEARNING, LOSING, WINNING, UNCLEAR)
+#: The verdicts in the owner's words (the page's line).
+PHRASES = {LEARNING: "still learning", LOSING: "losing", WINNING: "winning", UNCLEAR: "not proven yet"}
+MIN_N = 30  # draws before the full verdict
+EARLY_N = 10  # draws before the early stop may call a clear loser (99 % sure)
+WIN_N = 100  # draws before a record can be "winning"
+MIN_LOSSES = 3  # losing draws seen before a record can be "winning"
+CONFIDENCE = 0.95  # one-sided: the bounds shown, and the pause
+WIN_CONFIDENCE = 0.99  # one-sided: the bar to be "winning", and the early stop (the module docstring says why)
+#: Exact one-sided Student-t quantiles for 1..9 degrees of freedom (the expansion is used from 10 on).
+_T_SMALL = {
+    0.95: (6.313752, 2.919986, 2.353363, 2.131847, 2.015048, 1.943180, 1.894579, 1.859548, 1.833113),
+    0.99: (31.820516, 6.964557, 4.540703, 3.746947, 3.364930, 3.142668, 2.997952, 2.896459, 2.821438),
+}
+
+
+@dataclass(frozen=True, slots=True)
+class Verdict:
+    """One desk book's verdict. ``n`` and ``losses`` count draws (events when grouped, else settlements;
+    ``settled`` is the settlements behind them). ``mean``, ``lower`` and ``upper`` (the one-sided 95 % bounds),
+    ``win_lower`` (the 99 % lower bound) and ``stressed`` (the mean with the loss rate at its 99 % upper bound,
+    ``loss_rate_hi``) are per draw, relative to the benchmark (the excess), in ``unit``: ``usd`` (the caller's
+    money) or ``stake`` (a return on the money at risk, 0.01 = 1 %). ``total`` is the plain sum of the P&L in
+    money; ``benchmark`` the mean hurdle per draw; ``summary`` the reason's first part (counts and money);
+    ``early`` marks the early stop."""
+
+    verdict: str
+    reason: str
+    n: int
+    losses: int
+    total: float
+    mean: float | None
+    lower: float | None
+    upper: float | None
+    win_lower: float | None
+    stressed: float | None
+    loss_rate_hi: float | None
+    benchmark: float
+    min_n: int
+    win_n: int
+    settled: int = 0
+    summary: str = ""
+    unit: str = "usd"
+    per: str = "settlement"
+    early: bool = False
+
+    @property
+    def phrase(self) -> str:
+        return PHRASES[self.verdict]
+
+    def to_dict(self) -> dict[str, Any]:
+        return asdict(self)
+
+
+def t_quantile(df: int, confidence: float = CONFIDENCE) -> float:
+    """The one-sided ``confidence`` quantile of Student's t with ``df`` degrees of freedom: a table for 1-9 (95 %
+    and 99 % only), then the Cornish-Fisher expansion in the normal quantile (Abramowitz & Stegun 26.7.5; within
+    1e-4 of the exact value from df 10 on at both levels)."""
+    if df < 1:
+        raise ValueError("df must be at least 1")
+    if df < 10:
+        if confidence not in _T_SMALL:
+            raise ValueError("below 10 degrees of freedom only the 95 % and 99 % quantiles are known")
+        return _T_SMALL[confidence][df - 1]
+    z, v = NormalDist().inv_cdf(confidence), float(df)
+    g1 = (z**3 + z) / 4.0
+    g2 = (5 * z**5 + 16 * z**3 + 3 * z) / 96.0
+    g3 = (3 * z**7 + 19 * z**5 + 17 * z**3 - 15 * z) / 384.0
+    g4 = (79 * z**9 + 776 * z**7 + 1482 * z**5 - 1920 * z**3 - 945 * z) / 92160.0
+    return z + g1 / v + g2 / v**2 + g3 / v**3 + g4 / v**4
+
+
+def loss_rate_upper(losses: int, n: int, confidence: float = CONFIDENCE) -> float:
+    """One-sided upper bound on the share of losses after ``losses`` in ``n`` (Wilson score bound; with no loss
+    it is ``z^2 / (n + z^2)``: about 2.7 / n at 95 %, the rule of three)."""
+    if n <= 0:
+        return 1.0
+    z = NormalDist().inv_cdf(confidence)
+    p, z2 = losses / n, z * z
+    centre = p + z2 / (2 * n)
+    half = z * math.sqrt(p * (1.0 - p) / n + z2 / (4.0 * n * n))
+    return min(1.0, (centre + half) / (1.0 + z2 / n))
+
+
+def _tiny(size: float) -> str:
+    """A positive number below the shown precision, with two significant digits and no exponent (0.0004)."""
+    return format(Decimal(f"{size:.2g}"), "f")
+
+
+def _usd(value: float) -> str:
+    """Signed dollars to the cent; a non-zero amount under half a cent keeps two significant digits, so a bound
+    is never shown as ``$0.00`` unless it is zero (``-$0.003``)."""
+    size = abs(value)
+    if size == 0:
+        return "$0.00"
+    sign = "-" if value < 0 else "+"
+    return f"{sign}${size:,.2f}" if size >= 0.005 else f"{sign}${_tiny(size)}"
+
+
+def _pct(value: float) -> str:
+    """A return (0.01 = 1 %) as signed percent to two decimals; under that, two significant digits (never
+    ``0.00 %`` for a non-zero bound)."""
+    size = abs(value) * 100.0
+    if size == 0:
+        return "0.00 %"
+    sign = "-" if value < 0 else "+"
+    return f"{sign}{size:,.2f} %" if size >= 0.005 else f"{sign}{_tiny(size)} %"
+
+
+def _finite(value: Any) -> bool:
+    return isinstance(value, (int, float)) and not isinstance(value, bool) and math.isfinite(value)
+
+
+def _same_length(name: str, values: Iterable[Any] | None, n: int) -> list[Any] | None:
+    if values is None:
+        return None
+    out = list(values)
+    if len(out) != n:
+        raise ValueError(f"{name} needs one value per settlement ({len(out)} for {n})")
+    return out
+
+
+def _draws(pnls: Iterable[Any], benchmark: float | Sequence[float] | None, groups: Sequence[Any] | None,
+           stakes: Sequence[Any] | None) -> tuple[list[float], list[float], float, int]:
+    """``(money per draw, excess per draw, mean benchmark per draw, settlements kept)``. A settlement with a
+    non-finite P&L, paired benchmark or stake (or a stake that is not positive) is dropped. A group's draw is the
+    sum of its settlements (first-seen order); with stakes, divided by the group's money at risk."""
+    raw = list(pnls)
+    paired = not (benchmark is None or isinstance(benchmark, (int, float)))
+    hurdle = 0.0
+    if not paired:
+        hurdle = float(benchmark or 0.0)  # type: ignore[arg-type]
+        if not math.isfinite(hurdle):
+            raise ValueError("benchmark must be a finite number")
+    bench = _same_length("a paired benchmark", benchmark, len(raw)) if paired else None  # type: ignore[arg-type]
+    keys = _same_length("groups", groups, len(raw))
+    stake = _same_length("stakes", stakes, len(raw))
+    ok = [i for i, x in enumerate(raw) if _finite(x) and (bench is None or _finite(bench[i]))
+          and (stake is None or (_finite(stake[i]) and stake[i] > 0))]
+    if keys is None:  # every settlement its own draw
+        money = [float(raw[i]) for i in ok]
+        marks = [float(bench[i]) for i in ok] if bench is not None else None
+        scale = [float(stake[i]) for i in ok] if stake is not None else None
+    else:  # a draw per group: its [money, benchmark, money at risk], first-seen order
+        sums: dict[tuple[str, Any], list[float]] = {}
+        for i in ok:
+            acc = sums.setdefault(("solo", i) if keys[i] is None else ("group", str(keys[i])), [0.0, 0.0, 0.0])
+            acc[0] += float(raw[i])
+            acc[1] += float(bench[i]) if bench is not None else 0.0
+            acc[2] += float(stake[i]) if stake is not None else 1.0
+        money = [a[0] for a in sums.values()]
+        marks = [a[1] for a in sums.values()] if bench is not None else None
+        scale = [a[2] for a in sums.values()] if stake is not None else None
+    values = money if scale is None else [m / k for m, k in zip(money, scale)]
+    if marks is None:
+        return money, [v - hurdle for v in values], hurdle, len(ok)
+    if scale is not None:
+        marks = [m / k for m, k in zip(marks, scale)]
+    return money, [v - m for v, m in zip(values, marks)], (sum(marks) / len(marks) if marks else 0.0), len(ok)
+
+
+def judge(pnls: Iterable[float], benchmark: float | Sequence[float] | None = None, *,
+          groups: Sequence[Any] | None = None, stakes: Sequence[float] | None = None, min_n: int = MIN_N,
+          win_n: int = WIN_N, min_losses: int = MIN_LOSSES, early_n: int = EARLY_N) -> Verdict:
+    """The verdict on one book's settled record (module docstring). ``pnls``: the P&L of every settlement of the
+    current rule (one book: paper or real), any order. ``groups``: one key per settlement (None: a draw of its
+    own); settlements with the same key are one draw, their P&L summed. ``stakes``: the money each settlement put
+    at risk; with it a draw is judged as its return on that money. Pure; junk values are dropped, never raised on;
+    only a paired benchmark, ``groups`` or ``stakes`` of the wrong length raise."""
+    min_n = max(2, int(min_n))
+    win_n = max(min_n, int(win_n))
+    min_losses = max(1, int(min_losses))
+    early_n = max(2, int(early_n))
+    money, excess, bench, settled = _draws(pnls, benchmark, groups, stakes)
+    n = len(excess)
+    losses = sum(1 for x in excess if x < 0)
+    total = sum(money)
+    grouped, per_stake = groups is not None, stakes is not None
+    plain = benchmark is None or (isinstance(benchmark, (int, float)) and benchmark == 0)
+    lost = "lost" if plain else "behind the benchmark"
+    per = ("an event" if grouped else "a settlement") + ("" if plain else " above the benchmark")
+    draws = "events" if grouped else "settlements"
+    counted = f"{n} events ({settled} settled)" if grouped else f"{n} settled"
+    head = f"{counted}, {losses} {lost}, {_usd(total)} in all"
+    learning = f"{n} of {min_n} {draws} needed before judging; so far {_usd(total)}, {losses} {lost}"
+
+    def amount(value: float, *, unit: bool = True) -> str:
+        return (_pct(value) + (" of the stake" if unit else "")) if per_stake else _usd(value)
+
+    def verdict(word: str, reason: str, stats: Mapping[str, float | None] | None = None,
+                early: bool = False) -> Verdict:
+        got = stats or {}
+        return Verdict(word, reason, n, losses, total, got.get("mean"), got.get("lower"), got.get("upper"),
+                       got.get("win_lower"), got.get("stressed"), got.get("loss_rate_hi"), bench, min_n, win_n,
+                       settled=settled, summary=head, unit="stake" if per_stake else "usd",
+                       per="event" if grouped else "settlement", early=early)
+
+    if n < min(min_n, early_n):
+        return verdict(LEARNING, learning)
+    mean = sum(excess) / n
+    se = math.sqrt(sum((x - mean) ** 2 for x in excess) / (n - 1) / n)
+    lower, upper = mean - t_quantile(n - 1) * se, mean + t_quantile(n - 1) * se
+    win_lower = mean - t_quantile(n - 1, WIN_CONFIDENCE) * se
+    rate = loss_rate_upper(losses, n, WIN_CONFIDENCE)
+    stressed = None
+    if losses:
+        ok = [x for x in excess if x >= 0]
+        bad = [x for x in excess if x < 0]
+        stressed = (sum(ok) / len(ok) if ok else 0.0) * (1.0 - rate) + sum(bad) / len(bad) * rate
+    stats = {"mean": mean, "lower": lower, "upper": upper, "win_lower": win_lower, "stressed": stressed,
+             "loss_rate_hi": rate}
+    if n < min_n:  # the early stop: before min_n only a record that loses even at its 99 % best is called
+        early_upper = mean + t_quantile(n - 1, WIN_CONFIDENCE) * se
+        if early_upper < 0:
+            return verdict(LOSING, f"{head}; even at best {amount(early_upper)} {per} (99 % sure, early stop)",
+                           stats, early=True)
+        return verdict(LEARNING, learning)
+    if upper < 0:
+        return verdict(LOSING, f"{head}; even at best {amount(upper)} {per} (95 % sure)", stats)
+    times = rate / (losses / n) if losses else 0.0
+    if win_lower > 0 and n >= win_n and losses >= min_losses and stressed is not None and stressed > 0:
+        return verdict(WINNING, f"{head}; at worst {amount(win_lower)} {per} (99 % sure), ahead even with "
+                                f"{times:.1f}x the losses", stats)
+    if lower <= 0:
+        why = "not proven either way"
+    elif n < win_n:
+        why = f"needs {win_n} {'events' if grouped else 'settled'} to count as proven"
+    elif losses < min_losses:
+        why = f"only {losses} {lost}: too few losses to trust the record"
+    elif win_lower <= 0:
+        why = "not yet 99 % sure, the bar for real money"
+    else:
+        why = f"losses {times:.1f}x as often would wipe it out"
+    return verdict(UNCLEAR, f"{head}; between {amount(lower, unit=False)} and {amount(upper)} {per} (95 % sure); "
+                            f"{why}", stats)
+
+
+def pause_step(paused: Mapping[str, Any] | None, verdict: Verdict, *, rule: str, now: float, on: bool = True,
+               what: str = "the desk") -> tuple[dict[str, Any] | None, str | None]:
+    """One round of a book's pause, PURE: ``(the pause now, an event to record or None)``. ``paused`` is the
+    book's pause record (``{at, reason, rule}``) or None; ``rule`` the desk's current rule (an id that changes
+    with any setting of the rule); ``on`` the owner's switch (off: never paused); ``what`` names the book in the
+    event ("the desk", "real buys").
+
+    * the switch is off: no pause (the event says a pause was lifted, when there was one);
+    * a pause of an older rule: lifted (a changed rule starts a fresh record);
+    * ``losing`` and not paused: paused, with the verdict's reason;
+    * otherwise unchanged: a pause STICKS for its rule (a few lucky settlements after the evidence do not undo it;
+      a changed rule or the owner's switch does). A pause only ever stops buying; nothing here starts any."""
+    current = dict(paused) if isinstance(paused, Mapping) else None
+    if not on:
+        return None, (f"Risk manager switched off by the owner: the pause on {what} is lifted" if current else None)
+    lifted = None
+    if current is not None and current.get("rule") != rule:
+        current = None
+        lifted = f"Risk manager lifted the pause on {what}: the rule changed, its record starts from zero"
+    if current is None and verdict.verdict == LOSING:
+        return {"at": now, "reason": verdict.reason, "rule": rule}, f"Risk manager paused {what}: {verdict.reason}"
+    return current, lifted

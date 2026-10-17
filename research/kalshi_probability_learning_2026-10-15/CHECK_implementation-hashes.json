@@ -1,0 +1,13 @@
+{
+  "files": {
+    "src/nightcrawler/kalshi_probability_learning.py": "a21b903ccbef0775f48f2a13322dc7ebfc4c831d381599a45993ebb218e22113",
+    "src/nightcrawler/kalshi_arena.py": "f183d7f66de018126445effcde714992808a36527e7a30f35ad36782fdd55d7b",
+    "tests/test_kalshi_probability_learning.py": "62256a835e8c5e62ca68de5698e683c013af01184cb230c747e05743fb7ac016",
+    "tests/test_kalshi_probability_arena.py": "b7f300752a72c0345543bef8222be0f1b80f122f0eaab33ca5edcabb0eb8b082"
+  },
+  "probability_fingerprint": "e79897062a3ebbd61fe5dc70617f02c44bb7d29c9dbf51e23940459686653c7c",
+  "new_tests_passed": 94,
+  "mypy_source_files": 129,
+  "ruff_files": 4,
+  "notes": "Final restore validation hardening; earlier checks/failures preserved. No source writes after this freeze without notifying root."
+}

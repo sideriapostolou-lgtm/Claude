@@ -1,0 +1,17 @@
+{
+  "request": {
+    "projectId": "75750847-85c0-41a3-a2a7-b7f2201a51e9",
+    "environmentId": "17f7b0e0-104c-4903-9484-0106748b3cdb",
+    "deploymentId": "c1fda55b-72fd-47b3-9801-dffec83b9e8b",
+    "startDate": "2026-10-15T18:17:05Z",
+    "endDate": "2026-10-15T18:21:10Z",
+    "filter": "\"kalshi_arena_hardened\"",
+    "limit": 20
+  },
+  "before": {
+    "current_time": "2026-10-15 18:21:10 UTC"
+  },
+  "after": {
+    "current_time": "2026-10-15 18:21:14 UTC"
+  }
+}

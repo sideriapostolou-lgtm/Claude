@@ -1,0 +1,197 @@
+{
+  "at_utc": "2026-10-15T18:15:09.898238+00:00",
+  "archive": "PREPARATION.zip",
+  "bytes": 838703,
+  "sha256": "5e3b7611d89b9163074b60dd13c7a66f613d675139d8e1155f28321b283b81cf",
+  "member_count": 37,
+  "all_member_bytes_crc_hashes_verified": true,
+  "bounded_private_credential_scan": "pass; expected SHA/deploy/window/order/fill identifiers are nonsensitive evidence",
+  "raw_patch_whitespace": "Originalpatch bytes preserved; standard single-space context blanklines are evidence, not application whitespace. Scoped source/docs/test diffcheckpasses.",
+  "members": [
+    {
+      "name": "CANDIDATE_GUARD_REPRO.json",
+      "bytes": 2934,
+      "sha256": "3934a9e20a6ea67f36f344656663cc02efa06084d1acb3149958ea936462bc1a"
+    },
+    {
+      "name": "CANDIDATE_GUARD_REPRO.py.txt",
+      "bytes": 2863,
+      "sha256": "e34e28e50298e3b107c509e03f0bf871eb656840e181bd5f18799182b7b1008c"
+    },
+    {
+      "name": "CHECK_baseline-new-regressions-02.log",
+      "bytes": 4716,
+      "sha256": "363f79dcd2ed8df027a150653b6df19c6e7b1d802601bc1fd89d753b9a650dce"
+    },
+    {
+      "name": "CHECK_focused-01.log",
+      "bytes": 10250,
+      "sha256": "2c80f96543d05bf5bfa33251fe89842dc72a9c5ce57c2566cb64564ad0e3f9c9"
+    },
+    {
+      "name": "CHECK_focused-02.log",
+      "bytes": 278,
+      "sha256": "05becd0c2cd5a66d609df3f76b40d441f960ca628edbe3d0e045b7b612f90532"
+    },
+    {
+      "name": "CHECK_freeze-v1.json",
+      "bytes": 1087,
+      "sha256": "0b0cf6cb73c361965f48176e983cf7ac0cc33f3c4115e60a49846ccb9bcbdc11"
+    },
+    {
+      "name": "CHECK_full-pytest-v1.log",
+      "bytes": 8196,
+      "sha256": "39275c2bf4c3f1bfacde742edd5951ac827d9c2f7a6da2393391df09287c4b6f"
+    },
+    {
+      "name": "CHECK_lock-guard-v1.patch",
+      "bytes": 10016,
+      "sha256": "0e8a034b60529c871b5c6f1f612bdc33df26a7f34d1f147b5232f930f4243878"
+    },
+    {
+      "name": "CHECK_mypy-02.log",
+      "bytes": 62,
+      "sha256": "9c6e29fa758d3fe6ece2646d38426cc1e31b0b1bf5c852a423a510950e66cc86"
+    },
+    {
+      "name": "CHECK_root-full-freeze-after.json",
+      "bytes": 327,
+      "sha256": "4e99fa7d4058576e313ece7eaa0a45990c834ad717109a38e778da037efa6429"
+    },
+    {
+      "name": "CHECK_root-full-freeze-before.json",
+      "bytes": 293,
+      "sha256": "341a0b58c70550de051007a1c917a83ade4deff7913b3a2857e7eb9ba4c71184"
+    },
+    {
+      "name": "CHECK_ruff-02.log",
+      "bytes": 36,
+      "sha256": "9ec5d2215c924f0b1a29fe8e8dac1928dee82915e83f877b7d558bef854820fa"
+    },
+    {
+      "name": "CORRECTION.md",
+      "bytes": 4515,
+      "sha256": "33b13903929a142b6ffbefaf4ed7d822a82de21e16d1da953b64d87a46a3e583"
+    },
+    {
+      "name": "INDEPENDENT_BUG_FINDINGS.json",
+      "bytes": 4681,
+      "sha256": "3aeebc2731818906adaeae4a7114ff86f85a5091c696ace0715f67e7ab385a60"
+    },
+    {
+      "name": "INDEPENDENT_EXACT_REVIEW.json",
+      "bytes": 4930,
+      "sha256": "914d415ee24970b62f46ed9f5efdc29b0c2baef811e6b3a3cc446d2be8217134"
+    },
+    {
+      "name": "LOSS_MECHANISM.json",
+      "bytes": 4590,
+      "sha256": "922196450ff18f29b10cffd753bf6a8b58aeb364dab6f9ae6291e5fef06d0a27"
+    },
+    {
+      "name": "METADATA_OPTIMIZATION_DEFERRED.json",
+      "bytes": 35278,
+      "sha256": "ef851c1cce2bc84acd6f850188405f6eef17d8b88c4e25067530674c74c3c6b6"
+    },
+    {
+      "name": "ORIGINAL_GUARD_REPRO.json",
+      "bytes": 2924,
+      "sha256": "2878118b00ff462c6240c38dca109d20851f0ed6af4296a71a61e7f6aaa411c5"
+    },
+    {
+      "name": "ORIGINAL_GUARD_REPRO.py.txt",
+      "bytes": 2851,
+      "sha256": "e765ba2c480748610883707b514f14c89f610495cdf678d99d1e82f8fb3f8689"
+    },
+    {
+      "name": "PLAN.json",
+      "bytes": 2238,
+      "sha256": "fdf7b12daa2aaaa28344b8aef3e9a40dcb3f6b8013d7852a15b24afc54f6c6d6"
+    },
+    {
+      "name": "PROTECTED_SOURCE.json",
+      "bytes": 1722,
+      "sha256": "8139dc28808e71fcbe864ce48d6873de643af6b8b5b958de15d4d3fc373f3769"
+    },
+    {
+      "name": "ROOT_SCOPE_CHECK.json",
+      "bytes": 398,
+      "sha256": "131947a424802a570d32e782c0fc6a6fb243f98403a2ae2f78ba06c7a425e03c"
+    },
+    {
+      "name": "prior_deployment_fill.native.json",
+      "bytes": 103643,
+      "sha256": "6fb65ad5437f69b1557ef1ed7e361f6941349e95ccd4080961a1cd5217372062"
+    },
+    {
+      "name": "prior_deployment_fill.request.json",
+      "bytes": 553,
+      "sha256": "369b32d71f5a7d4c69fb53b80804bda4c719186fbdec7dc9c41a66ea8c79fab6"
+    },
+    {
+      "name": "prior_deployment_fill.target.json",
+      "bytes": 478,
+      "sha256": "5dcc83526dee6b1831864282d1aa56f8c99a580f865cb8602fffb8ea743ad70a"
+    },
+    {
+      "name": "speeddesk_live_cancel.native.json",
+      "bytes": 1967177,
+      "sha256": "905d6fdc6dd9511425d241b68cfb917595b11824eab8b0d7ad8c8c12794579bb"
+    },
+    {
+      "name": "speeddesk_live_cancel.request.json",
+      "bytes": 615,
+      "sha256": "221c5f808aa7ac1d25f04ca5a19d775b5ff740bec2739ffbd619bbb10ee4b802"
+    },
+    {
+      "name": "speeddesk_live_cancel.target.json",
+      "bytes": 3,
+      "sha256": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570"
+    },
+    {
+      "name": "speeddesk_live_fill.native.json",
+      "bytes": 1191064,
+      "sha256": "7b7ad5611a85c092e998bd57f540f3eed335ff57defafec392177838a7e63903"
+    },
+    {
+      "name": "speeddesk_live_fill.request.json",
+      "bytes": 613,
+      "sha256": "bdaeb4d9b8806eaec84f76beea1909c53da906a527527192beb6cee1be5c8a0e"
+    },
+    {
+      "name": "speeddesk_live_fill.target.json",
+      "bytes": 479,
+      "sha256": "d81fbc086981dd1738c5ab9d3341633dfd03cd1fce856d8ac1aa96e86bf1a855"
+    },
+    {
+      "name": "speeddesk_live_lock.native.json",
+      "bytes": 1025970,
+      "sha256": "e5c44e328015d77d8db743884ffd50c6c20a85f405286e6ced4bb0d718ff8ac9"
+    },
+    {
+      "name": "speeddesk_live_lock.request.json",
+      "bytes": 613,
+      "sha256": "a34b6d601e05be42bcba4dfd49a7181a4c26fedb45024507d3e96480b9df4aa9"
+    },
+    {
+      "name": "speeddesk_live_lock.target.json",
+      "bytes": 298,
+      "sha256": "4b488d07134ca47d85a3655836641936b19e1f52325b7d77bde98aa60a7fab80"
+    },
+    {
+      "name": "speeddesk_live_order.native.json",
+      "bytes": 1980951,
+      "sha256": "0c2b6d192b6c1dc6322b4ad5807dce546b8e857c8d52271073b996ac0ae52a7b"
+    },
+    {
+      "name": "speeddesk_live_order.request.json",
+      "bytes": 614,
+      "sha256": "2892b6bf19d37c93de39e8772176aac1a5f4495372c482d87a42ab681de83250"
+    },
+    {
+      "name": "speeddesk_live_order.target.json",
+      "bytes": 1088,
+      "sha256": "8813bdc7a4c41dff01e6215da92e99a965c49d0db48ebf21bcee547e79a13e4a"
+    }
+  ]
+}

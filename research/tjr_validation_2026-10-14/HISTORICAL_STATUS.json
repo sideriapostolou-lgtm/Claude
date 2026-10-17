@@ -1,0 +1,32 @@
+{
+  "status": "BLOCKED",
+  "reason": "VERIFIED_ACTUAL_MNQZ2025_DATA_BUNDLE_MISSING",
+  "generatedAtUTC": "2026-10-14T18:55:39.000Z",
+  "protocol": {
+    "version": "TJR_DEVELOPMENT_RUNNER_v1",
+    "sourceVersion": "TJR_BC23_MNQZ25_SWEEP_BOS_v0.1.1_calendar",
+    "contract": "MNQZ2025",
+    "warmup": "2025-09-19",
+    "start": "2025-09-22",
+    "end": "2025-10-31",
+    "partition": "DEVELOPMENT",
+    "holdout": [
+      "2025-11-03",
+      "2025-12-12"
+    ],
+    "liveExecutionEnabled": false,
+    "priceUnit": "INTEGER_TICKS",
+    "tickSize": 0.25,
+    "tickUSD": 0.5,
+    "assumedBarAvailability": "INTERVAL_CLOSE",
+    "observedLatency": false
+  },
+  "historicalTradesTested": 0,
+  "historicalPnlUSD": null,
+  "holdoutOpened": false,
+  "holdoutExposureStatus": "NOT_ACCESSED_NO_INPUT",
+  "holdoutReplayed": false,
+  "paperTradingStarted": false,
+  "liveExecutionEnabled": false,
+  "performanceClaimAllowed": false
+}

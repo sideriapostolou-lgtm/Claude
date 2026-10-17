@@ -1,0 +1,227 @@
+{
+ "hypothesis": "X6",
+ "version": "x6-v1",
+ "stage": "train",
+ "split": "train",
+ "utc": "2026-10-09 04:45:11",
+ "provisional": false,
+ "debug_only": false,
+ "prereg_sha256": "6f28eb52bb607e1f31a5bdacb78c97ca88a71e0c0a57434e8c933f239530d7ef",
+ "rerun_reason": null,
+ "coverage": {
+  "split": "train",
+  "bounds_utc": [
+   "2026-10-01 00:00:00",
+   "2026-10-05 00:00:00"
+  ],
+  "debug_only": false,
+  "graduates_in_split": 5435,
+  "tradeable": 3863,
+  "usable": 3863,
+  "excluded": {
+   "mayhem": 1422,
+   "not_sol_quoted": 150
+  },
+  "created_inexact": 943,
+  "has_create0": 943,
+  "chain_hours_scanned_frac": 1.0,
+  "days": [
+   {
+    "day": "2026-10-01",
+    "hours_in_split": 24,
+    "curve_hours": 24,
+    "b2_hours": 24,
+    "b2_hours_midrun": 0,
+    "coins_created": 1261,
+    "tradeable": 989,
+    "usable": 989,
+    "usable_frac": 1.0,
+    "partial": false
+   },
+   {
+    "day": "2026-10-02",
+    "hours_in_split": 24,
+    "curve_hours": 24,
+    "b2_hours": 24,
+    "b2_hours_midrun": 0,
+    "coins_created": 1255,
+    "tradeable": 933,
+    "usable": 933,
+    "usable_frac": 1.0,
+    "partial": false
+   },
+   {
+    "day": "2026-10-03",
+    "hours_in_split": 24,
+    "curve_hours": 24,
+    "b2_hours": 24,
+    "b2_hours_midrun": 0,
+    "coins_created": 1632,
+    "tradeable": 966,
+    "usable": 966,
+    "usable_frac": 1.0,
+    "partial": false
+   },
+   {
+    "day": "2026-10-04",
+    "hours_in_split": 24,
+    "curve_hours": 24,
+    "b2_hours": 24,
+    "b2_hours_midrun": 0,
+    "coins_created": 1287,
+    "tradeable": 975,
+    "usable": 975,
+    "usable_frac": 1.0,
+    "partial": false
+   }
+  ],
+  "days_expected": 4.0,
+  "days_full": 4,
+  "curve_span_utc": [
+   "2026-09-30 17:00:00",
+   "2026-10-09 02:00:00"
+  ],
+  "b2_span_utc": [
+   "2026-10-01 00:00:00",
+   "2026-10-05 04:00:00"
+  ],
+  "completeness_source": "raw_chunks",
+  "parquet_snapshot_utc": "2026-10-09 03:57:17",
+  "b2_hours_needed": 100,
+  "b2_hours_done": 100,
+  "b2_hours_midrun": [],
+  "sol_usd": {
+   "series_utc": [
+    "2026-09-15 00:00:00",
+    "2026-10-08 23:59:00"
+   ],
+   "constant_fallback": false,
+   "lookahead_coins": 0,
+   "stale_coins": 0
+  },
+  "power": {
+   "entry_bar_coins": {
+    "need": 40,
+    "have_usable_coins": 3863,
+    "ok": true
+   },
+   "x1_r0_trades_5_seeds": {
+    "need": 500,
+    "max_possible": 19315,
+    "ok": true
+   },
+   "g1_flagged_coins_val": {
+    "need": 200,
+    "max_possible": 3863,
+    "ok": true
+   }
+  },
+  "underpowered": false,
+  "complete": true,
+  "notes": [],
+  "from_flow": true
+ },
+ "n_coins": 3863,
+ "span_days": 4.0,
+ "separation": {
+  "n_obs": 1792,
+  "n_coins": 965,
+  "need": {
+   "coins_per_group": 30,
+   "diff": 0.05,
+   "horizon_bars": 30
+  },
+  "per_K": {
+   "5": {
+    "n": 950,
+    "n_TAKEOVER": 92,
+    "n_REPLACE": 86,
+    "n_DIES": 391,
+    "n_MIDDLE": 467,
+    "n_momentum": 331,
+    "powered": true,
+    "diff": -0.08748922838414991,
+    "diff_ci90": [
+     -0.27003708782789865,
+     0.11564073967690608
+    ],
+    "passes": false,
+    "means": {
+     "TAKEOVER": -0.3014913561824793,
+     "REPLACE": -0.2590630231851675,
+     "DIES": -0.2140021277983294,
+     "MIDDLE": -0.2644841572369326,
+     "momentum": -0.23392916977567466
+    },
+    "medians": {
+     "TAKEOVER": -0.6949386216892427,
+     "REPLACE": -0.6571944850501317,
+     "DIES": -0.4200698665542031,
+     "MIDDLE": -0.5661736295377868,
+     "momentum": -0.5539044371863024
+    },
+    "winsorized": {
+     "TAKEOVER": -0.3677892785380553,
+     "REPLACE": -0.32761893683783433,
+     "DIES": -0.3183360325489917,
+     "MIDDLE": -0.36396717232464537,
+     "momentum": -0.32984049510139385
+    }
+   },
+   "10": {
+    "n": 842,
+    "n_TAKEOVER": 85,
+    "n_REPLACE": 81,
+    "n_DIES": 455,
+    "n_MIDDLE": 302,
+    "n_momentum": 267,
+    "powered": true,
+    "diff": 0.03452385972230637,
+    "diff_ci90": [
+     -0.11146019060166362,
+     0.18493971179293883
+    ],
+    "passes": false,
+    "means": {
+     "TAKEOVER": -0.20498388443759014,
+     "REPLACE": -0.23323406954713768,
+     "DIES": -0.2395077441598965,
+     "MIDDLE": -0.2540304235659037,
+     "momentum": -0.24415064257310737
+    },
+    "medians": {
+     "TAKEOVER": -0.4649034372055907,
+     "REPLACE": -0.47289705955799277,
+     "DIES": -0.3846529301475219,
+     "MIDDLE": -0.4247757440772527,
+     "momentum": -0.4761573334790502
+    },
+    "winsorized": {
+     "TAKEOVER": -0.24897979078486354,
+     "REPLACE": -0.2627702669546068,
+     "DIES": -0.27931149806762995,
+     "MIDDLE": -0.28459448278888677,
+     "momentum": -0.3092947536169621
+    }
+   }
+  },
+  "passed": [],
+  "decision": "KILL",
+  "trial": {
+   "config": "X6-sep|c1c758fe52ab",
+   "new_trial": true,
+   "n_trials_total": 2586,
+   "hypothesis_configs": 1,
+   "over_variant_limit": false,
+   "family_val_looks": 0
+  }
+ },
+ "decision": {
+  "verdict": "KILLED_SEP",
+  "shortlist_written": false,
+  "note": "PREREG 7: the separation gate precedes any P&L; the grid was not run"
+ },
+ "runtime_s": 15.8,
+ "n_trials_total": 2586,
+ "overall": "KILLED (takeover does not separate from flow-dies: PREREG 7)"
+}

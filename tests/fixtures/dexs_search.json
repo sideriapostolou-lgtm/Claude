@@ -1,0 +1,226 @@
+{
+ "schemaVersion": "1.0.0",
+ "pairs": [
+  {
+   "chainId": "solana",
+   "dexId": "pumpswap",
+   "url": "https://dexscreener.com/solana/bfrszakeqnzvtm3efhroo4erhagmmwn8brntiqkfh6ru",
+   "pairAddress": "BFrSZakeqNzVtM3EFhroo4eRhagmmWN8BRntiQKFH6Ru",
+   "baseToken": {
+    "address": "DoVAVzViX8Bjy3r15nwikSaSbzE6dV4ovd28aWpJpump",
+    "name": "Higgspad",
+    "symbol": "HIGGS"
+   },
+   "quoteToken": {
+    "address": "So11111111111111111111111111111111111111112",
+    "name": "Wrapped SOL",
+    "symbol": "SOL"
+   },
+   "priceNative": "0.000008058",
+   "priceUsd": "0.0008832",
+   "txns": {
+    "m5": {
+     "buys": 3,
+     "sells": 4
+    },
+    "h1": {
+     "buys": 76,
+     "sells": 57
+    },
+    "h6": {
+     "buys": 521,
+     "sells": 389
+    },
+    "h24": {
+     "buys": 2579,
+     "sells": 2034
+    }
+   },
+   "volume": {
+    "h24": 414996.55,
+    "h6": 72188.01,
+    "h1": 11146.98,
+    "m5": 1343.43
+   },
+   "priceChange": {
+    "m5": -4.83,
+    "h1": -2.1,
+    "h6": -16.95,
+    "h24": -48.65
+   },
+   "liquidity": {
+    "usd": 119336.33,
+    "base": 68302069,
+    "quote": 538.3472
+   },
+   "fdv": 855167,
+   "marketCap": 855167,
+   "pairCreatedAt": 1791117376000,
+   "info": {
+    "imageUrl": "https://cdn.dexscreener.com/cms/images/oqd8EuXuIb-sWnPu?width=800&height=800&quality=95&format=auto",
+    "openGraph": "https://cdn.dexscreener.com/token-images/og/solana/DoVAVzViX8Bjy3r15nwikSaSbzE6dV4ovd28aWpJpump?timestamp=1791473400000",
+    "websites": [
+     {
+      "url": "https://higgspad.com/",
+      "label": "Website"
+     }
+    ],
+    "socials": [
+     {
+      "url": "https://x.com/higgspad",
+      "type": "twitter"
+     }
+    ]
+   }
+  },
+  {
+   "chainId": "solana",
+   "dexId": "meteora",
+   "url": "https://dexscreener.com/solana/dqygmagx8nb6ykixotlnfc6evvqjrmqz7akryinnkem1",
+   "pairAddress": "DQyGMAGx8nB6ykixotLNFC6eVVQjrMqz7AkRyinNkEm1",
+   "labels": [
+    "DLMM"
+   ],
+   "baseToken": {
+    "address": "DoVAVzViX8Bjy3r15nwikSaSbzE6dV4ovd28aWpJpump",
+    "name": "Higgspad",
+    "symbol": "HIGGS"
+   },
+   "quoteToken": {
+    "address": "So11111111111111111111111111111111111111112",
+    "name": "Wrapped SOL",
+    "symbol": "SOL"
+   },
+   "priceNative": "0.000008140",
+   "priceUsd": "0.0008888",
+   "txns": {
+    "m5": {
+     "buys": 16,
+     "sells": 16
+    },
+    "h1": {
+     "buys": 171,
+     "sells": 189
+    },
+    "h6": {
+     "buys": 1011,
+     "sells": 1019
+    },
+    "h24": {
+     "buys": 4270,
+     "sells": 3924
+    }
+   },
+   "volume": {
+    "h24": 883497.5,
+    "h6": 177257.3,
+    "h1": 36805.52,
+    "m5": 5008.29
+   },
+   "priceChange": {
+    "m5": -4.44,
+    "h1": -1.12,
+    "h6": -16.6,
+    "h24": -47.73
+   },
+   "liquidity": {
+    "usd": 69049.32,
+    "base": 30612406,
+    "quote": 383.1714
+   },
+   "fdv": 878016,
+   "marketCap": 860635,
+   "pairCreatedAt": 1791119414000,
+   "info": {
+    "imageUrl": "https://cdn.dexscreener.com/cms/images/oqd8EuXuIb-sWnPu?width=800&height=800&quality=95&format=auto",
+    "openGraph": "https://cdn.dexscreener.com/token-images/og/solana/DoVAVzViX8Bjy3r15nwikSaSbzE6dV4ovd28aWpJpump?timestamp=1791473400000",
+    "websites": [
+     {
+      "url": "https://higgspad.com/",
+      "label": "Website"
+     }
+    ],
+    "socials": [
+     {
+      "url": "https://x.com/higgspad",
+      "type": "twitter"
+     }
+    ]
+   }
+  },
+  {
+   "chainId": "robinhood",
+   "dexId": "uniswap",
+   "url": "https://dexscreener.com/robinhood/0x288b1b69cc7ef57402b8c49f83bbf135108877c596215fb42ac30ecf16cbe0d5",
+   "pairAddress": "0x288b1b69cc7ef57402b8c49f83bbf135108877c596215fb42ac30ecf16cbe0d5",
+   "labels": [
+    "v4"
+   ],
+   "baseToken": {
+    "address": "0xC9Ba3E053733CD027577aa5D23BB630e52Eb8AB0",
+    "name": "HiggsFamily",
+    "symbol": "HIGGS"
+   },
+   "quoteToken": {
+    "address": "0x0000000000000000000000000000000000000000",
+    "name": "Ether",
+    "symbol": "ETH"
+   },
+   "priceNative": "0.000000003110",
+   "priceUsd": "0.000007864",
+   "txns": {
+    "m5": {
+     "buys": 0,
+     "sells": 0
+    },
+    "h1": {
+     "buys": 0,
+     "sells": 0
+    },
+    "h6": {
+     "buys": 16,
+     "sells": 14
+    },
+    "h24": {
+     "buys": 26,
+     "sells": 54
+    }
+   },
+   "volume": {
+    "h24": 2506.49,
+    "h6": 700.6,
+    "h1": 0,
+    "m5": 0
+   },
+   "priceChange": {
+    "h6": -7.13,
+    "h24": -28.68
+   },
+   "liquidity": {
+    "usd": 8257.57,
+    "base": 524958232,
+    "quote": 1.6327
+   },
+   "fdv": 7756,
+   "marketCap": 7756,
+   "pairCreatedAt": 1791191006000,
+   "info": {
+    "imageUrl": "https://cdn.dexscreener.com/cms/images/7ag9M0EAol4godAF?width=800&height=800&quality=95&format=auto",
+    "header": "https://cdn.dexscreener.com/cms/images/QjgPt0nhNBBJEbO8?width=1500&height=500&quality=95&format=auto",
+    "openGraph": "https://cdn.dexscreener.com/token-images/og/robinhood/0xc9ba3e053733cd027577aa5d23bb630e52eb8ab0?timestamp=1791473400000",
+    "websites": [
+     {
+      "url": "https://higgsfam.com",
+      "label": "Website"
+     }
+    ],
+    "socials": [
+     {
+      "url": "https://x.com/higgsfamcom",
+      "type": "twitter"
+     }
+    ]
+   }
+  }
+ ]
+}

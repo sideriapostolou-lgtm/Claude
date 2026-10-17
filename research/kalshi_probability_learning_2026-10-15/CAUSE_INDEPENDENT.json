@@ -1,0 +1,85 @@
+{
+  "review_type": "Independent read-only source diagnosis, offline fakes, and prospective architecture assessment",
+  "base": "88f8f6f4a695d32d712351d1dc1b2332180d165c",
+  "source_sha256": {
+    "src/nightcrawler/speeddesk_kalshi.py": "53727b3d3f2ec6790469d53d8fb330f7501ad1838c558c887ea95c54840d8f82",
+    "src/nightcrawler/speeddesk_kalshi_ws.py": "d76e9dfa6a026f796f11503642a373a5a0f2799da8dabadf078c565591f82112",
+    "src/nightcrawler/speeddesk_venues.py": "54f0c2eaea909621f24734d8cd73cdd46f2ea711d885269b6892c564bc9dff51",
+    "src/nightcrawler/kalshi_arena.py": "091ea297b1fed8973be3c78e74184e6ea71fa8f36e808e67449f433c88d19a0e",
+    "src/nightcrawler/kalshi_online_learning.py": "16a14ff7d8bb933d4eb8e4251d0fdcf943c81e6f8c6f8f1720ced3d5e14f5fa8",
+    "src/nightcrawler/speeddesk_model.py": "50ba3b4f78c6efd031fdcd8bb1cb1a59ea2988973c341b9ad275345d70de7429"
+  },
+  "scope": "No repository source/docs, production, settings, money controls, history or sealed research changes. Private harness/output only; cloud runtime context read without credential values.",
+  "production_evidence": "PR62 fixed capture establishes explicit-slug causes, aggregate flags true, fresh BTC, V1 zero forecasts/scored. No unique producer branch/occurrence time was retained; source fakes do not attribute the actual captured gaps.",
+  "findings": [
+    {
+      "id": "v1_probability_estimand_mismatch",
+      "kind": "Intentional V1 admission semantics, not a false gap",
+      "evidence": [
+        "speeddesk_kalshi_ws.py:331-335: makers require a trade in previous 3 seconds; losing membership emits explicit gap even with fresh books",
+        "speeddesk_kalshi.py:193-198: forwards explicit gaps",
+        "speeddesk_venues.py:31-42: venue-local gap survives composite healthy flags",
+        "kalshi_arena.py:1535-1543: forwards to V1",
+        "kalshi_online_learning.py:161-171,263-270: V1 stores the gap and rejects the due slot",
+        "speeddesk_model.py:213-233: fair_up depends on spot/strike/sigma/horizon, not maker-tape eligibility"
+      ],
+      "reproduction": "quiet_trade_expiry: connected timestamped WS book age0, trade age4, Coinbase connected, composite stream true, due BTC age0.2, p0.5 available; actual V1 unknown/pregap1, forecasts0. Legitimate V1 history stays intact."
+    },
+    {
+      "id": "prestart_gap_queued_into_window",
+      "kind": "Source-proven observation chronology defect, production frequency unknown",
+      "evidence": [
+        "kalshi_arena.py:613-614: g has no event timestamp",
+        "kalshi_arena.py:1334-1367: frame receive enqueues g",
+        "kalshi_arena.py:1491-1530: drain uses current application time",
+        "kalshi_arena.py:1543: V1 receives application time"
+      ],
+      "reproduction": "Actual parent feed_gap at999, healthy recovery also999, child receives/drains1000.1 for window start1000: V1 pregap. Identical V1 direct event-time calls999 ignore prestart gap and forecast at1300.",
+      "smallest_correct_fix": "Separately scoped timestamped producer gap observation carried to child and used for learner event chronology, preserving FIFO and simulator cancellation at application time. Unknown/legacy/invalid/skewed stamps fail closed; occurrence time cannot be inferred from frame-send clock. This is deferred by root, not silently repaired through V2."
+    },
+    {
+      "id": "superseded_rest_book_failure",
+      "kind": "Source-proven unconditional late invalidation; usefulness for admission not established",
+      "evidence": [
+        "speeddesk_kalshi.py:285-290: success path checks current fresh WS before applying REST",
+        "speeddesk_kalshi.py:291-294: exception path unconditionally clears marker and emits explicit gap"
+      ],
+      "reproduction": "Awaited REST poll starts without fresh WS; synthetic recovery gives fresh WS/active websocket transport while request waits; REST then times out and publishes book_unavailable explicit slug despite healthy makers.",
+      "smallest_correct_fix": "A separately reviewed error supersession check must require fresh current WS evidence and relevant transport; avoid late failure clearing a valid recovered source. Preserve failure when source missing/stale or continuity uncertain. Tape failure needs stronger sequence/trade freshness evidence, not cached maker list.",
+      "limit": "Prior real continuity loss/transport gap may already exclude window. Suppressing this additional late marker does not prove the window is eligible or fix all samples."
+    }
+  ],
+  "recommended_prospective_work": {
+    "decision": "Separate V2 probability-quality observer is justified as a prospective new protocol. It is not a repair of upstream gaps and does not turn V1 unknowns into forecasts.",
+    "boundary": [
+      "New module/class, protocol, fingerprint, state/panel/log keys; no copied or migrated V1 counts, pending forecasts, bins, labels or unknowns. Preserve V1 source/fingerprint and existing hooks/results.",
+      "Fixed300-second slot with existing5-second grace and first-due outcome finality. Discover prestart; no late/backfilled forecast. Same bin10/prior20 prequential score-before-update math.",
+      "Require finite positive verified Kalshi venue_start_price equal to start_price, consistent 900-second terms, current finite positive BTC with0<=age<=3, finite nonnegative qualified sigma, finite valid fresh batch age<=3, no known raw sequence/drop since start.",
+      "Raw parent/child corruption and lost frame/drop remain exclusions; maker/book/REST availability cannot be interpreted as absent probability inputs. Their annotation must not drive V2 admission implicitly.",
+      "Validate raw labels before bool coercion; reject early/malformed/conflicting/timeout labels and term changes before scoring, preserve out-of-order official settlements and future-watermark independence.",
+      "Independent optional error boundary, restore checks, no control/order interfaces. Add state under independent optional key to existing cadence; no new parent/wire work or fsync.",
+      "State explicitly whether a current Coinbase disconnect with still-fresh observed BTC is eligible. Do not silently inherit trade_stream conjunction."
+    ],
+    "quality_limit": "BitcoinTape.sigma (speeddesk_model.py:339-350) requires3600-second warmup/1500 adjacent returns and skips gaps. Finite sigma proves its existing qualification, not complete3600-second coverage. Existing snapshots expose no full-history certification.",
+    "fingerprint_limit": "Plain subclassing OnlineLearning is unsafe: methods close over module-global PROTOCOL, fingerprint and logger names. New protocol identity must describe every reused dependency; exact deployed source still needed for child-hook identity.",
+    "regressions": [
+      "quiet maker expiry with fresh conditional probability inputs: V1 remains pregap while V2 prospective forecast/official score is independent",
+      "invalid/missing/disagreeing strike, NaN/negative sigma, stale/future BTC, missing/stale/future batch, reversed clock all reject without later cherry-pick",
+      "raw sequence and drop before/after/start-boundary; drop before w same-frame; legacy batch metadata missing; no manufactured continuity",
+      "same-frame terms+label in both orderings, early label, malformed original bool, duplicate/conflicting labels, delayed official labels and timeouts",
+      "restart with old V1-only state starts new V2 history without copying; malformed V2 state disables only V2; V1 serialized state and counts remain exact across traces",
+      "failure injection in V2 constructor/method/log/restore cannot change V1 or residents/accounting/save cadence",
+      "bounded pending/recent/labels and measured child CPU/state overhead; protected source bytes remain identical; regression tests before release"
+    ],
+    "release_claim": "A future qualified V2 forecast/score proves operation on its declared cohort only. It does not prove calibration improvement, trading profitability, upstream continuity or closure of EXEC."
+  },
+  "artifacts": {
+    "harness": "/workspace/learning_gap_independent_harness.py",
+    "results": "/workspace/learning-gap-independent-reproductions.json"
+  },
+  "validation": {
+    "command": "PYTHONPATH=/workspace/nightcrawler-live-correction/src /workspace/shared/nightcrawler-venv/bin/python /workspace/learning_gap_independent_harness.py",
+    "exit_code": 0,
+    "initial_attempt": "Default Python failed import requests before execution; corrected by using existing shared venv, no installation."
+  }
+}

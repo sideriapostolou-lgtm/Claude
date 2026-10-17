@@ -1,0 +1,33 @@
+{
+  "request": {
+    "projectId": "75750847-85c0-41a3-a2a7-b7f2201a51e9",
+    "deploymentId": "66e6e7e4-30d9-4628-a234-f2a8e97dad19",
+    "startDate": "2026-10-15T21:33:20Z",
+    "endDate": "2026-10-15T21:36:00Z",
+    "filter": "\"Traceback\"",
+    "limit": 30
+  },
+  "before": {
+    "current_time": "2026-10-15 21:35:04 UTC"
+  },
+  "result": {
+    "content": [
+      {
+        "type": "text",
+        "text": "**Deployment 66e6e7e4-30d9-4628-a234-f2a8e97dad19** [SUCCESS]\nservice: f84d3b52-002f-44cb-931e-bc9e3e097e97, env: 17f7b0e0-104c-4903-9484-0106748b3cdb\n\n### Deploy logs (0)\n(no deploy logs in range)"
+      }
+    ],
+    "structuredContent": {
+      "scope": "deployment",
+      "deploymentId": "66e6e7e4-30d9-4628-a234-f2a8e97dad19",
+      "serviceId": "f84d3b52-002f-44cb-931e-bc9e3e097e97",
+      "environmentId": "17f7b0e0-104c-4903-9484-0106748b3cdb",
+      "status": "SUCCESS",
+      "deploy": []
+    },
+    "isError": false
+  },
+  "after": {
+    "current_time": "2026-10-15 21:35:05 UTC"
+  }
+}

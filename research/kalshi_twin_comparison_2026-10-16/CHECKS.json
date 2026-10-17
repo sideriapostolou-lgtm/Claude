@@ -1,0 +1,22 @@
+{
+  "completed_by_utc": "2026-10-16T02:42:15Z",
+  "completed_by_pacific": "2026-10-15 7:42:15 PM PDT",
+  "base_sha": "ef1f3d38a49332bb19c69a8b1770abc56d83eb56",
+  "full_pytest": {"command": "python -m pytest -q", "exit": 0, "passed": 6057, "skipped": 14, "duration_seconds": 318.02},
+  "skip_scope": "Existing opt-in network/performance checks and absent Lab3 cache; no live network or performance switch enabled",
+  "full_mypy": {"command": "python -m mypy src/nightcrawler", "exit": 0, "source_files": 131},
+  "ruff": {"exit": 0, "files": ["src/nightcrawler/speeddesk_live.py", "src/nightcrawler/speeddesk_twin_trace.py", "tests/test_speeddesk_twin_trace.py"]},
+  "root_independent_rerun": {"passed": 72, "duration_seconds": 1.43, "scope": "48 baseline differential/malformed/partial-IOC independent checks plus 24 implementation checks"},
+  "sol_focused": {"passed": 188, "duration_seconds": 24.49, "scope": "trace/live/pull/safety/crash/killpoints; overlaps full suite, not an additive total"},
+  "diff_check_exit": 0,
+  "secret_scan": {"candidate_files": 14, "decoded_archive_originals": 15, "pattern_findings": 0, "limits": "Pattern scan plus manual new-content review; not a proof of every possible secret's absence"},
+  "source_sha256": {
+    "src/nightcrawler/speeddesk_live.py": "08e4084687847f8fb7511998b5908bc62b95c81e50cb1dba0bfa118dea16b609",
+    "src/nightcrawler/speeddesk_twin_trace.py": "5ac1e2289909769aa318ea96cd865394211e1226bd271a77aec0b3d2b91e2904",
+    "tests/test_speeddesk_twin_trace.py": "faa3cc68ccbb9a903b3f526ddf072ac617fe4b0e699d331c93f6cbd3aea78f6d"
+  },
+  "complete_code_patch_sha256": "5c8d163f73a509340da51c71431343547e9a6b4ae37044861d72924125306211",
+  "probability_source_fingerprint": "f2652c6b9f5f4732b5ac865d72c4748df250ad73b38d493387f9dfc478dcff6c",
+  "preserved_initial_failures": "Five malformed diagnostics poisoned initial checkpoint/panel attempts; all fixed with regression tests. Initial root fingerprint import without correct PYTHONPATH failed ModuleNotFoundError; explicit current src then succeeded. Neither is erased or called a production failure.",
+  "release_status_at_check_completion": "Not yet pushed, merged or deployed; exact deployment and runtime evidence remain required"
+}

@@ -1,0 +1,31 @@
+{
+  "derived_selected_fields": true,
+  "deployments": [
+    {
+      "id": "c64e8199-4ce2-4234-ac53-63905e22231d",
+      "status": "BUILDING",
+      "createdAt": "2026-10-15T17:19:46.571Z",
+      "updatedAt": "2026-10-15T17:19:51.936Z",
+      "commitHash": "ff05beb654095ce91fefe24adfb2a94eea22be39",
+      "regions": []
+    },
+    {
+      "id": "c8ee7970-a856-4ab2-86b8-2a962a7d02e9",
+      "status": "SKIPPED",
+      "createdAt": "2026-10-15T16:41:21.858Z",
+      "updatedAt": "2026-10-15T16:41:21.858Z",
+      "commitHash": "3ce8a0b92f53916768a3e1c09cac700281d3c1cd",
+      "regions": []
+    },
+    {
+      "id": "c10a6663-9206-4d67-9a49-db7c95303f71",
+      "status": "SKIPPED",
+      "createdAt": "2026-10-15T16:33:50.198Z",
+      "updatedAt": "2026-10-15T16:33:50.198Z",
+      "commitHash": "25f801167426fb996c352603039a73dfd1229da2",
+      "regions": []
+    }
+  ],
+  "recorded_at_utc": "2026-10-15T17:20:52.882746+00:00",
+  "observation_wall_clock": "Exact initial retrieval wall clock not instrumented; bounded after rootclock17:19:50UTC and before thisrecord. Exact platformcreated/updated timestamps below. No invented point-health timestamp."
+}

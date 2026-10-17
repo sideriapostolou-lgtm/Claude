@@ -1,0 +1,247 @@
+{
+ "mint": "EDQRk4ETkyb4qkcGfeVMxK3FsFXava7Q3HFxmpJXpump",
+ "tokenProgram": "TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb",
+ "creator": "7WKdcCiZ3yrutfGrShz35bmTc4Jk3sikaMzJLaxRpjkw",
+ "creatorBalance": 2181662779733,
+ "token": {
+  "mintAuthority": null,
+  "supply": 2000000000000000,
+  "decimals": 6,
+  "isInitialized": true,
+  "freezeAuthority": null
+ },
+ "token_extensions": {
+  "nonTransferable": false,
+  "transferFeeConfig": null,
+  "defaultAccountState": null,
+  "permanentDelegate": null,
+  "metadataPointer": {
+   "authority": null,
+   "metadataAddress": "EDQRk4ETkyb4qkcGfeVMxK3FsFXava7Q3HFxmpJXpump"
+  },
+  "groupPointer": null,
+  "groupMemberPointer": null,
+  "tokenMetadata": {
+   "authority": null,
+   "mint": "EDQRk4ETkyb4qkcGfeVMxK3FsFXava7Q3HFxmpJXpump",
+   "name": "Super Israelligence",
+   "symbol": "NWO",
+   "uri": "https://ipfs.io/ipfs/QmUt3cJ49mHnhmaZhtrHeuNa3wdgio1MSi5cM9LsSgnSk5",
+   "additionalMetadata": {}
+  },
+  "mintCloseAuthority": null,
+  "confidentialTransferMint": null,
+  "interestBearingConfig": null,
+  "transferHook": null,
+  "confidentialTransferFeeConfig": null,
+  "tokenGroup": null,
+  "tokenGroupMember": null,
+  "scaledUiAmountConfig": null,
+  "pausableConfig": null
+ },
+ "tokenMeta": {
+  "name": "Super Israelligence",
+  "symbol": "NWO",
+  "uri": "https://ipfs.io/ipfs/QmUt3cJ49mHnhmaZhtrHeuNa3wdgio1MSi5cM9LsSgnSk5",
+  "mutable": false,
+  "updateAuthority": "11111111111111111111111111111111"
+ },
+ "topHolders": [
+  {
+   "address": "HnWB7CKrQJfeovvTxjf8LEMoBZZvp2uW17zxC4Y3n75o",
+   "amount": 1000673797172235,
+   "decimals": 6,
+   "pct": 50.03368985861175,
+   "uiAmount": 1000694140.660749,
+   "uiAmountString": "1000673797.172235",
+   "owner": "EA2y1S4Up5KerH2Vn2arxcwsGt84R38KQEyb3a3UbG5y",
+   "insider": false
+  },
+  {
+   "address": "8Mwg33RR2YssHB3uqbW9fQ3K7bCp46FjxsJmJikcsUri",
+   "amount": 997144540048032,
+   "decimals": 6,
+   "pct": 49.8572270024016,
+   "uiAmount": 997144540.048032,
+   "uiAmountString": "997144540.048032",
+   "owner": "BwWK17cbHxwWBKZkUYvzxLcNQ1YVyaFezduWbtm2de6s",
+   "insider": false
+  },
+  {
+   "address": "3d5fHuQ7RuqzT6TZRLhBVGeK7ouh3mgmxTJE1dxms3yM",
+   "amount": 2181662779733,
+   "decimals": 6,
+   "pct": 0.10908313898665,
+   "uiAmount": 2181662.779733,
+   "uiAmountString": "2181662.779733",
+   "owner": "7WKdcCiZ3yrutfGrShz35bmTc4Jk3sikaMzJLaxRpjkw",
+   "insider": false
+  }
+ ],
+ "freezeAuthority": null,
+ "mintAuthority": null,
+ "risks": [
+  {
+   "name": "Creator history of rugged tokens",
+   "value": "",
+   "description": "Creator has a history of rugging tokens.",
+   "score": 19200,
+   "level": "danger"
+  },
+  {
+   "name": "Single holder ownership",
+   "value": "49.86%",
+   "description": "One user holds a large amount of the token supply",
+   "score": 4985,
+   "level": "danger"
+  }
+ ],
+ "score": 24186,
+ "score_normalised": 62,
+ "fileMeta": {
+  "description": "",
+  "name": "Super Israelligence",
+  "symbol": "NWO",
+  "image": ""
+ },
+ "lockerOwners": {},
+ "lockers": {},
+ "lockerScanStatus": "none",
+ "markets": [
+  {
+   "pubkey": "EA2y1S4Up5KerH2Vn2arxcwsGt84R38KQEyb3a3UbG5y",
+   "marketType": "pump_fun",
+   "mintA": "EDQRk4ETkyb4qkcGfeVMxK3FsFXava7Q3HFxmpJXpump",
+   "mintB": "So11111111111111111111111111111111111111112",
+   "mintLP": "11111111111111111111111111111111",
+   "liquidityA": "E9AA6Qx7MTv98CUxKYDPNqtkKFJGz5xEqMLbfTDtPq6K",
+   "liquidityB": "EA2y1S4Up5KerH2Vn2arxcwsGt84R38KQEyb3a3UbG5y",
+   "mintAAccount": {
+    "mintAuthority": null,
+    "supply": 2000000000000000,
+    "decimals": 6,
+    "isInitialized": true,
+    "freezeAuthority": null
+   },
+   "mintBAccount": {
+    "mintAuthority": null,
+    "supply": 0,
+    "decimals": 9,
+    "isInitialized": false,
+    "freezeAuthority": null
+   },
+   "mintLPAccount": {
+    "mintAuthority": null,
+    "supply": 0,
+    "decimals": 0,
+    "isInitialized": false,
+    "freezeAuthority": null
+   },
+   "liquidityAAccount": {
+    "mint": "EDQRk4ETkyb4qkcGfeVMxK3FsFXava7Q3HFxmpJXpump",
+    "owner": "EA2y1S4Up5KerH2Vn2arxcwsGt84R38KQEyb3a3UbG5y",
+    "amount": 793773797172235,
+    "delegate": null,
+    "state": 0,
+    "delegatedAmount": 0,
+    "closeAuthority": null
+   },
+   "liquidityBAccount": {
+    "mint": "So11111111111111111111111111111111111111112",
+    "owner": "EA2y1S4Up5KerH2Vn2arxcwsGt84R38KQEyb3a3UbG5y",
+    "amount": 10570201,
+    "delegate": null,
+    "state": 0,
+    "delegatedAmount": 0,
+    "closeAuthority": null
+   },
+   "lp": {
+    "baseMint": "EDQRk4ETkyb4qkcGfeVMxK3FsFXava7Q3HFxmpJXpump",
+    "quoteMint": "So11111111111111111111111111111111111111112",
+    "lpMint": "11111111111111111111111111111111",
+    "quotePrice": 108.43692657057976,
+    "basePrice": 8.523498960975118e-07,
+    "base": 793773797.172235,
+    "quote": 0.010570201,
+    "reserveSupply": 10570201,
+    "currentSupply": 0,
+    "quoteUSD": 1.1462001096732686,
+    "baseUSD": 676.573013544682,
+    "pctReserve": 0,
+    "pctSupply": 0,
+    "holders": null,
+    "totalTokensUnlocked": 0,
+    "tokenSupply": 0,
+    "lpLocked": 10570201,
+    "lpUnlocked": 0,
+    "lpLockedPct": 100,
+    "lpLockedUSD": 677.7192136543553,
+    "lpMaxSupply": 0,
+    "lpCurrentSupply": 0,
+    "lpTotalSupply": 10570201
+   }
+  }
+ ],
+ "totalMarketLiquidity": 677.7192136543553,
+ "totalStableLiquidity": 1.1462001096732686,
+ "totalLPProviders": 0,
+ "totalHolders": 3,
+ "price": 8.523498960975118e-07,
+ "rugged": false,
+ "tokenType": "",
+ "transferFee": {
+  "pct": 0,
+  "maxAmount": 0,
+  "authority": "11111111111111111111111111111111"
+ },
+ "knownAccounts": {
+  "7WKdcCiZ3yrutfGrShz35bmTc4Jk3sikaMzJLaxRpjkw": {
+   "name": "Creator",
+   "type": "CREATOR"
+  },
+  "BW8qUQKDWLhAd7PvjSRzEQipr2aMhNDcppnD43795quV": {
+   "name": "Printr Stake Pool",
+   "type": "LOCKER"
+  },
+  "E9AA6Qx7MTv98CUxKYDPNqtkKFJGz5xEqMLbfTDtPq6K": {
+   "name": "Pump Fun",
+   "type": "AMM"
+  },
+  "EA2y1S4Up5KerH2Vn2arxcwsGt84R38KQEyb3a3UbG5y": {
+   "name": "Pump Fun",
+   "type": "AMM"
+  }
+ },
+ "events": [],
+ "verification": null,
+ "validation": {
+  "validated": false
+ },
+ "graphInsidersDetected": 0,
+ "insiderNetworks": null,
+ "detectedAt": "2026-10-08T15:32:06.739745607Z",
+ "creatorTokens": [
+  {
+   "mint": "BEc681qahKTLAdmevuwExnFFXg7rxbfA6vnTWQwwpump",
+   "marketCap": 2.1605695355640764,
+   "createdAt": "2026-09-12T17:04:39.999938385Z"
+  },
+  {
+   "mint": "5cJesUzcJNpK9WJqjVoYMnBNVSazy9mz7EGeyuzGpump",
+   "marketCap": 2.2357579249508177,
+   "createdAt": "2026-09-12T14:28:01.351772165Z"
+  },
+  {
+   "mint": "Enq1GfGQmkLtykbjYXMWWQqjCbiD1YQRCv88vMQTpump",
+   "marketCap": 332.3125659400549,
+   "createdAt": "2026-09-11T18:38:55.133974961Z"
+  }
+ ],
+ "launchpad": {
+  "name": "Pump.Fun",
+  "logo": "https://api.rugcheck.xyz/public/logos/pump_fun.png",
+  "url": "https://x.com/pumpfun",
+  "platform": "pump_fun"
+ },
+ "deployPlatform": "unknown"
+}

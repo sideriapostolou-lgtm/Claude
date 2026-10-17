@@ -1,0 +1,49 @@
+{
+  "task": "read-only preparation archive integrity check; fixed capture context",
+  "checked_at_utc": "2026-10-15",
+  "archive": {
+    "path": "/workspace/nightcrawler-input-causes/research/kalshi_input_causes_2026-10-15/PREPARATION.zip",
+    "bytes": 194674,
+    "expected_bytes": 194674,
+    "sha256": "eae0203dd58b6413d7c449f3e79ab1f4fe39cb2796a2dd2e084705d7a7e5808d",
+    "expected_sha256": "eae0203dd58b6413d7c449f3e79ab1f4fe39cb2796a2dd2e084705d7a7e5808d",
+    "zip_testzip_bad_member": null,
+    "zip_members": 83,
+    "expected_members": 83,
+    "manifest_members": 83,
+    "members_read_and_crc_checked": 83,
+    "manifest_member_bytes_and_sha256_checked": 83,
+    "missing_members": 0,
+    "unexpected_members": 0,
+    "member_mismatch_failures": 0
+  },
+  "manifest": {
+    "path": "/workspace/nightcrawler-input-causes/research/kalshi_input_causes_2026-10-15/PREPARATION_MANIFEST.json",
+    "sha256": "77964b4a1b684b30808fb086aa5aa16e0e70db3b07b09cc514168df1d10dfd47",
+    "archive_values_match_manifest": true
+  },
+  "frozen_file_hashes": [
+    {
+      "path": "src/nightcrawler/kalshi_arena.py",
+      "exists": true,
+      "expected_sha256": "091ea297b1fed8973be3c78e74184e6ea71fa8f36e808e67449f433c88d19a0e",
+      "actual_sha256": "091ea297b1fed8973be3c78e74184e6ea71fa8f36e808e67449f433c88d19a0e",
+      "matches": true
+    },
+    {
+      "path": "tests/test_kalshi_learning_diagnostic.py",
+      "exists": true,
+      "expected_sha256": "239793d141ec481a66ec72acd3ab5f7fcff90bfdd00d02fcaeef5207caf355b0",
+      "actual_sha256": "239793d141ec481a66ec72acd3ab5f7fcff90bfdd00d02fcaeef5207caf355b0",
+      "matches": true
+    }
+  ],
+  "failure_count": 0,
+  "failures": [],
+  "scope_exclusions": [
+    "No private handoff or credential material inspected.",
+    "No production queries or application tests run.",
+    "No public repository files modified.",
+    "No profitability or strategy conclusion assessed."
+  ]
+}

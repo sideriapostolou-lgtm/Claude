@@ -1,0 +1,15 @@
+{
+  "source_sha256": "5ee9d12ef27bc8ad0c324b299868df69535627a5f873eddcc3ff4e448ba88fb4",
+  "passed": true,
+  "checks": [
+    "exact original framing",
+    "nested/parent/prefix/multiline/wronglevel/wrongevent rejected",
+    "toolerror/textonly/nullstructured/nulldeploy/topnull/toplist/badJSON explicit",
+    "missing originaltimestamp retained error while nextvalidrowparsed",
+    "overlappingdiagnosticqueries deduplicated withbothprovenances",
+    "overlappingunknownqueries oneoriginaljoin",
+    "nullshape queryatcap unknown, errors retained",
+    "unsupportedslotdisposition blocked"
+  ],
+  "scope": "Synthetic offline evidence-parser regression checks, not app tests or profit evidence."
+}

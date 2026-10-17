@@ -1,0 +1,5 @@
+{
+  "failure": "Initiallargecmd processcreation rejected: argv list too long; no commandran.",
+  "recovery": "Saved300732serializedbytes of originalMCPresult in13bounded24000character chunks; JSONparsed,3anchoredoriginalsvalidated. Not a production/network/data retrieval failure.",
+  "source_or_production_changed_by_failed_attempt": false
+}

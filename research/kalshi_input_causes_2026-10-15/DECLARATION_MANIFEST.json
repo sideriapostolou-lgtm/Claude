@@ -1,0 +1,16 @@
+{
+  "recorded_at_utc": "2026-10-15T17:27:58.968922+00:00",
+  "recorded_at_pacific": "2026-10-15T10:27:58.968922-07:00",
+  "declared_before_window": true,
+  "source_commit": "ff05beb654095ce91fefe24adfb2a94eea22be39",
+  "deployment_id": "c64e8199-4ce2-4234-ac53-63905e22231d",
+  "start": 1792085400,
+  "end": 1792086300,
+  "tail_end": 1792086420,
+  "files": {
+    "CAPTURE_DECLARATION.json": "d8fb192eaba52325c76ef1560229f97b6013ae6d68052eabcd03ffac4fa02261",
+    "CAPTURE_DECLARATION.md": "b46f91d6c0a7de8b501ab8c6d4cec52b6f0f0ebdb80a76de882e8cf8a7a0116b",
+    "CAPTURE_QUERY_PLAN.json": "2c3bebe0482810161df4ea9cb3a4b8dd799530c0227c73b8258b0072db3ae440"
+  },
+  "source_changes_prohibited_during_capture": true
+}

@@ -1,0 +1,566 @@
+{
+  "reviewed_at_utc": "2026-10-15T22:03:54.872030+00:00",
+  "verdict": "NEGATIVE: target produced no forecast or score; independently accepted extraction, but forecast-to-official-score milestone and broader EXEC remain OPEN",
+  "cohort": {
+    "target": "KXBTC15M-26OCT151800-00",
+    "start": "2026-10-15T21:45:00Z",
+    "end": "2026-10-15T22:00:00Z",
+    "tail": "2026-10-15T22:02:00Z",
+    "source": "0c30491e0bd101250ee443912e1352f38718af45",
+    "deployment": "66e6e7e4-30d9-4628-a234-f2a8e97dad19",
+    "source_fingerprint": "23e2ca80d3c04415256bf3fc237ba017d56733a59219d718e86c554eaa1f1d25"
+  },
+  "capture_stage": "initial",
+  "queries": {
+    "learning": {
+      "request": {
+        "projectId": "75750847-85c0-41a3-a2a7-b7f2201a51e9",
+        "deploymentId": "66e6e7e4-30d9-4628-a234-f2a8e97dad19",
+        "startDate": "2026-10-15T21:45:00Z",
+        "endDate": "2026-10-15T22:02:00Z",
+        "filter": "\"INFO nightcrawler.kalshi_probability_learning: kalshi_probability_learning_\"",
+        "limit": 500
+      },
+      "count": 11,
+      "saturated": false,
+      "before": {
+        "current_time": "2026-10-15 22:02:08 UTC"
+      },
+      "after": {
+        "current_time": "2026-10-15 22:02:09 UTC"
+      },
+      "deployment_status": "SUCCESS"
+    },
+    "v1": {
+      "request": {
+        "projectId": "75750847-85c0-41a3-a2a7-b7f2201a51e9",
+        "deploymentId": "66e6e7e4-30d9-4628-a234-f2a8e97dad19",
+        "startDate": "2026-10-15T21:45:00Z",
+        "endDate": "2026-10-15T22:02:00Z",
+        "filter": "\"INFO nightcrawler.kalshi_online_learning: kalshi_online_learning_\"",
+        "limit": 500
+      },
+      "count": 11,
+      "saturated": false,
+      "before": {
+        "current_time": "2026-10-15 22:02:08 UTC"
+      },
+      "after": {
+        "current_time": "2026-10-15 22:02:09 UTC"
+      },
+      "deployment_status": "SUCCESS"
+    },
+    "diagnostics": {
+      "request": {
+        "projectId": "75750847-85c0-41a3-a2a7-b7f2201a51e9",
+        "deploymentId": "66e6e7e4-30d9-4628-a234-f2a8e97dad19",
+        "startDate": "2026-10-15T21:45:00Z",
+        "endDate": "2026-10-15T22:02:00Z",
+        "filter": "\"INFO nightcrawler.kalshi_arena: kalshi_learning_input_diagnostic \"",
+        "limit": 500
+      },
+      "count": 1,
+      "saturated": false,
+      "before": {
+        "current_time": "2026-10-15 22:02:08 UTC"
+      },
+      "after": {
+        "current_time": "2026-10-15 22:02:09 UTC"
+      },
+      "deployment_status": "SUCCESS"
+    },
+    "timing": {
+      "request": {
+        "projectId": "75750847-85c0-41a3-a2a7-b7f2201a51e9",
+        "deploymentId": "66e6e7e4-30d9-4628-a234-f2a8e97dad19",
+        "startDate": "2026-10-15T21:45:00Z",
+        "endDate": "2026-10-15T22:02:00Z",
+        "filter": "\"INFO nightcrawler.speeddesk_kalshi_ws: speeddesk_feed_kalshi_ws_timing \"",
+        "limit": 500
+      },
+      "count": 48,
+      "saturated": false,
+      "before": {
+        "current_time": "2026-10-15 22:02:08 UTC"
+      },
+      "after": {
+        "current_time": "2026-10-15 22:02:09 UTC"
+      },
+      "deployment_status": "SUCCESS"
+    },
+    "gaps": {
+      "request": {
+        "projectId": "75750847-85c0-41a3-a2a7-b7f2201a51e9",
+        "deploymentId": "66e6e7e4-30d9-4628-a234-f2a8e97dad19",
+        "startDate": "2026-10-15T21:45:00Z",
+        "endDate": "2026-10-15T22:02:00Z",
+        "filter": "\"WARNING nightcrawler.speeddesk_kalshi_ws: speeddesk_feed_kalshi_ws_gap \"",
+        "limit": 500
+      },
+      "count": 21,
+      "saturated": false,
+      "before": {
+        "current_time": "2026-10-15 22:02:08 UTC"
+      },
+      "after": {
+        "current_time": "2026-10-15 22:02:09 UTC"
+      },
+      "deployment_status": "SUCCESS"
+    },
+    "timing_unavailable": {
+      "request": {
+        "projectId": "75750847-85c0-41a3-a2a7-b7f2201a51e9",
+        "deploymentId": "66e6e7e4-30d9-4628-a234-f2a8e97dad19",
+        "startDate": "2026-10-15T21:45:00Z",
+        "endDate": "2026-10-15T22:02:00Z",
+        "filter": "\"INFO nightcrawler.speeddesk_kalshi_ws: speeddesk_feed_kalshi_ws_timing_unavailable\"",
+        "limit": 500
+      },
+      "count": 0,
+      "saturated": false,
+      "before": {
+        "current_time": "2026-10-15 22:02:08 UTC"
+      },
+      "after": {
+        "current_time": "2026-10-15 22:02:10 UTC"
+      },
+      "deployment_status": "SUCCESS"
+    },
+    "live": {
+      "request": {
+        "projectId": "75750847-85c0-41a3-a2a7-b7f2201a51e9",
+        "deploymentId": "66e6e7e4-30d9-4628-a234-f2a8e97dad19",
+        "startDate": "2026-10-15T21:45:00Z",
+        "endDate": "2026-10-15T22:02:00Z",
+        "filter": "\"INFO nightcrawler.speeddesk: speeddesk_live_\"",
+        "limit": 500
+      },
+      "count": 19,
+      "saturated": false,
+      "before": {
+        "current_time": "2026-10-15 22:02:08 UTC"
+      },
+      "after": {
+        "current_time": "2026-10-15 22:02:09 UTC"
+      },
+      "deployment_status": "SUCCESS"
+    },
+    "practice_windows": {
+      "request": {
+        "projectId": "75750847-85c0-41a3-a2a7-b7f2201a51e9",
+        "deploymentId": "66e6e7e4-30d9-4628-a234-f2a8e97dad19",
+        "startDate": "2026-10-15T21:45:00Z",
+        "endDate": "2026-10-15T22:02:00Z",
+        "filter": "\"INFO nightcrawler.speeddesk: speeddesk_window \"",
+        "limit": 500
+      },
+      "count": 3,
+      "saturated": false,
+      "before": {
+        "current_time": "2026-10-15 22:02:08 UTC"
+      },
+      "after": {
+        "current_time": "2026-10-15 22:02:09 UTC"
+      },
+      "deployment_status": "SUCCESS"
+    },
+    "tracebacks": {
+      "request": {
+        "projectId": "75750847-85c0-41a3-a2a7-b7f2201a51e9",
+        "deploymentId": "66e6e7e4-30d9-4628-a234-f2a8e97dad19",
+        "startDate": "2026-10-15T21:45:00Z",
+        "endDate": "2026-10-15T22:02:00Z",
+        "filter": "Traceback",
+        "limit": 500
+      },
+      "count": 0,
+      "saturated": false,
+      "before": {
+        "current_time": "2026-10-15 22:02:08 UTC"
+      },
+      "after": {
+        "current_time": "2026-10-15 22:02:09 UTC"
+      },
+      "deployment_status": "SUCCESS"
+    },
+    "trade_gaps": {
+      "request": {
+        "projectId": "75750847-85c0-41a3-a2a7-b7f2201a51e9",
+        "deploymentId": "66e6e7e4-30d9-4628-a234-f2a8e97dad19",
+        "startDate": "2026-10-15T21:45:00Z",
+        "endDate": "2026-10-15T22:02:00Z",
+        "filter": "\"speeddesk_feed_kalshi_trade_gap\"",
+        "limit": 500
+      },
+      "count": 2,
+      "saturated": false,
+      "before": {
+        "current_time": "2026-10-15 22:02:08 UTC"
+      },
+      "after": {
+        "current_time": "2026-10-15 22:02:09 UTC"
+      },
+      "deployment_status": "SUCCESS"
+    },
+    "lineage": {
+      "request": {
+        "projectId": "75750847-85c0-41a3-a2a7-b7f2201a51e9",
+        "deploymentId": "66e6e7e4-30d9-4628-a234-f2a8e97dad19",
+        "startDate": "2026-10-15T21:45:00Z",
+        "endDate": "2026-10-15T22:02:00Z",
+        "filter": "\"INFO nightcrawler.kalshi_probability_epochs: kalshi_probability_epoch_status \"",
+        "limit": 500
+      },
+      "count": 0,
+      "saturated": false,
+      "before": {
+        "current_time": "2026-10-15 22:02:08 UTC"
+      },
+      "after": {
+        "current_time": "2026-10-15 22:02:09 UTC"
+      },
+      "deployment_status": "SUCCESS"
+    }
+  },
+  "total_unique_original_rows": 116,
+  "event_counts": {
+    "learning": {
+      "kalshi_probability_learning_status": 10,
+      "kalshi_probability_learning_unknown": 1
+    },
+    "v1": {
+      "kalshi_online_learning_status": 10,
+      "kalshi_online_learning_unknown": 1
+    },
+    "diagnostics": {
+      "kalshi_learning_input_diagnostic": 1
+    },
+    "timing": {
+      "speeddesk_feed_kalshi_ws_timing": 48
+    },
+    "gaps": {
+      "speeddesk_feed_kalshi_ws_gap": 21
+    },
+    "timing_unavailable": {},
+    "live": {
+      "speeddesk_live_status": 17,
+      "speeddesk_live_starter": 2
+    },
+    "practice_windows": {
+      "speeddesk_window": 3
+    },
+    "tracebacks": {},
+    "trade_gaps": {
+      "speeddesk_feed_kalshi_trade_gap": 2
+    },
+    "lineage": {}
+  },
+  "target_exclusion_original": {
+    "timestamp": "2026-10-15T21:50:00.090966357Z",
+    "severity": "info",
+    "message": "2026-10-15T21:50:00Z INFO nightcrawler.kalshi_probability_learning: kalshi_probability_learning_unknown {\"at\":1792101000.0313098,\"mode\":\"observe_only\",\"live_application\":false,\"profitability_proven\":false,\"protocol\":\"kalshi-probability-calibration-v2-h300-g5-b10-prior20\",\"source_fingerprint\":\"23e2ca80d3c04415256bf3fc237ba017d56733a59219d718e86c554eaa1f1d25\",\"window\":\"KXBTC15M-26OCT151800-00\",\"reason\":\"invalid\"}",
+    "attributes": [
+      {
+        "key": "level",
+        "value": "\"info\""
+      }
+    ]
+  },
+  "matching_input_diagnostic": {
+    "timestamp": "2026-10-15T21:50:00.090272912Z",
+    "severity": "info",
+    "message": "2026-10-15T21:50:00Z INFO nightcrawler.kalshi_arena: kalshi_learning_input_diagnostic {\"diagnostic_schema\":1,\"mode\":\"observe_only\",\"live_application\":false,\"profitability_proven\":false,\"arena_source_sha256\":\"52b983cb87ba6ec593124aef525b37b2ad48ce8cabba0325f6b813d52e7a0676\",\"deployment_sha\":null,\"deployment_id\":null,\"deployment_identity\":\"unavailable_in_child\",\"pid\":43,\"instance\":\"b0953a1e7691e79f4843ab4f\",\"protocol\":\"kalshi-online-calibration-v1-h300-g5-b10-prior20\",\"source_fingerprint\":\"b6112b7ef8955b20af734157c1e7f5ec533bf98f70e034558f06670578c391f2\",\"window\":\"KXBTC15M-26OCT151800-00\",\"at\":1792101000.0313098,\"pending\":{\"start\":1792100700.0,\"end\":1792101600.0,\"elapsed_s\":300.03130984306335,\"forecast_none\":true,\"stored_pregap\":\"explicit_feed_gap\"},\"learner_method\":\"advance\",\"observation\":\"due\",\"cause_history\":\"restart_history_unavailable\",\"first_effective_cause\":{\"flags\":{\"explicit_slug\":true,\"trade_stream_false\":false,\"coinbase_false\":false,\"sequence_discontinuity\":false,\"drop_counter_increased\":false,\"missing_ladder\":false,\"late_book\":false,\"late_trade\":false,\"replayed_drop\":false},\"effective_at\":1792100701.1276395,\"child_apply_at\":1792100701.1276395,\"child_receive_at\":1792100701.126236,\"frame_sequence\":6346,\"parent_frame_sent_at\":1792100701.0960128,\"producer_event_time\":null,\"producer_timing\":\"unavailable_on_gap_wire\",\"frame_transit_s\":0.03022313117980957,\"child_wait_s\":0.0014035701751708984,\"data_at\":null,\"data_clock\":null,\"data_checked_at\":null,\"data_age_s\":null,\"timing\":\"finite_ordered\"},\"last_effective_cause\":{\"flags\":{\"explicit_slug\":true,\"trade_stream_false\":false,\"coinbase_false\":false,\"sequence_discontinuity\":false,\"drop_counter_increased\":false,\"missing_ladder\":false,\"late_book\":false,\"late_trade\":false,\"replayed_drop\":false},\"effective_at\":1792100995.2257566,\"child_apply_at\":1792100995.2257566,\"child_receive_at\":1792100995.2253869,\"frame_sequence\":9171,\"parent_frame_sent_at\":1792100995.1906579,\"producer_event_time\":null,\"producer_timing\":\"unavailable_on_gap_wire\",\"frame_transit_s\":0.03472900390625,\"child_wait_s\":0.00036978721618652344,\"data_at\":null,\"data_clock\":null,\"data_checked_at\":null,\"data_age_s\":null,\"timing\":\"finite_ordered\"},\"feed_ok\":true,\"feed_status\":[true,true],\"input_facts\":{\"bitcoin_age_s\":3.6016387939453125,\"bitcoin_age_valid\":false,\"spot_valid\":true,\"sigma_valid\":true},\"disposition\":\"unknown\",\"reason\":\"pregap\",\"counter_delta_scope\":\"learner_call\",\"counter_delta\":{\"forecasts\":0,\"unknown\":1,\"scored\":0},\"coverage\":\"child_observations_only; upstream cause and producer occurrence unavailable\"}",
+    "attributes": [
+      {
+        "key": "level",
+        "value": "\"info\""
+      }
+    ]
+  },
+  "last_current_status": {
+    "timestamp": "2026-10-15T22:00:52.027782936Z",
+    "event": "kalshi_probability_learning_status",
+    "payload": {
+      "at": 1792101652.0108252,
+      "mode": "observe_only",
+      "live_application": false,
+      "profitability_proven": false,
+      "protocol": "kalshi-probability-calibration-v2-h300-g5-b10-prior20",
+      "source_fingerprint": "23e2ca80d3c04415256bf3fc237ba017d56733a59219d718e86c554eaa1f1d25",
+      "learning": {
+        "mode": "observe_only",
+        "enabled": true,
+        "live_application": false,
+        "profitability_proven": false,
+        "protocol": "kalshi-probability-calibration-v2-h300-g5-b10-prior20",
+        "source_fingerprint": "23e2ca80d3c04415256bf3fc237ba017d56733a59219d718e86c554eaa1f1d25",
+        "history_protocol": "kalshi-probability-calibration-v2-h300-g5-b10-prior20",
+        "history_source_fingerprint": "23e2ca80d3c04415256bf3fc237ba017d56733a59219d718e86c554eaa1f1d25",
+        "forecast_horizon_s": 300,
+        "grace_s": 5,
+        "bins": 10,
+        "pending": 0,
+        "forecasts": 0,
+        "scored": 0,
+        "unknown": 2,
+        "brier_baseline": null,
+        "brier_shadow": null,
+        "error": null,
+        "coverage": "conditional fresh-input probabilities; continuous coverage and profitability not certified",
+        "exclusions": {
+          "startup_inside": 1,
+          "late": 0,
+          "invalid": 1,
+          "pregap": 0,
+          "terms_changed": 0,
+          "missing_label": 0,
+          "outcome_known": 0,
+          "invalid_label": 0,
+          "capacity": 0,
+          "invalid_batch": 0,
+          "invalid_strike": 0
+        }
+      }
+    },
+    "body": "{\"at\":1792101652.0108252,\"mode\":\"observe_only\",\"live_application\":false,\"profitability_proven\":false,\"protocol\":\"kalshi-probability-calibration-v2-h300-g5-b10-prior20\",\"source_fingerprint\":\"23e2ca80d3c04415256bf3fc237ba017d56733a59219d718e86c554eaa1f1d25\",\"learning\":{\"mode\":\"observe_only\",\"enabled\":true,\"live_application\":false,\"profitability_proven\":false,\"protocol\":\"kalshi-probability-calibration-v2-h300-g5-b10-prior20\",\"source_fingerprint\":\"23e2ca80d3c04415256bf3fc237ba017d56733a59219d718e86c554eaa1f1d25\",\"history_protocol\":\"kalshi-probability-calibration-v2-h300-g5-b10-prior20\",\"history_source_fingerprint\":\"23e2ca80d3c04415256bf3fc237ba017d56733a59219d718e86c554eaa1f1d25\",\"forecast_horizon_s\":300,\"grace_s\":5,\"bins\":10,\"pending\":0,\"forecasts\":0,\"scored\":0,\"unknown\":2,\"brier_baseline\":null,\"brier_shadow\":null,\"error\":null,\"coverage\":\"conditional fresh-input probabilities; continuous coverage and profitability not certified\",\"exclusions\":{\"startup_inside\":1,\"late\":0,\"invalid\":1,\"pregap\":0,\"terms_changed\":0,\"missing_label\":0,\"outcome_known\":0,\"invalid_label\":0,\"capacity\":0,\"invalid_batch\":0,\"invalid_strike\":0}}}",
+    "original": {
+      "timestamp": "2026-10-15T22:00:52.027782936Z",
+      "severity": "info",
+      "message": "2026-10-15T22:00:52Z INFO nightcrawler.kalshi_probability_learning: kalshi_probability_learning_status {\"at\":1792101652.0108252,\"mode\":\"observe_only\",\"live_application\":false,\"profitability_proven\":false,\"protocol\":\"kalshi-probability-calibration-v2-h300-g5-b10-prior20\",\"source_fingerprint\":\"23e2ca80d3c04415256bf3fc237ba017d56733a59219d718e86c554eaa1f1d25\",\"learning\":{\"mode\":\"observe_only\",\"enabled\":true,\"live_application\":false,\"profitability_proven\":false,\"protocol\":\"kalshi-probability-calibration-v2-h300-g5-b10-prior20\",\"source_fingerprint\":\"23e2ca80d3c04415256bf3fc237ba017d56733a59219d718e86c554eaa1f1d25\",\"history_protocol\":\"kalshi-probability-calibration-v2-h300-g5-b10-prior20\",\"history_source_fingerprint\":\"23e2ca80d3c04415256bf3fc237ba017d56733a59219d718e86c554eaa1f1d25\",\"forecast_horizon_s\":300,\"grace_s\":5,\"bins\":10,\"pending\":0,\"forecasts\":0,\"scored\":0,\"unknown\":2,\"brier_baseline\":null,\"brier_shadow\":null,\"error\":null,\"coverage\":\"conditional fresh-input probabilities; continuous coverage and profitability not certified\",\"exclusions\":{\"startup_inside\":1,\"late\":0,\"invalid\":1,\"pregap\":0,\"terms_changed\":0,\"missing_label\":0,\"outcome_known\":0,\"invalid_label\":0,\"capacity\":0,\"invalid_batch\":0,\"invalid_strike\":0}}}",
+      "attributes": [
+        {
+          "key": "level",
+          "value": "\"info\""
+        }
+      ]
+    }
+  },
+  "last_v1_status": {
+    "timestamp": "2026-10-15T22:00:52.027777897Z",
+    "event": "kalshi_online_learning_status",
+    "payload": {
+      "at": 1792101652.0108252,
+      "mode": "observe_only",
+      "live_application": false,
+      "profitability_proven": false,
+      "protocol": "kalshi-online-calibration-v1-h300-g5-b10-prior20",
+      "source_fingerprint": "b6112b7ef8955b20af734157c1e7f5ec533bf98f70e034558f06670578c391f2",
+      "learning": {
+        "mode": "observe_only",
+        "enabled": true,
+        "live_application": false,
+        "profitability_proven": false,
+        "protocol": "kalshi-online-calibration-v1-h300-g5-b10-prior20",
+        "source_fingerprint": "b6112b7ef8955b20af734157c1e7f5ec533bf98f70e034558f06670578c391f2",
+        "history_protocol": "kalshi-online-calibration-v1-h300-g5-b10-prior20",
+        "history_source_fingerprint": "b6112b7ef8955b20af734157c1e7f5ec533bf98f70e034558f06670578c391f2",
+        "forecast_horizon_s": 300,
+        "grace_s": 5,
+        "bins": 10,
+        "pending": 0,
+        "forecasts": 0,
+        "scored": 0,
+        "unknown": 33,
+        "brier_baseline": null,
+        "brier_shadow": null,
+        "error": null,
+        "coverage": "quiet observations; full data coverage not certified",
+        "exclusions": {
+          "startup_inside": 4,
+          "late": 0,
+          "invalid": 0,
+          "pregap": 29,
+          "terms_changed": 0,
+          "missing_label": 0,
+          "outcome_known": 0,
+          "invalid_label": 0,
+          "capacity": 0
+        }
+      }
+    },
+    "body": "{\"at\":1792101652.0108252,\"mode\":\"observe_only\",\"live_application\":false,\"profitability_proven\":false,\"protocol\":\"kalshi-online-calibration-v1-h300-g5-b10-prior20\",\"source_fingerprint\":\"b6112b7ef8955b20af734157c1e7f5ec533bf98f70e034558f06670578c391f2\",\"learning\":{\"mode\":\"observe_only\",\"enabled\":true,\"live_application\":false,\"profitability_proven\":false,\"protocol\":\"kalshi-online-calibration-v1-h300-g5-b10-prior20\",\"source_fingerprint\":\"b6112b7ef8955b20af734157c1e7f5ec533bf98f70e034558f06670578c391f2\",\"history_protocol\":\"kalshi-online-calibration-v1-h300-g5-b10-prior20\",\"history_source_fingerprint\":\"b6112b7ef8955b20af734157c1e7f5ec533bf98f70e034558f06670578c391f2\",\"forecast_horizon_s\":300,\"grace_s\":5,\"bins\":10,\"pending\":0,\"forecasts\":0,\"scored\":0,\"unknown\":33,\"brier_baseline\":null,\"brier_shadow\":null,\"error\":null,\"coverage\":\"quiet observations; full data coverage not certified\",\"exclusions\":{\"startup_inside\":4,\"late\":0,\"invalid\":0,\"pregap\":29,\"terms_changed\":0,\"missing_label\":0,\"outcome_known\":0,\"invalid_label\":0,\"capacity\":0}}}",
+    "original": {
+      "timestamp": "2026-10-15T22:00:52.027777897Z",
+      "severity": "info",
+      "message": "2026-10-15T22:00:52Z INFO nightcrawler.kalshi_online_learning: kalshi_online_learning_status {\"at\":1792101652.0108252,\"mode\":\"observe_only\",\"live_application\":false,\"profitability_proven\":false,\"protocol\":\"kalshi-online-calibration-v1-h300-g5-b10-prior20\",\"source_fingerprint\":\"b6112b7ef8955b20af734157c1e7f5ec533bf98f70e034558f06670578c391f2\",\"learning\":{\"mode\":\"observe_only\",\"enabled\":true,\"live_application\":false,\"profitability_proven\":false,\"protocol\":\"kalshi-online-calibration-v1-h300-g5-b10-prior20\",\"source_fingerprint\":\"b6112b7ef8955b20af734157c1e7f5ec533bf98f70e034558f06670578c391f2\",\"history_protocol\":\"kalshi-online-calibration-v1-h300-g5-b10-prior20\",\"history_source_fingerprint\":\"b6112b7ef8955b20af734157c1e7f5ec533bf98f70e034558f06670578c391f2\",\"forecast_horizon_s\":300,\"grace_s\":5,\"bins\":10,\"pending\":0,\"forecasts\":0,\"scored\":0,\"unknown\":33,\"brier_baseline\":null,\"brier_shadow\":null,\"error\":null,\"coverage\":\"quiet observations; full data coverage not certified\",\"exclusions\":{\"startup_inside\":4,\"late\":0,\"invalid\":0,\"pregap\":29,\"terms_changed\":0,\"missing_label\":0,\"outcome_known\":0,\"invalid_label\":0,\"capacity\":0}}}",
+      "attributes": [
+        {
+          "key": "level",
+          "value": "\"info\""
+        }
+      ]
+    }
+  },
+  "archive_limit": "Startup separately verified old5scores under e798 and legacy digest. No lineage status in fixed capture (startup-only emitter), no native raw archive export or new preservation certification. Do not pool old scores with current0.",
+  "official_market": {
+    "ticker": "KXBTC15M-26OCT151800-00",
+    "status": "finalized",
+    "result": "yes",
+    "floor_strike": 82191.08,
+    "expiration_value": "82319.67",
+    "settlement_ts": "2026-10-15T22:00:01.838348Z",
+    "rules_primary": "If the simple average of the sixty seconds of CF Benchmarks' BRTI before 6:00 PM EDT on Oct 15, 2026 is at least the simple average of the sixty seconds of CF Benchmarks' BRTI before 5:45 PM EDT on October 15, 2026, then the market resolves to Yes."
+  },
+  "score_math": "No frozen forecast exists for target; Brier score is undefined/unavailable. OfficialYES cannot create a retroactive forecast or score.",
+  "financial": {
+    "original_status_count": 17,
+    "all68_selected_fields_equal_startup_across_all17": true,
+    "last_timestamp": "2026-10-15T22:01:06.410642425Z",
+    "last_selected": {
+      "mode": "paper",
+      "configured_mode": "live",
+      "trading_now": false,
+      "day_stop_latched": true,
+      "cash_usd": 30.2496,
+      "open_risk_usd": 0,
+      "reserved_usd": 0,
+      "positions": 0,
+      "open_orders": 0,
+      "total.pnl_usd": -19.49180000000001,
+      "today.pnl_usd": -5.044700000000009,
+      "caps": {
+        "window_usd": 10.0,
+        "open_usd": 20.0,
+        "day_stop_usd": 6.0,
+        "clip": 5.0,
+        "total_stop_usd": 10.0
+      }
+    },
+    "real_order_fill_cancel_settlement_count": 0,
+    "starter_refusal_originals": [
+      {
+        "timestamp": "2026-10-15T21:45:13.529038705Z",
+        "severity": "info",
+        "message": "2026-10-15T21:45:13Z INFO nightcrawler.speeddesk: speeddesk_live_starter {\"at\":1792100713.141118,\"venue\":\"kalshi\",\"window\":\"KXBTC15M-26OCT151800-00\",\"side\":\"down\",\"price\":0.51,\"reason\":\"day_stop\",\"state\":\"No first buy: one contract and its hedge would not fit under the daily loss stop\",\"total_at_risk_usd\":0.44079999999999586,\"day_at_risk_usd\":5.044700000000006,\"total_stop_usd\":10.0,\"day_stop_usd\":6.0}",
+        "attributes": [
+          {
+            "key": "level",
+            "value": "\"info\""
+          }
+        ]
+      },
+      {
+        "timestamp": "2026-10-15T22:00:17.440312938Z",
+        "severity": "info",
+        "message": "2026-10-15T22:00:17Z INFO nightcrawler.speeddesk: speeddesk_live_starter {\"at\":1792101617.1913726,\"venue\":\"kalshi\",\"window\":\"KXBTC15M-26OCT151815-15\",\"side\":\"up\",\"price\":0.6,\"reason\":\"day_stop\",\"state\":\"No first buy: one contract and its hedge would not fit under the daily loss stop\",\"total_at_risk_usd\":0.44079999999999586,\"day_at_risk_usd\":5.044700000000006,\"total_stop_usd\":10.0,\"day_stop_usd\":6.0}",
+        "attributes": [
+          {
+            "key": "level",
+            "value": "\"info\""
+          }
+        ]
+      }
+    ],
+    "limits": "Starter refusal total_at_risk/day_at_risk figures are stop-accounting context, not new exposure. Statuses report0risk/reserved/orders/positions. No complete native ledger/export or continuous account coverage."
+  },
+  "practice_originals": [
+    {
+      "timestamp": "2026-10-15T21:45:16.983774220Z",
+      "severity": "info",
+      "message": "2026-10-15T21:45:16Z INFO nightcrawler.speeddesk: speeddesk_window {\"mode\":\"practice\",\"window\":\"KXBTC15M-26OCT151745-45\",\"at\":1792100716.378372,\"up_wins\":false,\"up_shares\":0.01,\"down_shares\":0.01,\"cost_usd\":0.0061,\"fee_usd\":0.0,\"payout_usd\":0.01,\"locked_usd\":0.0039000000000000003,\"direction_usd\":-4.336808689942018e-19,\"pnl_usd\":0.0039,\"side\":\"both\",\"price\":null,\"size\":0.02,\"fair\":null,\"edge\":null,\"latency_ms\":null,\"bitcoin_price\":82175.42,\"bitcoin_staleness_s\":0.5046930313110352,\"venue\":\"kalshi\"}",
+      "attributes": [
+        {
+          "key": "level",
+          "value": "\"info\""
+        }
+      ]
+    },
+    {
+      "timestamp": "2026-10-15T21:49:52.272078493Z",
+      "severity": "info",
+      "message": "2026-10-15T21:49:52Z INFO nightcrawler.speeddesk: speeddesk_window {\"mode\":\"practice\",\"window\":\"cpc-btc-updown-15m-2026-10-15-2130z\",\"at\":1792100991.737398,\"up_wins\":false,\"up_shares\":0.01,\"down_shares\":0.01,\"cost_usd\":0.0077,\"fee_usd\":0.0,\"payout_usd\":0.01,\"locked_usd\":0.0022999999999999995,\"direction_usd\":4.336808689942018e-19,\"pnl_usd\":0.0023,\"side\":\"both\",\"price\":null,\"size\":0.02,\"fair\":null,\"edge\":null,\"latency_ms\":null,\"bitcoin_price\":82244.61,\"bitcoin_staleness_s\":0.23165082931518555,\"venue\":\"polymarket_us\"}",
+      "attributes": [
+        {
+          "key": "level",
+          "value": "\"info\""
+        }
+      ]
+    },
+    {
+      "timestamp": "2026-10-15T22:00:19.563327191Z",
+      "severity": "info",
+      "message": "2026-10-15T22:00:19Z INFO nightcrawler.speeddesk: speeddesk_window {\"mode\":\"practice\",\"window\":\"KXBTC15M-26OCT151800-00\",\"at\":1792101619.0188136,\"up_wins\":true,\"up_shares\":0.0,\"down_shares\":0.0,\"cost_usd\":0.0,\"fee_usd\":0.0,\"payout_usd\":0.0,\"locked_usd\":0.0,\"direction_usd\":0.0,\"pnl_usd\":0.0,\"side\":\"both\",\"price\":null,\"size\":0.0,\"fair\":null,\"edge\":null,\"latency_ms\":null,\"bitcoin_price\":82340.63,\"bitcoin_staleness_s\":0.3074455261230469,\"venue\":\"kalshi\"}",
+      "attributes": [
+        {
+          "key": "level",
+          "value": "\"info\""
+        }
+      ]
+    }
+  ],
+  "practice_limit": "Target zero-share/zeroPnL practice record is distinct from actual trading, priorKalshi practice+.0039 and Polymarket practice+.0023. No pooling.",
+  "timing": {
+    "counts": [
+      {
+        "reader": "speeddesk",
+        "event": "status",
+        "receipt_status": "overflow",
+        "count": 4
+      },
+      {
+        "reader": "speeddesk",
+        "event": "status",
+        "receipt_status": "known",
+        "count": 25
+      },
+      {
+        "reader": "speeddesk",
+        "event": "gap",
+        "receipt_status": "overflow",
+        "count": 19
+      }
+    ],
+    "known_main_gap_receipts": 0,
+    "main_gap_overflow": 19,
+    "main_status_overflow": 4,
+    "main_ws_gap_warnings": 21,
+    "recurrence_limit": "No known rejected-frame residence in this capture. Overflow remains unknown; known status cohort cannot substitute for prespecified known-gap recurrence."
+  },
+  "trade_gap_originals": [
+    {
+      "timestamp": "2026-10-15T21:54:03.824896553Z",
+      "severity": "error",
+      "message": "2026-10-15T21:54:03Z WARNING nightcrawler.speeddesk_kalshi: speeddesk_feed_kalshi_trade_gap error=ValueError invalidated=True",
+      "attributes": [
+        {
+          "key": "level",
+          "value": "\"error\""
+        }
+      ]
+    },
+    {
+      "timestamp": "2026-10-15T21:56:44.598795696Z",
+      "severity": "error",
+      "message": "2026-10-15T21:56:44Z WARNING nightcrawler.speeddesk_kalshi: speeddesk_feed_kalshi_trade_gap error=ValueError invalidated=True",
+      "attributes": [
+        {
+          "key": "level",
+          "value": "\"error\""
+        }
+      ]
+    }
+  ],
+  "traceback_matches": 0,
+  "limitations": [
+    "Initial capture awaiting one same-bounds ingestion-lag requery, without extending cohort.",
+    "All11queries unsaturated/parseable/noAPIerror; filters and gaps still do not establish continuous coverage.",
+    "Two trade-gap invalidatedTrue warnings have no reader identity; leave attribution unassigned.",
+    "Underlying cause of BTCage3.601638794s remains unproved despite exact rejection predicate established.",
+    "No profitable edge, saved dollars, accuracy advantage, archive raw-byte export, strategy comparison or resumed trading claim.",
+    "Last status is a sampled original at22:01:06; as_of is paneltime and exact account-read age unpublished."
+  ],
+  "source_test_sha256": {
+    "src/nightcrawler/kalshi_probability_epochs.py": "495450c64b9402e2f9dfaa53756a51dbf44a5c75bf7245b6dc428271cddc708f",
+    "src/nightcrawler/kalshi_probability_learning.py": "43d8f527fd24aee3a7dbb33d848dcaaaf0e39089ab605deddad32dfabc1e35ab",
+    "src/nightcrawler/kalshi_arena.py": "52b983cb87ba6ec593124aef525b37b2ad48ce8cabba0325f6b813d52e7a0676",
+    "src/nightcrawler/pagestate.py": "d73eec093164c7a659f12b08226844fb58cfd01e96278585b255575ea8212479",
+    "tests/test_kalshi_probability_epochs.py": "977f3ee0c6c9bc69a40951567cb9a4cedad13a529fd0754862fcf49ac48b51da",
+    "tests/test_kalshi_probability_arena.py": "2f69e8c665b0b4d0277c398d4a7fa27aedfeecb544c1e32f9cb65a72cde8b4cb",
+    "tests/test_kalshi_arena_page.py": "2d922b6e2e586e7befa2b9d8f65c6477ea6ba36daf1e2f155198e04ecb516bfa"
+  },
+  "input_sha256": {
+    "/workspace/private-handoffs/claude-2026-10-15/PR66_FINAL_CAPTURE_INITIAL_NATIVE.json": "9a5047397203f8e83e759589dd66cba8ef4ac7720c53be75523d477fe9003081",
+    "/workspace/nightcrawler-probability-epochs/research/kalshi_probability_epochs_2026-10-15/WINDOW_CLOSE_PUBLIC.json": "68f5c1067240ffaea596960166daa355ec4651d063f71bdecb512bebdc7b163b",
+    "/workspace/private-handoffs/claude-2026-10-15/kalshi-recovery-review/pr66_invalid_slot_review.json": "7869f11c5c62e9c08ee9208a0def57942429c7e3b842b1ca3edc5a78ba1e5863"
+  }
+}

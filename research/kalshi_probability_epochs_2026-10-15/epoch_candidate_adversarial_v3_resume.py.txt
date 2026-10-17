@@ -1,0 +1,34 @@
+"""Read-only candidate checks. Synthetic source ids; private temp files only."""
+import copy,json,sys,tempfile
+from pathlib import Path
+from unittest.mock import patch
+ROOT=Path('/workspace/nightcrawler-probability-epochs');sys.path.insert(0,str(ROOT/'src'))
+from nightcrawler.kalshi_probability_learning import ProbabilityLearning
+from nightcrawler.kalshi_probability_epochs import ProbabilityEpochs,LEGACY,EPOCHS,MARKER,SCHEMA
+from nightcrawler.kalshi_arena import KalshiArena,ArenaConfig,WireView
+
+def make(source,now,raw=None):
+    with patch('nightcrawler.kalshi_probability_learning.fingerprint',return_value=source*64):
+        active=ProbabilityLearning(now)
+        host=ProbabilityEpochs(active,now)
+        if raw is not None:host.restore(raw,now)
+    return host
+
+def state(host):
+    old,envelope=host.checkpoint();return {LEGACY:old,EPOCHS:envelope,MARKER:SCHEMA}
+
+a=make('a',1000);sa=state(a)
+b=make('b',2000,sa);sb=state(b)
+c=make('c',3000,sb);sc=state(c)
+assert len(sc[EPOCHS]['archived'])==2
+broken=copy.deepcopy(sc);broken[EPOCHS]['active']['state_sha256']='0'*64
+blocked=make('d',4000,broken);saved=state(blocked)
+print(json.dumps({'case':'malformed_active_digest','before_archives':2,'after_archives':len(saved[EPOCHS]['archived']) if saved[EPOCHS] else None,'active':saved[EPOCHS]['active'] if saved[EPOCHS] else None,'error':blocked.error}))
+# Collect without changing the candidate, preserving all actual behavior.
+with tempfile.TemporaryDirectory(dir='/workspace/private-handoffs/claude-2026-10-15/kalshi-recovery-review') as td:
+    with patch('nightcrawler.kalshi_arena.ProbabilityEpochs',side_effect=ValueError('synthetic host init failure')):
+        arena=KalshiArena(ArenaConfig(Path(td),population=2),lambda:WireView(),clock=lambda:1000.)
+    print(json.dumps({'case':'host_constructor_failure','active_still_enabled':arena.learning_probability.enabled if arena.learning_probability else None,'host_exists':arena._probability_epochs is not None,'arena_state_serializes':bool(json.dumps(arena.state(1000),allow_nan=False))}))
+
+assert len(saved[EPOCHS]["archived"])==2 and saved[EPOCHS]["active"] is None and not blocked.active.enabled
+assert arena.learning_probability.enabled is False

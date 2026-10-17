@@ -1,0 +1,205 @@
+"""Fake-only source-pinned opportunity proof. No clients, credentials, or network.
+
+This runs exact LiveRiskBook and AST-extracted _send_guard; controller health
+predicates are declared fake inputs, not a claim of full controller integration.
+No historical market data/outcomes or production state is read.
+"""
+from __future__ import annotations
+
+import ast
+import hashlib
+import json
+import math
+from dataclasses import asdict, replace
+from pathlib import Path
+from types import SimpleNamespace as NS
+
+from frozen.speeddesk_live_model import ActualFill, LiveLimits, LiveRiskBook
+from frozen.speeddesk_model import Book, Level, Window
+
+ROOT = Path(__file__).resolve().parent
+SOURCE = ROOT / 'frozen'
+SLUG = 'KXBTC15M-SYNTHETIC-OPPORTUNITY'
+NOW = 1012.0
+EDGE = .03
+
+
+def fixture(maker=.0, partial=False):
+    limits = LiveLimits(window_usd=10, open_usd=20, day_loss_usd=6,
+                        total_loss_usd=10, clip=5, fee_precision=.0001)
+    b = LiveRiskBook(limits)
+    w = Window(SLUG, 1000, 1900, 100, taker_coefficient=.07,
+               maker_coefficient=maker, venue='kalshi')
+    b.add_window(w)
+    b.update_cash(30, 1010)
+    n = 3 if partial else 5
+    intent = b.reserve_intent(SLUG, 'down', 'rest', .57, 5, 1010,
+                              'nc-speed-synthetic-starter', .60)
+    b.mark_submitted(intent.client_order_id, 'synthetic-venue-order')
+    fee = 0 if maker == 0 else .005 * n
+    assert b.record_fill(ActualFill('synthetic-fill', 'synthetic-venue-order',
+                                   intent.client_order_id, SLUG, 'down', .57,
+                                   n, fee, 1011))
+    return b, w, n
+
+
+def capped_price(b, fair, n, now=NOW, decision_fair=None):
+    quote_fair = fair if decision_fair is None else decision_fair
+    ordinary = round(math.floor((quote_fair - EDGE + 1e-9) * 100) / 100, 2)
+    if fair - b.unit_reserve(SLUG, ordinary, 'rest') < EDGE - 1e-9:
+        return None, []
+    if b.can_buy(SLUG, 'up', 'rest', ordinary, n, now) != 'pair_cap':
+        return None, []
+    rows = []
+    # Exhaustive descending integer ticks, no monotonicity/binary-search assumption.
+    for cent in range(round(ordinary * 100) - 1, 0, -1):
+        p = cent / 100
+        unit = b.unit_reserve(SLUG, p, 'rest')
+        reason = b.can_buy(SLUG, 'up', 'rest', p, n, now)
+        strict = b.balancing_contracts(SLUG, 'up', n, unit) == n
+        row = {'price': p, 'reserved_unit': unit, 'reason': reason,
+               'strictly_balancing': strict, 'edge_ok': fair - unit >= EDGE - 1e-9}
+        rows.append(row)
+        if not reason and strict and row['edge_ok']:
+            return p, rows
+    return None, rows
+
+
+def guard_method():
+    tree = ast.parse((SOURCE / 'speeddesk_live.py').read_text())
+    matches = [n for n in ast.walk(tree)
+               if isinstance(n, ast.FunctionDef) and n.name == '_send_guard']
+    assert len(matches) == 1
+    scope = {'EPS': 1e-9}
+    module = ast.Module(body=[ast.ImportFrom(module='__future__',
+                         names=[ast.alias(name='annotations')], level=0), matches[0]], type_ignores=[])
+    exec(compile(ast.fix_missing_locations(module), '<exact_source_send_guard>', 'exec'), scope)
+    return scope['_send_guard']
+
+
+def guard_checks(b, w, p, n, fair):
+    intent = b.reserve_intent(SLUG, 'up', 'rest', p, n, NOW,
+                              'nc-speed-synthetic-hedge', fair)
+    book = Book(SLUG, 'up', bids=(), asks=(Level(.66, 20),), at=NOW, sequence=1)
+    state = {'fair': fair, 'trade_reason': '', 'feed_reason': '', 'pull': False}
+    snapshot = NS(bitcoin_price=100, sigma=.001, maker_windows={SLUG},
+                  books={(SLUG, 'up'): book})
+    fake = NS(intents={intent.client_order_id: intent}, book=b,
+              snapshot=lambda: snapshot, _current_window=lambda slug, snap: w,
+              _trade_reason=lambda **kwargs: state['trade_reason'],
+              _feed_reason=lambda *args: state['feed_reason'], clock=lambda: NOW,
+              _fair=lambda *args: state['fair'],
+              settings=NS(speeddesk_take_edge=.03, speeddesk_make_edge=EDGE),
+              pull=NS(blocks=lambda *args: state['pull']), _pull_refused=set())
+    guard = guard_method()
+    assert b.strictly_balancing_intent(intent.client_order_id)
+    assert guard(fake, intent.client_order_id)
+    checks = {'healthy_declared_inputs': True}
+    for key, bad in [('fair', None), ('fair', .20), ('trade_reason', 'fake_stale_account'),
+                     ('feed_reason', 'fake_stale_book'), ('pull', True)]:
+        old = state[key]
+        state[key] = bad
+        assert not guard(fake, intent.client_order_id)
+        checks[f'refused_{key}_{bad}'] = True
+        state[key] = old
+    snapshot.books[(SLUG, 'up')] = replace(book, asks=(Level(p, 20),))
+    assert not guard(fake, intent.client_order_id)
+    checks['postonly_cross_refused'] = True
+    snapshot.books[(SLUG, 'up')] = book
+    snapshot.maker_windows.clear()
+    assert not guard(fake, intent.client_order_id)
+    checks['maker_unverified_refused'] = True
+    return checks
+
+
+def main():
+    result = {'kind': 'SYNTHETIC_MECHANISM_ONLY_NOT_BACKTEST', 'source_ref': '0818f9c',
+              'source_hashes': {}, 'cases': [], 'limitations': [
+                  'No executable fill, queue, P&L, historical frequency or causality claim.',
+                  'Exact pure risk source and exact send_guard body; trade/feed health predicates are fake inputs.',
+                  'Private proposed search only; production controller unchanged.']}
+    for f in sorted(SOURCE.glob('speeddesk*.py')):
+        data = f.read_bytes()
+        blob = b'blob ' + str(len(data)).encode() + b'\0' + data
+        result['source_hashes'][f.name] = {'sha256': hashlib.sha256(data).hexdigest(),
+                                         'git_blob_sha1': hashlib.sha1(blob).hexdigest(), 'bytes': len(data)}
+    for maker, partial in [(0, False), (.0175, False), (0, True), (.0175, True)]:
+        b, w, n = fixture(maker, partial)
+        initial = b.to_state()
+        # _send recalculates fair after the earlier _decide price. Nonzero maker
+        # fees would otherwise fail the original edge guard before pair_cap.
+        decision_fair = .65
+        fair = .65 if maker == 0 else .67
+        original = .62
+        reason = b.can_buy(SLUG, 'up', 'rest', original, n, NOW)
+        assert reason == 'pair_cap'
+        assert fair - b.unit_reserve(SLUG, original, 'rest') >= EDGE - 1e-9
+        chosen, searched = capped_price(b, fair, n, decision_fair=decision_fair)
+        assert chosen == (.42 if maker == 0 else .40)
+        assert chosen is not None
+        assert b.can_buy(SLUG, 'up', 'rest', chosen, n, NOW) == ''
+        assert b.can_buy(SLUG, 'up', 'rest', chosen, n, NOW + 10) == 'cash_stale'
+        units_all = [b.unit_reserve(SLUG, c / 100, 'rest') for c in range(1, 100)]
+        guards_all = [b._inventory_guard(SLUG, 'up', n, u, b.limits) for u in units_all]
+        accepted_all = [not reason for reason in guards_all]
+        assert units_all == sorted(units_all)
+        assert accepted_all == sorted(accepted_all, reverse=True)
+        row = {'maker_coefficient': maker, 'partial_starter': partial,
+               'initial_state': initial, 'decision_fair_up': decision_fair,
+               'admission_fair_up': fair, 'maker_edge': EDGE,
+               'ordinary_price': original, 'ordinary_refusal': reason,
+               'same_contracts': n, 'chosen_price': chosen, 'risk_after': b.risk_status(NOW),
+               'all99_ticks': {'units': units_all, 'inventory_guard': guards_all,
+                              'monotonic_in_this_fixed_fixture': True},
+               'descending_search': searched}
+        row['send_time_guard_checks'] = guard_checks(b, w, chosen, n, fair)
+        assert b.can_buy(SLUG, 'up', 'rest', .01, 1, NOW) == 'order_pending'
+        row['same_side_reservation_still_blocks'] = True
+        result['cases'].append(row)
+    # Both supported precisions and coefficient boundaries: exhaustive finite
+    # tick check, separate from any claim of monotonic full controller behavior.
+    from frozen.speeddesk_live_model import reserve_unit_cost
+    fee_checks = []
+    for coefficient in (0, .0175, .07, 1):
+        for precision in (.0001, .01):
+            units = [reserve_unit_cost(c / 100, coefficient, precision) for c in range(1, 100)]
+            assert units == sorted(units)
+            fee_checks.append({'coefficient': coefficient, 'precision': precision,
+                               'ticks_checked': 99, 'monotonic_unit_reserve': True})
+    result['fee_rounding_checks'] = fee_checks
+    # Existing starter remains governed by unchanged starter_fit; no cap search on empty inventory.
+    empty = LiveRiskBook(LiveLimits(window_usd=10, open_usd=20, day_loss_usd=6,
+                                   total_loss_usd=10, clip=5, fee_precision=.0001))
+    empty.add_window(fixture()[1]); empty.update_cash(30, NOW)
+    assert empty.starter_fit(SLUG, 'up', 'rest', .62, 5, NOW) == (5, '')
+    assert capped_price(empty, .65, 5)[0] is None
+    # Existing expensive late completion remains allowed on identical initial inventory.
+    b, w, n = fixture()
+    b.update_cash(30, 1660)
+    assert b.can_buy(SLUG, 'up', 'rest', .42, 5, 1660) == 'cutoff'
+    assert b.can_lock(SLUG, 'up', .80, 5, 1660) == ''
+    assert b.can_lock(SLUG, 'up', .98, 5, 1660) == 'lock_price'
+    result['unchanged_starter_and_lock'] = {'starter_fit': [5, ''], 'starter_search': None,
+               'ordinary_cutoff_at_240s': True, '80c_lock_allowed_at_240s': True,
+               '98c_lock_refused': True, 'limits': asdict(b.limits)}
+    other_gates = {}
+    for field, value, expected in [('window_usd', 4, 'window_budget'),
+                                   ('open_usd', 4, 'open_budget')]:
+        b, _, _ = fixture()
+        b.limits = replace(b.limits, **{field: value})
+        assert b.can_buy(SLUG, 'up', 'rest', .62, 5, NOW) == expected
+        assert capped_price(b, .65, 5)[0] is None
+        other_gates[field] = expected
+    b, _, _ = fixture(); b.update_cash(3, NOW)
+    assert b.can_buy(SLUG, 'up', 'rest', .62, 5, NOW) == 'cash_budget'
+    assert capped_price(b, .65, 5)[0] is None
+    other_gates['cash_usd'] = 'cash_budget'
+    b, _, _ = fixture(.0175)
+    assert capped_price(b, .65, 5)[0] is None
+    other_gates['unchanged_fair_nonzero_maker_fee'] = 'original_edge_guard_before_pair_cap'
+    result['other_gates_not_bypassed'] = other_gates
+    print(json.dumps(result, sort_keys=True, indent=2))
+
+
+if __name__ == '__main__':
+    main()

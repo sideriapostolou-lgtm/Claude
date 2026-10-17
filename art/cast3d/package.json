@@ -1,0 +1,8 @@
+{
+  "name": "nightcrawler-cast3d",
+  "private": true,
+  "description": "Dev tool: turns the cast's Higgsfield models and bought moves into the page's GLB files (see art/CAST_3D.md).",
+  "type": "module",
+  "scripts": { "build": "node build_cast.mjs" },
+  "devDependencies": { "@gltf-transform/cli": "4.1.1" }
+}

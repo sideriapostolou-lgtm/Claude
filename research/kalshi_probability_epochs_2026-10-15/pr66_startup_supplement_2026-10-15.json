@@ -1,0 +1,80 @@
+{
+  "reviewed_at_utc": "2026-10-15T21:41:00.675280+00:00",
+  "decision": "ACCEPT positive deployment and low-disk originals as supplement; prior startup receipt preserved",
+  "original_startup_receipt_sha256": "d775f186d0f538435c2b9accdf55bdbd8a2d4d2e990c0294ea60fc32442d95ff",
+  "deployment": {
+    "id": "66e6e7e4-30d9-4628-a234-f2a8e97dad19",
+    "status": "SUCCESS",
+    "createdAt": "2026-10-15T21:32:19.644Z",
+    "updatedAt": "2026-10-15T21:33:37.737Z",
+    "serviceId": "f84d3b52-002f-44cb-931e-bc9e3e097e97",
+    "environmentId": "17f7b0e0-104c-4903-9484-0106748b3cdb"
+  },
+  "source": "0c30491e0bd101250ee443912e1352f38718af45",
+  "deployment_public_derivative_matches_private_original": true,
+  "general_query": {
+    "request": {
+      "projectId": "75750847-85c0-41a3-a2a7-b7f2201a51e9",
+      "deploymentId": "66e6e7e4-30d9-4628-a234-f2a8e97dad19",
+      "startDate": "2026-10-15T21:33:30Z",
+      "endDate": "2026-10-15T21:34:20Z",
+      "limit": 20
+    },
+    "count": 21,
+    "limit": 20,
+    "saturated": true,
+    "before": {
+      "current_time": "2026-10-15 21:34:19 UTC"
+    },
+    "after": {
+      "current_time": "2026-10-15 21:34:19 UTC"
+    },
+    "permitted_inference": "Positive returned events only; no complete-startup or absent-errors inference"
+  },
+  "new_low_disk_original": {
+    "timestamp": "2026-10-15T21:33:33.430156704Z",
+    "severity": "error",
+    "message": "2026-10-15T21:33:33Z WARNING nightcrawler.learn.recorder: learn_paused reason=low_disk free_mb=726",
+    "attributes": [
+      {
+        "key": "level",
+        "value": "\"error\""
+      }
+    ]
+  },
+  "old_low_disk_original": {
+    "timestamp": "2026-10-15T20:49:02.608802566Z",
+    "severity": "error",
+    "message": "2026-10-15T20:49:02Z WARNING nightcrawler.learn.recorder: learn_paused reason=low_disk free_mb=735",
+    "attributes": [
+      {
+        "key": "level",
+        "value": "\"error\""
+      }
+    ]
+  },
+  "low_disk_interpretation": {
+    "reported_free_MiB_before": 735,
+    "reported_free_MiB_after": 726,
+    "emitter": "nightcrawler.learn.recorder",
+    "threshold_bytes": 1073741824,
+    "unit_source": "learn/recorder.py logs free // (1 << 20) under free_mb label",
+    "scope": "Generic memecoin recorder warning separate from enabled probability observer and dedicated Kalshi recorder. Values are original reported samples, not current filesystem/free-space certification. No cleanup or retention changes."
+  },
+  "future_score_review_checklist": [
+    "Pin exact target KXBTC15M-26OCT151800-00, source0c30491e/deployment66e6e7e4, fingerprint23e2ca80 and protocolv2; keep21:45\u201322:00UTC/tail22:02 fixed. Hash complete original wrappers, split any saturated query, exclude nested status copies, preserve unknowns/errors.",
+    "For the original target forecast, check pinned terms start/end/opening=strike; forecast at start+300 through+305seconds, BTC and completed-batch ages each0\u20133seconds, finite positive spot/strike and nonnegative sigma. Recompute fair_up with settles_on_average=True and frozen remaining time; check bin=min(9,int(p*10)) and q=(wins+20*p)/(n+20). Zero n/wins implies q=p, not an accuracy improvement.",
+    "Independently read the official finalized Kalshi market for the same ticker; verify YES/NO and venue strike/CF Benchmarks60-second BRTI average rules. No Coinbase substitution. Join the original scored receipt to the exact immutable forecast fields/source/protocol/window, preserve post_gaps and all exclusion receipts.",
+    "Recompute Brier baseline=(p-y)^2 and shadow=(q-y)^2, y=1forYES/0forNO; check official outcome, score after close, current counts/bin evidence when available, and postscore status. Keep old5scores/Briers under archivee798 separate; do not infer raw-bin export from summaries.",
+    "Retain daily-stop/paper/tradingfalse and losses independently of observer scoring. No forecast or official score by fixed tail means milestone remains open; do not extend/reselect to find success. One matched score verifies plumbing only, not continuous coverage, profitable edge or permission to resume."
+  ],
+  "future_score_verified": false,
+  "input_sha256": {
+    "/workspace/private-handoffs/claude-2026-10-15/PR66_DEPLOYMENT_NATIVE.json": "f4eb7052adf60eaa82fa00e285419f75d3933046fb5b5721ed3ab3d8d885adf6",
+    "/workspace/private-handoffs/claude-2026-10-15/PR66_STARTUP_GENERAL_NATIVE.json": "f414e3769d7d523b251112352b14dfa7aa15a697d7d51c52dc0df338bcd95ff0",
+    "/workspace/nightcrawler-probability-epochs/research/kalshi_probability_epochs_2026-10-15/DEPLOYMENT_RECEIPT.json": "12a534f8746df3c975e13c96d99ca5032633229377a780801d029bb3c59f8c10",
+    "/workspace/nightcrawler-probability-epochs/research/kalshi_probability_epochs_2026-10-15/NEW_LOW_DISK_WARNING.json": "f7b5c9e0a9efda19f5c28d282d1da541f73e8caf231296621f45da50c1b4475b",
+    "/workspace/nightcrawler-probability-epochs/research/kalshi_probability_epochs_2026-10-15/OLD_LOW_DISK.native.json": "0b2ac28b205d0d149ac60b6f144f11cf9575798e4b29e38149f193520bb3a202",
+    "/workspace/private-handoffs/claude-2026-10-15/kalshi-recovery-review/pr66_startup_review.json": "d775f186d0f538435c2b9accdf55bdbd8a2d4d2e990c0294ea60fc32442d95ff"
+  }
+}

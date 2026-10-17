@@ -1,0 +1,12 @@
+{
+  "command": [
+    "/workspace/shared/nightcrawler-venv/bin/python",
+    "-m",
+    "mypy",
+    "src/nightcrawler"
+  ],
+  "start_utc": "2026-10-15T19:03:36.819108+00:00",
+  "end_utc": "2026-10-15T19:03:37.351108+00:00",
+  "elapsed_s": 0.5320331740076654,
+  "exit_code": 0
+}

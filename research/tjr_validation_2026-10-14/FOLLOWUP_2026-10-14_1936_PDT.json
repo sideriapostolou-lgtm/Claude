@@ -1,0 +1,89 @@
+{
+  "checked_at_utc": "2026-10-15T02:36:32Z",
+  "checked_at_pacific": "2026-10-14 7:36 PM PDT",
+  "branch_head": "e6bf99baabf5e6bf0e3a0c7ec6b6a1e569eccac7",
+  "github_files": [
+    {
+      "path": "docs/COORDINATION.md",
+      "blob_sha": "ac468c0636da7325b778f05914629eef998947ae"
+    },
+    {
+      "path": "AGENTS.md",
+      "blob_sha": "389266a51ccba3d21072371fd680bc8e4aff2af9"
+    },
+    {
+      "path": "docs/WORKLOG.md",
+      "blob_sha": "5a64bebf61da39e8efbf2884032d0eebd73bf06c"
+    },
+    {
+      "path": "research/kalshi_profitability_2026-10-14/PR47_DEPLOYMENT.md",
+      "blob_sha": "33c13fb39f85c958e322b8afbcaecfc052d6531b"
+    },
+    {
+      "path": "research/tjr_validation_2026-10-14/HISTORICAL_STATUS.json",
+      "blob_sha": "e079d3c762ced81b2262a5261ab164f291e3d5ac"
+    }
+  ],
+  "priority_gate": {
+    "pr47_exact_release_restart_verification_recorded_complete": true,
+    "pr47_recorded_deployment": "f707494f-1b45-4610-9488-def9796b5923",
+    "pr47_recorded_success_pacific": "2026-10-14 9:24:05.418 AM PDT",
+    "earlier_explicit_offline_reprioritization_recorded": true,
+    "current_execution_task_complete": false,
+    "remaining_recorded_execution_blocker": "53 source-age warnings and freshness attribution remain open after the fixed two-window audit.",
+    "merge_is_not_completion": true,
+    "reminder_authorizes_no_new_production_actions": true
+  },
+  "page_deltas": [
+    {
+      "page_id": "page_d0294998a7cc8191b771278fbfb98a2f",
+      "after_sequence": 2,
+      "through_sequence": 2,
+      "markdown_diff": "",
+      "changes": [],
+      "changed_blocks": [],
+      "deleted_block_ids": [],
+      "truncated": false,
+      "resync_required": false
+    },
+    {
+      "page_id": "page_33c0bb7e8dac81919e012fc502bae98a",
+      "after_sequence": 1,
+      "through_sequence": 1,
+      "markdown_diff": "",
+      "changes": [],
+      "changed_blocks": [],
+      "deleted_block_ids": [],
+      "truncated": false,
+      "resync_required": false
+    }
+  ],
+  "source_reuse": {
+    "complete_saved_page_blocks": 124,
+    "original_review": "research/tjr_mnq_2026-10-14/REVIEW.md",
+    "saved_validation": "research/tjr_validation_2026-10-14/VALIDATION.md",
+    "source_version": "TJR_BC23_MNQZ25_SWEEP_BOS_v0.1.1_calendar",
+    "new_reconstruction_research_or_synthetic_rerun": false
+  },
+  "historical_status": {
+    "status": "BLOCKED",
+    "reason": "VERIFIED_ACTUAL_MNQZ2025_DATA_BUNDLE_MISSING",
+    "historicalTradesTested": 0,
+    "historicalPnlUSD": null,
+    "holdoutOpened": false,
+    "paperTradingStarted": false,
+    "liveExecutionEnabled": false,
+    "performanceClaimAllowed": false
+  },
+  "independent_check": "Separate read-only worker verified exact PR47 deployment/restart evidence and historical-status blobs through connected GitHub; stopped after the two reads.",
+  "new_recorded_development_data": false,
+  "new_recorded_cost_evidence": false,
+  "scope": [
+    "Current connected-GitHub records and unchanged Page-delta check; reused previously complete saved source reads.",
+    "No new production log/status check or current account claim; older dated financial results are not promoted into this check.",
+    "No duplicate tests, historical-data probe, backtest, holdout access, paid-resource use or paper/live start.",
+    "No source, deployment, orders, funding, variables, financial-risk, stop or resume-budget change."
+  ],
+  "decision": "Keep TJR-MNQ-001 queued/blocked and unfinished. Live disabled; paper not started. Follow-up automation retained and unchanged routine notification suppressed.",
+  "next": "Authorized immutable actual MNQ December2025 minute OHLCV Sep19–Oct31,2025, plus verified provider/contract mapping, research license, timestamps/bar convention and actual account/execution/platform/data costs; then frozen development validation. Paper later requires verified current contract/feed/runtime; holdout remains unopened."
+}

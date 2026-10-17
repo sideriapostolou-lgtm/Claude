@@ -1,0 +1,12 @@
+{
+  "recorded_at_utc": "2026-10-15T18:25:06.258755+00:00",
+  "supersedes_derived_interpretation_only": [
+    "STARTUP_AUDIT.json account_data_age_s",
+    "research/kalshi_input_causes_2026-10-15/CAPTURE_FINDINGS.json post_tail_current_selected.account_data_age_at_payload_s",
+    "priorWORKLOG/release/independentsupplementdescriptions of payload.at-as_of asaccountage"
+  ],
+  "correct_meaning": "panelas_of=self.clock(); payload.at sampled by_recordafterpanelconstruction. Delta isconstruction/record delay, notlastaccountreadage. account_at unpublished, exactaccountageunknown.",
+  "still_supported": "Cashagefromcash_at islocalbalanceobservationage; originaltrading_nowtrue/waitingemptymeansstanding/waitingaccountfreshnesschecks passedatpanelevaluation. Neitherprovescontinuoushealth.",
+  "preservation": "Alloriginalnative/derivedhistoricalreceipts andarchivebytesretained. Thisdatednote retractstheunsupportednumericaccountageclaim withoutchangingfinancialvaluesorflags.",
+  "independent_note": "ACCOUNT_AGE_EVIDENCE_CORRECTION.json"
+}

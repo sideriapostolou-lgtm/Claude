@@ -1,0 +1,20 @@
+{
+  "timestamp_utc": "2026-10-16T01:57:57.433253+00:00",
+  "scope": "own synthetic fixtures only; no historical inputs",
+  "core_sha256": "4bb43b0848b3fd3ad2eba73d90f9786f5ef4119ca4e60887d98dc3ab32be93da",
+  "test_sha256": "9841af1f2c18a4313c9b0112ca35d1f0061e8d95acf985eb389f22b705ce401b",
+  "manifest_sha256": "d9a85d4e472031e32a6086b474980672fcb33d81ac4047837065c61069a9de4d",
+  "manifest_file_digest_matches": {
+    "replay.py": true,
+    "test_replay.py": true,
+    "INTERFACE.md": true,
+    "FROZEN_CONFIG.json": true,
+    "CHECKS.json": true
+  },
+  "own_test_sha256": "aa5acec9d942ccdf842465945dbe5d421a07452b24aef07f5ff8d5ff4a940840",
+  "own_test_exit_code": 0,
+  "own_test_stdout": "",
+  "own_test_stderr": "............\n----------------------------------------------------------------------\nRan 12 tests in 0.003s\n\nOK\n",
+  "sol_test_suite_independently_rerun": "43 passed; prior command receipt",
+  "approval": "CORE PRIMITIVES ONLY; data/runner/reporting review still required"
+}

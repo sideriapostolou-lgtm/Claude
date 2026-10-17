@@ -1,0 +1,93 @@
+[
+ {
+  "id": "8ZCmwpW3MtC5UpNcZf7U4HMvRNTo71syU11BDiAFpump",
+  "name": "Gary the Cat",
+  "symbol": "Gary",
+  "icon": "https://ipfs.io/ipfs/bafybeie3jls7xdmm2rffjd36dc5sn5zod4cqljfv3tad4sf7nutgwnyzfm",
+  "decimals": 6,
+  "dev": "G7YaEzm4c1aMQcn1SQLUPHYnoUNE7bG4XwQ4nxyYydn",
+  "circSupply": 994092192.206734,
+  "totalSupply": 994092192.206734,
+  "tokenProgram": "TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb",
+  "launchpad": "pump.fun",
+  "graduatedPool": "2uZuTQEjcXcR1ESwMdGTpqEwM5PCekEwrSNVRPc1EhS1",
+  "graduatedAt": "2026-10-08T13:28:26Z",
+  "holderCount": 2988,
+  "fdv": 603658.3857636394,
+  "mcap": 603658.3857636394,
+  "usdPrice": 0.0006072458776922986,
+  "priceBlockId": 454587057,
+  "liquidity": 33279.655184057425,
+  "stats5m": {
+   "priceChange": -12.64832993704437,
+   "holderChange": -0.433188937020993,
+   "liquidityChange": -4.488250409420853,
+   "volumeChange": 39.33042516959986,
+   "buyVolume": 10156.344837355846,
+   "sellVolume": 11532.920981434045,
+   "numBuys": 374,
+   "numSells": 154,
+   "numTraders": 152,
+   "numNetBuyers": 102
+  },
+  "stats1h": {
+   "priceChange": 15.000715608896453,
+   "holderChange": 73.01679212507239,
+   "liquidityChange": 7.081674261965396,
+   "volumeChange": -33.26788993712793,
+   "buyVolume": 176070.066329002,
+   "sellVolume": 171456.05019988935,
+   "buyOrganicVolume": 48.789454756214674,
+   "sellOrganicVolume": 15.503134316934142,
+   "numBuys": 4403,
+   "numSells": 2117,
+   "numTraders": 3262,
+   "numNetBuyers": 1877
+  },
+  "stats6h": {
+   "priceChange": 104.26110868709809,
+   "holderChange": 8688.235294117647,
+   "liquidityChange": 44.8155702454696,
+   "buyVolume": 520644.07642620034,
+   "sellVolume": 482217.16582352493,
+   "buyOrganicVolume": 624.5718396424562,
+   "sellOrganicVolume": 15.503134316934142,
+   "numBuys": 10131,
+   "numSells": 5288,
+   "numTraders": 6645,
+   "numNetBuyers": 3132
+  },
+  "stats24h": {
+   "priceChange": 104.26110868709809,
+   "holderChange": 8688.235294117647,
+   "liquidityChange": 44.8155702454696,
+   "buyVolume": 520644.07642620034,
+   "sellVolume": 482217.16582352493,
+   "buyOrganicVolume": 624.5718396424562,
+   "sellOrganicVolume": 15.503134316934142,
+   "numBuys": 10131,
+   "numSells": 5288,
+   "numTraders": 6645,
+   "numNetBuyers": 3132
+  },
+  "firstPool": {
+   "id": "8ZCmwpW3MtC5UpNcZf7U4HMvRNTo71syU11BDiAFpump",
+   "createdAt": "2026-10-08T13:28:26Z"
+  },
+  "audit": {
+   "mintAuthorityDisabled": true,
+   "freezeAuthorityDisabled": true,
+   "topHoldersPercentage": 2.1511197909622957,
+   "devMigrations": 1,
+   "devMints": 2
+  },
+  "organicScore": 0,
+  "organicScoreLabel": "low",
+  "tags": [
+   "unknown",
+   "token-2022"
+  ],
+  "createdAt": "2026-10-08T13:28:26Z",
+  "updatedAt": "2026-10-08T15:37:53.601720956Z"
+ }
+]

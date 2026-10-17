@@ -1,0 +1,39 @@
+"""Verify PR69's selected runtime-original archive; optionally restore to a new folder."""
+import argparse
+import base64
+import hashlib
+import json
+import lzma
+from pathlib import Path
+
+def sha(raw):
+    return hashlib.sha256(raw).hexdigest()
+
+parser = argparse.ArgumentParser(description=__doc__)
+parser.add_argument('--output', type=Path)
+args = parser.parse_args()
+root = Path(__file__).resolve().parent
+manifest = json.loads((root / 'RUNTIME_MANIFEST.json').read_text())
+parts = []
+for part in manifest['parts']:
+    raw = (root / part['path']).read_bytes()
+    assert len(raw) == part['bytes'] and sha(raw) == part['sha256']
+    parts.append(raw.decode().strip())
+packed = base64.b64decode(''.join(parts), validate=True)
+assert sha(packed) == manifest['archive_sha256']
+raw = lzma.decompress(packed)
+assert sha(raw) == manifest['unpacked_sha256']
+files = json.loads(raw)['files']
+assert len(files) == len(manifest['files'])
+for item, expected in zip(files, manifest['files'], strict=True):
+    path = Path(item['path'])
+    assert not path.is_absolute() and '..' not in path.parts
+    data = item['text'].encode()
+    assert item['path'] == expected['path']
+    assert len(data) == expected['bytes'] and sha(data) == expected['sha256']
+    if args.output:
+        target = args.output / path
+        assert not target.exists(), 'Refusing to overwrite existing file: ' + str(target)
+        target.parent.mkdir(parents=True, exist_ok=True)
+        target.write_bytes(data)
+print(json.dumps({'files_verified': len(files), 'parts_verified': len(parts), 'selected_original_bytes': 'exact', 'market_coverage_certified': False, 'profitability_proven': False}))

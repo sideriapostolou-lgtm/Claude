@@ -1,0 +1,360 @@
+{
+  "at_utc": "2026-10-15T21:52:24.019180+00:00",
+  "decision": "ACCEPT target exclusion as uniquely joined BTC-age rejection; forecast/score milestone NOT completed",
+  "target": "KXBTC15M-26OCT151800-00",
+  "deployed_source": "0c30491e0bd101250ee443912e1352f38718af45",
+  "deployment": "66e6e7e4-30d9-4628-a234-f2a8e97dad19",
+  "source_fingerprint": "23e2ca80d3c04415256bf3fc237ba017d56733a59219d718e86c554eaa1f1d25",
+  "queries": {
+    "PR66_FIRST_SLOT_NATIVE.json": {
+      "request": {
+        "projectId": "75750847-85c0-41a3-a2a7-b7f2201a51e9",
+        "deploymentId": "66e6e7e4-30d9-4628-a234-f2a8e97dad19",
+        "startDate": "2026-10-15T21:45:00Z",
+        "endDate": "2026-10-15T21:51:00Z",
+        "filter": "\"INFO nightcrawler.kalshi_probability_learning: kalshi_probability_learning_\"",
+        "limit": 100
+      },
+      "count": 5,
+      "limit": 100,
+      "saturated": false,
+      "before": {
+        "current_time": "2026-10-15 21:50:33 UTC"
+      },
+      "after": {
+        "current_time": "2026-10-15 21:50:35 UTC"
+      }
+    },
+    "PR66_INVALID_INPUT_DIAGNOSTIC_NATIVE.json": {
+      "request": {
+        "projectId": "75750847-85c0-41a3-a2a7-b7f2201a51e9",
+        "deploymentId": "66e6e7e4-30d9-4628-a234-f2a8e97dad19",
+        "startDate": "2026-10-15T21:49:45Z",
+        "endDate": "2026-10-15T21:50:15Z",
+        "limit": 100,
+        "filter": "\"INFO nightcrawler.kalshi_arena: kalshi_learning_input_diagnostic \""
+      },
+      "count": 1,
+      "limit": 100,
+      "saturated": false,
+      "before": {
+        "current_time": "2026-10-15 21:50:45 UTC"
+      },
+      "after": {
+        "current_time": "2026-10-15 21:50:46 UTC"
+      }
+    },
+    "PR66_INVALID_V1_NATIVE.json": {
+      "request": {
+        "projectId": "75750847-85c0-41a3-a2a7-b7f2201a51e9",
+        "deploymentId": "66e6e7e4-30d9-4628-a234-f2a8e97dad19",
+        "startDate": "2026-10-15T21:49:45Z",
+        "endDate": "2026-10-15T21:50:15Z",
+        "limit": 100,
+        "filter": "\"INFO nightcrawler.kalshi_online_learning: kalshi_online_learning_\""
+      },
+      "count": 2,
+      "limit": 100,
+      "saturated": false,
+      "before": {
+        "current_time": "2026-10-15 21:50:45 UTC"
+      },
+      "after": {
+        "current_time": "2026-10-15 21:50:46 UTC"
+      }
+    }
+  },
+  "unique_originals": {
+    "v2_invalid": {
+      "original": {
+        "timestamp": "2026-10-15T21:50:00.090966357Z",
+        "severity": "info",
+        "message": "2026-10-15T21:50:00Z INFO nightcrawler.kalshi_probability_learning: kalshi_probability_learning_unknown {\"at\":1792101000.0313098,\"mode\":\"observe_only\",\"live_application\":false,\"profitability_proven\":false,\"protocol\":\"kalshi-probability-calibration-v2-h300-g5-b10-prior20\",\"source_fingerprint\":\"23e2ca80d3c04415256bf3fc237ba017d56733a59219d718e86c554eaa1f1d25\",\"window\":\"KXBTC15M-26OCT151800-00\",\"reason\":\"invalid\"}",
+        "attributes": [
+          {
+            "key": "level",
+            "value": "\"info\""
+          }
+        ]
+      },
+      "event": "kalshi_probability_learning_unknown",
+      "payload": {
+        "at": 1792101000.0313098,
+        "mode": "observe_only",
+        "live_application": false,
+        "profitability_proven": false,
+        "protocol": "kalshi-probability-calibration-v2-h300-g5-b10-prior20",
+        "source_fingerprint": "23e2ca80d3c04415256bf3fc237ba017d56733a59219d718e86c554eaa1f1d25",
+        "window": "KXBTC15M-26OCT151800-00",
+        "reason": "invalid"
+      }
+    },
+    "v1_input_diagnostic": {
+      "original": {
+        "timestamp": "2026-10-15T21:50:00.090272912Z",
+        "severity": "info",
+        "message": "2026-10-15T21:50:00Z INFO nightcrawler.kalshi_arena: kalshi_learning_input_diagnostic {\"diagnostic_schema\":1,\"mode\":\"observe_only\",\"live_application\":false,\"profitability_proven\":false,\"arena_source_sha256\":\"52b983cb87ba6ec593124aef525b37b2ad48ce8cabba0325f6b813d52e7a0676\",\"deployment_sha\":null,\"deployment_id\":null,\"deployment_identity\":\"unavailable_in_child\",\"pid\":43,\"instance\":\"b0953a1e7691e79f4843ab4f\",\"protocol\":\"kalshi-online-calibration-v1-h300-g5-b10-prior20\",\"source_fingerprint\":\"b6112b7ef8955b20af734157c1e7f5ec533bf98f70e034558f06670578c391f2\",\"window\":\"KXBTC15M-26OCT151800-00\",\"at\":1792101000.0313098,\"pending\":{\"start\":1792100700.0,\"end\":1792101600.0,\"elapsed_s\":300.03130984306335,\"forecast_none\":true,\"stored_pregap\":\"explicit_feed_gap\"},\"learner_method\":\"advance\",\"observation\":\"due\",\"cause_history\":\"restart_history_unavailable\",\"first_effective_cause\":{\"flags\":{\"explicit_slug\":true,\"trade_stream_false\":false,\"coinbase_false\":false,\"sequence_discontinuity\":false,\"drop_counter_increased\":false,\"missing_ladder\":false,\"late_book\":false,\"late_trade\":false,\"replayed_drop\":false},\"effective_at\":1792100701.1276395,\"child_apply_at\":1792100701.1276395,\"child_receive_at\":1792100701.126236,\"frame_sequence\":6346,\"parent_frame_sent_at\":1792100701.0960128,\"producer_event_time\":null,\"producer_timing\":\"unavailable_on_gap_wire\",\"frame_transit_s\":0.03022313117980957,\"child_wait_s\":0.0014035701751708984,\"data_at\":null,\"data_clock\":null,\"data_checked_at\":null,\"data_age_s\":null,\"timing\":\"finite_ordered\"},\"last_effective_cause\":{\"flags\":{\"explicit_slug\":true,\"trade_stream_false\":false,\"coinbase_false\":false,\"sequence_discontinuity\":false,\"drop_counter_increased\":false,\"missing_ladder\":false,\"late_book\":false,\"late_trade\":false,\"replayed_drop\":false},\"effective_at\":1792100995.2257566,\"child_apply_at\":1792100995.2257566,\"child_receive_at\":1792100995.2253869,\"frame_sequence\":9171,\"parent_frame_sent_at\":1792100995.1906579,\"producer_event_time\":null,\"producer_timing\":\"unavailable_on_gap_wire\",\"frame_transit_s\":0.03472900390625,\"child_wait_s\":0.00036978721618652344,\"data_at\":null,\"data_clock\":null,\"data_checked_at\":null,\"data_age_s\":null,\"timing\":\"finite_ordered\"},\"feed_ok\":true,\"feed_status\":[true,true],\"input_facts\":{\"bitcoin_age_s\":3.6016387939453125,\"bitcoin_age_valid\":false,\"spot_valid\":true,\"sigma_valid\":true},\"disposition\":\"unknown\",\"reason\":\"pregap\",\"counter_delta_scope\":\"learner_call\",\"counter_delta\":{\"forecasts\":0,\"unknown\":1,\"scored\":0},\"coverage\":\"child_observations_only; upstream cause and producer occurrence unavailable\"}",
+        "attributes": [
+          {
+            "key": "level",
+            "value": "\"info\""
+          }
+        ]
+      },
+      "event": "kalshi_learning_input_diagnostic",
+      "payload": {
+        "diagnostic_schema": 1,
+        "mode": "observe_only",
+        "live_application": false,
+        "profitability_proven": false,
+        "arena_source_sha256": "52b983cb87ba6ec593124aef525b37b2ad48ce8cabba0325f6b813d52e7a0676",
+        "deployment_sha": null,
+        "deployment_id": null,
+        "deployment_identity": "unavailable_in_child",
+        "pid": 43,
+        "instance": "b0953a1e7691e79f4843ab4f",
+        "protocol": "kalshi-online-calibration-v1-h300-g5-b10-prior20",
+        "source_fingerprint": "b6112b7ef8955b20af734157c1e7f5ec533bf98f70e034558f06670578c391f2",
+        "window": "KXBTC15M-26OCT151800-00",
+        "at": 1792101000.0313098,
+        "pending": {
+          "start": 1792100700.0,
+          "end": 1792101600.0,
+          "elapsed_s": 300.03130984306335,
+          "forecast_none": true,
+          "stored_pregap": "explicit_feed_gap"
+        },
+        "learner_method": "advance",
+        "observation": "due",
+        "cause_history": "restart_history_unavailable",
+        "first_effective_cause": {
+          "flags": {
+            "explicit_slug": true,
+            "trade_stream_false": false,
+            "coinbase_false": false,
+            "sequence_discontinuity": false,
+            "drop_counter_increased": false,
+            "missing_ladder": false,
+            "late_book": false,
+            "late_trade": false,
+            "replayed_drop": false
+          },
+          "effective_at": 1792100701.1276395,
+          "child_apply_at": 1792100701.1276395,
+          "child_receive_at": 1792100701.126236,
+          "frame_sequence": 6346,
+          "parent_frame_sent_at": 1792100701.0960128,
+          "producer_event_time": null,
+          "producer_timing": "unavailable_on_gap_wire",
+          "frame_transit_s": 0.03022313117980957,
+          "child_wait_s": 0.0014035701751708984,
+          "data_at": null,
+          "data_clock": null,
+          "data_checked_at": null,
+          "data_age_s": null,
+          "timing": "finite_ordered"
+        },
+        "last_effective_cause": {
+          "flags": {
+            "explicit_slug": true,
+            "trade_stream_false": false,
+            "coinbase_false": false,
+            "sequence_discontinuity": false,
+            "drop_counter_increased": false,
+            "missing_ladder": false,
+            "late_book": false,
+            "late_trade": false,
+            "replayed_drop": false
+          },
+          "effective_at": 1792100995.2257566,
+          "child_apply_at": 1792100995.2257566,
+          "child_receive_at": 1792100995.2253869,
+          "frame_sequence": 9171,
+          "parent_frame_sent_at": 1792100995.1906579,
+          "producer_event_time": null,
+          "producer_timing": "unavailable_on_gap_wire",
+          "frame_transit_s": 0.03472900390625,
+          "child_wait_s": 0.00036978721618652344,
+          "data_at": null,
+          "data_clock": null,
+          "data_checked_at": null,
+          "data_age_s": null,
+          "timing": "finite_ordered"
+        },
+        "feed_ok": true,
+        "feed_status": [
+          true,
+          true
+        ],
+        "input_facts": {
+          "bitcoin_age_s": 3.6016387939453125,
+          "bitcoin_age_valid": false,
+          "spot_valid": true,
+          "sigma_valid": true
+        },
+        "disposition": "unknown",
+        "reason": "pregap",
+        "counter_delta_scope": "learner_call",
+        "counter_delta": {
+          "forecasts": 0,
+          "unknown": 1,
+          "scored": 0
+        },
+        "coverage": "child_observations_only; upstream cause and producer occurrence unavailable"
+      }
+    },
+    "v1_pregap": {
+      "original": {
+        "timestamp": "2026-10-15T21:50:00.090267142Z",
+        "severity": "info",
+        "message": "2026-10-15T21:50:00Z INFO nightcrawler.kalshi_online_learning: kalshi_online_learning_unknown {\"at\":1792101000.0313098,\"mode\":\"observe_only\",\"live_application\":false,\"profitability_proven\":false,\"protocol\":\"kalshi-online-calibration-v1-h300-g5-b10-prior20\",\"source_fingerprint\":\"b6112b7ef8955b20af734157c1e7f5ec533bf98f70e034558f06670578c391f2\",\"window\":\"KXBTC15M-26OCT151800-00\",\"reason\":\"pregap\"}",
+        "attributes": [
+          {
+            "key": "level",
+            "value": "\"info\""
+          }
+        ]
+      },
+      "event": "kalshi_online_learning_unknown",
+      "payload": {
+        "at": 1792101000.0313098,
+        "mode": "observe_only",
+        "live_application": false,
+        "profitability_proven": false,
+        "protocol": "kalshi-online-calibration-v1-h300-g5-b10-prior20",
+        "source_fingerprint": "b6112b7ef8955b20af734157c1e7f5ec533bf98f70e034558f06670578c391f2",
+        "window": "KXBTC15M-26OCT151800-00",
+        "reason": "pregap"
+      }
+    }
+  },
+  "join": {
+    "window_equal": true,
+    "payload_at_equal": true,
+    "payload_at": 1792101000.0313098,
+    "bitcoin_age_seconds": 3.6016387939453125,
+    "threshold_seconds": 3,
+    "threshold_excess_seconds": 0.6016387939453125,
+    "inferred_bitcoin_exchange_timestamp": 1792100996.429671,
+    "inferred_timestamp_iso": "2026-10-15T21:49:56.429671+00:00",
+    "source_callsite_arguments": {
+      "V1": [
+        "'advance'",
+        "snap.windows",
+        "snap.bitcoin_price",
+        "snap.sigma",
+        "snap.bitcoin_at",
+        "snap.outcomes",
+        "now",
+        "{}",
+        "True"
+      ],
+      "V2": [
+        "'advance'",
+        "snap.windows",
+        "snap.bitcoin_price",
+        "snap.sigma",
+        "snap.bitcoin_at",
+        "now"
+      ]
+    },
+    "rejection_reason": "Identical shared inputs and time; V2 has already passed pending/pregap/batch/strike checks before generic invalid. Diagnostic confirms finite positive spot and nonnegative finite sigma. BTC age3.6016387939453125 is outside inclusive0\u20133; genericinvalid returns before fair_up.",
+    "V1_reason_distinct": "V1 terminates on stored explicit-feed pregap before its age validation. Do not relabel V1pregap as V2reason."
+  },
+  "synthetic_boundary_checks": [
+    {
+      "btc_age": 3.6016387939453125,
+      "forecasts": 0,
+      "invalid": 1,
+      "unknown": 1,
+      "pending": false
+    },
+    {
+      "btc_age": 3.0,
+      "forecasts": 1,
+      "invalid": 0,
+      "unknown": 0,
+      "pending": true
+    }
+  ],
+  "synthetic_limit": "Synthetic spot100/sigma.001 only pin unchanged age behavior; not actual unseen input values or a forecast/counterfactual score.",
+  "history": "Latest pre-exclusion status has current0forecasts/0scores/1startupunknown. Actual target adds1invalidunknown in current source per code; follow-up native status required for reported total. Previously verified archivede7985scores/1unknown remain separate; no fresh raw archive export claimed.",
+  "timing_evidence_available": {
+    "diagnostic_gap_frames": {
+      "first_effective_cause": {
+        "flags": {
+          "explicit_slug": true,
+          "trade_stream_false": false,
+          "coinbase_false": false,
+          "sequence_discontinuity": false,
+          "drop_counter_increased": false,
+          "missing_ladder": false,
+          "late_book": false,
+          "late_trade": false,
+          "replayed_drop": false
+        },
+        "effective_at": 1792100701.1276395,
+        "child_apply_at": 1792100701.1276395,
+        "child_receive_at": 1792100701.126236,
+        "frame_sequence": 6346,
+        "parent_frame_sent_at": 1792100701.0960128,
+        "producer_event_time": null,
+        "producer_timing": "unavailable_on_gap_wire",
+        "frame_transit_s": 0.03022313117980957,
+        "child_wait_s": 0.0014035701751708984,
+        "data_at": null,
+        "data_clock": null,
+        "data_checked_at": null,
+        "data_age_s": null,
+        "timing": "finite_ordered"
+      },
+      "last_effective_cause": {
+        "flags": {
+          "explicit_slug": true,
+          "trade_stream_false": false,
+          "coinbase_false": false,
+          "sequence_discontinuity": false,
+          "drop_counter_increased": false,
+          "missing_ladder": false,
+          "late_book": false,
+          "late_trade": false,
+          "replayed_drop": false
+        },
+        "effective_at": 1792100995.2257566,
+        "child_apply_at": 1792100995.2257566,
+        "child_receive_at": 1792100995.2253869,
+        "frame_sequence": 9171,
+        "parent_frame_sent_at": 1792100995.1906579,
+        "producer_event_time": null,
+        "producer_timing": "unavailable_on_gap_wire",
+        "frame_transit_s": 0.03472900390625,
+        "child_wait_s": 0.00036978721618652344,
+        "data_at": null,
+        "data_clock": null,
+        "data_checked_at": null,
+        "data_age_s": null,
+        "timing": "finite_ordered"
+      }
+    },
+    "producer_source": "speeddesk_feeds.py parses Coinbase exchange trade time, records socket receipt time and calls on_tick(price,event_at,received_at); SpeedRunner stores accepted TickReceipt.",
+    "child_source": "ArenaLink sends m(price,exchange_time,sigma) on change; child updates WireView serially then passes one snapshot to both learners. TickReceipt/tradeID are not present on this m-wire.",
+    "critical_limit": "Explicit gap frame transit/wait observations refer to different events; last gap frame precedes inferred BTC exchange timestamp, so cannot apportion target BTC age using those gap timings.",
+    "what_is_missing": "Original exact BTC trade/receipt ID+exchange/parent-receipt times joined to its m-frame sequence/sent/childreceive/apply and due snapshot. No such joined original in supplied3queries.",
+    "causality": "True tradequietness, Coinbase/library backlog, parent callback delay, unchanged snapshot age, and child transport/scheduling contribution remain unresolved. Connected/feed_oktrue does not certify a fresh trade. Existing Kalshi WS mainreader residence concerns a different stream, not proof of this BTCagecause."
+  },
+  "required_next": "Keep source and chosen window/tail frozen through22:02; complete fixed capture with all unknowns and absence/presence of original forecasts/scores; do not weaken3-second gate, retry/reselect window or claim milestone complete.",
+  "source_test_sha256": {
+    "src/nightcrawler/kalshi_probability_epochs.py": "495450c64b9402e2f9dfaa53756a51dbf44a5c75bf7245b6dc428271cddc708f",
+    "src/nightcrawler/kalshi_probability_learning.py": "43d8f527fd24aee3a7dbb33d848dcaaaf0e39089ab605deddad32dfabc1e35ab",
+    "src/nightcrawler/kalshi_arena.py": "52b983cb87ba6ec593124aef525b37b2ad48ce8cabba0325f6b813d52e7a0676",
+    "src/nightcrawler/pagestate.py": "d73eec093164c7a659f12b08226844fb58cfd01e96278585b255575ea8212479",
+    "tests/test_kalshi_probability_epochs.py": "977f3ee0c6c9bc69a40951567cb9a4cedad13a529fd0754862fcf49ac48b51da",
+    "tests/test_kalshi_probability_arena.py": "2f69e8c665b0b4d0277c398d4a7fa27aedfeecb544c1e32f9cb65a72cde8b4cb",
+    "tests/test_kalshi_arena_page.py": "2d922b6e2e586e7befa2b9d8f65c6477ea6ba36daf1e2f155198e04ecb516bfa"
+  },
+  "input_sha256": {
+    "/workspace/private-handoffs/claude-2026-10-15/PR66_FIRST_SLOT_NATIVE.json": "2dba8881abae903466905dbbb764e7e4295d67b1198ea17467b70b82f4bfc3b3",
+    "/workspace/private-handoffs/claude-2026-10-15/PR66_INVALID_INPUT_DIAGNOSTIC_NATIVE.json": "2929f2a68fa8f4852e6e58bff6fc711b26dfc5e5bf4e2fc3d77b0379fc9d621f",
+    "/workspace/private-handoffs/claude-2026-10-15/PR66_INVALID_V1_NATIVE.json": "0de3e517d76d5b532bfbbb3cdac2636f08b7a749d019d2ae95237b13903cb419"
+  }
+}

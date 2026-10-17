@@ -1,0 +1,46 @@
+{
+  "request": {
+    "projectId": "75750847-85c0-41a3-a2a7-b7f2201a51e9",
+    "environmentId": "17f7b0e0-104c-4903-9484-0106748b3cdb",
+    "deploymentId": "2e88601d-c9c7-474f-add8-72c0a13c1a4b",
+    "startDate": "2026-10-15T19:30:00Z",
+    "endDate": "2026-10-15T19:47:00Z",
+    "filter": "\"kalshi_learning_input_diagnostic\"",
+    "limit": 500
+  },
+  "before": {
+    "current_time": "2026-10-15 19:47:09 UTC"
+  },
+  "after": {
+    "current_time": "2026-10-15 19:47:10 UTC"
+  },
+  "result": {
+    "content": [
+      {
+        "type": "text",
+        "text": "**Deployment 2e88601d-c9c7-474f-add8-72c0a13c1a4b** [SUCCESS]\nservice: f84d3b52-002f-44cb-931e-bc9e3e097e97, env: 17f7b0e0-104c-4903-9484-0106748b3cdb\n\n### Deploy logs (1)\n2026-10-15T19:35:00.010846897Z info 2026-10-15T19:35:00Z INFO nightcrawler.kalshi_arena: kalshi_learning_input_diagnostic {\"diagnostic_schema\":1,\"mode\":\"observe_only\",\"live_application\":false,\"profitability_proven\":false,\"arena_source_sha256\":\"f183d7f66de018126445effcde714992808a36527e7a30f35ad36782fdd55d7b\",\"deployment_sha\":null,\"deployment_id\":null,\"deployment_identity\":\"unavailable_in_child\",\"pid\":38,\"instance\":\"d6865d38e9161fa558294386\",\"protocol\":\"kalshi-online-calibration-v1-h300-g5-b10-prior20\",\"source_fingerprint\":\"b6112b7ef8955b20af734157c1e7f5ec533bf98f70e034558f06670578c391f2\",\"window\":\"KXBTC15M-26OCT151545-45\",\"at\":1792092900.0042238,\"pending\":{\"start\":1792092600.0,\"end\":1792093500.0,\"elapsed_s\":300.00422382354736,\"forecast_none\":true,\"stored_pregap\":\"explicit_feed_gap\"},\"learner_method\":\"advance\",\"observation\":\"due\",\"cause_history\":\"restart_history_unavailable\",\"first_effective_cause\":{\"flags\":{\"explicit_slug\":true,\"trade_stream_false\":false,\"coinbase_false\":false,\"sequence_discontinuity\":false,\"drop_counter_increased\":false,\"missing_ladder\":false,\"late_book\":false,\"late_trade\":false,\"replayed_drop\":false},\"effective_at\":1792092607.3505955,\"child_apply_at\":1792092607.3505955,\"child_receive_at\":1792092607.3495965,\"frame_sequence\":3865,\"parent_frame_sent_at\":1792092607.2691169,\"producer_event_time\":null,\"producer_timing\":\"unavailable_on_gap_wire\",\"frame_transit_s\":0.08047962188720703,\"child_wait_s\":0.0009989738464355469,\"data_at\":null,\"data_clock\":null,\"data_checked_at\":null,\"data_age_s\":null,\"timing\":\"finite_ordered\"},\"last_effective_cause\":{\"flags\":{\"explicit_slug\":true,\"trade_stream_false\":false,\"coinbase_false\":false,\"sequence_discontinuity\":false,\"drop_counter_increased\":false,\"missing_ladder\":false,\"late_book\":false,\"late_trade\":false,\"replayed_drop\":false},\"effective_at\":1792092899.7041936,\"child_apply_at\":1792092899.7041936,\"child_receive_at\":1792092899.7038562,\"frame_sequence\":6498,\"parent_frame_sent_at\":1792092899.6431456,\"producer_event_time\":null,\"producer_timing\":\"unavailable_on_gap_wire\",\"frame_transit_s\":0.06071066856384277,\"child_wait_s\":0.00033736228942871094,\"data_at\":null,\"data_clock\":null,\"data_checked_at\":null,\"data_age_s\":null,\"timing\":\"finite_ordered\"},\"feed_ok\":true,\"feed_status\":[true,true],\"input_facts\":{\"bitcoin_age_s\":0.8847758769989014,\"bitcoin_age_valid\":true,\"spot_valid\":true,\"sigma_valid\":true},\"disposition\":\"unknown\",\"reason\":\"pregap\",\"counter_delta_scope\":\"learner_call\",\"counter_delta\":{\"forecasts\":0,\"unknown\":1,\"scored\":0},\"coverage\":\"child_observations_only; upstream cause and producer occurrence unavailable\"}"
+      }
+    ],
+    "structuredContent": {
+      "scope": "deployment",
+      "deploymentId": "2e88601d-c9c7-474f-add8-72c0a13c1a4b",
+      "serviceId": "f84d3b52-002f-44cb-931e-bc9e3e097e97",
+      "environmentId": "17f7b0e0-104c-4903-9484-0106748b3cdb",
+      "status": "SUCCESS",
+      "deploy": [
+        {
+          "timestamp": "2026-10-15T19:35:00.010846897Z",
+          "severity": "info",
+          "message": "2026-10-15T19:35:00Z INFO nightcrawler.kalshi_arena: kalshi_learning_input_diagnostic {\"diagnostic_schema\":1,\"mode\":\"observe_only\",\"live_application\":false,\"profitability_proven\":false,\"arena_source_sha256\":\"f183d7f66de018126445effcde714992808a36527e7a30f35ad36782fdd55d7b\",\"deployment_sha\":null,\"deployment_id\":null,\"deployment_identity\":\"unavailable_in_child\",\"pid\":38,\"instance\":\"d6865d38e9161fa558294386\",\"protocol\":\"kalshi-online-calibration-v1-h300-g5-b10-prior20\",\"source_fingerprint\":\"b6112b7ef8955b20af734157c1e7f5ec533bf98f70e034558f06670578c391f2\",\"window\":\"KXBTC15M-26OCT151545-45\",\"at\":1792092900.0042238,\"pending\":{\"start\":1792092600.0,\"end\":1792093500.0,\"elapsed_s\":300.00422382354736,\"forecast_none\":true,\"stored_pregap\":\"explicit_feed_gap\"},\"learner_method\":\"advance\",\"observation\":\"due\",\"cause_history\":\"restart_history_unavailable\",\"first_effective_cause\":{\"flags\":{\"explicit_slug\":true,\"trade_stream_false\":false,\"coinbase_false\":false,\"sequence_discontinuity\":false,\"drop_counter_increased\":false,\"missing_ladder\":false,\"late_book\":false,\"late_trade\":false,\"replayed_drop\":false},\"effective_at\":1792092607.3505955,\"child_apply_at\":1792092607.3505955,\"child_receive_at\":1792092607.3495965,\"frame_sequence\":3865,\"parent_frame_sent_at\":1792092607.2691169,\"producer_event_time\":null,\"producer_timing\":\"unavailable_on_gap_wire\",\"frame_transit_s\":0.08047962188720703,\"child_wait_s\":0.0009989738464355469,\"data_at\":null,\"data_clock\":null,\"data_checked_at\":null,\"data_age_s\":null,\"timing\":\"finite_ordered\"},\"last_effective_cause\":{\"flags\":{\"explicit_slug\":true,\"trade_stream_false\":false,\"coinbase_false\":false,\"sequence_discontinuity\":false,\"drop_counter_increased\":false,\"missing_ladder\":false,\"late_book\":false,\"late_trade\":false,\"replayed_drop\":false},\"effective_at\":1792092899.7041936,\"child_apply_at\":1792092899.7041936,\"child_receive_at\":1792092899.7038562,\"frame_sequence\":6498,\"parent_frame_sent_at\":1792092899.6431456,\"producer_event_time\":null,\"producer_timing\":\"unavailable_on_gap_wire\",\"frame_transit_s\":0.06071066856384277,\"child_wait_s\":0.00033736228942871094,\"data_at\":null,\"data_clock\":null,\"data_checked_at\":null,\"data_age_s\":null,\"timing\":\"finite_ordered\"},\"feed_ok\":true,\"feed_status\":[true,true],\"input_facts\":{\"bitcoin_age_s\":0.8847758769989014,\"bitcoin_age_valid\":true,\"spot_valid\":true,\"sigma_valid\":true},\"disposition\":\"unknown\",\"reason\":\"pregap\",\"counter_delta_scope\":\"learner_call\",\"counter_delta\":{\"forecasts\":0,\"unknown\":1,\"scored\":0},\"coverage\":\"child_observations_only; upstream cause and producer occurrence unavailable\"}",
+          "attributes": [
+            {
+              "key": "level",
+              "value": "\"info\""
+            }
+          ]
+        }
+      ]
+    },
+    "isError": false
+  }
+}

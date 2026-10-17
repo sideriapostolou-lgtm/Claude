@@ -1,0 +1,18 @@
+{
+  "at_utc": "2026-10-15T18:31:15.902907+00:00",
+  "basis": "Exact deployed59ba6a8e, docs/evidence followup only",
+  "source_test_frozen_hashes": "exact; unchanged from tested and deployed bytes",
+  "preparation_immutable": "37/37 CRC/hash/size/local bytes pass",
+  "independent_restart": "accepted with explicit coverage and timestamp limits",
+  "json_parsed": 89,
+  "prior_doc_lines": "all retained in order",
+  "new_relative_links_checked": 8,
+  "diff_scope": "docs/research only; no watched deployment files",
+  "bounded_sensitive_scan": {
+    "files": 103,
+    "matches": 0,
+    "limits": "Recognizable credential/private-attachment patterns only; hashes and deployment/order/fill IDs are expected evidence."
+  },
+  "whitespace": "Scoped prose/source/test diff check passed; original raw patch context retained, not trimmed.",
+  "no_profit_or_all_tasks_done_claim": true
+}

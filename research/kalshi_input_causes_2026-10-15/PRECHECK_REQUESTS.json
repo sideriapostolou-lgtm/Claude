@@ -1,0 +1,29 @@
+{
+  "observed_at_utc": "2026-10-15T16:52:45.673344+00:00",
+  "tool": "railway_get_logs",
+  "projectId": "75750847-85c0-41a3-a2a7-b7f2201a51e9",
+  "environmentId": "17f7b0e0-104c-4903-9484-0106748b3cdb",
+  "serviceId": "f84d3b52-002f-44cb-931e-bc9e3e097e97",
+  "retrieval_wall_clock": "Exact call wall clock not instrumented; bounded between root clock receipts16:49:13 and16:51:31UTC. Requested end16:53UTC lay in the future; these are point-status prechecks, NOT complete coverage of requested interval.",
+  "queries": [
+    {
+      "file": "pre_current_status.native.json",
+      "startDate": "2026-10-15T16:48:00Z",
+      "endDate": "2026-10-15T16:53:00Z",
+      "filter": "\"speeddesk_live_status\"",
+      "limit": 12,
+      "returned": 2,
+      "at_cap": false
+    },
+    {
+      "file": "pre_learning_status.native.json",
+      "startDate": "2026-10-15T16:30:00Z",
+      "endDate": "2026-10-15T16:53:00Z",
+      "filter": "\"kalshi_online_learning_status\"",
+      "limit": 12,
+      "returned": 9,
+      "at_cap": false
+    }
+  ],
+  "deployment_scope_note": "service scoped log response deploymentId names latest SKIPPED docs deployment, not emitter. Running deployment established separately by native environment health and selected deployment list."
+}

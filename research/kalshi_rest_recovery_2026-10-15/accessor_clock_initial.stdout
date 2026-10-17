@@ -1,0 +1,3 @@
+{"case": "book_expires_during_accessor", "book_at": 100, "clock_reads": [103, 103.01], "maker_result": ["KXBTC15M-26OCT151545-45"], "expected": []}
+{"case": "report_future_book_becomes_current_between_checks", "status": {"ws_connected": true, "ws_books": [], "ws_maker_windows": ["KXBTC15M-26OCT151545-45"], "ws_status": "market_websocket", "gap_windows": []}, "maker_subset_of_books": false}
+{"weather_overrides_fresh_books": false, "weather_overrides_report": false}

@@ -1,0 +1,77 @@
+{
+  "started_at": "2026-10-15T22:31:16.797249+00:00",
+  "source_hashes_before": {
+    "src/nightcrawler/speeddesk.py": "eb9146263a881ba2ef6645c03585ca78c7bc0e1d9f03cb5177028d483e403ef4",
+    "tests/test_speeddesk_checkpoint_settlements.py": "3eb15e8f138cbe47ef99b5b6fa76ac6ce6db4751bcba7e76b1d0d5585e13ca30"
+  },
+  "commands": [
+    {
+      "name": "pytest",
+      "argv": [
+        "/workspace/shared/nightcrawler-venv/bin/python",
+        "-m",
+        "pytest",
+        "-q"
+      ],
+      "cwd": "/workspace/nightcrawler-practice-checkpoint",
+      "started_at": "2026-10-15T22:31:16.797477+00:00",
+      "stdout": "pytest.stdout.txt",
+      "stderr": "pytest.stderr.txt",
+      "exit_code": 0,
+      "finished_at": "2026-10-15T22:36:52.109422+00:00",
+      "elapsed_s": 335.3119580280036,
+      "stdout_sha256": "60f69eb3839875f9ba27bfcbad3605c37fdcad176ae3a64da86f309923937aa4",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "mypy",
+      "argv": [
+        "/workspace/shared/nightcrawler-venv/bin/python",
+        "-m",
+        "mypy",
+        "src/nightcrawler"
+      ],
+      "cwd": "/workspace/nightcrawler-practice-checkpoint",
+      "started_at": "2026-10-15T22:36:52.109898+00:00",
+      "stdout": "mypy.stdout.txt",
+      "stderr": "mypy.stderr.txt",
+      "exit_code": 0,
+      "finished_at": "2026-10-15T22:36:52.625223+00:00",
+      "elapsed_s": 0.5153319130040472,
+      "stdout_sha256": "45cd732b059538f71b7ce21bbf7979985ada6de5a5ca0cf10f66de2702e36c06",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "ruff",
+      "argv": [
+        "/workspace/shared/nightcrawler-venv/bin/python",
+        "-m",
+        "ruff",
+        "check",
+        "src/nightcrawler/speeddesk.py",
+        "tests/test_speeddesk_checkpoint_settlements.py"
+      ],
+      "cwd": "/workspace/nightcrawler-practice-checkpoint",
+      "started_at": "2026-10-15T22:36:52.625643+00:00",
+      "stdout": "ruff.stdout.txt",
+      "stderr": "ruff.stderr.txt",
+      "exit_code": 0,
+      "finished_at": "2026-10-15T22:36:52.657730+00:00",
+      "elapsed_s": 0.03209003200754523,
+      "stdout_sha256": "82b3e6a6c090a57601d22943bd23fca9218d1031dbe5a7b754092f9a156b4f18",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  ],
+  "environment_overrides": {
+    "PYTHONPATH": "/workspace/nightcrawler-practice-checkpoint/src:/workspace/nightcrawler-practice-checkpoint/tests",
+    "NIGHTCRAWLER_LIVE_TESTS": "0"
+  },
+  "note": "No network smoke tests or application/production runner. Existing process environment inherited without inspection.",
+  "source_hashes_after": {
+    "src/nightcrawler/speeddesk.py": "eb9146263a881ba2ef6645c03585ca78c7bc0e1d9f03cb5177028d483e403ef4",
+    "tests/test_speeddesk_checkpoint_settlements.py": "3eb15e8f138cbe47ef99b5b6fa76ac6ce6db4751bcba7e76b1d0d5585e13ca30"
+  },
+  "source_stable": true,
+  "finished_at": "2026-10-15T22:36:52.658258+00:00",
+  "status": "passed"
+}
