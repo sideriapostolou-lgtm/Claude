@@ -1,0 +1,7 @@
+{
+  "chunk_id": "79d3e2",
+  "wall_time_seconds": 0.371557215,
+  "exit_code": 0,
+  "original_token_count": 61,
+  "output": "{\"path\": \"/healthz\", \"checked_at_utc\": \"2026-10-17T15:18:13.513240+00:00\", \"status\": 200, \"content_type\": \"text/plain; charset=utf-8\", \"body_bytes\": 2}\n{\"path\": \"/api/page\", \"status\": 401, \"checked_at_utc\": \"2026-10-17T15:18:13.701948+00:00\"}\n"
+}

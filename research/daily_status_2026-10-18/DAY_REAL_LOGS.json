@@ -1,0 +1,33 @@
+{
+  "request": {
+    "projectId": "75750847-85c0-41a3-a2a7-b7f2201a51e9",
+    "deploymentId": "43f14443-2d07-4985-b879-3a2515fb8d2c",
+    "startDate": "2026-10-17T00:00:00Z",
+    "endDate": "2026-10-18T15:21:00Z",
+    "types": [
+      "deploy"
+    ],
+    "filter": "\"nightcrawler.speeddesk: speeddesk_live_fill\" OR \"nightcrawler.speeddesk: speeddesk_live_settlement\"",
+    "limit": 100
+  },
+  "response": {
+    "scope": "deployment",
+    "deploymentId": "43f14443-2d07-4985-b879-3a2515fb8d2c",
+    "serviceId": "f84d3b52-002f-44cb-931e-bc9e3e097e97",
+    "environmentId": "17f7b0e0-104c-4903-9484-0106748b3cdb",
+    "status": "SUCCESS",
+    "deploy": [
+      {
+        "timestamp": "2026-10-17T00:00:11.243298345Z",
+        "severity": "info",
+        "message": "2026-10-17T00:00:11Z INFO nightcrawler.speeddesk: speeddesk_live_settlement {\"at\":1792195206.838417,\"venue\":\"kalshi\",\"window\":\"KXBTC15M-26OCT162000-00\",\"settlement_id\":\"kalshi:KXBTC15M-26OCT162000-00\",\"up_wins\":false,\"up_shares\":1.0,\"down_shares\":1.0,\"cost_usd\":0.97,\"fee_usd\":0.0173,\"paired_credit_usd\":1.0,\"net_payout_usd\":0.0,\"payout_usd\":1.0,\"locked_usd\":0.012699999999999989,\"direction_usd\":-5.551115123125783e-17,\"pnl_usd\":0.012699999999999934,\"observed_at\":1792195210.5728614,\"time_source\":\"venue settled_time\"}",
+        "attributes": [
+          {
+            "key": "level",
+            "value": "\"info\""
+          }
+        ]
+      }
+    ]
+  }
+}
