@@ -120,7 +120,11 @@ Use a pull request for bigger changes or when the owner wants to review first.
   After every deploy, check that Railway built that exact commit and that the logs show `polydesk_started ... (LIVE ...)` with
   no tracebacks. PR #5's merge commit 1cd27824 ran as deployment 0866daea at 16:23 UTC, triggered by setting the
   source branch rather than by the merge itself. That earlier restart alone did not verify deploy on push.
-* Restarts are safe. State lives on the volume, and the desk re-reads the venue each round.
+* Normal restarts rely on intact, current state on the volume and fresh venue reconciliation. After a failed
+  authoritative save or disk-full error, do not assume the old file includes every loss, pending order or
+  consumed owner control. Inspect available space/inodes and state integrity, preserve the original records,
+  and reconcile current venue balances, positions, orders, fills and settlements before recovery.
+  A healthy web process, valid JSON or free bytes alone is not proof that restarting real trading is safe.
 * Any worker's push to the branch deploys (see AGENTS.md rule 3). To read logs a worker needs the owner's Railway
   token in its environment as `RAILWAY_TOKEN` (Railway CLI: `railway logs`, `railway status`). Never `railway
   variables` without `--set`, because it prints secret values.

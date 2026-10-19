@@ -1,0 +1,22 @@
+{
+  "request": {
+    "projectId": "75750847-85c0-41a3-a2a7-b7f2201a51e9",
+    "environmentId": "17f7b0e0-104c-4903-9484-0106748b3cdb",
+    "serviceId": "f84d3b52-002f-44cb-931e-bc9e3e097e97",
+    "startDate": "2026-10-18T15:25:00Z",
+    "endDate": "2026-10-19T00:01:00Z",
+    "filter": "\"nightcrawler.speeddesk: speeddesk_live_status\" OR \"polydesk_started\" OR \"No space left on device\"",
+    "limit": 30,
+    "types": [
+      "deploy"
+    ]
+  },
+  "response": {
+    "scope": "service",
+    "deploymentId": "7ef890c8-a037-4b0a-813e-a070dd33701c",
+    "serviceId": "f84d3b52-002f-44cb-931e-bc9e3e097e97",
+    "environmentId": "17f7b0e0-104c-4903-9484-0106748b3cdb",
+    "status": "SKIPPED",
+    "deploy": []
+  }
+}
