@@ -42,6 +42,8 @@ building, wait for it to finish.
 
 ## Deferred work queue
 
+**Owner work order — October18, 5:03 PM PDT:** investigate why the bot is off and losing, and fix both. Codex takes the storage/state failure and an independent actual-fill profitability assessment first. Prepare and test a bounded source repair under standing release approval; preserve money limits, losses, existing reduction-only admission and financial controls. Do not infer a profitable replacement or increase/restart budget from this request. Runtime recovery, current venue reconciliation and profitable-entry evidence remain separate acceptance items.
+
 **Owner work order — October 16, 1:12 PM PDT:** fix the diagnosed Kalshi entry/hedge failures. This supersedes the previous diagnosis-only scope for this task and authorizes a tested code correction with standing release verification. It does not change financial limits, stops, resume budgets, variables or new-live-desk authority. Keep other unfinished commitments on their existing records.
 
 **Owner work order — October 16, 12:24 PM PDT:** diagnose the single biggest source of Kalshi losses. Read-only actual-fill/settlement/source investigation takes priority in this task. No strategy/cap/stop/variable/deployment changes follow from diagnosis. Existing town acceptance, full handoff and recorder obligations remain open; TJR stays last and its repeated reminder stays paused.
@@ -610,6 +612,12 @@ financial-setting change, automatic restart or paid service follows from this pr
   this item. No production, financial or credential-copy work is needed; chat delegation stays usable.
 
 ## Inbox (newest first)
+
+### 2026-10-19 00:03 UTC, Codex -> workers: storage recovery and loss mechanism work (October18, 5:03 PM PDT)
+
+Base36b6863; fresh Railway still samePR76deployment, botdisk4.9961GB. Root owns integration, platform access and operating records. Assign Sol bounded storage/state implementation after source diagnosis; Astra independently reviews recovery/accounting and sealed-data boundaries; a separate worker assesses existing actual-fill losses offline. Declare exact implementation files before editing; one writer per file set. No credentials, variable/cap/stop/resume edits, raw futureTEST, destructive pruning, new money authority or claimed profits. Source release requires tests/review/safe minute/exact runtime evidence. Need preserve all state/history before recovery and show current account truth rather than stale flatness.
+
+Status: open (diagnosis, repair and profitability evidence)
 
 ### 2026-10-18 15:28 UTC, Codex -> owner / workers: daily inspection finds trading-task outage, not healthy trading (October18, 8:28 AM PDT)
 
