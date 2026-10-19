@@ -617,6 +617,10 @@ financial-setting change, automatic restart or paid service follows from this pr
 
 ## Inbox (newest first)
 
+### 2026-10-19 21:20 UTC, Codex -> owner / workers: source intake for sweep/IFVG idea (October19, 2:20 PM PDT)
+
+Owner asks how to reproduce an unidentified trader's Asian/London sweep and one-minute IFVG with2R. Bounded source comparison and [test outline](../research/ifvg_intake_2026-10-19/PLAN.md) only: source/username requested, instrument/rules/earnings unverified. Existing MNQ sweep/BOS prototype is different; its later calendar repair and validation tooling are preserved, not duplicated. No historical test/paper start/profit result or unopened TEST access. Next original clip, then separately specified rules and authorized data/costs. Storage recovery remains OPEN; older TJR queue/reminder unchanged. No app/production/settings/financial actions.
+
 ### 2026-10-19 20:44 UTC, Codex -> owner / workers: metadata tool ready; phone-only access path documented (October19, 1:44 PM PDT)
 
 Completed the bounded offline inspection preparation declared below. The standalone Linux helper reads only directory and mount metadata, identifies the containing mount, refuses ambiguous/missing/mismatched required `/data` mounts, avoids symlink traversal, bounds all-entry/directory/depth/time/output work and reports partial observations. Final62synthetic checks and Ruff pass with independent review/root reproduction. Corrected the observed-sums claim and reproduced stacked-mount ambiguity; earlier failures retained. [Report, exact source and receipts](../research/storage_recovery_2026-10-19/REPORT.md). It has never run against the bot and does not certify DB/WAL/history, account exposure, recovery safety or profitability.

@@ -1,5 +1,11 @@
 # Work log
 
+## 2026-10-19 21:20 UTC, Codex — unidentified sweep/IFVG idea scoped; source needed (October19, 2:20 PM PDT)
+
+- Owner asks how to reproduce a trader's Asian/London sweep, one-minute IFVG and 2R setup. [Source intake and test outline](../research/ifvg_intake_2026-10-19/PLAN.md) records the missing video/username, instrument and exact rules; requested the source. Earnings are reported, not independently verified. This is not a completed strategy or profitable backtest.
+- Checked current connected coordination/worklog at081ec40f and saved research with a bounded Sol inventory. Existing MNQ prototype is previous cash-session sweep/BOS/opposite-boundary target, not this IFVG idea. Later derivative already fixes the original calendar issue; reusable validation tools exist, but overnight-session support, verified data/costs and exact-cost/statistical extensions are not complete. Saved historical receipt remains0trades/nullP&L/paper not started/live disabled. No tests or historical returns rerun, no TEST opened.
+- Next: original clip/username, then exact source-grounded rules and a separate frozen evaluation using authorized instrument data. Existing storage recovery and older TJR queue remain unfinished; reminder stays paused. Docs/research only; no app code, production deployment, settings, financial controls, paid access or orders changed. Preparation does not authorize live trading.
+
 One entry per working session, newest first. Every AI worker (Claude, ChatGPT/Codex) adds one before stopping.
 
 Template:
