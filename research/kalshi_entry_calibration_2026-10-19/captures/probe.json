@@ -1,0 +1,70 @@
+{
+  "request": {
+    "projectId": "75750847-85c0-41a3-a2a7-b7f2201a51e9",
+    "environmentId": "17f7b0e0-104c-4903-9484-0106748b3cdb",
+    "serviceId": "f84d3b52-002f-44cb-931e-bc9e3e097e97",
+    "types": [
+      "deploy"
+    ],
+    "startDate": "2026-10-15T23:55:00.000Z",
+    "endDate": "2026-10-16T00:10:00.000Z",
+    "filter": "\"speeddesk_live_order\" AND \"nc-speed-d5cbea4f687b48d89948722af91bcf5a\"",
+    "limit": 500
+  },
+  "captured_at_utc": "2026-10-19T19:11:18.597Z",
+  "response": {
+    "isError": false,
+    "structuredContent": {
+      "scope": "service",
+      "deploymentId": "3187a2d9-eebe-45ad-9b86-b75d86f6f58f",
+      "serviceId": "f84d3b52-002f-44cb-931e-bc9e3e097e97",
+      "environmentId": "17f7b0e0-104c-4903-9484-0106748b3cdb",
+      "status": "SKIPPED",
+      "deploy": [
+        {
+          "timestamp": "2026-10-16T00:00:14.370799194Z",
+          "severity": "info",
+          "message": "2026-10-16T00:00:14Z INFO nightcrawler.speeddesk: speeddesk_live_order {\"at\":1792108813.1936557,\"venue\":\"kalshi\",\"client_order_id\":\"nc-speed-d5cbea4f687b48d89948722af91bcf5a\",\"window\":\"KXBTC15M-26OCT152015-15\",\"side\":\"down\",\"kind\":\"rest\",\"price\":0.5,\"size\":5.0,\"fair\":0.5378408640029941,\"state\":\"durable intent\",\"timing\":[{\"metric\":\"btc_exchange_to_decision\",\"scope\":\"real_kalshi\",\"at\":1792108813.1935263,\"value_ms\":48.689191695302725,\"status\":\"ok\"},{\"metric\":\"btc_receipt_to_decision\",\"scope\":\"real_kalshi\",\"at\":1792108813.1935263,\"value_ms\":8.127038832753897,\"status\":\"ok\"}]}",
+          "attributes": [
+            {
+              "key": "level",
+              "value": "\"info\""
+            }
+          ]
+        },
+        {
+          "timestamp": "2026-10-16T00:00:14.376141409Z",
+          "severity": "info",
+          "message": "2026-10-16T00:00:14Z INFO nightcrawler.speeddesk: speeddesk_live_order {\"at\":1792108814.252605,\"venue\":{\"ts_ms\":1792108813374,\"sent_ms\":1792108813233.7,\"acked_ms\":1792108814252.6,\"offset_ms\":-369.1,\"rtt_ms\":1018.9},\"client_order_id\":\"nc-speed-d5cbea4f687b48d89948722af91bcf5a\",\"order_id\":\"01a14202-5ac8-7f4a-84ac-d72b5480ff55\",\"window\":\"KXBTC15M-26OCT152015-15\",\"state\":\"accepted; waiting for real fills\",\"timing\":{\"metric\":\"decision_to_ack\",\"scope\":\"real_kalshi\",\"at\":1792108813.1935263,\"value_ms\":1058.9771680533886,\"status\":\"ok\"},\"stages\":{\"save_ms\":33.03350415080786,\"decision_to_send_ms\":40.08673224598169,\"send_to_ack_ms\":1018.8904358074069}}",
+          "attributes": [
+            {
+              "key": "level",
+              "value": "\"info\""
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "original_evidence": {
+    "original_private_capture_basename": "probe.json",
+    "original_envelope_sha256": "23e1725a6b4b095a4fc4fad58232adbcab200a7cf29c5d2293ead6d347bde90a",
+    "original_response_canonical_sha256": "bf0c1cf6dfd4284280306c38c84709ffb2ed101c10f93bc5658692450dfcd7cf",
+    "original_provider_rows": 2,
+    "selected_direct_order_rows": 2,
+    "excluded_rows": {},
+    "selection_boundary": "Only complete standalone nightcrawler.speeddesk speeddesk_live_order JSON rows with exact queried client IDs. Nested status matches and fragments excluded; originals privately preserved. This is a minimized selection, not a full provider archive."
+  },
+  "selected_row_provenance": [
+    {
+      "original_row_index": 0,
+      "original_row_canonical_sha256": "59f67ee1c45205c973704e52b590c244bae3634d50f26d69472d80b18fba8ca9",
+      "message_sha256": "865ff343436a75a7b525276f87242d950e32967b14a96654fb5658f0a7b50f79"
+    },
+    {
+      "original_row_index": 1,
+      "original_row_canonical_sha256": "6b619c37b7f57e5f318c61cf29b05ea37a38e08ee72659690211d3b7b027c9b4",
+      "message_sha256": "68bee99825dfaeac1ecfb89605f5c4b14bd3b1f164629f113e8687ce720b9fe3"
+    }
+  ]
+}

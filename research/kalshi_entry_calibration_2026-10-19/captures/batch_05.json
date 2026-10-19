@@ -1,0 +1,374 @@
+{
+  "label": "batch_05",
+  "request": {
+    "projectId": "75750847-85c0-41a3-a2a7-b7f2201a51e9",
+    "environmentId": "17f7b0e0-104c-4903-9484-0106748b3cdb",
+    "serviceId": "f84d3b52-002f-44cb-931e-bc9e3e097e97",
+    "types": [
+      "deploy"
+    ],
+    "startDate": "2026-10-16T19:29:00.000Z",
+    "endDate": "2026-10-16T21:57:35.668Z",
+    "filter": "\"speeddesk_live_order\" AND (\"nc-speed-f9b5af6f81784faf8242fe4680a4c7cf\" OR \"nc-speed-66b391fd49dc4a09910f6c322ebf08fa\" OR \"nc-speed-4bfafa13dc564665891ed699ab5b0019\" OR \"nc-speed-8e28e0607e324f798c4e13ddb2c286c3\" OR \"nc-speed-f18062e8ec4644229ffffd17162b5a73\" OR \"nc-speed-e3260890920842bb96ada0814abc2b66\" OR \"nc-speed-1b26744a5eb1463189c8b507627745aa\" OR \"nc-speed-2b9142ace8d547e8bee351a80efceba7\" OR \"nc-speed-aee5d484961c4e708afb76e5ad6d06f5\" OR \"nc-speed-22910df1efcd4395abc3dba42ad3476a\")",
+    "limit": 500
+  },
+  "client_order_ids": [
+    "nc-speed-f9b5af6f81784faf8242fe4680a4c7cf",
+    "nc-speed-66b391fd49dc4a09910f6c322ebf08fa",
+    "nc-speed-4bfafa13dc564665891ed699ab5b0019",
+    "nc-speed-8e28e0607e324f798c4e13ddb2c286c3",
+    "nc-speed-f18062e8ec4644229ffffd17162b5a73",
+    "nc-speed-e3260890920842bb96ada0814abc2b66",
+    "nc-speed-1b26744a5eb1463189c8b507627745aa",
+    "nc-speed-2b9142ace8d547e8bee351a80efceba7",
+    "nc-speed-aee5d484961c4e708afb76e5ad6d06f5",
+    "nc-speed-22910df1efcd4395abc3dba42ad3476a"
+  ],
+  "captured_at_utc": "2026-10-19T19:11:28.737Z",
+  "response": {
+    "isError": false,
+    "structuredContent": {
+      "scope": "service",
+      "deploymentId": "3187a2d9-eebe-45ad-9b86-b75d86f6f58f",
+      "serviceId": "f84d3b52-002f-44cb-931e-bc9e3e097e97",
+      "environmentId": "17f7b0e0-104c-4903-9484-0106748b3cdb",
+      "status": "SKIPPED",
+      "deploy": [
+        {
+          "timestamp": "2026-10-16T19:30:58.605904399Z",
+          "severity": "info",
+          "message": "2026-10-16T19:30:58Z INFO nightcrawler.speeddesk: speeddesk_live_order {\"at\":1792179057.5824063,\"venue\":\"kalshi\",\"client_order_id\":\"nc-speed-f9b5af6f81784faf8242fe4680a4c7cf\",\"window\":\"KXBTC15M-26OCT161545-45\",\"side\":\"up\",\"kind\":\"rest\",\"price\":0.4,\"size\":3.0,\"fair\":0.4372536787578135,\"state\":\"durable intent\",\"timing\":[{\"metric\":\"btc_exchange_to_decision\",\"scope\":\"real_kalshi\",\"at\":1792179057.582196,\"value_ms\":310.2530767209828,\"status\":\"ok\"},{\"metric\":\"btc_receipt_to_decision\",\"scope\":\"real_kalshi\",\"at\":1792179057.582196,\"value_ms\":287.7959539182484,\"status\":\"ok\"}]}",
+          "attributes": [
+            {
+              "key": "level",
+              "value": "\"info\""
+            }
+          ]
+        },
+        {
+          "timestamp": "2026-10-16T19:30:58.605911459Z",
+          "severity": "info",
+          "message": "2026-10-16T19:30:58Z INFO nightcrawler.speeddesk: speeddesk_live_order {\"at\":1792179057.643244,\"venue\":{\"ts_ms\":1792179057619,\"sent_ms\":1792179057596.3,\"acked_ms\":1792179057643.2,\"offset_ms\":-0.8,\"rtt_ms\":46.9},\"client_order_id\":\"nc-speed-f9b5af6f81784faf8242fe4680a4c7cf\",\"order_id\":\"01a14632-3168-7c6e-858d-001aa5140fc2\",\"window\":\"KXBTC15M-26OCT161545-45\",\"state\":\"accepted; waiting for real fills\",\"timing\":{\"metric\":\"decision_to_ack\",\"scope\":\"real_kalshi\",\"at\":1792179057.582196,\"value_ms\":60.877746902406216,\"status\":\"ok\"},\"stages\":{\"save_ms\":7.322264835238457,\"decision_to_send_ms\":13.973536901175976,\"send_to_ack_ms\":46.90421000123024}}",
+          "attributes": [
+            {
+              "key": "level",
+              "value": "\"info\""
+            }
+          ]
+        },
+        {
+          "timestamp": "2026-10-16T19:46:08.941417688Z",
+          "severity": "info",
+          "message": "2026-10-16T19:46:08Z INFO nightcrawler.speeddesk: speeddesk_live_order {\"at\":1792179968.3773572,\"venue\":\"kalshi\",\"client_order_id\":\"nc-speed-66b391fd49dc4a09910f6c322ebf08fa\",\"window\":\"KXBTC15M-26OCT161600-00\",\"side\":\"down\",\"kind\":\"rest\",\"price\":0.42,\"size\":2.0,\"fair\":0.4570282466390462,\"state\":\"durable intent\",\"timing\":[{\"metric\":\"btc_exchange_to_decision\",\"scope\":\"real_kalshi\",\"at\":1792179968.3772073,\"value_ms\":163.45500573515892,\"status\":\"ok\"},{\"metric\":\"btc_receipt_to_decision\",\"scope\":\"real_kalshi\",\"at\":1792179968.3772073,\"value_ms\":159.1024361550808,\"status\":\"ok\"}]}",
+          "attributes": [
+            {
+              "key": "level",
+              "value": "\"info\""
+            }
+          ]
+        },
+        {
+          "timestamp": "2026-10-16T19:46:08.941426748Z",
+          "severity": "info",
+          "message": "2026-10-16T19:46:08Z INFO nightcrawler.speeddesk: speeddesk_live_order {\"at\":1792179968.4729543,\"venue\":{\"ts_ms\":1792179968446,\"sent_ms\":1792179968405.7,\"acked_ms\":1792179968472.9,\"offset_ms\":6.7,\"rtt_ms\":67.3},\"client_order_id\":\"nc-speed-66b391fd49dc4a09910f6c322ebf08fa\",\"order_id\":\"01a14640-1800-72a5-a5a1-2df32aa00909\",\"window\":\"KXBTC15M-26OCT161600-00\",\"state\":\"accepted; waiting for real fills\",\"timing\":{\"metric\":\"decision_to_ack\",\"scope\":\"real_kalshi\",\"at\":1792179968.3772073,\"value_ms\":95.63203295692801,\"status\":\"ok\"},\"stages\":{\"save_ms\":15.14433603733778,\"decision_to_send_ms\":28.369625099003315,\"send_to_ack_ms\":67.2624078579247}}",
+          "attributes": [
+            {
+              "key": "level",
+              "value": "\"info\""
+            }
+          ]
+        },
+        {
+          "timestamp": "2026-10-16T20:00:32.772273142Z",
+          "severity": "info",
+          "message": "2026-10-16T20:00:32Z INFO nightcrawler.speeddesk: speeddesk_live_order {\"at\":1792180832.4185126,\"venue\":\"kalshi\",\"client_order_id\":\"nc-speed-4bfafa13dc564665891ed699ab5b0019\",\"window\":\"KXBTC15M-26OCT161615-15\",\"side\":\"down\",\"kind\":\"rest\",\"price\":0.49,\"size\":1.0,\"fair\":0.5264517785578482,\"state\":\"durable intent\",\"timing\":[{\"metric\":\"btc_exchange_to_decision\",\"scope\":\"real_kalshi\",\"at\":1792180832.4183097,\"value_ms\":359.64098013937473,\"status\":\"ok\"},{\"metric\":\"btc_receipt_to_decision\",\"scope\":\"real_kalshi\",\"at\":1792180832.4183097,\"value_ms\":107.54766501486301,\"status\":\"ok\"}]}",
+          "attributes": [
+            {
+              "key": "level",
+              "value": "\"info\""
+            }
+          ]
+        },
+        {
+          "timestamp": "2026-10-16T20:00:32.772281572Z",
+          "severity": "info",
+          "message": "2026-10-16T20:00:32Z INFO nightcrawler.speeddesk: speeddesk_live_order {\"at\":1792180832.521811,\"venue\":{\"ts_ms\":1792180832508,\"sent_ms\":1792180832452.1,\"acked_ms\":1792180832521.8,\"offset_ms\":21.0,\"rtt_ms\":69.7},\"client_order_id\":\"nc-speed-4bfafa13dc564665891ed699ab5b0019\",\"order_id\":\"01a1464d-4700-70d6-be73-32a7b73a034b\",\"window\":\"KXBTC15M-26OCT161615-15\",\"state\":\"accepted; waiting for real fills\",\"timing\":{\"metric\":\"decision_to_ack\",\"scope\":\"real_kalshi\",\"at\":1792180832.4183097,\"value_ms\":103.34651125594974,\"status\":\"ok\"},\"stages\":{\"save_ms\":25.66686412319541,\"decision_to_send_ms\":33.70455000549555,\"send_to_ack_ms\":69.64196125045419}}",
+          "attributes": [
+            {
+              "key": "level",
+              "value": "\"info\""
+            }
+          ]
+        },
+        {
+          "timestamp": "2026-10-16T20:15:16.894804682Z",
+          "severity": "info",
+          "message": "2026-10-16T20:15:16Z INFO nightcrawler.speeddesk: speeddesk_live_order {\"at\":1792181716.2566094,\"venue\":\"kalshi\",\"client_order_id\":\"nc-speed-8e28e0607e324f798c4e13ddb2c286c3\",\"window\":\"KXBTC15M-26OCT161630-30\",\"side\":\"down\",\"kind\":\"rest\",\"price\":0.38,\"size\":1.0,\"fair\":0.4173965050559487,\"state\":\"durable intent\",\"timing\":[{\"metric\":\"btc_exchange_to_decision\",\"scope\":\"real_kalshi\",\"at\":1792181716.2564642,\"value_ms\":297.8586754761636,\"status\":\"ok\"},{\"metric\":\"btc_receipt_to_decision\",\"scope\":\"real_kalshi\",\"at\":1792181716.2564642,\"value_ms\":283.85277604684234,\"status\":\"ok\"}]}",
+          "attributes": [
+            {
+              "key": "level",
+              "value": "\"info\""
+            }
+          ]
+        },
+        {
+          "timestamp": "2026-10-16T20:15:16.894814612Z",
+          "severity": "info",
+          "message": "2026-10-16T20:15:16Z INFO nightcrawler.speeddesk: speeddesk_live_order {\"at\":1792181716.430545,\"venue\":{\"ts_ms\":1792181716409,\"sent_ms\":1792181716281.0,\"acked_ms\":1792181716430.5,\"offset_ms\":53.3,\"rtt_ms\":149.6},\"client_order_id\":\"nc-speed-8e28e0607e324f798c4e13ddb2c286c3\",\"order_id\":\"01a1465a-c420-79fb-bf81-ab2bf17b8bc1\",\"window\":\"KXBTC15M-26OCT161630-30\",\"state\":\"accepted; waiting for real fills\",\"timing\":{\"metric\":\"decision_to_ack\",\"scope\":\"real_kalshi\",\"at\":1792181716.2564642,\"value_ms\":173.96195884793997,\"status\":\"ok\"},\"stages\":{\"save_ms\":23.19939900189638,\"decision_to_send_ms\":24.425270035862923,\"send_to_ack_ms\":149.53668881207705}}",
+          "attributes": [
+            {
+              "key": "level",
+              "value": "\"info\""
+            }
+          ]
+        },
+        {
+          "timestamp": "2026-10-16T20:30:19.652559046Z",
+          "severity": "info",
+          "message": "2026-10-16T20:30:19Z INFO nightcrawler.speeddesk: speeddesk_live_order {\"at\":1792182618.9378002,\"venue\":\"kalshi\",\"client_order_id\":\"nc-speed-f18062e8ec4644229ffffd17162b5a73\",\"window\":\"KXBTC15M-26OCT161645-45\",\"side\":\"down\",\"kind\":\"rest\",\"price\":0.33,\"size\":1.0,\"fair\":0.366624549400688,\"state\":\"durable intent\",\"timing\":[{\"metric\":\"btc_exchange_to_decision\",\"scope\":\"real_kalshi\",\"at\":1792182618.9376745,\"value_ms\":180.02474680542946,\"status\":\"ok\"},{\"metric\":\"btc_receipt_to_decision\",\"scope\":\"real_kalshi\",\"at\":1792182618.9376745,\"value_ms\":118.43669787049294,\"status\":\"ok\"}]}",
+          "attributes": [
+            {
+              "key": "level",
+              "value": "\"info\""
+            }
+          ]
+        },
+        {
+          "timestamp": "2026-10-16T20:30:19.652568026Z",
+          "severity": "info",
+          "message": "2026-10-16T20:30:19Z INFO nightcrawler.speeddesk: speeddesk_live_order {\"at\":1792182619.4062393,\"venue\":{\"ts_ms\":1792182619124,\"sent_ms\":1792182618954.1,\"acked_ms\":1792182619406.2,\"offset_ms\":-56.2,\"rtt_ms\":452.1},\"client_order_id\":\"nc-speed-f18062e8ec4644229ffffd17162b5a73\",\"order_id\":\"01a14668-8b78-7bfd-b97a-0a5c52ed1361\",\"window\":\"KXBTC15M-26OCT161645-45\",\"state\":\"accepted; waiting for real fills\",\"timing\":{\"metric\":\"decision_to_ack\",\"scope\":\"real_kalshi\",\"at\":1792182618.9376745,\"value_ms\":468.46879506483674,\"status\":\"ok\"},\"stages\":{\"save_ms\":9.565722197294235,\"decision_to_send_ms\":16.349127981811762,\"send_to_ack_ms\":452.119667083025}}",
+          "attributes": [
+            {
+              "key": "level",
+              "value": "\"info\""
+            }
+          ]
+        },
+        {
+          "timestamp": "2026-10-16T20:49:03.424230275Z",
+          "severity": "info",
+          "message": "2026-10-16T20:49:03Z INFO nightcrawler.speeddesk: speeddesk_live_order {\"at\":1792183742.9636512,\"venue\":\"kalshi\",\"client_order_id\":\"nc-speed-e3260890920842bb96ada0814abc2b66\",\"window\":\"KXBTC15M-26OCT161700-00\",\"side\":\"down\",\"kind\":\"rest\",\"price\":0.53,\"size\":1.0,\"fair\":0.5695533894230045,\"completion\":false,\"state\":\"durable intent\",\"timing\":[{\"metric\":\"btc_exchange_to_decision\",\"scope\":\"real_kalshi\",\"at\":1792183742.9632623,\"value_ms\":649.4685374200344,\"status\":\"ok\"},{\"metric\":\"btc_receipt_to_decision\",\"scope\":\"real_kalshi\",\"at\":1792183742.9632623,\"value_ms\":644.1370211541653,\"status\":\"ok\"}]}",
+          "attributes": [
+            {
+              "key": "level",
+              "value": "\"info\""
+            }
+          ]
+        },
+        {
+          "timestamp": "2026-10-16T20:49:03.424236845Z",
+          "severity": "info",
+          "message": "2026-10-16T20:49:03Z INFO nightcrawler.speeddesk: speeddesk_live_order {\"at\":1792183743.1072366,\"venue\":{\"ts_ms\":1792183743082,\"sent_ms\":1792183742983.7,\"acked_ms\":1792183743107.2,\"offset_ms\":36.6,\"rtt_ms\":123.6},\"client_order_id\":\"nc-speed-e3260890920842bb96ada0814abc2b66\",\"order_id\":\"01a14679-b218-776b-9671-f7afa570dac2\",\"window\":\"KXBTC15M-26OCT161700-00\",\"state\":\"accepted; waiting for real fills\",\"timing\":{\"metric\":\"decision_to_ack\",\"scope\":\"real_kalshi\",\"at\":1792183742.9632623,\"value_ms\":143.63912399858236,\"status\":\"ok\"},\"stages\":{\"save_ms\":11.542786844074726,\"decision_to_send_ms\":20.101675298064947,\"send_to_ack_ms\":123.53744870051742}}",
+          "attributes": [
+            {
+              "key": "level",
+              "value": "\"info\""
+            }
+          ]
+        },
+        {
+          "timestamp": "2026-10-16T21:00:33.851846606Z",
+          "severity": "info",
+          "message": "2026-10-16T21:00:33Z INFO nightcrawler.speeddesk: speeddesk_live_order {\"at\":1792184432.4745612,\"venue\":\"kalshi\",\"client_order_id\":\"nc-speed-1b26744a5eb1463189c8b507627745aa\",\"window\":\"KXBTC15M-26OCT161715-15\",\"side\":\"down\",\"kind\":\"rest\",\"price\":0.54,\"size\":1.0,\"fair\":0.5785549569571738,\"completion\":false,\"state\":\"durable intent\",\"timing\":[{\"metric\":\"btc_exchange_to_decision\",\"scope\":\"real_kalshi\",\"at\":1792184432.4742398,\"value_ms\":262.0669021271169,\"status\":\"ok\"},{\"metric\":\"btc_receipt_to_decision\",\"scope\":\"real_kalshi\",\"at\":1792184432.4742398,\"value_ms\":252.07454105839133,\"status\":\"ok\"}]}",
+          "attributes": [
+            {
+              "key": "level",
+              "value": "\"info\""
+            }
+          ]
+        },
+        {
+          "timestamp": "2026-10-16T21:00:33.851853226Z",
+          "severity": "info",
+          "message": "2026-10-16T21:00:33Z INFO nightcrawler.speeddesk: speeddesk_live_order {\"at\":1792184432.5667698,\"venue\":{\"ts_ms\":1792184432519,\"sent_ms\":1792184432500.3,\"acked_ms\":1792184432566.8,\"offset_ms\":-14.5,\"rtt_ms\":66.4},\"client_order_id\":\"nc-speed-1b26744a5eb1463189c8b507627745aa\",\"order_id\":\"01a14684-3580-7be4-82b0-70de06d4cf01\",\"window\":\"KXBTC15M-26OCT161715-15\",\"state\":\"accepted; waiting for real fills\",\"timing\":{\"metric\":\"decision_to_ack\",\"scope\":\"real_kalshi\",\"at\":1792184432.4742398,\"value_ms\":92.25544380024076,\"status\":\"ok\"},\"stages\":{\"save_ms\":16.220564022660255,\"decision_to_send_ms\":25.852339807897806,\"send_to_ack_ms\":66.40310399234295}}",
+          "attributes": [
+            {
+              "key": "level",
+              "value": "\"info\""
+            }
+          ]
+        },
+        {
+          "timestamp": "2026-10-16T21:18:46.099095253Z",
+          "severity": "info",
+          "message": "2026-10-16T21:18:45Z INFO nightcrawler.speeddesk: speeddesk_live_order {\"at\":1792185525.5612242,\"venue\":\"kalshi\",\"client_order_id\":\"nc-speed-2b9142ace8d547e8bee351a80efceba7\",\"window\":\"KXBTC15M-26OCT161730-30\",\"side\":\"up\",\"kind\":\"rest\",\"price\":0.62,\"size\":1.0,\"fair\":0.6570992783289373,\"completion\":false,\"state\":\"durable intent\",\"timing\":[{\"metric\":\"btc_exchange_to_decision\",\"scope\":\"real_kalshi\",\"at\":1792185525.5606928,\"value_ms\":226.77271394059062,\"status\":\"ok\"},{\"metric\":\"btc_receipt_to_decision\",\"scope\":\"real_kalshi\",\"at\":1792185525.5606928,\"value_ms\":4.30266885086894,\"status\":\"ok\"}]}",
+          "attributes": [
+            {
+              "key": "level",
+              "value": "\"info\""
+            }
+          ]
+        },
+        {
+          "timestamp": "2026-10-16T21:18:46.099100763Z",
+          "severity": "info",
+          "message": "2026-10-16T21:18:45Z INFO nightcrawler.speeddesk: speeddesk_live_order {\"at\":1792185525.6718764,\"venue\":{\"ts_ms\":1792185525635,\"sent_ms\":1792185525579.7,\"acked_ms\":1792185525671.9,\"offset_ms\":9.2,\"rtt_ms\":92.2},\"client_order_id\":\"nc-speed-2b9142ace8d547e8bee351a80efceba7\",\"order_id\":\"01a14694-e308-7d68-9dd5-675ab5907842\",\"window\":\"KXBTC15M-26OCT161730-30\",\"state\":\"accepted; waiting for real fills\",\"timing\":{\"metric\":\"decision_to_ack\",\"scope\":\"real_kalshi\",\"at\":1792185525.5606928,\"value_ms\":110.67252699285746,\"status\":\"ok\"},\"stages\":{\"save_ms\":9.988226927816868,\"decision_to_send_ms\":18.559394869953394,\"send_to_ack_ms\":92.11313212290406}}",
+          "attributes": [
+            {
+              "key": "level",
+              "value": "\"info\""
+            }
+          ]
+        },
+        {
+          "timestamp": "2026-10-16T21:31:26.077243181Z",
+          "severity": "info",
+          "message": "2026-10-16T21:31:26Z INFO nightcrawler.speeddesk: speeddesk_live_order {\"at\":1792186285.5412617,\"venue\":\"kalshi\",\"client_order_id\":\"nc-speed-aee5d484961c4e708afb76e5ad6d06f5\",\"window\":\"KXBTC15M-26OCT161745-45\",\"side\":\"down\",\"kind\":\"rest\",\"price\":0.44,\"size\":1.0,\"fair\":0.47116168367472966,\"completion\":false,\"state\":\"durable intent\",\"timing\":[{\"metric\":\"btc_exchange_to_decision\",\"scope\":\"real_kalshi\",\"at\":1792186285.5409296,\"value_ms\":836.9360864162445,\"status\":\"ok\"},{\"metric\":\"btc_receipt_to_decision\",\"scope\":\"real_kalshi\",\"at\":1792186285.5409296,\"value_ms\":824.9455392360687,\"status\":\"ok\"}]}",
+          "attributes": [
+            {
+              "key": "level",
+              "value": "\"info\""
+            }
+          ]
+        },
+        {
+          "timestamp": "2026-10-16T21:31:26.077260711Z",
+          "severity": "info",
+          "message": "2026-10-16T21:31:26Z INFO nightcrawler.speeddesk: speeddesk_live_order {\"at\":1792186285.919605,\"venue\":{\"ts_ms\":1792186285576,\"sent_ms\":1792186285554.4,\"acked_ms\":1792186285919.6,\"offset_ms\":-161.0,\"rtt_ms\":365.2},\"client_order_id\":\"nc-speed-aee5d484961c4e708afb76e5ad6d06f5\",\"order_id\":\"01a146a0-7bc8-797e-8483-8d48b76a6d22\",\"window\":\"KXBTC15M-26OCT161745-45\",\"state\":\"accepted; waiting for real fills\",\"timing\":{\"metric\":\"decision_to_ack\",\"scope\":\"real_kalshi\",\"at\":1792186285.5409296,\"value_ms\":378.3973637036979,\"status\":\"ok\"},\"stages\":{\"save_ms\":6.333088036626577,\"decision_to_send_ms\":13.17421905696392,\"send_to_ack_ms\":365.223144646734}}",
+          "attributes": [
+            {
+              "key": "level",
+              "value": "\"info\""
+            }
+          ]
+        },
+        {
+          "timestamp": "2026-10-16T21:47:18.768580717Z",
+          "severity": "info",
+          "message": "2026-10-16T21:47:18Z INFO nightcrawler.speeddesk: speeddesk_live_order {\"at\":1792187238.2260463,\"venue\":\"kalshi\",\"client_order_id\":\"nc-speed-22910df1efcd4395abc3dba42ad3476a\",\"window\":\"KXBTC15M-26OCT161800-00\",\"side\":\"down\",\"kind\":\"rest\",\"price\":0.48,\"size\":1.0,\"fair\":0.5191792337088559,\"completion\":false,\"state\":\"durable intent\",\"timing\":[{\"metric\":\"btc_exchange_to_decision\",\"scope\":\"real_kalshi\",\"at\":1792187238.2257252,\"value_ms\":107.01317526400089,\"status\":\"ok\"},{\"metric\":\"btc_receipt_to_decision\",\"scope\":\"real_kalshi\",\"at\":1792187238.2257252,\"value_ms\":89.72091414034367,\"status\":\"ok\"}]}",
+          "attributes": [
+            {
+              "key": "level",
+              "value": "\"info\""
+            }
+          ]
+        },
+        {
+          "timestamp": "2026-10-16T21:47:18.768588367Z",
+          "severity": "info",
+          "message": "2026-10-16T21:47:18Z INFO nightcrawler.speeddesk: speeddesk_live_order {\"at\":1792187238.3357987,\"venue\":{\"ts_ms\":1792187238307,\"sent_ms\":1792187238276.4,\"acked_ms\":1792187238335.8,\"offset_ms\":0.9,\"rtt_ms\":59.4},\"client_order_id\":\"nc-speed-22910df1efcd4395abc3dba42ad3476a\",\"order_id\":\"01a146af-0670-7f0a-815c-f762e1365ac8\",\"window\":\"KXBTC15M-26OCT161800-00\",\"state\":\"accepted; waiting for real fills\",\"timing\":{\"metric\":\"decision_to_ack\",\"scope\":\"real_kalshi\",\"at\":1792187238.2257252,\"value_ms\":109.79086393490434,\"status\":\"ok\"},\"stages\":{\"save_ms\":17.542823683470488,\"decision_to_send_ms\":50.44156173244119,\"send_to_ack_ms\":59.34930220246315}}",
+          "attributes": [
+            {
+              "key": "level",
+              "value": "\"info\""
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "original_evidence": {
+    "original_private_capture_basename": "batch_05.json",
+    "original_envelope_sha256": "c7927900bbd0d1812f6e885cf5184634af131afcb90813966047fe6278bdb77b",
+    "original_response_canonical_sha256": "ef23e8492ec041a175b412dca4330f2a45ddde37520515ebd923208d79fdad14",
+    "original_provider_rows": 26,
+    "selected_direct_order_rows": 20,
+    "excluded_rows": {
+      "fragment_or_other_unparseable_top_level": 3,
+      "non_order_top_level_speeddesk_live_status": 3
+    },
+    "selection_boundary": "Only complete standalone nightcrawler.speeddesk speeddesk_live_order JSON rows with exact queried client IDs. Nested status matches and fragments excluded; originals privately preserved. This is a minimized selection, not a full provider archive."
+  },
+  "selected_row_provenance": [
+    {
+      "original_row_index": 0,
+      "original_row_canonical_sha256": "316606c2b299ccccfd102723057331c2f8f5e94a5e45c3dc3631d88cc4639873",
+      "message_sha256": "b94528458e01473a899a1e4eb31695e8e1ed84ca76fb69558681a28ad4764497"
+    },
+    {
+      "original_row_index": 1,
+      "original_row_canonical_sha256": "079f5d5192890e5d6821b24362df98bcd7034103aa7209edce31688aab00d6a4",
+      "message_sha256": "c4776241d11c8f86710402cfa8385ed76876dab3d05bdd2138f0c36ec6c3eae8"
+    },
+    {
+      "original_row_index": 3,
+      "original_row_canonical_sha256": "28fecfcd7a8784882c8933d20c6f389e9cd7042cbb09c1cf40652521ed174810",
+      "message_sha256": "a641f4d4f76a6bb3aee239a91f1b3d281666f54710fd4f9a9d0e400723bb3af9"
+    },
+    {
+      "original_row_index": 4,
+      "original_row_canonical_sha256": "55ad220c2778bd2393d815218971e9780c0fe766dbfe5f855464bb0492d8796f",
+      "message_sha256": "c4096fa68480ff1c912daff96f75c591ef954dc185549502638e001cad5ee18a"
+    },
+    {
+      "original_row_index": 5,
+      "original_row_canonical_sha256": "a81a68869c471051d8ee9e1d7f5a61fb1cf2fde4fc202bbaf4ab775f9ad5edcc",
+      "message_sha256": "3ab2a90b8d67abd81e841d30f59006e99fe2526b7411d18c1c4a0b66090a8c9a"
+    },
+    {
+      "original_row_index": 6,
+      "original_row_canonical_sha256": "b512f31eae461e57ca34f0147ae787d9469eb5ae4c986cc93514f9d9a9843879",
+      "message_sha256": "235053e36b37c258606795e1b25d07a58eae7cea9a242103fbe1b32d10ad9bf0"
+    },
+    {
+      "original_row_index": 9,
+      "original_row_canonical_sha256": "c0bd32e4e654f2c48990647187a679b8f405e254dc51d04aee5de1ed1f4b13f0",
+      "message_sha256": "e066551df21c9934fdda88664f4e9a250a9aab1a594f159a8f8b64964897c0d6"
+    },
+    {
+      "original_row_index": 10,
+      "original_row_canonical_sha256": "486dd89aeb2301fa36a43553135395bccc1352632addd6b9382385a52f99187b",
+      "message_sha256": "2cce51e548a91df3a7dbb9e156862fd90a32079e36d140ee6ba6961585598086"
+    },
+    {
+      "original_row_index": 11,
+      "original_row_canonical_sha256": "2bce883ce38d9272439739f29e98a3650486b70134694e6c58630776d735f8ed",
+      "message_sha256": "eb5577ac3572cba6888721d919b2a6365344ec2750a638987c2899df902f47d8"
+    },
+    {
+      "original_row_index": 12,
+      "original_row_canonical_sha256": "57a006f4d723cdaf1c596d53843bc5e24b68d6504119264591ab80d3cd50c553",
+      "message_sha256": "d0c2dcbe16030cd62597c8280d1e0107a4315f0dc333efc99f2e66e7bdede2fa"
+    },
+    {
+      "original_row_index": 13,
+      "original_row_canonical_sha256": "c572d0fef87dd43e60d6551ad808525eb163f0831d55003f29ecd0282f9ee888",
+      "message_sha256": "9036c83cf2ea65317c0b61b8c0c4c286eb37961860b7afda325b11e37238144d"
+    },
+    {
+      "original_row_index": 14,
+      "original_row_canonical_sha256": "ffc31004eb260dc5cbd762c0ebeb17a24bb9764b8f1fdf851e3f48d36a4aac9d",
+      "message_sha256": "d87d83244d0b0401a6fa92fe13dbec3da6693f9686a2f939bca880371ae93e80"
+    },
+    {
+      "original_row_index": 16,
+      "original_row_canonical_sha256": "f03d052ed5889c33c11e24955d6020d90fd7f751f74391654145477dd77078ef",
+      "message_sha256": "a79289a75470cb873fce0be0ff6b65ffd690e8a4262f678be2dff714ab476515"
+    },
+    {
+      "original_row_index": 17,
+      "original_row_canonical_sha256": "b815e289cf53d5aea576de2066673a242fdc975d1af5d239db25a2cc6955d442",
+      "message_sha256": "c7a3054ecec4f95bc1ad6bcbe77cd4936437bb7d643b9a9f89a629b4d4f946da"
+    },
+    {
+      "original_row_index": 18,
+      "original_row_canonical_sha256": "3f2636fe56ca0d8c46fcf3bd5c061c829281ac93141ee5d7f1550e3fab893b6d",
+      "message_sha256": "c318968e1672deaa92540b14ed08421f4d5e27ced365e44f4aa0ff03e995548a"
+    },
+    {
+      "original_row_index": 19,
+      "original_row_canonical_sha256": "27b08c839057a0fc2352c54173d024ecc8b5f9273837eebce0d66d2233d4fbff",
+      "message_sha256": "015524da86e0dfe91dd0ed077a3027525e3703c01715cd7e453047631f6b0f51"
+    },
+    {
+      "original_row_index": 20,
+      "original_row_canonical_sha256": "47391362a647dbf735d9d12a58f4abc4ae29c681a6adcdf79e7a493ef5f572f8",
+      "message_sha256": "3637e83c272928b1f49dace4f4c4ed1356308b526bc4f9c974a84bdb9d1de852"
+    },
+    {
+      "original_row_index": 21,
+      "original_row_canonical_sha256": "33bc0f0359ffa7b0566d13d5ce5ec32a438fce8b6abdd81edd6211cf2c4149b8",
+      "message_sha256": "6e97ee034c9d80796aa7c3bd81c8bc7b4a3c03649c9937b5ae57388fd9bf38d0"
+    },
+    {
+      "original_row_index": 23,
+      "original_row_canonical_sha256": "8dc98420abba0a45782b80bbf672f225e727ad0846b5ebee67ffb44e384fe54b",
+      "message_sha256": "ffb0e813388effd2221a541e1b08ebbb2f4bcca2016640165d191af16cbb8cef"
+    },
+    {
+      "original_row_index": 24,
+      "original_row_canonical_sha256": "63fa3ce5d95b09819a122a73c9bf34973a3bf6be2dc35a62e7ab89446952e33f",
+      "message_sha256": "9d4240de14e173dda29546f059153629d920d688fd62a5acf9569f237fe577a0"
+    }
+  ]
+}
