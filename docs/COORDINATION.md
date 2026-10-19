@@ -605,6 +605,11 @@ financial-setting change, automatic restart or paid service follows from this pr
 - Completion evidence: exact source version; synthetic test reproduction; historical validation report
   including fees/slippage and limitations; verified paper start and saved observations; live execution disabled.
 
+### OWNER-SWEEP-IFVG-001 — first exploratory replay complete; actual-contract validation OPEN
+- **October 19, 3:07 PM PDT:** owner requested testing profitability. Separate saved v1 simulator, fixed dates and all nine cost cases are implemented/reviewed. [First historical report](../research/ifvg_validation_2026-10-19/REPORT.md): 11 interior days, two simulated one-contract trades, baseline +$114/−$286.50 = **−$172.50**, every assumed-cost case negative (−$170.50 to −$174.50). Six no-sweep days and three rejected attempts retained; October 1 incomplete boundary remains unknown. Variable structural risk $58 versus $283.50 explains the dollar imbalance; no equal-risk or filtered-strategy result claimed.
+- Exact contract, adjustment/roll mapping and actual fees/platform/data costs remain unverified. This is a small public root-series proxy experiment, not actual fills, proven long-run edge or completion of the older TJR campaign. First header-format failure and all original sources retained; only strict ingestion corrected before prices, no strategy tuning. Existing TJR/Family A TEST untouched; paused reminder unchanged.
+- Next: verified licensed individual-contract history with full overnight/morning coverage, calendar/roll mapping and actual costs, then a separately frozen broader validation. Any changed dollar-risk policy needs its own prospective specification, not a post hoc deletion of the losing trade. Paper has not started; live execution disabled. No production source/settings/money actions. Existing Kalshi recovery and operating commitments stay OPEN.
+
 ### MODEL-CLI-001 — defaults load; standalone CLI role launch awaits sign-in refresh
 - **2026-10-14 1:00 PM PDT:** project default Sol, default subagent Sol and three-worker cap load under
   strict CLI 0.159.2 after the owner's authorized repository-only trust setting. The three named role
@@ -616,6 +621,14 @@ financial-setting change, automatic restart or paid service follows from this pr
   this item. No production, financial or credential-copy work is needed; chat delegation stays usable.
 
 ## Inbox (newest first)
+
+### 2026-10-19 22:07 UTC, Codex -> owner / workers: first IFVG sample loses; preserve the result (October 19, 3:07 PM PDT)
+
+[First frozen exploratory result](../research/ifvg_validation_2026-10-19/REPORT.md) is −$172.50 after baseline assumed fees/friction: 11 interior sessions, one winning/one losing simulated MNQ unit. Every cost case is negative. First five days +$114; unchanged later six −$286.50. Wider stop put $283.50 at risk on the loser versus $58 on the winner; no equal-risk profitability inference. Root-symbol contract/adjustment uncertainty, tiny sample, assumed fills/costs and missing October 1 Asian range remain explicit. Strict-header correction retained after first attempt failed before price parsing; no rule/cost/date tuning. Offline source/test/result records published separately from production. OWNER-SWEEP-IFVG-001 actual-contract/paper follow-up remains open; no real trades, deployment/settings/risk changes or old TEST access. Kalshi recovery remains unresolved.
+
+### 2026-10-19 21:57 UTC, Codex -> workers: implement and test owner's IFVG v1 offline (October19, 2:57 PM PDT)
+
+Owner explicitly asks to test profitability now. Root owns data qualification, evaluation scope, integration and records. Sol owns a standalone simulator plus meaningful tests under `research/ifvg_validation_2026-10-19/`; independent review follows exact source. Implement the saved `OWNER_SWEEP_IFVG_MNQ_v1` without tuning it to results. Obtain fresh public data evidence; freeze dataset, dates, costs and partitions before outcome inspection. If only a continuous/unverified-contract sample is available, any exploratory proxy study needs an explicitly separate declaration and cannot clear the actual-contract or profitability gate. No old TJR/FamilyA TEST access, real orders, production code/deployments/settings, funding or paid purchases. Existing Kalshi recovery stays open; the recurring TJR reminder stays paused.
 
 ### 2026-10-19 21:52 UTC, Codex -> owner / workers: proceed with explicit sweep/IFVG v1; video no longer required (October19, 2:52 PM PDT)
 

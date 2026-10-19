@@ -1,0 +1,77 @@
+"""Ingestion and accounting probes on invented records only."""
+from copy import deepcopy
+
+import pytest
+from run_study import parse_csv_rows, parse_rows, summarize
+
+
+def row(**kw):
+    values = {"t": "2026-10-02 09:30:00", "o": "100", "h": "101", "low": "99", "c": "100.25", "v": "4"}
+    values.update(kw)
+    return list(values.values())
+
+
+def test_source_clock_and_exact_ticks():
+    bar = parse_rows([row()])[0]
+    assert bar.timestamp.isoformat() == "2026-10-02T13:30:00+00:00"
+    assert (bar.open, bar.high, bar.low, bar.close) == (400, 404, 396, 401)
+
+
+def test_csv_exact_header_preserves_first_and_last_data_record():
+    header = ["timestamp", "open", "high", "low", "close", "volume"]
+    rows = [row(), row(t="2026-10-02 09:31:00")]
+    assert parse_csv_rows(iter([header, *rows])) == parse_rows(rows)
+
+
+def test_csv_missing_wrong_repeated_or_header_only_is_rejected():
+    header = ["timestamp", "open", "high", "low", "close", "volume"]
+    for rows in ([], [row()], [header], [["Timestamp", *header[1:]], row()],
+                 [header[::-1], row()], [header, header, row()]):
+        with pytest.raises(ValueError):
+            parse_csv_rows(rows)
+
+
+@pytest.mark.parametrize("changes", [{"o": "100.01"}, {"h": "NaN"}, {"low": "102"},
+                                    {"v": "-1"}, {"v": "1.5"}, {"c": "0"},
+                                    {"t": "2026-10-02 09:30:01"}, {"t": "2026-11-02 09:30:00"}])
+def test_invalid_source_never_becomes_clean_candle(changes):
+    with pytest.raises(ValueError):
+        parse_rows([row(**changes)])
+
+
+def test_empty_duplicates_and_unsorted_rejected():
+    for rows in ([], [row(), row()], [row(t="2026-10-02 09:31:00"), row()]):
+        with pytest.raises(ValueError):
+            parse_rows(rows)
+
+
+def day(date, net, gross, fees):
+    return {"session_date": date, "decision": "TRADE", "net_usd": net,
+            "trade": {"net_usd": net, "gross_usd": gross, "fees_usd": fees,
+                      "risk_ticks": 10, "ambiguous": False}}
+
+
+def test_known_losses_fees_and_zero_days_remain_in_totals():
+    rows = [day("a", "8.00", "10.00", "2.00"), day("b", "-7.00", "-5.00", "2.00"),
+            {"session_date": "c", "decision": "NO_TRADE", "trade": None, "net_usd": "0.00"}]
+    original = deepcopy(rows)
+    s = summarize(rows)
+    assert s["period_trading_net_usd"] == "1.00"
+    assert s["known_closed_fees_usd"] == "4.00"
+    assert s["mean_per_scheduled_session_usd"] == "0.33"
+    assert s["session_end_max_drawdown_usd"] == "7.00"
+    assert s["net_without_best_day_usd"] == "-7.00"
+    assert s["win_fraction"] == "1/2"
+    assert rows == original
+
+
+def test_unresolved_open_trade_retains_known_loss_and_entry_fee():
+    rows = [day("a", "-7.00", "-5.00", "2.00"),
+            {"session_date": "b", "decision": "UNRESOLVED", "net_usd": None,
+             "trade": {"net_usd": None, "entry_fee_usd": "1.00"}}]
+    s = summarize(rows)
+    assert s["known_closed_net_usd"] == "-7.00"
+    assert s["known_entry_fees_on_unresolved_usd"] == "1.00"
+    assert s["period_trading_net_usd"] is None
+    assert s["session_end_max_drawdown_usd"] is None
+    assert s["operating_net_usd"] is None
