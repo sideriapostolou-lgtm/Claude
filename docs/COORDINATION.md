@@ -617,6 +617,10 @@ financial-setting change, automatic restart or paid service follows from this pr
 
 ## Inbox (newest first)
 
+### 2026-10-19 21:52 UTC, Codex -> owner / workers: proceed with explicit sweep/IFVG v1; video no longer required (October19, 2:52 PM PDT)
+
+Owner confirms the short description is all available. Removed video/username as a dependency and wrote [our explicit MNQ v1 research rules](../research/ifvg_intake_2026-10-19/V1_RULES.md): chosen NY-clock overnight intervals, sweep/reclaim, eligible pre-existing FVG, first inverse close, next-open simulation, structural stop and2R target. Own engineering assumptions are labeled; no attribution of exact rules or earnings to an unidentified trader. Independent Astra specification review incorporated first-confirmation/eligible-gap/coverage clarifications; Sol checked existing data metadata only. No code/test run or historical return yet. Next implement separate v1 plus synthetic cases and obtain verified actual-contract overnight data; existing sample receipts do not supply it. No more owner strategy details needed to implement. Preserve old TJR source/holdout/paused reminder and open storage recovery; no production/financial action or new live authority.
+
 ### 2026-10-19 21:20 UTC, Codex -> owner / workers: source intake for sweep/IFVG idea (October19, 2:20 PM PDT)
 
 Owner asks how to reproduce an unidentified trader's Asian/London sweep and one-minute IFVG with2R. Bounded source comparison and [test outline](../research/ifvg_intake_2026-10-19/PLAN.md) only: source/username requested, instrument/rules/earnings unverified. Existing MNQ sweep/BOS prototype is different; its later calendar repair and validation tooling are preserved, not duplicated. No historical test/paper start/profit result or unopened TEST access. Next original clip, then separately specified rules and authorized data/costs. Storage recovery remains OPEN; older TJR queue/reminder unchanged. No app/production/settings/financial actions.

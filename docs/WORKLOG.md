@@ -1,5 +1,11 @@
 # Work log
 
+## 2026-10-19 21:52 UTC, Codex — owner description is sufficient for our own IFVG v1 (October19, 2:52 PM PDT)
+
+- Removed the prior video/username blocker after the owner confirmed no other information is available. [Version1 rules](../research/ifvg_intake_2026-10-19/V1_RULES.md) make the missing implementation choices explicitly: MNQ, NY-clock Asian/London ranges, first sweep/reclaim, selected pre-existing gap and first inverse close, next-open modeled entry, structural stop and2R, one attempt, time exit and conservative fill/cost assumptions. These are our research choices, not verified personal rules of the unidentified trader.
+- Independent Astra specification review clarified eligible-gap selection, first-confirmation priority, scheduled-minute completeness/unresolved gaps and11:30 opening-exit semantics. Sol's bounded existing metadata review found no verified complete overnight actual-contract bundle in the inspected records: FirstRate contract/coverage unverified; Portara partial session inadequate. No fresh network/data request, prices/TEST inspection, code implementation, synthetic rerun, backtest, profit result or paper start is claimed.
+- Next executable work: separate v1 signal/replay implementation and synthetic tests, with a verified full-session dataset/date split and actual-cost evidence before a real-cost historical verdict. No further owner strategy clarification is required to start implementation. Source/definition substep complete; historical validation and paper/live remain unfinished. Existing old TJR campaign/holdout/reminder and storage recovery retained. Docs/research only; no production release, money/settings/limits/stop/order/purchase action.
+
 ## 2026-10-19 21:20 UTC, Codex — unidentified sweep/IFVG idea scoped; source needed (October19, 2:20 PM PDT)
 
 - Owner asks how to reproduce a trader's Asian/London sweep, one-minute IFVG and 2R setup. [Source intake and test outline](../research/ifvg_intake_2026-10-19/PLAN.md) records the missing video/username, instrument and exact rules; requested the source. Earnings are reported, not independently verified. This is not a completed strategy or profitable backtest.

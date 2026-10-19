@@ -1,5 +1,11 @@
 # Asia/London sweep and one-minute IFVG: source intake
 
+**Owner clarification, October 19, 2:51 PM PDT:** the original description is all
+the owner has. A video/username is no longer a prerequisite. Proceed with our own
+explicit [version 1 rules](V1_RULES.md), with engineering assumptions labeled.
+The earlier source-intake request below is preserved as history, superseded by
+this clarification. No claim of exact trader replication or profits follows.
+
 October 19, 2026, 2:20 PM PDT. Owner asks how to reproduce an unidentified trader's
 reported success. This is a bounded source comparison and test outline, not a
 frozen strategy, implemented bot, completed backtest or permission to trade.
@@ -44,7 +50,7 @@ found public samples with wrong dates/contract or inadequate session coverage fo
 the old experiment. This is not proof that all possible sources are unavailable.
 No new data request, purchase, credential read or historical outcome was made.
 
-## Next steps, in order
+## Historical source-intake steps (video dependency superseded above)
 
 1. Identify the trader and instrument from the clip. Extract the actual rules and
    record source timestamps. Separate statements from assumptions and unresolved
@@ -77,7 +83,7 @@ gross break-even win rate is one third. With constant average costs c measured
 in R per trade, it becomes (1+c)/3. Real stop slippage, partial exits and variable
 costs change that model. A claimed 2R target alone establishes no profitability.
 
-## Scope and concrete next input
+## Historical source-intake scope (video dependency superseded above)
 
 Send the original video/post link or trader username; that is the next useful
 input, not funding or a larger Kalshi stake. No new live setup, production release,
