@@ -6,6 +6,53 @@ base `f0ce4f8c02692bcfc9ad7071080c4c1deafed098`, branch
 (October19 UTC). Runtime recovery, source correctness and profitability are
 separate acceptance items.
 
+## Follow-up, October18 5:32 PM PDT
+
+The bounded optimization investigation is complete; **no arena source change is
+accepted**. A tuple-value block scan improved some timings but failed a repeated
+p99 check and independent review found representation changes for signed zero
+and custom numeric equality. A final identity-preserving candidate passed4,550
+exact-delta cases but failed both original performance nodes, including11,536
+dropped events in the deep case. These were scratch process-local experiments,
+not the four-file storage patch or production. No thresholds, GC settings or
+encoding budgets changed. [Full retained triage](ARENA_FAILURE_TRIAGE.md) and
+[independent rejection](ARENA_BLOCK_SCAN_REVIEW.md). The required full-suite
+result remains6,332passed/2failed/14skipped; source release remains blocked.
+
+At **5:29:31PM PDT** the platform still reports the same active application and
+1/1online; the disk metric fetched then is4.996153344GB on the5000MB volume.
+The metrics API supplies no individual sample timestamp. Independent review
+caught an incorrect native event name in that follow-up log filter; its0rows
+do not establish native-status coverage. Its requested end5:30PM also exceeds
+the5:29:31PM response time. Both limitations and the original response remain
+in the [request/response receipt](FOLLOWUP_PLATFORM.json).
+
+The corrected query uses the actual `speeddesk_live_status` event, plus the
+existing halt/startup/disk-error names. Retrieved **5:32:07PM PDT**, it returns
+0rows for **5:00–5:31PM PDT** on the exact application deployment.
+[Corrected original request/response](CORRECTED_NATIVE_QUERY.json).
+Actual free space, authoritative state and current venue exposure remain unknown.
+
+The second normal Railway CLI sign-in expired without completion by5:29:03PM.
+No server shell or volume export succeeded. The prepared inventory reads only
+metadata; its15second/100,000regular-file bounds are cooperative, not hard syscall
+deadlines. It skips observed symlinks but is not directory-race/mount hardened;
+verify the actual stable volume before use. Hardlinks and open-deleted files mean
+file sums are not exact filesystem usage. Truncation/errors must stay visible.
+
+Next: complete normal Railway sign-in; obtain a coherent DB/WAL-aware Kalshi
+state/receipt/journal/archive export and original Polymarket state, plus fresh
+paginated venue balances/orders/positions/fills/settlements. Preserve originals
+and reconcile missing losses, liabilities and consumed controls before choosing
+an evidence-preserving capacity recovery. Continue arena profiling separately
+without changing release thresholds. No restart, new entry or profitable claim
+follows from valid old JSON, apparent free bytes or passing focused tests.
+
+The local source branch integrated published docs9d7b8b1 with merge98235b9;
+the four-file source candidate0f7eba1 is unchanged and unpublished. Initial
+docs/evidence publication9d7b8b1 was verified RailwaySKIPPED
+(`d9f03069-bf3f-4381-853b-710be74e19a1`), not a bot restart.
+
 ## Current facts
 
 Read-only Railway inspection around **October18, 5:01–5:03 PM PDT** still shows
