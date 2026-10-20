@@ -42,6 +42,12 @@ building, wait for it to finish.
 
 ## Deferred work queue
 
+### ECOM-001 — initial offer and small-budget operating test; launch OPEN
+- **October19, 6:03 PM PDT:** owner asks for an automated e-commerce team, the most promising current niche, and a first test around $50. Current bounded task: candidate evidence, original product/creative/support preparation and access mapping. Private launch brief and editable/PDF/source product draft saved and read back; two independent Sol work packages plus root integration/inspection. Candidate selection is a hypothesis, not validated profitability or a claim to have found the newest/best global niche.
+- **Prepared:** current-source comparison, proposed $50 total ceiling ($40 acquisition/$10 contingency; $0 charged), original draft product, three ad scripts, support drafts, source links and stage-by-stage operating map. No rendered ad/video, storefront, campaign, automated support, paying customer or continuous worker is claimed.
+- **Open and next:** target-user usability review; actual store/payment/Meta/support accounts, costs and permissions; final product/policy/preview and delivery/purchase/refund verification; only then a bounded sales test with every fee/refund/ad charge reconciled. New paid integrations and scaling are not inferred from the budget discussion. Private business materials and account identifiers stay out of this repository. Town roles remain planned until verified events exist.
+- Existing Kalshi recovery, operating handoff, recorder and town acceptance remain open. TJR reminder stays paused and research last; this task changes no trading service, production source, Railway settings or financial controls.
+
 **Owner work order — October18, 5:03 PM PDT:** investigate why the bot is off and losing, and fix both. Codex takes the storage/state failure and an independent actual-fill profitability assessment first. Prepare and test a bounded source repair under standing release approval; preserve money limits, losses, existing reduction-only admission and financial controls. Do not infer a profitable replacement or increase/restart budget from this request. Runtime recovery, current venue reconciliation and profitable-entry evidence remain separate acceptance items.
 
 **Owner work order — October 16, 1:12 PM PDT:** fix the diagnosed Kalshi entry/hedge failures. This supersedes the previous diagnosis-only scope for this task and authorizes a tested code correction with standing release verification. It does not change financial limits, stops, resume budgets, variables or new-live-desk authority. Keep other unfinished commitments on their existing records.
@@ -621,6 +627,10 @@ financial-setting change, automatic restart or paid service follows from this pr
   this item. No production, financial or credential-copy work is needed; chat delegation stays usable.
 
 ## Inbox (newest first)
+
+### 2026-10-20 01:03 UTC, Codex -> owner / workers: e-commerce preparation and launch queue (October19, 6:03 PM PDT)
+
+Root takes the owner's e-commerce request: research a first offer within the proposed small budget, prepare original product/creative/support drafts privately and verify connection gaps. Two bounded workers completed source comparison and workflow/product drafts; root reviewed evidence and packaging. Shared repository scope is append-only COORDINATION/WORKLOG, with no app/trading source edits. ECOM-001 stays open for operator usability, account connections, actual delivery/tracking and paid-market evidence. Product materials remain private. No purchase, campaign activation, customer message, external post, order, deployment, variable or money-control change occurred. Existing recovery commitments remain unresolved and preserved.
 
 ### 2026-10-19 22:07 UTC, Codex -> owner / workers: first IFVG sample loses; preserve the result (October 19, 3:07 PM PDT)
 
