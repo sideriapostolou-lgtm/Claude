@@ -42,12 +42,15 @@ building, wait for it to finish.
 
 ## Deferred work queue
 
+**Owner work order — October19,7:07PM PDT:** execute the e-commerce launch next, using the existing prepared offer and bounded proposed budget. Current task produces a reviewed product and demo; seller/payment access and real sales validation remainopen. Town candidate is preserved, with its existing recovery/release gates retained. This grants no new trading authority.
+
 **Owner work order — October19,6:20PM PDT:** execute the town update now. Current presentation candidate is implemented and privately preserved; release and owner acceptance remain open behind the existing production recovery and required-check gates. E-commerce is prepared work, not a launched or connected operation. This changes no financial authority.
 
 ### ECOM-001 — initial offer and small-budget operating test; launch OPEN
+- **October19,7:07PM PDT:** privatev0.2 product repaired/reviewed, one18-second demo rendered and complete22-file launch/evidence packet saved/read back. Actual source/file/video/arithmetic checks pass; no store/payment/support connection, cleaner trial, paid order or campaign verified. Current owner account inquiry pending. Next seller-owned free checkout, factual support/policies and operator/editor/delivery/payment checks, then bounded test; refresh town's prepared-creative status before its eventual release. No production or money-control change.
 - **October19,6:39PM PDT:** Company-town presentation implemented in local `dcfca453`; private source/screenshots preserved, not deployed. Six dated stages expose actual drafts and missing connections; no store/campaign/support worker or sales launched. Existing usability/accounts/delivery/cost/paid-market evidence requirements remain open. [Candidate record](TOWN_COMPANY_UPDATE_2026-10-19.md).
 - **October19, 6:03 PM PDT:** owner asks for an automated e-commerce team, the most promising current niche, and a first test around $50. Current bounded task: candidate evidence, original product/creative/support preparation and access mapping. Private launch brief and editable/PDF/source product draft saved and read back; two independent Sol work packages plus root integration/inspection. Candidate selection is a hypothesis, not validated profitability or a claim to have found the newest/best global niche.
-- **Prepared:** current-source comparison, proposed $50 total ceiling ($40 acquisition/$10 contingency; $0 charged), original draft product, three ad scripts, support drafts, source links and stage-by-stage operating map. No rendered ad/video, storefront, campaign, automated support, paying customer or continuous worker is claimed.
+- **Initial preparation,6:03PM PDT (superseded by progress above):** current-source comparison, proposed $50 total ceiling ($40 acquisition/$10 contingency; $0 charged), original draft product, three ad scripts, support drafts, source links and stage-by-stage operating map. No rendered ad/video, storefront, campaign, automated support, paying customer or continuous worker is claimed.
 - **Open and next:** target-user usability review; actual store/payment/Meta/support accounts, costs and permissions; final product/policy/preview and delivery/purchase/refund verification; only then a bounded sales test with every fee/refund/ad charge reconciled. New paid integrations and scaling are not inferred from the budget discussion. Private business materials and account identifiers stay out of this repository. Town roles remain planned until verified events exist.
 - Existing Kalshi recovery, operating handoff, recorder and town acceptance remain open. TJR reminder stays paused and research last; this task changes no trading service, production source, Railway settings or financial controls.
 
@@ -631,6 +634,10 @@ financial-setting change, automatic restart or paid service follows from this pr
   this item. No production, financial or credential-copy work is needed; chat delegation stays usable.
 
 ## Inbox (newest first)
+
+### 2026-10-20 02:07 UTC, Codex -> owner / workers: e-commerce launch preparation advanced; seller access pending (October19, 7:07 PM PDT)
+
+Owner asks to get the e-commerce operation moving. Root takes ECOM-001 launch preparation; two bounded Sol workers reviewed product/economics and produced one local private demo. Existing product defects repaired and exactv0.2 package/evidence privately preserved; current store/payment/support access, operator usability and checkout/paid-market proof still missing. No ad spend, outreach, store publication, production operation or continuous agent claimed. Current account inquiry remains pending; do not repeat previously completed niche research or call a file/demo a profitable business. Before future town release, update its dated prepared-creative status. Existing recovery, town release, handoff and recorder queues remainopen; unwanted TJR reminder stayspaused.
 
 ### 2026-10-20 01:39 UTC, Codex -> owner / workers: company town implemented; release BLOCKED (October19, 6:39 PM PDT)
 
