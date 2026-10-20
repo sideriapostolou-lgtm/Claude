@@ -628,6 +628,10 @@ financial-setting change, automatic restart or paid service follows from this pr
 
 ## Inbox (newest first)
 
+### 2026-10-20 01:21 UTC, Codex -> owner / workers: execute company town update (October19, 6:21 PM PDT)
+
+Owner explicitly asks to execute and switch up the town. Root takes a presentation-only company workflow view, preserving the existing trading view, authentic balances/P&L, source ages and real/practice separation. Current e-commerce work is prepared drafts and disconnected launch stages, not a live store or sales operation. Assign isolated worktree based on79e1225: one Sol worker owns company UI plus its new module/tests; one Sol worker owns bounded architectural art only; root owns integration/browser QA and records, with independent review before release. No trading/config/controller/accounting/engine change, paid ad launch or invented progress. Production still reports old43f14443 online while bounded native status query returns0rows; unresolved disk/state/reconciliation must be checked before any shared-service restart. Do all authorized implementation and review now; publish exact release evidence or the concrete remaining blocker, not a claim that a preview is the live app. Existing commitments retained; TJR reminder remains paused.
+
 ### 2026-10-20 01:03 UTC, Codex -> owner / workers: e-commerce preparation and launch queue (October19, 6:03 PM PDT)
 
 Root takes the owner's e-commerce request: research a first offer within the proposed small budget, prepare original product/creative/support drafts privately and verify connection gaps. Two bounded workers completed source comparison and workflow/product drafts; root reviewed evidence and packaging. Shared repository scope is append-only COORDINATION/WORKLOG, with no app/trading source edits. ECOM-001 stays open for operator usability, account connections, actual delivery/tracking and paid-market evidence. Product materials remain private. No purchase, campaign activation, customer message, external post, order, deployment, variable or money-control change occurred. Existing recovery commitments remain unresolved and preserved.
