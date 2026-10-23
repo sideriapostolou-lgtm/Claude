@@ -1,0 +1,1709 @@
+{
+  "expected_source": "66561e4ee43c962292347693e98ea00986f5db35",
+  "expected_deployment": "99bf5b9e-72b2-4912-a7cb-8a3db414133b",
+  "source_identity_is_root_verified_not_proved_by_this_script": true,
+  "bounds_utc": {
+    "start": "2026-10-16T03:00:00+00:00",
+    "end": "2026-10-16T03:15:00+00:00",
+    "tail_end": "2026-10-16T03:17:00+00:00"
+  },
+  "inputs_sha256": {
+    "/workspace/private-handoffs/claude-2026-10-15/maker-parity-2026-10-16/native/CAPTURE_ws_gap.native.json": "51e1e6c137ed378e2d2fa450e76a9a46c5d7a6fadc720b71cae66655f390cf1a",
+    "/workspace/private-handoffs/claude-2026-10-15/maker-parity-2026-10-16/native/CAPTURE_ws_timing.native.json": "12befdb9a7c899a86815ac05276bb730af2dfcfccf0f039422d93397e4bc9c8e",
+    "/workspace/private-handoffs/claude-2026-10-15/maker-parity-2026-10-16/native/CAPTURE_ws_unavailable.native.json": "d7a45c9cc79d11ac9c9b5e380e14de058bfd76bbade33d751d415b2abca2bf05"
+  },
+  "queries": [
+    {
+      "input": "/workspace/private-handoffs/claude-2026-10-15/maker-parity-2026-10-16/native/CAPTURE_ws_gap.native.json",
+      "request": {
+        "projectId": "75750847-85c0-41a3-a2a7-b7f2201a51e9",
+        "deploymentId": "99bf5b9e-72b2-4912-a7cb-8a3db414133b",
+        "startDate": "2026-10-16T03:00:00Z",
+        "endDate": "2026-10-16T03:17:00Z",
+        "filter": "\"WARNING nightcrawler.speeddesk_kalshi_ws: speeddesk_feed_kalshi_ws_gap \"",
+        "limit": 500,
+        "types": [
+          "deploy"
+        ]
+      },
+      "before": {
+        "current_time": "2026-10-16 03:17:36 UTC"
+      },
+      "after": {
+        "current_time": "2026-10-16 03:17:38 UTC"
+      },
+      "count": 10,
+      "saturated": false,
+      "isError": false,
+      "deployment_matches": true
+    },
+    {
+      "input": "/workspace/private-handoffs/claude-2026-10-15/maker-parity-2026-10-16/native/CAPTURE_ws_timing.native.json",
+      "request": {
+        "projectId": "75750847-85c0-41a3-a2a7-b7f2201a51e9",
+        "deploymentId": "99bf5b9e-72b2-4912-a7cb-8a3db414133b",
+        "startDate": "2026-10-16T03:00:00Z",
+        "endDate": "2026-10-16T03:17:00Z",
+        "filter": "\"INFO nightcrawler.speeddesk_kalshi_ws: speeddesk_feed_kalshi_ws_timing \"",
+        "limit": 500,
+        "types": [
+          "deploy"
+        ]
+      },
+      "before": {
+        "current_time": "2026-10-16 03:17:36 UTC"
+      },
+      "after": {
+        "current_time": "2026-10-16 03:17:38 UTC"
+      },
+      "count": 29,
+      "saturated": false,
+      "isError": false,
+      "deployment_matches": true
+    },
+    {
+      "input": "/workspace/private-handoffs/claude-2026-10-15/maker-parity-2026-10-16/native/CAPTURE_ws_unavailable.native.json",
+      "request": {
+        "projectId": "75750847-85c0-41a3-a2a7-b7f2201a51e9",
+        "deploymentId": "99bf5b9e-72b2-4912-a7cb-8a3db414133b",
+        "startDate": "2026-10-16T03:00:00Z",
+        "endDate": "2026-10-16T03:17:00Z",
+        "filter": "\"INFO nightcrawler.speeddesk_kalshi_ws: speeddesk_feed_kalshi_ws_timing_unavailable\"",
+        "limit": 500,
+        "types": [
+          "deploy"
+        ]
+      },
+      "before": {
+        "current_time": "2026-10-16 03:17:36 UTC"
+      },
+      "after": {
+        "current_time": "2026-10-16 03:17:38 UTC"
+      },
+      "count": 0,
+      "saturated": false,
+      "isError": false,
+      "deployment_matches": true
+    }
+  ],
+  "event_counts": {
+    "speeddesk_feed_kalshi_ws_gap": 10,
+    "speeddesk_feed_kalshi_ws_timing": 29
+  },
+  "unknown_counts_all_populations": {
+    "receipt_overflow": 11
+  },
+  "input_problems": [],
+  "conflicts": [],
+  "excluded": {},
+  "groups": {
+    "target/main/gap": {
+      "logged_rows": 7,
+      "observed_sessions": [
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9
+      ],
+      "valid_known": 0,
+      "unknown": {
+        "receipt_overflow": 7
+      },
+      "accepted_after_call": 0,
+      "over_1000": 0,
+      "over_3000": 0,
+      "over_1000_with_shown_checkpoint_overlap": 0,
+      "max_accepted_to_recv_call_ms": null
+    },
+    "target/main/status": {
+      "logged_rows": 18,
+      "observed_sessions": [
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10
+      ],
+      "valid_known": 15,
+      "unknown": {
+        "receipt_overflow": 3
+      },
+      "accepted_after_call": 9,
+      "over_1000": 0,
+      "over_3000": 0,
+      "over_1000_with_shown_checkpoint_overlap": 0,
+      "max_accepted_to_recv_call_ms": 911.9824380613863
+    },
+    "target/unknown_reader/gap": {
+      "logged_rows": 0,
+      "observed_sessions": [],
+      "valid_known": 0,
+      "unknown": {},
+      "accepted_after_call": 0,
+      "over_1000": 0,
+      "over_3000": 0,
+      "over_1000_with_shown_checkpoint_overlap": 0,
+      "max_accepted_to_recv_call_ms": null
+    },
+    "target/unknown_reader/status": {
+      "logged_rows": 0,
+      "observed_sessions": [],
+      "valid_known": 0,
+      "unknown": {},
+      "accepted_after_call": 0,
+      "over_1000": 0,
+      "over_3000": 0,
+      "over_1000_with_shown_checkpoint_overlap": 0,
+      "max_accepted_to_recv_call_ms": null
+    },
+    "tail/main/gap": {
+      "logged_rows": 1,
+      "observed_sessions": [
+        11
+      ],
+      "valid_known": 0,
+      "unknown": {
+        "receipt_overflow": 1
+      },
+      "accepted_after_call": 0,
+      "over_1000": 0,
+      "over_3000": 0,
+      "over_1000_with_shown_checkpoint_overlap": 0,
+      "max_accepted_to_recv_call_ms": null
+    },
+    "tail/main/status": {
+      "logged_rows": 3,
+      "observed_sessions": [
+        11,
+        12
+      ],
+      "valid_known": 3,
+      "unknown": {},
+      "accepted_after_call": 2,
+      "over_1000": 0,
+      "over_3000": 0,
+      "over_1000_with_shown_checkpoint_overlap": 0,
+      "max_accepted_to_recv_call_ms": 114.03651209548116
+    },
+    "tail/unknown_reader/gap": {
+      "logged_rows": 0,
+      "observed_sessions": [],
+      "valid_known": 0,
+      "unknown": {},
+      "accepted_after_call": 0,
+      "over_1000": 0,
+      "over_3000": 0,
+      "over_1000_with_shown_checkpoint_overlap": 0,
+      "max_accepted_to_recv_call_ms": null
+    },
+    "tail/unknown_reader/status": {
+      "logged_rows": 0,
+      "observed_sessions": [],
+      "valid_known": 0,
+      "unknown": {},
+      "accepted_after_call": 0,
+      "over_1000": 0,
+      "over_3000": 0,
+      "over_1000_with_shown_checkpoint_overlap": 0,
+      "max_accepted_to_recv_call_ms": null
+    }
+  },
+  "originals": [
+    {
+      "timestamp": "2026-10-16T03:00:14.711133900Z",
+      "segment": "target",
+      "event": "speeddesk_feed_kalshi_ws_gap",
+      "level": "WARNING",
+      "text": "reason=market_set_changed reader_kind=speeddesk reader_instance=1 reader_process=1 reader_session=2",
+      "reader_session_context": {
+        "kind": "speeddesk",
+        "instance": 1,
+        "process": 1,
+        "session": 2
+      }
+    },
+    {
+      "timestamp": "2026-10-16T03:00:15.869297932Z",
+      "segment": "target",
+      "event": "speeddesk_feed_kalshi_ws_timing",
+      "level": "INFO",
+      "reader": {
+        "kind": "speeddesk",
+        "instance": 1,
+        "process": 1
+      },
+      "session": 3,
+      "timing_event": "status",
+      "kind": "subscribed",
+      "receipt": {
+        "ordinal": 1,
+        "status": "known",
+        "accepted_monotonic": 3650722.284551154,
+        "accepted_wall": 1792119615.8470392,
+        "received_monotonic": 3650722.284596404,
+        "received_wall": 1792119615.8470843,
+        "residence_ms": 0.045250169932842255
+      },
+      "connection": {
+        "accepted": 6,
+        "received": 1,
+        "retained": 5,
+        "overflow": 0,
+        "unknown": 0,
+        "known": 1,
+        "max_residence_ms": 0.045250169932842255,
+        "disabled": 0,
+        "errors": 0,
+        "unsupported": 0
+      },
+      "previous_message": null,
+      "population": "main",
+      "apply_wall_segment": "target",
+      "segments_ms": {
+        "accepted_to_recv_call_ms": -31.170052010565996,
+        "recv_call_to_receipt_ms": 31.21530218049884,
+        "receipt_to_return_ms": 0.013669952750205994,
+        "return_to_apply_ms": 0.030979979783296585
+      },
+      "accepted_before_recv_call": false,
+      "over_1000": false,
+      "over_3000": false,
+      "acceptance_wall_before_target": false
+    },
+    {
+      "timestamp": "2026-10-16T03:01:07.114565839Z",
+      "segment": "target",
+      "event": "speeddesk_feed_kalshi_ws_timing",
+      "level": "INFO",
+      "reader": {
+        "kind": "speeddesk",
+        "instance": 1,
+        "process": 1
+      },
+      "session": 3,
+      "timing_event": "gap",
+      "kind": "orderbook_delta",
+      "receipt": {
+        "ordinal": 30672,
+        "status": "overflow",
+        "accepted_monotonic": null,
+        "accepted_wall": null,
+        "received_monotonic": 3650770.137644056,
+        "received_wall": 1792119663.700132,
+        "residence_ms": null
+      },
+      "connection": {
+        "accepted": 32584,
+        "received": 30672,
+        "retained": 256,
+        "overflow": 16228,
+        "unknown": 14572,
+        "known": 16100,
+        "max_residence_ms": 2297.4499869160354,
+        "disabled": 0,
+        "errors": 0,
+        "unsupported": 0
+      },
+      "previous_message": {
+        "processing_ms": 0.8282419294118881,
+        "yield_resume_ms": 327.08430336788297
+      },
+      "population": "main",
+      "apply_wall_segment": "target",
+      "unknown": "receipt_overflow"
+    },
+    {
+      "timestamp": "2026-10-16T03:01:07.116080715Z",
+      "segment": "target",
+      "event": "speeddesk_feed_kalshi_ws_gap",
+      "level": "WARNING",
+      "text": "reason=timestamp_missing_or_stale:orderbook_delta_network:age_s=3.115 reader_kind=speeddesk reader_instance=1 reader_process=1 reader_session=3",
+      "reader_session_context": {
+        "kind": "speeddesk",
+        "instance": 1,
+        "process": 1,
+        "session": 3
+      }
+    },
+    {
+      "timestamp": "2026-10-16T03:01:07.524528702Z",
+      "segment": "target",
+      "event": "speeddesk_feed_kalshi_ws_timing",
+      "level": "INFO",
+      "reader": {
+        "kind": "speeddesk",
+        "instance": 1,
+        "process": 1
+      },
+      "session": 4,
+      "timing_event": "status",
+      "kind": "subscribed",
+      "receipt": {
+        "ordinal": 1,
+        "status": "known",
+        "accepted_monotonic": 3650773.957533767,
+        "accepted_wall": 1792119667.520023,
+        "received_monotonic": 3650773.957774434,
+        "received_wall": 1792119667.5202625,
+        "residence_ms": 0.24066679179668427
+      },
+      "connection": {
+        "accepted": 14,
+        "received": 1,
+        "retained": 13,
+        "overflow": 0,
+        "unknown": 0,
+        "known": 1,
+        "max_residence_ms": 0.24066679179668427,
+        "disabled": 0,
+        "errors": 0,
+        "unsupported": 0
+      },
+      "previous_message": null,
+      "population": "main",
+      "apply_wall_segment": "target",
+      "segments_ms": {
+        "accepted_to_recv_call_ms": -46.70940386131406,
+        "recv_call_to_receipt_ms": 46.95007065311074,
+        "receipt_to_return_ms": 0.022240448743104935,
+        "return_to_apply_ms": 0.055688899010419846
+      },
+      "accepted_before_recv_call": false,
+      "over_1000": false,
+      "over_3000": false,
+      "acceptance_wall_before_target": false
+    },
+    {
+      "timestamp": "2026-10-16T03:01:30.990101644Z",
+      "segment": "target",
+      "event": "speeddesk_feed_kalshi_ws_timing",
+      "level": "INFO",
+      "reader": {
+        "kind": "speeddesk",
+        "instance": 1,
+        "process": 1
+      },
+      "session": 4,
+      "timing_event": "gap",
+      "kind": "orderbook_delta",
+      "receipt": {
+        "ordinal": 10254,
+        "status": "overflow",
+        "accepted_monotonic": null,
+        "accepted_wall": null,
+        "received_monotonic": 3650789.001725861,
+        "received_wall": 1792119682.5642138,
+        "residence_ms": null
+      },
+      "connection": {
+        "accepted": 12525,
+        "received": 10254,
+        "retained": 256,
+        "overflow": 6392,
+        "unknown": 4377,
+        "known": 5877,
+        "max_residence_ms": 2508.7772170081735,
+        "disabled": 0,
+        "errors": 0,
+        "unsupported": 0
+      },
+      "previous_message": {
+        "processing_ms": 0.33404678106307983,
+        "yield_resume_ms": 39.07419089227915
+      },
+      "population": "main",
+      "apply_wall_segment": "target",
+      "unknown": "receipt_overflow"
+    },
+    {
+      "timestamp": "2026-10-16T03:01:30.990111624Z",
+      "segment": "target",
+      "event": "speeddesk_feed_kalshi_ws_gap",
+      "level": "WARNING",
+      "text": "reason=timestamp_missing_or_stale:orderbook_delta_network:age_s=3.005 reader_kind=speeddesk reader_instance=1 reader_process=1 reader_session=4",
+      "reader_session_context": {
+        "kind": "speeddesk",
+        "instance": 1,
+        "process": 1,
+        "session": 4
+      }
+    },
+    {
+      "timestamp": "2026-10-16T03:01:30.990120204Z",
+      "segment": "target",
+      "event": "speeddesk_feed_kalshi_ws_timing",
+      "level": "INFO",
+      "reader": {
+        "kind": "speeddesk",
+        "instance": 1,
+        "process": 1
+      },
+      "session": 5,
+      "timing_event": "status",
+      "kind": "subscribed",
+      "receipt": {
+        "ordinal": 1,
+        "status": "known",
+        "accepted_monotonic": 3650792.249145557,
+        "accepted_wall": 1792119685.8116338,
+        "received_monotonic": 3650792.262472368,
+        "received_wall": 1792119685.8249605,
+        "residence_ms": 13.326810672879219
+      },
+      "connection": {
+        "accepted": 7,
+        "received": 1,
+        "retained": 6,
+        "overflow": 0,
+        "unknown": 0,
+        "known": 1,
+        "max_residence_ms": 13.326810672879219,
+        "disabled": 0,
+        "errors": 0,
+        "unsupported": 0
+      },
+      "previous_message": null,
+      "population": "main",
+      "apply_wall_segment": "target",
+      "segments_ms": {
+        "accepted_to_recv_call_ms": -26.62025298923254,
+        "recv_call_to_receipt_ms": 39.94706366211176,
+        "receipt_to_return_ms": 0.016269274055957794,
+        "return_to_apply_ms": 0.036430079489946365
+      },
+      "accepted_before_recv_call": false,
+      "over_1000": false,
+      "over_3000": false,
+      "acceptance_wall_before_target": false
+    },
+    {
+      "timestamp": "2026-10-16T03:01:51.913476053Z",
+      "segment": "target",
+      "event": "speeddesk_feed_kalshi_ws_timing",
+      "level": "INFO",
+      "reader": {
+        "kind": "speeddesk",
+        "instance": 1,
+        "process": 1
+      },
+      "session": 5,
+      "timing_event": "gap",
+      "kind": "orderbook_delta",
+      "receipt": {
+        "ordinal": 17275,
+        "status": "overflow",
+        "accepted_monotonic": null,
+        "accepted_wall": null,
+        "received_monotonic": 3650818.293757448,
+        "received_wall": 1792119711.8562455,
+        "residence_ms": null
+      },
+      "connection": {
+        "accepted": 19294,
+        "received": 17275,
+        "retained": 256,
+        "overflow": 8278,
+        "unknown": 6515,
+        "known": 10760,
+        "max_residence_ms": 1885.9224352054298,
+        "disabled": 0,
+        "errors": 0,
+        "unsupported": 0
+      },
+      "previous_message": {
+        "processing_ms": 0.47545507550239563,
+        "yield_resume_ms": 32.651038840413094
+      },
+      "population": "main",
+      "apply_wall_segment": "target",
+      "unknown": "receipt_overflow"
+    },
+    {
+      "timestamp": "2026-10-16T03:01:53.907598610Z",
+      "segment": "target",
+      "event": "speeddesk_feed_kalshi_ws_gap",
+      "level": "WARNING",
+      "text": "reason=timestamp_missing_or_stale:orderbook_delta_network:age_s=3.008 reader_kind=speeddesk reader_instance=1 reader_process=1 reader_session=5",
+      "reader_session_context": {
+        "kind": "speeddesk",
+        "instance": 1,
+        "process": 1,
+        "session": 5
+      }
+    },
+    {
+      "timestamp": "2026-10-16T03:01:55.325550431Z",
+      "segment": "target",
+      "event": "speeddesk_feed_kalshi_ws_timing",
+      "level": "INFO",
+      "reader": {
+        "kind": "speeddesk",
+        "instance": 1,
+        "process": 1
+      },
+      "session": 6,
+      "timing_event": "status",
+      "kind": "subscribed",
+      "receipt": {
+        "ordinal": 1,
+        "status": "known",
+        "accepted_monotonic": 3650821.702806974,
+        "accepted_wall": 1792119715.265295,
+        "received_monotonic": 3650821.702853773,
+        "received_wall": 1792119715.2653418,
+        "residence_ms": 0.046798959374427795
+      },
+      "connection": {
+        "accepted": 9,
+        "received": 1,
+        "retained": 8,
+        "overflow": 0,
+        "unknown": 0,
+        "known": 1,
+        "max_residence_ms": 0.046798959374427795,
+        "disabled": 0,
+        "errors": 0,
+        "unsupported": 0
+      },
+      "previous_message": null,
+      "population": "main",
+      "apply_wall_segment": "target",
+      "segments_ms": {
+        "accepted_to_recv_call_ms": -32.84293692559004,
+        "recv_call_to_receipt_ms": 32.889735884964466,
+        "receipt_to_return_ms": 0.013990327715873718,
+        "return_to_apply_ms": 0.023389700800180435
+      },
+      "accepted_before_recv_call": false,
+      "over_1000": false,
+      "over_3000": false,
+      "acceptance_wall_before_target": false
+    },
+    {
+      "timestamp": "2026-10-16T03:02:54.643032452Z",
+      "segment": "target",
+      "event": "speeddesk_feed_kalshi_ws_timing",
+      "level": "INFO",
+      "reader": {
+        "kind": "speeddesk",
+        "instance": 1,
+        "process": 1
+      },
+      "session": 6,
+      "timing_event": "gap",
+      "kind": "orderbook_delta",
+      "receipt": {
+        "ordinal": 39846,
+        "status": "overflow",
+        "accepted_monotonic": null,
+        "accepted_wall": null,
+        "received_monotonic": 3650881.039601051,
+        "received_wall": 1792119774.602089,
+        "residence_ms": null
+      },
+      "connection": {
+        "accepted": 42268,
+        "received": 39846,
+        "retained": 256,
+        "overflow": 20071,
+        "unknown": 17905,
+        "known": 21941,
+        "max_residence_ms": 2457.6324662193656,
+        "disabled": 0,
+        "errors": 0,
+        "unsupported": 0
+      },
+      "previous_message": {
+        "processing_ms": 0.4057767800986767,
+        "yield_resume_ms": 166.0292148590088
+      },
+      "population": "main",
+      "apply_wall_segment": "target",
+      "unknown": "receipt_overflow"
+    },
+    {
+      "timestamp": "2026-10-16T03:02:56.620423599Z",
+      "segment": "target",
+      "event": "speeddesk_feed_kalshi_ws_gap",
+      "level": "WARNING",
+      "text": "reason=timestamp_missing_or_stale:orderbook_delta_network:age_s=3.114 reader_kind=speeddesk reader_instance=1 reader_process=1 reader_session=6",
+      "reader_session_context": {
+        "kind": "speeddesk",
+        "instance": 1,
+        "process": 1,
+        "session": 6
+      }
+    },
+    {
+      "timestamp": "2026-10-16T03:02:57.943046397Z",
+      "segment": "target",
+      "event": "speeddesk_feed_kalshi_ws_timing",
+      "level": "INFO",
+      "reader": {
+        "kind": "speeddesk",
+        "instance": 1,
+        "process": 1
+      },
+      "session": 7,
+      "timing_event": "status",
+      "kind": "subscribed",
+      "receipt": {
+        "ordinal": 1,
+        "status": "known",
+        "accepted_monotonic": 3650884.284173843,
+        "accepted_wall": 1792119777.846662,
+        "received_monotonic": 3650884.284270562,
+        "received_wall": 1792119777.8467586,
+        "residence_ms": 0.09671924635767937
+      },
+      "connection": {
+        "accepted": 5,
+        "received": 1,
+        "retained": 4,
+        "overflow": 0,
+        "unknown": 0,
+        "known": 1,
+        "max_residence_ms": 0.09671924635767937,
+        "disabled": 0,
+        "errors": 0,
+        "unsupported": 0
+      },
+      "previous_message": null,
+      "population": "main",
+      "apply_wall_segment": "target",
+      "segments_ms": {
+        "accepted_to_recv_call_ms": -45.34698510542512,
+        "recv_call_to_receipt_ms": 45.4437043517828,
+        "receipt_to_return_ms": 0.01753866672515869,
+        "return_to_apply_ms": 0.043390318751335144
+      },
+      "accepted_before_recv_call": false,
+      "over_1000": false,
+      "over_3000": false,
+      "acceptance_wall_before_target": false
+    },
+    {
+      "timestamp": "2026-10-16T03:03:47.661688642Z",
+      "segment": "target",
+      "event": "speeddesk_feed_kalshi_ws_timing",
+      "level": "INFO",
+      "reader": {
+        "kind": "speeddesk",
+        "instance": 1,
+        "process": 1
+      },
+      "session": 7,
+      "timing_event": "gap",
+      "kind": "orderbook_delta",
+      "receipt": {
+        "ordinal": 30822,
+        "status": "overflow",
+        "accepted_monotonic": null,
+        "accepted_wall": null,
+        "received_monotonic": 3650934.026629895,
+        "received_wall": 1792119827.5891178,
+        "residence_ms": null
+      },
+      "connection": {
+        "accepted": 32066,
+        "received": 30822,
+        "retained": 256,
+        "overflow": 11924,
+        "unknown": 10936,
+        "known": 19886,
+        "max_residence_ms": 1525.8751129731536,
+        "disabled": 0,
+        "errors": 0,
+        "unsupported": 0
+      },
+      "previous_message": {
+        "processing_ms": 0.3467658534646034,
+        "yield_resume_ms": 0.015730038285255432
+      },
+      "population": "main",
+      "apply_wall_segment": "target",
+      "unknown": "receipt_overflow"
+    },
+    {
+      "timestamp": "2026-10-16T03:03:49.612356923Z",
+      "segment": "target",
+      "event": "speeddesk_feed_kalshi_ws_gap",
+      "level": "WARNING",
+      "text": "reason=timestamp_missing_or_stale:book_engine:age_s=3.000 reader_kind=speeddesk reader_instance=1 reader_process=1 reader_session=7",
+      "reader_session_context": {
+        "kind": "speeddesk",
+        "instance": 1,
+        "process": 1,
+        "session": 7
+      }
+    },
+    {
+      "timestamp": "2026-10-16T03:03:51.077868463Z",
+      "segment": "target",
+      "event": "speeddesk_feed_kalshi_ws_timing",
+      "level": "INFO",
+      "reader": {
+        "kind": "speeddesk",
+        "instance": 1,
+        "process": 1
+      },
+      "session": 8,
+      "timing_event": "status",
+      "kind": "subscribed",
+      "receipt": {
+        "ordinal": 1,
+        "status": "known",
+        "accepted_monotonic": 3650937.289135001,
+        "accepted_wall": 1792119830.851623,
+        "received_monotonic": 3650937.302254994,
+        "received_wall": 1792119830.864743,
+        "residence_ms": 13.119992800056934
+      },
+      "connection": {
+        "accepted": 12,
+        "received": 1,
+        "retained": 11,
+        "overflow": 0,
+        "unknown": 0,
+        "known": 1,
+        "max_residence_ms": 13.119992800056934,
+        "disabled": 0,
+        "errors": 0,
+        "unsupported": 0
+      },
+      "previous_message": null,
+      "population": "main",
+      "apply_wall_segment": "target",
+      "segments_ms": {
+        "accepted_to_recv_call_ms": -40.3268001973629,
+        "recv_call_to_receipt_ms": 53.446792997419834,
+        "receipt_to_return_ms": 0.01434003934264183,
+        "return_to_apply_ms": 0.017278827726840973
+      },
+      "accepted_before_recv_call": false,
+      "over_1000": false,
+      "over_3000": false,
+      "acceptance_wall_before_target": false
+    },
+    {
+      "timestamp": "2026-10-16T03:04:53.948281790Z",
+      "segment": "target",
+      "event": "speeddesk_feed_kalshi_ws_timing",
+      "level": "INFO",
+      "reader": {
+        "kind": "speeddesk",
+        "instance": 1,
+        "process": 1
+      },
+      "session": 8,
+      "timing_event": "status",
+      "kind": "orderbook_delta",
+      "receipt": {
+        "ordinal": 37303,
+        "status": "known",
+        "accepted_monotonic": 3650997.138443959,
+        "accepted_wall": 1792119890.7009318,
+        "received_monotonic": 3650997.350768568,
+        "received_wall": 1792119890.9132564,
+        "residence_ms": 212.32460904866457
+      },
+      "connection": {
+        "accepted": 37317,
+        "received": 37303,
+        "retained": 14,
+        "overflow": 11753,
+        "unknown": 11753,
+        "known": 25550,
+        "max_residence_ms": 2321.8645029701293,
+        "disabled": 0,
+        "errors": 0,
+        "unsupported": 0
+      },
+      "previous_message": {
+        "processing_ms": 0.676044262945652,
+        "yield_resume_ms": 173.18355990573764
+      },
+      "population": "main",
+      "apply_wall_segment": "target",
+      "segments_ms": {
+        "accepted_to_recv_call_ms": 212.30134926736355,
+        "recv_call_to_receipt_ms": 0.023259781301021576,
+        "receipt_to_return_ms": 0.01488998532295227,
+        "return_to_apply_ms": 0.04358915612101555
+      },
+      "accepted_before_recv_call": true,
+      "over_1000": false,
+      "over_3000": false,
+      "acceptance_wall_before_target": false
+    },
+    {
+      "timestamp": "2026-10-16T03:05:19.968690710Z",
+      "segment": "target",
+      "event": "speeddesk_feed_kalshi_ws_timing",
+      "level": "INFO",
+      "reader": {
+        "kind": "speeddesk",
+        "instance": 1,
+        "process": 1
+      },
+      "session": 8,
+      "timing_event": "gap",
+      "kind": "orderbook_delta",
+      "receipt": {
+        "ordinal": 52745,
+        "status": "overflow",
+        "accepted_monotonic": null,
+        "accepted_wall": null,
+        "received_monotonic": 3651022.210827371,
+        "received_wall": 1792119915.7733154,
+        "residence_ms": null
+      },
+      "connection": {
+        "accepted": 53236,
+        "received": 52745,
+        "retained": 256,
+        "overflow": 19077,
+        "unknown": 18842,
+        "known": 33903,
+        "max_residence_ms": 2321.8645029701293,
+        "disabled": 0,
+        "errors": 0,
+        "unsupported": 0
+      },
+      "previous_message": {
+        "processing_ms": 0.5608652718365192,
+        "yield_resume_ms": 0.011689960956573486
+      },
+      "population": "main",
+      "apply_wall_segment": "target",
+      "unknown": "receipt_overflow"
+    },
+    {
+      "timestamp": "2026-10-16T03:05:19.968694120Z",
+      "segment": "target",
+      "event": "speeddesk_feed_kalshi_ws_gap",
+      "level": "WARNING",
+      "text": "reason=timestamp_missing_or_stale:book_engine:age_s=3.000 reader_kind=speeddesk reader_instance=1 reader_process=1 reader_session=8",
+      "reader_session_context": {
+        "kind": "speeddesk",
+        "instance": 1,
+        "process": 1,
+        "session": 8
+      }
+    },
+    {
+      "timestamp": "2026-10-16T03:05:19.968697560Z",
+      "segment": "target",
+      "event": "speeddesk_feed_kalshi_ws_timing",
+      "level": "INFO",
+      "reader": {
+        "kind": "speeddesk",
+        "instance": 1,
+        "process": 1
+      },
+      "session": 9,
+      "timing_event": "status",
+      "kind": "subscribed",
+      "receipt": {
+        "ordinal": 1,
+        "status": "known",
+        "accepted_monotonic": 3651025.768791024,
+        "accepted_wall": 1792119919.331279,
+        "received_monotonic": 3651025.768827913,
+        "received_wall": 1792119919.331316,
+        "residence_ms": 0.03688875585794449
+      },
+      "connection": {
+        "accepted": 3,
+        "received": 1,
+        "retained": 2,
+        "overflow": 0,
+        "unknown": 0,
+        "known": 1,
+        "max_residence_ms": 0.03688875585794449,
+        "disabled": 0,
+        "errors": 0,
+        "unsupported": 0
+      },
+      "previous_message": null,
+      "population": "main",
+      "apply_wall_segment": "target",
+      "segments_ms": {
+        "accepted_to_recv_call_ms": -12.165311258286238,
+        "recv_call_to_receipt_ms": 12.202200014144182,
+        "receipt_to_return_ms": 0.017130281776189804,
+        "return_to_apply_ms": 0.02171006053686142
+      },
+      "accepted_before_recv_call": false,
+      "over_1000": false,
+      "over_3000": false,
+      "acceptance_wall_before_target": false
+    },
+    {
+      "timestamp": "2026-10-16T03:06:19.397016019Z",
+      "segment": "target",
+      "event": "speeddesk_feed_kalshi_ws_timing",
+      "level": "INFO",
+      "reader": {
+        "kind": "speeddesk",
+        "instance": 1,
+        "process": 1
+      },
+      "session": 9,
+      "timing_event": "status",
+      "kind": "orderbook_delta",
+      "receipt": {
+        "ordinal": 25335,
+        "status": "overflow",
+        "accepted_monotonic": null,
+        "accepted_wall": null,
+        "received_monotonic": 3651085.769005853,
+        "received_wall": 1792119979.3314936,
+        "residence_ms": null
+      },
+      "connection": {
+        "accepted": 26226,
+        "received": 25335,
+        "retained": 256,
+        "overflow": 3992,
+        "unknown": 3357,
+        "known": 21978,
+        "max_residence_ms": 1005.1125045865774,
+        "disabled": 0,
+        "errors": 0,
+        "unsupported": 0
+      },
+      "previous_message": {
+        "processing_ms": 0.32025715336203575,
+        "yield_resume_ms": 2.4952106177806854
+      },
+      "population": "main",
+      "apply_wall_segment": "target",
+      "unknown": "receipt_overflow"
+    },
+    {
+      "timestamp": "2026-10-16T03:07:19.543140814Z",
+      "segment": "target",
+      "event": "speeddesk_feed_kalshi_ws_timing",
+      "level": "INFO",
+      "reader": {
+        "kind": "speeddesk",
+        "instance": 1,
+        "process": 1
+      },
+      "session": 9,
+      "timing_event": "status",
+      "kind": "orderbook_delta",
+      "receipt": {
+        "ordinal": 58349,
+        "status": "known",
+        "accepted_monotonic": 3651145.433548931,
+        "accepted_wall": 1792120038.9960368,
+        "received_monotonic": 3651145.974914474,
+        "received_wall": 1792120039.5374024,
+        "residence_ms": 541.3655429147184
+      },
+      "connection": {
+        "accepted": 58364,
+        "received": 58349,
+        "retained": 15,
+        "overflow": 11776,
+        "unknown": 11776,
+        "known": 46573,
+        "max_residence_ms": 1612.491660285741,
+        "disabled": 0,
+        "errors": 0,
+        "unsupported": 0
+      },
+      "previous_message": {
+        "processing_ms": 0.38486719131469727,
+        "yield_resume_ms": 526.9504971802235
+      },
+      "population": "main",
+      "apply_wall_segment": "target",
+      "segments_ms": {
+        "accepted_to_recv_call_ms": 541.3355231285095,
+        "recv_call_to_receipt_ms": 0.030019786208868027,
+        "receipt_to_return_ms": 0.014440156519412994,
+        "return_to_apply_ms": 0.032839830964803696
+      },
+      "accepted_before_recv_call": true,
+      "over_1000": false,
+      "over_3000": false,
+      "acceptance_wall_before_target": false
+    },
+    {
+      "timestamp": "2026-10-16T03:08:23.613163909Z",
+      "segment": "target",
+      "event": "speeddesk_feed_kalshi_ws_timing",
+      "level": "INFO",
+      "reader": {
+        "kind": "speeddesk",
+        "instance": 1,
+        "process": 1
+      },
+      "session": 9,
+      "timing_event": "status",
+      "kind": "orderbook_delta",
+      "receipt": {
+        "ordinal": 84052,
+        "status": "known",
+        "accepted_monotonic": 3651205.399064956,
+        "accepted_wall": 1792120098.961553,
+        "received_monotonic": 3651206.058138872,
+        "received_wall": 1792120099.6206272,
+        "residence_ms": 659.0739162638783
+      },
+      "connection": {
+        "accepted": 84288,
+        "received": 84052,
+        "retained": 236,
+        "overflow": 14662,
+        "unknown": 14662,
+        "known": 69390,
+        "max_residence_ms": 1612.491660285741,
+        "disabled": 0,
+        "errors": 0,
+        "unsupported": 0
+      },
+      "previous_message": {
+        "processing_ms": 0.6660954095423222,
+        "yield_resume_ms": 262.4630886130035
+      },
+      "population": "main",
+      "apply_wall_segment": "target",
+      "segments_ms": {
+        "accepted_to_recv_call_ms": 659.0200872160494,
+        "recv_call_to_receipt_ms": 0.053829047828912735,
+        "receipt_to_return_ms": 0.020971056073904037,
+        "return_to_apply_ms": 0.05789007991552353
+      },
+      "accepted_before_recv_call": true,
+      "over_1000": false,
+      "over_3000": false,
+      "acceptance_wall_before_target": false
+    },
+    {
+      "timestamp": "2026-10-16T03:09:19.692467277Z",
+      "segment": "target",
+      "event": "speeddesk_feed_kalshi_ws_timing",
+      "level": "INFO",
+      "reader": {
+        "kind": "speeddesk",
+        "instance": 1,
+        "process": 1
+      },
+      "session": 9,
+      "timing_event": "status",
+      "kind": "orderbook_delta",
+      "receipt": {
+        "ordinal": 118517,
+        "status": "overflow",
+        "accepted_monotonic": null,
+        "accepted_wall": null,
+        "received_monotonic": 3651266.05842519,
+        "received_wall": 1792120159.6209133,
+        "residence_ms": null
+      },
+      "connection": {
+        "accepted": 120000,
+        "received": 118517,
+        "retained": 256,
+        "overflow": 26905,
+        "unknown": 25678,
+        "known": 92839,
+        "max_residence_ms": 1662.3713211156428,
+        "disabled": 0,
+        "errors": 0,
+        "unsupported": 0
+      },
+      "previous_message": {
+        "processing_ms": 0.3040577284991741,
+        "yield_resume_ms": 0.012320000678300858
+      },
+      "population": "main",
+      "apply_wall_segment": "target",
+      "unknown": "receipt_overflow"
+    },
+    {
+      "timestamp": "2026-10-16T03:10:19.869723050Z",
+      "segment": "target",
+      "event": "speeddesk_feed_kalshi_ws_timing",
+      "level": "INFO",
+      "reader": {
+        "kind": "speeddesk",
+        "instance": 1,
+        "process": 1
+      },
+      "session": 9,
+      "timing_event": "status",
+      "kind": "orderbook_delta",
+      "receipt": {
+        "ordinal": 147504,
+        "status": "known",
+        "accepted_monotonic": 3651325.193886751,
+        "accepted_wall": 1792120218.7563746,
+        "received_monotonic": 3651326.105890709,
+        "received_wall": 1792120219.6683786,
+        "residence_ms": 912.003958132118
+      },
+      "connection": {
+        "accepted": 147670,
+        "received": 147504,
+        "retained": 166,
+        "overflow": 30800,
+        "unknown": 30800,
+        "known": 116704,
+        "max_residence_ms": 1662.3713211156428,
+        "disabled": 0,
+        "errors": 0,
+        "unsupported": 0
+      },
+      "previous_message": {
+        "processing_ms": 0.6090551614761353,
+        "yield_resume_ms": 425.85224006325006
+      },
+      "population": "main",
+      "apply_wall_segment": "target",
+      "segments_ms": {
+        "accepted_to_recv_call_ms": 911.9824380613863,
+        "recv_call_to_receipt_ms": 0.021520070731639862,
+        "receipt_to_return_ms": 0.013640150427818298,
+        "return_to_apply_ms": 0.04159891977906227
+      },
+      "accepted_before_recv_call": true,
+      "over_1000": false,
+      "over_3000": false,
+      "acceptance_wall_before_target": false
+    },
+    {
+      "timestamp": "2026-10-16T03:11:20.276200991Z",
+      "segment": "target",
+      "event": "speeddesk_feed_kalshi_ws_timing",
+      "level": "INFO",
+      "reader": {
+        "kind": "speeddesk",
+        "instance": 1,
+        "process": 1
+      },
+      "session": 9,
+      "timing_event": "status",
+      "kind": "orderbook_delta",
+      "receipt": {
+        "ordinal": 179163,
+        "status": "overflow",
+        "accepted_monotonic": null,
+        "accepted_wall": null,
+        "received_monotonic": 3651386.114709662,
+        "received_wall": 1792120279.677198,
+        "residence_ms": null
+      },
+      "connection": {
+        "accepted": 179539,
+        "received": 179163,
+        "retained": 256,
+        "overflow": 38953,
+        "unknown": 38833,
+        "known": 140330,
+        "max_residence_ms": 1662.3713211156428,
+        "disabled": 0,
+        "errors": 0,
+        "unsupported": 0
+      },
+      "previous_message": {
+        "processing_ms": 0.30809734016656876,
+        "yield_resume_ms": 23.695653770118952
+      },
+      "population": "main",
+      "apply_wall_segment": "target",
+      "unknown": "receipt_overflow"
+    },
+    {
+      "timestamp": "2026-10-16T03:11:28.208583805Z",
+      "segment": "target",
+      "event": "speeddesk_feed_kalshi_ws_timing",
+      "level": "INFO",
+      "reader": {
+        "kind": "speeddesk",
+        "instance": 1,
+        "process": 1
+      },
+      "session": 9,
+      "timing_event": "gap",
+      "kind": "orderbook_delta",
+      "receipt": {
+        "ordinal": 186069,
+        "status": "overflow",
+        "accepted_monotonic": null,
+        "accepted_wall": null,
+        "received_monotonic": 3651394.621571722,
+        "received_wall": 1792120288.1840596,
+        "residence_ms": null
+      },
+      "connection": {
+        "accepted": 186457,
+        "received": 186069,
+        "retained": 256,
+        "overflow": 44863,
+        "unknown": 44731,
+        "known": 141338,
+        "max_residence_ms": 2442.0572272501886,
+        "disabled": 0,
+        "errors": 0,
+        "unsupported": 0
+      },
+      "previous_message": {
+        "processing_ms": 0.36418670788407326,
+        "yield_resume_ms": 1.8961550667881966
+      },
+      "population": "main",
+      "apply_wall_segment": "target",
+      "unknown": "receipt_overflow"
+    },
+    {
+      "timestamp": "2026-10-16T03:11:30.322461428Z",
+      "segment": "target",
+      "event": "speeddesk_feed_kalshi_ws_gap",
+      "level": "WARNING",
+      "text": "reason=timestamp_missing_or_stale:book_engine:age_s=3.001 reader_kind=speeddesk reader_instance=1 reader_process=1 reader_session=9",
+      "reader_session_context": {
+        "kind": "speeddesk",
+        "instance": 1,
+        "process": 1,
+        "session": 9
+      }
+    },
+    {
+      "timestamp": "2026-10-16T03:11:31.561784627Z",
+      "segment": "target",
+      "event": "speeddesk_feed_kalshi_ws_timing",
+      "level": "INFO",
+      "reader": {
+        "kind": "speeddesk",
+        "instance": 1,
+        "process": 1
+      },
+      "session": 10,
+      "timing_event": "status",
+      "kind": "subscribed",
+      "receipt": {
+        "ordinal": 1,
+        "status": "known",
+        "accepted_monotonic": 3651397.99827426,
+        "accepted_wall": 1792120291.5607624,
+        "received_monotonic": 3651397.998319459,
+        "received_wall": 1792120291.5608075,
+        "residence_ms": 0.0451989471912384
+      },
+      "connection": {
+        "accepted": 11,
+        "received": 1,
+        "retained": 10,
+        "overflow": 0,
+        "unknown": 0,
+        "known": 1,
+        "max_residence_ms": 0.0451989471912384,
+        "disabled": 0,
+        "errors": 0,
+        "unsupported": 0
+      },
+      "previous_message": null,
+      "population": "main",
+      "apply_wall_segment": "target",
+      "segments_ms": {
+        "accepted_to_recv_call_ms": -32.90735837072134,
+        "recv_call_to_receipt_ms": 32.95255731791258,
+        "receipt_to_return_ms": 0.014530029147863388,
+        "return_to_apply_ms": 0.022779684513807297
+      },
+      "accepted_before_recv_call": false,
+      "over_1000": false,
+      "over_3000": false,
+      "acceptance_wall_before_target": false
+    },
+    {
+      "timestamp": "2026-10-16T03:12:31.613660840Z",
+      "segment": "target",
+      "event": "speeddesk_feed_kalshi_ws_timing",
+      "level": "INFO",
+      "reader": {
+        "kind": "speeddesk",
+        "instance": 1,
+        "process": 1
+      },
+      "session": 10,
+      "timing_event": "status",
+      "kind": "orderbook_delta",
+      "receipt": {
+        "ordinal": 32317,
+        "status": "known",
+        "accepted_monotonic": 3651457.981774922,
+        "accepted_wall": 1792120351.544263,
+        "received_monotonic": 3651458.024618576,
+        "received_wall": 1792120351.5871067,
+        "residence_ms": 42.843653820455074
+      },
+      "connection": {
+        "accepted": 32359,
+        "received": 32317,
+        "retained": 42,
+        "overflow": 3696,
+        "unknown": 3696,
+        "known": 28621,
+        "max_residence_ms": 990.3673739172518,
+        "disabled": 0,
+        "errors": 0,
+        "unsupported": 0
+      },
+      "previous_message": {
+        "processing_ms": 0.8787820115685463,
+        "yield_resume_ms": 41.802273131906986
+      },
+      "population": "main",
+      "apply_wall_segment": "target",
+      "segments_ms": {
+        "accepted_to_recv_call_ms": 42.81087405979633,
+        "recv_call_to_receipt_ms": 0.032779760658741,
+        "receipt_to_return_ms": 0.01979013904929161,
+        "return_to_apply_ms": 0.0418592244386673
+      },
+      "accepted_before_recv_call": true,
+      "over_1000": false,
+      "over_3000": false,
+      "acceptance_wall_before_target": false
+    },
+    {
+      "timestamp": "2026-10-16T03:13:31.623968988Z",
+      "segment": "target",
+      "event": "speeddesk_feed_kalshi_ws_timing",
+      "level": "INFO",
+      "reader": {
+        "kind": "speeddesk",
+        "instance": 1,
+        "process": 1
+      },
+      "session": 10,
+      "timing_event": "status",
+      "kind": "orderbook_delta",
+      "receipt": {
+        "ordinal": 52130,
+        "status": "known",
+        "accepted_monotonic": 3651518.036915588,
+        "accepted_wall": 1792120411.5994043,
+        "received_monotonic": 3651518.042095255,
+        "received_wall": 1792120411.6045837,
+        "residence_ms": 5.179666914045811
+      },
+      "connection": {
+        "accepted": 52135,
+        "received": 52130,
+        "retained": 5,
+        "overflow": 4167,
+        "unknown": 4167,
+        "known": 47963,
+        "max_residence_ms": 990.3673739172518,
+        "disabled": 0,
+        "errors": 0,
+        "unsupported": 0
+      },
+      "previous_message": {
+        "processing_ms": 0.6899242289364338,
+        "yield_resume_ms": 0.03355974331498146
+      },
+      "population": "main",
+      "apply_wall_segment": "target",
+      "segments_ms": {
+        "accepted_to_recv_call_ms": -22.995647974312305,
+        "recv_call_to_receipt_ms": 28.175314888358116,
+        "receipt_to_return_ms": 0.018168706446886063,
+        "return_to_apply_ms": 0.042010098695755005
+      },
+      "accepted_before_recv_call": false,
+      "over_1000": false,
+      "over_3000": false,
+      "acceptance_wall_before_target": false
+    },
+    {
+      "timestamp": "2026-10-16T03:14:31.948092449Z",
+      "segment": "target",
+      "event": "speeddesk_feed_kalshi_ws_timing",
+      "level": "INFO",
+      "reader": {
+        "kind": "speeddesk",
+        "instance": 1,
+        "process": 1
+      },
+      "session": 10,
+      "timing_event": "status",
+      "kind": "orderbook_delta",
+      "receipt": {
+        "ordinal": 61652,
+        "status": "known",
+        "accepted_monotonic": 3651578.380304528,
+        "accepted_wall": 1792120471.942793,
+        "received_monotonic": 3651578.380627955,
+        "received_wall": 1792120471.943116,
+        "residence_ms": 0.32342690974473953
+      },
+      "connection": {
+        "accepted": 61668,
+        "received": 61652,
+        "retained": 16,
+        "overflow": 4167,
+        "unknown": 4167,
+        "known": 57485,
+        "max_residence_ms": 990.3673739172518,
+        "disabled": 0,
+        "errors": 0,
+        "unsupported": 0
+      },
+      "previous_message": {
+        "processing_ms": 3.583719953894615,
+        "yield_resume_ms": 2.251029945909977
+      },
+      "population": "main",
+      "apply_wall_segment": "target",
+      "segments_ms": {
+        "accepted_to_recv_call_ms": 0.3004469908773899,
+        "recv_call_to_receipt_ms": 0.022979918867349625,
+        "receipt_to_return_ms": 0.014489982277154922,
+        "return_to_apply_ms": 0.039909034967422485
+      },
+      "accepted_before_recv_call": true,
+      "over_1000": false,
+      "over_3000": false,
+      "acceptance_wall_before_target": false
+    },
+    {
+      "timestamp": "2026-10-16T03:15:03.334558387Z",
+      "segment": "tail",
+      "event": "speeddesk_feed_kalshi_ws_gap",
+      "level": "WARNING",
+      "text": "reason=market_set_changed reader_kind=speeddesk reader_instance=1 reader_process=1 reader_session=10",
+      "reader_session_context": {
+        "kind": "speeddesk",
+        "instance": 1,
+        "process": 1,
+        "session": 10
+      }
+    },
+    {
+      "timestamp": "2026-10-16T03:15:04.854739627Z",
+      "segment": "tail",
+      "event": "speeddesk_feed_kalshi_ws_timing",
+      "level": "INFO",
+      "reader": {
+        "kind": "speeddesk",
+        "instance": 1,
+        "process": 1
+      },
+      "session": 11,
+      "timing_event": "status",
+      "kind": "subscribed",
+      "receipt": {
+        "ordinal": 1,
+        "status": "known",
+        "accepted_monotonic": 3651611.281198415,
+        "accepted_wall": 1792120504.8436863,
+        "received_monotonic": 3651611.281546452,
+        "received_wall": 1792120504.8440342,
+        "residence_ms": 0.34803710877895355
+      },
+      "connection": {
+        "accepted": 54,
+        "received": 1,
+        "retained": 53,
+        "overflow": 0,
+        "unknown": 0,
+        "known": 1,
+        "max_residence_ms": 0.34803710877895355,
+        "disabled": 0,
+        "errors": 0,
+        "unsupported": 0
+      },
+      "previous_message": null,
+      "population": "main",
+      "apply_wall_segment": "tail",
+      "segments_ms": {
+        "accepted_to_recv_call_ms": -180.01613905653358,
+        "recv_call_to_receipt_ms": 180.36417616531253,
+        "receipt_to_return_ms": 0.014389865100383759,
+        "return_to_apply_ms": 0.028289854526519775
+      },
+      "accepted_before_recv_call": false,
+      "over_1000": false,
+      "over_3000": false,
+      "acceptance_wall_before_target": false
+    },
+    {
+      "timestamp": "2026-10-16T03:15:15.250927350Z",
+      "segment": "tail",
+      "event": "speeddesk_feed_kalshi_ws_timing",
+      "level": "INFO",
+      "reader": {
+        "kind": "speeddesk",
+        "instance": 1,
+        "process": 1
+      },
+      "session": 11,
+      "timing_event": "gap",
+      "kind": "orderbook_delta",
+      "receipt": {
+        "ordinal": 6446,
+        "status": "overflow",
+        "accepted_monotonic": null,
+        "accepted_wall": null,
+        "received_monotonic": 3651621.632562996,
+        "received_wall": 1792120515.1950507,
+        "residence_ms": null
+      },
+      "connection": {
+        "accepted": 10091,
+        "received": 6446,
+        "retained": 256,
+        "overflow": 6479,
+        "unknown": 3090,
+        "known": 3356,
+        "max_residence_ms": 2757.204445078969,
+        "disabled": 0,
+        "errors": 0,
+        "unsupported": 0
+      },
+      "previous_message": {
+        "processing_ms": 0.3207367844879627,
+        "yield_resume_ms": 111.1074211075902
+      },
+      "population": "main",
+      "apply_wall_segment": "tail",
+      "unknown": "receipt_overflow"
+    },
+    {
+      "timestamp": "2026-10-16T03:15:17.367262798Z",
+      "segment": "tail",
+      "event": "speeddesk_feed_kalshi_ws_gap",
+      "level": "WARNING",
+      "text": "reason=timestamp_missing_or_stale:orderbook_delta_network:age_s=3.089 reader_kind=speeddesk reader_instance=1 reader_process=1 reader_session=11",
+      "reader_session_context": {
+        "kind": "speeddesk",
+        "instance": 1,
+        "process": 1,
+        "session": 11
+      }
+    },
+    {
+      "timestamp": "2026-10-16T03:15:19.024316848Z",
+      "segment": "tail",
+      "event": "speeddesk_feed_kalshi_ws_timing",
+      "level": "INFO",
+      "reader": {
+        "kind": "speeddesk",
+        "instance": 1,
+        "process": 1
+      },
+      "session": 12,
+      "timing_event": "status",
+      "kind": "subscribed",
+      "receipt": {
+        "ordinal": 1,
+        "status": "known",
+        "accepted_monotonic": 3651625.174817949,
+        "accepted_wall": 1792120518.737306,
+        "received_monotonic": 3651625.174909308,
+        "received_wall": 1792120518.7373972,
+        "residence_ms": 0.09135901927947998
+      },
+      "connection": {
+        "accepted": 7,
+        "received": 1,
+        "retained": 6,
+        "overflow": 0,
+        "unknown": 0,
+        "known": 1,
+        "max_residence_ms": 0.09135901927947998,
+        "disabled": 0,
+        "errors": 0,
+        "unsupported": 0
+      },
+      "previous_message": null,
+      "population": "main",
+      "apply_wall_segment": "tail",
+      "segments_ms": {
+        "accepted_to_recv_call_ms": -27.255619876086712,
+        "recv_call_to_receipt_ms": 27.346978895366192,
+        "receipt_to_return_ms": 0.012449920177459717,
+        "return_to_apply_ms": 0.026859808713197708
+      },
+      "accepted_before_recv_call": false,
+      "over_1000": false,
+      "over_3000": false,
+      "acceptance_wall_before_target": false
+    },
+    {
+      "timestamp": "2026-10-16T03:16:18.863878588Z",
+      "segment": "tail",
+      "event": "speeddesk_feed_kalshi_ws_timing",
+      "level": "INFO",
+      "reader": {
+        "kind": "speeddesk",
+        "instance": 1,
+        "process": 1
+      },
+      "session": 12,
+      "timing_event": "status",
+      "kind": "orderbook_delta",
+      "receipt": {
+        "ordinal": 37919,
+        "status": "known",
+        "accepted_monotonic": 3651685.061145672,
+        "accepted_wall": 1792120578.6236336,
+        "received_monotonic": 3651685.175188574,
+        "received_wall": 1792120578.7376764,
+        "residence_ms": 114.0429018996656
+      },
+      "connection": {
+        "accepted": 38021,
+        "received": 37919,
+        "retained": 102,
+        "overflow": 15175,
+        "unknown": 15175,
+        "known": 22744,
+        "max_residence_ms": 1898.812383878976,
+        "disabled": 0,
+        "errors": 0,
+        "unsupported": 0
+      },
+      "previous_message": {
+        "processing_ms": 0.30566658824682236,
+        "yield_resume_ms": 0.018720049411058426
+      },
+      "population": "main",
+      "apply_wall_segment": "tail",
+      "segments_ms": {
+        "accepted_to_recv_call_ms": 114.03651209548116,
+        "recv_call_to_receipt_ms": 0.006389804184436798,
+        "receipt_to_return_ms": 0.003819819539785385,
+        "return_to_apply_ms": 0.007329974323511124
+      },
+      "accepted_before_recv_call": true,
+      "over_1000": false,
+      "over_3000": false,
+      "acceptance_wall_before_target": false
+    }
+  ],
+  "unique_shown_spans": [],
+  "coverage_certified": false,
+  "limits": [
+    "Finite error-triggered/minute-status logged samples, not all-stream rates.",
+    "Saturated parents may be replaced by complete split leaves; original attempts retained for root review.",
+    "Zero recurrence means unobserved, never eliminated.",
+    "Nested wall/CPU spans and full-bin/slow coverage populations are not additive.",
+    "Shown checkpoint-family unions are lower bounds; no CPU or unique causal/profit claim.",
+    "Query completeness and actual retrieval after tail require separate root verification."
+  ]
+}

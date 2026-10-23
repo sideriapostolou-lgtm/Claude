@@ -1,0 +1,45 @@
+{
+  "scope": "Immutable first-window snapshot and offline warning attribution evidence; second window/publication tail not complete.",
+  "running_source": "c8e37e5504aad04da0521b3f95c17f86dac42899",
+  "members": [
+    {
+      "path": "post-fairness-closed-first_window_financial_tail.json",
+      "bytes": 12514016,
+      "sha256": "527cff43b675e116ee1278672a5f24a961eb4cca76c0b9adb89f7aacc650d8cd"
+    },
+    {
+      "path": "post-fairness-first-window-independent-audit.json",
+      "bytes": 34235,
+      "sha256": "8cc5b31c7e8d91bd35aa6fc9ec13011ef367cabdf46f120cfa1e259d08eb7035"
+    },
+    {
+      "path": "pre-fairness-feed-warning-baseline.json",
+      "bytes": 11911,
+      "sha256": "e8240e2a178292bcc38967035cba0557aff4bbca2a7effc983836f41fd9a8af0"
+    },
+    {
+      "path": "fairness-work-amplification-proof.py",
+      "bytes": 12254,
+      "sha256": "eec9ac53e3802fa53b558ae71d342ddbdbec30bcf1cdd95fe7e94be08c0f039f"
+    },
+    {
+      "path": "fairness-work-amplification-proof.json",
+      "bytes": 144059,
+      "sha256": "037d301db23bd42e112c3be050269d0c9fa32da283c53843bf0a02be9c27d892"
+    },
+    {
+      "path": "post-fairness-resource-query-failure.json",
+      "bytes": 1324,
+      "sha256": "e8a612acf5f69e9d2557640d3df97c70f479bef3fb3900f24871e00cae35ca6e"
+    }
+  ],
+  "limits": [
+    "First-window audit is not full two-window gate acceptance.",
+    "Offline surrogate proof is not production causality.",
+    "Resource metric request failed; no CPU measurement returned."
+  ],
+  "archive": "feed_fairness_first_window_evidence.zip",
+  "archive_bytes": 1519909,
+  "archive_sha256": "35b85a0ea83309d90d7284f75b96649eee9f5b97cd76764a3443aaa896bbda4b",
+  "verification": "Every member read back and hashed; ZIP CRC/JSON/credential-pattern checks passed."
+}

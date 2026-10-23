@@ -1,0 +1,18 @@
+{
+  "command": [
+    "/workspace/shared/nightcrawler-venv/bin/python",
+    "-m",
+    "pytest",
+    "-q"
+  ],
+  "started_at_utc": "2026-10-15T20:36:47.302496+00:00",
+  "finished_at_utc": "2026-10-15T20:42:09.191237+00:00",
+  "seconds": 321.8887631969992,
+  "exit_code": 0,
+  "source_hashes_unchanged": true,
+  "after_sha256": {
+    "src/nightcrawler/speeddesk_kalshi.py": "7946b64f9f1441ea8b02b1d17f5b2d400d7c8e7a65897eed8974373dac3ae9b9",
+    "src/nightcrawler/speeddesk_kalshi_ws.py": "1eef6d36a0b5aaf3a00680c0aedec057e163aac8fc8d63e3e213b01124b4337b",
+    "tests/test_speeddesk_kalshi_rest_recovery.py": "dab6f4f862388488e19a2d61b3848359849790dc3b07191614e2e140cd299fad"
+  }
+}

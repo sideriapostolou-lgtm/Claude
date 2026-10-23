@@ -1,0 +1,213 @@
+{
+  "archive": "/workspace/shared/feed-hotpath-preparation.zip",
+  "archive_bytes": 1550225,
+  "archive_sha256": "5f78dee452cde5eb4be6e2e13959b248604b5769e0884827fe3d974f1d6cd5d1",
+  "crc_verified": true,
+  "exact_member_equality_verified": true,
+  "members": [
+    {
+      "original_path": "/workspace/shared/feed-hotpath-profile.py",
+      "member": "feed-hotpath-profile.py",
+      "bytes": 10590,
+      "sha256": "f1ca77689d8b22106efdfb4777d31fc516b620b2ccd71dd4f9bd1c86d41ee57d"
+    },
+    {
+      "original_path": "/workspace/shared/feed-hotpath-profile-artifacts/SUMMARY.json",
+      "member": "feed-hotpath-profile-artifacts/SUMMARY.json",
+      "bytes": 10272,
+      "sha256": "456b7be73a02a787c52bd5957cd9175a5dd2c0c521aaf84fa887b653f0dda4bf"
+    },
+    {
+      "original_path": "/workspace/shared/feed-hotpath-profile-artifacts/fixture-0-57183118762990/speeddesk/kalshi_live/controller.lock",
+      "member": "feed-hotpath-profile-artifacts/fixture-0-57183118762990/speeddesk/kalshi_live/controller.lock",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "original_path": "/workspace/shared/feed-hotpath-profile-artifacts/fixture-0-57183118762990/speeddesk/kalshi_live/receipts.db",
+      "member": "feed-hotpath-profile-artifacts/fixture-0-57183118762990/speeddesk/kalshi_live/receipts.db",
+      "bytes": 102400,
+      "sha256": "ae1ccc5d81d7565ec9affc0969f0ff21d1e905d083489e2c73c25486a9e5126d"
+    },
+    {
+      "original_path": "/workspace/shared/feed-hotpath-profile-artifacts/fixture-0-57183118762990/speeddesk/kalshi_live/state.json",
+      "member": "feed-hotpath-profile-artifacts/fixture-0-57183118762990/speeddesk/kalshi_live/state.json",
+      "bytes": 13674,
+      "sha256": "fa16646dcbcd85826abbd44940af8d81cf46a7f161d09e60494e9451f905d6ac"
+    },
+    {
+      "original_path": "/workspace/shared/feed-hotpath-profile-artifacts/fixture-0-57183118762990/speeddesk/receipts.db",
+      "member": "feed-hotpath-profile-artifacts/fixture-0-57183118762990/speeddesk/receipts.db",
+      "bytes": 102400,
+      "sha256": "b30de9ad0f139f9831113a33cb4c567946a6fb5d35502e2f8cc06dea7e5b9435"
+    },
+    {
+      "original_path": "/workspace/shared/feed-hotpath-profile-artifacts/fixture-0-57188404771351/speeddesk/kalshi_live/controller.lock",
+      "member": "feed-hotpath-profile-artifacts/fixture-0-57188404771351/speeddesk/kalshi_live/controller.lock",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "original_path": "/workspace/shared/feed-hotpath-profile-artifacts/fixture-0-57188404771351/speeddesk/kalshi_live/receipts.db",
+      "member": "feed-hotpath-profile-artifacts/fixture-0-57188404771351/speeddesk/kalshi_live/receipts.db",
+      "bytes": 327680,
+      "sha256": "278841e76e401605abd364c804f11c5cf2852ddbed446733e586be8fb0a970ed"
+    },
+    {
+      "original_path": "/workspace/shared/feed-hotpath-profile-artifacts/fixture-0-57188404771351/speeddesk/kalshi_live/state.json",
+      "member": "feed-hotpath-profile-artifacts/fixture-0-57188404771351/speeddesk/kalshi_live/state.json",
+      "bytes": 237527,
+      "sha256": "61426fe293e33857e53f030d27642cb0016911a8d182a60f83fcf5fef3d65dd1"
+    },
+    {
+      "original_path": "/workspace/shared/feed-hotpath-profile-artifacts/fixture-0-57188404771351/speeddesk/receipts.db",
+      "member": "feed-hotpath-profile-artifacts/fixture-0-57188404771351/speeddesk/receipts.db",
+      "bytes": 585728,
+      "sha256": "9e185151683568f17cd6581d75c08d3b05d21f942d3b2643bd7b16f136842bbc"
+    },
+    {
+      "original_path": "/workspace/shared/feed-hotpath-profile-artifacts/fixture-0-57188404771351/speeddesk/state.json",
+      "member": "feed-hotpath-profile-artifacts/fixture-0-57188404771351/speeddesk/state.json",
+      "bytes": 244527,
+      "sha256": "cf308e62532903d42aff611e93210085c6bb9eba45943dc72d64915f78f9fec6"
+    },
+    {
+      "original_path": "/workspace/shared/feed-hotpath-profile-artifacts/fixture-128-57191126424694/speeddesk/kalshi_live/controller.lock",
+      "member": "feed-hotpath-profile-artifacts/fixture-128-57191126424694/speeddesk/kalshi_live/controller.lock",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "original_path": "/workspace/shared/feed-hotpath-profile-artifacts/fixture-128-57191126424694/speeddesk/kalshi_live/receipts.db",
+      "member": "feed-hotpath-profile-artifacts/fixture-128-57191126424694/speeddesk/kalshi_live/receipts.db",
+      "bytes": 614400,
+      "sha256": "bd24c505356b7fcccb2864cc8dbd464c4090f32797972d653d61364fb1d2755a"
+    },
+    {
+      "original_path": "/workspace/shared/feed-hotpath-profile-artifacts/fixture-128-57191126424694/speeddesk/kalshi_live/state.json",
+      "member": "feed-hotpath-profile-artifacts/fixture-128-57191126424694/speeddesk/kalshi_live/state.json",
+      "bytes": 441387,
+      "sha256": "c09fcd673607d8bf99bbd20ea060b1f7cb7595c406caab22fa7046c67ac9ad80"
+    },
+    {
+      "original_path": "/workspace/shared/feed-hotpath-profile-artifacts/fixture-128-57191126424694/speeddesk/receipts.db",
+      "member": "feed-hotpath-profile-artifacts/fixture-128-57191126424694/speeddesk/receipts.db",
+      "bytes": 851968,
+      "sha256": "16ca18d8331e9531535077b24265424f8c00f069b83e5caace51ef4650fff371"
+    },
+    {
+      "original_path": "/workspace/shared/feed-hotpath-profile-artifacts/fixture-128-57191126424694/speeddesk/state.json",
+      "member": "feed-hotpath-profile-artifacts/fixture-128-57191126424694/speeddesk/state.json",
+      "bytes": 342737,
+      "sha256": "1b7a1512e789c9988b6f30c4b06b8f9665043ca391bf1be57c13e28e4ee85cf6"
+    },
+    {
+      "original_path": "/workspace/shared/feed-hotpath-profile-artifacts/fixture-512-57194515641394/speeddesk/kalshi_live/controller.lock",
+      "member": "feed-hotpath-profile-artifacts/fixture-512-57194515641394/speeddesk/kalshi_live/controller.lock",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "original_path": "/workspace/shared/feed-hotpath-profile-artifacts/fixture-512-57194515641394/speeddesk/kalshi_live/receipts.db",
+      "member": "feed-hotpath-profile-artifacts/fixture-512-57194515641394/speeddesk/kalshi_live/receipts.db",
+      "bytes": 1417216,
+      "sha256": "8d00d2dbdcc1e57100346bf73ac515f3cb6ac62b0899797ee1e039ad6afa8033"
+    },
+    {
+      "original_path": "/workspace/shared/feed-hotpath-profile-artifacts/fixture-512-57194515641394/speeddesk/kalshi_live/state.json",
+      "member": "feed-hotpath-profile-artifacts/fixture-512-57194515641394/speeddesk/kalshi_live/state.json",
+      "bytes": 1031855,
+      "sha256": "8dd8284cf3f4476cc5bdf97d8cf7105b74193feda69918e77a958a47d8fc21a4"
+    },
+    {
+      "original_path": "/workspace/shared/feed-hotpath-profile-artifacts/fixture-512-57194515641394/speeddesk/receipts.db",
+      "member": "feed-hotpath-profile-artifacts/fixture-512-57194515641394/speeddesk/receipts.db",
+      "bytes": 1638400,
+      "sha256": "11ceb097466f0009a16cae690cd473691332643a547e7a4195e66282ff20b14a"
+    },
+    {
+      "original_path": "/workspace/shared/feed-hotpath-profile-artifacts/fixture-512-57194515641394/speeddesk/state.json",
+      "member": "feed-hotpath-profile-artifacts/fixture-512-57194515641394/speeddesk/state.json",
+      "bytes": 630545,
+      "sha256": "ec9514b8183a7f2d96bc82e5234ecb918e95badcbd578a158fe44d1fa7fe063c"
+    },
+    {
+      "original_path": "/workspace/shared/feed-hotpath-profile-artifacts/history-0-book.prof",
+      "member": "feed-hotpath-profile-artifacts/history-0-book.prof",
+      "bytes": 46966,
+      "sha256": "e7ac81f694353dfcf0c4ed73526d7f4947a75c3bac1384a0b21bb2cf926e40f0"
+    },
+    {
+      "original_path": "/workspace/shared/feed-hotpath-profile-artifacts/history-0-book.txt",
+      "member": "feed-hotpath-profile-artifacts/history-0-book.txt",
+      "bytes": 2601,
+      "sha256": "7c39b45be093035a50a7ccc0316c298954539bc386e6e24f8323b613e6b2278a"
+    },
+    {
+      "original_path": "/workspace/shared/feed-hotpath-profile-artifacts/history-0-trade.prof",
+      "member": "feed-hotpath-profile-artifacts/history-0-trade.prof",
+      "bytes": 45589,
+      "sha256": "844946ee680d54996a45f20496efe6a11d178ce5c5a69d3bffac1d606d4db6e6"
+    },
+    {
+      "original_path": "/workspace/shared/feed-hotpath-profile-artifacts/history-0-trade.txt",
+      "member": "feed-hotpath-profile-artifacts/history-0-trade.txt",
+      "bytes": 2566,
+      "sha256": "f77994aeb9d91464a34acb363ddeb02fafa532e80861e49bc3c1741d7b3d2390"
+    },
+    {
+      "original_path": "/workspace/shared/feed-hotpath-profile-artifacts/history-128-book.prof",
+      "member": "feed-hotpath-profile-artifacts/history-128-book.prof",
+      "bytes": 46966,
+      "sha256": "fad07ba2efdc3eea5b281f7c3d9055675f5cdee6d8ed82a883d4c37da29b59e7"
+    },
+    {
+      "original_path": "/workspace/shared/feed-hotpath-profile-artifacts/history-128-book.txt",
+      "member": "feed-hotpath-profile-artifacts/history-128-book.txt",
+      "bytes": 2589,
+      "sha256": "765a04762caa05ca65e0fcf01d8b6ef0b19ef3a0303b0356aa197f1f1ef87679"
+    },
+    {
+      "original_path": "/workspace/shared/feed-hotpath-profile-artifacts/history-128-trade.prof",
+      "member": "feed-hotpath-profile-artifacts/history-128-trade.prof",
+      "bytes": 45589,
+      "sha256": "daf2863b4a5718d1777b2ecff9f1ffc69a2c72c7dc51205ae21cdaf125829623"
+    },
+    {
+      "original_path": "/workspace/shared/feed-hotpath-profile-artifacts/history-128-trade.txt",
+      "member": "feed-hotpath-profile-artifacts/history-128-trade.txt",
+      "bytes": 2566,
+      "sha256": "0b8e2bebf7fc278eb6e22a07c97be81fb200e9d7841fb36ff9575a58d9d56a42"
+    },
+    {
+      "original_path": "/workspace/shared/feed-hotpath-profile-artifacts/history-512-book.prof",
+      "member": "feed-hotpath-profile-artifacts/history-512-book.prof",
+      "bytes": 46966,
+      "sha256": "668dc4ef0ce4ad5cfa6c4941e64300723e9d7cd7f0a2831441169c532aae1941"
+    },
+    {
+      "original_path": "/workspace/shared/feed-hotpath-profile-artifacts/history-512-book.txt",
+      "member": "feed-hotpath-profile-artifacts/history-512-book.txt",
+      "bytes": 2589,
+      "sha256": "d37977e0ca789296233e0a0b9036e5729a73a61da3b4fa5639dea0148002490f"
+    },
+    {
+      "original_path": "/workspace/shared/feed-hotpath-profile-artifacts/history-512-trade.prof",
+      "member": "feed-hotpath-profile-artifacts/history-512-trade.prof",
+      "bytes": 45589,
+      "sha256": "273e63220ee23a6975b2b325eca7814a0afedc549bf84599efc29c76f4eb998f"
+    },
+    {
+      "original_path": "/workspace/shared/feed-hotpath-profile-artifacts/history-512-trade.txt",
+      "member": "feed-hotpath-profile-artifacts/history-512-trade.txt",
+      "bytes": 2566,
+      "sha256": "b3092080c06c99afb912d1a58f5e2838aef16d13dc866a2f088dce41a3a1b9a8"
+    },
+    {
+      "original_path": "/workspace/shared/feed-hotpath-profile-artifacts/results.json",
+      "member": "feed-hotpath-profile-artifacts/results.json",
+      "bytes": 66737,
+      "sha256": "4e537fcc8fbf2fb4327f84010c3959ce62ebf7821977ee27acf7a8cae65d9e38"
+    }
+  ]
+}

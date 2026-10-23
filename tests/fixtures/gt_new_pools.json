@@ -1,0 +1,313 @@
+{
+ "data": [
+  {
+   "id": "solana_DyJZSeSDqeHv3yCAYKEt9eNRe3Xody6BpZL85S1qyXBU",
+   "type": "pool",
+   "attributes": {
+    "base_token_price_usd": "0.0000336975402892474935741168842050479097005333850422637769405374544",
+    "base_token_price_native_currency": null,
+    "quote_token_price_usd": "109.018791405824464444338839778444043009152752624",
+    "quote_token_price_native_currency": null,
+    "base_token_price_quote_token": null,
+    "quote_token_price_base_token": null,
+    "address": "DyJZSeSDqeHv3yCAYKEt9eNRe3Xody6BpZL85S1qyXBU",
+    "name": "Altruists / SOL",
+    "pool_created_at": "2026-10-08T15:31:31Z",
+    "fdv_usd": "25421.1981111165",
+    "market_cap_usd": null,
+    "price_change_percentage": {
+     "m5": "89.686",
+     "m15": "89.686",
+     "m30": "89.686",
+     "h1": "89.686",
+     "h6": "89.686",
+     "h24": "89.686"
+    },
+    "transactions": {
+     "m5": {
+      "buys": 7,
+      "sells": 0,
+      "buyers": 7,
+      "sellers": 0
+     },
+     "m15": {
+      "buys": 7,
+      "sells": 0,
+      "buyers": 7,
+      "sellers": 0
+     },
+     "m30": {
+      "buys": 7,
+      "sells": 0,
+      "buyers": 7,
+      "sellers": 0
+     },
+     "h1": {
+      "buys": 7,
+      "sells": 0,
+      "buyers": 7,
+      "sellers": 0
+     },
+     "h6": {
+      "buys": 7,
+      "sells": 0,
+      "buyers": 7,
+      "sellers": 0
+     },
+     "h24": {
+      "buys": 7,
+      "sells": 0,
+      "buyers": 7,
+      "sellers": 0
+     }
+    },
+    "volume_usd": {
+     "m5": "753.2656440488",
+     "m15": "753.2656440488",
+     "m30": "753.2656440488",
+     "h1": "753.2656440488",
+     "h6": "753.2656440488",
+     "h24": "753.2656440488"
+    },
+    "reserve_in_usd": "0.0"
+   },
+   "relationships": {
+    "base_token": {
+     "data": {
+      "id": "solana_5wjVDmEnfayycCSihhx1hU2qG3mRSkSkxxqU5KRTMvdt",
+      "type": "token"
+     }
+    },
+    "quote_token": {
+     "data": {
+      "id": "solana_So11111111111111111111111111111111111111112",
+      "type": "token"
+     }
+    },
+    "dex": {
+     "data": {
+      "id": "meteora-dbc",
+      "type": "dex"
+     }
+    }
+   }
+  },
+  {
+   "id": "solana_C4xexaonS1D2R7CE6JxAgBnk9HpmqTw9vw39TREeMrhm",
+   "type": "pool",
+   "attributes": {
+    "base_token_price_usd": "0.000000000980250380515856223029124428523525793825202188191565748287673388",
+    "base_token_price_native_currency": "0.00000000000906101279992361",
+    "quote_token_price_usd": "108.892733791108892898099525110620171997320628788",
+    "quote_token_price_native_currency": "1.0",
+    "base_token_price_quote_token": "0.0000000000090610128",
+    "quote_token_price_base_token": "110362938678.161",
+    "address": "C4xexaonS1D2R7CE6JxAgBnk9HpmqTw9vw39TREeMrhm",
+    "name": "Altruists / SOL",
+    "pool_created_at": "2026-10-08T15:31:22Z",
+    "fdv_usd": "0.9832132349",
+    "market_cap_usd": null,
+    "price_change_percentage": {
+     "m5": "-99.355",
+     "m15": "-99.355",
+     "m30": "-99.355",
+     "h1": "-99.355",
+     "h6": "-99.355",
+     "h24": "-99.355"
+    },
+    "transactions": {
+     "m5": {
+      "buys": 19,
+      "sells": 12,
+      "buyers": 14,
+      "sellers": 11
+     },
+     "m15": {
+      "buys": 19,
+      "sells": 12,
+      "buyers": 14,
+      "sellers": 11
+     },
+     "m30": {
+      "buys": 19,
+      "sells": 12,
+      "buyers": 14,
+      "sellers": 11
+     },
+     "h1": {
+      "buys": 19,
+      "sells": 12,
+      "buyers": 14,
+      "sellers": 11
+     },
+     "h6": {
+      "buys": 19,
+      "sells": 12,
+      "buyers": 14,
+      "sellers": 11
+     },
+     "h24": {
+      "buys": 19,
+      "sells": 12,
+      "buyers": 14,
+      "sellers": 11
+     }
+    },
+    "volume_usd": {
+     "m5": "139.0891388002",
+     "m15": "139.0891388002",
+     "m30": "139.0891388002",
+     "h1": "139.0891388002",
+     "h6": "139.0891388002",
+     "h24": "139.0891388002"
+    },
+    "reserve_in_usd": "1.30974124283537"
+   },
+   "relationships": {
+    "base_token": {
+     "data": {
+      "id": "solana_E7VTCpUtES5uQX2FkWgLDn7TkqLutZeThFoxCYBHpqD4",
+      "type": "token"
+     }
+    },
+    "quote_token": {
+     "data": {
+      "id": "solana_So11111111111111111111111111111111111111112",
+      "type": "token"
+     }
+    },
+    "dex": {
+     "data": {
+      "id": "meteora-damm-v2",
+      "type": "dex"
+     }
+    }
+   }
+  },
+  {
+   "id": "solana_2qYNyzUYqLcpvKWfdYeu3a24zQtLsBnFwWyoHGz7bQmN",
+   "type": "pool",
+   "attributes": {
+    "base_token_price_usd": "0.00000000000495663316441182923674110072839088718314171770356004839627180591",
+    "base_token_price_native_currency": null,
+    "quote_token_price_usd": "109.045913756286652285984946631547551982662852997",
+    "quote_token_price_native_currency": null,
+    "base_token_price_quote_token": null,
+    "quote_token_price_base_token": null,
+    "address": "2qYNyzUYqLcpvKWfdYeu3a24zQtLsBnFwWyoHGz7bQmN",
+    "name": "PANDA / SOL",
+    "pool_created_at": "2026-10-08T15:31:18Z",
+    "fdv_usd": "0.004956633164",
+    "market_cap_usd": null,
+    "price_change_percentage": {
+     "m5": "0",
+     "m15": "0",
+     "m30": "0",
+     "h1": "0",
+     "h6": "0",
+     "h24": "0"
+    },
+    "transactions": {
+     "m5": {
+      "buys": 1,
+      "sells": 0,
+      "buyers": 1,
+      "sellers": 0
+     },
+     "m15": {
+      "buys": 1,
+      "sells": 0,
+      "buyers": 1,
+      "sellers": 0
+     },
+     "m30": {
+      "buys": 1,
+      "sells": 0,
+      "buyers": 1,
+      "sellers": 0
+     },
+     "h1": {
+      "buys": 1,
+      "sells": 0,
+      "buyers": 1,
+      "sellers": 0
+     },
+     "h6": {
+      "buys": 1,
+      "sells": 0,
+      "buyers": 1,
+      "sellers": 0
+     },
+     "h24": {
+      "buys": 1,
+      "sells": 0,
+      "buyers": 1,
+      "sellers": 0
+     }
+    },
+    "volume_usd": {
+     "m5": "0.001090459138",
+     "m15": "0.001090459138",
+     "m30": "0.001090459138",
+     "h1": "0.001090459138",
+     "h6": "0.001090459138",
+     "h24": "0.001090459138"
+    },
+    "reserve_in_usd": "0.0"
+   },
+   "relationships": {
+    "base_token": {
+     "data": {
+      "id": "solana_EkKg6JJyjsoQhYDyt6DC5mUvgq3kpWZYkyTD2hRXpump",
+      "type": "token"
+     }
+    },
+    "quote_token": {
+     "data": {
+      "id": "solana_So11111111111111111111111111111111111111112",
+      "type": "token"
+     }
+    },
+    "dex": {
+     "data": {
+      "id": "meteora-dbc",
+      "type": "dex"
+     }
+    }
+   }
+  }
+ ],
+ "included": [
+  {
+   "id": "solana_5wjVDmEnfayycCSihhx1hU2qG3mRSkSkxxqU5KRTMvdt",
+   "type": "token",
+   "attributes": {
+    "address": "5wjVDmEnfayycCSihhx1hU2qG3mRSkSkxxqU5KRTMvdt",
+    "name": "The Altruists",
+    "symbol": "Altruists",
+    "decimals": 6,
+    "image_url": null,
+    "coingecko_coin_id": null
+   }
+  },
+  {
+   "id": "solana_So11111111111111111111111111111111111111112",
+   "type": "token",
+   "attributes": {
+    "address": "So11111111111111111111111111111111111111112",
+    "name": "Wrapped SOL",
+    "symbol": "SOL",
+    "decimals": 9,
+    "image_url": "https://coin-images.coingecko.com/coins/images/21629/large/solana.jpg?1696520989",
+    "coingecko_coin_id": "wrapped-solana"
+   }
+  },
+  {
+   "id": "meteora-dbc",
+   "type": "dex",
+   "attributes": {
+    "name": "Meteora DBC"
+   }
+  }
+ ]
+}

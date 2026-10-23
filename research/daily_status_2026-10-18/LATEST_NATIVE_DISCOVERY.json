@@ -1,0 +1,45 @@
+{
+  "request": {
+    "projectId": "75750847-85c0-41a3-a2a7-b7f2201a51e9",
+    "deploymentId": "43f14443-2d07-4985-b879-3a2515fb8d2c",
+    "startDate": "2026-10-17T00:00:00Z",
+    "endDate": "2026-10-18T15:21:00Z",
+    "types": [
+      "deploy"
+    ],
+    "filter": "\"nightcrawler.speeddesk: speeddesk_live_status\"",
+    "limit": 3
+  },
+  "response": {
+    "scope": "deployment",
+    "deploymentId": "43f14443-2d07-4985-b879-3a2515fb8d2c",
+    "serviceId": "f84d3b52-002f-44cb-931e-bc9e3e097e97",
+    "environmentId": "17f7b0e0-104c-4903-9484-0106748b3cdb",
+    "status": "SUCCESS",
+    "deploy": [
+      {
+        "timestamp": "2026-10-17T08:58:56.596190840Z",
+        "severity": "error",
+        "message": "2026-10-17T08:58:56Z ERROR nightcrawler.speeddesk: speeddesk_live_status mode=paper reason=companion_halted error=OSError",
+        "attributes": [
+          {
+            "key": "level",
+            "value": "\"error\""
+          }
+        ]
+      },
+      {
+        "timestamp": "2026-10-17T08:58:57.084912957Z",
+        "severity": "error",
+        "message": "2026-10-17T08:58:57Z ERROR nightcrawler.speeddesk: speeddesk_live_status mode=paper reason=cleanup_unconfirmed error=OSError",
+        "attributes": [
+          {
+            "key": "level",
+            "value": "\"error\""
+          }
+        ]
+      }
+    ]
+  },
+  "projection_note": "Only terminal halt messages retained. Full last pre-failure status is safely projected in ../daily_status_2026-10-17/LAST_NATIVE.json. Discovery query was saturated; it is not coverage proof."
+}

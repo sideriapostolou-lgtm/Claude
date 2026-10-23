@@ -1,0 +1,26 @@
+{
+  "checked_at_utc": "2026-10-16T23:51:10Z",
+  "merge": {
+    "pr": 76,
+    "url": "https://github.com/sideriapostolou-lgtm/Claude/pull/76",
+    "at_pacific": "2026-10-16 16:49:22 PDT",
+    "tested_commit": "83ab53868edbc7567e3d2088904f7bcc285f8ca4",
+    "merged_commit": "f370c3c252927f659472ee160eb92fac2458ee51",
+    "tree": "cfdad49e5fabe3b936b4f654428d71ea55420d22",
+    "identical_tree": true
+  },
+  "deployment": {
+    "id": "43f14443-2d07-4985-b879-3a2515fb8d2c",
+    "status": "SUCCESS",
+    "createdAt": "2026-10-16T23:49:24.905Z",
+    "updatedAt": "2026-10-16T23:50:35.236Z",
+    "serviceId": "f84d3b52-002f-44cb-931e-bc9e3e097e97",
+    "environmentId": "17f7b0e0-104c-4903-9484-0106748b3cdb",
+    "meta": {
+      "reason": "deploy",
+      "commitMessage": "Merge pull request #76 from sideriapostolou-lgtm/codex/kalshi-reduction-only-20261016\n\nfix: contain unpaired Kalshi entries (touches real money)",
+      "commitHash": "f370c3c252927f659472ee160eb92fac2458ee51",
+      "branch": "claude/nightcrawler-memecoin-bot-Gwnb1S"
+    }
+  }
+}

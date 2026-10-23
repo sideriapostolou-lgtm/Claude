@@ -1,0 +1,260 @@
+{
+  "format": "nightcrawler-native-text-archive-v1",
+  "artifact": "NATIVE_EVIDENCE.json.xz.b64.txt",
+  "artifact_sha256": "fa93c769d631c0112d400329257638414035edbbfbbfa0987bfd152f8f649bbc",
+  "archive_json_bytes": 8915311,
+  "artifact_bytes": 146957,
+  "files": [
+    {
+      "name": "CAPTURE_live_cancel.native.json",
+      "sha256": "e69b68052de3c3ec03c605c77cf7b9608bd76d30b65216246f4463c0589b59f2",
+      "bytes": 108466
+    },
+    {
+      "name": "CAPTURE_live_fill.native.json",
+      "sha256": "f9e7ce376cbeb9ed55b269a5401a20c01c87ba8cb7a72699d4268c10fca0fe70",
+      "bytes": 8918
+    },
+    {
+      "name": "CAPTURE_live_order.native.json",
+      "sha256": "eebc0f67d9236e4cbbc8074a3d6a44b80131da12e3627501af84054299677e72",
+      "bytes": 254181
+    },
+    {
+      "name": "CAPTURE_live_reject.native.json",
+      "sha256": "4269767e6d5144c9abd872e7bd7ec84ecec74fc9363225d7a89520d57e93bb26",
+      "bytes": 1118
+    },
+    {
+      "name": "CAPTURE_live_settlement.native.json",
+      "sha256": "aeb144db7c3affbf74f06feb8ec425f4de77033ef507aa7ee6eb4ab5e63539fa",
+      "bytes": 3925
+    },
+    {
+      "name": "CAPTURE_live_status.native.json",
+      "sha256": "9851512512e0ea5c8ca7390375e8e5cad05dafaed61604064f362b352d073db3",
+      "bytes": 1902392
+    },
+    {
+      "name": "CAPTURE_practice_status.native.json",
+      "sha256": "be619cc2f4ae045f7a5b4ad55dc25e130af898a8d69055bcc302c3c24afd2a09",
+      "bytes": 3047664
+    },
+    {
+      "name": "CAPTURE_practice_window.native.json",
+      "sha256": "7ab7a6d28d8f3f0531de92cd5965797d5ecfc2add61404b18fe34876042c6939",
+      "bytes": 3732
+    },
+    {
+      "name": "CAPTURE_probability_forecast.native.json",
+      "sha256": "810f4d08cf4bfb951dcc81210b26d20295ba0aec64cc8732be52428260044fa0",
+      "bytes": 2960
+    },
+    {
+      "name": "CAPTURE_probability_scored.native.json",
+      "sha256": "83f3f6c131bb9105da60ca33215fc8b2e129c217471f11634f02c829c3f83c49",
+      "bytes": 3538
+    },
+    {
+      "name": "CAPTURE_probability_status.native.json",
+      "sha256": "35b3098be029d75063dde39bdb5174ef67a92d3f9f5a0b6014f899152f3c8485",
+      "bytes": 36626
+    },
+    {
+      "name": "CAPTURE_probability_unknown.native.json",
+      "sha256": "613bad6bd89ceffd31efc338fa5c7ebbc89d62d829f61aa6c1b00bcfc5511673",
+      "bytes": 1158
+    },
+    {
+      "name": "CAPTURE_traceback.native.json",
+      "sha256": "540303afe487983b158c2a40cae53f93246b5c24eeaf90318cdd268745b5a156",
+      "bytes": 1074
+    },
+    {
+      "name": "CAPTURE_ws_gap.native.json",
+      "sha256": "4334be8e1645e09994c4bab7de1c9d1c3e04325e43c5bee0ae05fb8b1ab8b822",
+      "bytes": 26005
+    },
+    {
+      "name": "CAPTURE_ws_timing.native.json",
+      "sha256": "ba4907fe37a722f4bbb40cf8a637e02c8d3e5340fcbc39ff607c0f5ba5e02cc2",
+      "bytes": 153435
+    },
+    {
+      "name": "CAPTURE_ws_unavailable.native.json",
+      "sha256": "f406f6b14ba0aacc76c44af14175218519e955421d65000d011e6a0acf5089c5",
+      "bytes": 1152
+    },
+    {
+      "name": "CAPTURE_DECLARATION.publication.json",
+      "sha256": "91e51ae8fe966c6c1663c9b5231316ead07bede0fb37fb882e1df3111e500ca9",
+      "bytes": 340
+    },
+    {
+      "name": "INWINDOW_FORECAST_FIXED.native.json",
+      "sha256": "51e68705910a997997b136e5919a05943747ece152d49839dcfca09ce265384d",
+      "bytes": 2925
+    },
+    {
+      "name": "TARGET_OFFICIAL_FIRST.json",
+      "sha256": "345022ece76721d1484fb03fdd23a794dc416e31db61666814c0584de3653cc1",
+      "bytes": 5701
+    },
+    {
+      "name": "RESTART_WINDOW_OFFICIAL_FIRST.json",
+      "sha256": "820b12f62a91b5a6ffb83f6f91a1af88d20926b1dec9bf9f9c0720eccfcf0a7a",
+      "bytes": 3244
+    },
+    {
+      "name": "RESTART_WINDOW_oldfills.native.json",
+      "sha256": "8db6bff95795b5b86711aec00aa1dd38a4525ea14eae2261dfb471edac4cf77e",
+      "bytes": 726079
+    },
+    {
+      "name": "RESTART_WINDOW_newfills.native.json",
+      "sha256": "af7cf4264affd62651aa27e84d3870cd1504500ad0bd52cce78b283cbad5a3d0",
+      "bytes": 289752
+    },
+    {
+      "name": "RESTART_WINDOW_settlements.native.json",
+      "sha256": "c9fb5386c3d6e80ddf9b16265f85666bf4fad0f6893458513dd55cda75af78e2",
+      "bytes": 2134
+    },
+    {
+      "name": "IMMEDIATE_BEFORE_0.native.json",
+      "sha256": "f35d0724e9321fb0b82de9f4d86ec6cc99dda675629902842d987b3df2175d85",
+      "bytes": 234600
+    },
+    {
+      "name": "IMMEDIATE_BEFORE_1.native.json",
+      "sha256": "0bb325e65010d6b33cb15771b02f4ae0a6c070185eb759af831032f12b3b82a3",
+      "bytes": 6553
+    },
+    {
+      "name": "oldV1.native.json",
+      "sha256": "56bffa49a410fb1678ac74b4cc51a0183a5ce213e637730683bc9e7df4456ab9",
+      "bytes": 6040
+    },
+    {
+      "name": "UNFILTERED_START_TAIL.native.json",
+      "sha256": "ba4419436345c11535c312e44dcc4ad5aa48557e294edadce688dc2221fc0c42",
+      "bytes": 231927
+    },
+    {
+      "name": "READY_START_epochs.native.json",
+      "sha256": "b7fff65e1d36177a43181235689e8af2d4a677a5ff04be71198959325f47d4ad",
+      "bytes": 5601
+    },
+    {
+      "name": "READY_START_financial.native.json",
+      "sha256": "d4952b335fc7f8908d295cfd9758ee510ff28b4ede312b154ba30e21fe7a0558",
+      "bytes": 112332
+    },
+    {
+      "name": "FRESH_STATUS.native.json",
+      "sha256": "e78c4d1abe6d5bc6fb0bee97f2fe3da1d2b608204cc0dc149dcb06511b02783d",
+      "bytes": 119656
+    },
+    {
+      "name": "FRESH_STATUS_2.native.json",
+      "sha256": "6b97103fc6e4355398fc43ac0adab48677df8c7f9bb35fd182e23ed8f99ba123",
+      "bytes": 119441
+    },
+    {
+      "name": "POST_TAIL_HEALTH.native.json",
+      "sha256": "0c04e31a1fd796e51425ac92430a4e66b067348b54506e13b45f56d0815a2ec2",
+      "bytes": 3263
+    },
+    {
+      "name": "POST_TAIL_IDENTITY.json",
+      "sha256": "148d16787904e71ee69233a4a95258b6362896eb7c0a63f572e28005c9d2790a",
+      "bytes": 6263
+    },
+    {
+      "name": "LATEST_FINANCIAL_SCOPED.json",
+      "sha256": "97792a3fa5d202384a662e89db29ad8d2707b2362920f5ab128d733cc88d31eb",
+      "bytes": 1646
+    },
+    {
+      "name": "ASTRA_RESTART_RETENTION_REVIEW.json",
+      "sha256": "0e184ddfd2fd02fb69669dc06a9ab183a8fd203395236a494f7b062415c803fa",
+      "bytes": 12079
+    },
+    {
+      "name": "ASTRA_FINANCIAL_STARTUP_ALL_DIFFS.json",
+      "sha256": "9b29838bccfec3817bb1280c0661d5c3ef106506b311e866cb134d84e723ce0a",
+      "bytes": 135280
+    },
+    {
+      "name": "ASTRA_RESTART_WINDOW_REVIEW.json",
+      "sha256": "a7cf3904b98a2cf847a98471221139d1751707637e7dd673cb380a36df8afda7",
+      "bytes": 12496
+    },
+    {
+      "name": "ASTRA_FIXED_FORECAST_REVIEW.json",
+      "sha256": "bb2d6600caa20dd2997e93758d59e230b0554d8789610e20acad9f007ca976e9",
+      "bytes": 4505
+    },
+    {
+      "name": "ASTRA_TARGET_OFFICIAL_BRIER_REVIEW.json",
+      "sha256": "d49b19e4efbeec290b7cd71bcbaae36bace2f979446a8fc91899d955f14db4e6",
+      "bytes": 2783
+    },
+    {
+      "name": "ASTRA_CLOSED_CAPTURE_REVIEW.json",
+      "sha256": "d007173730e9588c3b6bbdcf43d0c04d50fd5a0390d390b872aaa4bfd65bc641",
+      "bytes": 26554
+    },
+    {
+      "name": "ASTRA_POST_TAIL_IDENTITY_SUPPLEMENT.json",
+      "sha256": "9775979f2bfb295bad55d4dd755833635703f6592fe5678ff035412f241810d1",
+      "bytes": 4654
+    },
+    {
+      "name": "INTEGRATION_ROOT_TREE_PROOF.json",
+      "sha256": "dcc937c5baa27fc88da05ad15bedcca4512e69fbdef0f3b3bc17b9a0e40fbab6",
+      "bytes": 955
+    },
+    {
+      "name": "OPENAPI_GET.json",
+      "sha256": "29c0bdcc0d58e8bfc5809a2ce9b1b7a0b8cc726b2b4cd7a32a1dcd8401191c26",
+      "bytes": 481
+    },
+    {
+      "name": "HISTORICAL_CUTOFF_GET.json",
+      "sha256": "27e3cad49cb3f2ae03e03803e58b054bca0a58610d8570f159c664eb1946b148",
+      "bytes": 893
+    }
+  ],
+  "roundtrip_exact": true,
+  "credential_contact_scan_flags": [],
+  "limits": "Original finite filtered logs and selected public-market/status receipts, not raw volume, all-stream, complete ledger or profitability certification. Preserve truncated original strings.",
+  "xz_sha256": "e934a1c47b6cc0bab4dec556fd4dcd5db3d6d497372b351e84cc053baddd077f",
+  "xz_bytes": 108784,
+  "encoding": "base64 standard lines of LZMA/XZ compressed UTF8 JSON; stdlib base64 + lzma",
+  "parts": [
+    {
+      "name": "NATIVE_EVIDENCE.part01.txt",
+      "bytes": 64000,
+      "sha256": "330200c6d729b1f7bf4b98e117af734d73c9e9466b624459c5586bf265c1e3ae"
+    },
+    {
+      "name": "NATIVE_EVIDENCE.part02.txt",
+      "bytes": 64000,
+      "sha256": "a33d56f2bceb478d67105a3dc38dc7382f1dd7e5c090229c62e758155e05b465"
+    },
+    {
+      "name": "NATIVE_EVIDENCE.part03.txt",
+      "bytes": 18957,
+      "sha256": "5fd93b0bbcc7b52565183289f346e288f204bd70250edb6826f150ff6a2bed32"
+    }
+  ],
+  "reassemble": "Concatenate parts in numeric order, verify artifact_sha256, base64-decode then lzma.decompress, parse JSON, write each files[].utf8 to files[].name and verify its SHA256. Exact original truncated strings stay truncated.",
+  "excluded_public_artifacts": [
+    {
+      "name": "OPENAPI_2026-10-16.yaml",
+      "sha256": "a33d05aaa5deab319674407d543b5c0027d41adbf2c4f8a11dab708a0debd35a",
+      "reason": "Official public schema contains a private-key-looking example. Exact raw schema remains private; public GET metadata/hash retained. No claim that example is an actual credential."
+    }
+  ]
+}

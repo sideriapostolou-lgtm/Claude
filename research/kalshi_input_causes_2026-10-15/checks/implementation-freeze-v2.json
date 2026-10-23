@@ -1,0 +1,8 @@
+{
+  "base": "3ce8a0b92f53916768a3e1c09cac700281d3c1cd",
+  "patch_sha256": "d9359ee04a183632fbc72652bcc75e2d3f621db0fe21574e79670270bad55e8b",
+  "files": {
+    "src/nightcrawler/kalshi_arena.py": "27597ada56d59b87dd75fe80272c7316e5e778d859ff0f5c74f3929d85226e13",
+    "tests/test_kalshi_learning_diagnostic.py": "295793e03b8eb1abb81960e6671246a43561fe0e87cb9f0c036e5a60b6e79965"
+  }
+}

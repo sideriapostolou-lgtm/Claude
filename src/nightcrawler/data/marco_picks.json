@@ -1,0 +1,34 @@
+{
+  "about": "Million Dollar Marco Piemonte's picks (All In Sports podcast, YouTube @Cousins_AllIn), one entry per episode. Written by the weekly transcription routine; read by nightcrawler.marcodesk, which copies only the picks he loves, on paper. rank 1 = his favorite; love = he said he loves it; game_date = the game's local US date (YYYY-MM-DD).",
+  "episodes": [
+    {
+      "id": "nfl-2026-week-05",
+      "title": "NFL Week 5: Sharp Plays & Public Traps!",
+      "published": "2026-10-08T11:00:00Z",
+      "source_url": "https://www.youtube.com/watch?v=zQMEJVDKhhk",
+      "picks": [
+        {"rank": 1, "love": true, "league": "nfl", "team": "Green Bay Packers", "opponent": "Chicago Bears",
+         "kind": "moneyline", "line": "ML", "quote": "my favorite game of the week ... I'm hammering it",
+         "game_date": "2026-10-11"},
+        {"rank": 1, "love": true, "league": "nfl", "team": "Green Bay Packers", "opponent": "Chicago Bears",
+         "kind": "spread", "line": "+3", "quote": "my favorite game of the week ... I'm hammering it",
+         "game_date": "2026-10-11"},
+        {"rank": 2, "love": true, "league": "nfl", "team": "New Orleans Saints", "opponent": "Minnesota Vikings",
+         "kind": "moneyline", "line": "ML", "quote": "my second favorite pick of the week ... I love this so much",
+         "game_date": "2026-10-11"},
+        {"rank": 2, "love": true, "league": "nfl", "team": "New Orleans Saints", "opponent": "Minnesota Vikings",
+         "kind": "spread", "line": "+3", "quote": "my second favorite pick of the week ... I love this so much",
+         "game_date": "2026-10-11"},
+        {"rank": 3, "love": true, "league": "nfl", "team": "Washington Commanders", "opponent": "New York Giants",
+         "kind": "moneyline", "line": "ML", "quote": "my third favorite pick of the week",
+         "game_date": "2026-10-11"},
+        {"rank": 4, "love": false, "league": "nfl", "team": "Six-leg parlay", "opponent": null,
+         "kind": "parlay", "line": "+2300", "quote": "23-to-1 parlay",
+         "legs": ["New Orleans Saints +3", "Washington Commanders ML", "Green Bay Packers +3",
+                  "Philadelphia Eagles +8", "Tampa Bay Buccaneers +10",
+                  "Las Vegas Raiders vs New England Patriots under 51"],
+         "game_date": "2026-10-11"}
+      ]
+    }
+  ]
+}

@@ -1,0 +1,24 @@
+[
+  {
+    "timestamp": "2026-10-15T18:15:24.487915769Z",
+    "payload": {
+      "at": 1792088123.8603725,
+      "venue": "kalshi",
+      "window": "KXBTC15M-26OCT151415-15",
+      "settlement_id": "kalshi:KXBTC15M-26OCT151415-15",
+      "up_wins": false,
+      "up_shares": 0.0,
+      "down_shares": 0.0,
+      "cost_usd": 0.0,
+      "fee_usd": 0.0,
+      "paired_credit_usd": 0.0,
+      "net_payout_usd": 0.0,
+      "payout_usd": 0.0,
+      "locked_usd": 0.0,
+      "direction_usd": 0.0,
+      "pnl_usd": 0.0,
+      "observed_at": 1792088123.8604937,
+      "time_source": "public final outcome observed; paired position has no cash settlement"
+    }
+  }
+]

@@ -1,0 +1,31 @@
+{
+  "queried_at": "2026-10-19 00:32:07 UTC",
+  "request": {
+    "projectId": "75750847-85c0-41a3-a2a7-b7f2201a51e9",
+    "environmentId": "17f7b0e0-104c-4903-9484-0106748b3cdb",
+    "deploymentId": "43f14443-2d07-4985-b879-3a2515fb8d2c",
+    "serviceId": "f84d3b52-002f-44cb-931e-bc9e3e097e97",
+    "startDate": "2026-10-19T00:00:00Z",
+    "endDate": "2026-10-19T00:31:00Z",
+    "filter": "\"speeddesk_live_status\" OR \"companion_halted\" OR \"polydesk_started\" OR \"No space left\" OR \"cleanup_unconfirmed\"",
+    "limit": 100
+  },
+  "response": {
+    "content": [
+      {
+        "type": "text",
+        "text": "**Deployment 43f14443-2d07-4985-b879-3a2515fb8d2c** [SUCCESS]\nservice: f84d3b52-002f-44cb-931e-bc9e3e097e97, env: 17f7b0e0-104c-4903-9484-0106748b3cdb\n\n### Deploy logs (0)\n(no deploy logs in range)"
+      }
+    ],
+    "structuredContent": {
+      "scope": "deployment",
+      "deploymentId": "43f14443-2d07-4985-b879-3a2515fb8d2c",
+      "serviceId": "f84d3b52-002f-44cb-931e-bc9e3e097e97",
+      "environmentId": "17f7b0e0-104c-4903-9484-0106748b3cdb",
+      "status": "SUCCESS",
+      "deploy": []
+    },
+    "isError": false
+  },
+  "correction": "Initial follow-up used kalshi_live_status, which is not the actual native event name; that initial result supplies no native-status coverage. This query uses speeddesk_live_status. Both raw requests retained."
+}

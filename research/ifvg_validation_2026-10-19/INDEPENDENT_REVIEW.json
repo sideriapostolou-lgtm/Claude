@@ -1,0 +1,123 @@
+{
+  "schema_version": 1,
+  "review_scope": "Independent synthetic signal/replay and runner checks, bounded source/provenance/summary inspection; no historical prices or TEST reads",
+  "review_date_utc": "2026-10-19",
+  "strategy_version": "OWNER_SWEEP_IFVG_MNQ_v1",
+  "verdict": "NO_BLOCKING_SIMULATOR_OR_RUNNER_FINDING",
+  "source_sha256": "69caef01eb392211342524b2fc3bc695f5cb31eab9d6d64763a4fc4503c2615b",
+  "spec_sha256": "59e43db6904ce48ff0da9e0c4e144a11e160c9c577c86339963c9e1b51aa6d18",
+  "independent_test_sha256": "ba343c3fa98251317398fcdf60766be0b185ed1cc1996b1e9c99f8a0918aba81",
+  "runner_sha256": "6e9d820aabc18776d7c6a316e9016dd24a94d87238f0f92a058eda5ce03fe76e",
+  "evaluation_declaration_sha256": "274ee2edc8ad1dc687c96bfed8e7b05d805d5681d2031650570f8a9861f0dbe6",
+  "checks": [
+    {
+      "stage": "initial independent fixtures before source inspection",
+      "source_sha256": "e994218ce0977df95d259131925ed4bdb89075fb9c2d422425de3c9eb299d230",
+      "command": "/workspace/nightcrawler-daily/.venv/bin/python -m pytest -q research/ifvg_validation_2026-10-19/independent_test.py",
+      "passed": 39,
+      "failed": 0
+    },
+    {
+      "stage": "expanded specification boundary fixtures",
+      "command": "/workspace/nightcrawler-daily/.venv/bin/python -m pytest -q research/ifvg_validation_2026-10-19/independent_test.py",
+      "passed": 55,
+      "failed": 0
+    },
+    {
+      "stage": "initial independent test lint",
+      "command": "/workspace/nightcrawler-daily/.venv/bin/ruff check research/ifvg_validation_2026-10-19/independent_test.py",
+      "exit_code": 1,
+      "findings": ["I001 import grouping", "UP017 timezone.utc alias, two occurrences", "FURB162 unnecessary Z replacement"],
+      "resolution": "Only independent_test.py style changed; no simulator changes or expected financial values changed"
+    },
+    {
+      "stage": "original-source independent checks after lint corrections",
+      "pytest_passed": 55,
+      "pytest_failed": 0,
+      "pytest_output": "55 passed in 0.30s",
+      "ruff_exit_code": 0,
+      "ruff_output": "All checks passed!"
+    },
+    {
+      "stage": "final exit-time metadata source independent checks",
+      "source_sha256": "ef9b629bb6ff8baa4a5eb0dfa08aa0d85c63e6962547c8befaa024828af36e77",
+      "pytest_passed": 57,
+      "pytest_failed": 0,
+      "pytest_output": "57 passed in 0.28s",
+      "ruff_exit_code": 0,
+      "ruff_output": "All checks passed!",
+      "change": "Explicit OPEN versus INTRABAR_INTERVAL exit time metadata; signal/accounting unchanged"
+    },
+    {
+      "stage": "root runner synthetic reproduction and source review",
+      "initial_runner_sha256": "b66b8c1a28a55db681ce8b9abd8a1be94e4ff74df0bfa21b99298a583242f18e",
+      "root_tests_passed": 12,
+      "failed": 0,
+      "runner_change_before_final_check": "Explicit scenario default binding in inner function; no accounting behavior change"
+    },
+    {
+      "stage": "added independent runner guard checks initial lint",
+      "pytest_passed": 74,
+      "pytest_failed": 0,
+      "ruff_exit_code": 1,
+      "findings": ["FURB157 four unnecessary string conversions in synthetic Decimal fixture"],
+      "resolution": "Replaced whole-number Decimal string arguments with integer arguments; financial expectations unchanged"
+    },
+    {
+      "stage": "independent and root runner checks before type refinement",
+      "command": "/workspace/nightcrawler-daily/.venv/bin/python -m pytest -q research/ifvg_validation_2026-10-19/independent_test.py research/ifvg_validation_2026-10-19/test_study.py",
+      "independent_tests_passed": 62,
+      "root_runner_tests_passed": 12,
+      "pytest_failed": 0,
+      "pytest_output": "74 passed in 0.33s",
+      "ruff_exit_code": 0,
+      "ruff_output": "All checks passed!"
+    },
+    {
+      "stage": "final exact-source recheck after type refinement",
+      "source_sha256": "69caef01eb392211342524b2fc3bc695f5cb31eab9d6d64763a4fc4503c2615b",
+      "change": "Typed gap/attempt records and result dictionary after root reported four mypy annotation errors; no signal/accounting/serialization change",
+      "independent_tests_passed": 62,
+      "root_runner_tests_passed": 12,
+      "pytest_failed": 0,
+      "pytest_output": "74 passed in 0.30s",
+      "ruff_exit_code": 0,
+      "ruff_output": "All checks passed!"
+    }
+  ],
+  "blocking_findings": [],
+  "tested_behaviors": [
+    "Sweep-candle confirmation and next-open causal entry",
+    "Long/short reflection symmetry and exact integer tick/Decimal accounting",
+    "Every one of nine declared friction/fee cases; integer fee cents equal Decimal USD",
+    "Target touch rejection, one-tick trade-through and no favorable fill improvement",
+    "Opening target/stop precedence before intrabar extrema",
+    "Adverse stop opening gaps and intrabar stop-first ambiguity flag",
+    "11:30 resting exit precedence, time exit and exclusion of later extrema",
+    "Entry-bar exit exposure and entry at stop rejection",
+    "First attempt consumption and simultaneous opposite sweep rejection",
+    "Missing references, pre-gap, observation, confirmation, entry and outcome remain unresolved",
+    "Known closed losses survive missing later bars; no-trade needs observation coverage",
+    "New York DST transitions, Sunday reference start and epoch-minute input equivalence",
+    "Eligible older gap survives rejection of newer already-inverted gap",
+    "First strict inversion after equality and inclusive tenth confirmation bar",
+    "Opposite sweep rejection precedes same-bar confirmation",
+    "Inclusive ten-minute gap age and strict 11:00 entry cutoff",
+    "Prices after a closed trade cannot change its result",
+    "Unknown/incomplete calendar remains unresolved; supplied closed/shortened status excludes",
+    "Duplicate minute timestamps raise rather than overwrite",
+    "Exact opening exit versus intrabar exit interval timestamp metadata",
+    "Runner synthetic gross/net/fee accounting, drawdown, loss streak and best-day removal",
+    "Runner existing output preservation before reading inputs",
+    "Runner unqualified/incomplete manifest and changed source rejection before data access",
+    "Reproduced root parser and unresolved-summary tests on invented data"
+  ],
+  "limitations": [
+    "Synthetic software verification is not historical profitability or executable-fill evidence",
+    "Calendar REGULAR is a caller attestation, not independently verified by this API",
+    "Actual-contract identity, provider fidelity, independent CME halt history, actual costs and statistical generalization remain unverified; runner tests cannot supply them",
+    "A continuous or unverified-contract public sample can support only explicitly labeled exploratory proxy observations, not the registered actual-MNQ protocol",
+    "Intrabar stop/target timestamps identify the modeled bar, not an observed exact execution time",
+    "No historical data, sealed holdout, production system, broker, account, secret or network was accessed by this reviewer"
+  ]
+}

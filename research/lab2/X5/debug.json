@@ -1,0 +1,377 @@
+{
+ "hypothesis": "X5",
+ "version": "x5-v1",
+ "stage": "debug",
+ "split": "final_train",
+ "utc": "2026-10-09 04:25:18",
+ "provisional": false,
+ "debug_only": true,
+ "prereg_sha256": "8b8bce32d7610c43a51132396cc250c284ac9ecad67cf6ff7b2cd42a396ed8ef",
+ "rerun_reason": null,
+ "coverage": {
+  "split": "final_train",
+  "bounds_utc": [
+   "2026-10-07 19:37:30",
+   "2026-10-08 08:06:47"
+  ],
+  "debug_only": true,
+  "graduates_in_split": 644,
+  "tradeable": 450,
+  "usable": 450,
+  "excluded": {
+   "mayhem": 129,
+   "not_sol_quoted": 65
+  },
+  "created_inexact": 0,
+  "has_create0": 44,
+  "chain_hours_scanned_frac": 1.0,
+  "days": [
+   {
+    "day": "2026-10-07",
+    "hours_in_split": 5,
+    "curve_hours": 5,
+    "b2_hours": 5,
+    "b2_hours_midrun": 0,
+    "coins_created": 294,
+    "tradeable": 196,
+    "usable": 196,
+    "usable_frac": 1.0,
+    "partial": false
+   },
+   {
+    "day": "2026-10-08",
+    "hours_in_split": 9,
+    "curve_hours": 9,
+    "b2_hours": 9,
+    "b2_hours_midrun": 0,
+    "coins_created": 350,
+    "tradeable": 254,
+    "usable": 254,
+    "usable_frac": 1.0,
+    "partial": false
+   }
+  ],
+  "days_expected": 0.52,
+  "days_full": 2,
+  "curve_span_utc": [
+   "2026-09-30 17:00:00",
+   "2026-10-09 02:00:00"
+  ],
+  "b2_span_utc": [
+   "2026-10-07 19:00:00",
+   "2026-10-08 19:00:00"
+  ],
+  "completeness_source": "raw_chunks",
+  "parquet_snapshot_utc": "2026-10-09 03:57:17",
+  "b2_hours_needed": 24,
+  "b2_hours_done": 24,
+  "b2_hours_midrun": [],
+  "sol_usd": {
+   "series_utc": [
+    "2026-09-15 00:00:00",
+    "2026-10-08 23:59:00"
+   ],
+   "constant_fallback": false,
+   "lookahead_coins": 0,
+   "stale_coins": 0
+  },
+  "power": {
+   "entry_bar_coins": {
+    "need": 40,
+    "have_usable_coins": 450,
+    "ok": true
+   },
+   "x1_r0_trades_5_seeds": {
+    "need": 200,
+    "max_possible": 2250,
+    "ok": true
+   },
+   "g1_flagged_coins_val": {
+    "need": 200,
+    "max_possible": 450,
+    "ok": true
+   }
+  },
+  "underpowered": false,
+  "complete": true,
+  "notes": [],
+  "from_flow": true
+ },
+ "n_coins": 450,
+ "span_days": 0.5203240740740741,
+ "regime": {
+  "stage": "debug",
+  "split": "final_train",
+  "grid_utc": [
+   "2026-10-06 19:15:00",
+   "2026-10-08 18:30:00"
+  ],
+  "gr_pool_created_before_utc": "2026-10-08 08:06:47",
+  "history_splits": [
+   "final_train"
+  ],
+  "history_coins": 450,
+  "history_created_utc": [
+   "2026-10-07 19:37:30",
+   "2026-10-08 08:06:47"
+  ],
+  "records": {
+   "GR": 1498,
+   "AV": 20003,
+   "SV": 450
+  },
+  "known_points": {
+   "GR": 148,
+   "AV": 7,
+   "SV": 18
+  },
+  "points": 190,
+  "first_known_utc": {
+   "GR": "2026-10-06 19:15:00",
+   "AV": "2026-10-08 06:45:00",
+   "SV": "2026-10-08 04:15:00"
+  }
+ },
+ "history_coverage": {
+  "final_train": {
+   "usable": 450,
+   "complete": true
+  }
+ },
+ "known_share_at_g60": {
+  "GR": 0.949,
+  "AV": 0.0,
+  "SV": 0.0
+ },
+ "grad_delay_counts": {
+  "exact": 450,
+  "over_6h": 2,
+  "over_1h": 20,
+  "unscanned_creation": 0
+ },
+ "model_check": {
+  "n_coins_alive_at_r0_decision": 94,
+  "need_obs": 200,
+  "signals": {
+   "GR": {
+    "n_obs": 88,
+    "decision": "HIDDEN (debug split: no outcome statistics)"
+   },
+   "AV": {
+    "n_obs": 0,
+    "decision": "HIDDEN (debug split: no outcome statistics)"
+   },
+   "SV": {
+    "n_obs": 0,
+    "decision": "HIDDEN (debug split: no outcome statistics)"
+   }
+  },
+  "decision": "HIDDEN",
+  "pass_signals": [
+   "GR",
+   "AV",
+   "SV"
+  ],
+  "trial": {
+   "config": "X5-modelcheck|b37bf2e6c363",
+   "new_trial": false,
+   "n_trials_total": 2575,
+   "hypothesis_configs": 0,
+   "over_variant_limit": false,
+   "family_val_looks": 0
+  }
+ },
+ "hosts": {
+  "R0": {
+   "hypothesis": "X5.host-R0",
+   "host": "R0",
+   "params_hash": "17ae0775ee5a",
+   "n": 94,
+   "n_coins": 94,
+   "by_tag_n": {
+    "R0": 94
+   },
+   "horizon_exits": 0,
+   "trial": {
+    "config": "X5.host-R0|17ae0775ee5a|cfg:a06543feac6c",
+    "new_trial": false,
+    "n_trials_total": 2575
+   },
+   "returns": "hidden on the debug split (never choose parameters on FINAL data)"
+  }
+ },
+ "configs": {
+  "R0|GR|q0.5": {
+   "config": "R0|GR|q0.5",
+   "params_hash": "2f4d80b8964e",
+   "hypothesis": "X5",
+   "host": "R0",
+   "signal": "GR",
+   "q": 0.5,
+   "n": 43,
+   "n_coins": 43,
+   "n_placebo": 860,
+   "host_n": 94,
+   "host_states": {
+    "OFF": 45,
+    "ON": 43,
+    "UNKNOWN": 6
+   },
+   "known_share": 0.9361702127659575,
+   "on_blocks": 2,
+   "gate_consistent": true,
+   "horizon_exits": 0,
+   "trial": {
+    "config": "X5|2f4d80b8964e|cfg:a06543feac6c",
+    "new_trial": false,
+    "n_trials_total": 2575
+   },
+   "returns": "hidden on the debug split (never choose parameters on FINAL data)"
+  },
+  "R0|GR|q0.8": {
+   "config": "R0|GR|q0.8",
+   "params_hash": "ccd0202251aa",
+   "hypothesis": "X5",
+   "host": "R0",
+   "signal": "GR",
+   "q": 0.8,
+   "n": 12,
+   "n_coins": 12,
+   "n_placebo": 240,
+   "host_n": 94,
+   "host_states": {
+    "OFF": 76,
+    "ON": 12,
+    "UNKNOWN": 6
+   },
+   "known_share": 0.9361702127659575,
+   "on_blocks": 2,
+   "gate_consistent": true,
+   "horizon_exits": 0,
+   "trial": {
+    "config": "X5|ccd0202251aa|cfg:a06543feac6c",
+    "new_trial": false,
+    "n_trials_total": 2575
+   },
+   "returns": "hidden on the debug split (never choose parameters on FINAL data)"
+  },
+  "R0|AV|q0.5": {
+   "config": "R0|AV|q0.5",
+   "params_hash": "711c268a884e",
+   "hypothesis": "X5",
+   "host": "R0",
+   "signal": "AV",
+   "q": 0.5,
+   "n": 0,
+   "n_coins": 0,
+   "n_placebo": 0,
+   "host_n": 94,
+   "host_states": {
+    "UNKNOWN": 94
+   },
+   "known_share": 0.0,
+   "on_blocks": 0,
+   "gate_consistent": true,
+   "horizon_exits": 0,
+   "trial": {
+    "config": "X5|711c268a884e|cfg:a06543feac6c",
+    "new_trial": false,
+    "n_trials_total": 2575
+   },
+   "returns": "hidden on the debug split (never choose parameters on FINAL data)"
+  },
+  "R0|AV|q0.8": {
+   "config": "R0|AV|q0.8",
+   "params_hash": "bf77e9ad2be3",
+   "hypothesis": "X5",
+   "host": "R0",
+   "signal": "AV",
+   "q": 0.8,
+   "n": 0,
+   "n_coins": 0,
+   "n_placebo": 0,
+   "host_n": 94,
+   "host_states": {
+    "UNKNOWN": 94
+   },
+   "known_share": 0.0,
+   "on_blocks": 0,
+   "gate_consistent": true,
+   "horizon_exits": 0,
+   "trial": {
+    "config": "X5|bf77e9ad2be3|cfg:a06543feac6c",
+    "new_trial": false,
+    "n_trials_total": 2575
+   },
+   "returns": "hidden on the debug split (never choose parameters on FINAL data)"
+  },
+  "R0|SV|q0.5": {
+   "config": "R0|SV|q0.5",
+   "params_hash": "637bda54a198",
+   "hypothesis": "X5",
+   "host": "R0",
+   "signal": "SV",
+   "q": 0.5,
+   "n": 0,
+   "n_coins": 0,
+   "n_placebo": 0,
+   "host_n": 94,
+   "host_states": {
+    "UNKNOWN": 94
+   },
+   "known_share": 0.0,
+   "on_blocks": 0,
+   "gate_consistent": true,
+   "horizon_exits": 0,
+   "trial": {
+    "config": "X5|637bda54a198|cfg:a06543feac6c",
+    "new_trial": false,
+    "n_trials_total": 2575
+   },
+   "returns": "hidden on the debug split (never choose parameters on FINAL data)"
+  },
+  "R0|SV|q0.8": {
+   "config": "R0|SV|q0.8",
+   "params_hash": "52f6809bf641",
+   "hypothesis": "X5",
+   "host": "R0",
+   "signal": "SV",
+   "q": 0.8,
+   "n": 0,
+   "n_coins": 0,
+   "n_placebo": 0,
+   "host_n": 94,
+   "host_states": {
+    "UNKNOWN": 94
+   },
+   "known_share": 0.0,
+   "on_blocks": 0,
+   "gate_consistent": true,
+   "horizon_exits": 0,
+   "trial": {
+    "config": "X5|52f6809bf641|cfg:a06543feac6c",
+    "new_trial": false,
+    "n_trials_total": 2575
+   },
+   "returns": "hidden on the debug split (never choose parameters on FINAL data)"
+  }
+ },
+ "n_trials_total": 2575,
+ "signals_per_day": {
+  "R0|GR|q0.5": 82.6408043420233,
+  "R0|GR|q0.8": 23.062550048936735,
+  "R0|AV|q0.5": 0.0,
+  "R0|AV|q0.8": 0.0,
+  "R0|SV|q0.5": 0.0,
+  "R0|SV|q0.8": 0.0
+ },
+ "host_trades_per_day": {
+  "R0": 180.65664205000445
+ },
+ "decision": {
+  "verdict": "DEBUG",
+  "note": "mechanics and counts only; returns hidden"
+ },
+ "runtime_s": 6.6,
+ "overall": "PENDING (no official TRAIN run)"
+}

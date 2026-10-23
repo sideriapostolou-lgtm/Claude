@@ -1,0 +1,16 @@
+{
+  "content": [
+    {
+      "type": "text",
+      "text": "Action completed."
+    }
+  ],
+  "structuredContent": {
+    "content": "    def _lock_guard(self, intent: Intent) -> bool:\n        \"\"\"Last check under the transport lock: still the lock period, still unpaired, ask still there.\"\"\"\n        snapshot, now = self.snapshot(), self.clock()\n        window = self._current_window(intent.window, snapshot)\n        spec = self.book.windows.get(intent.window)\n        if (window is None or spec is None or self.stopping\n                or (self.stop_event is not None and self.stop_event.is_set())\n                or self._gates() or self.fatal_reason or self.book.integrity_error\n                or not self.authenticated or self._waiting_reason()\n                or not spec.end - self.book.limits.lock_s <= now < spec.end - LOCK_MARGIN_S\n                or self._book_reason(window, snapshot, now)):\n            return False\n        # Admission preceded the worker/rate-limit wait. Recheck its cash clock,\n        # without re-running can_lock: this intent already owns the reservation.\n        if (self.book.cash_at is None or self.book.cash_usd is None\n                or not 0 <= now - self.book.cash_at <= self.book.limits_for(intent.window).cash_max_age_s):\n            return False\n        side, unpaired = self.book.lock_side(intent.window)\n        if side != intent.side or intent.size > unpaired + EPS:\n            return False\n        asks = snapshot.books[(intent.window, intent.side)].asks\n        return any(level.price <= intent.price + EPS and level.size > 0 for level in asks)\n\n    @staticmethod\n    def _single_order_refusal(exc: Exception) -> bool:\n        \"\"\"A definite 4xx about one order; authentication and rate limits stay account errors.\"\"\"\n        return (isinstance(exc, KalshiClientError) and not exc.uncertain and exc.status is not None\n                and 400 <= exc.status < 500 and exc.status not in (401, 403, 429))\n",
+    "encoding": "utf-8",
+    "sha": "23fce9699d4633decdf543e8f13e5c9dcfe874a9",
+    "display_url": "https://github.com/sideriapostolou-lgtm/Claude/blob/59ba6a8e33c4e7368e74ca1e71645cc4f288d699/src/nightcrawler/speeddesk_live.py",
+    "display_title": "speeddesk_live.py"
+  },
+  "isError": false
+}

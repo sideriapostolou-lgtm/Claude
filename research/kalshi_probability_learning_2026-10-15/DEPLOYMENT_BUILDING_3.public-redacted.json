@@ -1,0 +1,88 @@
+{
+  "at": {
+    "current_time": "2026-10-15 19:17:55 UTC"
+  },
+  "request": {
+    "projectId": "75750847-85c0-41a3-a2a7-b7f2201a51e9",
+    "environmentId": "17f7b0e0-104c-4903-9484-0106748b3cdb",
+    "serviceId": "f84d3b52-002f-44cb-931e-bc9e3e097e97",
+    "limit": 3
+  },
+  "result": {
+    "content": [
+      {
+        "type": "text",
+        "text": "Found 3 deployment(s):\n\n- **2e88601d-c9c7-474f-add8-72c0a13c1a4b** [BUILDING]\n  service: f84d3b52-002f-44cb-931e-bc9e3e097e97, env: 17f7b0e0-104c-4903-9484-0106748b3cdb\n  created: 2026-10-15T19:17:06.734Z by sideriapostolou@gmail.com\n  branch claude/nightcrawler-memecoin-bot-Gwnb1S \u00b7 commit 8c8681a \u00b7 Merge pull request #64 from sideriapostolou-lgtm/codex/kalshi-probability-learning\n\nLIVE ON MERGE: probability observer; touches real money on restart\n- **23d5425b-faa7-4940-bc48-898af89f76e4** [SKIPPED]\n  service: f84d3b52-002f-44cb-931e-bc9e3e097e97, env: 17f7b0e0-104c-4903-9484-0106748b3cdb\n  created: 2026-10-15T18:54:56.063Z by sideriapostolou@gmail.com\n  branch claude/nightcrawler-memecoin-bot-Gwnb1S \u00b7 commit bbe2ead \u00b7 docs: freeze separate probability observer protocol and scope\n- **3fe6d4b0-ce69-400b-ac8d-c42212dec0d5** [SKIPPED]\n  service: f84d3b52-002f-44cb-931e-bc9e3e097e97, env: 17f7b0e0-104c-4903-9484-0106748b3cdb\n  created: 2026-10-15T18:47:03.215Z by sideriapostolou@gmail.com\n  branch claude/nightcrawler-memecoin-bot-Gwnb1S \u00b7 commit 88f8f6f \u00b7 docs: record bounded TJR queue check at 11:45 Pacific"
+      }
+    ],
+    "structuredContent": {
+      "deployments": [
+        {
+          "id": "2e88601d-c9c7-474f-add8-72c0a13c1a4b",
+          "status": "BUILDING",
+          "createdAt": "2026-10-15T19:17:06.734Z",
+          "updatedAt": "2026-10-15T19:17:08.489Z",
+          "serviceId": "f84d3b52-002f-44cb-931e-bc9e3e097e97",
+          "environmentId": "17f7b0e0-104c-4903-9484-0106748b3cdb",
+          "url": null,
+          "snapshotId": "102aed5e-bb39-4141-b8b0-4371e1b569ae",
+          "canRollback": false,
+          "canRedeploy": false,
+          "regions": [],
+          "meta": {
+            "reason": "deploy",
+            "commitMessage": "Merge pull request #64 from sideriapostolou-lgtm/codex/kalshi-probability-learning\n\nLIVE ON MERGE: probability observer; touches real money on restart",
+            "commitHash": "8c8681a032a6181c49915ba88ba38d0818dc69d3",
+            "branch": "claude/nightcrawler-memecoin-bot-Gwnb1S"
+          }
+        },
+        {
+          "id": "23d5425b-faa7-4940-bc48-898af89f76e4",
+          "status": "SKIPPED",
+          "createdAt": "2026-10-15T18:54:56.063Z",
+          "updatedAt": "2026-10-15T18:54:56.063Z",
+          "serviceId": "f84d3b52-002f-44cb-931e-bc9e3e097e97",
+          "environmentId": "17f7b0e0-104c-4903-9484-0106748b3cdb",
+          "url": null,
+          "snapshotId": null,
+          "canRollback": false,
+          "canRedeploy": false,
+          "regions": [],
+          "meta": {
+            "commitMessage": "docs: freeze separate probability observer protocol and scope",
+            "commitHash": "bbe2eadd43303f4f0bc411768c4c653648727f82",
+            "branch": "claude/nightcrawler-memecoin-bot-Gwnb1S"
+          }
+        },
+        {
+          "id": "3fe6d4b0-ce69-400b-ac8d-c42212dec0d5",
+          "status": "SKIPPED",
+          "createdAt": "2026-10-15T18:47:03.215Z",
+          "updatedAt": "2026-10-15T18:47:03.215Z",
+          "serviceId": "f84d3b52-002f-44cb-931e-bc9e3e097e97",
+          "environmentId": "17f7b0e0-104c-4903-9484-0106748b3cdb",
+          "url": null,
+          "snapshotId": null,
+          "canRollback": false,
+          "canRedeploy": false,
+          "regions": [],
+          "meta": {
+            "commitMessage": "docs: record bounded TJR queue check at 11:45 Pacific",
+            "commitHash": "88f8f6f4a695d32d712351d1dc1b2332180d165c",
+            "branch": "claude/nightcrawler-memecoin-bot-Gwnb1S"
+          }
+        }
+      ]
+    },
+    "isError": false
+  },
+  "public_derivative": {
+    "original_sha256": "a49a23a78e5b3f3322870dca367173f869151cdf0b29d897403fe502c98abe35",
+    "redacted_json_paths": [
+      "$.result.structuredContent.deployments[0].creator",
+      "$.result.structuredContent.deployments[1].creator",
+      "$.result.structuredContent.deployments[2].creator"
+    ],
+    "reason": "Unneeded creator contact/identity metadata omitted; full original retained privately. All deployment/source/state fields preserved."
+  }
+}

@@ -1,0 +1,29 @@
+"""Synthetic review reproduction; no network or source writes. Run with PYTHONPATH=src."""
+import json
+import logging
+import tempfile
+from pathlib import Path
+from nightcrawler import kalshi_arena as m
+from nightcrawler.speeddesk_model import Window
+class Capture(logging.Handler):
+ def __init__(self):super().__init__();self.events=[]
+ def emit(self,r):
+  s=r.getMessage()
+  if s.startswith('kalshi_learning_input_diagnostic '):self.events.append(json.loads(s.split(' ',1)[1]))
+def run(write_then_raise=False, count=1):
+ h=Capture();m.log.addHandler(h);oldlevel=m.log.level;m.log.setLevel(logging.INFO);original=m.log.info
+ try:
+  with tempfile.TemporaryDirectory() as tmp:
+   c=[900.];v=m.WireView();v.bitcoin_price=100;v.sigma=.001;v.bitcoin_at=900
+   a=m.KalshiArena(m.ArenaConfig(Path(tmp),population=2),lambda:v,clock=lambda:c[0])
+   ws=tuple(Window(f'KXBTC15M-logfail-{i}',1000+i,1900+i,100,venue='kalshi') for i in range(count));v.windows=ws;a.step(900)
+   def fail(message,*args,**kwargs):
+    if message.startswith('kalshi_learning_input_diagnostic'):
+     if write_then_raise:original(message,*args,**kwargs)
+     raise RuntimeError('synthetic diagnostic failure')
+    original(message,*args,**kwargs)
+   m.log.info=fail;c[0]=v.bitcoin_at=1300+count;a.step(c[0]);m.log.info=original
+   c[0]=v.bitcoin_at=1900+count;v.outcomes={w.slug:True for w in ws};a.step(c[0])
+   return {'write_then_raise':write_then_raise,'count':count,'forecasts':a.learning.counts['forecasts'],'scored':a.learning.counts['scored'],'events':[(r['window'],r['disposition'],r['observation'],r['pending']['forecast_none']) for r in h.events]}
+ finally:m.log.info=original;m.log.removeHandler(h);m.log.setLevel(oldlevel)
+if __name__=='__main__':print(json.dumps([run(False,1),run(True,1),run(False,2),run(True,2)],indent=2))

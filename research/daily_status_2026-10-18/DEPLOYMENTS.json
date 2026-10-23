@@ -1,0 +1,80 @@
+{
+  "deployments": [
+    {
+      "id": "96c1c9f4-4a6d-45df-bf1c-400eca03dd8d",
+      "status": "SKIPPED",
+      "createdAt": "2026-10-17T00:05:57.292Z",
+      "updatedAt": "2026-10-17T00:05:57.292Z",
+      "serviceId": "f84d3b52-002f-44cb-931e-bc9e3e097e97",
+      "environmentId": "17f7b0e0-104c-4903-9484-0106748b3cdb",
+      "url": null,
+      "snapshotId": null,
+      "canRollback": false,
+      "canRedeploy": false,
+      "regions": [],
+      "meta": {
+        "commitMessage": "docs: verify reduction-only deployment and preserve final losses",
+        "commitHash": "c8fbc6e59e7a1555489116dce35f7657cd5fe208",
+        "branch": "claude/nightcrawler-memecoin-bot-Gwnb1S"
+      }
+    },
+    {
+      "id": "43f14443-2d07-4985-b879-3a2515fb8d2c",
+      "status": "SUCCESS",
+      "createdAt": "2026-10-16T23:49:24.905Z",
+      "updatedAt": "2026-10-16T23:50:35.236Z",
+      "serviceId": "f84d3b52-002f-44cb-931e-bc9e3e097e97",
+      "environmentId": "17f7b0e0-104c-4903-9484-0106748b3cdb",
+      "url": null,
+      "snapshotId": "b39e1fa6-b26f-4301-ae40-52989a5e2dd4",
+      "canRollback": true,
+      "canRedeploy": true,
+      "regions": [
+        "us-east4-eqdc4a"
+      ],
+      "meta": {
+        "reason": "deploy",
+        "commitMessage": "Merge pull request #76 from sideriapostolou-lgtm/codex/kalshi-reduction-only-20261016\n\nfix: contain unpaired Kalshi entries (touches real money)",
+        "commitHash": "f370c3c252927f659472ee160eb92fac2458ee51",
+        "branch": "claude/nightcrawler-memecoin-bot-Gwnb1S"
+      }
+    },
+    {
+      "id": "504aa1d8-6af9-43a8-beaa-abafa0de7d70",
+      "status": "SKIPPED",
+      "createdAt": "2026-10-16T23:30:56.314Z",
+      "updatedAt": "2026-10-16T23:30:56.314Z",
+      "serviceId": "f84d3b52-002f-44cb-931e-bc9e3e097e97",
+      "environmentId": "17f7b0e0-104c-4903-9484-0106748b3cdb",
+      "url": null,
+      "snapshotId": null,
+      "canRollback": false,
+      "canRedeploy": false,
+      "regions": [],
+      "meta": {
+        "commitMessage": "docs: declare post-PR75 loss containment scope",
+        "commitHash": "42f2395cbe73e8a222309bf1c27ab865e2a062ba",
+        "branch": "claude/nightcrawler-memecoin-bot-Gwnb1S"
+      }
+    },
+    {
+      "id": "f8c60e3a-e906-4609-908c-305096245ca9",
+      "status": "SKIPPED",
+      "createdAt": "2026-10-16T20:44:17.536Z",
+      "updatedAt": "2026-10-16T20:44:17.536Z",
+      "serviceId": "f84d3b52-002f-44cb-931e-bc9e3e097e97",
+      "environmentId": "17f7b0e0-104c-4903-9484-0106748b3cdb",
+      "url": null,
+      "snapshotId": null,
+      "canRollback": false,
+      "canRedeploy": false,
+      "regions": [],
+      "meta": {
+        "commitMessage": "docs: verify PR75 hedge correction deployment and preserve open evidence",
+        "commitHash": "826fd0e1fcd9dac47673c92a9c903c86946e24d8",
+        "branch": "claude/nightcrawler-memecoin-bot-Gwnb1S"
+      }
+    }
+  ],
+  "projection_note": "Deployment creator identity omitted; source and state retained."
+}

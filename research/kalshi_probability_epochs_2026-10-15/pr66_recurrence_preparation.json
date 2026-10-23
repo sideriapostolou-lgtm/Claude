@@ -1,0 +1,39 @@
+{
+  "prepared_at_utc": "2026-10-15T21:42:17.509398+00:00",
+  "checked_at_utc": "2026-10-15T21:43:33.462456+00:00",
+  "plan_publication_by_root_before_start_required": true,
+  "files": {
+    "pr66_recurrence_plan.md": {
+      "bytes": 5342,
+      "sha256": "3d6dc70dbbe128873be02ef0a43dd51613c2a533cfd15093c64f49755078b17d"
+    },
+    "pr66_recurrence.py.txt": {
+      "bytes": 11636,
+      "sha256": "871b08790c415b1dac66d185b948a82bdf26bd1a5736df1e15cf2e67f9662053"
+    },
+    "pr66_recurrence_checks.py.txt": {
+      "bytes": 4254,
+      "sha256": "afab912019b9e5c9de36b44041c903ac12356f5eaddaddd04cd5ae145e7c484a"
+    },
+    "pr66_recurrence_checks.stdout": {
+      "bytes": 439,
+      "sha256": "5a592bb6ff13e75633d71848e5b543cf062aab012b8ee52de239cc02e26bbad9"
+    },
+    "pr66_recurrence_PR65_sanity.json": {
+      "bytes": 146818,
+      "sha256": "9980cef12f1062f03df86fab1527a7c89ba1aa337c9f60126591236809ba1460"
+    }
+  },
+  "unchanged_timing_source_sha256": {
+    "speeddesk_kalshi_ws.py": "1eef6d36a0b5aaf3a00680c0aedec057e163aac8fc8d63e3e213b01124b4337b",
+    "speeddesk_ws_timing.py": "77989b80dcc8eb452d1fee658b37ecc5bbd1daa77427d6bb104b51c6ef6c1d8b",
+    "speeddesk_worktrace.py": "cc8b3770d125bed718144b7aaa4d60ea4408ef3142543d115afd5125b85195b2",
+    "speeddesk_workbins.py": "41fbf76947a1792fdc1f0c9a51e9352d0d4d160b2b968fc65691f9c0386ec4f8"
+  },
+  "synthetic_checks_passed": 13,
+  "PR65_sanity_matches_existing_three_known_main_gap_decomposition": true,
+  "PR65_fixture_is_preexisting_not_PR66_evidence": true,
+  "api_calls": 0,
+  "bot_source_edits": 0,
+  "production_changes": 0
+}

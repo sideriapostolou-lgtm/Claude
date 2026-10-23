@@ -1,0 +1,17 @@
+{
+  "checked_at_utc": "2026-10-16T03:27:16Z",
+  "checked_at_pacific": "2026-10-15 8:27:16 PM PDT",
+  "root_independent_actual_receipt_checks": 39,
+  "astra_independent_actual_receipt_checks": 32,
+  "analysis_fake_tests": {"passed": 14, "seconds": 0.03, "scope": "8 original audit, 4 corrected parser, 2 portable adapter; not another app suite"},
+  "lossless_archive": {"files": 86, "raw_file_bytes": 8561092, "base64_parts": 8, "base64_bytes": 218128, "every_original_byte_and_hash_matches": true},
+  "unpacked_root_audit": {"passed": 39, "real_target_pnl_usd": "-2.8509", "fees_usd": "0.0109"},
+  "unpacked_independent_audit": {"passed": 32, "same_complete_result_except_two_documented_adapter_hashes": true, "reads_raw_private_identity": false},
+  "root_final_code_git_blob_readbacks": {"src/nightcrawler/speeddesk_live.py": "45ce0312ac41785063b631161d47a909be890595", "src/nightcrawler/speeddesk_twin_trace.py": "49fb937c268047440f84764ec4a9761eb9fc7a02", "tests/test_speeddesk_twin_trace.py": "b8310020b3be7902f3263c5eb54ecad479540021"},
+  "preserved_analysis_failures": [
+    "First local native inspection used the task root instead of native/ and failed FileNotFoundError; corrected path, no lost data.",
+    "Original generic scaffold excluded the lock's durable-intent suffix and non-speeddesk JSON/plaintext. Original output/harness preserved; corrected independent parser and regression tests supersede its limited counts.",
+    "First archive allowlist accidentally repeated POST_START_POLY; duplicate assertion stopped packaging before publication. Duplicate removed; explicit 86-file roundtrip and unpacked executions passed."
+  ],
+  "production_claim_limits": ["No profitability gate passed.", "Complete raw queue/print delivery and venue queue position remain unknown.", "Service health is not recorder volume verification or measured production cost.", "No additional source change, financial-control change or real order was made by this documentation closeout."]
+}

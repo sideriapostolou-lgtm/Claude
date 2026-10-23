@@ -1,0 +1,16 @@
+{
+  "registered_at": "2026-10-13T17:47:59.266813+00:00",
+  "series": [
+    "KXBTC15M",
+    "KXETH15M",
+    "KXSOL15M",
+    "KXXRP15M"
+  ],
+  "selection": "nearest future close with open_time <= metadata request time and close_time > metadata response time, from status=open; same selected ticker held for all rounds; skip if closed or missing",
+  "rounds": 3,
+  "delay_between_rounds_seconds": 2,
+  "minimum_interval_request_starts_seconds": 0.55,
+  "size_for_debit": 1,
+  "cost": "one full fill per leg, direct account balance grid 0.0001; standard coefficient0.07; no live fee-override entitlement asserted",
+  "purpose": "public snapshot diagnostic, not fill simulation or backtest; request receipt not exchange event time"
+}

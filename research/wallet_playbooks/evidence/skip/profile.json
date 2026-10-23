@@ -1,0 +1,24 @@
+{
+  "retrieved_at": 1791918110.9247036,
+  "url": "https://gamma-api.polymarket.com/public-profile?address=0xc53375ff94e96100f2b30a4b5775db35218d69a9",
+  "data": {
+    "$schema": "https://gamma-api.polymarket.com/schemas/PublicProfileResponse.json",
+    "createdAt": "2026-07-16T19:16:02.752301Z",
+    "proxyWallet": "0xc53375ff94e96100f2b30a4b5775db35218d69a9",
+    "displayUsernamePublic": true,
+    "pseudonym": "Lone-Easel-Election",
+    "name": "dangerously-skip-permissions",
+    "users": [
+      {
+        "id": "9280954",
+        "creator": false,
+        "mod": false,
+        "communityMod": false
+      }
+    ],
+    "verifiedBadge": false,
+    "takerTier": 6,
+    "takerTierName": "Obsidian",
+    "weightedVolume": 3189142.098025
+  }
+}

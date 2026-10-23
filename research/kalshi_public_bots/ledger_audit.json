@@ -1,0 +1,34 @@
+{
+  "source": "https://3rdeyes.io/.netlify/functions/ledger",
+  "fetched_utc": "2026-10-13T13:26:14Z",
+  "updated": "2026-09-04",
+  "period": "Apr 23 - Sep 4, 2026",
+  "rows": 317,
+  "net_sum_usd": "201.16",
+  "positive_rows": 279,
+  "negative_rows": 36,
+  "zero_rows": 2,
+  "positive_row_rate_pct": 88.01261829652996,
+  "published_wins": 279,
+  "published_losses": 36,
+  "published_winrate": "88.6%",
+  "last50_net_usd": "-62.25",
+  "last50_positive": 39,
+  "worst_row_usd": -37.16,
+  "row_fields": [
+    "date",
+    "market",
+    "net",
+    "win"
+  ],
+  "monthly_net_usd": {
+    "Apr": "3.60",
+    "May": "97.48",
+    "Jun": "5.07",
+    "Jul": "117.91",
+    "Aug": "-34.16",
+    "Sep": "11.26"
+  },
+  "verification": "Arithmetic on publisher data only; no authenticated venue-fill reconciliation.",
+  "source_sha256": "1b3f81da605988bd7158eb0f85ce828c793621937a9f9f43d10664d0672e96b5"
+}

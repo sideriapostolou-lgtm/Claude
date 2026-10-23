@@ -1,0 +1,11 @@
+{
+  "at_utc": "2026-10-19T15:24:00Z",
+  "time_precision": "approximate command interval, not provider timestamp",
+  "command": "Railway CLI5.70.0 whoami --json",
+  "exit_code": 1,
+  "result": "Unauthorized. Please login with railway login",
+  "production_shell_or_volume_export": false,
+  "new_login_initiated": false,
+  "credential_values_read_or_listed": false,
+  "page_authentication": "HTTP401 on /api/page and /api/town without credentials; see HTTP_CHECK.json"
+}

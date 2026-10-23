@@ -1,0 +1,38 @@
+{
+  "original_file_sha256": "60ef35f7d89d2ffcf5c3f60dac05a8434c36b79a2d114413708211616032a504",
+  "original_file_bytes": 2377,
+  "request": {
+    "projectId": "75750847-85c0-41a3-a2a7-b7f2201a51e9",
+    "environmentId": "17f7b0e0-104c-4903-9484-0106748b3cdb",
+    "serviceId": "f84d3b52-002f-44cb-931e-bc9e3e097e97",
+    "limit": 1
+  },
+  "before": {
+    "current_time": "2026-10-15 20:50:11 UTC"
+  },
+  "after": {
+    "current_time": "2026-10-15 20:50:13 UTC"
+  },
+  "derivative": "exact structured deployment, creator contact object omitted; full native original retained privately",
+  "deployment": {
+    "id": "1c01ffe7-e231-40c6-a026-ac63fec01227",
+    "status": "SUCCESS",
+    "createdAt": "2026-10-15T20:47:23.393Z",
+    "updatedAt": "2026-10-15T20:49:04.606Z",
+    "serviceId": "f84d3b52-002f-44cb-931e-bc9e3e097e97",
+    "environmentId": "17f7b0e0-104c-4903-9484-0106748b3cdb",
+    "url": null,
+    "snapshotId": "f8f88596-73d2-4052-b7e4-09d705a4fdf5",
+    "canRollback": true,
+    "canRedeploy": true,
+    "regions": [
+      "us-east4-eqdc4a"
+    ],
+    "meta": {
+      "reason": "deploy",
+      "commitMessage": "fix: preserve recovered Kalshi feeds after obsolete REST failures (#65)\n\nTouches real money through feed correctness; stakes, stops and trading rules unchanged. Full5939tests/mypy129/Ruff3 and exact independent review passed. Deploy verification follows.",
+      "commitHash": "b7b7192e5d463e57417d05acb3b168744941b9fc",
+      "branch": "claude/nightcrawler-memecoin-bot-Gwnb1S"
+    }
+  }
+}

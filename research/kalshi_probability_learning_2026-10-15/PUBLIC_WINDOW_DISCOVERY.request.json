@@ -1,0 +1,18 @@
+{
+  "request": {
+    "url": "https://api.elections.kalshi.com/trade-api/v2/markets?series_ticker=KXBTC15M&status=open&limit=100",
+    "method": "GET",
+    "authentication": "none",
+    "timeout_s": 15
+  },
+  "before_utc": "2026-10-15T19:30:16.772976+00:00",
+  "after_utc": "2026-10-15T19:30:17.934564+00:00",
+  "http_status": 200,
+  "headers": {
+    "content-type": "application/json",
+    "date": "Thu, 15 Oct 2026 19:30:03 GMT"
+  },
+  "error_type": null,
+  "body_sha256": "2f37b29a73a854a9bcc7240ab67ade9268a345b30bfd440b258441ee0204d98e",
+  "body_bytes": 2152
+}

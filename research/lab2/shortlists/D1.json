@@ -1,0 +1,27 @@
+{
+ "configs": [
+  {
+   "cap_def": "strict",
+   "entry_class": "CAP",
+   "exit_set": "bracket",
+   "study": "strategy",
+   "variant": "V1",
+   "version": "d1-v1"
+  },
+  {
+   "cap_def": "loose",
+   "entry_class": "CAP",
+   "exit_set": "bracket",
+   "study": "strategy",
+   "variant": "V2",
+   "version": "d1-v1"
+  }
+ ],
+ "hashes": [
+  "ba746e85de4d",
+  "01f62e90e921"
+ ],
+ "hypothesis": "D1",
+ "note": "d1-v1 TRAIN rule: top 2 by TRAIN mean among variants meeting the minimum sample",
+ "written_utc": "2026-10-09 08:44:11"
+}

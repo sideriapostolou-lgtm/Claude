@@ -1,0 +1,131 @@
+{
+ "hyp": "T3",
+ "stage": "test",
+ "split": [
+  "2026-01-01",
+  null
+ ],
+ "utc": "2026-10-09 12:37:22",
+ "configs": {
+  "sma50": {
+   "n_days": 282,
+   "years": 0.773,
+   "cagr": 0.07455681511836176,
+   "total_return": 0.057128805029899254,
+   "vol_ann": 0.33299070627745275,
+   "sharpe": 0.21594690246085907,
+   "max_drawdown": -0.2765732102059062,
+   "best_day": 0.11707885298059124,
+   "worst_day": -0.06079753869747028,
+   "share_positive_days": 0.32978723404255317,
+   "calmar": 0.26957352472010904,
+   "exposure": 0.5437352245862883,
+   "turnover_per_year": 22.434988179669027,
+   "cost_drag_per_year": 0.06954846335697398,
+   "stress_x2": 0.007605220558576323,
+   "gross_sharpe": 0.4230580602596457,
+   "placebo": {
+    "n_placebo": 200,
+    "placebo_sharpe_mean": -0.4297065145485259,
+    "placebo_sharpe_p90": 0.38199552522470315,
+    "sharpe_p_value": 0.17,
+    "excess_daily_mean": 0.0005987313614584739,
+    "excess_ann": 0.21853694693234296,
+    "excess_ci95": [
+     -0.0009640590144363148,
+     0.002490133873708817
+    ],
+    "placebo_cagr_mean": -0.11739009353542905,
+    "placebo_mdd_mean": -0.33432886354266517
+   },
+   "vs_buy_hold": {
+    "sharpe_diff": 0.45311047459368814,
+    "cagr_diff": 0.1969166036185781,
+    "mdd_better": true
+   },
+   "deflated_sharpe": {
+    "dsr": 0.006986331433000814,
+    "sr_daily": 0.011303177475726914,
+    "sr0_daily": 0.15685442478925832,
+    "n_trials": 133,
+    "T": 282
+   },
+   "by_year": {
+    "2026": 0.0571
+   },
+   "n_universe_mean": 3.0
+  }
+ },
+ "benchmarks": {
+  "buy_hold_ew": {
+   "n_days": 282,
+   "years": 0.773,
+   "cagr": -0.12235978850021634,
+   "total_return": -0.09592141337296001,
+   "vol_ann": 0.5503313601144886,
+   "sharpe": -0.2371635721328291,
+   "max_drawdown": -0.49796503582162666,
+   "best_day": 0.12398486387160433,
+   "worst_day": -0.14621701535466486,
+   "share_positive_days": 0.49645390070921985,
+   "calmar": -0.2457196383242581,
+   "exposure": 1.0,
+   "turnover_per_year": 0.0,
+   "cost_drag_per_year": 0.0
+  },
+  "sol_only": {
+   "n_days": 282,
+   "years": 0.773,
+   "cagr": -0.1392094670960241,
+   "total_return": -0.10936118923262439,
+   "vol_ann": 0.6374034527067839,
+   "sharpe": -0.23517928404527827,
+   "max_drawdown": -0.5763462849352419,
+   "best_day": 0.11778999872106422,
+   "worst_day": -0.14936901653611845,
+   "share_positive_days": 0.48936170212765956,
+   "calmar": -0.24153789264324946,
+   "exposure": 1.0,
+   "turnover_per_year": 0.0,
+   "cost_drag_per_year": 0.0
+  },
+  "btc_only": {
+   "n_days": 282,
+   "years": 0.773,
+   "cagr": -0.06322250499888438,
+   "total_return": -0.049206415602468634,
+   "vol_ann": 0.45807311182380583,
+   "sharpe": -0.14257438075044984,
+   "max_drawdown": -0.396381481913907,
+   "best_day": 0.12321351786083978,
+   "worst_day": -0.139825748650648,
+   "share_positive_days": 0.48936170212765956,
+   "calmar": -0.15949913879331057,
+   "exposure": 1.0,
+   "turnover_per_year": 0.0,
+   "cost_drag_per_year": 0.0
+  },
+  "cash": {
+   "sharpe": 0.0,
+   "cagr": 0.0,
+   "max_drawdown": 0.0
+  }
+ },
+ "n_trials_total": 133,
+ "costs": {
+  "bps_side": 25.0,
+  "network_usd": 0.02,
+  "capital_usd": 100.0,
+  "rebal_min": 0.05
+ },
+ "decision": {
+  "verdict": "FAIL",
+  "criteria": {
+   "sharpe_gt_0": true,
+   "placebo_excess_ci95_lo_gt_0": false,
+   "mdd_better_than_buy_hold": true
+  },
+  "note": "a PASS never funds real money by itself (PLAN 5)"
+ },
+ "runtime_s": 8.9
+}

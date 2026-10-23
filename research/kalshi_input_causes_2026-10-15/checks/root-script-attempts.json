@@ -1,0 +1,13 @@
+{
+  "audit_capture_initial_ruff": {
+    "exit": 1,
+    "rule": "TRY004",
+    "location": "audit_capture.py:33",
+    "message": "Prefer TypeError exception for invalid type",
+    "fix": "Use TypeError for non-dictionary payload; no application source change."
+  },
+  "orchestration_initial_evidence_copy": {
+    "result": "functions.exec JavaScript SyntaxError before evaluation",
+    "effect": "No commands executed; corrected tool expression succeeded."
+  }
+}

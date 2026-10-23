@@ -1,0 +1,44 @@
+[
+  {
+    "id": "c8ee7970-a856-4ab2-86b8-2a962a7d02e9",
+    "status": "SKIPPED",
+    "commitHash": "3ce8a0b92f53916768a3e1c09cac700281d3c1cd",
+    "createdAt": "2026-10-15T16:41:21.858Z",
+    "updatedAt": "2026-10-15T16:41:21.858Z",
+    "regions": []
+  },
+  {
+    "id": "c10a6663-9206-4d67-9a49-db7c95303f71",
+    "status": "SKIPPED",
+    "commitHash": "25f801167426fb996c352603039a73dfd1229da2",
+    "createdAt": "2026-10-15T16:33:50.198Z",
+    "updatedAt": "2026-10-15T16:33:50.198Z",
+    "regions": []
+  },
+  {
+    "id": "4bf76e04-cf79-414e-b429-30df344f77a7",
+    "status": "SKIPPED",
+    "commitHash": "245ca1ee61cabbbcbbf90c892897e34ff42b1428",
+    "createdAt": "2026-10-15T16:27:29.231Z",
+    "updatedAt": "2026-10-15T16:27:29.231Z",
+    "regions": []
+  },
+  {
+    "id": "e641cdf8-f9e1-43b2-9309-56fd70827d25",
+    "status": "SUCCESS",
+    "commitHash": "153a12214f8763b9bf9382697fe6d6810ab04860",
+    "createdAt": "2026-10-15T15:54:55.184Z",
+    "updatedAt": "2026-10-15T15:57:51.700Z",
+    "regions": [
+      "us-east4-eqdc4a"
+    ]
+  },
+  {
+    "id": "8ba4b910-0563-4205-a906-83c5d56b3531",
+    "status": "SKIPPED",
+    "commitHash": "a2d4535bc94a4d20b95171faf164a67de4185c00",
+    "createdAt": "2026-10-15T15:43:02.182Z",
+    "updatedAt": "2026-10-15T15:43:02.182Z",
+    "regions": []
+  }
+]

@@ -1,0 +1,81 @@
+{
+  "scope": "deployment",
+  "query": {
+    "startDate": "2026-10-16T23:25:00Z",
+    "endDate": "2026-10-16T23:52:00Z",
+    "filter": "\"nightcrawler.speeddesk: speeddesk_live_fill\" OR \"nightcrawler.speeddesk: speeddesk_live_settlement\"",
+    "limit": 100
+  },
+  "deploymentId": "7582010e-5681-41bb-964b-951e8b3c6767",
+  "serviceId": "f84d3b52-002f-44cb-931e-bc9e3e097e97",
+  "environmentId": "17f7b0e0-104c-4903-9484-0106748b3cdb",
+  "status": "REMOVED",
+  "deploy": [
+    {
+      "timestamp": "2026-10-16T23:30:08.247972084Z",
+      "severity": "info",
+      "message": "2026-10-16T23:30:08Z INFO nightcrawler.speeddesk: speeddesk_live_settlement {\"at\":1792193401.836547,\"venue\":\"kalshi\",\"window\":\"KXBTC15M-26OCT161930-30\",\"settlement_id\":\"kalshi:KXBTC15M-26OCT161930-30\",\"up_wins\":false,\"up_shares\":1.0,\"down_shares\":1.0,\"cost_usd\":0.96,\"fee_usd\":0.0175,\"paired_credit_usd\":1.0,\"net_payout_usd\":0.0,\"payout_usd\":1.0,\"locked_usd\":0.022499999999999964,\"direction_usd\":0.0,\"pnl_usd\":0.022499999999999964,\"observed_at\":1792193407.907646,\"time_source\":\"venue settled_time\"}",
+      "attributes": [
+        {
+          "key": "level",
+          "value": "\"info\""
+        }
+      ]
+    },
+    {
+      "timestamp": "2026-10-16T23:37:02.487087043Z",
+      "severity": "info",
+      "message": "2026-10-16T23:37:02Z INFO nightcrawler.speeddesk: speeddesk_live_fill {\"at\":1792193820.822622,\"venue\":\"kalshi\",\"fill_id\":\"07245b5e-9719-80b0-a001-a6585dc6b52e\",\"order_id\":\"01a14713-4298-7392-a4ab-80b947622b5a\",\"client_order_id\":\"nc-speed-a9d114ea6a64485abbb40f19175e10e2\",\"window\":\"KXBTC15M-26OCT161945-45\",\"side\":\"down\",\"price\":0.68,\"size\":1.0,\"fee_usd\":0.0,\"is_taker\":false}",
+      "attributes": [
+        {
+          "key": "level",
+          "value": "\"info\""
+        }
+      ]
+    },
+    {
+      "timestamp": "2026-10-16T23:40:25.113943036Z",
+      "severity": "info",
+      "message": "2026-10-16T23:40:25Z INFO nightcrawler.speeddesk: speeddesk_live_fill {\"at\":1792194023.91182,\"venue\":\"kalshi\",\"fill_id\":\"07245b4c-43b1-8d1a-a9a1-e9023f152e05\",\"order_id\":\"01a14716-7ad0-7af0-8748-f38b92c5a581\",\"client_order_id\":\"nc-speed-056dbc2b99dc4bfd9efb540a4b7f8b95\",\"window\":\"KXBTC15M-26OCT161945-45\",\"side\":\"up\",\"price\":0.31,\"size\":1.0,\"fee_usd\":0.0,\"is_taker\":false}",
+      "attributes": [
+        {
+          "key": "level",
+          "value": "\"info\""
+        }
+      ]
+    },
+    {
+      "timestamp": "2026-10-16T23:45:09.028358134Z",
+      "severity": "info",
+      "message": "2026-10-16T23:45:09Z INFO nightcrawler.speeddesk: speeddesk_live_settlement {\"at\":1792194306.826236,\"venue\":\"kalshi\",\"window\":\"KXBTC15M-26OCT161945-45\",\"settlement_id\":\"kalshi:KXBTC15M-26OCT161945-45\",\"up_wins\":false,\"up_shares\":1.0,\"down_shares\":1.0,\"cost_usd\":0.99,\"fee_usd\":0.0,\"paired_credit_usd\":1.0,\"net_payout_usd\":0.0,\"payout_usd\":1.0,\"locked_usd\":0.009999999999999898,\"direction_usd\":1.1102230246251565e-16,\"pnl_usd\":0.010000000000000009,\"observed_at\":1792194308.833759,\"time_source\":\"venue settled_time\"}",
+      "attributes": [
+        {
+          "key": "level",
+          "value": "\"info\""
+        }
+      ]
+    },
+    {
+      "timestamp": "2026-10-16T23:45:38.867122161Z",
+      "severity": "info",
+      "message": "2026-10-16T23:45:38Z INFO nightcrawler.speeddesk: speeddesk_live_fill {\"at\":1792194337.976937,\"venue\":\"kalshi\",\"fill_id\":\"07245b76-26c1-a5e3-ad80-3146c684184f\",\"order_id\":\"01a1471b-4560-7da1-bfb1-0dbd8be501ff\",\"client_order_id\":\"nc-speed-cc71d15cbb314e87bcddca85e412945c\",\"window\":\"KXBTC15M-26OCT162000-00\",\"side\":\"down\",\"price\":0.41,\"size\":1.0,\"fee_usd\":0.0,\"is_taker\":false}",
+      "attributes": [
+        {
+          "key": "level",
+          "value": "\"info\""
+        }
+      ]
+    },
+    {
+      "timestamp": "2026-10-16T23:46:05.088273900Z",
+      "severity": "info",
+      "message": "2026-10-16T23:46:05Z INFO nightcrawler.speeddesk: speeddesk_live_fill {\"at\":1792194364.485462,\"venue\":\"kalshi\",\"fill_id\":\"07245b74-a759-9069-574d-70cdbc72aaa5\",\"order_id\":\"01a1471b-c260-7910-bd00-adf8438e1db3\",\"client_order_id\":\"nc-speed-a33096d82504421a9a37b6db289acef9\",\"window\":\"KXBTC15M-26OCT162000-00\",\"side\":\"up\",\"price\":0.56,\"size\":1.0,\"fee_usd\":0.0173,\"is_taker\":true}",
+      "attributes": [
+        {
+          "key": "level",
+          "value": "\"info\""
+        }
+      ]
+    }
+  ]
+}

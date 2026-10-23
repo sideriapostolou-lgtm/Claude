@@ -1,0 +1,60 @@
+{
+  "name": "LowTempTation",
+  "retrieved_at": "2026-10-13T18:57:38.228732+00:00",
+  "url": "https://data-api.polymarket.com/trades?user=0x8e40e10d9b34b28c77c4962be5026c6fdd1f3797&limit=500&offset=0&takerOnly=false",
+  "status": 200,
+  "sha256": "5b587999ca38a82a5aadf08a7cb3faab7b7e77c82bbc0a66bbd295f13fa48c12",
+  "n": 500,
+  "min_timestamp": 1789290204,
+  "max_timestamp": 1791882154,
+  "buy_count": 158,
+  "sell_count": 342,
+  "price_median": 0.96393134395,
+  "size_median": 66.0,
+  "buy_outcomes": {
+    "Yes": 55,
+    "No": 103
+  },
+  "titles": [
+    [
+      "Will the highest temperature in Tel Aviv be 30\u00b0C on September 21?",
+      51
+    ],
+    [
+      "Will the highest temperature in Karachi be 40\u00b0C on September 13?",
+      13
+    ],
+    [
+      "Will the highest temperature in Wellington be 20\u00b0C on October 10?",
+      12
+    ],
+    [
+      "Will the highest temperature in Sao Paulo be 25\u00b0C on September 22?",
+      11
+    ],
+    [
+      "Will the highest temperature in Ankara be 24\u00b0C on September 18?",
+      10
+    ],
+    [
+      "Will the highest temperature in Sao Paulo be 32\u00b0C on September 30?",
+      8
+    ],
+    [
+      "Will the highest temperature in Lucknow be 26\u00b0C on September 26?",
+      8
+    ],
+    [
+      "Will the highest temperature in Panama City be 32\u00b0C or higher on October 4?",
+      7
+    ],
+    [
+      "Will the highest temperature in Tel Aviv be 29\u00b0C on September 30?",
+      7
+    ],
+    [
+      "Will the highest temperature in Atlanta be between 88-89\u00b0F on September 20?",
+      7
+    ]
+  ]
+}

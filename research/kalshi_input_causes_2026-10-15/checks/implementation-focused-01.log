@@ -1,0 +1,28 @@
+....................................F................................... [ 64%]
+.................s......................                                 [100%]
+=================================== FAILURES ===================================
+_______________ test_diagnostic_construction_failure_is_optional _______________
+
+tmp_path = PosixPath('/tmp/pytest-of-agent/pytest-161/test_diagnostic_construction_f0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7fbadccb83b0>
+
+    def test_diagnostic_construction_failure_is_optional(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+        def fail(*args: Any, **kwargs: Any) -> bytes:
+            raise OSError("synthetic source read failure")
+    
+        monkeypatch.setattr(Path, "read_bytes", fail)
+        arena, view, clock, _ = ready(tmp_path)
+        assert arena._diagnostic is None
+        tick(arena, view, clock, 1300)
+>       assert arena.learning.enabled and arena.learning.counts["forecasts"] == 1
+E       assert (False)
+E        +  where False = <nightcrawler.kalshi_online_learning.OnlineLearning object at 0x7fbadccb8b90>.enabled
+E        +    where <nightcrawler.kalshi_online_learning.OnlineLearning object at 0x7fbadccb8b90> = <nightcrawler.kalshi_arena.KalshiArena object at 0x7fbadccba3c0>.learning
+
+tests/test_kalshi_learning_diagnostic.py:481: AssertionError
+=========================== short test summary info ============================
+SKIPPED [1] tests/test_kalshi_arena_feed.py:794: wall-clock timing; set NIGHTCRAWLER_PERF_TESTS=1 to run
+FAILED tests/test_kalshi_learning_diagnostic.py::test_diagnostic_construction_failure_is_optional
+1 failed, 110 passed, 1 skipped in 26.21s
+
+CAPTURED_EXIT=1

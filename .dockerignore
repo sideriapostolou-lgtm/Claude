@@ -1,0 +1,27 @@
+# The image needs only pyproject.toml, README.md and src/. Everything else stays
+# out of the build context - above all secrets (.env) and local state (data/).
+.git
+.github
+.claude
+.env
+.env.*
+data
+tests
+docs
+build
+dist
+.venv
+venv
+.pytest_cache
+.mypy_cache
+.ruff_cache
+**/__pycache__
+**/*.py[cod]
+**/*.egg-info
+**/*.db
+**/*.db-wal
+**/*.db-shm
+**/*.jsonl
+**/KILL
+**/bot-keypair.json
+**/.bot-keypair.json.*.tmp

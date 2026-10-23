@@ -1,0 +1,72 @@
+{
+  "checked_at_utc": "2026-10-15T02:52:21Z",
+  "checked_at_pacific": "2026-10-14 7:52 PM PDT",
+  "branch_head": "5d439dc28b629a1e712d80154df6d166b0c36f0b",
+  "github_files": [
+    {
+      "path": "docs/COORDINATION.md",
+      "blob_sha": "7705c571e795f9b86a747581f36d89e6f283fbeb"
+    },
+    {
+      "path": "AGENTS.md",
+      "blob_sha": "389266a51ccba3d21072371fd680bc8e4aff2af9"
+    },
+    {
+      "path": "docs/WORKLOG.md",
+      "blob_sha": "20501901446912d405391d8e08a073b2dd3499eb"
+    },
+    {
+      "path": "research/kalshi_profitability_2026-10-14/PR47_DEPLOYMENT.md",
+      "blob_sha": "33c13fb39f85c958e322b8afbcaecfc052d6531b"
+    },
+    {
+      "path": "research/tjr_validation_2026-10-14/HISTORICAL_STATUS.json",
+      "blob_sha": "e079d3c762ced81b2262a5261ab164f291e3d5ac"
+    }
+  ],
+  "gate": {
+    "pr47_recorded_exact_deployment_and_restart_evidence_complete": true,
+    "execution_work_cleared": false,
+    "remaining_recorded_execution_blocker": "Freshness attribution remains open after the fixed two-window audit; 53 source-age warnings recorded.",
+    "earlier_explicit_offline_reprioritization_recorded": true,
+    "new_production_authority": false
+  },
+  "page_deltas": [
+    {
+      "page_id": "page_d0294998a7cc8191b771278fbfb98a2f",
+      "after_sequence": 2,
+      "through_sequence": 2,
+      "markdown_diff": "",
+      "changes": [],
+      "changed_blocks": [],
+      "deleted_block_ids": [],
+      "truncated": false,
+      "resync_required": false
+    },
+    {
+      "page_id": "page_33c0bb7e8dac81919e012fc502bae98a",
+      "after_sequence": 1,
+      "through_sequence": 1,
+      "markdown_diff": "",
+      "changes": [],
+      "changed_blocks": [],
+      "deleted_block_ids": [],
+      "truncated": false,
+      "resync_required": false
+    }
+  ],
+  "reuse": "Prior complete124-block reads, original saved implementation and reproduced synthetic tests retained. No reconstruction, duplicate research/test/data probe or holdout access.",
+  "historical_status": {
+    "status": "BLOCKED",
+    "reason": "VERIFIED_ACTUAL_MNQZ2025_DATA_BUNDLE_MISSING",
+    "historical_trades": 0,
+    "historical_pnl_usd": null,
+    "paper_started": false,
+    "live_enabled": false,
+    "holdout_opened": false
+  },
+  "independent_review": "Bounded separate worker reread the two exact evidence/status files through GitHub; expected blobs match; stopped after the reads.",
+  "decision": "Keep existing TJR-MNQ-001 queued/blocked and unfinished; automation unchanged; suppress routine unchanged notification.",
+  "scope": "GitHub records/Page-delta check only. No new production health/cash claim, source, deploy, orders, funding, variables, financial risk, stop or resume-budget action.",
+  "next": "Authorized actual MNQ December2025 minute OHLCV Sep19–Oct31 plus verified mapping/license/timestamps/bar convention and actual account/execution/platform/data costs; then saved frozen development validation. Paper later needs verified current contract/feed/runtime; live disabled and holdout unopened."
+}

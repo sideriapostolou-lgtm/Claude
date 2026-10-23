@@ -1,0 +1,85 @@
+{
+  "encoding": "concatenate ordered text parts; base64 decode; lzma decompress; JSON files[].utf8",
+  "files": [
+    {
+      "name": "native/FROZEN_FULL_TWIN.json",
+      "sha256": "302f95e1efc49d0e90e4eeacfd64fd0469e7534c4589204eae29032b0b74a11b"
+    },
+    {
+      "name": "native/FROZEN_TWIN_PART_A.json",
+      "sha256": "9b30d0397c2362c16577b0f974e9b702d08eaef569fae6a5c243e8ea33102f94"
+    },
+    {
+      "name": "native/FROZEN_TWIN_PART_B.json",
+      "sha256": "edb8af919de0e4ec0981efc94ca5197690075d7e43d28a7e45c9cb050c2241e4"
+    },
+    {
+      "name": "astra/REVIEW.md",
+      "sha256": "0ac836cf657dfd2647d12a09da7d2ce866e25bd0e829d569f890367796263a20"
+    },
+    {
+      "name": "astra/RECONSTRUCTION.json",
+      "sha256": "fb36782221935a1cac0cf463c13386804950a70180693b554e035261e5d60010"
+    },
+    {
+      "name": "astra/SUPPLEMENT.md",
+      "sha256": "63503d7e0268d80da9841e8c93552976047435f54b60d32e931632ab3c3aacb4"
+    },
+    {
+      "name": "astra/SUPPLEMENT.json",
+      "sha256": "11f5409db9fd408c22b86630da3322cacf37472a948399af9a083617a507729c"
+    },
+    {
+      "name": "astra/OBSERVABILITY_RECOMMENDATION.md",
+      "sha256": "9f70ce7a79f0a4b13c877c0a3ee628dcf752fe5120f5a4bcf17916094bc40a18"
+    },
+    {
+      "name": "astra/BAD_TRACE_FAILURES.json",
+      "sha256": "d861e473c3e0cd82db4e3507dd2afbbee203211370f8e05823d0e246bd842c54"
+    },
+    {
+      "name": "astra/PHASE1_REVIEW.md",
+      "sha256": "6ab1965bbca2d3c432063e08fda4cdfab00de08e3e0dbc8f41b381ba24baa384"
+    },
+    {
+      "name": "astra/PHASE1_APPROVAL.json",
+      "sha256": "e2dc8986787a56cb9418fffe4246abd62394c98abe346ad8af7db35afd4000ff"
+    },
+    {
+      "name": "sol/REVIEW.md",
+      "sha256": "3629dcf5f35f1b61b5cedcfe6f5b4ee47450944030bc6c349998a877d3c09a05"
+    },
+    {
+      "name": "sol/PHASE1_HANDOFF.md",
+      "sha256": "f7d80ad32922aecc6e2586745c2c78727b97557bd721f76c743181569ad0d6e8"
+    },
+    {
+      "name": "sol/PHASE1_MANIFEST.json",
+      "sha256": "3f8d38a7c87b6ace202640cb94b344c21372d4d9fd27e9e0e432bd4d21fbc927"
+    },
+    {
+      "name": "sol/PHASE1.patch",
+      "sha256": "5c8d163f73a509340da51c71431343547e9a6b4ae37044861d72924125306211"
+    }
+  ],
+  "parts": [
+    {
+      "name": "EVIDENCE_00.b64.txt",
+      "bytes": 28000,
+      "sha256": "58d094598a1a01b52f82f41a024d566696abfb8f55ebcb23664b11c92cd8accf"
+    },
+    {
+      "name": "EVIDENCE_01.b64.txt",
+      "bytes": 28000,
+      "sha256": "f9d0896fe3ccb0a489a74f9d6104b42b719d987fb302c143ce24c95b8386303f"
+    },
+    {
+      "name": "EVIDENCE_02.b64.txt",
+      "bytes": 19788,
+      "sha256": "5ad53d9a1fa6a828908313b6aee950ef429ddeb4936a635f79930f6ed6f55fd8"
+    }
+  ],
+  "combined_base64_sha256": "83e98659cb483be759f03bc071a44606884c88eaa0b6395a0111b386dda567f9",
+  "payload_sha256": "dd29a543b7901d951cca54b6f9986f6d8e63324e3455b0363126b3d6ebc03c14",
+  "roundtrip": "all original bytes and per-file hashes match"
+}

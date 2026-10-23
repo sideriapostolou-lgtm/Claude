@@ -1,0 +1,98 @@
+{
+  "recorded_at_utc": "2026-10-15T17:36:38.067952+00:00",
+  "phase": "slot_only; final17:47UTCpending",
+  "window": "KXBTC15M-26OCT151345-45",
+  "fixed_start": 1792085400,
+  "fixed_end": 1792086300,
+  "actual_disposition": "unknown",
+  "reason": "pregap",
+  "at": 1792085700.117887,
+  "pending": {
+    "start": 1792085400.0,
+    "end": 1792086300.0,
+    "elapsed_s": 300.1178870201111,
+    "forecast_none": true,
+    "stored_pregap": "explicit_feed_gap"
+  },
+  "source_and_receipt_join": {
+    "window": "KXBTC15M-26OCT151345-45",
+    "disposition": "unknown",
+    "candidate_window_time_reason_receipts": 1,
+    "matched_original_receipts": 1,
+    "identity_mismatches": [],
+    "arena_source_match": true,
+    "learner_source_match": true,
+    "learner_protocol_match": true,
+    "observe_only": true
+  },
+  "first_effective_cause": {
+    "flags": {
+      "explicit_slug": true,
+      "trade_stream_false": false,
+      "coinbase_false": false,
+      "sequence_discontinuity": false,
+      "drop_counter_increased": false,
+      "missing_ladder": false,
+      "late_book": false,
+      "late_trade": false,
+      "replayed_drop": false
+    },
+    "effective_at": 1792085400.7004135,
+    "child_apply_at": 1792085400.7004135,
+    "child_receive_at": 1792085400.6991065,
+    "frame_sequence": 3530,
+    "parent_frame_sent_at": 1792085400.6331902,
+    "producer_event_time": null,
+    "producer_timing": "unavailable_on_gap_wire",
+    "frame_transit_s": 0.06591629981994629,
+    "child_wait_s": 0.0013070106506347656,
+    "data_at": null,
+    "data_clock": null,
+    "data_checked_at": null,
+    "data_age_s": null,
+    "timing": "finite_ordered"
+  },
+  "last_effective_cause": {
+    "flags": {
+      "explicit_slug": true,
+      "trade_stream_false": false,
+      "coinbase_false": false,
+      "sequence_discontinuity": false,
+      "drop_counter_increased": false,
+      "missing_ladder": false,
+      "late_book": false,
+      "late_trade": false,
+      "replayed_drop": false
+    },
+    "effective_at": 1792085696.826439,
+    "child_apply_at": 1792085696.826439,
+    "child_receive_at": 1792085696.8260307,
+    "frame_sequence": 6086,
+    "parent_frame_sent_at": 1792085696.8212507,
+    "producer_event_time": null,
+    "producer_timing": "unavailable_on_gap_wire",
+    "frame_transit_s": 0.0047800540924072266,
+    "child_wait_s": 0.000408172607421875,
+    "data_at": null,
+    "data_clock": null,
+    "data_checked_at": null,
+    "data_age_s": null,
+    "timing": "finite_ordered"
+  },
+  "input_facts": {
+    "bitcoin_age_s": 0.24464702606201172,
+    "bitcoin_age_valid": true,
+    "spot_valid": true,
+    "sigma_valid": true
+  },
+  "feed_ok": true,
+  "feed_status": [
+    true,
+    true
+  ],
+  "cause_history": "restart_history_unavailable",
+  "coverage": "All four finite slotqueriesbelow500/noqueryerrors; notwholewindow/fullstreamcertification. Produceroccurrence, parentFIFOresidence and upstreamreason unavailable on unchangedwire. Known first/last observations do not establishcompletecausehistory.",
+  "conclusion": "Exactchildobserved explicit-slug gaps causedstickyV1pregap; cannotidentifyquiettradeexpiryvsbookgap/transport/metadata/otherreason. CurrentfreshBTCandtrueaggregateflags do noterasepriorgap.",
+  "learning": "No prospectiveforecast/scoredsample oraccuracy/profitinferred. Do notweaken/rewriteV1toobtainforecasts.",
+  "next": "Finishfixedtail17:47thenindependentaudit; nextupstreamcausecontextrequiresseparatedesign/review/resourcechecks."
+}
