@@ -1,0 +1,128 @@
+{
+  "task": "read-only release precheck artifact/hash verification",
+  "artifacts": [
+    {
+      "path": "research/kalshi_probability_learning_2026-10-15/BEFORE_STATUS.native.json",
+      "bytes": 207822,
+      "sha256": "60a0a3a089bd4e4d81ac469f474c3e244e6e3bef1a4df8c6ae94964351b4e9de",
+      "readable": true,
+      "json_valid": true
+    },
+    {
+      "path": "research/kalshi_probability_learning_2026-10-15/BEFORE_STATUS.originals.json",
+      "bytes": 155646,
+      "sha256": "1f42349d30d69313a547467f9e5233834fba84ae635bad117f827032dbfc5fbc",
+      "readable": true,
+      "json_valid": true
+    },
+    {
+      "path": "research/kalshi_probability_learning_2026-10-15/BEFORE_SELECTED.json",
+      "bytes": 2469,
+      "sha256": "f56ff033cd2f5d46c2455af33781354149c35b4937364a3382f1495398458e83",
+      "readable": true,
+      "json_valid": true
+    },
+    {
+      "path": "research/kalshi_probability_learning_2026-10-15/BEFORE_HEALTH.native.json",
+      "bytes": 2997,
+      "sha256": "f3f373a58260be254a818385de1bc9822c58bdaa72ab454763a49ebf5ba0d750",
+      "readable": true,
+      "json_valid": true
+    },
+    {
+      "path": "research/kalshi_probability_learning_2026-10-15/MERGE_COMMAND.native.json",
+      "bytes": 215,
+      "sha256": "58110461919819fb97778a572647c77aa49074225fa63d796371c7c15a1c5696",
+      "readable": true,
+      "json_valid": true
+    },
+    {
+      "path": "research/kalshi_probability_learning_2026-10-15/DEPLOYMENT_BUILDING_1.native.json",
+      "bytes": 4487,
+      "sha256": "132b8a42d460f9625fcec89ab66294909db6c1ec0b0c52ec360a059c8dc4abfd",
+      "readable": true,
+      "json_valid": true
+    },
+    {
+      "path": "research/kalshi_probability_learning_2026-10-15/DEPLOYMENT_BUILDING_2.native.json",
+      "bytes": 4487,
+      "sha256": "d3218d126cf7e10800bb91018c1433a7f44abc96ab7ff6e6530fadd66b9f123e",
+      "readable": true,
+      "json_valid": true
+    },
+    {
+      "path": "research/kalshi_probability_learning_2026-10-15/DEPLOYMENT_BUILDING_3.native.json",
+      "bytes": 4487,
+      "sha256": "a49a23a78e5b3f3322870dca367173f869151cdf0b29d897403fe502c98abe35",
+      "readable": true,
+      "json_valid": true
+    },
+    {
+      "path": "research/kalshi_probability_learning_2026-10-15/MERGED_SOURCE_VERIFICATION.json",
+      "bytes": 1556,
+      "sha256": "a86bc12758298f0b85c6d7210d7e4295955b451184cad5b666344284414588ce",
+      "readable": true,
+      "json_valid": true
+    },
+    {
+      "path": "research/kalshi_probability_learning_2026-10-15/PREPARATION.zip",
+      "bytes": 73624,
+      "sha256": "5e14bf92167051e6494825a5752163d31325a789cbf704055a3917371ae553c3",
+      "readable": true,
+      "json_valid": null
+    },
+    {
+      "path": "research/kalshi_probability_learning_2026-10-15/PREPARATION_MANIFEST.json",
+      "bytes": 7267,
+      "sha256": "1c52267d79639849d0ff585a0aa96fc4e2ff82657db766b795c2af852e1ff309",
+      "readable": true,
+      "json_valid": true
+    }
+  ],
+  "immutable_preparation_archive": {
+    "path": "research/kalshi_probability_learning_2026-10-15/PREPARATION.zip",
+    "bytes": 73624,
+    "sha256": "5e14bf92167051e6494825a5752163d31325a789cbf704055a3917371ae553c3",
+    "members": 44,
+    "manifest_members": 44,
+    "crc_members_read": 44,
+    "member_size_sha_matches": 44,
+    "local_byte_equal": 44,
+    "bad_crc_member": null
+  },
+  "source_candidate_merge_links": {
+    "protocol_commit_from_context": "bbe2ead",
+    "candidate_commit": "4cf0734e7a85a0ac962b3a75825af62a5e714525",
+    "merge_commit": "8c8681a032a6181c49915ba88ba38d0818dc69d3",
+    "seven_tested_source_hashes_match": true,
+    "app_test_build_diff_empty": true,
+    "source_hash_map": {
+      "src/nightcrawler/kalshi_probability_learning.py": "a21b903ccbef0775f48f2a13322dc7ebfc4c831d381599a45993ebb218e22113",
+      "src/nightcrawler/kalshi_arena.py": "f183d7f66de018126445effcde714992808a36527e7a30f35ad36782fdd55d7b",
+      "src/nightcrawler/pagestate.py": "5367079109d34e03d0d9690266d1068750c09e0987917cab915b411198bca616",
+      "tests/test_kalshi_probability_learning.py": "62256a835e8c5e62ca68de5698e683c013af01184cb230c747e05743fb7ac016",
+      "tests/test_kalshi_probability_arena.py": "b7f300752a72c0345543bef8222be0f1b80f122f0eaab33ca5edcabb0eb8b082",
+      "tests/test_kalshi_probability_learning_page.py": "c72897a137e1fc81e98dfb962bc3169ee036d353408994fe3fc4b2ff2af356b7",
+      "tests/test_kalshi_arena_page.py": "d00afdaa5b01b1c4d996dcbf5d7e280218c37705d5dfc4b2166fdb0eae48fe29"
+    },
+    "same_hash_map_in_preparation_checks": true,
+    "same_hash_map_in_before_after_freeze": true,
+    "probability_fingerprint": "e79897062a3ebbd61fe5dc70617f02c44bb7d29c9dbf51e23940459686653c7c"
+  },
+  "bounded_sensitive_scan": {
+    "scope": "only named local evidence files and PREPARATION.zip member contents",
+    "patterns": [
+      "pem_private_key",
+      "sk_style_credential",
+      "bearer_credential",
+      "credential_assignment",
+      "private_handoff_or_attachment_reference"
+    ],
+    "hit_count": 0,
+    "redacted_hits": [],
+    "secret_values_recorded": false
+  },
+  "error_count": 0,
+  "errors": [],
+  "scope_note": "No source content inspected or modified, no production calls, and no repository writes. Runtime/public rollout claims are not made by this precheck."
+}

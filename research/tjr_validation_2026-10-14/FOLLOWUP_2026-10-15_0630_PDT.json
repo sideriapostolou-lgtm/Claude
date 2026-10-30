@@ -1,0 +1,70 @@
+{
+  "checked_at_utc": "2026-10-15T13:30:02Z",
+  "checked_at_pacific": "Thursday, October 15, 2026 at 6:30:02 AM PDT",
+  "repository": "sideriapostolou-lgtm/Claude",
+  "branch": "claude/nightcrawler-memecoin-bot-Gwnb1S",
+  "pinned_sha": "f0a0a9d8cab3880925a91abae6773282514e0660",
+  "reads": [
+    {
+      "path": "AGENTS.md",
+      "status": "read_ok",
+      "blob_sha": "389266a51ccba3d21072371fd680bc8e4aff2af9",
+      "url": "https://github.com/sideriapostolou-lgtm/Claude/blob/f0a0a9d8cab3880925a91abae6773282514e0660/AGENTS.md"
+    },
+    {
+      "path": "docs/COORDINATION.md",
+      "status": "read_ok",
+      "blob_sha": "e5aea06af60f06fc3ce138665bd6418808996dcb",
+      "url": "https://github.com/sideriapostolou-lgtm/Claude/blob/f0a0a9d8cab3880925a91abae6773282514e0660/docs/COORDINATION.md"
+    },
+    {
+      "path": "docs/WORKLOG.md",
+      "status": "read_ok",
+      "blob_sha": "b8dc3f0d424238a6b926f1daf9ff897666898aff",
+      "url": "https://github.com/sideriapostolou-lgtm/Claude/blob/f0a0a9d8cab3880925a91abae6773282514e0660/docs/WORKLOG.md"
+    },
+    {
+      "path": "research/kalshi_profitability_2026-10-14/PR47_DEPLOYMENT.md",
+      "status": "read_ok",
+      "blob_sha": "33c13fb39f85c958e322b8afbcaecfc052d6531b",
+      "url": "https://github.com/sideriapostolou-lgtm/Claude/blob/f0a0a9d8cab3880925a91abae6773282514e0660/research/kalshi_profitability_2026-10-14/PR47_DEPLOYMENT.md"
+    },
+    {
+      "path": "research/tjr_validation_2026-10-14/HISTORICAL_STATUS.json",
+      "status": "read_ok",
+      "blob_sha": "e079d3c762ced81b2262a5261ab164f291e3d5ac",
+      "url": "https://github.com/sideriapostolou-lgtm/Claude/blob/f0a0a9d8cab3880925a91abae6773282514e0660/research/tjr_validation_2026-10-14/HISTORICAL_STATUS.json"
+    }
+  ],
+  "pr47": {
+    "exact_release_restart_separately_complete": true,
+    "evidence": "PR47 exact merge e8db34ee34d95411ac7f695f704ceb82ef8e32d5; Railway deployment f707494f-1b45-4610-9488-def9796b5923 recorded SUCCESS; health check and normal startup/restart evidence recorded.",
+    "separate_from_exec": true
+  },
+  "exec": {
+    "status": "OPEN",
+    "basis": "Current COORDINATION and newest WORKLOG identify unresolved EXEC production attribution/freshness verification; original/inverse strategy comparison remains unstarted."
+  },
+  "tjr": {
+    "earlier_explicit_offline_priority": "Acknowledged in current COORDINATION's existing 4:55 AM PDT entry.",
+    "status": "BLOCKED; unfinished; automation unchanged.",
+    "latest_historical_status": {
+      "status": "BLOCKED",
+      "reason": "VERIFIED_ACTUAL_MNQZ2025_DATA_BUNDLE_MISSING",
+      "generatedAtUTC": "2026-10-14T18:55:39.000Z",
+      "historicalTradesTested": 0,
+      "historicalPnlUSD": null,
+      "paperTradingStarted": false,
+      "liveExecutionEnabled": false,
+      "holdoutOpened": false,
+      "holdoutReplayed": false,
+      "performanceClaimAllowed": false
+    },
+    "material_new_input_or_data_access": false,
+    "next_input": "Actual MNQZ2025 Sep 19–Oct 31 development minute bars with verified contract mapping, license, timestamps and bar convention, plus verified account/execution/platform/data costs; then the saved frozen development validation preserving losses, friction and gaps.",
+    "no_new_tjr_production_authority": true
+  },
+  "scope": "Read-only connected-GitHub documentation/status check. No Page reads, duplicate research, tests, data probes, source edits, release/deploy, orders, funding, Railway variables, caps, stops or resume changes.",
+  "notification": "No routine unchanged notification sent.",
+  "completion": "Do not mark TJR done; retain queued/blocked state and automation."
+}

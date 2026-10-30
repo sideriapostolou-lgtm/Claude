@@ -1,0 +1,677 @@
+{
+  "candidate_window": {
+    "contained_interval_delta_sum_check": {
+      "intervals": 14,
+      "matches_endpoint_delta": {
+        "feed_book": true,
+        "feed_status": true,
+        "feed_tick": true,
+        "feed_trade": true,
+        "feed_windows": true,
+        "kalshi_decode_apply": true,
+        "live_checkpoint": true,
+        "live_panel": true,
+        "practice_checkpoint": true,
+        "practice_step": true
+      },
+      "note": "A consistency check on adjacent contained status-counter deltas; it is not an extra work total."
+    },
+    "feed_age_and_warning_events": {
+      "age_warning_sources": {
+        "book_engine": {
+          "count": 1,
+          "max_age_s": 3.004,
+          "min_age_s": 3.004
+        },
+        "orderbook_delta_network": {
+          "count": 18,
+          "max_age_s": 3.358,
+          "min_age_s": 3.007
+        },
+        "trade_network": {
+          "count": 2,
+          "max_age_s": 3.086,
+          "min_age_s": 3.075
+        }
+      },
+      "events": [
+        {
+          "count": 2,
+          "event": "speeddesk_feed_kalshi_trade_gap",
+          "reason_or_error": "ValueError"
+        },
+        {
+          "count": 1,
+          "event": "speeddesk_feed_kalshi_ws_gap",
+          "reason_or_error": "market_set_changed"
+        },
+        {
+          "count": 1,
+          "event": "speeddesk_feed_kalshi_ws_gap",
+          "reason_or_error": "timestamp_missing_or_stale:book_engine"
+        },
+        {
+          "count": 18,
+          "event": "speeddesk_feed_kalshi_ws_gap",
+          "reason_or_error": "timestamp_missing_or_stale:orderbook_delta_network"
+        },
+        {
+          "count": 2,
+          "event": "speeddesk_feed_kalshi_ws_gap",
+          "reason_or_error": "timestamp_missing_or_stale:trade_network"
+        }
+      ],
+      "reported_age_warning_count": 21,
+      "total_events": 24
+    },
+    "fully_contained_interval_count_deltas": [
+      {
+        "end_utc": "2026-10-15T00:01:13.838Z",
+        "section_count_deltas": {
+          "feed_book": 68974,
+          "feed_status": 56,
+          "feed_tick": 290,
+          "feed_trade": 15406,
+          "feed_windows": 8,
+          "kalshi_decode_apply": 35551,
+          "live_checkpoint": 33,
+          "live_panel": 50,
+          "practice_checkpoint": 42,
+          "practice_step": 577
+        },
+        "start_utc": "2026-10-15T00:00:13.322Z"
+      },
+      {
+        "end_utc": "2026-10-15T00:02:14.032Z",
+        "section_count_deltas": {
+          "feed_book": 83690,
+          "feed_status": 39,
+          "feed_tick": 394,
+          "feed_trade": 13172,
+          "feed_windows": 8,
+          "kalshi_decode_apply": 42853,
+          "live_checkpoint": 25,
+          "live_panel": 63,
+          "practice_checkpoint": 55,
+          "practice_step": 592
+        },
+        "start_utc": "2026-10-15T00:01:13.838Z"
+      },
+      {
+        "end_utc": "2026-10-15T00:03:14.242Z",
+        "section_count_deltas": {
+          "feed_book": 76452,
+          "feed_status": 41,
+          "feed_tick": 334,
+          "feed_trade": 13770,
+          "feed_windows": 7,
+          "kalshi_decode_apply": 39124,
+          "live_checkpoint": 22,
+          "live_panel": 57,
+          "practice_checkpoint": 50,
+          "practice_step": 607
+        },
+        "start_utc": "2026-10-15T00:02:14.032Z"
+      },
+      {
+        "end_utc": "2026-10-15T00:04:14.275Z",
+        "section_count_deltas": {
+          "feed_book": 80598,
+          "feed_status": 16,
+          "feed_tick": 299,
+          "feed_trade": 9092,
+          "feed_windows": 8,
+          "kalshi_decode_apply": 42075,
+          "live_checkpoint": 31,
+          "live_panel": 37,
+          "practice_checkpoint": 30,
+          "practice_step": 640
+        },
+        "start_utc": "2026-10-15T00:03:14.242Z"
+      },
+      {
+        "end_utc": "2026-10-15T00:05:14.639Z",
+        "section_count_deltas": {
+          "feed_book": 64418,
+          "feed_status": 4,
+          "feed_tick": 411,
+          "feed_trade": 9620,
+          "feed_windows": 8,
+          "kalshi_decode_apply": 35429,
+          "live_checkpoint": 23,
+          "live_panel": 30,
+          "practice_checkpoint": 21,
+          "practice_step": 714
+        },
+        "start_utc": "2026-10-15T00:04:14.275Z"
+      },
+      {
+        "end_utc": "2026-10-15T00:06:14.996Z",
+        "section_count_deltas": {
+          "feed_book": 65924,
+          "feed_status": 4,
+          "feed_tick": 369,
+          "feed_trade": 9158,
+          "feed_windows": 8,
+          "kalshi_decode_apply": 35959,
+          "live_checkpoint": 27,
+          "live_panel": 30,
+          "practice_checkpoint": 22,
+          "practice_step": 648
+        },
+        "start_utc": "2026-10-15T00:05:14.639Z"
+      },
+      {
+        "end_utc": "2026-10-15T00:07:15.037Z",
+        "section_count_deltas": {
+          "feed_book": 71802,
+          "feed_status": 31,
+          "feed_tick": 319,
+          "feed_trade": 11574,
+          "feed_windows": 8,
+          "kalshi_decode_apply": 38062,
+          "live_checkpoint": 32,
+          "live_panel": 49,
+          "practice_checkpoint": 42,
+          "practice_step": 569
+        },
+        "start_utc": "2026-10-15T00:06:14.996Z"
+      },
+      {
+        "end_utc": "2026-10-15T00:08:15.311Z",
+        "section_count_deltas": {
+          "feed_book": 61544,
+          "feed_status": 16,
+          "feed_tick": 333,
+          "feed_trade": 10748,
+          "feed_windows": 8,
+          "kalshi_decode_apply": 32539,
+          "live_checkpoint": 27,
+          "live_panel": 41,
+          "practice_checkpoint": 34,
+          "practice_step": 640
+        },
+        "start_utc": "2026-10-15T00:07:15.037Z"
+      },
+      {
+        "end_utc": "2026-10-15T00:09:15.514Z",
+        "section_count_deltas": {
+          "feed_book": 67820,
+          "feed_status": 17,
+          "feed_tick": 314,
+          "feed_trade": 15786,
+          "feed_windows": 8,
+          "kalshi_decode_apply": 36399,
+          "live_checkpoint": 29,
+          "live_panel": 41,
+          "practice_checkpoint": 33,
+          "practice_step": 590
+        },
+        "start_utc": "2026-10-15T00:08:15.311Z"
+      },
+      {
+        "end_utc": "2026-10-15T00:10:15.842Z",
+        "section_count_deltas": {
+          "feed_book": 71058,
+          "feed_status": 4,
+          "feed_tick": 327,
+          "feed_trade": 5920,
+          "feed_windows": 8,
+          "kalshi_decode_apply": 36946,
+          "live_checkpoint": 34,
+          "live_panel": 37,
+          "practice_checkpoint": 30,
+          "practice_step": 627
+        },
+        "start_utc": "2026-10-15T00:09:15.514Z"
+      },
+      {
+        "end_utc": "2026-10-15T00:11:16.014Z",
+        "section_count_deltas": {
+          "feed_book": 66224,
+          "feed_status": 41,
+          "feed_tick": 385,
+          "feed_trade": 12212,
+          "feed_windows": 8,
+          "kalshi_decode_apply": 34383,
+          "live_checkpoint": 30,
+          "live_panel": 73,
+          "practice_checkpoint": 65,
+          "practice_step": 550
+        },
+        "start_utc": "2026-10-15T00:10:15.842Z"
+      },
+      {
+        "end_utc": "2026-10-15T00:12:16.053Z",
+        "section_count_deltas": {
+          "feed_book": 94842,
+          "feed_status": 15,
+          "feed_tick": 352,
+          "feed_trade": 21708,
+          "feed_windows": 8,
+          "kalshi_decode_apply": 50882,
+          "live_checkpoint": 12,
+          "live_panel": 38,
+          "practice_checkpoint": 31,
+          "practice_step": 637
+        },
+        "start_utc": "2026-10-15T00:11:16.014Z"
+      },
+      {
+        "end_utc": "2026-10-15T00:13:16.083Z",
+        "section_count_deltas": {
+          "feed_book": 102610,
+          "feed_status": 27,
+          "feed_tick": 497,
+          "feed_trade": 27984,
+          "feed_windows": 7,
+          "kalshi_decode_apply": 55607,
+          "live_checkpoint": 12,
+          "live_panel": 33,
+          "practice_checkpoint": 25,
+          "practice_step": 676
+        },
+        "start_utc": "2026-10-15T00:12:16.053Z"
+      },
+      {
+        "end_utc": "2026-10-15T00:14:16.291Z",
+        "section_count_deltas": {
+          "feed_book": 45758,
+          "feed_status": 4,
+          "feed_tick": 355,
+          "feed_trade": 9002,
+          "feed_windows": 8,
+          "kalshi_decode_apply": 26291,
+          "live_checkpoint": 12,
+          "live_panel": 33,
+          "practice_checkpoint": 26,
+          "practice_step": 704
+        },
+        "start_utc": "2026-10-15T00:13:16.083Z"
+      }
+    ],
+    "rest_fallback": {
+      "explicit_fallback_counter_or_event": false,
+      "instrumented_read_resume_records_per_selected_cycle": 5,
+      "interpretation": "These are read-resume work records, not a counter labeled as REST fallback; no fallback attribution is supported.",
+      "operation_names_per_cycle": [
+        "list_orders",
+        "fills",
+        "list_orders",
+        "positions",
+        "balance"
+      ]
+    },
+    "section_count_delta_across_in_window_endpoints": {
+      "count_deltas": {
+        "feed_book": 1021714,
+        "feed_status": 315,
+        "feed_tick": 4979,
+        "feed_trade": 185152,
+        "feed_windows": 110,
+        "kalshi_decode_apply": 542100,
+        "live_checkpoint": 349,
+        "live_panel": 612,
+        "practice_checkpoint": 506,
+        "practice_step": 8771
+      },
+      "counter_scope": "deployment cumulative section counts; delta only between the two named snapshots",
+      "first_cumulative_counts": {
+        "feed_book": 531184,
+        "feed_status": 141,
+        "feed_tick": 2190,
+        "feed_trade": 72978,
+        "feed_windows": 57,
+        "kalshi_decode_apply": 281361,
+        "live_checkpoint": 86,
+        "live_panel": 155,
+        "practice_checkpoint": 101,
+        "practice_step": 5171
+      },
+      "first_snapshot_utc": "2026-10-15T00:00:13.322Z",
+      "last_cumulative_counts": {
+        "feed_book": 1552898,
+        "feed_status": 456,
+        "feed_tick": 7169,
+        "feed_trade": 258130,
+        "feed_windows": 167,
+        "kalshi_decode_apply": 823461,
+        "live_checkpoint": 435,
+        "live_panel": 767,
+        "practice_checkpoint": 607,
+        "practice_step": 13942
+      },
+      "last_snapshot_utc": "2026-10-15T00:14:16.291Z",
+      "sample_span_seconds": 842.969,
+      "status_sample_count": 15
+    },
+    "selected_cycle_work_samples": {
+      "cpu_aggregation": "Per-cycle lower bounds only; no summing across cycles or nested spans. No status-interval CPU total is exposed.",
+      "sample_count": 7,
+      "samples": [
+        {
+          "callback_work": {
+            "contained_top_level_cpu_lower_bound_ms": 24.621228000029305,
+            "covered_wall_ms": 145.71969211101532,
+            "cpu_basis": "whole top-level spans inside one retained full bin only; crossing spans omitted",
+            "omitted_spans": 0,
+            "retained_overlapping_spans": 7,
+            "unattributed_wall_ms": 219.3232667632401,
+            "whole_bin_wall_lower_bound_ms": 126.67688401415944
+          },
+          "cycle_id": 299,
+          "elapsed_wall_ms": 365.008,
+          "ended_at_utc": "2026-10-15T00:00:18.397Z",
+          "read_resume_operation_names": [
+            "list_orders",
+            "fills",
+            "list_orders",
+            "positions",
+            "balance"
+          ],
+          "read_resume_work_is_fallback_labeled": false,
+          "read_resume_work_sample_count": 5,
+          "started_at_utc": "2026-10-15T00:00:18.032Z"
+        },
+        {
+          "callback_work": {
+            "contained_top_level_cpu_lower_bound_ms": 165.46923199973662,
+            "covered_wall_ms": 764.4552951678634,
+            "cpu_basis": "whole top-level spans inside one retained full bin only; crossing spans omitted",
+            "omitted_spans": 0,
+            "retained_overlapping_spans": 18,
+            "unattributed_wall_ms": 302.2834691219032,
+            "whole_bin_wall_lower_bound_ms": 917.1022418886423
+          },
+          "cycle_id": 323,
+          "elapsed_wall_ms": 1066.711,
+          "ended_at_utc": "2026-10-15T00:00:52.096Z",
+          "read_resume_operation_names": [
+            "list_orders",
+            "fills",
+            "list_orders",
+            "positions",
+            "balance"
+          ],
+          "read_resume_work_is_fallback_labeled": false,
+          "read_resume_work_sample_count": 5,
+          "started_at_utc": "2026-10-15T00:00:51.029Z"
+        },
+        {
+          "callback_work": {
+            "contained_top_level_cpu_lower_bound_ms": 815.4687650003609,
+            "covered_wall_ms": 979.7318209894001,
+            "cpu_basis": "whole top-level spans inside one retained full bin only; crossing spans omitted",
+            "omitted_spans": 17,
+            "retained_overlapping_spans": 49,
+            "unattributed_wall_ms": 2217.4687241204083,
+            "whole_bin_wall_lower_bound_ms": 1651.8529164604843
+          },
+          "cycle_id": 330,
+          "elapsed_wall_ms": 3197.157,
+          "ended_at_utc": "2026-10-15T00:01:03.659Z",
+          "read_resume_operation_names": [
+            "list_orders",
+            "fills",
+            "list_orders",
+            "positions",
+            "balance"
+          ],
+          "read_resume_work_is_fallback_labeled": false,
+          "read_resume_work_sample_count": 5,
+          "started_at_utc": "2026-10-15T00:01:00.462Z"
+        },
+        {
+          "callback_work": {
+            "contained_top_level_cpu_lower_bound_ms": 180.5343319995245,
+            "covered_wall_ms": 163.2297746837139,
+            "cpu_basis": "whole top-level spans inside one retained full bin only; crossing spans omitted",
+            "omitted_spans": 0,
+            "retained_overlapping_spans": 9,
+            "unattributed_wall_ms": 457.0492282509804,
+            "whole_bin_wall_lower_bound_ms": 309.92135871201754
+          },
+          "cycle_id": 333,
+          "elapsed_wall_ms": 620.252,
+          "ended_at_utc": "2026-10-15T00:01:06.388Z",
+          "read_resume_operation_names": [
+            "list_orders",
+            "fills",
+            "list_orders",
+            "positions",
+            "balance"
+          ],
+          "read_resume_work_is_fallback_labeled": false,
+          "read_resume_work_sample_count": 5,
+          "started_at_utc": "2026-10-15T00:01:05.768Z"
+        },
+        {
+          "callback_work": {
+            "contained_top_level_cpu_lower_bound_ms": 131.04909100022155,
+            "covered_wall_ms": 453.1280850060284,
+            "cpu_basis": "whole top-level spans inside one retained full bin only; crossing spans omitted",
+            "omitted_spans": 0,
+            "retained_overlapping_spans": 18,
+            "unattributed_wall_ms": 566.8084002099931,
+            "whole_bin_wall_lower_bound_ms": 548.0413669720292
+          },
+          "cycle_id": 357,
+          "elapsed_wall_ms": 1019.908,
+          "ended_at_utc": "2026-10-15T00:01:37.374Z",
+          "read_resume_operation_names": [
+            "list_orders",
+            "fills",
+            "list_orders",
+            "positions",
+            "balance"
+          ],
+          "read_resume_work_is_fallback_labeled": false,
+          "read_resume_work_sample_count": 5,
+          "started_at_utc": "2026-10-15T00:01:36.354Z"
+        },
+        {
+          "callback_work": {
+            "contained_top_level_cpu_lower_bound_ms": 106.25039500021671,
+            "covered_wall_ms": 1005.5610649287701,
+            "cpu_basis": "whole top-level spans inside one retained full bin only; crossing spans omitted",
+            "omitted_spans": 0,
+            "retained_overlapping_spans": 29,
+            "unattributed_wall_ms": 248.93915094435215,
+            "whole_bin_wall_lower_bound_ms": 1076.9544471986592
+          },
+          "cycle_id": 370,
+          "elapsed_wall_ms": 1254.474,
+          "ended_at_utc": "2026-10-15T00:01:53.146Z",
+          "read_resume_operation_names": [
+            "list_orders",
+            "fills",
+            "list_orders",
+            "positions",
+            "balance"
+          ],
+          "read_resume_work_is_fallback_labeled": false,
+          "read_resume_work_sample_count": 5,
+          "started_at_utc": "2026-10-15T00:01:51.892Z"
+        },
+        {
+          "callback_work": {
+            "contained_top_level_cpu_lower_bound_ms": 8.991113000035966,
+            "covered_wall_ms": 584.644622169435,
+            "cpu_basis": "whole top-level spans inside one retained full bin only; crossing spans omitted",
+            "omitted_spans": 0,
+            "retained_overlapping_spans": 16,
+            "unattributed_wall_ms": 178.06592071428895,
+            "whole_bin_wall_lower_bound_ms": 554.5644476078451
+          },
+          "cycle_id": 788,
+          "elapsed_wall_ms": 762.681,
+          "ended_at_utc": "2026-10-15T00:11:04.216Z",
+          "read_resume_operation_names": [
+            "list_orders",
+            "fills",
+            "list_orders",
+            "positions",
+            "balance"
+          ],
+          "read_resume_work_is_fallback_labeled": false,
+          "read_resume_work_sample_count": 5,
+          "started_at_utc": "2026-10-15T00:11:03.453Z"
+        }
+      ]
+    },
+    "status_interval_coverage": {
+      "contained_interval_count_deltas_retained": 14,
+      "covering_interval_count": 16,
+      "fully_contained_interval_count": 14,
+      "note": "The 16 covering intervals include two intervals that straddle window boundaries; the 14 fully contained intervals are the contained sample. Deltas use adjacent cumulative snapshots, not maxima.",
+      "sample_cap_hits": [],
+      "status_union_covers_entire_window": true
+    },
+    "window_utc": {
+      "end": "2026-10-15T00:15:00Z",
+      "start": "2026-10-15T00:00:00Z"
+    }
+  },
+  "inputs": [
+    {
+      "bytes": 12514016,
+      "path": "/workspace/shared/post-fairness-closed-first_window_financial_tail.json",
+      "sha256": "527cff43b675e116ee1278672a5f24a961eb4cca76c0b9adb89f7aacc650d8cd",
+      "source_commit": "c8e37e5504aad04da0521b3f95c17f86dac42899",
+      "source_index": [
+        "summary.windows[0]",
+        "summary.status_intervals",
+        "summary.trace_publication_statuses",
+        "summary.selected_cycles",
+        "summary.feed_health_original_events"
+      ]
+    },
+    {
+      "bytes": 2362959,
+      "path": "/workspace/nightcrawler-next-evidence/research/kalshi_profitability_2026-10-14/POST_GROUPING_FULL_WINDOW_1630_PDT.json",
+      "sha256": "b58a299363dba8f2f3ce542485b06be59ca84f44d80f905eea4534e3ce4b994a",
+      "source_commit": "4b0ea4004060e5b66d09b509ee0b6e79b5e63c72",
+      "source_index": [
+        "events[].payload.reconcile_trace.callback_work.sections",
+        "summary.status_count",
+        "summary.intervals"
+      ]
+    },
+    {
+      "bytes": 11911,
+      "path": "/workspace/shared/pre-fairness-feed-warning-baseline.json",
+      "sha256": "e8240e2a178292bcc38967035cba0557aff4bbca2a7effc983836f41fd9a8af0",
+      "source_commit": "4b0ea4004060e5b66d09b509ee0b6e79b5e63c72",
+      "source_index": [
+        "original_events",
+        "counts",
+        "findings"
+      ]
+    }
+  ],
+  "pre_fairness_comparison": {
+    "counter_delta_across_in_window_endpoints": {
+      "count_deltas": {
+        "feed_book": 973782,
+        "feed_status": 58,
+        "feed_tick": 4274,
+        "feed_trade": 104050,
+        "feed_windows": 110,
+        "kalshi_decode_apply": 519186,
+        "live_checkpoint": 167,
+        "live_panel": 275,
+        "practice_checkpoint": 169,
+        "practice_step": 8343
+      },
+      "counter_scope": "deployment cumulative section counts; delta only between the two named snapshots",
+      "first_cumulative_counts": {
+        "feed_book": 565346,
+        "feed_status": 62,
+        "feed_tick": 1669,
+        "feed_trade": 67244,
+        "feed_windows": 38,
+        "kalshi_decode_apply": 305447,
+        "live_checkpoint": 62,
+        "live_panel": 99,
+        "practice_checkpoint": 63,
+        "practice_step": 2014
+      },
+      "first_snapshot_utc": "2026-10-14T23:15:52.254Z",
+      "last_cumulative_counts": {
+        "feed_book": 1539128,
+        "feed_status": 120,
+        "feed_tick": 5943,
+        "feed_trade": 171294,
+        "feed_windows": 148,
+        "kalshi_decode_apply": 824633,
+        "live_checkpoint": 229,
+        "live_panel": 374,
+        "practice_checkpoint": 232,
+        "practice_step": 10357
+      },
+      "last_snapshot_utc": "2026-10-14T23:29:55.398Z",
+      "sample_span_seconds": 843.144,
+      "status_sample_count": 15
+    },
+    "endpoint_and_traffic_limits": [
+      "For both count comparisons, the nearest in-window status endpoints span about 14m03s rather than exactly 15m; their endpoints are shown explicitly.",
+      "Counters are deployment-scoped and reset on process/deployment restart; compare within-deployment deltas, not absolute totals.",
+      "The two windows have different source commits and observed feed traffic; no traffic normalization or work-per-input-message denominator is supplied."
+    ],
+    "source_commit": "4b0ea4004060e5b66d09b509ee0b6e79b5e63c72",
+    "warning_only_receipt": {
+      "counts": {
+        "book_engine_age_stale": 0,
+        "market_set_changed": 1,
+        "network_age_stale": 0,
+        "trade_gap_ValueError": 1,
+        "unique_trade_gap": 1,
+        "unique_ws_gap": 1
+      },
+      "explicit_age_warning_count": 0,
+      "original_events": [
+        {
+          "cause": "reason=market_set_changed",
+          "event": "speeddesk_feed_kalshi_ws_gap",
+          "timestamp_utc": "2026-10-14T23:15:09Z"
+        },
+        {
+          "cause": "error=ValueError",
+          "event": "speeddesk_feed_kalshi_trade_gap",
+          "timestamp_utc": "2026-10-14T23:29:55Z"
+        }
+      ],
+      "scope_note": "This warning-only receipt has warning classes and no callback/work/checkpoint counters.",
+      "window_utc": {
+        "end": "2026-10-14T23:30:00Z",
+        "pacific": "2026-10-14 4:15\u20134:30 PM PDT",
+        "start": "2026-10-14T23:15:00Z"
+      }
+    },
+    "window_utc": {
+      "end": "2026-10-14T23:30:00Z",
+      "start": "2026-10-14T23:15:00Z"
+    }
+  },
+  "task": "Offline source-indexed inventory of feed/work telemetry; no production queries or source changes.",
+  "wake_amplification_assessment": {
+    "causal_wake_driven_work_amplification_quantifiable": false,
+    "count_comparison_available": true,
+    "interpretation_limit": "Descriptive count differences only. Do not pool quantiles, difference maxima, sum overlapping span CPU, infer rates from incomplete endpoints, or claim causality.",
+    "reason": "Section counters show observed callback/work counts, but do not classify a callback as feed-triggered versus periodic/wake-triggered; feed message volume differs and is not a normalization denominator. The warning-only baseline receipt has no work counters, though its linked complete-window source receipt does carry callback section counters."
+  },
+  "independent_review": {
+    "reviewer_role": "GPT-6 Astra independent original-status reparse; offline only",
+    "original_inventory_sha256": "d529f69136a67c735c3f3a8ea133eb38b8db906eac0ce61d00db77766b26a79a",
+    "counts_and_endpoints_reproduced": true,
+    "prior_endpoint_span_seconds": 843.144,
+    "candidate_endpoint_span_seconds": 842.969,
+    "material_activity_confound": "Prior span starts at23:15:52UTC, after all seven target-window intents and both fills; it contains zero target-window order/fill/cancellation events. Candidate span starts at00:00:13UTC and contains125durable intents,124accepted orders,six fills and123cancellation rows. Increased checkpoint/panel counts cannot isolate wake amplification from ordinary activity-driven work.",
+    "operations_not_used": [
+      "cumulative-max subtraction",
+      "pooled quantiles",
+      "nested CPU summation"
+    ],
+    "derivative_note": "Original extraction is preserved unchanged in the execution workspace. This publication corrects interval wording and adds the independent interpretation limit; numerical observations unchanged."
+  }
+}

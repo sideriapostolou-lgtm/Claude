@@ -1,0 +1,73 @@
+{
+  "checked_at_utc": "2026-10-15T03:46:03Z",
+  "checked_at_pacific": "2026-10-14 8:46 PM PDT",
+  "branch_head": "a37666641e90f38d9cecfd57628c230c430d43d4",
+  "github_files": [
+    {
+      "path": "docs/COORDINATION.md",
+      "blob_sha": "ed642c8c85df87d76b8d7e7ee473f578e6df62ef"
+    },
+    {
+      "path": "AGENTS.md",
+      "blob_sha": "389266a51ccba3d21072371fd680bc8e4aff2af9"
+    },
+    {
+      "path": "docs/WORKLOG.md",
+      "blob_sha": "bf7f548e3e4e1ed4a2a4f3653ddade012c3541b0"
+    },
+    {
+      "path": "research/kalshi_profitability_2026-10-14/PR47_DEPLOYMENT.md",
+      "blob_sha": "33c13fb39f85c958e322b8afbcaecfc052d6531b"
+    },
+    {
+      "path": "research/tjr_validation_2026-10-14/HISTORICAL_STATUS.json",
+      "blob_sha": "e079d3c762ced81b2262a5261ab164f291e3d5ac"
+    }
+  ],
+  "gate": {
+    "pr47_exact_deployment_restart_evidence_recorded_complete": true,
+    "current_execution_work_complete": false,
+    "remaining_recorded_blocker": "Source-age/freshness attribution after the fixed two-window audit.",
+    "earlier_explicit_offline_reprioritization_recorded": true,
+    "new_production_authority": false
+  },
+  "page_deltas": [
+    {
+      "page_id": "page_d0294998a7cc8191b771278fbfb98a2f",
+      "after_sequence": 2,
+      "through_sequence": 2,
+      "markdown_diff": "",
+      "changes": [],
+      "changed_blocks": [],
+      "deleted_block_ids": [],
+      "truncated": false,
+      "resync_required": false
+    },
+    {
+      "page_id": "page_33c0bb7e8dac81919e012fc502bae98a",
+      "after_sequence": 1,
+      "through_sequence": 1,
+      "markdown_diff": "",
+      "changes": [],
+      "changed_blocks": [],
+      "deleted_block_ids": [],
+      "truncated": false,
+      "resync_required": false
+    }
+  ],
+  "source_reuse": "Prior complete124-block source reads and saved implementation/tests retained, no duplicate reconstruction/research/tests/data probes/holdout access.",
+  "historical_status": {
+    "status": "BLOCKED",
+    "historical_trades": 0,
+    "historical_pnl_usd": null,
+    "paper_started": false,
+    "live_enabled": false,
+    "holdout_opened": false,
+    "reason": "Verified actual MNQZ2025 development data and actual-cost inputs remain missing."
+  },
+  "independent_record_check": "Separate bounded reader confirmed exact PR47 post-merge deployment/restart evidence and unchanged historical-status blob at the pinned head; stopped after two reads.",
+  "decision": "Leave TJR-MNQ-001 queued/blocked and unfinished; follow-up automation unchanged; no routine unchanged-blocker notification.",
+  "next": "Authorized actual MNQ December2025 minute OHLCV Sep19–Oct31 with verified mapping/license/timestamp/bar convention and actual account/execution/platform/data costs; then saved frozen development validation. Paper later requires current contract/feed/runtime evidence, with live disabled and holdout unopened.",
+  "scope": "Repository/Page record check only; no current production health/cash claims, source, trading, funding, variables, deployment, risk/stop/resume action.",
+  "interactive_owner_request": "Owner reports a ChatGPT/Codex app-work session glitch, not a town/bot-app defect. Last task/error requested so the correct saved work can be resumed. No remote chat repair or app-code fix claimed."
+}

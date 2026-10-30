@@ -1,0 +1,203 @@
+{
+ "hypothesis": "X4",
+ "version": "x4-v1",
+ "stage": "train",
+ "split": "train",
+ "utc": "2026-10-09 04:44:49",
+ "provisional": false,
+ "debug_only": false,
+ "prereg_sha256": "88edb8ed8df8e8fa22d5455c22acf640022a56a9bdeef69d63c689b796a5a74e",
+ "rerun_reason": null,
+ "coverage": {
+  "split": "train",
+  "bounds_utc": [
+   "2026-10-01 00:00:00",
+   "2026-10-05 00:00:00"
+  ],
+  "debug_only": false,
+  "graduates_in_split": 5435,
+  "tradeable": 3863,
+  "usable": 3863,
+  "excluded": {
+   "mayhem": 1422,
+   "not_sol_quoted": 150
+  },
+  "created_inexact": 943,
+  "has_create0": 943,
+  "chain_hours_scanned_frac": 1.0,
+  "days": [
+   {
+    "day": "2026-10-01",
+    "hours_in_split": 24,
+    "curve_hours": 24,
+    "b2_hours": 24,
+    "b2_hours_midrun": 0,
+    "coins_created": 1261,
+    "tradeable": 989,
+    "usable": 989,
+    "usable_frac": 1.0,
+    "partial": false
+   },
+   {
+    "day": "2026-10-02",
+    "hours_in_split": 24,
+    "curve_hours": 24,
+    "b2_hours": 24,
+    "b2_hours_midrun": 0,
+    "coins_created": 1255,
+    "tradeable": 933,
+    "usable": 933,
+    "usable_frac": 1.0,
+    "partial": false
+   },
+   {
+    "day": "2026-10-03",
+    "hours_in_split": 24,
+    "curve_hours": 24,
+    "b2_hours": 24,
+    "b2_hours_midrun": 0,
+    "coins_created": 1632,
+    "tradeable": 966,
+    "usable": 966,
+    "usable_frac": 1.0,
+    "partial": false
+   },
+   {
+    "day": "2026-10-04",
+    "hours_in_split": 24,
+    "curve_hours": 24,
+    "b2_hours": 24,
+    "b2_hours_midrun": 0,
+    "coins_created": 1287,
+    "tradeable": 975,
+    "usable": 975,
+    "usable_frac": 1.0,
+    "partial": false
+   }
+  ],
+  "days_expected": 4.0,
+  "days_full": 4,
+  "curve_span_utc": [
+   "2026-09-30 17:00:00",
+   "2026-10-09 02:00:00"
+  ],
+  "b2_span_utc": [
+   "2026-10-01 00:00:00",
+   "2026-10-05 04:00:00"
+  ],
+  "completeness_source": "raw_chunks",
+  "parquet_snapshot_utc": "2026-10-09 03:57:17",
+  "b2_hours_needed": 100,
+  "b2_hours_done": 100,
+  "b2_hours_midrun": [],
+  "sol_usd": {
+   "series_utc": [
+    "2026-09-15 00:00:00",
+    "2026-10-08 23:59:00"
+   ],
+   "constant_fallback": false,
+   "lookahead_coins": 0,
+   "stale_coins": 0
+  },
+  "power": {
+   "entry_bar_coins": {
+    "need": 40,
+    "have_usable_coins": 3863,
+    "ok": true
+   },
+   "x1_r0_trades_5_seeds": {
+    "need": 500,
+    "max_possible": 19315,
+    "ok": true
+   },
+   "g1_flagged_coins_val": {
+    "need": 200,
+    "max_possible": 3863,
+    "ok": true
+   }
+  },
+  "underpowered": false,
+  "complete": true,
+  "notes": [],
+  "from_flow": true
+ },
+ "n_coins": 3863,
+ "span_days": 4.0,
+ "separation": {
+  "n_obs": 28596,
+  "n_coins": 1881,
+  "n_none": 28593,
+  "need": {
+   "obs": 30,
+   "coins": 15,
+   "ratio": 2.0,
+   "diff": 0.05,
+   "revive_mult": 2.0
+  },
+  "per_signal": {
+   "BREADTH": {
+    "n": 3,
+    "coins": 3,
+    "powered": false,
+    "rate": 0.0,
+    "diff": -0.00017486797467911727,
+    "diff_ci90": [
+     -0.00045300902533365855,
+     0.0
+    ],
+    "passes": false,
+    "rate15": 0.0,
+    "mean_ratio": 1.1390992201071986
+   },
+   "FLOW": {
+    "n": 2,
+    "coins": 2,
+    "powered": false,
+    "rate": 0.0,
+    "diff": -0.00017486797467911727,
+    "diff_ci90": [
+     -0.00045369280104601593,
+     0.0
+    ],
+    "passes": false,
+    "rate15": 0.0,
+    "mean_ratio": 1.2048713720334332
+   },
+   "BOTH": {
+    "n": 2,
+    "coins": 2,
+    "powered": false,
+    "rate": 0.0,
+    "diff": -0.00017486797467911727,
+    "diff_ci90": [
+     -0.00045369280104601593,
+     0.0
+    ],
+    "passes": false,
+    "rate15": 0.0,
+    "mean_ratio": 1.2048713720334332
+   }
+  },
+  "passed": [],
+  "rate_none": 0.00017486797467911727,
+  "rate15_none": 0.0005945511139089987,
+  "mean_ratio_none": 1.0147461377796394,
+  "decision": "UNDERPOWERED",
+  "trial": {
+   "config": "X4-sep|738b45175864",
+   "new_trial": true,
+   "n_trials_total": 2585,
+   "hypothesis_configs": 1,
+   "over_variant_limit": false,
+   "family_val_looks": 0
+  }
+ },
+ "decision": {
+  "verdict": "UNDERPOWERED_SEP",
+  "shortlist_written": false,
+  "note": "PREREG 9: the separation gate precedes any P&L; the grid was not run"
+ },
+ "runtime_s": 19.5,
+ "n_trials_total": 2585,
+ "overall": "UNDERPOWERED (too few floor signals for the separation gate on TRAIN)"
+}

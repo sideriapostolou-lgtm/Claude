@@ -1,0 +1,100 @@
+{
+  "checked_at_utc": "2026-10-15T01:21:22Z",
+  "checked_at_pacific": "2026-10-14 6:21 PM PDT",
+  "branch_head": "541181c18b8d1f59de11015f12bac31ab8a5eb6b",
+  "github_files": [
+    {
+      "path": "docs/COORDINATION.md",
+      "blob_sha": "6bc78318e6136575328a73e29d7986127f70553a"
+    },
+    {
+      "path": "AGENTS.md",
+      "blob_sha": "389266a51ccba3d21072371fd680bc8e4aff2af9"
+    },
+    {
+      "path": "docs/WORKLOG.md",
+      "blob_sha": "fcafdf7a918bd2364d5cf78c886b27a70ecc6995"
+    },
+    {
+      "path": "research/kalshi_profitability_2026-10-14/PR47_DEPLOYMENT.md",
+      "blob_sha": "33c13fb39f85c958e322b8afbcaecfc052d6531b"
+    },
+    {
+      "path": "research/tjr_validation_2026-10-14/HISTORICAL_STATUS.json",
+      "blob_sha": "e079d3c762ced81b2262a5261ab164f291e3d5ac"
+    }
+  ],
+  "priority_gate": {
+    "earlier_explicit_offline_reprioritization": true,
+    "pr47_recorded_exact_release_restart_verification_complete": true,
+    "pr47_merge_sha": "e8db34ee34d95411ac7f695f704ceb82ef8e32d5",
+    "pr47_recorded_deployment": "f707494f-1b45-4610-9488-def9796b5923",
+    "pr47_recorded_success_utc": "2026-10-14T16:24:05.418Z",
+    "active_execution_task_complete": false,
+    "latest_execution_record": "research/kalshi_profitability_2026-10-14/FEED_FAIRNESS_POSTRELEASE.md",
+    "two_window_collection_and_independent_audit_complete": true,
+    "remaining_open_surface": "53 recorded source-age warnings require attribution; earlier finite local recurrence result does not clear freshness.",
+    "merge_is_not_completion": true,
+    "reminder_adds_production_authority": false
+  },
+  "page_deltas": [
+    {
+      "page_id": "page_d0294998a7cc8191b771278fbfb98a2f",
+      "after_sequence": 2,
+      "through_sequence": 2,
+      "markdown_diff": "",
+      "changes": [],
+      "changed_blocks": [],
+      "deleted_block_ids": [],
+      "truncated": false,
+      "resync_required": false
+    },
+    {
+      "page_id": "page_33c0bb7e8dac81919e012fc502bae98a",
+      "after_sequence": 1,
+      "through_sequence": 1,
+      "markdown_diff": "",
+      "changes": [],
+      "changed_blocks": [],
+      "deleted_block_ids": [],
+      "truncated": false,
+      "resync_required": false
+    }
+  ],
+  "source_reuse": {
+    "complete_saved_page_blocks": 124,
+    "full_original_review": "research/tjr_mnq_2026-10-14/REVIEW.md",
+    "saved_validation": "research/tjr_validation_2026-10-14/VALIDATION.md",
+    "original_checks_previously_reproduced": 65,
+    "feature_checks_previously_reproduced": 26,
+    "runner_checks_previously_passed": 58,
+    "new_source_reconstruction_or_synthetic_rerun": false
+  },
+  "historical_status": {
+    "status": "BLOCKED",
+    "reason": "VERIFIED_ACTUAL_MNQZ2025_DATA_BUNDLE_MISSING",
+    "sourceVersion": "TJR_BC23_MNQZ25_SWEEP_BOS_v0.1.1_calendar",
+    "historicalTradesTested": 0,
+    "historicalPnlUSD": null,
+    "holdoutOpened": false,
+    "paperTradingStarted": false,
+    "liveExecutionEnabled": false,
+    "performanceClaimAllowed": false
+  },
+  "new_recorded_development_data": false,
+  "new_recorded_cost_evidence": false,
+  "current_runtime_metadata_only": {
+    "observations_current": true,
+    "phase": "running",
+    "network_policy_state": "enforced",
+    "new_futures_data_access_established": false,
+    "limitation": "Readiness metadata does not itself establish broker/data access, historical input availability, or a new authorization."
+  },
+  "scope_limitations": [
+    "Connected-GitHub record check and unchanged Page deltas; no new production status/log check or current-cash claim.",
+    "Independent bounded reviewer verified PR47 release and frozen historical status; no duplicate research, data probe, tests or holdout access.",
+    "No source/trading/risk/variable/resume/deployment/funding/order action. Existing active work is not changed by this reminder."
+  ],
+  "decision": "Keep TJR-MNQ-001 queued/blocked and unfinished. Paper not started; live disabled. Follow-up automation unchanged; suppress routine unchanged-blocker notification.",
+  "next": "Authorized immutable actual MNQ December2025 minute OHLCV Sep19–Oct31,2025, with verified provider/contract mapping, research license, timestamp/bar convention and actual account/execution/platform/data costs; then frozen development scenarios. Later paper requires verified current contract/feed/runtime; holdout remains unopened."
+}

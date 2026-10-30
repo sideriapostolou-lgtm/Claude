@@ -1,0 +1,20 @@
+{"days": 0, "baseline_ms": 1.138933, "candidate_ms": 1.125238, "equal": false}
+Traceback (most recent call last):
+  File "/workspace/private-handoffs/claude-2026-10-15/profit-next-2026-10-16/sol/profile_active_windows.py", line 134, in <module>
+    asyncio.run(main())
+  File "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/lib/python3.12/asyncio/runners.py", line 195, in run
+    return runner.run(main)
+           ^^^^^^^^^^^^^^^^
+  File "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/lib/python3.12/asyncio/runners.py", line 118, in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/lib/python3.12/asyncio/base_events.py", line 691, in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+  File "/workspace/private-handoffs/claude-2026-10-15/profit-next-2026-10-16/sol/profile_active_windows.py", line 122, in main
+    pair.append(await scenario(Path(tmp)/f'{days}-{proposed}',days,proposed))
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/private-handoffs/claude-2026-10-15/profit-next-2026-10-16/sol/profile_active_windows.py", line 69, in scenario
+    desk.final_outcomes.update({key: row.up_won for key,row in desk.book.settled.items()})
+                                     ^^^^^^^^^^
+AttributeError: 'LiveSettlement' object has no attribute 'up_won'. Did you mean: 'up_wins'?

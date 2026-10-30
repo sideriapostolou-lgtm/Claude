@@ -1,0 +1,191 @@
+"""Frozen, offline root-series exploratory study; no venue or network access."""
+
+from __future__ import annotations
+
+import argparse
+import csv
+import hashlib
+import json
+from collections import Counter
+from datetime import UTC, datetime
+from decimal import Decimal, InvalidOperation
+from pathlib import Path
+from zoneinfo import ZoneInfo
+
+from simulator import COST_SCENARIOS, Bar, simulate_day
+
+KIND = "OWNER_SWEEP_IFVG_ROOT_SAMPLE_EXPLORATORY_v1"
+CSV_SHA = "6dc53ce719b935022c668f36bd2532887a6548b83a7b28d6ac5df0b4f79ee83b"
+EARLY = ["2026-10-02", "2026-10-05", "2026-10-06", "2026-10-07", "2026-10-08"]
+LATER = ["2026-10-09", "2026-10-12", "2026-10-13", "2026-10-14", "2026-10-15", "2026-10-16"]
+NY = ZoneInfo("America/New_York")
+HERE = Path(__file__).resolve().parent
+
+
+def sha(path: Path) -> str:
+    return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+def parse_rows(rows):
+    """Validate unadjusted tick geometry, never round or manufacture bars.
+
+    This cannot resolve the sample's unknown adjustment/contract provenance.
+    It accepts only the declared October span, avoiding DST-ambiguous local rows.
+    """
+    bars = []
+    seen = set()
+    previous = None
+    for number, row in enumerate(rows, 1):
+        if number > 20000 or len(row) != 6:
+            raise ValueError(f"row {number}: unexpected row count or schema")
+        try:
+            naive = datetime.strptime(row[0], "%Y-%m-%d %H:%M:%S")
+            if naive.second or not "2026-10-01" <= naive.date().isoformat() <= "2026-10-16":
+                raise ValueError("timestamp outside frozen sample/minute convention")
+            stamp = naive.replace(tzinfo=NY).astimezone(UTC)
+            prices = [Decimal(x) for x in row[1:5]]
+            volume = Decimal(row[5])
+            if (not volume.is_finite() or volume < 0
+                    or volume != volume.to_integral_value()):
+                raise ValueError("invalid volume")
+            if any(not p.is_finite() or p <= 0 or p * 4 != (p * 4).to_integral_value()
+                   for p in prices):
+                raise ValueError("nonpositive, nonfinite or off-tick OHLC")
+            ticks = [int(p * 4) for p in prices]
+            if not ticks[2] <= min(ticks[0], ticks[3]) <= max(ticks[0], ticks[3]) <= ticks[1]:
+                raise ValueError("OHLC extrema invalid")
+        except (ValueError, InvalidOperation) as exc:
+            raise ValueError(f"row {number}: invalid source record ({exc})") from exc
+        if stamp in seen or (previous is not None and stamp <= previous):
+            raise ValueError(f"row {number}: duplicate or unsorted timestamp")
+        seen.add(stamp)
+        previous = stamp
+        bars.append(Bar(stamp, *ticks))
+    if not bars:
+        raise ValueError("empty source is not a historical result")
+    return bars
+
+
+def money(value: Decimal) -> str:
+    return format(value, ".2f")
+
+
+def summarize(days):
+    """Keep unknown campaign outcomes null and visible known losses separately."""
+    unresolved = [x["session_date"] for x in days if x["decision"] == "UNRESOLVED"]
+    closed = [x for x in days if x.get("trade") and x["trade"].get("net_usd") is not None]
+    net = sum((Decimal(x["trade"]["net_usd"]) for x in closed), Decimal(0))
+    fees = sum((Decimal(x["trade"]["fees_usd"]) for x in closed), Decimal(0))
+    gross = sum((Decimal(x["trade"]["gross_usd"]) for x in closed), Decimal(0))
+    known_entry_fees_on_unresolved = sum(
+        (Decimal(x["trade"]["entry_fee_usd"]) for x in days
+         if x["decision"] == "UNRESOLVED" and x.get("trade")
+         and x["trade"].get("net_usd") is None), Decimal(0))
+    wins = sum(Decimal(x["trade"]["net_usd"]) > 0 for x in closed)
+    losses = sum(Decimal(x["trade"]["net_usd"]) < 0 for x in closed)
+    curve = peak = drawdown = Decimal(0)
+    longest = streak = 0
+    for day in days:
+        if day["net_usd"] is not None:
+            curve += Decimal(day["net_usd"])
+            peak = max(peak, curve)
+            drawdown = max(drawdown, peak - curve)
+        if day in closed:
+            outcome = Decimal(day["trade"]["net_usd"])
+            if outcome < 0:
+                streak += 1
+                longest = max(longest, streak)
+            else:
+                streak = 0
+    known_daily = [Decimal(x["net_usd"]) for x in days if x["net_usd"] is not None]
+    best = max(known_daily) if known_daily else Decimal(0)
+    return {
+        "sessions": len(days), "decisions": dict(sorted(Counter(x["decision"] for x in days).items())),
+        "unresolved_dates": unresolved, "closed_trades": len(closed), "net_wins": wins,
+        "net_losses": losses, "net_flat": len(closed) - wins - losses,
+        "win_fraction": f"{wins}/{len(closed)}" if closed else None,
+        "known_closed_gross_after_friction_usd": money(gross),
+        "known_closed_fees_usd": money(fees), "known_closed_net_usd": money(net),
+        "known_entry_fees_on_unresolved_usd": money(known_entry_fees_on_unresolved),
+        "period_trading_net_usd": None if unresolved else money(net),
+        "mean_per_closed_trade_usd": money(net / len(closed)) if closed else None,
+        "mean_per_scheduled_session_usd": money(net / len(days)) if days and not unresolved else None,
+        "worst_closed_trade_usd": min((x["trade"]["net_usd"] for x in closed), key=Decimal, default=None),
+        "worst_known_day_usd": money(min(known_daily)) if known_daily else None,
+        "longest_known_closed_loss_streak": longest,
+        "session_end_max_drawdown_usd": None if unresolved else money(drawdown),
+        "net_without_best_day_usd": None if unresolved else money(net - best),
+        "ambiguous_closed_trades": sum(bool(x["trade"]["ambiguous"]) for x in closed),
+        "planned_entry_risk_usd": [money(Decimal(x["trade"]["risk_ticks"]) / 2) for x in closed],
+        "operating_net_usd": None,
+        "operating_net_reason": "Actual trading/platform/data costs unverified; reported fees are assumptions.",
+    }
+
+
+def run(data_path: Path, manifest_path: Path, output: Path):
+    if output.exists():
+        raise ValueError("refusing to overwrite a prior run")
+    manifest = json.loads(manifest_path.read_text())
+    if (manifest.get("study_kind") != KIND or manifest.get("data_sha256") != CSV_SHA
+            or manifest.get("early_dates") != EARLY or manifest.get("later_dates") != LATER
+            or manifest.get("actual_contract_verified") is not False
+            or manifest.get("actual_costs_verified") is not False
+            or manifest.get("live_execution_enabled") is not False):
+        raise ValueError("manifest differs from frozen exploratory protocol")
+    expected_files = {"simulator.py", "run_study.py", "EVALUATION.md",
+                      "../ifvg_intake_2026-10-19/V1_RULES.md"}
+    if set(manifest.get("source_sha256", {})) != expected_files:
+        raise ValueError("incomplete frozen source manifest")
+    for name, digest in manifest["source_sha256"].items():
+        if sha(HERE / name) != digest:
+            raise ValueError(f"source changed after freeze: {name}")
+    if data_path.stat().st_size > 10 * 1024 * 1024 or sha(data_path) != CSV_SHA:
+        raise ValueError("source data size/hash mismatch")
+    with data_path.open(newline="") as stream:
+        bars = parse_rows(csv.reader(stream))
+    if len(bars) != 16200:
+        raise ValueError("source row count differs from metadata")
+    result = {
+        "study_kind": KIND, "generated_at_utc": datetime.now(UTC).isoformat(),
+        "manifest_sha256": sha(manifest_path), "source_sha256": manifest["source_sha256"],
+        "data_sha256": CSV_SHA, "source_rows": len(bars), "actual_contract_verified": False,
+        "actual_costs_verified": False, "performance_claim_allowed": False,
+        "live_execution_enabled": False, "paper_trading_started": False,
+        "whole_downloaded_span_pnl_usd": None,
+        "whole_span_reason": "October1 lacks preceding Asian range; boundary outcome is unresolved.",
+        "evaluated_interior_dates": EARLY + LATER,
+        "hypothetical_contracts": 1, "hypothetical_tick_usd": "0.50",
+        "baseline": {"fee_per_side_cents": 100, "friction_ticks": 2}, "scenarios": [],
+        "limitations": ["Unknown root-series adjustment, roll map and individual contract identity",
+                        "11 days only, with five earlier and six later fixed chronological sessions",
+                        "Next-open and intrabar fills are OHLC approximations, not observed execution",
+                        "Hypothetical fees/slippage; actual business costs and operating net unknown",
+                        "Cash calendar checked; independent CME halt history unverified",
+                        "No raw sample redistribution; licensed actual-contract validation still needed"],
+    }
+    for cost in COST_SCENARIOS:
+        def one(day, scenario=cost):
+            return simulate_day(bars, day, scenario["fee_per_side_cents"], scenario["friction_ticks"], "REGULAR")
+        boundary = one("2026-10-01")
+        early = [one(day) for day in EARLY]
+        later = [one(day) for day in LATER]
+        result["scenarios"].append({
+            **cost, "boundary_diagnostic": boundary, "early_days": early, "later_days": later,
+            "early_summary": summarize(early), "later_summary": summarize(later),
+            "interior_summary": summarize(early + later),
+        })
+    # Creation is exclusive; a failure never replaces another run's evidence.
+    with output.open("x") as stream:
+        json.dump(result, stream, indent=2)
+        stream.write("\n")
+    return result
+
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--data", type=Path, required=True)
+    parser.add_argument("--manifest", type=Path, required=True)
+    parser.add_argument("--output", type=Path, required=True)
+    args = parser.parse_args()
+    report = run(args.data, args.manifest, args.output)
+    print(json.dumps({"study": KIND, "output": str(args.output), "scenarios": len(report["scenarios"])}))

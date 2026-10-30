@@ -1,0 +1,19 @@
+{
+  "partial_query": {
+    "coverage": "saturated; not used for financial conclusions",
+    "requested_limit": 500,
+    "returned_rows": 501,
+    "original_bytes": 903164,
+    "original_sha256": "f12c3e3502fba206a0c128e8faf3bb9a9b1864b7e67f860829759eea88ceea44",
+    "compressed_file": "TARGET_PARTIAL_LOGS.json.gz",
+    "compressed_sha256": "0c985d4cd60aa95262bb3fff44f7abcadf684b0b66c8ee741c4e20d83cd8e35a"
+  },
+  "sources": {
+    "TARGET_START.json": "0f174861e3f5272e1afe30694a8c6e18ab9283e0f060d7da33a16c44b222d476",
+    "MARKOUTS.json": "cbfa517105331520225d2594e082bcdf5090c7b263942c4d2e722ec95a20e787",
+    "MONEY_LOGS.json": "60413088eaeeba211e1a26dd4a67f68b55ee6c121634b26fcbe42c334e8dc0ee",
+    "STATUS.json": "5fb126fdd050de28feebecf08fb20c4356cc3e24f1ed2b1be2de22ddf538722b",
+    "START_TRACE.json": "a88628fc7cdefeb2d493f42c378429d6517589f9b70f109d9fbc2a14f8b85bf5",
+    "TARGET_ORDERS.json": "5b6b604a7e801a7c8162117ce5bd086fac1496cf7033fae875f4a30a2d0c5554"
+  }
+}

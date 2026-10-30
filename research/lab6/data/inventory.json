@@ -1,0 +1,47 @@
+{
+ "active_games": 6167,
+ "covered_games": 6234,
+ "covered_with_prints_24h": 6167,
+ "credits": {
+  "api_remaining": 4747883,
+  "api_used": 252117,
+  "api_used_first_seen": 10135,
+  "by_kind": {
+   "odds": {
+    "calls": 24209,
+    "credits": 241870
+   }
+  },
+  "calls": 24209,
+  "cap": 300000,
+  "spent": 241870
+ },
+ "failures_by_reason": {
+  "no Pinnacle event near the start time": 284,
+  "no Pinnacle events for the sport keys": 221,
+  "team names do not match": 184
+ },
+ "first_close": "2026-07-01",
+ "game_moneyline_markets": 20014,
+ "games": 16710,
+ "games_2way": 13227,
+ "games_3way": 3483,
+ "games_clean": 16412,
+ "lab4_sports_events": 20344,
+ "lab4_sports_markets": 42124,
+ "last_close": "2026-10-09",
+ "match_rate": 0.8879520025944544,
+ "matched_by_split": {
+  "test": 1043,
+  "train": 2161,
+  "val": 2272
+ },
+ "matched_clean": 5448,
+ "matched_dt_start_abs_median_min": 0.0,
+ "matched_games": 5476,
+ "pinnacle_events": 7224,
+ "pinnacle_rows": 216507,
+ "pinnacle_snapshots": 23543,
+ "utc": "2026-10-09T21:55:30+00:00",
+ "verdict_data": "OK"
+}

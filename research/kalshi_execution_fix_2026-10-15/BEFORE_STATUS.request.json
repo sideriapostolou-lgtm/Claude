@@ -1,0 +1,17 @@
+{
+  "request": {
+    "projectId": "75750847-85c0-41a3-a2a7-b7f2201a51e9",
+    "environmentId": "17f7b0e0-104c-4903-9484-0106748b3cdb",
+    "deploymentId": "c64e8199-4ce2-4234-ac53-63905e22231d",
+    "startDate": "2026-10-15T18:14:00Z",
+    "endDate": "2026-10-15T18:15:55Z",
+    "filter": "\"speeddesk_live_status\"",
+    "limit": 10
+  },
+  "before": {
+    "current_time": "2026-10-15 18:15:55 UTC"
+  },
+  "after": {
+    "current_time": "2026-10-15 18:16:00 UTC"
+  }
+}

@@ -1,0 +1,97 @@
+{
+  "recorded_at_utc": "2026-10-15T18:46:22.860660+00:00",
+  "display_time": "October15,2026,11:45AM Pacific/PDT",
+  "checked_head": "2f77520df426e874348ebecfeaf6e461639a5b41",
+  "current_connected_github_blob_shas": {
+    "AGENTS.md": "389266a51ccba3d21072371fd680bc8e4aff2af9",
+    "docs/COORDINATION.md": "ac295d2f87eeca6f596280a2abfb2dd5237a13a3",
+    "docs/WORKLOG.md": "65543b17c0ad4f3450f3078fb1925beb9c936908"
+  },
+  "source_read_clock": {
+    "before": {
+      "current_time": "2026-10-15 18:45:03 UTC"
+    },
+    "after": {
+      "current_time": "2026-10-15 18:45:03 UTC"
+    }
+  },
+  "pr47_completion": "Complete according to exact deployment/restart/follow-up evidence; not inferred from merge alone.",
+  "current_kalshi_work": "EXEC-DELAY-001 and KALSHI-ONLINE-001 remain open. PR63 bounded fix/restart verified, but upstream input-gap causes and zero-scored forecasts remain unresolved.",
+  "prioritization": "Existing explicit offline TJR priority persists. It does not supply missing authentic contract data or actual account costs, clear EXEC or authorize production action.",
+  "gate": "QUEUED/BLOCKED; unfinished",
+  "tjr_status": {
+    "historical_trades": 0,
+    "historical_pnl_usd": null,
+    "holdout_opened": false,
+    "paper_started": false,
+    "live_enabled": false,
+    "performance_claim_allowed": false
+  },
+  "saved_implementation": "Preserved TJR_BC23_MNQZ25_SWEEP_BOS_v0.1.1_calendar and TJR_DEVELOPMENT_RUNNER_v1, saved Page sources and previous65synthetic-check reproduction; no rerun or reconstruction.",
+  "current_pages": "Not read or change-checked in this blocked follow-up; no current complete-read or unchanged-version assertion.",
+  "actions": "Read current repo records and update only queue/worklog/evidence. No duplicate research, new Page/data probes, synthetic runs, historical/holdout replay, paper start, production inspection/mutation, orders, funding, deployments, variables, caps, stop or loss-budget reset.",
+  "automation": "Unchanged; do not mark done or disable before historical results and verified paper start exist. Routine unchanged notification suppressed.",
+  "next_step": "Obtain an existing authorized actual MNQ December2025 minute OHLCV development export for Sep19\u2013Oct31, with verified contract mapping/license/timezone/bar convention and intended-account fees/execution/platform/data costs. Run the saved frozen development validation preserving friction/losses/gaps; paper later needs current contract/feed/runtime and verified start evidence, live disabled.",
+  "independent_evidence": {
+    "task": "bounded read-only TJR queue evidence check",
+    "source": {
+      "repository": "sideriapostolou-lgtm/Claude",
+      "branch": "claude/nightcrawler-memecoin-bot-Gwnb1S",
+      "paths_and_blob_shas": [
+        {
+          "path": "research/kalshi_profitability_2026-10-14/PR47_DEPLOYMENT.md",
+          "blob_sha": "33c13fb39f85c958e322b8afbcaecfc052d6531b"
+        },
+        {
+          "path": "research/tjr_validation_2026-10-14/DATA_ACCESS.md",
+          "blob_sha": "78c2beb80e24a5f5e2305561ecf7f496abdd3e40"
+        },
+        {
+          "path": "research/tjr_validation_2026-10-14/HISTORICAL_STATUS.json",
+          "blob_sha": "e079d3c762ced81b2262a5261ab164f291e3d5ac"
+        }
+      ]
+    },
+    "pr47_deployment_restart_evidence": {
+      "merge_commit": "e8db34ee34d95411ac7f695f704ceb82ef8e32d5",
+      "merged_at_pdt": "2026-10-14 09:21:48",
+      "deployment_id": "f707494f-1b45-4610-9488-def9796b5923",
+      "deployment_status": "SUCCESS",
+      "deployment_at_pdt": "2026-10-14 09:24:05",
+      "deployment_at_utc": "2026-10-14T16:24:05.418Z",
+      "separate_restart_evidence": {
+        "healthz_utc": "2026-10-14T16:24:00.361Z",
+        "polymarket_live_startup_utc": "2026-10-14T16:23:59.109Z",
+        "kalshi_real_money_status_utc": "2026-10-14T16:24:11.297Z"
+      },
+      "evidence_interpretation": "The source document records a successful deployment and separate post-merge health/startup/runtime log observations; this is distinct from merge metadata alone."
+    },
+    "tjr_data_and_state": {
+      "data_access_document_checked": "2026-10-14 11:50\u201311:52 PDT",
+      "authentic_mnq_december_2025_development_bars_obtained": false,
+      "historical_returns_computed": false,
+      "required_contract_period": "MNQ December 2025; September 19 warmup and September 22\u2013October 31 development",
+      "data_blocker": "No verified actual-contract development data bundle. Public samples described in DATA_ACCESS.md cover other dates/contracts and do not establish MNQ December 2025 history.",
+      "actual_costs_verified": false,
+      "cost_blocker": "No verified intended-account fee schedule; fees, spread, slippage, platform, and data costs remain unresolved assumptions.",
+      "candidate_symbol_status": "MNQZ5 is only a candidate raw symbol and is explicitly unverified pending instrument-definition resolution.",
+      "historical_status_json": {
+        "status": "BLOCKED",
+        "reason": "VERIFIED_ACTUAL_MNQZ2025_DATA_BUNDLE_MISSING",
+        "historical_trades_tested": 0,
+        "historical_pnl_usd": null,
+        "holdout_opened": false,
+        "holdout_replayed": false,
+        "paper_trading_started": false,
+        "live_execution_enabled": false,
+        "performance_claim_allowed": false
+      }
+    },
+    "limitations": [
+      "No new Pages, probes, data downloads, synthetic runs, tests, production checks, or writes to repository/production were performed.",
+      "The verification covers the three named files at the exact branch/ref and their returned Git blob SHAs.",
+      "PR47 deployment evidence does not imply TJR historical validity or profitability.",
+      "TJR remains blocked pending authorized authentic data, contract mapping/license/timezone/bar convention, and verified costs."
+    ]
+  }
+}

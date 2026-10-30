@@ -1,0 +1,1525 @@
+{
+ "schema": 1,
+ "generated_by": "scripts/gen_playbook.py",
+ "source": "docs/EXPERIENCE_GROUNDED.md",
+ "source_sha256": "d01168a4c2d35463ef8779e06a1d9ec468e928e37ed44896c33061dabaa45fc0",
+ "statuses": {
+  "in_bot_contradicted": "in the bot, contradicted by our data",
+  "in_bot_unsupported": "in the bot, untested",
+  "fix_engineering": "a correctness fix, waiting for a reviewed change",
+  "candidate": "an idea, not tested yet",
+  "queued": "next in line for a test",
+  "testing": "being tested",
+  "validated": "tested and kept",
+  "rejected": "tested and dropped",
+  "blocked_data": "waiting for data",
+  "parked": "parked: low value for now"
+ },
+ "tracks": {
+  "E": "a correctness or universe fix, by a reviewed change",
+  "F": "a loss-avoiding filter, veto or exit",
+  "P": "an entry that could make money: the strict exam first",
+  "R": "risk and sizing: human-reviewed code only, never learnable",
+  "M": "how the team is measured"
+ },
+ "rules": [
+  {
+   "id": "G01",
+   "ids": [
+    "RA-02"
+   ],
+   "section": "Safety and universe",
+   "name": "Skip Mayhem coins",
+   "owner": "cocoon",
+   "owners": [
+    "cocoon"
+   ],
+   "status": "fix_engineering",
+   "track": "E",
+   "priority": "P0",
+   "grounded": [
+    "M"
+   ],
+   "rule_in_bot": "no",
+   "evidence": "No Mayhem check in the bot; 410 of 1,783 graduates (23%) were Mayhem coins no test covered",
+   "rule": "Skip Mayhem coins: CreateEvent or bonding-curve flag, supply > 1e9, or real SOL at completion < 80. Supply ≤ 1e9 does not prove non-Mayhem",
+   "where": "cocoon._check_mint_account gets supply from solana_rpc.mint_info and never reads it; sources/pumpfun.py returns mayhem_state",
+   "refs": "Lab census and lab2 universes; F3: 410 of 1,783 graduates (23%); F4 supply signature (25/25, 50/50)"
+  },
+  {
+   "id": "G02",
+   "ids": [
+    "RA-01"
+   ],
+   "section": "Safety and universe",
+   "name": "Hard fails on token authorities, extensions and pool lock",
+   "owner": "cocoon",
+   "owners": [
+    "cocoon"
+   ],
+   "status": "in_bot_contradicted",
+   "track": "F",
+   "priority": "P2",
+   "grounded": [
+    "P"
+   ],
+   "rule_in_bot": "partial",
+   "evidence": "Genuine graduates pass them every time (1,542 of 1,548; 100 of 100 by RPC): they carry no information",
+   "rule": "Provenance invariant: a coin of pump.fun origin must be Token-2022 with exactly {metadataPointer, tokenMetadata} and null mint, freeze and update authority, or it fails. Keep the blacklist for other launchpads. \"Is Token-2022\" carries no information",
+   "where": "cocoon._check_mint_account, DANGEROUS_EXTENSIONS, _apply_rug_report; the crawler accepts every Jupiter launchpad",
+   "refs": "F1: 1,542 of 1,548 graduates are Token-2022; F2: 100/100 by live RPC"
+  },
+  {
+   "id": "G03",
+   "ids": [
+    "RA-15"
+   ],
+   "section": "Safety and universe",
+   "name": "Measure and exit on the coin's main pool",
+   "owner": "broker",
+   "owners": [
+    "broker"
+   ],
+   "status": "parked",
+   "track": "E",
+   "priority": "P3",
+   "grounded": [
+    "P"
+   ],
+   "rule_in_bot": "partial",
+   "evidence": "13 of 1,783 graduates had a second pool; a second venue once cut the round trip to 0.40%",
+   "rule": "Measure liquidity, price and crash risk on the canonical pool only. Route exits through it unless another route is strictly better at the exact size",
+   "where": "cocoon._check_lp, _lp_locked_pct; broker/live.py",
+   "refs": "PLAN C1 engineering track (not started)"
+  },
+  {
+   "id": "G04",
+   "ids": [
+    "PE-11",
+    "RA-03",
+    "RA-04"
+   ],
+   "section": "Coin-class gates",
+   "name": "Class each graduate: factory, operator, completed, organic",
+   "owner": "crawler",
+   "owners": [
+    "crawler",
+    "strategy"
+   ],
+   "status": "testing",
+   "track": "F",
+   "priority": "P1",
+   "grounded": [
+    "P"
+   ],
+   "rule_in_bot": "partial",
+   "evidence": "Lab hypothesis G1 is registered; 450 census coins: 183 factory, 34 operator, 19 completed, 193 organic",
+   "rule": "G1 class at g + 140 s. OPERATOR (≥ 500 SOL of pool buys and ≤ 30 buyers in 2 min) goes to M1 only. FACTORY: instant (≤ 5 s) with top-5 share ≥ 0.85, or a ticker reused ≥ 3 times in 48 h. COMPLETED: completer or top-3 share ≥ 0.6, or < 15 buyers. \"Fast fill = strong\" holds only for many-wallet fills",
+   "where": "cocoon._add_name_warnings, normalize_ticker; crawler.launchpad_deployer",
+   "refs": "lab2 G1 PREREG with 3 variants (G-time, G-chain, G-chain+) and the G1.dip and G1.R0 hosts. Debug, counts only, 450 census coins: FACTORY 183, OPERATOR 34, COMPLETED 19, ORGANIC 193, UNRESOLVED 21. RA-03's ticker variant and PE-11's \"fast organic\" cell are not in G1; adding them is a counted amendment"
+  },
+  {
+   "id": "G05",
+   "ids": [
+    "RA-10"
+   ],
+   "section": "Coin-class gates",
+   "name": "Wait until a repeat completer has sold out",
+   "owner": "strategy",
+   "owners": [
+    "strategy"
+   ],
+   "status": "blocked_data",
+   "track": "P",
+   "priority": "P2",
+   "grounded": [
+    "M"
+   ],
+   "rule_in_bot": "no",
+   "evidence": "Needs wallet trade data that is not downloaded yet; 24.8% of slower graduates had a completer",
+   "rule": "On a repeat-completer coin (completer bought ≥ 60% of the last 30 SOL, or has ≥ 3 earlier completions in a past-only registry), enter only after its position is ≤ 10% of its peak",
+   "where": "—",
+   "refs": "lab2 S1 entry: a COMPLETED coin needs completer_pos_frac ≤ 0.10. There is no repeat-completer registry"
+  },
+  {
+   "id": "G06",
+   "ids": [
+    "PE-05",
+    "RA-12"
+   ],
+   "section": "Coin-class gates",
+   "name": "Serial-launcher check by creator address",
+   "owner": "cocoon",
+   "owners": [
+    "cocoon"
+   ],
+   "status": "in_bot_contradicted",
+   "track": "F",
+   "priority": "P2",
+   "grounded": [
+    "P",
+    "C"
+   ],
+   "rule_in_bot": "partial",
+   "evidence": "Only 7 of 1,145 creators launched twice; the launch counter counts platforms, not people",
+   "rule": "Judge a creator by its funder cluster's earlier launches (all CreateEvents, 1-2 hops, exchanges excluded), not by its address",
+   "where": "cocoon._check_jupiter_audit, _apply_rug_report; crawler.prefilter, KNOWN_LAUNCHPAD_DEPLOYERS",
+   "refs": "lab2 G1 serial (by address, 24 h) in G-chain+"
+  },
+  {
+   "id": "G07",
+   "ids": [
+    "PE-04"
+   ],
+   "section": "Coin-class gates",
+   "name": "Holder concentration caps as a rug shield",
+   "owner": "cocoon",
+   "owners": [
+    "cocoon"
+   ],
+   "status": "in_bot_unsupported",
+   "track": "F",
+   "priority": "P2",
+   "grounded": [
+    "AI",
+    "C"
+   ],
+   "rule_in_bot": "yes",
+   "evidence": "Airdrops spread 0.036% over 2,200 wallets and farm rugs came from 9-13% holders (9 rugs)",
+   "rule": "Top-10 and single-holder caps stay hard fails only if they beat \"no cap\" out of sample; otherwise they become logged features",
+   "where": "cocoon._check_concentration, _check_creator, _check_insiders; COCOON_* settings",
+   "refs": "none"
+  },
+  {
+   "id": "G08",
+   "ids": [
+    "PE-17"
+   ],
+   "section": "Coin-class gates",
+   "name": "Grade every rug-filter and radar veto",
+   "owner": "coach",
+   "owners": [
+    "coach"
+   ],
+   "status": "queued",
+   "track": "M",
+   "priority": "P1",
+   "grounded": [
+    "P"
+   ],
+   "rule_in_bot": "partial",
+   "evidence": "Rejections are taped with rule ids, but no veto has been graded against its shadow outcome",
+   "rule": "Log every Cocoon and Radar veto with a shadow outcome. Grade it weekly: precision against the base loss rate, missed winners, and paired improvement with an e-process. Demote it after ≥ 200 vetoes if it shows no value; raise a drift alarm",
+   "where": "cocoon._fail; engine receipts; learn/ tape",
+   "refs": "The LEARNING shadow book grades strategies, not vetoes"
+  },
+  {
+   "id": "G09",
+   "ids": [
+    "PE-13"
+   ],
+   "section": "Coin-class gates",
+   "name": "Jev weighs socials and paid promotion",
+   "owner": "judge",
+   "owners": [
+    "judge"
+   ],
+   "status": "in_bot_unsupported",
+   "track": "F",
+   "priority": "P1",
+   "grounded": [
+    "M"
+   ],
+   "rule_in_bot": "no",
+   "evidence": "Jev's prompt asks it to; untested, and they count only if a test shows +5 points over chance",
+   "rule": "Socials, \"DEX paid\", boosts and profiles are not entry evidence unless a test shows ≥ +5 pp. Test a recent boost as a veto",
+   "where": "judge.STATIC_SYSTEM_PROMPT, build_features; cocoon._add_candidate_warnings; crawler._remember_promotions",
+   "refs": "PLAN P1 (DexScreener orders, an 18-min pull, not run). G1 NEWS and G-full are not tested (no IPFS metadata)"
+  },
+  {
+   "id": "G10",
+   "ids": [
+    "PE-14"
+   ],
+   "section": "Coin-class gates",
+   "name": "Veto coins held by wallets with a rug habit",
+   "owner": "cocoon",
+   "owners": [
+    "cocoon"
+   ],
+   "status": "parked",
+   "track": "F",
+   "priority": "P3",
+   "grounded": [
+    "M"
+   ],
+   "rule_in_bot": "no",
+   "evidence": "Needs wallet position data: 0 coins downloaded so far",
+   "rule": "Veto when wallets with a learned rug habit (≥ 10 prior coins, ≥ 80% dead) hold or buy a large share",
+   "where": "—",
+   "refs": "PLAN W1 stage 1 (does wallet skill persist?) is the go/no-go for every registry rule"
+  },
+  {
+   "id": "G11",
+   "ids": [
+    "PE-09"
+   ],
+   "section": "Coin-class gates",
+   "name": "Never buy because a famous wallet bought",
+   "owner": "strategy",
+   "owners": [
+    "strategy"
+   ],
+   "status": "parked",
+   "track": "F",
+   "priority": "P3",
+   "grounded": [
+    "P"
+   ],
+   "rule_in_bot": "partial",
+   "evidence": "No such trigger exists in the bot; no dated wallet lists exist to test a crowding veto",
+   "rule": "Never enter because a KOL or \"smart\" wallet bought. ≥ 3 tracked wallets buying within 5 min is a crowding veto",
+   "where": "—",
+   "refs": "PLAN W1 stage 1. PLAN §6.6 rule 6 bans undated KOL lists and PnL leaderboards"
+  },
+  {
+   "id": "G12",
+   "ids": [
+    "PE-10",
+    "RA-09"
+   ],
+   "section": "Entry and flow",
+   "name": "Measure coin age from graduation, not creation",
+   "owner": "strategy",
+   "owners": [
+    "strategy"
+   ],
+   "status": "fix_engineering",
+   "track": "E",
+   "priority": "P0",
+   "grounded": [
+    "P"
+   ],
+   "rule_in_bot": "partial",
+   "evidence": "A slow graduate can be bought at graduation; random entries at 0-30 min lost 10.0% vs 6.9% at 2-6 h",
+   "rule": "The earliest entry is the delay after which waiting no longer improves net returns. Never enter before the BOOST bid ends (about g + 6 min). Lab rule: no entries in the first 30 min after graduation",
+   "where": "crawler.prefilter, crawler._age_min, engine._universe_problem, sources/jupiter.token_to_candidate",
+   "refs": "RESULTS \"when not to trade\" (no entries in the first 30 min). PLAN §6.7 diagnostic 3 (the BOOST cliff) has not run. S1 checkpoints start at g + 6"
+  },
+  {
+   "id": "G13",
+   "ids": [
+    "PE-01",
+    "PE-03",
+    "RA-13"
+   ],
+   "section": "Entry and flow",
+   "name": "Enter once insiders' cheap supply is spent (S1)",
+   "owner": "strategy",
+   "owners": [
+    "strategy"
+   ],
+   "status": "blocked_data",
+   "track": "P",
+   "priority": "P2",
+   "grounded": [
+    "M",
+    "C"
+   ],
+   "rule_in_bot": "no",
+   "evidence": "Lab hypothesis S1 is written but waits for wallet trade data; it ran on synthetic data only",
+   "rule": "Enter only when the cheap insider inventory (creator, bundle, snipers, completer, transferees) is mostly spent and organic net flow is positive: this is S1. The launch bundle share is a logged feature, not a gate",
+   "where": "cocoon._check_insiders",
+   "refs": "lab2 S1 PREREG. Its dose-response gate is exactly the PE-03 and RA-13 test, with 8 variants. Its debug ran on synthetic B1 only. RA-13's comparison (bundle_share quintiles on the same coins) is not in S1: add it as a counted descriptive"
+  },
+  {
+   "id": "G14",
+   "ids": [
+    "PE-02",
+    "RA-07"
+   ],
+   "section": "Entry and flow",
+   "name": "Refuse coins with free airdropped supply",
+   "owner": "cocoon",
+   "owners": [
+    "cocoon",
+    "radar"
+   ],
+   "status": "testing",
+   "track": "F",
+   "priority": "P1",
+   "grounded": [
+    "M"
+   ],
+   "rule_in_bot": "no",
+   "evidence": "Tested inside lab hypothesis G1 as a sell burst; one factory dump came 16 min after creation",
+   "rule": "Zero-cost supply. Refuse while transfer-in holdings or orphan sells are material. Treat identical-balance holders (≥ 10 of the top 20, or ≥ 100 identical transfers from one authority) as one holder, and the coin as FACTORY",
+   "where": "—",
+   "refs": "lab2 G1 airdrop_seen (≥ 1,000 sell trades within ≤ 2 consecutive minutes, ≥ 3× sells to buys) in G-chain+, the bar-level proxy. S1 entry requires orphan_share10 < 0.15. Timing: the Coinbase dump came at creation + 16 min, so for instant coins it is already over by the bot's entry"
+  },
+  {
+   "id": "G15",
+   "ids": [
+    "PE-06",
+    "RA-05"
+   ],
+   "section": "Entry and flow",
+   "name": "Buy confirmation on raw volume and buy/sell counts",
+   "owner": "radar",
+   "owners": [
+    "radar",
+    "strategy"
+   ],
+   "status": "in_bot_unsupported",
+   "track": "F",
+   "priority": "P1",
+   "grounded": [
+    "M"
+   ],
+   "rule_in_bot": "no",
+   "evidence": "Dust bots paint both (dust share 0.80 on instant clones vs 0.09 on slow coins); the rule is untested",
+   "rule": "Painted volume is not demand. If more than half of the last 10 minutes' trades are dust at more than 300 trades/min, or wash wallets dominate, refuse entries triggered by volume or momentum",
+   "where": "strategy.entry_signal (volume_up, ratio_m5); MIN_BUY_SELL_RATIO",
+   "refs": "F7: dust share 0.80 on instant clones against 0.09 on slow coins; 184 of 324 instant clones were over the threshold against 0 of 304 slow coins. The F4 \"winner\" learned paint (A3). Partly covered by G1 FACTORY"
+  },
+  {
+   "id": "G16",
+   "ids": [
+    "PE-07",
+    "RA-14"
+   ],
+   "section": "Entry and flow",
+   "name": "Count real buyers, not raw trades",
+   "owner": "crawler",
+   "owners": [
+    "crawler",
+    "strategy"
+   ],
+   "status": "queued",
+   "track": "F",
+   "priority": "P1",
+   "grounded": [
+    "M",
+    "C"
+   ],
+   "rule_in_bot": "no",
+   "evidence": "Factories run a median 341 trades a minute, so raw counts mislead; waits for lab data",
+   "rule": "Measure demand as distinct organic net buyers paying ≥ 0.01 SOL. Raw holders, trades, volume or trending rank may nominate a coin, never confirm it",
+   "where": "strategy.entry_signal; cocoon._add_candidate_warnings; crawler.prefilter",
+   "refs": "lab2 S1 org_buyers10 and org_net10 (B1)"
+  },
+  {
+   "id": "G17",
+   "ids": [
+    "PE-12"
+   ],
+   "section": "Entry and flow",
+   "name": "No entry right after a big creator sale",
+   "owner": "radar",
+   "owners": [
+    "radar"
+   ],
+   "status": "parked",
+   "track": "F",
+   "priority": "P3",
+   "grounded": [
+    "P"
+   ],
+   "rule_in_bot": "partial",
+   "evidence": "Rare in the bot's window: 0 of 9 farm rugs came from the creator",
+   "rule": "(a) No entry within 10 min of a creator or creator-funded sell of ≥ 20% of the creator's peak. (b) \"Dev fully sold\" is not a buy signal unless it tests positive",
+   "where": "radar.Radar.evaluate; engine entry path",
+   "refs": "S1 entry creator_sold10 < 0.20, and its exit on a creator sell ≥ 20% of peak"
+  },
+  {
+   "id": "G18",
+   "ids": [
+    "PE-08"
+   ],
+   "section": "Entry and flow",
+   "name": "Refuse coins bought up by brand-new wallets",
+   "owner": "cocoon",
+   "owners": [
+    "cocoon"
+   ],
+   "status": "parked",
+   "track": "F",
+   "priority": "P3",
+   "grounded": [
+    "M"
+   ],
+   "rule_in_bot": "no",
+   "evidence": "Needs per-wallet history queries that are not written yet",
+   "rule": "Refuse when wallets younger than 24 h, or wallets sharing one funder, carry a large share of recent buying or of the top holdings",
+   "where": "cocoon._check_insiders",
+   "refs": "none"
+  },
+  {
+   "id": "G19",
+   "ids": [
+    "PE-16",
+    "EX-15"
+   ],
+   "section": "Entry and flow",
+   "name": "Know our speed from decision to fill",
+   "owner": "broker",
+   "owners": [
+    "broker",
+    "coach"
+   ],
+   "status": "queued",
+   "track": "M",
+   "priority": "P1",
+   "grounded": [
+    "P",
+    "M"
+   ],
+   "rule_in_bot": "partial",
+   "evidence": "Never measured; lab replays 1-5 s apart were identical, so speed is probably not the weak point",
+   "rule": "Know our speed. Measure decision-to-fill latency (p50 and p90) and each rule's value of speed Δ(D). Reject edges that need faster fills. Build a websocket feed only if Δ(2 s) ≥ +2 pp",
+   "where": "Engine receipts; learn/ lag stream; POSITION_INTERVAL_S 10, WATCH_INTERVAL_S 60",
+   "refs": "PLAN X1 output 2 and its decision rule. RESULTS A3 and A5: 1-5 s replays were identical on farm coins, entries 1-2 min later were no worse; \"latency is not the weak point\""
+  },
+  {
+   "id": "G20",
+   "ids": [
+    "RA-11",
+    "RA-08",
+    "EX-10"
+   ],
+   "section": "Entry and flow",
+   "name": "Creator-watch as a rug alarm",
+   "owner": "radar",
+   "owners": [
+    "radar"
+   ],
+   "status": "in_bot_unsupported",
+   "track": "F",
+   "priority": "P2",
+   "grounded": [
+    "P",
+    "M",
+    "C"
+   ],
+   "rule_in_bot": "partial",
+   "evidence": "0 of 9 rugs came from the creator (too few to grade); a dump of 2,200 small sells is invisible to it",
+   "rule": "Label a big sell by where its tokens came from (bundle, sniper, completer, transferee or orphan seller, early top-5 pool buyer), not by the creator address. Exit at once on a distribution wave: orphan share ≥ 25% of the last 60-120 s; ≥ 20 near-identical sellers within a few slots; or SOPR3 > 2 with insider share > 0.5. While SOPR3 < 0.8 (capitulation), do not stop out on price unless the catastrophe level is hit",
+   "where": "radar.Radar.evaluate, _role; RADAR_* settings",
+   "refs": "PLAN V1, folded into the S1 exits (orphan_share10 > 0.25). D1's DIST/CAP classes (module in progress, task #20)"
+  },
+  {
+   "id": "G21",
+   "ids": [
+    "EX-13"
+   ],
+   "section": "Entry and flow",
+   "name": "A danger exit must come before the crash",
+   "owner": "radar",
+   "owners": [
+    "radar",
+    "coach"
+   ],
+   "status": "blocked_data",
+   "track": "F",
+   "priority": "P2",
+   "grounded": [
+    "M"
+   ],
+   "rule_in_bot": "no",
+   "evidence": "Every radar flag exits today; farm rugs were one swap and a factory dump was over in 26 s",
+   "rule": "A danger signal counts as an exit only if it leads the crash by more than our exit latency on ≥ 50% of crashes and its paired effect is positive. Otherwise demote it to an entry veto and a post-mortem label. Exit signals that are kept must run at the 10 s price cadence",
+   "where": "strategy.exit_signal; engine._manage_one; RADAR_INTERVAL_S 180, RADAR_CACHE_S 60",
+   "refs": "RESULTS A3: farm rugs are one swap, which no signal can lead. AUDIT: the factory dump was over in 26 s"
+  },
+  {
+   "id": "G22",
+   "ids": [
+    "EX-01"
+   ],
+   "section": "Exits and fills",
+   "name": "Stop-loss fills at the stop price in the simulators",
+   "owner": "coach",
+   "owners": [
+    "coach"
+   ],
+   "status": "in_bot_contradicted",
+   "track": "E",
+   "priority": "P0",
+   "grounded": [
+    "P"
+   ],
+   "rule_in_bot": "partial",
+   "evidence": "Rug stops booked at -51% to -59% really filled at -84% to -97% (36 swap windows, 9 rugs)",
+   "rule": "A stop is a market order. Every simulator fills stops, trails and time exits at the first trade at or after trigger + latency (B1), or at min(open, low) of the bar after the trigger bar. Never fill at the level. Log the gap slippage of every exit",
+   "where": "backtest.py CostModel.stop_fill; learn/replay.py exit fill; research/lab2/common.py FillConfig",
+   "refs": "RESULTS A3: rug stops booked at -51% to -59% were really -84% to -97%; F4 on TEST went from -5.4% to -17.7% per trade; rug-aware finalists lost -17% to -32%. X1 output 1"
+  },
+  {
+   "id": "G23",
+   "ids": [
+    "R01",
+    "RA-06",
+    "PE-15"
+   ],
+   "section": "Exits and fills",
+   "name": "Size for the -90% gap, not the -18% stop",
+   "owner": "risk",
+   "owners": [
+    "risk"
+   ],
+   "status": "fix_engineering",
+   "track": "R",
+   "priority": "P0",
+   "grounded": [
+    "M",
+    "P"
+   ],
+   "rule_in_bot": "partial",
+   "evidence": "At 20% sizing one rug costs about 19% of the money, not the 3.6% the stop implies",
+   "rule": "Per-trade risk = ticket × L_max, where L_max = max(0.95, p95 single-swap rug loss, crash capacity 1 − (y / (y + H))²). H is the largest non-pool holder, with clusters merged. Skip the coin if its crash capacity is ≥ 0.75; refuse thin real pool SOL",
+   "where": "risk.size_position_usd, RiskManager.size_position; POSITION_PCT, MIN_LIQUIDITY_USD; cocoon._check_concentration",
+   "refs": "RESULTS A3: 9 of 9 rugs were one sell of 9-13% of supply, falling 86-93% in one swap. dist_kelly: P(r ≤ −80%) = 2.2% in the worst-fill null"
+  },
+  {
+   "id": "G24",
+   "ids": [
+    "EX-02",
+    "EX-09"
+   ],
+   "section": "Exits and fills",
+   "name": "Test a wide crash stop plus a time stop",
+   "owner": "strategy",
+   "owners": [
+    "strategy"
+   ],
+   "status": "queued",
+   "track": "F",
+   "priority": "P1",
+   "grounded": [
+    "M",
+    "AI"
+   ],
+   "rule_in_bot": "partial",
+   "evidence": "7-8 of 10 test trades of the dip strategies ended at the -18% stop",
+   "rule": "Test a wide catastrophe stop (-35% to -50%) plus a time stop against today's -18%. Test breakeven stops but do not adopt them (prior: rejection)",
+   "where": "STOP_LOSS_PCT 0.18; strategy.exit_signal",
+   "refs": "PLAN X1 exit grid (-15%, -25%, catastrophe -50% with 60 min) and E1; lab2 G1.R0 uses X1 exit 6. F1 lost 7-8 of its 10 TEST trades to stops"
+  },
+  {
+   "id": "G25",
+   "ids": [
+    "EX-03"
+   ],
+   "section": "Exits and fills",
+   "name": "Confirm ordinary stops on a closed candle",
+   "owner": "strategy",
+   "owners": [
+    "strategy"
+   ],
+   "status": "blocked_data",
+   "track": "F",
+   "priority": "P2",
+   "grounded": [
+    "M"
+   ],
+   "rule_in_bot": "no",
+   "evidence": "Stops fire on a touch of the 10 s price; testing it needs trade-by-trade data",
+   "rule": "Confirm ordinary stops on a closed bar or two polls; fire a catastrophe stop (about -40%) on touch. Only if ≥ 30% of wick breaches recover",
+   "where": "strategy.exit_signal; engine._manage_one",
+   "refs": "PLAN X1 output 4 (stop regret)"
+  },
+  {
+   "id": "G26",
+   "ids": [
+    "EX-04"
+   ],
+   "section": "Exits and fills",
+   "name": "Set the longest hold from the crash risk by age",
+   "owner": "strategy",
+   "owners": [
+    "strategy"
+   ],
+   "status": "queued",
+   "track": "F",
+   "priority": "P1",
+   "grounded": [
+    "M"
+   ],
+   "rule_in_bot": "no",
+   "evidence": "Instant coins were stopped out 43% of the time at 0-30 min, 8% at 30-120 min, 1.2% at 2-6 h",
+   "rule": "Set each class's maximum hold from the crash hazard h(age, class), so that the cumulative crash probability over the hold stays ≤ 10%. Never hold through a known clock window",
+   "where": "MAX_HOLD_MIN 120",
+   "refs": "Census: the stop-out rate for instant coins falls from 43% (0-30 min) to 8% (30-120 min) to 1.2% (2-6 h). The farm's crashes cluster at g + 15-30 min"
+  },
+  {
+   "id": "G27",
+   "ids": [
+    "EX-05"
+   ],
+   "section": "Exits and fills",
+   "name": "Exit stale trades that never moved",
+   "owner": "strategy",
+   "owners": [
+    "strategy"
+   ],
+   "status": "candidate",
+   "track": "F",
+   "priority": "P2",
+   "grounded": [
+    "M"
+   ],
+   "rule_in_bot": "no",
+   "evidence": "7,631 of 9,434 random trades ended at the time limit, median -5.1%: about the trading costs",
+   "rule": "Stale-trade exit: if the best gain (MFE) is below Y after T minutes, exit",
+   "where": "—",
+   "refs": "Census: 7,631 of 9,434 random trades ended at the time stop with a median of -5.1%, about the round-trip cost. An earlier exit cannot refund costs already paid"
+  },
+  {
+   "id": "G28",
+   "ids": [
+    "EX-06"
+   ],
+   "section": "Exits and fills",
+   "name": "A fixed target instead of a trailing stop",
+   "owner": "strategy",
+   "owners": [
+    "strategy"
+   ],
+   "status": "queued",
+   "track": "F",
+   "priority": "P1",
+   "grounded": [
+    "P"
+   ],
+   "rule_in_bot": "partial",
+   "evidence": "On real swaps every +40% target filled at about +26%",
+   "rule": "Prefer a fixed target set from the host's TRAIN distribution of best gains. Keep a trailing stop only if it beats that target out of sample. Also test measuring the peak from closes instead of wick highs",
+   "where": "strategy.exit_signal, exit_levels; TAKE_PROFIT_PCT, TRAIL_PCT",
+   "refs": "RESULTS A3: every take-profit filled at +26% on real swaps. X1 grid"
+  },
+  {
+   "id": "G29",
+   "ids": [
+    "EX-07"
+   ],
+   "section": "Exits and fills",
+   "name": "Sell into bursts of real buying",
+   "owner": "strategy",
+   "owners": [
+    "strategy"
+   ],
+   "status": "candidate",
+   "track": "F",
+   "priority": "P2",
+   "grounded": [
+    "M"
+   ],
+   "rule_in_bot": "no",
+   "evidence": "Exploratory: nothing measured yet",
+   "rule": "While in profit, sell into bursts of organic buying",
+   "where": "—",
+   "refs": "none"
+  },
+  {
+   "id": "G30",
+   "ids": [
+    "EX-08"
+   ],
+   "section": "Exits and fills",
+   "name": "Sell half at +40%",
+   "owner": "strategy",
+   "owners": [
+    "strategy"
+   ],
+   "status": "in_bot_unsupported",
+   "track": "F",
+   "priority": "P2",
+   "grounded": [
+    "AI"
+   ],
+   "rule_in_bot": "yes",
+   "evidence": "In the bot but never tested against a full exit or no partial; worth about 0.5 points either way",
+   "rule": "Keep \"sell half at +X\" only if it beats both a full exit and no partial out of sample. Never leave a remainder under $5",
+   "where": "PARTIAL_TP_FRACTION 0.5; engine._exit",
+   "refs": "none"
+  },
+  {
+   "id": "G31",
+   "ids": [
+    "EX-11"
+   ],
+   "section": "Exits and fills",
+   "name": "Exit when real buying collapses",
+   "owner": "strategy",
+   "owners": [
+    "strategy"
+   ],
+   "status": "candidate",
+   "track": "F",
+   "priority": "P2",
+   "grounded": [
+    "M"
+   ],
+   "rule_in_bot": "no",
+   "evidence": "Part of lab hypothesis S1's exits; waits for lab data",
+   "rule": "Exit when organic buying collapses: organic buy SOL over the last 5 closed minutes < 30% of the 5 minutes before entry, and distinct buyers < 50%",
+   "where": "—",
+   "refs": "S1 exit org_net5 ≤ -1 SOL"
+  },
+  {
+   "id": "G32",
+   "ids": [
+    "EX-12"
+   ],
+   "section": "Exits and fills",
+   "name": "Exit when the dip's low breaks",
+   "owner": "strategy",
+   "owners": [
+    "strategy"
+   ],
+   "status": "candidate",
+   "track": "F",
+   "priority": "P2",
+   "grounded": [
+    "M"
+   ],
+   "rule_in_bot": "no",
+   "evidence": "The dip's low is computed at entry and never used at exit",
+   "rule": "Thesis stop: exit when the reason for the trade flips. For dip-rebound, that is the rebound low L taken out by a closed bar",
+   "where": "strategy.entry_signal metrics",
+   "refs": "The PLAN and S1 PREREG exit specs for S1, D1 and M1"
+  },
+  {
+   "id": "G33",
+   "ids": [
+    "EX-14"
+   ],
+   "section": "Exits and fills",
+   "name": "Get out when the price feed goes blind",
+   "owner": "broker",
+   "owners": [
+    "broker"
+   ],
+   "status": "fix_engineering",
+   "track": "E",
+   "priority": "P0",
+   "grounded": [
+    "M"
+   ],
+   "rule_in_bot": "no",
+   "evidence": "A missing price leaves only the 2-hour time limit, and the blind state coincides with rugs",
+   "rule": "Blind means out. If there is no price, or the price is older than 30 s, use an Ultra sell quote for the whole position as the price. Two failed quotes force an exit, retried every interval",
+   "where": "engine._prices, _manage_one",
+   "refs": "Jupiter Price v3 drops tokens it flags for \"market health\", which is the state just after a rug"
+  },
+  {
+   "id": "G34",
+   "ids": [
+    "EX-16"
+   ],
+   "section": "Exits and fills",
+   "name": "A server-side -50% stop",
+   "owner": "risk",
+   "owners": [
+    "risk"
+   ],
+   "status": "parked",
+   "track": "R",
+   "priority": "P3",
+   "grounded": [
+    "M"
+   ],
+   "rule_in_bot": "no",
+   "evidence": "Live only; the share of unwatched gaps is not measured yet",
+   "rule": "Add a server-side -50% stop (Jupiter Trigger) only if the losses in unmanaged gaps exceed its fee plus the cancel-and-withdraw latency it adds to every exit",
+   "where": "Engine stage budget; unresolved mints",
+   "refs": "PLAN X1 output 5"
+  },
+  {
+   "id": "G35",
+   "ids": [
+    "EX-20"
+   ],
+   "section": "Exits and fills",
+   "name": "Sell in one swap; alert on a bad route",
+   "owner": "broker",
+   "owners": [
+    "broker"
+   ],
+   "status": "parked",
+   "track": "E",
+   "priority": "P3",
+   "grounded": [
+    "AI"
+   ],
+   "rule_in_bot": "yes",
+   "evidence": "Exits are one swap already; the re-quote and the alert are missing",
+   "rule": "At $20, sell in one swap; never slice, never wait for a bounce. A quote above 3% impact means the wrong route or pool: re-quote on the canonical pool and alert",
+   "where": "engine._exit, EXIT_MAX_IMPACT_PCT",
+   "refs": "impact_bound.py: 0.18% at X = 102.6 SOL, 1.03% at 17.6"
+  },
+  {
+   "id": "G36",
+   "ids": [
+    "EX-19"
+   ],
+   "section": "Exits and fills",
+   "name": "Grade exits against random exit times",
+   "owner": "coach",
+   "owners": [
+    "coach"
+   ],
+   "status": "queued",
+   "track": "M",
+   "priority": "P1",
+   "grounded": [
+    "M"
+   ],
+   "rule_in_bot": "no",
+   "evidence": "No placebo exits yet; random entries with our exits lost 6.4% a trade",
+   "rule": "Exit skill = rule minus placebo exits drawn from the rule's own holding-time distribution (same entries, fills and costs). No exit rule is adopted with skill ≤ 0. Report the bot's current exits first",
+   "where": "research/lab2/common.backtest; learn/families/placebo.py",
+   "refs": "RESULTS random-entry reference: -6.4% per trade"
+  },
+  {
+   "id": "G37",
+   "ids": [
+    "EX-17",
+    "R11",
+    "PE-18"
+   ],
+   "section": "Exits and fills",
+   "name": "Stand down when the meme market breaks",
+   "owner": "risk",
+   "owners": [
+    "risk",
+    "radar"
+   ],
+   "status": "parked",
+   "track": "R",
+   "priority": "P3",
+   "grounded": [
+    "M"
+   ],
+   "rule_in_bot": "no",
+   "evidence": "Results by hour swing from -59% to +26% with no pattern that holds across days",
+   "rule": "Regime gate (PLAN R1). Halve or stand down when the trailing 6-h single-swap rug rate is in its top 20%. Cut everything when the meme market breaks (median 15-min return ≤ -20% with > 50% of coins down, or SOL -3% in 15 min). Trade on launch heat, not the clock",
+   "where": "—",
+   "refs": "PLAN R1 (next wave, score 20). Hour clustering was inconclusive (3 of 8 seeds at p < 0.01); the hourly ICC is about 0"
+  },
+  {
+   "id": "G38",
+   "ids": [
+    "R05",
+    "R06",
+    "R09"
+   ],
+   "section": "Risk and sizing",
+   "name": "20% sizing with a daily limit that is not a bound",
+   "owner": "risk",
+   "owners": [
+    "risk"
+   ],
+   "status": "in_bot_contradicted",
+   "track": "R",
+   "priority": "P1",
+   "grounded": [
+    "P",
+    "M"
+   ],
+   "rule_in_bot": "partial",
+   "evidence": "In simulation the 1-in-10 worst day loses 41-43% against a nominal 20% limit",
+   "rule": "Budget limits on Σ open ticket × L_max: a daily budget (realized + marked + open × L_max + new × L_max ≤ 15%), a drawdown floor (exposure ≤ the cushion above (1 − D) × peak), and a total-at-risk cap instead of 3 positions",
+   "where": "risk.can_open, _daily_loss_rule, _drawdown_rule, _positions_rules",
+   "refs": "policy_mc: the 90th-percentile worst day is 41-43% against a nominal 20%, and 13-14% with the budget rule. The cliff can end at about 78% drawdown"
+  },
+  {
+   "id": "G39",
+   "ids": [
+    "R02",
+    "R03",
+    "R16",
+    "R17"
+   ],
+   "section": "Risk and sizing",
+   "name": "Go live after 20-30 good paper trades",
+   "owner": "risk",
+   "owners": [
+    "risk",
+    "coach"
+   ],
+   "status": "in_bot_contradicted",
+   "track": "R",
+   "priority": "P0",
+   "grounded": [
+    "P",
+    "M",
+    "C"
+   ],
+   "rule_in_bot": "partial",
+   "evidence": "A strategy with no real advantage passes that test about half the time at 30 trades",
+   "rule": "Real stake = 0 until an anytime-valid lower bound on mean net return is above 0 (the stage-2 gate: ≥ 150 paper trades over ≥ 14 days). Then at most ¼ Kelly at that bound, and at most the risk-constrained Kelly fraction on a rug-aware distribution. No funding when the trades needed to prove the edge (n*) exceed the trades available before it decays. Never go live on \"20-30 positive trades\"",
+   "where": "readiness.py; learn/gate.py; docs/GOING_LIVE.md §0",
+   "refs": "LEARNING §5.4 and §5.10; sim2 and sim3; rck.py"
+  },
+  {
+   "id": "G40",
+   "ids": [
+    "R04"
+   ],
+   "section": "Risk and sizing",
+   "name": "Get the token-account deposit back",
+   "owner": "broker",
+   "owners": [
+    "broker"
+   ],
+   "status": "fix_engineering",
+   "track": "E",
+   "priority": "P1",
+   "grounded": [
+    "M"
+   ],
+   "rule_in_bot": "no",
+   "evidence": "About 1.1 points of every $20 round trip go to a deposit that is never refunded",
+   "rule": "Reclaim token-account rent (close the account in the sell, or batch-close empty accounts) before moving to smaller tickets. Minimum ticket s_min = 4F/μ",
+   "where": "broker/paper.py KV_RENT; broker/live.py",
+   "refs": "PLAN C1 (\"close the token account in the sell transaction regardless\"), not started"
+  },
+  {
+   "id": "G41",
+   "ids": [
+    "R08"
+   ],
+   "section": "Risk and sizing",
+   "name": "One open trade per operator family",
+   "owner": "risk",
+   "owners": [
+    "risk"
+   ],
+   "status": "queued",
+   "track": "R",
+   "priority": "P1",
+   "grounded": [
+    "P"
+   ],
+   "rule_in_bot": "partial",
+   "evidence": "All 12 test trades of one strategy came from the same farm",
+   "rule": "At most one open position per operator cluster (creator, funder, factory or airdrop family, completer, or normalized ticker family), and its stake counts once",
+   "where": "risk._positions_rules, _cooldown_rule; the cocoon's ticker memory (normalize_ticker)",
+   "refs": "RESULTS §2.6: all 12 F4 TEST trades were one farm. cocrash.py: 1.23× for factory pairs against 0.75× for organic pairs (one day, weak)"
+  },
+  {
+   "id": "G42",
+   "ids": [
+    "R10"
+   ],
+   "section": "Risk and sizing",
+   "name": "Cap the entry price impact near 0.75%",
+   "owner": "broker",
+   "owners": [
+    "broker"
+   ],
+   "status": "parked",
+   "track": "R",
+   "priority": "P3",
+   "grounded": [
+    "P"
+   ],
+   "rule_in_bot": "partial",
+   "evidence": "At $100k and up a $20 trade moves the price about 0.1-0.3%, so the cap rarely binds",
+   "rule": "Cap entry impact at about 0.75%, and at ≤ ¼ of the expected edge. Skip quotes whose impact is more than 2× the constant-product prediction from the reserves",
+   "where": "MAX_PRICE_IMPACT_PCT; broker/base.py",
+   "refs": "ticket_costs.py; RESULTS A4 (quotes within 0.0-0.35 pp of the model)"
+  },
+  {
+   "id": "G43",
+   "ids": [
+    "R12"
+   ],
+   "section": "Risk and sizing",
+   "name": "Step live size up slowly",
+   "owner": "risk",
+   "owners": [
+    "risk"
+   ],
+   "status": "parked",
+   "track": "R",
+   "priority": "P3",
+   "grounded": [
+    "P"
+   ],
+   "rule_in_bot": "partial",
+   "evidence": "Only matters once something shows a real advantage",
+   "rule": "Live ladder: start at the minimum ticket and step up ×1.5 per 50 live trades, only while the paper-live twin gap is ≥ -1 pp, the CUSUM is quiet, and G39 allows",
+   "where": "learn/gate.py",
+   "refs": "LEARNING §5.4 and §7"
+  },
+  {
+   "id": "G44",
+   "ids": [
+    "R13"
+   ],
+   "section": "Risk and sizing",
+   "name": "Sweep gains above about $125 to the owner",
+   "owner": "risk",
+   "owners": [
+    "risk"
+   ],
+   "status": "candidate",
+   "track": "R",
+   "priority": "P2",
+   "grounded": [
+    "P"
+   ],
+   "rule_in_bot": "partial",
+   "evidence": "Today the $150 wallet cap stops the bot once it does well",
+   "rule": "Sweep equity above about $125 to the owner and never refill after losses. Base the wallet tripwire on equity attributed to the bot, not a fixed $150",
+   "where": "risk._wallet_cap_rule",
+   "refs": "sim2 part c (sweeping: median $111; compounding: $92, decaying edge)"
+  },
+  {
+   "id": "G45",
+   "ids": [
+    "R07"
+   ],
+   "section": "Risk and sizing",
+   "name": "Judge decay on per-trade returns",
+   "owner": "coach",
+   "owners": [
+    "coach"
+   ],
+   "status": "candidate",
+   "track": "M",
+   "priority": "P2",
+   "grounded": [
+    "P"
+   ],
+   "rule_in_bot": "partial",
+   "evidence": "At 20% sizing even a real +3% strategy hits a 30% drawdown in simulation",
+   "rule": "Judge edge decay with the CUSUM / e-process on per-trade returns, which does not depend on sizing. Set the equity backstop from the current sizing, so that a real edge hits it with ≤ 5% probability",
+   "where": "learn/gate.py; risk._drawdown_rule",
+   "refs": "LEARNING §5.5; sim2 (at 20% sizing, a real +3% edge hits a 30% drawdown 100% of the time)"
+  },
+  {
+   "id": "G46",
+   "ids": [
+    "R15",
+    "DP-07"
+   ],
+   "section": "Risk and sizing",
+   "name": "No tilt or streak sizing",
+   "owner": "risk",
+   "owners": [
+    "risk",
+    "coach"
+   ],
+   "status": "parked",
+   "track": "R",
+   "priority": "P3",
+   "grounded": [
+    "AI"
+   ],
+   "rule_in_bot": "yes",
+   "evidence": "After 3 losses the next trade averaged -6.7% vs -6.5% overall (one day of data)",
+   "rule": "No tilt, equity-curve or anti-martingale sizing unless a streak effect is shown",
+   "where": "risk._cooldown_rule",
+   "refs": "dp_results.json, reentry_results.json"
+  },
+  {
+   "id": "G47",
+   "ids": [
+    "RA-19",
+    "DP-08"
+   ],
+   "section": "Jev",
+   "name": "Jev's no-votes must catch more than chance",
+   "owner": "judge",
+   "owners": [
+    "judge"
+   ],
+   "status": "queued",
+   "track": "F",
+   "priority": "P1",
+   "grounded": [
+    "M"
+   ],
+   "rule_in_bot": "no",
+   "evidence": "Never graded: vetoed coins are not followed up",
+   "rule": "Jev keeps its veto only if, on coins that passed every deterministic rule, its \"no\" votes land on later rugs and losers more often than a random veto at the same rate, net of API cost. Its confidence must be calibrated and its verdicts repeatable (≥ 80%). It sees numeric fingerprints (class, crash capacity, dust share, orphan share, insider_rem), never just names",
+   "where": "judge.Judge.decide, build_features, STATIC_SYSTEM_PROMPT",
+   "refs": "none"
+  },
+  {
+   "id": "G48",
+   "ids": [
+    "RA-16"
+   ],
+   "section": "Coach and the experience process",
+   "name": "Clean the trade data before any wallet rule",
+   "owner": "coach",
+   "owners": [
+    "coach"
+   ],
+   "status": "queued",
+   "track": "M",
+   "priority": "P1",
+   "grounded": [
+    "P"
+   ],
+   "rule_in_bot": "partial",
+   "evidence": "Mostly done in research; a few exclusion lists and checks are still missing",
+   "rule": "Evidence hygiene before any wallet or flow rule: drop failed transactions; exclude pooled accounts; read has_create = 0 as NULL; price at (x + v) / y with v per trade; handle PostCompleteBuyEvent",
+   "where": "research/flow/sql/*.sql, features.py; research/lab2/common.py",
+   "refs": "AUDIT fixes 1-6, tested"
+  },
+  {
+   "id": "G49",
+   "ids": [
+    "RA-18"
+   ],
+   "section": "Coach and the experience process",
+   "name": "Trip wires on protocol constants",
+   "owner": "coach",
+   "owners": [
+    "coach"
+   ],
+   "status": "candidate",
+   "track": "M",
+   "priority": "P2",
+   "grounded": [
+    "P"
+   ],
+   "rule_in_bot": "partial",
+   "evidence": "PumpSwap events grew 8 bytes on Oct 3; only one constant is checked today",
+   "rule": "Protocol-constant tripwires: BOOST (17.5845 SOL, 29-30 slices), migration reserves (85 SOL / 206.9M), curve supply (793.1M), the sign of v, the Mayhem share, event lengths and a fee-page hash. On a breach, freeze promotions and re-validate every detector that depends on it",
+   "where": "research/flow/validate.py",
+   "refs": "AUDIT §3.2 and §3.7 (PumpSwap events grew 8 bytes on 10-03); RESULTS (the farm's timing drifted)"
+  },
+  {
+   "id": "G50",
+   "ids": [
+    "RA-17",
+    "EX-18",
+    "DP-05"
+   ],
+   "section": "Coach and the experience process",
+   "name": "A post-mortem for every trade",
+   "owner": "coach",
+   "owners": [
+    "coach"
+   ],
+   "status": "queued",
+   "track": "M",
+   "priority": "P1",
+   "grounded": [
+    "M"
+   ],
+   "rule_in_bot": "no",
+   "evidence": "Not built yet; the parts of each result must add up to the trade",
+   "rule": "Post-mortem every closed trade within 24 h: paper, live, and shadow trades with a ≥ 50% drawdown. Record: the class (C3-C14, or ordinary bleed), with the earliest second it was knowable against our decision second; best and worst points (MFE/MAE), exit efficiency, gap slippage and stop regret; and an additive P&L split (selection, timing, exit, execution, residual) assigned to the member that controls each part. Thresholds fixed in advance open re-tests; they never change parameters automatically",
+   "where": "Receipts in ledger.py",
+   "refs": "RESULTS: 9 labelled rug exits and 36 F4 swap windows"
+  },
+  {
+   "id": "G51",
+   "ids": [
+    "DP-06",
+    "DP-11"
+   ],
+   "section": "Coach and the experience process",
+   "name": "Call a loss a mistake only against matched trades",
+   "owner": "coach",
+   "owners": [
+    "coach"
+   ],
+   "status": "candidate",
+   "track": "M",
+   "priority": "P2",
+   "grounded": [
+    "M"
+   ],
+   "rule_in_bot": "no",
+   "evidence": "Re-entry after a stop looked 4.6 points worse raw but 0.4 [-1.8, +1.1] matched: it was coin age",
+   "rule": "Compare a suspected mistake only with trades in the same situation (speed class, age band, G1 class, market-cap tier, regime). A mistake becomes a candidate rule only with ≥ 10 instances, ≥ 5 operators, ≥ 3 days, and a matched gap whose CI excludes 0. Adoption needs PLAN §3.5's veto bar. A single loss never patches the bot, except for pipeline bugs (G52)",
+   "where": "—",
+   "refs": "reentry_results.json: re-entry after a stop looked -4.6 pp worse raw and -0.4 pp [-1.8, +1.1] matched. The apparent \"mistake\" was coin age"
+  },
+  {
+   "id": "G52",
+   "ids": [
+    "DP-12"
+   ],
+   "section": "Coach and the experience process",
+   "name": "Hunt for bugs after an unusually bad loss",
+   "owner": "coach",
+   "owners": [
+    "coach"
+   ],
+   "status": "queued",
+   "track": "M",
+   "priority": "P1",
+   "grounded": [
+    "P"
+   ],
+   "rule_in_bot": "partial",
+   "evidence": "Every material error the lab audits found so far was a pipeline error",
+   "rule": "An unusually bad loss (below the 1% quantile of the variant's replay distribution) starts with a bug hunt: decision fidelity, data freshness, price, fills against quotes, costs, lookahead. A pipeline fault is the only kind of mistake fixed after a single instance",
+   "where": "learn/gate.py, learn/replay.py (sim_hash)",
+   "refs": "So far, every material error the lab audits found was a pipeline error: the half fill, the SOL/USD lookahead, a constant v, the truncated AGENT window, NULL read as 0"
+  },
+  {
+   "id": "G53",
+   "ids": [
+    "DP-01"
+   ],
+   "section": "Coach and the experience process",
+   "name": "Count independent situations, not raw reps",
+   "owner": "coach",
+   "owners": [
+    "coach"
+   ],
+   "status": "queued",
+   "track": "M",
+   "priority": "P1",
+   "grounded": [
+    "M"
+   ],
+   "rule_in_bot": "no",
+   "evidence": "16 random entries in one coin are worth about 5.4 independent ones",
+   "rule": "Count experience as the effective number of independent, outcome-known episodes per situation cell: n_eff = n / (1 + (m̄ − 1) × ICC), by coin, operator and day. Do not call a member \"experienced\" in a cell below the n needed to detect a 5 pp effect",
+   "where": "—",
+   "refs": "dp_results: coin ICC 0.13, so 16 random entries per coin are worth about 5.4 independent ones. F4's 12 TEST trades amount to about 1 operator"
+  },
+  {
+   "id": "G54",
+   "ids": [
+    "DP-17"
+   ],
+   "section": "Coach and the experience process",
+   "name": "Practise only where the pattern holds day to day",
+   "owner": "coach",
+   "owners": [
+    "coach"
+   ],
+   "status": "candidate",
+   "track": "M",
+   "priority": "P2",
+   "grounded": [
+    "M"
+   ],
+   "rule_in_bot": "no",
+   "evidence": "The farm's crash share moved from 22-24% to 33% between splits",
+   "rule": "Practise only on learnable cells: the sign holds across days and operators (I² < 50%, ≥ 75% of days with the same sign) and feedback is fast. Cells driven by one operator get vetoes only",
+   "where": "—",
+   "refs": "RESULTS: the farm's 15-30-min crash share moved from 22-24% to 33% between splits"
+  },
+  {
+   "id": "G55",
+   "ids": [
+    "DP-02"
+   ],
+   "section": "Coach and the experience process",
+   "name": "Grade decisions by expected value, never by one result",
+   "owner": "coach",
+   "owners": [
+    "coach"
+   ],
+   "status": "queued",
+   "track": "M",
+   "priority": "P1",
+   "grounded": [
+    "P"
+   ],
+   "rule_in_bot": "partial",
+   "evidence": "A rule with no advantage still comes out ahead on 79% of single trades",
+   "rule": "Grade decisions by the out-of-sample expected value of their (rule, cell), never by win rate or by one outcome",
+   "where": "pagestate.py, teamroom.py, learn/card.py",
+   "refs": "dp_results: a zero-edge rule wins 79% of single trades; a +5% rule loses 14%; cells explain 4.7% of single-trade variance"
+  },
+  {
+   "id": "G56",
+   "ids": [
+    "DP-03"
+   ],
+   "section": "Coach and the experience process",
+   "name": "Seal a numeric plan before each entry",
+   "owner": "strategy",
+   "owners": [
+    "strategy",
+    "coach"
+   ],
+   "status": "queued",
+   "track": "M",
+   "priority": "P1",
+   "grounded": [
+    "P"
+   ],
+   "rule_in_bot": "partial",
+   "evidence": "A simple per-situation forecast of stop-outs scored 0.19 over no forecast, but was miscalibrated",
+   "rule": "Seal a numeric plan in each entry receipt, and each shadow skip or veto, before the fill: rule hash, cell, thesis features, invalidation, horizon, size, assumed rug-aware worst loss, P(take-profit before stop), P(single-swap drop ≥ 50%), and expected net return with its CI",
+   "where": "Engine _decide inputs; models.Decision",
+   "refs": "brier_results: a trivial cell forecast of stop-outs reached Brier skill 0.19 [0.15, 0.23] from census TRAIN to VAL, but was miscalibrated (forecast 0.16, observed 0.29 in one bin)"
+  },
+  {
+   "id": "G57",
+   "ids": [
+    "DP-09",
+    "DP-16"
+   ],
+   "section": "Coach and the experience process",
+   "name": "Sealed exams for every skill claim",
+   "owner": "coach",
+   "owners": [
+    "coach"
+   ],
+   "status": "queued",
+   "track": "M",
+   "priority": "P1",
+   "grounded": [
+    "P"
+   ],
+   "rule_in_bot": "partial",
+   "evidence": "One strategy made +14% in practice, -5.4% on its exam and -17.7% on real swaps",
+   "rule": "Practise on a simulator with sealed exams: search on train, VAL from a shortlist written in advance, one TEST pass, every configuration logged and deflated (DSR, CSCV/PBO). Every claim that a member is skilled (turning Jev on, trusting a Cocoon forecast, a new exit) spends α like a strategy does",
+   "where": "research/lab2/common.py (GUARD_ENV, write_shortlist, deflated_sharpe); learn/gate.py",
+   "refs": "RESULTS: F4 made +14% in practice, -5.4% on the exam and -17.7% on real swaps"
+  },
+  {
+   "id": "G58",
+   "ids": [
+    "DP-04",
+    "R14"
+   ],
+   "section": "Coach and the experience process",
+   "name": "One report card per member against a random stand-in",
+   "owner": "coach",
+   "owners": [
+    "coach"
+   ],
+   "status": "queued",
+   "track": "M",
+   "priority": "P1",
+   "grounded": [
+    "P",
+    "M"
+   ],
+   "rule_in_bot": "partial",
+   "evidence": "Being built: a card says no measurable skill until its band clears chance",
+   "rule": "One report card per member against a no-skill baseline, with an anytime-valid CI. Crawler: G60. Cocoon: pass-minus-reject shadow return against a random veto at the same rate (and per rule via G08). Strategy: against a matched random entry. Radar: G21. Jev: G47. Broker: G59. Risk: limit breaches, gap ratio, rug-rate calibration, realistic drawdowns. Exits: G36. Coach: the placebo loses, a planted edge is found, false promotions stay in bound. A card says \"skilled\" only when its lower bound beats the baseline",
+   "where": "teamroom.py, pagestate.py, learn/card.py",
+   "refs": "LEARNING §9"
+  },
+  {
+   "id": "G59",
+   "ids": [
+    "DP-13"
+   ],
+   "section": "Coach and the experience process",
+   "name": "Score each fill by its shortfall",
+   "owner": "broker",
+   "owners": [
+    "broker"
+   ],
+   "status": "candidate",
+   "track": "M",
+   "priority": "P2",
+   "grounded": [
+    "P"
+   ],
+   "rule_in_bot": "partial",
+   "evidence": "Entry drift averaged +0.2% at 2 s; rug stop losses are a rug problem, not an execution one",
+   "rule": "Score each fill by its implementation shortfall against the mid at decision time: delay, impact plus fees, and the opportunity cost of missed signals. Compare paper with its replay twin, and later live with paper",
+   "where": "Ledger fills; learn/ fills stream",
+   "refs": "RESULTS A1 and A3: entry drift averaged +0.2% at 2 s (at most 0.9%). Rug stops are structural, a Risk and Cocoon problem, not an execution one"
+  },
+  {
+   "id": "G60",
+   "ids": [
+    "DP-14"
+   ],
+   "section": "Coach and the experience process",
+   "name": "Measure which new coins the crawler sees",
+   "owner": "crawler",
+   "owners": [
+    "crawler"
+   ],
+   "status": "candidate",
+   "track": "M",
+   "priority": "P2",
+   "grounded": [
+    "M"
+   ],
+   "rule_in_bot": "no",
+   "evidence": "The bot watches at most 15 of about 1,200 graduates a day; coverage is not measured",
+   "rule": "Coverage: recall of tradeable graduates within 5, 15 and 60 min against CryptoHouse CompleteEvents, the median lag, and the reason for each miss. Check that the shadow returns of missed coins match those of seen ones",
+   "where": "WATCHLIST_MAX 15; learn/recorder.py",
+   "refs": "none"
+  },
+  {
+   "id": "G61",
+   "ids": [
+    "DP-15"
+   ],
+   "section": "Coach and the experience process",
+   "name": "State rug odds as probabilities",
+   "owner": "cocoon",
+   "owners": [
+    "cocoon",
+    "radar"
+   ],
+   "status": "candidate",
+   "track": "M",
+   "priority": "P2",
+   "grounded": [
+    "M"
+   ],
+   "rule_in_bot": "no",
+   "evidence": "Pass or fail only today",
+   "rule": "State probabilities. Cocoon: P(single-swap drop ≥ 50% or airdrop dump during the hold). Radar: P(drop ≥ 30% in 5 min). Score them by Brier and log loss, and recalibrate weekly on past weeks only. Hard fails stay fail-closed",
+   "where": "cocoon.check, radar.scan",
+   "refs": "The G56 demo"
+  },
+  {
+   "id": "G62",
+   "ids": [
+    "DP-10"
+   ],
+   "section": "Coach and the experience process",
+   "name": "Spend practice on the weakest situations",
+   "owner": "coach",
+   "owners": [
+    "coach"
+   ],
+   "status": "parked",
+   "track": "M",
+   "priority": "P3",
+   "grounded": [
+    "M"
+   ],
+   "rule_in_bot": "no",
+   "evidence": "Random entries 0-30 min after an instant graduation lost 15.7% (a situation the bot never trades)",
+   "rule": "Give part of the 4 weekly registrations to the weakest learnable cell (ranked by G50's attribution), judged forward only. Keep this only if it beats a uniform allocation",
+   "where": "learn/gate.py REG_PER_ISO_WEEK",
+   "refs": "Census: instant coins 0-30 min after graduation lost -15.7% per random entry, stopped out 43% of the time (a cell the bot never trades)"
+  },
+  {
+   "id": "N4.9",
+   "ids": [],
+   "section": "Folklore already inside the bot",
+   "name": "The default dip-rebound strategy",
+   "owner": "strategy",
+   "owners": [
+    "strategy"
+   ],
+   "status": "in_bot_contradicted",
+   "track": "P",
+   "priority": null,
+   "grounded": [],
+   "rule_in_bot": "yes",
+   "evidence": "It lost on every split and every stress test; its one exam trade lost 22.1%",
+   "rule": "The default dip-rebound itself. It made 1 TEST trade (-22.1%), and the F1 dip strategies lost on every split and every stress test.",
+   "where": "strategy.entry_signal (dip-rebound); DIP_PCT and the other strategy Settings",
+   "refs": "RESULTS F1 (the dip strategies); the lab1 judge's one TEST trade"
+  }
+ ]
+}

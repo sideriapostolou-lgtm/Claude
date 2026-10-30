@@ -1,0 +1,153 @@
+{
+  "base": "67c54a6",
+  "baseline_source_sha256": "40f279f2c747634f2d3d194b93b87fded0ef6367c11878fccc17467295d6f287",
+  "candidate_files": {
+    "src/nightcrawler/speeddesk_worktrace.py": "cc8b3770d125bed718144b7aaa4d60ea4408ef3142543d115afd5125b85195b2",
+    "src/nightcrawler/speeddesk_workbins.py": "41fbf76947a1792fdc1f0c9a51e9352d0d4d160b2b968fc65691f9c0386ec4f8"
+  },
+  "pairs_per_sample": 3000,
+  "samples": [
+    {
+      "order": [
+        "baseline",
+        "candidate"
+      ],
+      "baseline": {
+        "wall_ns_per_pair": 7336.49,
+        "cpu_ns_per_pair": 7336.697,
+        "completed": 6000
+      },
+      "candidate": {
+        "wall_ns_per_pair": 10331.257333333333,
+        "cpu_ns_per_pair": 10325.187333333333,
+        "completed": 6000
+      }
+    },
+    {
+      "order": [
+        "candidate",
+        "baseline"
+      ],
+      "candidate": {
+        "wall_ns_per_pair": 10527.363,
+        "cpu_ns_per_pair": 10527.488333333333,
+        "completed": 6000
+      },
+      "baseline": {
+        "wall_ns_per_pair": 6850.219333333333,
+        "cpu_ns_per_pair": 6850.435333333333,
+        "completed": 6000
+      }
+    },
+    {
+      "order": [
+        "baseline",
+        "candidate"
+      ],
+      "baseline": {
+        "wall_ns_per_pair": 7028.114,
+        "cpu_ns_per_pair": 7020.920666666667,
+        "completed": 6000
+      },
+      "candidate": {
+        "wall_ns_per_pair": 10319.943,
+        "cpu_ns_per_pair": 10318.872,
+        "completed": 6000
+      }
+    },
+    {
+      "order": [
+        "candidate",
+        "baseline"
+      ],
+      "candidate": {
+        "wall_ns_per_pair": 10467.189666666667,
+        "cpu_ns_per_pair": 10467.429666666667,
+        "completed": 6000
+      },
+      "baseline": {
+        "wall_ns_per_pair": 6996.821666666667,
+        "cpu_ns_per_pair": 6996.989333333333,
+        "completed": 6000
+      }
+    },
+    {
+      "order": [
+        "baseline",
+        "candidate"
+      ],
+      "baseline": {
+        "wall_ns_per_pair": 7091.286,
+        "cpu_ns_per_pair": 7091.455333333333,
+        "completed": 6000
+      },
+      "candidate": {
+        "wall_ns_per_pair": 10999.587333333333,
+        "cpu_ns_per_pair": 10999.747,
+        "completed": 6000
+      }
+    },
+    {
+      "order": [
+        "candidate",
+        "baseline"
+      ],
+      "candidate": {
+        "wall_ns_per_pair": 10511.476333333334,
+        "cpu_ns_per_pair": 10511.605666666666,
+        "completed": 6000
+      },
+      "baseline": {
+        "wall_ns_per_pair": 6794.982,
+        "cpu_ns_per_pair": 6795.155666666667,
+        "completed": 6000
+      }
+    },
+    {
+      "order": [
+        "baseline",
+        "candidate"
+      ],
+      "baseline": {
+        "wall_ns_per_pair": 6817.441333333333,
+        "cpu_ns_per_pair": 6817.631,
+        "completed": 6000
+      },
+      "candidate": {
+        "wall_ns_per_pair": 10849.301666666666,
+        "cpu_ns_per_pair": 10849.413,
+        "completed": 6000
+      }
+    },
+    {
+      "order": [
+        "candidate",
+        "baseline"
+      ],
+      "candidate": {
+        "wall_ns_per_pair": 11037.759333333333,
+        "cpu_ns_per_pair": 11037.998333333333,
+        "completed": 6000
+      },
+      "baseline": {
+        "wall_ns_per_pair": 6860.2446666666665,
+        "cpu_ns_per_pair": 6860.373666666666,
+        "completed": 6000
+      }
+    }
+  ],
+  "median_wall_ns_per_pair": {
+    "baseline": 6928.533166666666,
+    "candidate": 10519.419666666667
+  },
+  "median_cpu_ns_per_pair": {
+    "baseline": 6928.6815,
+    "candidate": 10519.546999999999
+  },
+  "limits": [
+    "Synthetic empty span pairs, not real feed callbacks or production timing.",
+    "Real clocks, normal GC; instrumentation overhead included equally.",
+    "Eight alternating AB/BA pairs in one sequential process; no heavy concurrent jobs requested.",
+    "Does not replace unchanged full-suite performance gates."
+  ]
+}

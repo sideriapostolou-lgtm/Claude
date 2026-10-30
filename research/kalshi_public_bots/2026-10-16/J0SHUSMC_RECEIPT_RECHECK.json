@@ -1,0 +1,1015 @@
+{
+  "summary": {
+    "source_sha256": "d0d3f6176bcb1a23d93616fa0a53965634129d1613dc69281d8b894bcbea8df6",
+    "fill_rows": 84,
+    "settlement_rows": 31,
+    "unique_fill_ids": 84,
+    "unique_settlement_tickers": 31,
+    "fill_time_min": "2026-08-27T23:48:20.924022Z",
+    "fill_time_max": "2026-09-16T16:24:46.145582Z",
+    "settlement_time_min": "2026-08-28T00:00:05.929012Z",
+    "settlement_time_max": "2026-09-16T16:30:08.427734Z",
+    "exact_payout": "853.00",
+    "exact_cost": "758.595000",
+    "exact_fees": "16.271000",
+    "exact_pnl": "78.134000",
+    "positive_windows": 24,
+    "negative_windows": 7,
+    "reconciled_tickers": 31,
+    "fill_tickers_without_settlement": [],
+    "local_entry_receipt_matches": 31,
+    "local_entry_records": 31,
+    "by_local_buy_tag": {
+      "PULLBACK_99": {
+        "windows": 18,
+        "pnl": "-1.646900",
+        "fees": "6.251900"
+      },
+      "NO_RECLAIM_80": {
+        "windows": 2,
+        "pnl": "6.014300",
+        "fees": "1.365700"
+      },
+      "BTC_FADE_90": {
+        "windows": 8,
+        "pnl": "32.050000",
+        "fees": "6.640000"
+      },
+      "RECLAIM_70": {
+        "windows": 3,
+        "pnl": "41.716600",
+        "fees": "2.013400"
+      }
+    },
+    "limits": [
+      "Public committed export authenticity/completeness not independently verified.",
+      "Local requested-buy tags identify windows, not proof of sole-strategy causality or actual current source version.",
+      "No deposits/withdrawals/rebates/start balance history; full account profit is not established.",
+      "Published account snapshot uses a chosen starting balance and differs from receipt subset.",
+      "No private account was accessed; no third-party repository code was executed."
+    ]
+  },
+  "rows": [
+    {
+      "ticker": "KXBTC15M-26AUG272000-00",
+      "result": "no",
+      "local_buy_tags": [
+        "PULLBACK_99"
+      ],
+      "fill_rows": 2,
+      "yes_qty_fills": "5.00",
+      "no_qty_fills": "5.00",
+      "yes_qty_settlement": "5.00",
+      "no_qty_settlement": "5.00",
+      "settlement_payout": "5.00",
+      "settlement_cost": "2.955000",
+      "settlement_fee": "0.085100",
+      "settlement_pnl": "1.959900",
+      "fill_cost": "2.955000",
+      "fill_fee": "0.085100",
+      "cost_diff": "0.000000",
+      "fee_diff": "0.000000",
+      "quantity_match": true,
+      "local_entry_matches": [
+        {
+          "local_strategy": "PULLBACK_99",
+          "local_target_cents": 99,
+          "local_count": 5,
+          "local_price_cents": 59,
+          "matched_fill_rows": 1,
+          "matched_count": "5.00"
+        }
+      ]
+    },
+    {
+      "ticker": "KXBTC15M-26AUG272015-15",
+      "result": "no",
+      "local_buy_tags": [
+        "PULLBACK_99"
+      ],
+      "fill_rows": 2,
+      "yes_qty_fills": "5.00",
+      "no_qty_fills": "5.00",
+      "yes_qty_settlement": "5.00",
+      "no_qty_settlement": "5.00",
+      "settlement_payout": "5.00",
+      "settlement_cost": "3.000000",
+      "settlement_fee": "0.084700",
+      "settlement_pnl": "1.915300",
+      "fill_cost": "3.000000",
+      "fill_fee": "0.084700",
+      "cost_diff": "0.000000",
+      "fee_diff": "0.000000",
+      "quantity_match": true,
+      "local_entry_matches": [
+        {
+          "local_strategy": "PULLBACK_99",
+          "local_target_cents": 99,
+          "local_count": 5,
+          "local_price_cents": 59,
+          "matched_fill_rows": 1,
+          "matched_count": "5.00"
+        }
+      ]
+    },
+    {
+      "ticker": "KXBTC15M-26AUG272045-45",
+      "result": "no",
+      "local_buy_tags": [
+        "PULLBACK_99"
+      ],
+      "fill_rows": 2,
+      "yes_qty_fills": "5.00",
+      "no_qty_fills": "5.00",
+      "yes_qty_settlement": "5.00",
+      "no_qty_settlement": "5.00",
+      "settlement_payout": "5.00",
+      "settlement_cost": "2.950000",
+      "settlement_fee": "0.085300",
+      "settlement_pnl": "1.964700",
+      "fill_cost": "2.950000",
+      "fill_fee": "0.085300",
+      "cost_diff": "0.000000",
+      "fee_diff": "0.000000",
+      "quantity_match": true,
+      "local_entry_matches": [
+        {
+          "local_strategy": "PULLBACK_99",
+          "local_target_cents": 99,
+          "local_count": 5,
+          "local_price_cents": 58,
+          "matched_fill_rows": 1,
+          "matched_count": "5.00"
+        }
+      ]
+    },
+    {
+      "ticker": "KXBTC15M-26AUG272245-45",
+      "result": "yes",
+      "local_buy_tags": [
+        "PULLBACK_99"
+      ],
+      "fill_rows": 2,
+      "yes_qty_fills": "22.00",
+      "no_qty_fills": "22.00",
+      "yes_qty_settlement": "22.00",
+      "no_qty_settlement": "22.00",
+      "settlement_payout": "22.00",
+      "settlement_cost": "12.540000",
+      "settlement_fee": "0.379500",
+      "settlement_pnl": "9.080500",
+      "fill_cost": "12.540000",
+      "fill_fee": "0.379500",
+      "cost_diff": "0.000000",
+      "fee_diff": "0.000000",
+      "quantity_match": true,
+      "local_entry_matches": [
+        {
+          "local_strategy": "PULLBACK_99",
+          "local_target_cents": 99,
+          "local_count": 22,
+          "local_price_cents": 56,
+          "matched_fill_rows": 1,
+          "matched_count": "22.00"
+        }
+      ]
+    },
+    {
+      "ticker": "KXBTC15M-26AUG272315-15",
+      "result": "no",
+      "local_buy_tags": [
+        "PULLBACK_99"
+      ],
+      "fill_rows": 2,
+      "yes_qty_fills": "22.00",
+      "no_qty_fills": "22.00",
+      "yes_qty_settlement": "22.00",
+      "no_qty_settlement": "22.00",
+      "settlement_payout": "22.00",
+      "settlement_cost": "13.200000",
+      "settlement_fee": "0.372600",
+      "settlement_pnl": "8.427400",
+      "fill_cost": "13.200000",
+      "fill_fee": "0.372600",
+      "cost_diff": "0.000000",
+      "fee_diff": "0.000000",
+      "quantity_match": true,
+      "local_entry_matches": [
+        {
+          "local_strategy": "PULLBACK_99",
+          "local_target_cents": 99,
+          "local_count": 22,
+          "local_price_cents": 59,
+          "matched_fill_rows": 1,
+          "matched_count": "22.00"
+        }
+      ]
+    },
+    {
+      "ticker": "KXBTC15M-26AUG272345-45",
+      "result": "no",
+      "local_buy_tags": [
+        "PULLBACK_99"
+      ],
+      "fill_rows": 2,
+      "yes_qty_fills": "25.00",
+      "no_qty_fills": "0",
+      "yes_qty_settlement": "25.00",
+      "no_qty_settlement": "0.00",
+      "settlement_payout": "0.00",
+      "settlement_cost": "14.000000",
+      "settlement_fee": "0.431300",
+      "settlement_pnl": "-14.431300",
+      "fill_cost": "14.000000",
+      "fill_fee": "0.431300",
+      "cost_diff": "0.000000",
+      "fee_diff": "0.000000",
+      "quantity_match": true,
+      "local_entry_matches": [
+        {
+          "local_strategy": "PULLBACK_99",
+          "local_target_cents": 99,
+          "local_count": 25,
+          "local_price_cents": 56,
+          "matched_fill_rows": 2,
+          "matched_count": "25.00"
+        }
+      ]
+    },
+    {
+      "ticker": "KXBTC15M-26AUG280115-15",
+      "result": "no",
+      "local_buy_tags": [
+        "PULLBACK_99"
+      ],
+      "fill_rows": 3,
+      "yes_qty_fills": "44.00",
+      "no_qty_fills": "22.00",
+      "yes_qty_settlement": "44.00",
+      "no_qty_settlement": "22.00",
+      "settlement_payout": "22.00",
+      "settlement_cost": "13.200000",
+      "settlement_fee": "0.375200",
+      "settlement_pnl": "8.424800",
+      "fill_cost": "13.200000",
+      "fill_fee": "0.375200",
+      "cost_diff": "0.000000",
+      "fee_diff": "0.000000",
+      "quantity_match": true,
+      "local_entry_matches": [
+        {
+          "local_strategy": "PULLBACK_99",
+          "local_target_cents": 99,
+          "local_count": 22,
+          "local_price_cents": 58,
+          "matched_fill_rows": 1,
+          "matched_count": "22.00"
+        }
+      ]
+    },
+    {
+      "ticker": "KXBTC15M-26AUG280130-30",
+      "result": "yes",
+      "local_buy_tags": [
+        "PULLBACK_99"
+      ],
+      "fill_rows": 2,
+      "yes_qty_fills": "23.00",
+      "no_qty_fills": "23.00",
+      "yes_qty_settlement": "23.00",
+      "no_qty_settlement": "23.00",
+      "settlement_payout": "23.00",
+      "settlement_cost": "13.570000",
+      "settlement_fee": "0.392200",
+      "settlement_pnl": "9.037800",
+      "fill_cost": "13.570000",
+      "fill_fee": "0.392200",
+      "cost_diff": "0.000000",
+      "fee_diff": "0.000000",
+      "quantity_match": true,
+      "local_entry_matches": [
+        {
+          "local_strategy": "PULLBACK_99",
+          "local_target_cents": 99,
+          "local_count": 23,
+          "local_price_cents": 58,
+          "matched_fill_rows": 1,
+          "matched_count": "23.00"
+        }
+      ]
+    },
+    {
+      "ticker": "KXBTC15M-26AUG280245-45",
+      "result": "yes",
+      "local_buy_tags": [
+        "PULLBACK_99"
+      ],
+      "fill_rows": 1,
+      "yes_qty_fills": "0",
+      "no_qty_fills": "24.00",
+      "yes_qty_settlement": "0.00",
+      "no_qty_settlement": "24.00",
+      "settlement_payout": "0.00",
+      "settlement_cost": "14.160000",
+      "settlement_fee": "0.406400",
+      "settlement_pnl": "-14.566400",
+      "fill_cost": "14.160000",
+      "fill_fee": "0.406400",
+      "cost_diff": "0.000000",
+      "fee_diff": "0.000000",
+      "quantity_match": true,
+      "local_entry_matches": [
+        {
+          "local_strategy": "PULLBACK_99",
+          "local_target_cents": 99,
+          "local_count": 24,
+          "local_price_cents": 59,
+          "matched_fill_rows": 1,
+          "matched_count": "24.00"
+        }
+      ]
+    },
+    {
+      "ticker": "KXBTC15M-26AUG280315-15",
+      "result": "no",
+      "local_buy_tags": [
+        "PULLBACK_99"
+      ],
+      "fill_rows": 2,
+      "yes_qty_fills": "23.00",
+      "no_qty_fills": "23.00",
+      "yes_qty_settlement": "23.00",
+      "no_qty_settlement": "23.00",
+      "settlement_payout": "23.00",
+      "settlement_cost": "13.340000",
+      "settlement_fee": "0.394700",
+      "settlement_pnl": "9.265300",
+      "fill_cost": "13.340000",
+      "fill_fee": "0.394700",
+      "cost_diff": "0.000000",
+      "fee_diff": "0.000000",
+      "quantity_match": true,
+      "local_entry_matches": [
+        {
+          "local_strategy": "PULLBACK_99",
+          "local_target_cents": 99,
+          "local_count": 23,
+          "local_price_cents": 57,
+          "matched_fill_rows": 1,
+          "matched_count": "23.00"
+        }
+      ]
+    },
+    {
+      "ticker": "KXBTC15M-26AUG280330-30",
+      "result": "yes",
+      "local_buy_tags": [
+        "PULLBACK_99"
+      ],
+      "fill_rows": 2,
+      "yes_qty_fills": "25.00",
+      "no_qty_fills": "25.00",
+      "yes_qty_settlement": "25.00",
+      "no_qty_settlement": "25.00",
+      "settlement_payout": "25.00",
+      "settlement_cost": "14.250000",
+      "settlement_fee": "0.431200",
+      "settlement_pnl": "10.318800",
+      "fill_cost": "14.250000",
+      "fill_fee": "0.431200",
+      "cost_diff": "0.000000",
+      "fee_diff": "0.000000",
+      "quantity_match": true,
+      "local_entry_matches": [
+        {
+          "local_strategy": "PULLBACK_99",
+          "local_target_cents": 99,
+          "local_count": 25,
+          "local_price_cents": 56,
+          "matched_fill_rows": 1,
+          "matched_count": "25.00"
+        }
+      ]
+    },
+    {
+      "ticker": "KXBTC15M-26AUG280400-00",
+      "result": "yes",
+      "local_buy_tags": [
+        "PULLBACK_99"
+      ],
+      "fill_rows": 2,
+      "yes_qty_fills": "25.00",
+      "no_qty_fills": "25.00",
+      "yes_qty_settlement": "25.00",
+      "no_qty_settlement": "25.00",
+      "settlement_payout": "25.00",
+      "settlement_cost": "15.000000",
+      "settlement_fee": "0.423400",
+      "settlement_pnl": "9.576600",
+      "fill_cost": "15.000000",
+      "fill_fee": "0.423400",
+      "cost_diff": "0.000000",
+      "fee_diff": "0.000000",
+      "quantity_match": true,
+      "local_entry_matches": [
+        {
+          "local_strategy": "PULLBACK_99",
+          "local_target_cents": 99,
+          "local_count": 25,
+          "local_price_cents": 59,
+          "matched_fill_rows": 1,
+          "matched_count": "25.00"
+        }
+      ]
+    },
+    {
+      "ticker": "KXBTC15M-26AUG280545-45",
+      "result": "no",
+      "local_buy_tags": [
+        "PULLBACK_99"
+      ],
+      "fill_rows": 1,
+      "yes_qty_fills": "28.00",
+      "no_qty_fills": "0",
+      "yes_qty_settlement": "28.00",
+      "no_qty_settlement": "0.00",
+      "settlement_payout": "0.00",
+      "settlement_cost": "15.960000",
+      "settlement_fee": "0.480400",
+      "settlement_pnl": "-16.440400",
+      "fill_cost": "15.960000",
+      "fill_fee": "0.480400",
+      "cost_diff": "0.000000",
+      "fee_diff": "0.000000",
+      "quantity_match": true,
+      "local_entry_matches": [
+        {
+          "local_strategy": "PULLBACK_99",
+          "local_target_cents": 99,
+          "local_count": 28,
+          "local_price_cents": 57,
+          "matched_fill_rows": 1,
+          "matched_count": "28.00"
+        }
+      ]
+    },
+    {
+      "ticker": "KXBTC15M-26AUG280600-00",
+      "result": "no",
+      "local_buy_tags": [
+        "PULLBACK_99"
+      ],
+      "fill_rows": 6,
+      "yes_qty_fills": "25.00",
+      "no_qty_fills": "0",
+      "yes_qty_settlement": "25.00",
+      "no_qty_settlement": "0.00",
+      "settlement_payout": "0.00",
+      "settlement_cost": "14.250000",
+      "settlement_fee": "0.429000",
+      "settlement_pnl": "-14.679000",
+      "fill_cost": "14.250000",
+      "fill_fee": "0.429000",
+      "cost_diff": "0.000000",
+      "fee_diff": "0.000000",
+      "quantity_match": true,
+      "local_entry_matches": [
+        {
+          "local_strategy": "PULLBACK_99",
+          "local_target_cents": 99,
+          "local_count": 25,
+          "local_price_cents": 57,
+          "matched_fill_rows": 6,
+          "matched_count": "25.00"
+        }
+      ]
+    },
+    {
+      "ticker": "KXBTC15M-26AUG280730-30",
+      "result": "no",
+      "local_buy_tags": [
+        "PULLBACK_99"
+      ],
+      "fill_rows": 2,
+      "yes_qty_fills": "21.00",
+      "no_qty_fills": "21.00",
+      "yes_qty_settlement": "21.00",
+      "no_qty_settlement": "21.00",
+      "settlement_payout": "21.00",
+      "settlement_cost": "12.600000",
+      "settlement_fee": "0.355600",
+      "settlement_pnl": "8.044400",
+      "fill_cost": "12.600000",
+      "fill_fee": "0.355600",
+      "cost_diff": "0.000000",
+      "fee_diff": "0.000000",
+      "quantity_match": true,
+      "local_entry_matches": [
+        {
+          "local_strategy": "PULLBACK_99",
+          "local_target_cents": 99,
+          "local_count": 21,
+          "local_price_cents": 59,
+          "matched_fill_rows": 1,
+          "matched_count": "21.00"
+        }
+      ]
+    },
+    {
+      "ticker": "KXBTC15M-26AUG280900-00",
+      "result": "yes",
+      "local_buy_tags": [
+        "PULLBACK_99"
+      ],
+      "fill_rows": 2,
+      "yes_qty_fills": "20.00",
+      "no_qty_fills": "20.00",
+      "yes_qty_settlement": "20.00",
+      "no_qty_settlement": "20.00",
+      "settlement_payout": "20.00",
+      "settlement_cost": "12.000000",
+      "settlement_fee": "0.338700",
+      "settlement_pnl": "7.661300",
+      "fill_cost": "12.000000",
+      "fill_fee": "0.338700",
+      "cost_diff": "0.000000",
+      "fee_diff": "0.000000",
+      "quantity_match": true,
+      "local_entry_matches": [
+        {
+          "local_strategy": "PULLBACK_99",
+          "local_target_cents": 99,
+          "local_count": 20,
+          "local_price_cents": 59,
+          "matched_fill_rows": 1,
+          "matched_count": "20.00"
+        }
+      ]
+    },
+    {
+      "ticker": "KXBTC15M-26AUG280915-15",
+      "result": "no",
+      "local_buy_tags": [
+        "PULLBACK_99"
+      ],
+      "fill_rows": 1,
+      "yes_qty_fills": "22.00",
+      "no_qty_fills": "0",
+      "yes_qty_settlement": "22.00",
+      "no_qty_settlement": "0.00",
+      "settlement_payout": "0.00",
+      "settlement_cost": "12.980000",
+      "settlement_fee": "0.372600",
+      "settlement_pnl": "-13.352600",
+      "fill_cost": "12.980000",
+      "fill_fee": "0.372600",
+      "cost_diff": "0.000000",
+      "fee_diff": "0.000000",
+      "quantity_match": true,
+      "local_entry_matches": [
+        {
+          "local_strategy": "PULLBACK_99",
+          "local_target_cents": 99,
+          "local_count": 22,
+          "local_price_cents": 59,
+          "matched_fill_rows": 1,
+          "matched_count": "22.00"
+        }
+      ]
+    },
+    {
+      "ticker": "KXBTC15M-26AUG280800-00",
+      "result": "no",
+      "local_buy_tags": [
+        "PULLBACK_99"
+      ],
+      "fill_rows": 3,
+      "yes_qty_fills": "24.00",
+      "no_qty_fills": "0",
+      "yes_qty_settlement": "24.00",
+      "no_qty_settlement": "0.00",
+      "settlement_payout": "0.00",
+      "settlement_cost": "13.440000",
+      "settlement_fee": "0.414000",
+      "settlement_pnl": "-13.854000",
+      "fill_cost": "13.440000",
+      "fill_fee": "0.414000",
+      "cost_diff": "0.000000",
+      "fee_diff": "0.000000",
+      "quantity_match": true,
+      "local_entry_matches": [
+        {
+          "local_strategy": "PULLBACK_99",
+          "local_target_cents": 99,
+          "local_count": 24,
+          "local_price_cents": 56,
+          "matched_fill_rows": 3,
+          "matched_count": "24.00"
+        }
+      ]
+    },
+    {
+      "ticker": "KXBTC15M-26SEP081300-00",
+      "result": "no",
+      "local_buy_tags": [
+        "NO_RECLAIM_80"
+      ],
+      "fill_rows": 3,
+      "yes_qty_fills": "19.00",
+      "no_qty_fills": "19.00",
+      "yes_qty_settlement": "19.00",
+      "no_qty_settlement": "19.00",
+      "settlement_payout": "19.00",
+      "settlement_cost": "17.290000",
+      "settlement_fee": "0.316500",
+      "settlement_pnl": "1.393500",
+      "fill_cost": "17.290000",
+      "fill_fee": "0.316500",
+      "cost_diff": "0.000000",
+      "fee_diff": "0.000000",
+      "quantity_match": true,
+      "local_entry_matches": [
+        {
+          "local_strategy": "NO_RECLAIM_80",
+          "local_target_cents": 80,
+          "local_count": 19,
+          "local_price_cents": 61,
+          "matched_fill_rows": 2,
+          "matched_count": "19.00"
+        }
+      ]
+    },
+    {
+      "ticker": "KXBTC15M-26SEP082115-15",
+      "result": "no",
+      "local_buy_tags": [
+        "BTC_FADE_90"
+      ],
+      "fill_rows": 6,
+      "yes_qty_fills": "47.00",
+      "no_qty_fills": "47.00",
+      "yes_qty_settlement": "47.00",
+      "no_qty_settlement": "47.00",
+      "settlement_payout": "47.00",
+      "settlement_cost": "37.600000",
+      "settlement_fee": "0.822500",
+      "settlement_pnl": "8.577500",
+      "fill_cost": "37.600000",
+      "fill_fee": "0.822500",
+      "cost_diff": "0.000000",
+      "fee_diff": "0.000000",
+      "quantity_match": true,
+      "local_entry_matches": [
+        {
+          "local_strategy": "BTC_FADE_90",
+          "local_target_cents": 90,
+          "local_count": 47,
+          "local_price_cents": 50,
+          "matched_fill_rows": 1,
+          "matched_count": "47.00"
+        }
+      ]
+    },
+    {
+      "ticker": "KXBTC15M-26SEP090100-00",
+      "result": "yes",
+      "local_buy_tags": [
+        "BTC_FADE_90"
+      ],
+      "fill_rows": 2,
+      "yes_qty_fills": "45.00",
+      "no_qty_fills": "45.00",
+      "yes_qty_settlement": "45.00",
+      "no_qty_settlement": "45.00",
+      "settlement_payout": "45.00",
+      "settlement_cost": "39.150000",
+      "settlement_fee": "0.772100",
+      "settlement_pnl": "5.077900",
+      "fill_cost": "39.150000",
+      "fill_fee": "0.772100",
+      "cost_diff": "0.000000",
+      "fee_diff": "0.000000",
+      "quantity_match": true,
+      "local_entry_matches": [
+        {
+          "local_strategy": "BTC_FADE_90",
+          "local_target_cents": 90,
+          "local_count": 45,
+          "local_price_cents": 57,
+          "matched_fill_rows": 1,
+          "matched_count": "45.00"
+        }
+      ]
+    },
+    {
+      "ticker": "KXBTC15M-26SEP090730-30",
+      "result": "yes",
+      "local_buy_tags": [
+        "BTC_FADE_90"
+      ],
+      "fill_rows": 2,
+      "yes_qty_fills": "42.00",
+      "no_qty_fills": "42.00",
+      "yes_qty_settlement": "42.00",
+      "no_qty_settlement": "42.00",
+      "settlement_payout": "42.00",
+      "settlement_cost": "39.060000",
+      "settlement_fee": "0.685400",
+      "settlement_pnl": "2.254600",
+      "fill_cost": "39.060000",
+      "fill_fee": "0.685400",
+      "cost_diff": "0.000000",
+      "fee_diff": "0.000000",
+      "quantity_match": true,
+      "local_entry_matches": [
+        {
+          "local_strategy": "BTC_FADE_90",
+          "local_target_cents": 90,
+          "local_count": 42,
+          "local_price_cents": 63,
+          "matched_fill_rows": 1,
+          "matched_count": "42.00"
+        }
+      ]
+    },
+    {
+      "ticker": "KXBTC15M-26SEP101915-15",
+      "result": "no",
+      "local_buy_tags": [
+        "BTC_FADE_90"
+      ],
+      "fill_rows": 3,
+      "yes_qty_fills": "44.00",
+      "no_qty_fills": "0",
+      "yes_qty_settlement": "44.00",
+      "no_qty_settlement": "0.00",
+      "settlement_payout": "0.00",
+      "settlement_cost": "26.840000",
+      "settlement_fee": "0.000000",
+      "settlement_pnl": "-26.840000",
+      "fill_cost": "26.840000",
+      "fill_fee": "0.000000",
+      "cost_diff": "0.000000",
+      "fee_diff": "0.000000",
+      "quantity_match": true,
+      "local_entry_matches": [
+        {
+          "local_strategy": "BTC_FADE_90",
+          "local_target_cents": 90,
+          "local_count": 44,
+          "local_price_cents": 61,
+          "matched_fill_rows": 3,
+          "matched_count": "44.00"
+        }
+      ]
+    },
+    {
+      "ticker": "KXBTC15M-26SEP111645-45",
+      "result": "yes",
+      "local_buy_tags": [
+        "RECLAIM_70"
+      ],
+      "fill_rows": 6,
+      "yes_qty_fills": "47.00",
+      "no_qty_fills": "47.00",
+      "yes_qty_settlement": "47.00",
+      "no_qty_settlement": "47.00",
+      "settlement_payout": "47.00",
+      "settlement_cost": "35.720000",
+      "settlement_fee": "0.000000",
+      "settlement_pnl": "11.280000",
+      "fill_cost": "35.720000",
+      "fill_fee": "0.000000",
+      "cost_diff": "0.000000",
+      "fee_diff": "0.000000",
+      "quantity_match": true,
+      "local_entry_matches": [
+        {
+          "local_strategy": "RECLAIM_70",
+          "local_target_cents": 70,
+          "local_count": 47,
+          "local_price_cents": 46,
+          "matched_fill_rows": 1,
+          "matched_count": "47.00"
+        }
+      ]
+    },
+    {
+      "ticker": "KXBTC15M-26SEP112000-00",
+      "result": "yes",
+      "local_buy_tags": [
+        "RECLAIM_70"
+      ],
+      "fill_rows": 5,
+      "yes_qty_fills": "59.00",
+      "no_qty_fills": "59.00",
+      "yes_qty_settlement": "59.00",
+      "no_qty_settlement": "59.00",
+      "settlement_payout": "59.00",
+      "settlement_cost": "41.300000",
+      "settlement_fee": "0.991200",
+      "settlement_pnl": "16.708800",
+      "fill_cost": "41.300000",
+      "fill_fee": "0.991200",
+      "cost_diff": "0.000000",
+      "fee_diff": "0.000000",
+      "quantity_match": true,
+      "local_entry_matches": [
+        {
+          "local_strategy": "RECLAIM_70",
+          "local_target_cents": 70,
+          "local_count": 59,
+          "local_price_cents": 40,
+          "matched_fill_rows": 4,
+          "matched_count": "59.00"
+        }
+      ]
+    },
+    {
+      "ticker": "KXBTC15M-26SEP130900-00",
+      "result": "yes",
+      "local_buy_tags": [
+        "RECLAIM_70"
+      ],
+      "fill_rows": 3,
+      "yes_qty_fills": "59.00",
+      "no_qty_fills": "59.00",
+      "yes_qty_settlement": "59.00",
+      "no_qty_settlement": "59.00",
+      "settlement_payout": "59.00",
+      "settlement_cost": "44.250000",
+      "settlement_fee": "1.022200",
+      "settlement_pnl": "13.727800",
+      "fill_cost": "44.250000",
+      "fill_fee": "1.022200",
+      "cost_diff": "0.000000",
+      "fee_diff": "0.000000",
+      "quantity_match": true,
+      "local_entry_matches": [
+        {
+          "local_strategy": "RECLAIM_70",
+          "local_target_cents": 70,
+          "local_count": 59,
+          "local_price_cents": 46,
+          "matched_fill_rows": 2,
+          "matched_count": "59.00"
+        }
+      ]
+    },
+    {
+      "ticker": "KXBTC15M-26SEP140045-45",
+      "result": "yes",
+      "local_buy_tags": [
+        "BTC_FADE_90"
+      ],
+      "fill_rows": 2,
+      "yes_qty_fills": "63.00",
+      "no_qty_fills": "63.00",
+      "yes_qty_settlement": "63.00",
+      "no_qty_settlement": "63.00",
+      "settlement_payout": "63.00",
+      "settlement_cost": "48.510000",
+      "settlement_fee": "1.098600",
+      "settlement_pnl": "13.391400",
+      "fill_cost": "48.510000",
+      "fill_fee": "1.098600",
+      "cost_diff": "0.000000",
+      "fee_diff": "0.000000",
+      "quantity_match": true,
+      "local_entry_matches": [
+        {
+          "local_strategy": "BTC_FADE_90",
+          "local_target_cents": 90,
+          "local_count": 63,
+          "local_price_cents": 47,
+          "matched_fill_rows": 1,
+          "matched_count": "63.00"
+        }
+      ]
+    },
+    {
+      "ticker": "KXBTC15M-26SEP140430-30",
+      "result": "yes",
+      "local_buy_tags": [
+        "BTC_FADE_90"
+      ],
+      "fill_rows": 2,
+      "yes_qty_fills": "50.00",
+      "no_qty_fills": "50.00",
+      "yes_qty_settlement": "50.00",
+      "no_qty_settlement": "50.00",
+      "settlement_payout": "50.00",
+      "settlement_cost": "47.500000",
+      "settlement_fee": "0.796300",
+      "settlement_pnl": "1.703700",
+      "fill_cost": "47.500000",
+      "fill_fee": "0.796300",
+      "cost_diff": "0.000000",
+      "fee_diff": "0.000000",
+      "quantity_match": true,
+      "local_entry_matches": [
+        {
+          "local_strategy": "BTC_FADE_90",
+          "local_target_cents": 90,
+          "local_count": 50,
+          "local_price_cents": 65,
+          "matched_fill_rows": 1,
+          "matched_count": "50.00"
+        }
+      ]
+    },
+    {
+      "ticker": "KXBTC15M-26SEP151030-30",
+      "result": "no",
+      "local_buy_tags": [
+        "BTC_FADE_90"
+      ],
+      "fill_rows": 5,
+      "yes_qty_fills": "67.00",
+      "no_qty_fills": "67.00",
+      "yes_qty_settlement": "67.00",
+      "no_qty_settlement": "67.00",
+      "settlement_payout": "67.00",
+      "settlement_cost": "52.930000",
+      "settlement_fee": "1.172100",
+      "settlement_pnl": "12.897900",
+      "fill_cost": "52.930000",
+      "fill_fee": "1.172100",
+      "cost_diff": "0.000000",
+      "fee_diff": "0.000000",
+      "quantity_match": true,
+      "local_entry_matches": [
+        {
+          "local_strategy": "BTC_FADE_90",
+          "local_target_cents": 90,
+          "local_count": 67,
+          "local_price_cents": 49,
+          "matched_fill_rows": 1,
+          "matched_count": "67.00"
+        }
+      ]
+    },
+    {
+      "ticker": "KXBTC15M-26SEP160030-30",
+      "result": "yes",
+      "local_buy_tags": [
+        "BTC_FADE_90"
+      ],
+      "fill_rows": 3,
+      "yes_qty_fills": "74.00",
+      "no_qty_fills": "74.00",
+      "yes_qty_settlement": "74.00",
+      "no_qty_settlement": "74.00",
+      "settlement_payout": "74.00",
+      "settlement_cost": "57.720000",
+      "settlement_fee": "1.293000",
+      "settlement_pnl": "14.987000",
+      "fill_cost": "57.720000",
+      "fill_fee": "1.293000",
+      "cost_diff": "0.000000",
+      "fee_diff": "0.000000",
+      "quantity_match": true,
+      "local_entry_matches": [
+        {
+          "local_strategy": "BTC_FADE_90",
+          "local_target_cents": 90,
+          "local_count": 74,
+          "local_price_cents": 48,
+          "matched_fill_rows": 2,
+          "matched_count": "74.00"
+        }
+      ]
+    },
+    {
+      "ticker": "KXBTC15M-26SEP161230-30",
+      "result": "no",
+      "local_buy_tags": [
+        "NO_RECLAIM_80"
+      ],
+      "fill_rows": 3,
+      "yes_qty_fills": "63.00",
+      "no_qty_fills": "63.00",
+      "yes_qty_settlement": "63.00",
+      "no_qty_settlement": "63.00",
+      "settlement_payout": "63.00",
+      "settlement_cost": "57.330000",
+      "settlement_fee": "1.049200",
+      "settlement_pnl": "4.620800",
+      "fill_cost": "57.330000",
+      "fill_fee": "1.049200",
+      "cost_diff": "0.000000",
+      "fee_diff": "0.000000",
+      "quantity_match": true,
+      "local_entry_matches": [
+        {
+          "local_strategy": "NO_RECLAIM_80",
+          "local_target_cents": 80,
+          "local_count": 63,
+          "local_price_cents": 61,
+          "matched_fill_rows": 1,
+          "matched_count": "63.00"
+        }
+      ]
+    }
+  ]
+}

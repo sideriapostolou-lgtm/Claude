@@ -1,0 +1,301 @@
+"""Delayed public REST failures cannot revoke newer, current WS authority."""
+
+from __future__ import annotations
+
+import asyncio
+import math
+import threading
+from collections.abc import Callable
+from dataclasses import dataclass, field, replace
+from types import SimpleNamespace
+from typing import Any
+
+import pytest
+from fakes import FakeClock
+from test_speeddesk_kalshi import START, TICKER, book, trade
+from test_speeddesk_kalshi_ws import NEXT, delta, print_frame, snapshot, state
+
+from nightcrawler.config import Settings
+from nightcrawler.speeddesk import SpeedRunner
+from nightcrawler.speeddesk_kalshi import KalshiFeeds
+from nightcrawler.speeddesk_kalshi_ws import KalshiMarketWS, MarketState
+from nightcrawler.speeddesk_model import Book, Window
+
+
+@dataclass
+class Snapshot:
+    books: dict[Any, Book] = field(default_factory=dict)
+    maker_windows: frozenset[str] = frozenset()
+
+
+class Recovery:
+    """Real feed/status methods; inert downstream sinks and no network or keys."""
+
+    def __init__(self) -> None:
+        self.clock = FakeClock(START + 1)
+        self.statuses: list[dict[str, Any]] = []
+        self.trades: list[Any] = []
+        self.cancellations: list[Any] = []
+        self.runner: Any = SimpleNamespace(
+            evidence=SimpleNamespace(last_fresh={TICKER}),
+            feed_status={"coinbase": "connected", "trade_stream": True},
+            desk=SimpleNamespace(books={}, cancel=lambda *args, **kwargs: self.cancellations.append(args) or []),
+            clock=self.clock, _live_market_snapshot=Snapshot(),
+            decisions=lambda _: None, _refresh_live_snapshot=lambda: None,
+            _live_call=lambda *_: None, arena=None)
+        self.feed = KalshiFeeds(
+            Settings(), on_tick=lambda *_: None, on_book=self.on_book, on_trade=self.trades.append,
+            on_windows=lambda _: None, on_status=self.on_status, clock=self.clock.now, websocket=False)
+        self.feed.windows[TICKER] = Window(TICKER, START, START + 900, venue="kalshi")
+        self.ws = KalshiMarketWS(
+            Settings(), tickers=lambda: frozenset(self.feed.windows), on_book=self.feed._ws_book,
+            on_trade=self.trades.append, on_status=self.feed._ws_report, clock=self.clock.now)
+        self.feed._ws = self.ws
+
+    def on_status(self, value: dict[str, Any]) -> None:
+        self.statuses.append(value)
+        SpeedRunner.on_status(self.runner, {"coinbase": "connected", **value})
+
+    def on_book(self, value: Book) -> None:
+        self.runner.desk.books[value.window, value.side] = value
+        self.runner._live_market_snapshot.books[value.window, value.side] = value
+
+    def recover(self, *, prints: bool = True, deliver: bool = True) -> None:
+        self.clock.advance(0.25)
+        self.ws.connected, self.ws.state = True, state(with_snapshot=False)
+        self.ws.state.apply(snapshot(at=self.clock.now()), self.clock.now())
+        books, _ = self.ws.state.apply(delta(at=self.clock.now()), self.clock.now())
+        if prints:
+            self.ws.state.apply(print_frame(at=self.clock.now()), self.clock.now())
+        self.ws._report()
+        if deliver:
+            for value in books:
+                self.feed._ws_book(value)
+
+    async def pending(self, kind: str, mutate: Callable[[], None], *, outcome: str = "error") -> None:
+        started, release = asyncio.Event(), threading.Event()
+        loop = asyncio.get_running_loop()
+
+        def get(path: str) -> Any:
+            if kind == "tape" and "cursor=" not in path:
+                return {"trades": [trade()], "cursor": "next"}
+            loop.call_soon_threadsafe(started.set)
+            assert release.wait(5), "test did not release pending REST call"
+            if outcome == "error":
+                raise TimeoutError("synthetic REST failure")
+            if outcome == "pagination":
+                return {"trades": [trade()], "cursor": "next"}
+            return {} if outcome == "invalid" else book()
+
+        self.feed._get = get
+        task = asyncio.create_task(self.feed.poll_book() if kind == "book" else self.feed.poll_trades())
+        try:
+            await asyncio.wait_for(started.wait(), 2)
+            mutate()
+        finally:
+            release.set()
+        assert await asyncio.wait_for(task, 2)
+
+
+@pytest.mark.parametrize("kind", ["book", "tape"])
+@pytest.mark.parametrize("outcome", ["error", "invalid"])
+@pytest.mark.parametrize("rediscover", [False, True])
+def test_recovery_preserves_books_snapshot_health_and_rest_cursors(
+        kind: str, outcome: str, rediscover: bool, caplog: pytest.LogCaptureFixture) -> None:
+    case = Recovery()
+    before: dict[str, Any] = {}
+
+    def recover() -> None:
+        case.recover()
+        if rediscover:
+            case.feed.windows[TICKER] = replace(case.feed.windows[TICKER])
+        case.feed._tape_since[TICKER] = START - 1
+        case.feed._rest_trade_at[TICKER] = START + 0.5
+        before.update(status=case.feed._status.copy(), count=len(case.statuses),
+                      snapshot=case.runner._live_market_snapshot)
+
+    asyncio.run(case.pending(kind, recover, outcome=outcome))
+    assert len(case.runner.desk.books) == 2
+    assert len(case.runner._live_market_snapshot.books) == 2
+    assert case.runner._live_market_snapshot is before["snapshot"]
+    assert case.feed._status == before["status"] and len(case.statuses) == before["count"]
+    assert case.feed._tape_since == {TICKER: START - 1}
+    assert case.feed._rest_trade_at == {TICKER: START + 0.5}
+    assert not case.trades and not case.cancellations
+    assert "invalidated=False" in caplog.text
+    # Failed fallback keeps its rate slot even though it cannot revoke WS data.
+    if kind == "book":
+        case.ws.connected = False
+        assert not asyncio.run(case.feed.poll_book())
+    else:
+        assert case.feed._last_trades == START + 1
+
+
+@pytest.mark.parametrize("kind", ["book", "tape"])
+@pytest.mark.parametrize("authority", [
+    "no_ws", "disconnected", "cleared_state", "other_ticker", "undelivered", "rest_transport",
+    "stale_receipt", "stale_source", "future_receipt", "future_source", "nan_receipt", "infinite_source",
+])
+def test_current_genuine_failure_still_invalidates_with_cached_healthy_status(kind: str, authority: str) -> None:
+    case = Recovery()
+
+    def expire() -> None:
+        case.recover(deliver=authority != "undelivered")
+        assert case.feed._ws_status["ws_maker_windows"] == [TICKER]
+        if authority == "no_ws":
+            case.feed._ws = None
+        elif authority == "disconnected":
+            case.ws.connected = False
+        elif authority == "cleared_state":
+            case.ws.state = MarketState(frozenset())
+        elif authority == "other_ticker":
+            for stamps in (case.ws.state.book_at, case.ws.state.exchange_at, case.ws.state.trade_at):
+                stamps[NEXT] = stamps.pop(TICKER)
+        elif authority == "rest_transport":
+            case.feed._transport[TICKER] = "rest"
+        elif authority != "undelivered":
+            source = "source" in authority
+            stamps = case.ws.state.exchange_at if source else case.ws.state.book_at
+            stamps[TICKER] = (
+                math.nan if authority.startswith("nan") else math.inf if authority.startswith("infinite")
+                else case.clock.now() + 0.01 if authority.startswith("future") else case.clock.now() - 3.01)
+
+    asyncio.run(case.pending(kind, expire))
+    assert case.statuses[-1]["gap_windows"] == [TICKER]
+    assert case.feed._status["markets"] == ("book_unavailable" if kind == "book" else "trade_tape_gap")
+    assert not case.runner.desk.books and not case.runner._live_market_snapshot.books
+    assert case.cancellations and TICKER not in case.feed._rest_trade_at
+    assert not case.trades
+    if kind == "tape":
+        assert case.feed._tape_since[TICKER] == START + 1
+
+
+@pytest.mark.parametrize("print_age", [None, 3.01, -0.01, math.nan, math.inf, -math.inf])
+def test_tape_requires_real_fresh_print_even_when_book_and_cached_status_are_fresh(print_age: float | None) -> None:
+    case = Recovery()
+
+    def recover_book_only() -> None:
+        case.recover()
+        if print_age is None:
+            case.ws.state.trade_at.clear()
+        else:
+            case.ws.state.trade_at[TICKER] = case.clock.now() - print_age
+
+    asyncio.run(case.pending("tape", recover_book_only))
+    assert case.ws.fresh_books() == {TICKER}
+    assert case.statuses[-1]["gap_windows"] == [TICKER]
+    assert not case.runner.desk.books and not case.trades
+
+
+def test_book_recovery_does_not_require_trade_permission() -> None:
+    case = Recovery()
+    asyncio.run(case.pending("book", lambda: case.recover(prints=False)))
+    assert len(case.runner.desk.books) == 2
+    assert not case.statuses[-1]["gap_windows"]
+    assert not case.ws.fresh_maker_windows()
+
+
+def test_incomplete_five_page_tape_after_recovery_neither_delivers_nor_advances_cursor() -> None:
+    case = Recovery()
+    case.feed._tape_since[TICKER] = START - 1
+    asyncio.run(case.pending("tape", case.recover, outcome="pagination"))
+    assert case.feed._tape_since[TICKER] == START - 1
+    assert not case.trades and not case.cancellations
+    assert len(case.runner.desk.books) == 2
+    assert not case.statuses[-1]["gap_windows"]
+
+
+@pytest.mark.parametrize("kind", ["book", "tape"])
+@pytest.mark.parametrize("replacement", [False, True])
+@pytest.mark.parametrize("outcome", ["error", "invalid"])
+def test_retired_failure_cannot_mutate_current_health_or_revive_cursors(
+        kind: str, replacement: bool, outcome: str) -> None:
+    case = Recovery()
+    before: dict[str, Any] = {}
+
+    def retire() -> None:
+        case.feed.windows.clear()
+        if replacement:
+            case.feed.windows[NEXT] = Window(NEXT, START, START + 900, venue="kalshi")
+        case.feed._tape_since[NEXT] = START
+        case.feed._rest_trade_at[NEXT] = START
+        before.update(status=case.feed._status.copy(), count=len(case.statuses))
+
+    asyncio.run(case.pending(kind, retire, outcome=outcome))
+    assert case.feed._tape_since == {NEXT: START} and case.feed._rest_trade_at == {NEXT: START}
+    assert case.feed._status == before["status"] and len(case.statuses) == before["count"]
+    assert not case.cancellations and not case.trades
+
+
+@pytest.mark.parametrize("kind", ["book", "tape"])
+def test_failure_before_recovery_remains_an_original_gap(kind: str) -> None:
+    case = Recovery()
+    asyncio.run(case.pending(kind, lambda: None))
+    original = case.statuses[-1]
+    assert original["gap_windows"] == [TICKER]
+    case.recover()
+    assert len(case.runner.desk.books) == 2 and not case.statuses[-1]["gap_windows"]
+    assert original["gap_windows"] == [TICKER]
+    # A later genuine expiry still clears the actual downstream recovered books.
+    case.clock.advance(3.01)
+    case.ws._report()
+    assert not case.runner.desk.books and not case.runner._live_market_snapshot.books
+
+
+@pytest.mark.parametrize("kind", ["book", "tape"])
+def test_inclusive_freshness_boundary_preserves_recovered_book(kind: str) -> None:
+    case = Recovery()
+
+    def recover_at_boundary() -> None:
+        case.recover()
+        case.clock.advance(3)
+
+    asyncio.run(case.pending(kind, recover_at_boundary))
+    assert case.ws.fresh_maker_windows() == {TICKER}
+    assert len(case.runner.desk.books) == 2
+    case.ws._report()
+    assert case.statuses[-1]["ws_maker_windows"] == [TICKER]
+    case.clock.advance(0.001)
+    assert not case.ws.fresh_maker_windows()
+    case.ws._report()
+    assert case.statuses[-1]["gap_windows"] == [TICKER]
+
+
+@pytest.mark.parametrize("book_at,print_at,expected", [
+    (START + 1, START + 4, True),  # Both valid at the inclusive bound before books expire.
+    (START + 4.001, START + 4.001, False),  # Both are still future at the evaluation instant.
+])
+def test_accessor_evaluates_book_and_print_at_one_instant(book_at: float, print_at: float, expected: bool) -> None:
+    case = Recovery()
+    case.recover()
+    case.ws.state.book_at[TICKER] = case.ws.state.exchange_at[TICKER] = book_at
+    case.ws.state.trade_at[TICKER] = print_at
+    calls: list[float] = []
+
+    def advancing_clock() -> float:
+        calls.append(START + 4 + len(calls) * 0.001)
+        return calls[-1]
+
+    case.ws._clock = advancing_clock
+    assert bool(case.ws.fresh_maker_windows()) is expected
+    assert calls == [START + 4]
+    assert bool(case.ws.fresh_maker_windows()) is not expected
+
+
+def test_report_cannot_publish_maker_permission_for_a_book_it_reports_as_future() -> None:
+    case = Recovery()
+    case.recover()
+    at = START + 4.001
+    case.ws.state.book_at[TICKER] = case.ws.state.exchange_at[TICKER] = case.ws.state.trade_at[TICKER] = at
+    calls: list[float] = []
+
+    def advancing_clock() -> float:
+        calls.append(START + 4 + len(calls) * 0.001)
+        return calls[-1]
+
+    case.ws._clock = advancing_clock
+    case.ws._report()
+    assert not case.statuses[-1]["ws_books"] and not case.statuses[-1]["ws_maker_windows"]
+    assert calls == [START + 4]
+    case.ws._report()
+    assert case.statuses[-1]["ws_books"] == case.statuses[-1]["ws_maker_windows"] == [TICKER]

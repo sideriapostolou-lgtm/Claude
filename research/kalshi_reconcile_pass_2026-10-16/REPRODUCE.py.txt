@@ -1,0 +1,49 @@
+"""Restore this task's lossless evidence into a new directory; rerun local-only audits."""
+from pathlib import Path
+import base64
+import gzip
+import hashlib
+import json
+import subprocess
+import sys
+
+HERE = Path(__file__).resolve().parent
+manifest = json.loads((HERE/'EVIDENCE_MANIFEST.json').read_text())
+chunks=[]
+for part in manifest['parts']:
+    raw=(HERE/part['path']).read_bytes()
+    assert len(raw)==part['size'] and hashlib.sha256(raw).hexdigest()==part['sha256'],part['path']
+    chunks.append(raw.decode().strip())
+compressed=base64.b64decode(''.join(chunks),validate=True)
+assert hashlib.sha256(compressed).hexdigest()==manifest['gzip_sha256']
+archive=json.loads(gzip.decompress(compressed))
+assert archive['format']=='task-only-lossless-utf8-evidence-v1'
+target=Path(sys.argv[1] if len(sys.argv)>1 else 'restored-kalshi-reconcile-evidence').resolve()
+target.mkdir(parents=True,exist_ok=False)
+assert len(archive['files'])==manifest['file_count']
+for entry in archive['files']:
+    relative=Path(entry['path'])
+    assert not relative.is_absolute() and '..' not in relative.parts
+    path=target/relative
+    assert path.resolve().is_relative_to(target)
+    raw=entry['text'].encode('utf-8')
+    assert len(raw)==entry['size'] and hashlib.sha256(raw).hexdigest()==entry['sha256'],entry['path']
+    path.parent.mkdir(parents=True,exist_ok=True)
+    path.write_bytes(raw)
+steps=[('extract/extract_oct15_utc.py', ['extract/OCT15_UTC_NATIVE_MANIFEST.json','extract/OCT15_UTC_NATIVE_REPORT.md']),
+       ('astra/audit_oct15_cohort.py',['astra/OCT15_COHORT_ANALYSIS.json']),
+       ('astra/audit_actual_attribution.py',['astra/ACTUAL_ATTRIBUTION.json']),
+       ('audit_runtime.py',['RUNTIME_AUDIT.json']),
+       ('astra/audit_pr71_retention.py',['astra/PR71_RETENTION_ANALYSIS.json'])]
+expected={entry['path']:entry['sha256'] for entry in manifest['files']}
+for name,value in manifest['derived_manifest_reproduction'].items():
+    expected['extract/'+name]=value['original']
+if (target/'audit_pending.py').exists():
+    steps.append(('audit_pending.py',['PENDING_RETENTION.json']))
+for script,outputs in steps:
+    with (target/(Path(script).name+'.replay.log')).open('w') as log:
+        subprocess.run([sys.executable,str(target/script)],cwd=target,stdout=log,stderr=subprocess.STDOUT,check=True)
+    for output in outputs:
+        assert hashlib.sha256((target/output).read_bytes()).hexdigest()==expected[output],output
+    print(script+': passed; outputs byte-identical')
+print(str(manifest['file_count'])+' exact originals restored; no network, credentials or trading used.')

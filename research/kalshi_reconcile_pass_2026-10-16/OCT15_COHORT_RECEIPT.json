@@ -1,0 +1,14 @@
+{
+  "checks_passed": 1105,
+  "checks_total": 1105,
+  "files": {
+    "audit_oct15_cohort.py": "74f5bc77906a277fa09661f9554349866c82d6929af063752dda8e1eb3e1fc5b",
+    "OCT15_COHORT_ANALYSIS.json": "92ba3b0f1dfd63cf762a42e0cd0f68d112da6c5996b4ac94d012977e19b6cb9c",
+    "OCT15_COHORT_REVIEW.md": "0bb63176699021c8b03a30b8b6eb8aea5192092e81448c5212b65dd64f587726",
+    "OCT15_COHORT_RUN.log": "284bebedbdc9133f367bc973766a28f04ebdb23386f6673bb84cc024f51148c8"
+  },
+  "replay_writes_only": [
+    "OCT15_COHORT_ANALYSIS.json"
+  ],
+  "source_or_production_mutations": false
+}

@@ -1,0 +1,29 @@
+{
+  "content": [
+    {
+      "type": "text",
+      "text": "**Deployment c64e8199-4ce2-4234-ac53-63905e22231d** [REMOVED]\nservice: f84d3b52-002f-44cb-931e-bc9e3e097e97, env: 17f7b0e0-104c-4903-9484-0106748b3cdb\n\n### Deploy logs (1)\n2026-10-15T18:18:59.561198305Z info 2026-10-15T18:18:59Z INFO nightcrawler.speeddesk: speeddesk_live_fill {\"at\":1792088337.791504,\"venue\":\"kalshi\",\"fill_id\":\"072443ee-43c9-bd76-940d-5d92663b2e0b\",\"order_id\":\"01a140c9-ea68-70b4-8a9f-90e8d4236c0f\",\"client_order_id\":\"nc-speed-d2e19b8643184b63806eb631aad59665\",\"window\":\"KXBTC15M-26OCT151430-30\",\"side\":\"down\",\"price\":0.41,\"size\":1.0,\"fee_usd\":0.0,\"is_taker\":false}"
+    }
+  ],
+  "structuredContent": {
+    "scope": "deployment",
+    "deploymentId": "c64e8199-4ce2-4234-ac53-63905e22231d",
+    "serviceId": "f84d3b52-002f-44cb-931e-bc9e3e097e97",
+    "environmentId": "17f7b0e0-104c-4903-9484-0106748b3cdb",
+    "status": "REMOVED",
+    "deploy": [
+      {
+        "timestamp": "2026-10-15T18:18:59.561198305Z",
+        "severity": "info",
+        "message": "2026-10-15T18:18:59Z INFO nightcrawler.speeddesk: speeddesk_live_fill {\"at\":1792088337.791504,\"venue\":\"kalshi\",\"fill_id\":\"072443ee-43c9-bd76-940d-5d92663b2e0b\",\"order_id\":\"01a140c9-ea68-70b4-8a9f-90e8d4236c0f\",\"client_order_id\":\"nc-speed-d2e19b8643184b63806eb631aad59665\",\"window\":\"KXBTC15M-26OCT151430-30\",\"side\":\"down\",\"price\":0.41,\"size\":1.0,\"fee_usd\":0.0,\"is_taker\":false}",
+        "attributes": [
+          {
+            "key": "level",
+            "value": "\"info\""
+          }
+        ]
+      }
+    ]
+  },
+  "isError": false
+}

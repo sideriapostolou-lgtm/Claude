@@ -1,0 +1,364 @@
+{
+ "about": "The cast's 3D sources (Higgsfield jobs) and how build_cast.mjs turns them into the page's files. Raw downloads are not committed (17 MB each); re-download them from the URLs into the raw folder.",
+ "out_dir": "../../src/nightcrawler/office_assets",
+ "library": {
+  "rest_from": "idle",
+  "file": "clips.glb"
+ },
+ "clips": {
+  "idle": {
+   "raw": "clip_idle.glb",
+   "action": 0,
+   "action_name": "Idle",
+   "loop": true,
+   "job": "2a2959d8-2844-4113-a8e1-3ff616bb2bde",
+   "url": "https://d8j0ntlcm91z4.cloudfront.net/user_37raYK73mveR4zPEdz9xgOVsef4/hf_20261009_191510_2a2959d8-2844-4113-a8e1-3ff616bb2bde.glb"
+  },
+  "chat": {
+   "raw": "clip_chat.glb",
+   "action": 56,
+   "action_name": "Stand_and_Chat",
+   "loop": true,
+   "job": "64c0dfe7-4a08-4b30-b4d1-71528273eee4",
+   "url": "https://d8j0ntlcm91z4.cloudfront.net/user_37raYK73mveR4zPEdz9xgOVsef4/hf_20261009_191512_64c0dfe7-4a08-4b30-b4d1-71528273eee4.glb"
+  },
+  "talk": {
+   "raw": "clip_talk.glb",
+   "action": 313,
+   "action_name": "Talk_with_Hands_Open",
+   "loop": true,
+   "job": "9c6d7d01-bc5c-40bf-9793-c5cf3a01e81b",
+   "url": "https://d8j0ntlcm91z4.cloudfront.net/user_37raYK73mveR4zPEdz9xgOVsef4/hf_20261009_191514_9c6d7d01-bc5c-40bf-9793-c5cf3a01e81b.glb"
+  },
+  "sit": {
+   "raw": "clip_sit.glb",
+   "action": 33,
+   "action_name": "Chair_Sit_Idle_M",
+   "loop": true,
+   "job": "c6a48d78-c27c-4736-8a5f-d51d6cd3f6c1",
+   "url": "https://d8j0ntlcm91z4.cloudfront.net/user_37raYK73mveR4zPEdz9xgOVsef4/hf_20261009_191515_c6a48d78-c27c-4736-8a5f-d51d6cd3f6c1.glb"
+  },
+  "cheer": {
+   "raw": "clip_cheer.glb",
+   "action": 59,
+   "action_name": "Victory_Cheer",
+   "loop": false,
+   "job": "d76630f9-8cf9-4b2d-95ee-7e4a04e3bd63",
+   "url": "https://d8j0ntlcm91z4.cloudfront.net/user_37raYK73mveR4zPEdz9xgOVsef4/hf_20261009_191516_d76630f9-8cf9-4b2d-95ee-7e4a04e3bd63.glb"
+  },
+  "shrug": {
+   "raw": "clip_shrug.glb",
+   "action": 317,
+   "action_name": "Shrug",
+   "loop": false,
+   "job": "6d433c57-ac91-464a-a90c-2b64bc590740",
+   "url": "https://d8j0ntlcm91z4.cloudfront.net/user_37raYK73mveR4zPEdz9xgOVsef4/hf_20261009_191517_6d433c57-ac91-464a-a90c-2b64bc590740.glb"
+  },
+  "walk_casual": {
+   "raw": "clip_walk_casual.glb",
+   "action": 613,
+   "action_name": "Casual_Walk_inplace",
+   "loop": true,
+   "job": "ca7d6c7d-4622-45c0-98f4-8c21ffae2674",
+   "url": "https://d8j0ntlcm91z4.cloudfront.net/user_37raYK73mveR4zPEdz9xgOVsef4/hf_20261009_192841_ca7d6c7d-4622-45c0-98f4-8c21ffae2674.glb",
+   "walk": true
+  },
+  "walk_skip": {
+   "raw": "clip_walk_skip.glb",
+   "action": 668,
+   "action_name": "Skip_Forward_inplace",
+   "loop": true,
+   "job": "56296105-9d41-4ab9-b027-66fa28a460af",
+   "url": "https://d8j0ntlcm91z4.cloudfront.net/user_37raYK73mveR4zPEdz9xgOVsef4/hf_20261009_192841_56296105-9d41-4ab9-b027-66fa28a460af.glb",
+   "walk": true
+  },
+  "nod": {
+   "raw": "clip_nod.glb",
+   "action": 25,
+   "action_name": "Agree_Gesture",
+   "loop": false,
+   "job": "3636bd6d-e814-4353-8827-2a10607f34d7",
+   "url": "https://d8j0ntlcm91z4.cloudfront.net/user_37raYK73mveR4zPEdz9xgOVsef4/hf_20261009_192842_3636bd6d-e814-4353-8827-2a10607f34d7.glb"
+  },
+  "wave": {
+   "raw": "clip_wave.glb",
+   "action": 290,
+   "action_name": "Wave_One_Hand",
+   "loop": false,
+   "job": "a779e4d3-f522-49f2-9298-95a2b08b182d",
+   "url": "https://d8j0ntlcm91z4.cloudfront.net/user_37raYK73mveR4zPEdz9xgOVsef4/hf_20261009_192843_a779e4d3-f522-49f2-9298-95a2b08b182d.glb"
+  },
+  "drink": {
+   "raw": "clip_drink.glb",
+   "action": 342,
+   "action_name": "Stand_and_Drink",
+   "loop": true,
+   "job": "59b07823-caae-4033-9be2-fb9400538b76",
+   "url": "https://d8j0ntlcm91z4.cloudfront.net/user_37raYK73mveR4zPEdz9xgOVsef4/hf_20261009_192845_59b07823-caae-4033-9be2-fb9400538b76.glb"
+  },
+  "look": {
+   "raw": "clip_look.glb",
+   "action": 336,
+   "action_name": "Long_Breathe_and_Look_Around",
+   "loop": true,
+   "job": "3cde9611-1bae-4875-8eaf-c38ac2410eeb",
+   "url": "https://d8j0ntlcm91z4.cloudfront.net/user_37raYK73mveR4zPEdz9xgOVsef4/hf_20261009_192846_3cde9611-1bae-4875-8eaf-c38ac2410eeb.glb"
+  },
+  "carry": {
+   "raw": "clip_carry.glb",
+   "action": 611,
+   "action_name": "Carry_Heavy_Object_Walk_inplace",
+   "loop": true,
+   "job": "5efe9c17-563e-4260-bb39-0ebe2a7297a0",
+   "url": "https://d8j0ntlcm91z4.cloudfront.net/user_37raYK73mveR4zPEdz9xgOVsef4/hf_20261009_192848_5efe9c17-563e-4260-bb39-0ebe2a7297a0.glb",
+   "walk": true
+  },
+  "sit_talk": {
+   "raw": "clip_sit_talk.glb",
+   "action": 307,
+   "action_name": "Sitting_Answering_Questions",
+   "loop": true,
+   "job": "1aae08c7-f8f3-48cd-bd5c-f7fe5d2758e7",
+   "url": "https://d8j0ntlcm91z4.cloudfront.net/user_37raYK73mveR4zPEdz9xgOVsef4/hf_20261009_192850_1aae08c7-f8f3-48cd-bd5c-f7fe5d2758e7.glb"
+  },
+  "think": {
+   "raw": "clip_think.glb",
+   "action": 36,
+   "action_name": "Confused_Scratch",
+   "loop": false,
+   "job": "9778d153-e86e-4c70-b0cf-37411a814835",
+   "url": "https://d8j0ntlcm91z4.cloudfront.net/user_37raYK73mveR4zPEdz9xgOVsef4/hf_20261009_192851_9778d153-e86e-4c70-b0cf-37411a814835.glb"
+  },
+  "worried": {
+   "raw": "clip_worried.glb",
+   "action": 316,
+   "action_name": "Headache_Relief",
+   "loop": false,
+   "job": "eb463ed6-b960-49ec-a49f-60c03a26b420",
+   "url": "https://d8j0ntlcm91z4.cloudfront.net/user_37raYK73mveR4zPEdz9xgOVsef4/hf_20261009_192852_eb463ed6-b960-49ec-a49f-60c03a26b420.glb"
+  },
+  "scheme": {
+   "raw": "clip_scheme.glb",
+   "action": 318,
+   "action_name": "Scheming_Hand_Rub",
+   "loop": false,
+   "job": "03417ad3-2d37-4394-8ca2-ab1139ca705f",
+   "url": "https://d8j0ntlcm91z4.cloudfront.net/user_37raYK73mveR4zPEdz9xgOVsef4/hf_20261009_192853_03417ad3-2d37-4394-8ca2-ab1139ca705f.glb"
+  },
+  "listen": {
+   "raw": "clip_listen.glb",
+   "action": 47,
+   "action_name": "Listening_Gesture",
+   "loop": true,
+   "job": "6aeaefc2-74f2-4130-883f-497193b4de18",
+   "url": "https://d8j0ntlcm91z4.cloudfront.net/user_37raYK73mveR4zPEdz9xgOVsef4/hf_20261009_192854_6aeaefc2-74f2-4130-883f-497193b4de18.glb"
+  },
+  "walk_quick": {
+   "raw": "jet_rig.glb",
+   "action": 115,
+   "action_name": "Quick_Walk",
+   "loop": true,
+   "job": "4af1790c-e785-482e-89d5-b7c996221a30",
+   "url": "https://d8j0ntlcm91z4.cloudfront.net/user_37raYK73mveR4zPEdz9xgOVsef4/hf_20261009_191959_4af1790c-e785-482e-89d5-b7c996221a30.glb",
+   "walk": true
+  },
+  "walk_penguin": {
+   "raw": "voss_rig.glb",
+   "action": 62,
+   "action_name": "penguin_walk",
+   "loop": true,
+   "walk": true,
+   "job": "0355358a-89a5-491f-87d1-5be23f3130e2",
+   "url": "https://d8j0ntlcm91z4.cloudfront.net/user_37raYK73mveR4zPEdz9xgOVsef4/hf_20261009_193311_0355358a-89a5-491f-87d1-5be23f3130e2.glb"
+  },
+  "walk_heavy": {
+   "raw": "rook_rig.glb",
+   "action": 669,
+   "action_name": "Slow_Orc_Walk_inplace",
+   "loop": true,
+   "walk": true,
+   "job": "d285283f-24d9-4104-b45b-e7c2a1d9e052",
+   "url": "https://d8j0ntlcm91z4.cloudfront.net/user_37raYK73mveR4zPEdz9xgOVsef4/hf_20261009_193312_d285283f-24d9-4104-b45b-e7c2a1d9e052.glb"
+  }
+ },
+ "characters": {
+  "voss": {
+   "kind": "biped",
+   "raw": "voss_rig.glb",
+   "walk": "walk_penguin",
+   "mesh_job": "6f7b86ee-ee48-4b76-a868-cc53c558851d",
+   "mesh_url": "https://d8j0ntlcm91z4.cloudfront.net/user_37raYK73mveR4zPEdz9xgOVsef4/hf_20261009_191435_6f7b86ee-ee48-4b76-a868-cc53c558851d.glb",
+   "rig_job": "0355358a-89a5-491f-87d1-5be23f3130e2"
+  },
+  "pip": {
+   "kind": "biped",
+   "raw": "clip_idle.glb",
+   "walk": "walk_skip",
+   "mesh_job": "339edf66-9b46-4987-b054-7cae91da5e71",
+   "rig_job": "2bf5d717-bb0c-41da-8f76-034211930b34"
+  },
+  "nyx": {
+   "kind": "octopus",
+   "raw": "nyx_mesh.glb",
+   "yaw": -1.5708,
+   "tris": 45000,
+   "mesh_job": "3ccfd5ee-8174-4866-8c6c-2d78f652617f",
+   "mesh_url": "https://d8j0ntlcm91z4.cloudfront.net/user_37raYK73mveR4zPEdz9xgOVsef4/hf_20261009_191444_3ccfd5ee-8174-4866-8c6c-2d78f652617f.glb"
+  },
+  "rook": {
+   "kind": "biped",
+   "raw": "rook_rig.glb",
+   "walk": "walk_heavy",
+   "mesh_job": "088174ba-07d8-4b57-a731-b43cda2b02b8",
+   "mesh_url": "https://d8j0ntlcm91z4.cloudfront.net/user_37raYK73mveR4zPEdz9xgOVsef4/hf_20261009_191438_088174ba-07d8-4b57-a731-b43cda2b02b8.glb",
+   "rig_job": "d285283f-24d9-4104-b45b-e7c2a1d9e052"
+  },
+  "mote": {
+   "kind": "blob",
+   "raw": "mote_mesh.glb",
+   "yaw": -1.5708,
+   "tris": 30000,
+   "mesh_job": "aef7640f-42c8-4b20-aa2b-9c9f6442c4c7",
+   "mesh_url": "https://d8j0ntlcm91z4.cloudfront.net/user_37raYK73mveR4zPEdz9xgOVsef4/hf_20261009_191446_aef7640f-42c8-4b20-aa2b-9c9f6442c4c7.glb"
+  },
+  "motecart": {
+   "kind": "prop",
+   "role": "mote_cart",
+   "raw": "motecart_mesh.glb",
+   "yaw": 0,
+   "tris": 40000,
+   "mesh_job": "aa2d212a-ec46-4410-bdd2-5ce99b4f5de6",
+   "mesh_url": "https://d8j0ntlcm91z4.cloudfront.net/user_37raYK73mveR4zPEdz9xgOVsef4/hf_20261009_191449_aa2d212a-ec46-4410-bdd2-5ce99b4f5de6.glb"
+  },
+  "jet": {
+   "kind": "biped",
+   "raw": "jet_rig.glb",
+   "walk": "walk_quick",
+   "mesh_job": "77a22e57-0eba-4130-8046-31d3bb8dace8",
+   "mesh_url": "https://d8j0ntlcm91z4.cloudfront.net/user_37raYK73mveR4zPEdz9xgOVsef4/hf_20261009_191440_77a22e57-0eba-4130-8046-31d3bb8dace8.glb",
+   "rig_job": "4af1790c-e785-482e-89d5-b7c996221a30"
+  }
+ },
+ "props": {
+  "missiontable": {
+   "raw": "prop_missiontable.glb",
+   "role": "the round holo table in the mission courtyard (Voss)",
+   "height_m": 1.0,
+   "tris": 40000,
+   "tex": 1024,
+   "job": "f074d1a6-ba56-4ad7-a01b-84d5d1da50fe",
+   "url": "https://d8j0ntlcm91z4.cloudfront.net/user_37raYK73mveR4zPEdz9xgOVsef4/hf_20261009_193659_f074d1a6-ba56-4ad7-a01b-84d5d1da50fe.glb",
+   "yaw": 0
+  },
+  "telescope": {
+   "raw": "prop_telescope.glb",
+   "role": "the observatory telescope",
+   "height_m": 2.4,
+   "tris": 40000,
+   "tex": 1024,
+   "job": "d0c25333-256a-47ea-923d-b0fdf0171f7d",
+   "url": "https://d8j0ntlcm91z4.cloudfront.net/user_37raYK73mveR4zPEdz9xgOVsef4/hf_20261009_193702_d0c25333-256a-47ea-923d-b0fdf0171f7d.glb",
+   "yaw": 0
+  },
+  "vaultdoor": {
+   "raw": "prop_vaultdoor.glb",
+   "role": "the vault's round door (Rook)",
+   "height_m": 2.6,
+   "tris": 40000,
+   "tex": 1024,
+   "job": "628775c9-c461-459a-b919-97c705c4ca8c",
+   "url": "https://d8j0ntlcm91z4.cloudfront.net/user_37raYK73mveR4zPEdz9xgOVsef4/hf_20261009_193704_628775c9-c461-459a-b919-97c705c4ca8c.glb",
+   "yaw": -1.5708
+  },
+  "workbench": {
+   "raw": "prop_workbench.glb",
+   "role": "Pip's workbench",
+   "height_m": 1.05,
+   "tris": 40000,
+   "tex": 1024,
+   "job": "2171c981-65df-482c-af5c-bd40a7fa83f8",
+   "url": "https://d8j0ntlcm91z4.cloudfront.net/user_37raYK73mveR4zPEdz9xgOVsef4/hf_20261009_193707_2171c981-65df-482c-af5c-bd40a7fa83f8.glb",
+   "yaw": -1.5708
+  },
+  "nyxdesk": {
+   "raw": "prop_nyxdesk.glb",
+   "role": "Nyx's curved analysis desk",
+   "height_m": 1.5,
+   "tris": 40000,
+   "tex": 1024,
+   "job": "a7636cf7-0dac-4076-b923-288801f396c4",
+   "url": "https://d8j0ntlcm91z4.cloudfront.net/user_37raYK73mveR4zPEdz9xgOVsef4/hf_20261009_193710_a7636cf7-0dac-4076-b923-288801f396c4.glb",
+   "yaw": -1.5708
+  },
+  "archive": {
+   "raw": "prop_archive.glb",
+   "role": "Mote's crystal archive shelf",
+   "height_m": 2.8,
+   "tris": 40000,
+   "tex": 1024,
+   "job": "088717d8-d5ff-45e1-b093-dd2187b636ba",
+   "url": "https://d8j0ntlcm91z4.cloudfront.net/user_37raYK73mveR4zPEdz9xgOVsef4/hf_20261009_193712_088717d8-d5ff-45e1-b093-dd2187b636ba.glb",
+   "yaw": -1.5708
+  },
+  "airship": {
+   "raw": "prop_airship.glb",
+   "role": "Jet's courier airship at the dock",
+   "height_m": 3.2,
+   "tris": 40000,
+   "tex": 1024,
+   "job": "5c6fc036-2615-4579-ba1b-7a1a0974c63e",
+   "url": "https://d8j0ntlcm91z4.cloudfront.net/user_37raYK73mveR4zPEdz9xgOVsef4/hf_20261009_193714_5c6fc036-2615-4579-ba1b-7a1a0974c63e.glb",
+   "yaw": 0
+  },
+  "kiosk": {
+   "raw": "prop_kiosk.glb",
+   "role": "the rooftop espresso kiosk",
+   "height_m": 2.8,
+   "tris": 40000,
+   "tex": 1024,
+   "job": "8222e38d-d2d3-4ebb-8997-29a9547e2b40",
+   "url": "https://d8j0ntlcm91z4.cloudfront.net/user_37raYK73mveR4zPEdz9xgOVsef4/hf_20261009_193716_8222e38d-d2d3-4ebb-8997-29a9547e2b40.glb",
+   "yaw": -1.5708
+  },
+  "lantern": {
+   "raw": "prop_lantern.glb",
+   "role": "walkway lanterns",
+   "height_m": 2.6,
+   "tris": 20000,
+   "tex": 512,
+   "job": "bbd42c0d-ef71-416a-8c8a-771903b1a6da",
+   "url": "https://d8j0ntlcm91z4.cloudfront.net/user_37raYK73mveR4zPEdz9xgOVsef4/hf_20261009_193718_bbd42c0d-ef71-416a-8c8a-771903b1a6da.glb",
+   "yaw": 0
+  },
+  "arch": {
+   "raw": "prop_arch.glb",
+   "role": "the flowered stone arches",
+   "height_m": 3.4,
+   "tris": 40000,
+   "tex": 1024,
+   "job": "d8df6eac-929d-4fde-96c3-386d7574d95a",
+   "url": "https://d8j0ntlcm91z4.cloudfront.net/user_37raYK73mveR4zPEdz9xgOVsef4/hf_20261009_193722_d8df6eac-929d-4fde-96c3-386d7574d95a.glb",
+   "yaw": -1.5708
+  },
+  "rookdesk": {
+   "raw": "prop_rookdesk.glb",
+   "role": "Rook's risk desk with the scales",
+   "height_m": 1.3,
+   "tris": 40000,
+   "tex": 1024,
+   "job": "db8d0ffa-757e-4d77-b9cc-5927532b8f10",
+   "url": "https://d8j0ntlcm91z4.cloudfront.net/user_37raYK73mveR4zPEdz9xgOVsef4/hf_20261009_193724_db8d0ffa-757e-4d77-b9cc-5927532b8f10.glb",
+   "yaw": -1.5708
+  },
+  "island": {
+   "raw": "prop_island.glb",
+   "role": "small floating islands around the headquarters",
+   "height_m": 6.0,
+   "tris": 40000,
+   "tex": 1024,
+   "job": "ad015cb6-a2b3-444c-83b0-ddf7967c4f68",
+   "url": "https://d8j0ntlcm91z4.cloudfront.net/user_37raYK73mveR4zPEdz9xgOVsef4/hf_20261009_193727_ad015cb6-a2b3-444c-83b0-ddf7967c4f68.glb",
+   "yaw": 0
+  }
+ }
+}

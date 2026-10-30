@@ -1,0 +1,3 @@
+# the ledger lock and its atomic-write temp file (core.record_runs)
+trials.json.lock
+trials.json.tmp

@@ -1,0 +1,33 @@
+# Partial loss and cohort review
+
+Source: `/workspace/private-handoffs/claude-2026-10-15/PR66_PRECAP_CONTROLS_NATIVE.json`  
+SHA-256: `3f7799bc958e9093f846f9623beb2549908ef0c2a4f2932d9df5bd27ddc01a62`  
+Selected evidence: latest exact original `INFO nightcrawler.speeddesk: speeddesk_live_status` line (wrapper text line 9); nested copies were excluded. Log timestamp `2026-10-15T21:39:48.144889077Z info`; embedded `at` 1792100387.900 and `as_of` 1792100387.866 UTC epoch seconds.
+
+The status says **mode `paper`**, `configured_mode: live`, `status: PRACTICE`, `trading_now: false`, with the daily loss stop latched and reason: “Daily loss stop; no new risk until 00:00 UTC or the owner's day reset”. Cash was **$30.2496**; reserved, open risk, open cost and at-risk were each **$0**, and open orders were **0**. Reported caps: window $10.00, open $20.00, day stop $6.00, total stop $10.00, clip 5.
+
+## October 15 raw daily aggregate
+
+This is the top-level `today` aggregate: 69 windows, 302 fills, 71 settled windows; P&L **$-5.0447**, comprising locked **$4.5012**, directional **$-9.5459**, and fees **$0.8455**. It also reports 3582 maker orders / 224 maker fills, 61 locks / 39 lock fills, and 0 take attempts / 0 take fills.
+
+## October 15 fully observed scorecard cohort
+
+The separate scorecard covers **27 fully observed windows out of 79 eligible**; **52 are gap windows**. Of the complete cohort, 26 traded windows generated 124 fills and 167.83 matched pairs. Pair cost: **$1.0272**; cohort fees: **$0.3744**. Cohort P&L is **$-10.0028**: locked **$-4.5708**, directional **$-5.4320**. This differs from raw daily totals because it is a deliberately narrower fully observed population; do not add or substitute one for the other. The day is still open, `day_complete` is false, and the scorecard says full-day discovery/recording coverage is uncertified and some window coverage or fill history is missing or invalid.
+
+## Where the recorded losses sit
+
+In the fully observed October 15 cohort, both components are negative: **$4.5708 locked** and **$5.4320 directional**, with directional loss larger. In the raw October 15 aggregate, locked P&L is positive **$4.5012**, while directional P&L is negative **$9.5459** and larger in magnitude, producing the raw net loss. These are two different populations and neither supports attributing a cause to the strategy. In the scorecard, per-window results apply only to its observed sample; they do not represent missing windows or the whole day.
+
+## Prior completed UTC day reports
+
+These are top-level `reports[day].real` values in the selected original. Raw aggregates and scorecards remain separate:
+
+| UTC day | Raw reported windows / fills | Raw P&L (locked; directional; fees) | Scorecard coverage | Scorecard P&L (locked; directional; fees; matched pair cost) |
+|---|---:|---:|---|---|
+| 2026-10-12 | 2 / 3 | $1.0653 ($0.0000; $1.0653; $0.0697) | 0/19 complete, 5 gaps; partial | unknown |
+| 2026-10-13 | 68 / 299 | $-11.0074 ($-0.2566; $-10.7508; $1.5004) | 6/96 complete, 90 gaps; partial | $-2.9150 ($0.5317; $-3.4467; $0.0350; pair cost $0.7342) |
+| 2026-10-14 | 41 / 222 | $-4.5050 ($-0.5646; $-3.9404; $0.7011) | 0/96 complete, 96 gaps; partial | unknown |
+
+The prior scorecards remain partial even though each UTC day ended. October 12 and 14 have no complete scorecard windows, so their cohort financial fields stay null/unknown. October 13 has only 6 of 96 eligible windows complete, with 90 gaps; its scorecard P&L is only that subset. Raw prior-day values do not fill those gaps. This evidence therefore cannot support a clean full-day or entire-history strategy verdict, a causal explanation of losses, or a profit claim.
+
+Per-original field extraction and all nulls are preserved in [`partial_loss_cohort_review.json`](partial_loss_cohort_review.json). No raw full panels are included.

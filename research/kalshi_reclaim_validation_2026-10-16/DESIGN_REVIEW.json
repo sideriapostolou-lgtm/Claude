@@ -1,0 +1,14 @@
+{
+  "protocol_sha256": "91ff9c423b9b0ea4a594db9815ff0dc654a447baef23be63fa5b98338b64707b",
+  "requested_review_role": "gpt-6-astra/high",
+  "declaration_approved": true,
+  "implementation_approved": false,
+  "results_reviewed": false,
+  "confirmation_observations_opened": false,
+  "corrections": [
+    "Seal confirmation feature/candle history as well as outcomes/books.",
+    "Unknown attempted entries cannot be omitted to create a positive screen.",
+    "Secondary exit policies share entries within each delay cohort."
+  ],
+  "scope": "Design approval only. No real-money, deployment or policy authority."
+}

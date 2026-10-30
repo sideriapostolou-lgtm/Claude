@@ -1,0 +1,495 @@
+{
+  "request": {
+    "projectId": "75750847-85c0-41a3-a2a7-b7f2201a51e9",
+    "types": [
+      "deploy"
+    ],
+    "deploymentId": "43f14443-2d07-4985-b879-3a2515fb8d2c",
+    "startDate": "2026-10-17T08:58:50Z",
+    "endDate": "2026-10-17T08:59:15Z",
+    "limit": 200
+  },
+  "response": {
+    "scope": "deployment",
+    "deploymentId": "43f14443-2d07-4985-b879-3a2515fb8d2c",
+    "serviceId": "f84d3b52-002f-44cb-931e-bc9e3e097e97",
+    "environmentId": "17f7b0e0-104c-4903-9484-0106748b3cdb",
+    "status": "SUCCESS",
+    "deploy": [
+      {
+        "timestamp": "2026-10-17T08:58:56.596190840Z",
+        "severity": "error",
+        "message": "2026-10-17T08:58:56Z ERROR nightcrawler.speeddesk: speeddesk_live_status mode=paper reason=companion_halted error=OSError",
+        "attributes": [
+          {
+            "key": "level",
+            "value": "\"error\""
+          }
+        ]
+      },
+      {
+        "timestamp": "2026-10-17T08:58:57.084909867Z",
+        "severity": "error",
+        "message": "2026-10-17T08:58:57Z ERROR nightcrawler.skipwatch: skipwatch_halted error=OSError",
+        "attributes": [
+          {
+            "key": "level",
+            "value": "\"error\""
+          }
+        ]
+      },
+      {
+        "timestamp": "2026-10-17T08:58:57.084912957Z",
+        "severity": "error",
+        "message": "2026-10-17T08:58:57Z ERROR nightcrawler.speeddesk: speeddesk_live_status mode=paper reason=cleanup_unconfirmed error=OSError",
+        "attributes": [
+          {
+            "key": "level",
+            "value": "\"error\""
+          }
+        ]
+      },
+      {
+        "timestamp": "2026-10-17T08:58:58.081771607Z",
+        "severity": "info",
+        "message": "2026-10-17T08:58:58Z INFO nightcrawler.crawler: crawler_poll fetched=80 emitted=0 rejected=20 nursery=1060 seen=9557",
+        "attributes": [
+          {
+            "key": "level",
+            "value": "\"info\""
+          }
+        ]
+      },
+      {
+        "timestamp": "2026-10-17T08:59:00.713636929Z",
+        "severity": "error",
+        "message": "  File \"/usr/local/lib/python3.12/pathlib.py\", line 1048, in write_text",
+        "attributes": [
+          {
+            "key": "level",
+            "value": "\"error\""
+          }
+        ]
+      },
+      {
+        "timestamp": "2026-10-17T08:59:00.713642639Z",
+        "severity": "error",
+        "message": "    return f.write(data)",
+        "attributes": [
+          {
+            "key": "level",
+            "value": "\"error\""
+          }
+        ]
+      },
+      {
+        "timestamp": "2026-10-17T08:59:00.713676319Z",
+        "severity": "error",
+        "message": "Exception in thread polydesk:",
+        "attributes": [
+          {
+            "key": "level",
+            "value": "\"error\""
+          }
+        ]
+      },
+      {
+        "timestamp": "2026-10-17T08:59:00.713681869Z",
+        "severity": "error",
+        "message": "Traceback (most recent call last):",
+        "attributes": [
+          {
+            "key": "level",
+            "value": "\"error\""
+          }
+        ]
+      },
+      {
+        "timestamp": "2026-10-17T08:59:00.713685939Z",
+        "severity": "error",
+        "message": "  File \"/usr/local/lib/python3.12/site-packages/nightcrawler/polydesk.py\", line 1181, in _loop",
+        "attributes": [
+          {
+            "key": "level",
+            "value": "\"error\""
+          }
+        ]
+      },
+      {
+        "timestamp": "2026-10-17T08:59:00.713690239Z",
+        "severity": "error",
+        "message": "    self.poll(t0)",
+        "attributes": [
+          {
+            "key": "level",
+            "value": "\"error\""
+          }
+        ]
+      },
+      {
+        "timestamp": "2026-10-17T08:59:00.713694449Z",
+        "severity": "error",
+        "message": "  File \"/usr/local/lib/python3.12/site-packages/nightcrawler/polydesk.py\", line 1239, in poll",
+        "attributes": [
+          {
+            "key": "level",
+            "value": "\"error\""
+          }
+        ]
+      },
+      {
+        "timestamp": "2026-10-17T08:59:00.713723308Z",
+        "severity": "error",
+        "message": "    self._save()",
+        "attributes": [
+          {
+            "key": "level",
+            "value": "\"error\""
+          }
+        ]
+      },
+      {
+        "timestamp": "2026-10-17T08:59:00.713726908Z",
+        "severity": "error",
+        "message": "  File \"/usr/local/lib/python3.12/site-packages/nightcrawler/polydesk.py\", line 1194, in _save",
+        "attributes": [
+          {
+            "key": "level",
+            "value": "\"error\""
+          }
+        ]
+      },
+      {
+        "timestamp": "2026-10-17T08:59:00.713730798Z",
+        "severity": "error",
+        "message": "    save_state(self.path, self.state)",
+        "attributes": [
+          {
+            "key": "level",
+            "value": "\"error\""
+          }
+        ]
+      },
+      {
+        "timestamp": "2026-10-17T08:59:00.713735068Z",
+        "severity": "error",
+        "message": "  File \"/usr/local/lib/python3.12/site-packages/nightcrawler/polydesk.py\", line 995, in save_state",
+        "attributes": [
+          {
+            "key": "level",
+            "value": "\"error\""
+          }
+        ]
+      },
+      {
+        "timestamp": "2026-10-17T08:59:00.713739298Z",
+        "severity": "error",
+        "message": "    tmp.write_text(json.dumps(state, separators=(\",\", \":\"), sort_keys=True))",
+        "attributes": [
+          {
+            "key": "level",
+            "value": "\"error\""
+          }
+        ]
+      },
+      {
+        "timestamp": "2026-10-17T08:59:00.713917288Z",
+        "severity": "error",
+        "message": "    self._save()",
+        "attributes": [
+          {
+            "key": "level",
+            "value": "\"error\""
+          }
+        ]
+      },
+      {
+        "timestamp": "2026-10-17T08:59:00.713934997Z",
+        "severity": "error",
+        "message": "          ",
+        "attributes": [
+          {
+            "key": "level",
+            "value": "\"error\""
+          }
+        ]
+      },
+      {
+        "timestamp": "2026-10-17T08:59:00.713940797Z",
+        "severity": "error",
+        "message": " ^^^^^^^^^",
+        "attributes": [
+          {
+            "key": "level",
+            "value": "\"error\""
+          }
+        ]
+      },
+      {
+        "timestamp": "2026-10-17T08:59:00.713944027Z",
+        "severity": "error",
+        "message": "^^^^",
+        "attributes": [
+          {
+            "key": "level",
+            "value": "\"error\""
+          }
+        ]
+      },
+      {
+        "timestamp": "2026-10-17T08:59:00.713947297Z",
+        "severity": "error",
+        "message": "OSError: [Errno 28] No space left on device",
+        "attributes": [
+          {
+            "key": "level",
+            "value": "\"error\""
+          }
+        ]
+      },
+      {
+        "timestamp": "2026-10-17T08:59:00.713950307Z",
+        "severity": "error",
+        "message": "",
+        "attributes": [
+          {
+            "key": "level",
+            "value": "\"error\""
+          }
+        ]
+      },
+      {
+        "timestamp": "2026-10-17T08:59:00.713953277Z",
+        "severity": "error",
+        "message": "During handling of the above exception, another exception occurred:",
+        "attributes": [
+          {
+            "key": "level",
+            "value": "\"error\""
+          }
+        ]
+      },
+      {
+        "timestamp": "2026-10-17T08:59:00.713956147Z",
+        "severity": "error",
+        "message": "",
+        "attributes": [
+          {
+            "key": "level",
+            "value": "\"error\""
+          }
+        ]
+      },
+      {
+        "timestamp": "2026-10-17T08:59:00.713958877Z",
+        "severity": "error",
+        "message": "Traceback (most recent call last):",
+        "attributes": [
+          {
+            "key": "level",
+            "value": "\"error\""
+          }
+        ]
+      },
+      {
+        "timestamp": "2026-10-17T08:59:00.713961397Z",
+        "severity": "error",
+        "message": "  File \"/usr/local/lib/python3.12/threading.py\", line 1075, in _bootstrap_inner",
+        "attributes": [
+          {
+            "key": "level",
+            "value": "\"error\""
+          }
+        ]
+      },
+      {
+        "timestamp": "2026-10-17T08:59:00.713964397Z",
+        "severity": "error",
+        "message": "    self.run()",
+        "attributes": [
+          {
+            "key": "level",
+            "value": "\"error\""
+          }
+        ]
+      },
+      {
+        "timestamp": "2026-10-17T08:59:00.713967187Z",
+        "severity": "error",
+        "message": "  File \"/usr/local/lib/python3.12/threading.py\", line 1012, in run",
+        "attributes": [
+          {
+            "key": "level",
+            "value": "\"error\""
+          }
+        ]
+      },
+      {
+        "timestamp": "2026-10-17T08:59:00.713970167Z",
+        "severity": "error",
+        "message": "    self._target(*self._args, **self._kwargs)",
+        "attributes": [
+          {
+            "key": "level",
+            "value": "\"error\""
+          }
+        ]
+      },
+      {
+        "timestamp": "2026-10-17T08:59:00.713973047Z",
+        "severity": "error",
+        "message": "  File \"/usr/local/lib/python3.12/site-packages/nightcrawler/polydesk.py\", line 1185, in _loop",
+        "attributes": [
+          {
+            "key": "level",
+            "value": "\"error\""
+          }
+        ]
+      },
+      {
+        "timestamp": "2026-10-17T08:59:00.714704931Z",
+        "severity": "error",
+        "message": "          ",
+        "attributes": [
+          {
+            "key": "level",
+            "value": "\"error\""
+          }
+        ]
+      },
+      {
+        "timestamp": "2026-10-17T08:59:00.714705491Z",
+        "severity": "error",
+        "message": "  File \"/usr/local/lib/python3.12/site-packages/nightcrawler/polydesk.py\", line 1194, in _save",
+        "attributes": [
+          {
+            "key": "level",
+            "value": "\"error\""
+          }
+        ]
+      },
+      {
+        "timestamp": "2026-10-17T08:59:00.714712921Z",
+        "severity": "error",
+        "message": "    save_state(self.path, self.state)",
+        "attributes": [
+          {
+            "key": "level",
+            "value": "\"error\""
+          }
+        ]
+      },
+      {
+        "timestamp": "2026-10-17T08:59:00.714713581Z",
+        "severity": "error",
+        "message": " ^^^^^^^^^",
+        "attributes": [
+          {
+            "key": "level",
+            "value": "\"error\""
+          }
+        ]
+      },
+      {
+        "timestamp": "2026-10-17T08:59:00.714719611Z",
+        "severity": "error",
+        "message": "  File \"/usr/local/lib/python3.12/site-packages/nightcrawler/polydesk.py\", line 995, in save_state",
+        "attributes": [
+          {
+            "key": "level",
+            "value": "\"error\""
+          }
+        ]
+      },
+      {
+        "timestamp": "2026-10-17T08:59:00.714721901Z",
+        "severity": "error",
+        "message": "^^^^",
+        "attributes": [
+          {
+            "key": "level",
+            "value": "\"error\""
+          }
+        ]
+      },
+      {
+        "timestamp": "2026-10-17T08:59:00.714725781Z",
+        "severity": "error",
+        "message": "    tmp.write_text(json.dumps(state, separators=(\",\", \":\"), sort_keys=True))",
+        "attributes": [
+          {
+            "key": "level",
+            "value": "\"error\""
+          }
+        ]
+      },
+      {
+        "timestamp": "2026-10-17T08:59:00.714731821Z",
+        "severity": "error",
+        "message": "OSError: [Errno 28] No space left on device",
+        "attributes": [
+          {
+            "key": "level",
+            "value": "\"error\""
+          }
+        ]
+      },
+      {
+        "timestamp": "2026-10-17T08:59:00.714731961Z",
+        "severity": "error",
+        "message": "  File \"/usr/local/lib/python3.12/pathlib.py\", line 1048, in write_text",
+        "attributes": [
+          {
+            "key": "level",
+            "value": "\"error\""
+          }
+        ]
+      },
+      {
+        "timestamp": "2026-10-17T08:59:00.714737541Z",
+        "severity": "error",
+        "message": "    return f.write(data)",
+        "attributes": [
+          {
+            "key": "level",
+            "value": "\"error\""
+          }
+        ]
+      },
+      {
+        "timestamp": "2026-10-17T08:59:02.782860821Z",
+        "severity": "error",
+        "message": "2026-10-17T08:59:02Z ERROR nightcrawler.speeddesk: speeddesk_halted mode=PRACTICE error=OSError",
+        "attributes": [
+          {
+            "key": "level",
+            "value": "\"error\""
+          }
+        ]
+      },
+      {
+        "timestamp": "2026-10-17T08:59:03.896322917Z",
+        "severity": "info",
+        "message": "2026-10-17T08:59:03Z INFO nightcrawler.kalshi_arena: kalshi_arena_stopped windows=181 void=137",
+        "attributes": [
+          {
+            "key": "level",
+            "value": "\"info\""
+          }
+        ]
+      },
+      {
+        "timestamp": "2026-10-17T08:59:03.896353447Z",
+        "severity": "error",
+        "message": "2026-10-17T08:59:03Z ERROR nightcrawler.speeddesk: speeddesk_state_unavailable mode=PRACTICE",
+        "attributes": [
+          {
+            "key": "level",
+            "value": "\"error\""
+          }
+        ]
+      }
+    ]
+  },
+  "projection": "Excluded unrelated long skipwatch status payload; all other44minus1 rows retained"
+}

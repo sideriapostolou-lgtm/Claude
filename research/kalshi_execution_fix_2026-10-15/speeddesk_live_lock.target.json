@@ -1,0 +1,14 @@
+[
+  {
+    "timestamp": "2026-10-15T17:26:00.382348608Z",
+    "payload": {
+      "at": 1792085160.011505,
+      "venue": "kalshi",
+      "window": "KXBTC15M-26OCT151330-30",
+      "side": "up",
+      "size": 1,
+      "state": "waiting to complete the pair",
+      "reason": "lock_price"
+    }
+  }
+]

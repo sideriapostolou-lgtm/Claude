@@ -1,0 +1,57 @@
+{
+ "trades": [
+  {
+   "slotIndexId": "0004545875510017000000",
+   "tx": "5P9Cjr8JJfnCexQdixLoFjccLL2ZviamDgmxNyRJGqpEXJg8WiTyUBMijCPToXEuKp9MsJJ5o322CJskg6eX46Tt",
+   "timestamp": "2026-10-08T15:40:02.000Z",
+   "userAddress": "5CWaW5QMCHowdu6xPZgXh2unHaobs2H8HS1BTer5vjKy",
+   "type": "buy",
+   "program": "pump_amm",
+   "priceUsd": "0.0006391871838278680501032551837003100029816",
+   "priceSol": "0.000005865650393382313244283725814577248783749",
+   "amountUsd": "35.54585874562672191",
+   "amountSol": "0.32619487",
+   "baseAmount": "55665.891886",
+   "quoteAmount": "0.32619487",
+   "fillPriceUsd": "0.0006385572482773158151065647689998102189035",
+   "fillPriceSol": "0.000005859869642761228712095012744587501676664"
+  },
+  {
+   "slotIndexId": "0004545875510005250000",
+   "tx": "5fXhL5nz2DKYfnZbRn6ocqf4uE7irqRt91UzdpeAnPfHufTwV767KFhS6PFDNsirYHJ4t61V3gETnQBdbcdWMgLG",
+   "timestamp": "2026-10-08T15:40:02.000Z",
+   "userAddress": "As1dUpVV4TMW7RUNzMsNyqJfQf7NR5DkFQpMBjJ9aWm8",
+   "type": "buy",
+   "program": "pump_amm",
+   "priceUsd": "0.0006379291845005657371271089915222488553292",
+   "priceSol": "0.000005854106068909354717905888323749866348636",
+   "amountUsd": "0.271069985945885841",
+   "amountSol": "0.002487537",
+   "baseAmount": "424.924776",
+   "quoteAmount": "0.002487537",
+   "fillPriceUsd": "0.0006379246427981545632443894022315140315565",
+   "fillPriceSol": "0.00000585406439091704080818295236331430107055"
+  },
+  {
+   "slotIndexId": "0004545875480009580000",
+   "tx": "2c2h9DK9i2fSnfdRTSV6StdjSz3sYqRe7Rzio1htNBMcK2vjxE3HcmbTV6jPT5yPbAsSuHfmM3de5i8yakQk5xno",
+   "timestamp": "2026-10-08T15:40:02.000Z",
+   "userAddress": "7qTTyRuQUwZxzgTRfZ7W8Z1xsXKiBeHFHodWLXcjrHg8",
+   "type": "buy",
+   "program": "pump_amm",
+   "priceUsd": "0.0006379195958554103998188935414406326619757",
+   "priceSol": "0.00000585401807646887650893670657197205488639",
+   "amountUsd": "0.289038253345573611",
+   "amountSol": "0.002652427",
+   "baseAmount": "453.098579",
+   "quoteAmount": "0.002652427",
+   "fillPriceUsd": "0.0006379147204201971487533621243159979100266",
+   "fillPriceSol": "0.000005853973335899603428242047080001987823493"
+  }
+ ],
+ "pagination": {
+  "nextCursor": "0004545875450007570000-1791474001000",
+  "hasMore": true,
+  "limit": 5
+ }
+}

@@ -1,0 +1,184 @@
+{
+ "hyp": "T3",
+ "stage": "val",
+ "split": [
+  "2025-01-01",
+  "2026-01-01"
+ ],
+ "utc": "2026-10-09 12:36:44",
+ "configs": {
+  "sma50": {
+   "n_days": 365,
+   "years": 1.0,
+   "cagr": 0.2588683564423462,
+   "total_return": 0.2588683564423444,
+   "vol_ann": 0.3428684834151202,
+   "sharpe": 0.6714329217502699,
+   "max_drawdown": -0.19289919178719994,
+   "best_day": 0.1327353481446829,
+   "worst_day": -0.07352893260434157,
+   "share_positive_days": 0.2876712328767123,
+   "calmar": 1.3419877711458805,
+   "exposure": 0.4319634703196348,
+   "turnover_per_year": 18.0,
+   "cost_drag_per_year": 0.05579999999999999,
+   "stress_x2": 0.5084381740764548,
+   "gross_sharpe": 0.8338764355832474,
+   "placebo": {
+    "n_placebo": 200,
+    "placebo_sharpe_mean": -0.30735380891304415,
+    "placebo_sharpe_p90": 0.39755494643103173,
+    "sharpe_p_value": 0.03,
+    "excess_daily_mean": 0.0009176559450314881,
+    "excess_ann": 0.33494441993649315,
+    "excess_ci95": [
+     -0.00017128153244453038,
+     0.0022382814900389642
+    ],
+    "placebo_cagr_mean": -0.093618801528186,
+    "placebo_mdd_mean": -0.33705275705869087
+   },
+   "vs_buy_hold": {
+    "sharpe_diff": 0.9133871631574204,
+    "cagr_diff": 0.4008652134722096,
+    "mdd_better": true
+   },
+   "deflated_sharpe": {
+    "dsr": 0.023222517743072102,
+    "sr_daily": 0.03514440536587343,
+    "sr0_daily": 0.13781587365955916,
+    "n_trials": 133,
+    "T": 365
+   },
+   "by_year": {
+    "2025": 0.2589
+   },
+   "n_universe_mean": 3.0
+  },
+  "tsmom30": {
+   "n_days": 365,
+   "years": 1.0,
+   "cagr": 0.16178843818242372,
+   "total_return": 0.1617884381824224,
+   "vol_ann": 0.34162814762539045,
+   "sharpe": 0.4389584872535169,
+   "max_drawdown": -0.2021370651955675,
+   "best_day": 0.1327353481446829,
+   "worst_day": -0.11327667410685437,
+   "share_positive_days": 0.29863013698630136,
+   "calmar": 0.8003897653599229,
+   "exposure": 0.4246575342465753,
+   "turnover_per_year": 25.999999999999996,
+   "cost_drag_per_year": 0.08059999999999998,
+   "stress_x2": 0.20296163408630144,
+   "gross_sharpe": 0.6740933872318656,
+   "placebo": {
+    "n_placebo": 200,
+    "placebo_sharpe_mean": -0.3912377206492926,
+    "placebo_sharpe_p90": 0.345100297413581,
+    "sharpe_p_value": 0.075,
+    "excess_daily_mean": 0.0007823400436180578,
+    "excess_ann": 0.2855541159205911,
+    "excess_ci95": [
+     -0.00029071301448520807,
+     0.002178740839309619
+    ],
+    "placebo_cagr_mean": -0.12344425895507687,
+    "placebo_mdd_mean": -0.3450331611947081
+   },
+   "vs_buy_hold": {
+    "sharpe_diff": 0.6809127286606673,
+    "cagr_diff": 0.30378529521228714,
+    "mdd_better": true
+   },
+   "deflated_sharpe": {
+    "dsr": 0.014098572901276418,
+    "sr_daily": 0.022976137325250213,
+    "sr0_daily": 0.13781587365955916,
+    "n_trials": 133,
+    "T": 365
+   },
+   "by_year": {
+    "2025": 0.1618
+   },
+   "n_universe_mean": 3.0
+  }
+ },
+ "benchmarks": {
+  "buy_hold_ew": {
+   "n_days": 365,
+   "years": 1.0,
+   "cagr": -0.14199685702986342,
+   "total_return": -0.1419968570298632,
+   "vol_ann": 0.6329606601432395,
+   "sharpe": -0.2419542414071505,
+   "max_drawdown": -0.48518641789545447,
+   "best_day": 0.1589073973474661,
+   "worst_day": -0.14613867836203842,
+   "share_positive_days": 0.5123287671232877,
+   "calmar": -0.29266453427486544,
+   "exposure": 1.0,
+   "turnover_per_year": 0.0,
+   "cost_drag_per_year": 0.0
+  },
+  "sol_only": {
+   "n_days": 365,
+   "years": 1.0,
+   "cagr": -0.34090668361402454,
+   "total_return": -0.3409066836140241,
+   "vol_ann": 0.8617889602627355,
+   "sharpe": -0.48374970058060635,
+   "max_drawdown": -0.5978854154738731,
+   "best_day": 0.24465492025907087,
+   "worst_day": -0.20518128916741263,
+   "share_positive_days": 0.4958904109589041,
+   "calmar": -0.5701873215017765,
+   "exposure": 1.0,
+   "turnover_per_year": 0.0,
+   "cost_drag_per_year": 0.0
+  },
+  "btc_only": {
+   "n_days": 365,
+   "years": 1.0,
+   "cagr": -0.06273181865800981,
+   "total_return": -0.06273181865801014,
+   "vol_ann": 0.4192611716987251,
+   "sharpe": -0.154523789282359,
+   "max_drawdown": -0.321007545777108,
+   "best_day": 0.09587117972870107,
+   "worst_day": -0.08597399599514044,
+   "share_positive_days": 0.4958904109589041,
+   "calmar": -0.19542163255429432,
+   "exposure": 1.0,
+   "turnover_per_year": 0.0,
+   "cost_drag_per_year": 0.0
+  },
+  "cash": {
+   "sharpe": 0.0,
+   "cagr": 0.0,
+   "max_drawdown": 0.0
+  }
+ },
+ "n_trials_total": 133,
+ "costs": {
+  "bps_side": 25.0,
+  "network_usd": 0.02,
+  "capital_usd": 100.0,
+  "rebal_min": 0.05
+ },
+ "decision": {
+  "verdict": "SELECTED",
+  "candidate": "sma50",
+  "candidate_params": {
+   "rule": "sma",
+   "N": 50
+  },
+  "twin": [
+   "tsmom30"
+  ],
+  "val_sharpe": 0.6714329217502699,
+  "val_excess_daily": 0.0009176559450314881,
+  "note": "the judge reads VAL before any TEST look"
+ },
+ "runtime_s": 17.8
+}

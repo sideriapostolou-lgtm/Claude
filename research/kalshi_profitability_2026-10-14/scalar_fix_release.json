@@ -1,0 +1,552 @@
+{
+  "verified_at_utc": "2026-10-14T22:11:00Z",
+  "verified_at_pacific": "2026-10-14 3:11 PM PDT",
+  "pr": 53,
+  "source_commit": "95ff8acb35294de7080460721c0a47a7934d4a37",
+  "deployment": {
+    "id": "f838b81d-1bee-49f3-9083-e71a6cd0ae6f",
+    "status": "SUCCESS",
+    "createdAt": "2026-10-14T22:08:02.567Z",
+    "updatedAt": "2026-10-14T22:09:32.307Z",
+    "meta": {
+      "reason": "deploy",
+      "commitMessage": "fix: skip redundant checkpoint scalar conversion (touches real money) (#53)",
+      "commitHash": "95ff8acb35294de7080460721c0a47a7934d4a37",
+      "branch": "claude/nightcrawler-memecoin-bot-Gwnb1S"
+    }
+  },
+  "health": {
+    "environment": {
+      "id": "17f7b0e0-104c-4903-9484-0106748b3cdb",
+      "name": "production"
+    },
+    "services": [
+      {
+        "serviceId": "f84d3b52-002f-44cb-931e-bc9e3e097e97",
+        "serviceName": "bot",
+        "state": "online",
+        "statusText": "Online",
+        "activeDeployments": [
+          {
+            "id": "f838b81d-1bee-49f3-9083-e71a6cd0ae6f",
+            "status": "SUCCESS",
+            "createdAt": "2026-10-14T22:08:02.567Z",
+            "statusUpdatedAt": "2026-10-14T22:09:32.306Z"
+          }
+        ],
+        "replicaStatus": {
+          "running": 1,
+          "crashed": 0,
+          "total": 1
+        },
+        "cronJob": null,
+        "issues": {
+          "warningCount": 0,
+          "criticalCount": 0
+        },
+        "recentFailures": 0,
+        "recentFailedDeployments": [],
+        "hasIssues": false,
+        "isCronJob": false,
+        "hasVolume": true
+      },
+      {
+        "serviceId": "736b1c8a-8311-4ee0-9043-d05f508cd821",
+        "serviceName": "kalshi-recorder",
+        "state": "online",
+        "statusText": "Online",
+        "activeDeployments": [
+          {
+            "id": "8453f919-b891-4aa7-8478-6fcf6b9c24ee",
+            "status": "SUCCESS",
+            "createdAt": "2026-10-14T16:36:40.384Z",
+            "statusUpdatedAt": "2026-10-14T16:38:15.302Z"
+          }
+        ],
+        "replicaStatus": {
+          "running": 1,
+          "crashed": 0,
+          "total": 1
+        },
+        "cronJob": null,
+        "issues": {
+          "warningCount": 0,
+          "criticalCount": 0
+        },
+        "recentFailures": 0,
+        "recentFailedDeployments": [],
+        "hasIssues": false,
+        "isCronJob": false,
+        "hasVolume": true
+      }
+    ],
+    "pendingWork": [
+      {
+        "id": "patch:9a84e13c-3caf-4a85-b5f5-d9a2fcb8a021",
+        "kind": "EnvironmentPatch",
+        "status": "staged",
+        "changes": [],
+        "startedAt": "2026-10-12T16:21:53.480Z",
+        "workflowId": "commitChanges/17f7b0e0-104c-4903-9484-0106748b3cdb/9a84e13c-3caf-4a85-b5f5-d9a2fcb8a021"
+      }
+    ],
+    "summary": {
+      "totalServices": 2,
+      "servicesWithIssues": 0,
+      "totalFailures": 0
+    }
+  },
+  "polydesk_startup": [
+    {
+      "timestamp": "2026-10-14T22:09:27.829580991Z",
+      "message": "2026-10-14T22:09:27Z INFO nightcrawler.polydesk: polydesk_started theta=0.97 hours=1 ticket_usd=20 poll_s=90 (LIVE: 10 contract(s) per order)"
+    }
+  ],
+  "pre_restart": [
+    {
+      "timestamp": "2026-10-14T22:08:47.656258120Z",
+      "at": 1792015727.332741,
+      "venue": "kalshi",
+      "mode": "live",
+      "configured_mode": "live",
+      "status": "REAL MONEY (Kalshi)",
+      "reason": "imbalance",
+      "authenticated": true,
+      "cash_usd": 35.0802,
+      "cash_at": 1792015727.1133962,
+      "reserved_usd": 0,
+      "open_risk_usd": 0,
+      "open_cost_usd": 0.99,
+      "at_risk_usd": 0,
+      "open_orders": 0,
+      "positions": 0,
+      "total_halted": false,
+      "day_stop_latched": false,
+      "integrity_error": null,
+      "cleanup_pending": false,
+      "caps": {
+        "window_usd": 10,
+        "open_usd": 20,
+        "day_stop_usd": 6,
+        "clip": 5,
+        "total_stop_usd": 10
+      },
+      "total": {
+        "day": null,
+        "windows": 104,
+        "fills": 511,
+        "latency": null,
+        "scorecard": null,
+        "settled_windows": 117,
+        "fees_usd": 2.26832,
+        "locked_usd": -1.3753016483516518,
+        "directional_usd": -13.295898351648349,
+        "pnl_usd": -14.6712,
+        "worst_usd": -2.9791999999999987,
+        "take_attempts": 39,
+        "take_fills": 17,
+        "maker_orders": 3299,
+        "maker_fills": 351,
+        "locks": 80,
+        "lock_fills": 71,
+        "take_fill_rate": 0.4358974358974359,
+        "maker_fill_rate": 0.10639587753864807,
+        "avg_latency_ms": 4352.186139875552,
+        "latency_definition": "durable real decision to venue fill timestamp; maker includes resting time"
+      },
+      "save": {
+        "last_ms": 109.1831037774682,
+        "build_ms": 32.47300582006574,
+        "ledger_ms": 76.64472935721278,
+        "mirror_ms": null,
+        "archived_windows": 200,
+        "saved_orders": 316
+      },
+      "loop": {
+        "ms": {
+          "event_loop_lag": {
+            "n": 1544,
+            "median_ms": 11.8,
+            "p90_ms": 43.7,
+            "max_ms": 1024.7
+          },
+          "list_orders_worker_queue": {
+            "n": 74,
+            "median_ms": 2.3,
+            "p90_ms": 42.4,
+            "max_ms": 440.4
+          },
+          "list_orders_worker_resume": {
+            "n": 74,
+            "median_ms": 14.9,
+            "p90_ms": 93.1,
+            "max_ms": 445.4
+          },
+          "fills_worker_queue": {
+            "n": 37,
+            "median_ms": 1,
+            "p90_ms": 21.7,
+            "max_ms": 42.3
+          },
+          "fills_worker_resume": {
+            "n": 37,
+            "median_ms": 9.5,
+            "p90_ms": 56,
+            "max_ms": 238.5
+          },
+          "positions_worker_queue": {
+            "n": 37,
+            "median_ms": 0.4,
+            "p90_ms": 14,
+            "max_ms": 40.2
+          },
+          "positions_worker_resume": {
+            "n": 37,
+            "median_ms": 19.9,
+            "p90_ms": 50.1,
+            "max_ms": 110.5
+          },
+          "balance_worker_queue": {
+            "n": 37,
+            "median_ms": 1.5,
+            "p90_ms": 12.7,
+            "max_ms": 36.6
+          },
+          "balance_worker_resume": {
+            "n": 37,
+            "median_ms": 9.8,
+            "p90_ms": 56.4,
+            "max_ms": 1201.3
+          }
+        },
+        "counts": {}
+      },
+      "reconcile": {
+        "ms": {
+          "recent_ms": {
+            "n": 36,
+            "median_ms": 379.5,
+            "p90_ms": 1030.9,
+            "max_ms": 1446.3
+          },
+          "list_orders_ms": {
+            "n": 74,
+            "median_ms": 71.9,
+            "p90_ms": 371.7,
+            "max_ms": 1170.7
+          },
+          "fills_ms": {
+            "n": 37,
+            "median_ms": 61.2,
+            "p90_ms": 134.7,
+            "max_ms": 405.1
+          },
+          "positions_ms": {
+            "n": 37,
+            "median_ms": 66.5,
+            "p90_ms": 112.7,
+            "max_ms": 372.4
+          },
+          "balance_ms": {
+            "n": 37,
+            "median_ms": 54.3,
+            "p90_ms": 107.3,
+            "max_ms": 765
+          },
+          "full_ms": {
+            "n": 1,
+            "median_ms": 1927.7,
+            "p90_ms": 1927.7,
+            "max_ms": 1927.7
+          }
+        },
+        "counts": {
+          "pages": 154,
+          "rows": 8235,
+          "bytes": 6298371
+        },
+        "last": {
+          "full": false,
+          "ms": 270.1,
+          "failed": false,
+          "checks": {},
+          "reads": [
+            {
+              "read": "list_orders",
+              "ms": 34.6,
+              "rows": 9,
+              "pages": 1,
+              "bytes": 7087
+            },
+            {
+              "read": "fills",
+              "ms": 53.7,
+              "rows": 4,
+              "pages": 1,
+              "bytes": 2062
+            },
+            {
+              "read": "list_orders",
+              "ms": 69.1,
+              "rows": 9,
+              "pages": 1,
+              "bytes": 7087
+            },
+            {
+              "read": "positions",
+              "ms": 66.5,
+              "rows": 3,
+              "pages": 1,
+              "bytes": 1403
+            },
+            {
+              "read": "balance",
+              "ms": 43.7,
+              "rows": null,
+              "pages": null,
+              "bytes": null
+            }
+          ]
+        }
+      },
+      "resume_history_events": []
+    }
+  ],
+  "post_restart": [
+    {
+      "timestamp": "2026-10-14T22:09:55.727928793Z",
+      "at": 1792015795.4688265,
+      "venue": "kalshi",
+      "mode": "live",
+      "configured_mode": "live",
+      "status": "REAL MONEY (Kalshi)",
+      "reason": "Window has not started",
+      "authenticated": true,
+      "cash_usd": 35.0802,
+      "cash_at": 1792015795.399312,
+      "reserved_usd": 0,
+      "open_risk_usd": 0,
+      "open_cost_usd": 0.99,
+      "at_risk_usd": 0,
+      "open_orders": 0,
+      "positions": 0,
+      "total_halted": false,
+      "day_stop_latched": false,
+      "integrity_error": null,
+      "cleanup_pending": false,
+      "caps": {
+        "window_usd": 10,
+        "open_usd": 20,
+        "day_stop_usd": 6,
+        "clip": 5,
+        "total_stop_usd": 10
+      },
+      "total": {
+        "day": null,
+        "windows": 104,
+        "fills": 511,
+        "latency": null,
+        "scorecard": null,
+        "settled_windows": 117,
+        "fees_usd": 2.26832,
+        "locked_usd": -1.3753016483516518,
+        "directional_usd": -13.295898351648349,
+        "pnl_usd": -14.6712,
+        "worst_usd": -2.9791999999999987,
+        "take_attempts": 39,
+        "take_fills": 17,
+        "maker_orders": 3299,
+        "maker_fills": 351,
+        "locks": 80,
+        "lock_fills": 71,
+        "take_fill_rate": 0.4358974358974359,
+        "maker_fill_rate": 0.10639587753864807,
+        "avg_latency_ms": 4352.186139875552,
+        "latency_definition": "durable real decision to venue fill timestamp; maker includes resting time"
+      },
+      "save": {
+        "last_ms": 716.6971769183874,
+        "build_ms": 185.21333765238523,
+        "ledger_ms": 131.76816422492266,
+        "mirror_ms": 398.84677017107606,
+        "archived_windows": 200,
+        "saved_orders": 316
+      },
+      "loop": {
+        "ms": {
+          "other_worker_queue": {
+            "n": 1,
+            "median_ms": 4.4,
+            "p90_ms": 4.4,
+            "max_ms": 4.4
+          },
+          "other_worker_resume": {
+            "n": 1,
+            "median_ms": 780.4,
+            "p90_ms": 780.4,
+            "max_ms": 780.4
+          },
+          "event_loop_lag": {
+            "n": 55,
+            "median_ms": 12,
+            "p90_ms": 103.8,
+            "max_ms": 775.7
+          },
+          "list_orders_worker_queue": {
+            "n": 2,
+            "median_ms": 0.4,
+            "p90_ms": 33,
+            "max_ms": 33
+          },
+          "list_orders_worker_resume": {
+            "n": 2,
+            "median_ms": 7,
+            "p90_ms": 22.3,
+            "max_ms": 22.3
+          },
+          "fills_worker_queue": {
+            "n": 1,
+            "median_ms": 17.6,
+            "p90_ms": 17.6,
+            "max_ms": 17.6
+          },
+          "fills_worker_resume": {
+            "n": 1,
+            "median_ms": 277.2,
+            "p90_ms": 277.2,
+            "max_ms": 277.2
+          },
+          "positions_worker_queue": {
+            "n": 1,
+            "median_ms": 1.1,
+            "p90_ms": 1.1,
+            "max_ms": 1.1
+          },
+          "positions_worker_resume": {
+            "n": 1,
+            "median_ms": 150.1,
+            "p90_ms": 150.1,
+            "max_ms": 150.1
+          }
+        },
+        "counts": {}
+      },
+      "reconcile": {
+        "ms": {
+          "full_ms": {
+            "n": 1,
+            "median_ms": 2657.8,
+            "p90_ms": 2657.8,
+            "max_ms": 2657.8
+          },
+          "list_orders_ms": {
+            "n": 2,
+            "median_ms": 691,
+            "p90_ms": 751.1,
+            "max_ms": 751.1
+          },
+          "fills_ms": {
+            "n": 1,
+            "median_ms": 620.4,
+            "p90_ms": 620.4,
+            "max_ms": 620.4
+          },
+          "positions_ms": {
+            "n": 1,
+            "median_ms": 188.5,
+            "p90_ms": 188.5,
+            "max_ms": 188.5
+          },
+          "balance_ms": {
+            "n": 1,
+            "median_ms": 302.6,
+            "p90_ms": 302.6,
+            "max_ms": 302.6
+          }
+        },
+        "counts": {
+          "pages": 10,
+          "rows": 7335,
+          "bytes": 5663367
+        },
+        "last": {
+          "full": true,
+          "ms": 2657.8,
+          "failed": false,
+          "checks": {},
+          "reads": [
+            {
+              "read": "list_orders",
+              "ms": 751.1,
+              "rows": 3408,
+              "pages": 4,
+              "bytes": 2699348
+            },
+            {
+              "read": "fills",
+              "ms": 620.4,
+              "rows": 516,
+              "pages": 1,
+              "bytes": 263268
+            },
+            {
+              "read": "list_orders",
+              "ms": 691,
+              "rows": 3408,
+              "pages": 4,
+              "bytes": 2699348
+            },
+            {
+              "read": "positions",
+              "ms": 188.5,
+              "rows": 3,
+              "pages": 1,
+              "bytes": 1403
+            },
+            {
+              "read": "balance",
+              "ms": 302.6,
+              "rows": null,
+              "pages": null,
+              "bytes": null
+            }
+          ]
+        }
+      },
+      "resume_history_events": [
+        {
+          "event": "speeddesk_live_resume",
+          "state": "ignored; this value was already used",
+          "total_pnl_usd": -14.671200000000004
+        },
+        {
+          "event": "speeddesk_live_integrity_reset",
+          "state": "ignored; this value was already used"
+        },
+        {
+          "event": "speeddesk_live_day_reset",
+          "state": "ignored; this value was already used"
+        }
+      ]
+    }
+  ],
+  "bounded_error_query": {
+    "start_utc": "2026-10-14T22:09:00Z",
+    "filter": "Traceback OR ERROR OR Exception",
+    "returned_rows": 0
+  },
+  "checks": {
+    "full_pytest": "5456 passed /14 existing skips in300.22s",
+    "mypy": "125 source files clean",
+    "ruff": "all3 changed Python files clean",
+    "independent_source_test_bundle": "1861501781778aad10f9aa7f83c1f2f02f12ce2b287a5d9ab99e06a743bce835",
+    "archive_integrity": "All23 diagnostic files verified against retained hash manifest after archive creation."
+  },
+  "limits": [
+    "Restart partial window excluded from completed post-fix evidence.",
+    "First save is cold startup work, not a comparable steady-state timing sample.",
+    "No production speedup or profit established from startup snapshots.",
+    "Cumulative short callbacks below5ms are not timed individually in retained details; large uncovered gaps remain.",
+    "No new financial/risk/variable/strategy changes or resets; prior losses retained."
+  ]
+}

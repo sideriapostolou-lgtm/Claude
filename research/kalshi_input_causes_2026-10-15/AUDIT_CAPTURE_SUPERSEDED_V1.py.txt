@@ -1,0 +1,104 @@
+"""Audit the declared diagnostic cohort from saved original log responses only.
+
+No production calls, client imports, financial decisions, state changes or model
+fitting. Missing/capped/errored reads remain explicit. Keep original messages.
+"""
+from __future__ import annotations
+
+import json
+import re
+from pathlib import Path
+from typing import Any
+
+HERE = Path(__file__).resolve().parent
+LOGGERS = {
+    'kalshi_learning_input_diagnostic': 'nightcrawler.kalshi_arena',
+    'kalshi_online_learning_unknown': 'nightcrawler.kalshi_online_learning',
+    'kalshi_online_learning_forecast': 'nightcrawler.kalshi_online_learning',
+    'kalshi_online_learning_scored': 'nightcrawler.kalshi_online_learning',
+    'kalshi_online_learning_status': 'nightcrawler.kalshi_online_learning',
+    'speeddesk_live_status': 'nightcrawler.speeddesk',
+    'speeddesk_live_fill': 'nightcrawler.speeddesk',
+    'speeddesk_live_settlement': 'nightcrawler.speeddesk',
+}
+
+
+def parse_message(message: str, event: str) -> dict[str, Any] | None:
+    prefix = r'\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?Z INFO '
+    match = re.fullmatch(prefix + re.escape(LOGGERS[event]) + ': ' + re.escape(event) + r' (\{[^\n]*\})', message)
+    if match is None:
+        return None
+    parsed = json.loads(match.group(1))
+    if not isinstance(parsed, dict):
+        raise TypeError('event payload is not a dictionary')
+    return parsed
+
+
+def originals(path: Path, event: str) -> tuple[list[dict[str, Any]], list[str]]:
+    native = json.loads(path.read_text())
+    problems: list[str] = []
+    if native.get('isError'):
+        return [], ['tool returned isError']
+    structured = native.get('structuredContent')
+    if not isinstance(structured, dict) or not isinstance(structured.get('deploy'), list):
+        return [], ['no structured deploy log array']
+    rows = []
+    for row in structured['deploy']:
+        try:
+            payload = parse_message(row['message'], event)
+        except (KeyError, TypeError, ValueError, json.JSONDecodeError) as error:
+            problems.append(f'invalid original row: {type(error).__name__}')
+            continue
+        if payload is not None:
+            rows.append({'timestamp': row['timestamp'], 'payload': payload})
+    return rows, problems
+
+
+def main() -> None:
+    declaration = json.loads((HERE/'CAPTURE_DECLARATION.json').read_text())
+    queries = json.loads((HERE/'CAPTURE_REQUESTS.json').read_text())
+    result: dict[str, Any] = {'declaration': declaration, 'queries': [], 'diagnostic': [], 'joins': []}
+    events: dict[str, list[dict[str, Any]]] = {}
+    for query in queries['queries']:
+        path = HERE/query['file']
+        if not path.exists():
+            result['queries'].append({**query, 'missing': True})
+            continue
+        rows, errors = originals(path, query['event'])
+        raw = json.loads(path.read_text()).get('structuredContent', {}).get('deploy', [])
+        result['queries'].append({**query, 'raw_rows': len(raw), 'parsed_rows': len(rows),
+                                  'at_cap': len(raw) >= query['limit'], 'errors': errors})
+        events.setdefault(query['event'], []).extend(rows)
+    target: list[dict[str, Any]] = []
+    for row in events.get('kalshi_learning_input_diagnostic', []):
+        payload = row['payload']
+        pending = payload.get('pending') or {}
+        if pending.get('start') == declaration['start'] and pending.get('end') == declaration['end']:
+            target.append(row)
+    result['diagnostic'] = target
+    for row in target:
+        payload = row['payload']
+        kind = payload.get('disposition')
+        expected_event = 'kalshi_online_learning_forecast' if kind == 'forecast' else 'kalshi_online_learning_unknown'
+        matches = [candidate for candidate in events.get(expected_event, [])
+                   if candidate['payload'].get('window') == payload.get('window')
+                   and candidate['payload'].get('at') == payload.get('at')
+                   and candidate['payload'].get('reason') == payload.get('reason')]
+        result['joins'].append({'window': payload.get('window'), 'disposition': kind,
+                                'matched_original_receipts': len(matches),
+                                'arena_source_match': payload.get('arena_source_sha256') == declaration['arena_source_sha256'],
+                                'learner_source_match': payload.get('source_fingerprint') == declaration['learner_fingerprint'],
+                                'observe_only': payload.get('mode') == 'observe_only' and payload.get('live_application') is False})
+    result['limits'] = [
+        'Exact original logger/event framing; nested status text is never an original event.',
+        'Diagnostic counter deltas describe a whole learner call, not additive per-window totals.',
+        'No producer occurrence or parent FIFO timing exists on the unchanged gap wire.',
+        'Point/sampled log coverage is not whole-stream certification; retain query caps/errors/missing results.',
+        'No strategy-profitability or all-delays-fixed verdict follows from a diagnostic join.',
+    ]
+    (HERE/'CAPTURE_AUDIT.json').write_text(json.dumps(result, indent=2)+'\n')
+    print(json.dumps({'diagnostic_rows': len(target), 'joins': result['joins'], 'query_count': len(result['queries'])}))
+
+
+if __name__ == '__main__':
+    main()

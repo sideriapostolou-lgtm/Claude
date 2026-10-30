@@ -1,0 +1,328 @@
+{
+  "timezone": "America/New_York",
+  "reviewed": true,
+  "reviewedAtPacific": "2026-10-14T11:50:00-07:00",
+  "scope": "Planned US cash-session calendar only, not proof of actual CME trading or feed coverage; original MNQ campaign requires complete actual-contract bars independently.",
+  "sources": [
+    {
+      "id": "nasdaq-2025-pdf",
+      "url": "https://www.nasdaq.net/PublicPages/assets/MyMID/Trade_Calendar_2025.pdf",
+      "description": "Official Nasdaq 2025 calendar PDF. Visual legend and September/October grid inspected 2026-10-14; no full closure or early close on Sep19-Oct31 weekdays.",
+      "retrievedAtUTC": "2026-10-14T18:49:00Z",
+      "sha256": "963d69fec3b25609389edac4c6d31185223bb98d33e7043fd106b9b3edd8ebe6"
+    },
+    {
+      "id": "nyse-2025-holiday-notice",
+      "url": "https://ir.theice.com/press/news-details/2024/NYSE-Group-Announces-2025-2026-and-2027-Holiday-and-Early-Closings-Calendar/default.aspx",
+      "description": "Official Nov8,2024 ICE/NYSE notice enumerates 2025 closures/early closes; none between Sep19 and Oct31. Read via connected web tool; separate local HTTP fetch returned403."
+    },
+    {
+      "id": "nasdaq-hours",
+      "url": "https://www.nasdaqtrader.com/content/TechnicalSupport/nasdaq_sys_hours.pdf",
+      "description": "Nasdaq primary-source standard cash market hours09:30-16:00 Eastern. Current2026 document used only for stable normal-hour convention, corroborating frozen source."
+    }
+  ],
+  "rows": [
+    {
+      "date": "2025-09-19",
+      "status": "REGULAR",
+      "openUtc": "2025-09-19T13:30:00Z",
+      "previousSessionDate": null,
+      "sourceRef": "nasdaq-2025-pdf"
+    },
+    {
+      "date": "2025-09-20",
+      "status": "CLOSED",
+      "openUtc": null,
+      "previousSessionDate": "2025-09-19",
+      "sourceRef": "nasdaq-2025-pdf"
+    },
+    {
+      "date": "2025-09-21",
+      "status": "CLOSED",
+      "openUtc": null,
+      "previousSessionDate": "2025-09-19",
+      "sourceRef": "nasdaq-2025-pdf"
+    },
+    {
+      "date": "2025-09-22",
+      "status": "REGULAR",
+      "openUtc": "2025-09-22T13:30:00Z",
+      "previousSessionDate": "2025-09-19",
+      "sourceRef": "nasdaq-2025-pdf"
+    },
+    {
+      "date": "2025-09-23",
+      "status": "REGULAR",
+      "openUtc": "2025-09-23T13:30:00Z",
+      "previousSessionDate": "2025-09-22",
+      "sourceRef": "nasdaq-2025-pdf"
+    },
+    {
+      "date": "2025-09-24",
+      "status": "REGULAR",
+      "openUtc": "2025-09-24T13:30:00Z",
+      "previousSessionDate": "2025-09-23",
+      "sourceRef": "nasdaq-2025-pdf"
+    },
+    {
+      "date": "2025-09-25",
+      "status": "REGULAR",
+      "openUtc": "2025-09-25T13:30:00Z",
+      "previousSessionDate": "2025-09-24",
+      "sourceRef": "nasdaq-2025-pdf"
+    },
+    {
+      "date": "2025-09-26",
+      "status": "REGULAR",
+      "openUtc": "2025-09-26T13:30:00Z",
+      "previousSessionDate": "2025-09-25",
+      "sourceRef": "nasdaq-2025-pdf"
+    },
+    {
+      "date": "2025-09-27",
+      "status": "CLOSED",
+      "openUtc": null,
+      "previousSessionDate": "2025-09-26",
+      "sourceRef": "nasdaq-2025-pdf"
+    },
+    {
+      "date": "2025-09-28",
+      "status": "CLOSED",
+      "openUtc": null,
+      "previousSessionDate": "2025-09-26",
+      "sourceRef": "nasdaq-2025-pdf"
+    },
+    {
+      "date": "2025-09-29",
+      "status": "REGULAR",
+      "openUtc": "2025-09-29T13:30:00Z",
+      "previousSessionDate": "2025-09-26",
+      "sourceRef": "nasdaq-2025-pdf"
+    },
+    {
+      "date": "2025-09-30",
+      "status": "REGULAR",
+      "openUtc": "2025-09-30T13:30:00Z",
+      "previousSessionDate": "2025-09-29",
+      "sourceRef": "nasdaq-2025-pdf"
+    },
+    {
+      "date": "2025-10-01",
+      "status": "REGULAR",
+      "openUtc": "2025-10-01T13:30:00Z",
+      "previousSessionDate": "2025-09-30",
+      "sourceRef": "nasdaq-2025-pdf"
+    },
+    {
+      "date": "2025-10-02",
+      "status": "REGULAR",
+      "openUtc": "2025-10-02T13:30:00Z",
+      "previousSessionDate": "2025-10-01",
+      "sourceRef": "nasdaq-2025-pdf"
+    },
+    {
+      "date": "2025-10-03",
+      "status": "REGULAR",
+      "openUtc": "2025-10-03T13:30:00Z",
+      "previousSessionDate": "2025-10-02",
+      "sourceRef": "nasdaq-2025-pdf"
+    },
+    {
+      "date": "2025-10-04",
+      "status": "CLOSED",
+      "openUtc": null,
+      "previousSessionDate": "2025-10-03",
+      "sourceRef": "nasdaq-2025-pdf"
+    },
+    {
+      "date": "2025-10-05",
+      "status": "CLOSED",
+      "openUtc": null,
+      "previousSessionDate": "2025-10-03",
+      "sourceRef": "nasdaq-2025-pdf"
+    },
+    {
+      "date": "2025-10-06",
+      "status": "REGULAR",
+      "openUtc": "2025-10-06T13:30:00Z",
+      "previousSessionDate": "2025-10-03",
+      "sourceRef": "nasdaq-2025-pdf"
+    },
+    {
+      "date": "2025-10-07",
+      "status": "REGULAR",
+      "openUtc": "2025-10-07T13:30:00Z",
+      "previousSessionDate": "2025-10-06",
+      "sourceRef": "nasdaq-2025-pdf"
+    },
+    {
+      "date": "2025-10-08",
+      "status": "REGULAR",
+      "openUtc": "2025-10-08T13:30:00Z",
+      "previousSessionDate": "2025-10-07",
+      "sourceRef": "nasdaq-2025-pdf"
+    },
+    {
+      "date": "2025-10-09",
+      "status": "REGULAR",
+      "openUtc": "2025-10-09T13:30:00Z",
+      "previousSessionDate": "2025-10-08",
+      "sourceRef": "nasdaq-2025-pdf"
+    },
+    {
+      "date": "2025-10-10",
+      "status": "REGULAR",
+      "openUtc": "2025-10-10T13:30:00Z",
+      "previousSessionDate": "2025-10-09",
+      "sourceRef": "nasdaq-2025-pdf"
+    },
+    {
+      "date": "2025-10-11",
+      "status": "CLOSED",
+      "openUtc": null,
+      "previousSessionDate": "2025-10-10",
+      "sourceRef": "nasdaq-2025-pdf"
+    },
+    {
+      "date": "2025-10-12",
+      "status": "CLOSED",
+      "openUtc": null,
+      "previousSessionDate": "2025-10-10",
+      "sourceRef": "nasdaq-2025-pdf"
+    },
+    {
+      "date": "2025-10-13",
+      "status": "REGULAR",
+      "openUtc": "2025-10-13T13:30:00Z",
+      "previousSessionDate": "2025-10-10",
+      "sourceRef": "nasdaq-2025-pdf"
+    },
+    {
+      "date": "2025-10-14",
+      "status": "REGULAR",
+      "openUtc": "2025-10-14T13:30:00Z",
+      "previousSessionDate": "2025-10-13",
+      "sourceRef": "nasdaq-2025-pdf"
+    },
+    {
+      "date": "2025-10-15",
+      "status": "REGULAR",
+      "openUtc": "2025-10-15T13:30:00Z",
+      "previousSessionDate": "2025-10-14",
+      "sourceRef": "nasdaq-2025-pdf"
+    },
+    {
+      "date": "2025-10-16",
+      "status": "REGULAR",
+      "openUtc": "2025-10-16T13:30:00Z",
+      "previousSessionDate": "2025-10-15",
+      "sourceRef": "nasdaq-2025-pdf"
+    },
+    {
+      "date": "2025-10-17",
+      "status": "REGULAR",
+      "openUtc": "2025-10-17T13:30:00Z",
+      "previousSessionDate": "2025-10-16",
+      "sourceRef": "nasdaq-2025-pdf"
+    },
+    {
+      "date": "2025-10-18",
+      "status": "CLOSED",
+      "openUtc": null,
+      "previousSessionDate": "2025-10-17",
+      "sourceRef": "nasdaq-2025-pdf"
+    },
+    {
+      "date": "2025-10-19",
+      "status": "CLOSED",
+      "openUtc": null,
+      "previousSessionDate": "2025-10-17",
+      "sourceRef": "nasdaq-2025-pdf"
+    },
+    {
+      "date": "2025-10-20",
+      "status": "REGULAR",
+      "openUtc": "2025-10-20T13:30:00Z",
+      "previousSessionDate": "2025-10-17",
+      "sourceRef": "nasdaq-2025-pdf"
+    },
+    {
+      "date": "2025-10-21",
+      "status": "REGULAR",
+      "openUtc": "2025-10-21T13:30:00Z",
+      "previousSessionDate": "2025-10-20",
+      "sourceRef": "nasdaq-2025-pdf"
+    },
+    {
+      "date": "2025-10-22",
+      "status": "REGULAR",
+      "openUtc": "2025-10-22T13:30:00Z",
+      "previousSessionDate": "2025-10-21",
+      "sourceRef": "nasdaq-2025-pdf"
+    },
+    {
+      "date": "2025-10-23",
+      "status": "REGULAR",
+      "openUtc": "2025-10-23T13:30:00Z",
+      "previousSessionDate": "2025-10-22",
+      "sourceRef": "nasdaq-2025-pdf"
+    },
+    {
+      "date": "2025-10-24",
+      "status": "REGULAR",
+      "openUtc": "2025-10-24T13:30:00Z",
+      "previousSessionDate": "2025-10-23",
+      "sourceRef": "nasdaq-2025-pdf"
+    },
+    {
+      "date": "2025-10-25",
+      "status": "CLOSED",
+      "openUtc": null,
+      "previousSessionDate": "2025-10-24",
+      "sourceRef": "nasdaq-2025-pdf"
+    },
+    {
+      "date": "2025-10-26",
+      "status": "CLOSED",
+      "openUtc": null,
+      "previousSessionDate": "2025-10-24",
+      "sourceRef": "nasdaq-2025-pdf"
+    },
+    {
+      "date": "2025-10-27",
+      "status": "REGULAR",
+      "openUtc": "2025-10-27T13:30:00Z",
+      "previousSessionDate": "2025-10-24",
+      "sourceRef": "nasdaq-2025-pdf"
+    },
+    {
+      "date": "2025-10-28",
+      "status": "REGULAR",
+      "openUtc": "2025-10-28T13:30:00Z",
+      "previousSessionDate": "2025-10-27",
+      "sourceRef": "nasdaq-2025-pdf"
+    },
+    {
+      "date": "2025-10-29",
+      "status": "REGULAR",
+      "openUtc": "2025-10-29T13:30:00Z",
+      "previousSessionDate": "2025-10-28",
+      "sourceRef": "nasdaq-2025-pdf"
+    },
+    {
+      "date": "2025-10-30",
+      "status": "REGULAR",
+      "openUtc": "2025-10-30T13:30:00Z",
+      "previousSessionDate": "2025-10-29",
+      "sourceRef": "nasdaq-2025-pdf"
+    },
+    {
+      "date": "2025-10-31",
+      "status": "REGULAR",
+      "openUtc": "2025-10-31T13:30:00Z",
+      "previousSessionDate": "2025-10-30",
+      "sourceRef": "nasdaq-2025-pdf"
+    }
+  ]
+}

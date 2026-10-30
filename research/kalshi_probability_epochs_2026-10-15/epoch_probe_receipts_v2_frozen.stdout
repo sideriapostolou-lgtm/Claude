@@ -1,0 +1,9 @@
+{
+  "unknown_receipts": 2,
+  "actual_unknown_count": 1,
+  "actual_error": null,
+  "receipts": [
+    "kalshi_probability_learning_unknown {\"at\":1100,\"mode\":\"observe_only\",\"live_application\":false,\"profitability_proven\":false,\"protocol\":\"kalshi-probability-calibration-v2-h300-g5-b10-prior20\",\"source_fingerprint\":\"23e2ca80d3c04415256bf3fc237ba017d56733a59219d718e86c554eaa1f1d25\",\"window\":\"KXBTC15M-review\",\"reason\":\"startup_inside\"}",
+    "kalshi_probability_learning_unknown {\"at\":1100,\"mode\":\"observe_only\",\"live_application\":false,\"profitability_proven\":false,\"protocol\":\"kalshi-probability-calibration-v2-h300-g5-b10-prior20\",\"source_fingerprint\":\"23e2ca80d3c04415256bf3fc237ba017d56733a59219d718e86c554eaa1f1d25\",\"window\":\"KXBTC15M-review\",\"reason\":\"startup_inside\"}"
+  ]
+}

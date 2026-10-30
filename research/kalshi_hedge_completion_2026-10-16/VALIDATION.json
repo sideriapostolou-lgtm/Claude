@@ -1,0 +1,62 @@
+{
+  "observed_utc": "2026-10-16T20:30:08Z",
+  "display_time": "October 16, 2026, 1:30:08 PM PDT",
+  "review_bundle_sha256": "3dcfe32a07a90bd708ae14f5404cae9660ffac39e27b3d2f9f1c3065ff9b6e29",
+  "checks": {
+    "full_source_run": {
+      "passed": 6281,
+      "skipped": 14,
+      "seconds": 295.07,
+      "limitation": "Final application source; collection imported the earlier version of one test-only pull fixture. Every changed test file was subsequently rerun after strengthening it."
+    },
+    "final_modified_test_files": {
+      "passed": 218,
+      "seconds": 13.22
+    },
+    "independent_final_selected": {
+      "passed": 104,
+      "overlaps_other_suites": true
+    },
+    "root_reproduced_independent": {
+      "passed": 21
+    },
+    "mypy": {
+      "source_files": 135,
+      "result": "pass"
+    },
+    "ruff": {
+      "changed_python_files": 13,
+      "result": "pass"
+    },
+    "diff_check": "pass",
+    "credential_pattern_scan": {
+      "findings": 0
+    }
+  },
+  "initial_full_iteration": {
+    "passed": 6250,
+    "failed": 16,
+    "skipped": 14,
+    "resolved": "Restored raw-crossing starter exclusion and held-pull guards; test-only fixtures retain nonvacuous original accounting/cancellation checks."
+  },
+  "test_harness_correction": "Required count=True in fake pull observation; strengthened every transport case to require definitive rejection, released reservation, no uncertainty/errors and actual guard event. No source change for this correction.",
+  "log_sha256": {
+    "full_final": "893848cef3f68a5a163bf9d07d2ed57c7c50bc3557ef31dfb5d06e8dff10ed6b",
+    "modified_tests_final": "7098abf905a767b320408087e769f9d5eb3ec13da097529bd38801400f3b8e44",
+    "mypy_final": "e4702ba550f3d51822594fd98979a9585a5970032e6fbd5f304d99ffc69a0f00"
+  },
+  "production_release": {
+    "status": "exact deployment and bounded startup/runtime verified",
+    "commit": "2f0bba487b4c88fa39299924b7a112e8413cb933",
+    "deployment": "7582010e-5681-41bb-964b-951e8b3c6767",
+    "native_verified_at": "2026-10-16T20:39:21.213127288Z",
+    "proof": "DEPLOYMENT.json and RUNTIME.json",
+    "actual_new_policy_execution": "not yet observed",
+    "profitability": "unproved"
+  },
+  "review_patch_storage": {
+    "file": "reviewed_final_candidate.patch.gz",
+    "decoded_sha256": "3dcfe32a07a90bd708ae14f5404cae9660ffac39e27b3d2f9f1c3065ff9b6e29",
+    "note": "Lossless gzip preserves unified-diff context whitespace; extracted bytes match independent review."
+  }
+}

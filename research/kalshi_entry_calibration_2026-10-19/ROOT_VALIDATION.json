@@ -1,0 +1,14 @@
+{
+  "checks_each_run": 1554,
+  "original_inspection_source_reproduction": "JSON and CSV byte-identical",
+  "public_checkout_reproduction": "All numeric, receipt, coverage and limitation fields identical; CSV byte-identical. Only inspected current event-source hash differs because original extraction inspected the unpublished storage candidate. No changed input or numeric result.",
+  "inspected_source_hash_difference": {
+    "repository/src/nightcrawler/speeddesk_live.py": {
+      "extraction_checkout": "a61c3beb8b2ff3e4f1697a6fd2a62b8f0fbcbcd352b37e1f674e62bccec04248",
+      "published_checkout": "c228433baa997e8b12a35c7e1074c18d2a37306c9c43b34eaceccbcbe41c58b6"
+    }
+  },
+  "originals_selection": "Independent reviewer compared all selected rows to privately preserved raw envelopes (44 assertions) and independently recalculated raw joins (1408 assertions).",
+  "release_clearance": false,
+  "artifact_format_check": "Source/Markdown/JSON diff check passes; standard CSV CRLF accepted with per-command cr-at-eol. Byte-exact original failed-test log retains its original whitespace and SHA256; it is evidence, not formatted source."
+}

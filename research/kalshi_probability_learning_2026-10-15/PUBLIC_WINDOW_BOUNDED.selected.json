@@ -1,0 +1,27 @@
+{
+  "observed_at_utc": "2026-10-15T19:30:39.116185+00:00",
+  "market_count": 2,
+  "cursor_present": false,
+  "markets": [
+    {
+      "ticker": "KXBTC15M-26OCT151600-00",
+      "open_time": "2026-10-15T19:45:00Z",
+      "close_time": "2026-10-15T20:00:00Z",
+      "status": "initialized",
+      "floor_strike": null,
+      "rules_primary": "If the simple average of the sixty seconds of CF Benchmarks' BRTI before 4:00 PM EDT on Oct 15, 2026 is at least the simple average of the sixty seconds of CF Benchmarks' BRTI before 3:45 PM EDT on October 15, 2026, then the market resolves to Yes.",
+      "rules_secondary": "Not all cryptocurrency price data is the same. While checking a source like Google or Coinbase may help guide your decision, the price used to determine this market is based on CF Benchmarks' corresponding Real Time Index (RTI). At the last minute before expiration, 60 RTI prices are collected. The official and final value is the average of these prices, rounded to the nearest 2 decimal places.",
+      "result": ""
+    },
+    {
+      "ticker": "KXBTC15M-26OCT151545-45",
+      "open_time": "2026-10-15T19:30:00Z",
+      "close_time": "2026-10-15T19:45:00Z",
+      "status": "active",
+      "floor_strike": 82439.21,
+      "rules_primary": "If the simple average of the sixty seconds of CF Benchmarks' BRTI before 3:45 PM EDT on Oct 15, 2026 is at least the simple average of the sixty seconds of CF Benchmarks' BRTI before 3:30 PM EDT on October 15, 2026, then the market resolves to Yes.",
+      "rules_secondary": "Not all cryptocurrency price data is the same. While checking a source like Google or Coinbase may help guide your decision, the price used to determine this market is based on CF Benchmarks' corresponding Real Time Index (RTI). At the last minute before expiration, 60 RTI prices are collected. The official and final value is the average of these prices, rounded to the nearest 2 decimal places.",
+      "result": ""
+    }
+  ]
+}

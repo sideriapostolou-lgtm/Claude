@@ -1,0 +1,50 @@
+import json, statistics, math, gzip, hashlib
+from pathlib import Path
+OUT=Path('/workspace/private-handoffs/claude-2026-10-15/checkpoint-profile/candidate')
+manifest=json.loads((OUT/'matrix_manifest.json').read_text())
+assert manifest.get('status')=='passed'
+def dist(xs): return {'n':len(xs),'median':statistics.median(xs),'p95_nearest_rank':sorted(xs)[math.ceil(.95*len(xs))-1],'min':min(xs),'max':max(xs)}
+summary={'fixtures':{},'status':'passed','criteria':{'repeatable_wall_CPU_regression_gt_percent':5,'max_peak_RSS_growth_percent':10,'byte_parity':True},'all_children_exit_zero':all(r['exit_code']==0 for r in manifest['runs']),'max_child_elapsed_s':max(r['elapsed_s'] for r in manifest['runs']),'max_total_experiment_disk_bytes':max(r['experiment_disk_peak_sampled_bytes'] for r in manifest['runs']),'conventional_complete_patch_sha256':hashlib.sha256((OUT/'COMPLETE.patch').read_bytes()).hexdigest(),'limitations':['synthetic sparse histories; actual practice retained size unknown','inert paper companion panel and empty volatility tape understate full production cost','15 pooled samples are descriptive, p95 nearest rank equals maximum; no production percentile claim','count/allocation overhead separately reported; inclusive nested spans never summed','firstFULL, correction and warm states distinct; no real journal/risk/controller/source-epoch behavior claim','no production cause/speed/profit measured; no source release']}
+for fixture in ['zero','one','1day','fixed7days','7days','31days','older35days']:
+    data=[(row,json.loads((OUT/row['stdout']).read_text())) for row in manifest['runs'] if row['fixture']==fixture]
+    entry={'variants':{},'byte_comparisons':next(d for d in manifest['actual_comparisons'] if d['fixture']==fixture),'counts':data[0][1]['counts'],'paired_process_median_ratios':{}}
+    for variant in ['baseline','candidate']:
+        subset=[(row,d) for row,d in data if row['variant']==variant]
+        timed=[d for row,d in subset if row['mode']=='timing']
+        v={'operations':{},'first_full_checkpoint':{},'correction_checkpoint':{},'max_RSS_kib':max(max(row['rss_peak_sampled_kib'],d['peak_rss_kib']) for row,d in subset),'runtime_forbidden_attempts':sum(d['runtime_forbidden_attempts'] for _,d in subset),'blocked_import_probes':sum(len(d['import_blocked_socket_probes']) for _,d in subset),'mirror_bytes':timed[0]['mirror_bytes'],'kv_bytes':timed[0]['kv_json_bytes'],'receipts':timed[0]['receipts']}
+        for op in ['checkpoint','daily_reports','summary']:
+            samples=[s for d in timed for s in d['operations'][op]['samples']]
+            o={m:dist([s[m] for s in samples]) for m in ['wall_ms','thread_cpu_ms']}
+            count=next((d['operations'][op] for row,d in subset if row['mode']=='count'),None)
+            alloc=next((d['operations'][op] for row,d in subset if row['mode']=='allocation'),None)
+            if count:
+                n=len(count['samples']);o['calls_per_operation']={k:x/n for k,x in count['calls'].items()};o['instrumentation_count_wall_ratio']=count['wall_ms']['median']/o['wall_ms']['median']
+                c=data[0][1]['counts']['settlements'];days=data[0][1]['days']
+                expected=c if variant=='candidate' and op=='checkpoint' else (days+1)*2*c if op=='checkpoint' else days*2*c if op=='daily_reports' else 2*c
+                assert o['calls_per_operation'].get('speeddesk.asdict:Settlement',0)==expected
+            if alloc:o['allocation_current_peak_bytes']=alloc['tracemalloc_current_peak_bytes'];o['instrumentation_allocation_wall_ratio']=alloc['wall_ms']['median']/o['wall_ms']['median']
+            v['operations'][op]=o
+        for phase,field in [('first_full_checkpoint','first_full_sync_checkpoint'),('correction_checkpoint','correction_checkpoint')]:
+            v[phase]={m:dist([d[field][m] for d in timed]) for m in ['wall_ms','thread_cpu_ms']}
+        entry['variants'][variant]=v
+    baseline=entry['variants']['baseline'];candidate=entry['variants']['candidate']
+    for metric in ['wall_ms','thread_cpu_ms']:
+        ratios=[]
+        for rep in range(1,4):
+            b=next(d for row,d in data if row['variant']=='baseline' and row['mode']=='timing' and row['rep']==rep)
+            c=next(d for row,d in data if row['variant']=='candidate' and row['mode']=='timing' and row['rep']==rep)
+            ratios.append(c['operations']['checkpoint'][metric]['median']/b['operations']['checkpoint'][metric]['median'])
+        entry['paired_process_median_ratios'][metric]=ratios
+        entry['paired_process_median_ratios'][metric+'_repeatable_gt_5pct']=sum(r>1.05 for r in ratios)>=2
+    entry['checkpoint_median_percent_change']={m:100*(candidate['operations']['checkpoint'][m]['median']/baseline['operations']['checkpoint'][m]['median']-1) for m in ['wall_ms','thread_cpu_ms']}
+    entry['max_RSS_percent_change']=100*(candidate['max_RSS_kib']/baseline['max_RSS_kib']-1)
+    entry['regression_gate_passed']=not any(entry['paired_process_median_ratios'][m+'_repeatable_gt_5pct'] for m in ['wall_ms','thread_cpu_ms']) and entry['max_RSS_percent_change']<=10
+    if not entry['regression_gate_passed']:summary['status']='failed_regression_gate'
+    summary['fixtures'][fixture]=entry
+summary['all_full_output_byte_parity']=len(manifest['actual_comparisons'])==7 and all(check['byte_equal'] for r in manifest['actual_comparisons'] for check in r['checks'])
+assert summary['all_full_output_byte_parity']
+summary['manifest_sha256']=hashlib.sha256((OUT/'matrix_manifest.json').read_bytes()).hexdigest()
+(OUT/'SUMMARY.json').write_text(json.dumps(summary,indent=2)+'\n')
+for name,entry in summary['fixtures'].items():
+    print(name,'baseline',entry['variants']['baseline']['operations']['checkpoint']['wall_ms'],'candidate',entry['variants']['candidate']['operations']['checkpoint']['wall_ms'],'change',entry['checkpoint_median_percent_change'],'RSS_change',entry['max_RSS_percent_change'],'gate',entry['regression_gate_passed'])
+print('status',summary['status'])

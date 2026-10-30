@@ -1,0 +1,73 @@
+{
+  "at_utc": "2026-10-15T19:49:47.781805+00:00",
+  "forecast_original": "2026-10-15T19:35:00.011166115Z",
+  "scored_original": "2026-10-15T19:45:28.880931346Z",
+  "window": "KXBTC15M-26OCT151545-45",
+  "baseline_brier": 0.006125724178142175,
+  "shadow_brier": 0.006125724178142175,
+  "prior_count": 0,
+  "prior_wins": 0,
+  "q_equals_p": true,
+  "official_outcome": false,
+  "target_real": {
+    "fills": 2,
+    "up": "1.0",
+    "down": "1.0",
+    "cost_usd": "0.990",
+    "fees_usd": "0.0",
+    "payout_usd": "1.0",
+    "pnl_usd": "0.010",
+    "locked_usd": "0.010",
+    "directional_usd": "0"
+  },
+  "prior_partial_losses": [
+    {
+      "timestamp": "2026-10-15T19:30:06.081758316Z",
+      "payload": {
+        "at": 1792092602.335242,
+        "venue": "kalshi",
+        "window": "KXBTC15M-26OCT151530-30",
+        "settlement_id": "kalshi:KXBTC15M-26OCT151530-30",
+        "up_wins": true,
+        "up_shares": 1.0,
+        "down_shares": 1.0,
+        "cost_usd": 1.3399999999999999,
+        "fee_usd": 0.0034,
+        "paired_credit_usd": 1.0,
+        "net_payout_usd": 0.0,
+        "payout_usd": 1.0,
+        "locked_usd": -0.3433999999999999,
+        "direction_usd": 0.0,
+        "pnl_usd": -0.3433999999999999,
+        "observed_at": 1792092605.578929,
+        "time_source": "venue settled_time"
+      },
+      "query_files": [
+        "CAPTURE_FINAL_SPEEDDESK_LIVE_SETTLEMENT.native.json",
+        "CAPTURE_SLOT_SPEEDDESK_LIVE_SETTLEMENT.native.json"
+      ]
+    }
+  ],
+  "next_window_tail_fills": [
+    {
+      "timestamp": "2026-10-15T19:45:25.653066417Z",
+      "payload": {
+        "at": 1792093525.080238,
+        "venue": "kalshi",
+        "fill_id": "0724457d-5c19-affc-7eed-a7608417bda1",
+        "order_id": "01a14119-0c38-7c76-a8af-7c0abde8d0ad",
+        "client_order_id": "nc-speed-138852aa96df49d190afc37cd8f777e8",
+        "window": "KXBTC15M-26OCT151600-00",
+        "side": "down",
+        "price": 0.45,
+        "size": 1.0,
+        "fee_usd": 0.0,
+        "is_taker": false
+      },
+      "query_files": [
+        "CAPTURE_FINAL_SPEEDDESK_LIVE_FILL.native.json"
+      ]
+    }
+  ],
+  "caveat": "One score, q=p; no improvement/calibration/profitability claim. Trading result is from unchanged realbot, not the observer. Full native history/order/cash completeness not certified."
+}

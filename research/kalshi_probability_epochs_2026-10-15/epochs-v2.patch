@@ -1,0 +1,1025 @@
+diff --git a/src/nightcrawler/kalshi_probability_epochs.py b/src/nightcrawler/kalshi_probability_epochs.py
+new file mode 100644
+index 0000000..77ebc9f
+--- /dev/null
++++ b/src/nightcrawler/kalshi_probability_epochs.py
+@@ -0,0 +1,254 @@
++"""Child-only lineage for separate prospective probability measurement epochs.
++
++Old raw checkpoints are frozen before validation/restart can annotate them. The
++active learner keeps its strict restore rules; archives never receive callbacks.
++"""
++from __future__ import annotations
++
++import contextlib
++import copy
++import hashlib
++import json
++import logging
++from typing import Any
++
++from .kalshi_probability_learning import PROTOCOL, ProbabilityLearning, finite
++
++SCHEMA = 1
++MAX_ARCHIVES, MAX_BYTES, MAX_STATE_BYTES = 4, 2 * 1024 * 1024, 262144
++HOST_ERRORS = frozenset({"epoch_state_invalid", "epoch_history_missing", "epoch_history_disabled",
++                         "epoch_protocol_unsupported", "epoch_capacity", "epoch_method_failed"})
++LEGACY, EPOCHS = "learning_probability", "learning_probability_epochs"
++MARKER = "learning_probability_epoch_schema"
++log = logging.getLogger("nightcrawler.kalshi_probability_epochs")
++
++
++def encoded(raw: Any) -> bytes:
++    return json.dumps(raw, sort_keys=True, allow_nan=False, separators=(",", ":")).encode()
++
++
++def digest(raw: Any) -> str:
++    return hashlib.sha256(encoded(raw)).hexdigest()
++
++
++def _eligible(raw: dict[str, Any]) -> bool:
++    return (raw["restore_rejected"] is False and
++            ((raw["enabled"] is True and raw["error"] is None) or
++             (raw["enabled"] is False and raw["error"] == "source_or_protocol_mismatch")))
++
++
++class ProbabilityEpochs:
++    """Startup/checkpoint host only; the arena retains the active learner pointer."""
++
++    def __init__(self, active: ProbabilityLearning, now: float) -> None:
++        self.active = active
++        self.error: str | None = None
++        self._legacy: dict[str, Any] | None = None
++        self._envelope: dict[str, Any] | None = None
++        try:
++            raw = active.state()
++            self._validate_state(raw, now)
++            self._legacy = copy.deepcopy(raw)
++            self._envelope = self._base(self._record(raw, 0, now))
++            self._budget(self._envelope)
++        except Exception:  # noqa: BLE001 - optional construction cannot affect the arena
++            self._fail("epoch_state_invalid")
++
++    def _validate_state(self, raw: Any, now: float) -> None:
++        if not isinstance(raw, dict) or len(encoded(raw)) > MAX_STATE_BYTES:
++            raise ValueError("epoch learner state")
++        probe = ProbabilityLearning(now)
++        # Validation-only same-package coupling: public restore swallows malformed
++        # input into restore_rejected, indistinguishable from a valid saved latch.
++        # The unchanged strict implementation validates a disposable probe only.
++        probe._restore(raw, now)
++        if (probe.history_source != raw["source_fingerprint"] or
++                probe.history_protocol != raw["protocol"]):
++            raise ValueError("epoch learner identity")
++
++    def _record(self, raw: dict[str, Any], ordinal: int, opened_at: float | None) -> dict[str, Any]:
++        return {"ordinal": ordinal, "source_fingerprint": raw["source_fingerprint"],
++                "protocol": raw["protocol"], "opened_at": opened_at,
++                "state": copy.deepcopy(raw), "state_sha256": digest(raw)}
++
++    def _base(self, active: dict[str, Any] | None) -> dict[str, Any]:
++        return {"schema": SCHEMA, "legacy_sha256": digest(self._legacy),
++                "archived": [], "active": active, "error": None}
++
++    def _budget(self, envelope: dict[str, Any]) -> None:
++        # Reserve the longest fixed latch, so a later refusal itself always fits.
++        reserved = {**envelope, "error": max(HOST_ERRORS, key=len)}
++        if (len(envelope["archived"]) > MAX_ARCHIVES or
++                len(encoded({LEGACY: self._legacy, EPOCHS: reserved, MARKER: SCHEMA})) > MAX_BYTES):
++            raise OverflowError("epoch retention capacity")
++
++    def _fail(self, reason: str) -> None:
++        self.error = reason if reason in HOST_ERRORS else "epoch_method_failed"
++        if self._envelope is not None:
++            self._envelope["error"] = self.error
++        with contextlib.suppress(Exception):
++            self.active.disable("malformed_optional_learning_state")
++
++    def _validate_record(self, raw: Any, ordinal: int, now: float, *, archived: bool) -> None:
++        keys = {"ordinal", "source_fingerprint", "protocol", "opened_at", "state", "state_sha256"}
++        if archived:
++            keys.add("closed_at")
++        if (not isinstance(raw, dict) or set(raw) != keys or type(raw["ordinal"]) is not int
++                or raw["ordinal"] != ordinal or raw["protocol"] != PROTOCOL):
++            raise ValueError("epoch record")
++        self._validate_state(raw["state"], now)
++        if (raw["source_fingerprint"] != raw["state"]["source_fingerprint"] or
++                raw["protocol"] != raw["state"]["protocol"] or raw["state_sha256"] != digest(raw["state"])):
++            raise ValueError("epoch record identity/digest")
++        opened = raw["opened_at"]
++        if opened is None:
++            if ordinal != 0 or raw["state"] != self._legacy:
++                raise ValueError("epoch imported legacy")
++        elif not finite(opened) or not 0 <= opened <= raw["state"]["last_at"]:
++            raise ValueError("epoch opening time")
++        if archived:
++            closed = raw["closed_at"]
++            if not finite(closed) or not max(0, raw["state"]["last_at"]) <= closed <= now:
++                raise ValueError("epoch closing time")
++
++    def restore(self, arena: dict[str, Any], now: float) -> None:
++        """A loaded file is never a fresh bootstrap, including absent/null fields."""
++        self._legacy, self._envelope, self.error = None, None, None
++        try:
++            legacy = arena.get(LEGACY)
++            self._validate_state(legacy, now)
++            assert isinstance(legacy, dict)
++            self._legacy = copy.deepcopy(legacy)  # retain only validated, JSON-safe raw
++            self._envelope = {**self._base(None), "error": "epoch_state_invalid"}
++            # A separate atomic marker distinguishes damaged new checkpoints from
++            # genuine pre-host history. Removing both is not detectable here.
++            if EPOCHS not in arena:
++                if MARKER in arena:
++                    raise ValueError("epoch missing envelope")
++                if legacy["protocol"] != PROTOCOL:
++                    self._fail("epoch_protocol_unsupported")
++                    return
++                self._envelope = self._base(self._record(legacy, 0, None))
++            else:
++                raw = arena[EPOCHS]
++                if (not isinstance(raw, dict) or type(raw.get("schema")) is not int or raw["schema"] != SCHEMA
++                        or raw.get("legacy_sha256") != digest(legacy) or not isinstance(raw.get("archived"), list)):
++                    raise ValueError("epoch envelope")
++                for index, record in enumerate(raw["archived"][:MAX_ARCHIVES + 1]):
++                    if index == MAX_ARCHIVES:
++                        raise OverflowError("epoch archive capacity")
++                    self._validate_record(record, index, now, archived=True)
++                    if index and (record["opened_at"] is None or
++                                  record["opened_at"] < raw["archived"][index - 1]["closed_at"]):
++                        raise ValueError("epoch chronology")
++                    prefix = {**self._envelope, "archived": [*self._envelope["archived"], copy.deepcopy(record)]}
++                    self._budget(prefix)
++                    self._envelope = prefix  # only the completely validated contiguous prefix
++                # Validate activation metadata after salvaging certified archives.
++                if (set(raw) != {"schema", "legacy_sha256", "archived", "active", "error"}
++                        or type(arena.get(MARKER)) is not int or arena[MARKER] != SCHEMA
++                        or (raw["error"] is not None and raw["error"] not in HOST_ERRORS)):
++                    raise ValueError("epoch activation metadata")
++                active = raw["active"]
++                if active is None:
++                    if raw["error"] is None:
++                        raise ValueError("epoch missing active")
++                else:
++                    self._validate_record(active, len(raw["archived"]), now, archived=False)
++                    if raw["archived"] and (active["opened_at"] is None or
++                                            active["opened_at"] < raw["archived"][-1]["closed_at"]):
++                        raise ValueError("epoch chronology")
++                self._budget(raw)
++                self._envelope = copy.deepcopy(raw)
++            active = self._envelope["active"]
++            if self._envelope["error"] is not None:
++                self._fail(self._envelope["error"])
++            elif not _eligible(active["state"]):
++                self._fail("epoch_history_disabled")
++            elif not self.active.enabled:
++                self._fail("epoch_method_failed")
++            elif active["source_fingerprint"] == self.active.source:
++                self.active.restore(active["state"], now)
++                if active["opened_at"] is None:
++                    active["opened_at"] = now
++                self.checkpoint()
++            else:
++                self._rollover(now)
++        except OverflowError:
++            self._fail("epoch_capacity")
++        except Exception:  # noqa: BLE001 - bad optional history must never reset the arena
++            self._fail("epoch_history_missing" if LEGACY not in arena and EPOCHS not in arena
++                       else "epoch_state_invalid")
++
++    def _rollover(self, now: float) -> None:
++        assert self._envelope is not None
++        prior = self._envelope["active"]
++        candidate = {**self._envelope,
++                     "archived": [*self._envelope["archived"], {**prior, "closed_at": now}],
++                     "active": self._record(self.active.state(), prior["ordinal"] + 1, now)}
++        self._budget(candidate)
++        self._envelope = candidate
++
++    def checkpoint(self) -> tuple[dict[str, Any] | None, dict[str, Any] | None]:
++        """Atomic bounded optional snapshot; refusal retains the last safe records."""
++        if self._envelope is not None and self.error is None:
++            try:
++                raw = self.active.state()
++                self._validate_state(raw, self.active.last_at)
++                if (raw["source_fingerprint"] != self._envelope["active"]["source_fingerprint"]
++                        or raw["source_fingerprint"] != self.active.source or raw["protocol"] != PROTOCOL):
++                    raise ValueError("epoch active identity")
++                record = {**self._envelope["active"], "state": raw, "state_sha256": digest(raw)}
++                candidate = {**self._envelope, "active": record}
++                self._budget(candidate)
++                self._envelope = candidate
++            except OverflowError:
++                self._fail("epoch_capacity")
++            except Exception:  # noqa: BLE001 - even malformed optional memory cannot poison arena JSON
++                self._fail("epoch_method_failed")
++        return self.retained_state()
++
++    def retained_state(self) -> tuple[dict[str, Any] | None, dict[str, Any] | None]:
++        return copy.deepcopy(self._legacy), copy.deepcopy(self._envelope)
++
++    @staticmethod
++    def _summary(record: dict[str, Any]) -> dict[str, Any]:
++        raw = record["state"]
++        n = raw["counts"]["scored"]
++        return {key: record[key] for key in ("ordinal", "protocol", "source_fingerprint", "opened_at")} | {
++            "closed_at": record.get("closed_at"), "forecasts": raw["counts"]["forecasts"], "scored": n,
++            "unknown": raw["counts"]["unknown"],
++            "pending": sum(row["forecast"] is not None for row in raw["pending"].values()),
++            "brier_baseline": raw["brier_p"] / n if n else None,
++            "brier_shadow": raw["brier_q"] / n if n else None,
++            "pending_frozen_unresolved": True}
++
++    def current_panel(self) -> dict[str, Any] | None:
++        if self.error is not None or self._envelope is None:
++            return None
++        try:
++            panel = self.active.panel()
++            if (panel["history_source_fingerprint"] != panel["source_fingerprint"] or
++                    panel["history_protocol"] != panel["protocol"]):
++                raise ValueError("epoch current panel identity")
++            return panel
++        except Exception:  # noqa: BLE001 - optional panel failures cannot prevent arena saves
++            self._fail("epoch_method_failed")
++            return None
++
++    def panel(self) -> dict[str, Any]:
++        envelope = self._envelope
++        return {"schema": SCHEMA, "mode": "observe_only", "live_application": False,
++                "profitability_proven": False, "error": self.error,
++                "current_source_fingerprint": self.active.source,
++                "active_ordinal": envelope["active"]["ordinal"] if envelope and envelope["active"] else None,
++                "current_available": self.error is None and envelope is not None and envelope["active"] is not None,
++                "archived": [self._summary(record) for record in envelope["archived"]] if envelope else [],
++                "retained_active": self._summary(envelope["active"]) if envelope and envelope["active"] and self.error else None}
++
++    def status(self, now: float) -> None:
++        """One startup receipt; only bounded summaries and a consistency digest."""
++        payload = {"at": now, **self.panel(), "enabled": self.error is None and self.active.enabled,
++                   "current": self.current_panel(),
++                   "legacy_sha256": digest(self._legacy) if self._legacy is not None else None}
++        log.info("kalshi_probability_epoch_status %s", json.dumps(payload, allow_nan=False, separators=(",", ":")))
+diff --git a/src/nightcrawler/kalshi_probability_learning.py b/src/nightcrawler/kalshi_probability_learning.py
+index 3bdcd98..3cf8ea0 100644
+--- a/src/nightcrawler/kalshi_probability_learning.py
++++ b/src/nightcrawler/kalshi_probability_learning.py
+@@ -20,7 +20,7 @@ log = logging.getLogger("nightcrawler.kalshi_probability_learning")
+ PROTOCOL = "kalshi-probability-calibration-v2-h300-g5-b10-prior20"
+ HORIZON, GRACE, BINS, PRIOR = 300, 5, 10, 20
+ MAX_PENDING, MAX_RECENT, MAX_LABELS = 32, 64, 4096
+-SOURCE_FILES = ("kalshi_probability_learning.py", "speeddesk_model.py", "speeddesk_feeds.py",
++SOURCE_FILES = ("kalshi_probability_learning.py", "kalshi_probability_epochs.py", "speeddesk_model.py", "speeddesk_feeds.py",
+                 "speeddesk_kalshi.py", "speeddesk_kalshi_ws.py", "speeddesk_venues.py",
+                 "speeddesk.py", "kalshi_arena.py")
+ LABEL_TIMEOUT = 7200
+diff --git a/src/nightcrawler/kalshi_arena.py b/src/nightcrawler/kalshi_arena.py
+index 6744607..7085a8a 100644
+--- a/src/nightcrawler/kalshi_arena.py
++++ b/src/nightcrawler/kalshi_arena.py
+@@ -81,6 +81,7 @@ from .kalshi_online_learning import (
+     MAX_RECENT,
+     OnlineLearning,
+ )
++from .kalshi_probability_epochs import ProbabilityEpochs
+ from .kalshi_probability_learning import ProbabilityLearning
+ from .speeddesk_model import (
+     BitcoinTape,
+@@ -1270,13 +1271,16 @@ class KalshiArena:
+             pass
+         self.learning = OnlineLearning(clock())
+         self.learning_probability: ProbabilityLearning | None = None
++        self._probability_epochs: ProbabilityEpochs | None = None
+         try:
+             self.learning_probability = ProbabilityLearning(self.learning.started_at)
+-        except Exception:  # noqa: BLE001, S110 - optional construction cannot prevent arena startup
+-            pass
++            self._probability_epochs = ProbabilityEpochs(self.learning_probability, self.learning.started_at)
++        except Exception:  # noqa: BLE001 - optional construction cannot prevent arena startup
++            self._probability_call("disable", "optional_learning_method_failed")
+         self._load(clock())
+         self._learning_call("status", clock())
+         self._probability_call("status", self.learning.last_at)
++        self._probability_epoch_call("status", self.learning.last_at)
+         self.rng = random.Random(SEED + self.next_id)
+         self._populate(clock())
+ 
+@@ -1315,6 +1319,22 @@ class KalshiArena:
+             pass
+         return None
+ 
++    def _probability_epoch_call(self, method: str, *args: Any) -> Any:
++        """Isolate optional lineage persistence/panels; runtime callbacks stay on the learner."""
++        host = self._probability_epochs
++        if host is None or method not in {"restore", "checkpoint", "current_panel", "panel", "status"}:
++            return None
++        try:
++            return getattr(host, method)(*args)
++        except Exception:  # noqa: BLE001 - host failures cannot reset V1/residents or block saves
++            self._probability_call("disable", "optional_learning_method_failed")
++            with contextlib.suppress(Exception):
++                host._fail("epoch_method_failed")
++            if method == "checkpoint":
++                with contextlib.suppress(Exception):
++                    return host.retained_state()
++            return None
++
+     def _diagnostic_cause(self, slug: str, now: float, flags: Sequence[str], **kwargs: Any) -> None:
+         self._diagnostic_call("cause", self.learning, slug, now, flags, self._diagnostic_frame, **kwargs)
+ 
+@@ -1996,6 +2016,10 @@ class KalshiArena:
+                  "candidates": candidates[:PANEL_CANDIDATES], "events": self.events[:PANEL_EVENTS]}
+         counts = {"residents": len(rows), "grave": int(self.town["evicted"]), "candidates": len(candidates),
+                   "events": self.next_event - 1}
++        probability_panel = self._probability_epoch_call("current_panel")
++        epoch_panel = self._probability_epoch_call("panel")
++        if self._probability_epochs is None or self._probability_epochs.error is not None:
++            probability_panel = None
+         return {"schema_version": PANEL_SCHEMA, "mode": "paper", "label": LABEL, "as_of": now,
+                 "town_id": self.town_id, "heartbeat_s": SAVE_EVERY_S, "problem": self.problem,
+                 "population": len(self.residents), "rent_usd": self.config.rent_usd,
+@@ -2012,16 +2036,18 @@ class KalshiArena:
+                 "truncated": {key: len(shown[key]) < counts[key] for key in counts},
+                 "town": dict(self.town), "feed": self.telemetry(now),
+                 "learning": self._learning_call("panel"),
+-                "learning_probability": self._probability_call("panel")}
++                "learning_probability": probability_panel, "learning_probability_epochs": epoch_panel}
+ 
+     def state(self, now: float) -> dict[str, Any]:
++        probability, epochs = self._probability_epoch_call("checkpoint") or (None, None)
+         return {"version": STATE_VERSION, "label": LABEL, "saved_at": now, "started_at": self.started_at,
+                 "settings": {"population": self.config.population, "rent_usd": self.config.rent_usd,
+                              "broke_usd": self.config.broke_usd, "start_cash": self.config.start_cash},
+                 "control_rule": self.control_rule, "regime": self.regime, "next_id": self.next_id, "seq": self.seq,
+                 "town_id": self.town_id, "next_event": self.next_event, "rent_day": self.rent_day,
+                 "learning": self._learning_call("state"),
+-                "learning_probability": self._probability_call("state"),
++                "learning_probability": probability, "learning_probability_epochs": epochs,
++                "learning_probability_epoch_schema": 1,
+                 "active_windows": [[slug, window.start] for slug, window in sorted(self.windows.items())],
+                 "residents": [res.row for res in self.residents.values()], "grave": self.grave,
+                 "events": self.events, "town": self.town,
+@@ -2097,11 +2123,8 @@ class KalshiArena:
+             self._reset(exc)
+         else:
+             self._learning_call("restore", raw.get("learning"), now)
+-            if "learning_probability" in raw:
+-                if raw["learning_probability"] is None:
+-                    self._probability_call("disable", "malformed_optional_learning_state")
+-                else:
+-                    self._probability_call("restore", raw["learning_probability"], now)
++            if self._probability_epochs is not None:
++                self._probability_epoch_call("restore", raw, now)
+ 
+     def _reset(self, exc: BaseException) -> None:
+         self.learning.disable("arena_state_unreadable")
+diff --git a/src/nightcrawler/pagestate.py b/src/nightcrawler/pagestate.py
+index 393cc5c..d538995 100644
+--- a/src/nightcrawler/pagestate.py
++++ b/src/nightcrawler/pagestate.py
+@@ -1622,6 +1622,73 @@ def _kalshi_learning_view(raw: Any, *, probability_only: bool = False) -> dict[s
+                          if probability_only else "Quiet observations; full data coverage not certified")}
+ 
+ 
++def _kalshi_probability_epochs_view(raw: Any) -> dict[str, Any] | None:
++    """Bounded lineage summaries only; never raw states or combined epoch scores."""
++    errors = {"epoch_state_invalid", "epoch_history_missing", "epoch_history_disabled",
++              "epoch_protocol_unsupported", "epoch_capacity", "epoch_method_failed"}
++    protocol = "kalshi-probability-calibration-v2-h300-g5-b10-prior20"
++
++    def identity(value: Any) -> bool:
++        return isinstance(value, str) and len(value) == 64 and not set(value) - set("0123456789abcdef")
++
++    def summary(value: Any, ordinal: int, *, archived: bool) -> dict[str, Any] | None:
++        if (not isinstance(value, Mapping) or type(value.get("ordinal")) is not int or value["ordinal"] != ordinal
++                or value.get("protocol") != protocol or not identity(value.get("source_fingerprint"))
++                or value.get("pending_frozen_unresolved") is not True):
++            return None
++        opened: Any = value.get("opened_at")
++        closed: Any = value.get("closed_at")
++        if opened is None:
++            if ordinal != 0:
++                return None
++        elif _num(opened) is None or opened < 0:
++            return None
++        if archived:
++            if _num(closed) is None or closed < (opened or 0):
++                return None
++        elif closed is not None:
++            return None
++        counts: dict[str, Any] = {key: value.get(key) for key in ("forecasts", "scored", "unknown", "pending")}
++        if (any(type(n) is not int or not 0 <= n <= 10**12 for n in counts.values())
++                or counts["scored"] + counts["pending"] > counts["forecasts"]):
++            return None
++        scores: dict[str, Any] = {key: value.get(key) for key in ("brier_baseline", "brier_shadow")}
++        if any((v is not None if counts["scored"] == 0 else _num(v) is None or not 0 <= v <= 1)
++               for v in scores.values()):
++            return None
++        return {"ordinal": ordinal, "protocol": protocol, "source_fingerprint": value["source_fingerprint"],
++                "opened_at": opened, "closed_at": closed, **counts, **scores, "pending_frozen_unresolved": True}
++
++    if (not isinstance(raw, Mapping) or type(raw.get("schema")) is not int or raw["schema"] != 1
++            or raw.get("mode") != "observe_only" or raw.get("live_application") is not False
++            or raw.get("profitability_proven") is not False or type(raw.get("current_available")) is not bool
++            or not identity(raw.get("current_source_fingerprint"))
++            or not isinstance(raw.get("archived"), list) or len(raw["archived"]) > 4):
++        return None
++    error = raw.get("error")
++    if error is not None and (not isinstance(error, str) or error not in errors):
++        return None
++    ordinal = raw.get("active_ordinal")
++    if ordinal is not None and (type(ordinal) is not int or ordinal != len(raw["archived"])):
++        return None
++    if raw["current_available"] != (error is None and ordinal is not None):
++        return None
++    archives = [summary(value, index, archived=True) for index, value in enumerate(raw["archived"])]
++    if any(value is None for value in archives):
++        return None
++    retained = raw.get("retained_active")
++    if error is not None and ordinal is not None:
++        retained = summary(retained, ordinal, archived=False)
++        if retained is None:
++            return None
++    elif retained is not None:
++        return None
++    return {"schema": 1, "mode": "observe_only", "live_application": False, "profitability_proven": False,
++            "error": error, "current_source_fingerprint": raw["current_source_fingerprint"],
++            "active_ordinal": ordinal, "current_available": raw["current_available"],
++            "archived": archives, "retained_active": retained}
++
++
+ def _kalshi_arena_envelope(status: str, reason: str | None) -> dict[str, Any]:
+     """The block with nothing known: every figure null, never a zero or an empty list that would look like a fresh,
+     empty town. ``mode`` and ``real_orders_enabled`` are constants of this page, never read from a file (the arena
+@@ -1811,6 +1878,8 @@ def _kalshi_arena_view(kalshi_arena: Any, raw: Mapping[str, Any], settings: Sett
+         **({"learning": _kalshi_learning_view(raw.get("learning"))} if "learning" in raw else {}),
+         **({"learning_probability": _kalshi_learning_view(raw.get("learning_probability"), probability_only=True)}
+            if "learning_probability" in raw else {}),
++        **({"learning_probability_epochs": _kalshi_probability_epochs_view(raw.get("learning_probability_epochs"))}
++           if "learning_probability_epochs" in raw else {}),
+     }
+ 
+ 
+diff --git a/tests/test_kalshi_probability_epochs.py b/tests/test_kalshi_probability_epochs.py
+new file mode 100644
+index 0000000..c991dae
+--- /dev/null
++++ b/tests/test_kalshi_probability_epochs.py
+@@ -0,0 +1,528 @@
++"""Real child-only epoch transitions with synthetic inputs, files and source IDs."""
++from __future__ import annotations
++
++import copy
++import json
++import logging
++from dataclasses import replace
++from pathlib import Path
++from typing import Any
++
++import pytest
++from test_kalshi_probability_arena import admit, forecast, receive, setup, tick
++from test_kalshi_probability_learning import predict, window
++
++from nightcrawler import kalshi_probability_epochs as epochs
++from nightcrawler import kalshi_probability_learning as probability
++from nightcrawler.kalshi_arena import KalshiArena
++from nightcrawler.kalshi_probability_epochs import (
++    EPOCHS,
++    LEGACY,
++    MARKER,
++    ProbabilityEpochs,
++)
++from nightcrawler.kalshi_probability_learning import ProbabilityLearning
++from nightcrawler.pagestate import _kalshi_probability_epochs_view
++
++A, B = "a" * 64, "b" * 64
++
++
++def host(monkeypatch: pytest.MonkeyPatch, source: str, now: float) -> ProbabilityEpochs:
++    monkeypatch.setattr(probability, "fingerprint", lambda: source)
++    return ProbabilityEpochs(ProbabilityLearning(now), now)
++
++
++def saved(value: ProbabilityEpochs) -> dict[str, Any]:
++    legacy, envelope = value.checkpoint()
++    return {LEGACY: legacy, EPOCHS: envelope, MARKER: epochs.SCHEMA}
++
++
++def history(monkeypatch: pytest.MonkeyPatch, *, pending: bool = False) -> dict[str, Any]:
++    monkeypatch.setattr(probability, "fingerprint", lambda: A)
++    learner = ProbabilityLearning(0)
++    for index in range(5):
++        w = window(1000 + index * 1000)
++        learner.discover([w], w.start - 1)
++        predict(learner, w, w.start + 300)
++        learner.labels_received([(w.slug, bool(index % 2))], w.end)
++        learner.advance([w], 100, .001, w.end, w.end)
++    w = window(6000)
++    learner.discover([w], 5999)
++    learner.advance([w], 100, .001, 6310, 6310)
++    if pending:
++        w = window(7000)
++        learner.discover([w], 6999)
++        predict(learner, w, 7300)
++    return learner.state()
++
++
++def test_import_freezes_exact_five_scores_one_unknown_and_pending_before_restore(monkeypatch: pytest.MonkeyPatch) -> None:
++    raw = history(monkeypatch, pending=True)
++    original = copy.deepcopy(raw)
++    value = host(monkeypatch, B, 9000)
++    value.restore({LEGACY: raw}, 9000)
++    state = saved(value)
++    assert raw == original == state[LEGACY] == state[EPOCHS]["archived"][0]["state"]
++    assert state[EPOCHS]["archived"][0]["state"]["last_at"] == 7300
++    assert value.active.enabled and value.active.source == B
++    assert not any(value.active.counts.values()) and not any(value.active.bin_n)
++    assert value.active.brier_p == value.active.brier_q == 0
++    assert value.active.watermark == -1 and not value.active.pending and not value.active.labels
++    assert value.active.batch_seq is value.active.batch_at is value.active.raw_gap_at is None
++    assert value.active.panel()["brier_baseline"] is None
++    value.active.labels_received([(window(7000).slug, True)], 9001)
++    value.active.advance([], 100, .001, 9001, 9001)
++    assert saved(value)[EPOCHS]["archived"][0]["state"] == original
++    panel = value.panel()
++    assert panel["active_ordinal"] == 1 and panel["archived"][0]["scored"] == 5
++    assert panel["archived"][0]["unknown"] == panel["archived"][0]["pending"] == 1
++    assert _kalshi_probability_epochs_view(panel) == panel
++    assert "state" not in panel["archived"][0]
++
++
++@pytest.mark.parametrize("disabled,rejected,error", [
++    (False, False, "source_or_protocol_mismatch"),
++    (False, False, "raw_stream_invalid"),
++    (False, False, "conflicting_or_invalid_final_label"),
++    (True, True, None), (False, True, "source_or_protocol_mismatch"), (False, False, None),
++])
++def test_original_fatal_status_is_never_hidden_by_current_source_mismatch(
++        monkeypatch: pytest.MonkeyPatch, disabled: bool, rejected: bool, error: str | None) -> None:
++    raw = history(monkeypatch)
++    raw.update(enabled=disabled, restore_rejected=rejected, error=error)
++    value = host(monkeypatch, B, 9000)
++    value.restore({LEGACY: raw}, 9000)
++    allowed = not disabled and not rejected and error == "source_or_protocol_mismatch"
++    assert value.active.enabled is allowed
++    state = saved(value)
++    assert state[LEGACY] == raw
++    if allowed:
++        assert state[EPOCHS]["archived"][0]["state"] == raw
++    else:
++        assert value.error == "epoch_history_disabled" and value.current_panel() is None
++        assert state[EPOCHS]["active"]["state"] == raw
++        assert value.panel()["retained_active"]["scored"] == 5
++        retry = host(monkeypatch, B, 9001)
++        retry.restore(state, 9001)
++        assert not retry.active.enabled and saved(retry) == state
++
++
++@pytest.mark.parametrize("raw", [{}, {LEGACY: None}, {LEGACY: {}}, {EPOCHS: None}])
++def test_loaded_missing_null_and_malformed_are_not_fresh_bootstrap(monkeypatch: pytest.MonkeyPatch, raw: Any) -> None:
++    value = host(monkeypatch, B, 9000)
++    assert value.active.enabled  # only the genuinely absent-file path may bootstrap
++    value.restore(raw, 9000)
++    assert not value.active.enabled and value.current_panel() is None
++    assert value.error == ("epoch_history_missing" if not raw else "epoch_state_invalid")
++    json.dumps(saved(value), allow_nan=False)
++
++
++def test_same_source_restart_preserves_training_and_strict_restart_annotations(monkeypatch: pytest.MonkeyPatch) -> None:
++    raw = history(monkeypatch, pending=True)
++    value = host(monkeypatch, A, 7400)
++    value.restore({LEGACY: raw}, 7400)
++    state = saved(value)
++    assert state[LEGACY] == raw and state[EPOCHS]["active"]["ordinal"] == 0
++    assert value.active.counts == raw["counts"] and value.active.bin_n == raw["bin_n"]
++    assert value.active.pending[window(7000).slug]["post_gaps"] == ["child_restart_gap"]
++    assert state[EPOCHS]["active"]["state"]["last_at"] == 7400
++    restarted = host(monkeypatch, A, 7500)
++    restarted.restore(state, 7500)
++    assert restarted.active.started_at == 7500 and restarted.error is None
++    assert saved(restarted)[EPOCHS]["active"]["opened_at"] == 7400
++    assert not saved(restarted)[EPOCHS]["archived"]
++    w = window(7600)
++    restarted.active.discover([w], 7600)
++    assert restarted.active.counts["startup_inside"] == raw["counts"]["startup_inside"] + 1
++
++
++def test_rollback_a_b_a_creates_new_ordinal_without_resurrecting_a(monkeypatch: pytest.MonkeyPatch) -> None:
++    raw = history(monkeypatch, pending=True)
++    first = host(monkeypatch, A, 7400)
++    first.restore({LEGACY: raw}, 7400)
++    initial = saved(first)
++    second = host(monkeypatch, B, 8000)
++    second.restore(initial, 8000)
++    middle = saved(second)
++    third = host(monkeypatch, A, 9000)
++    third.restore(middle, 9000)
++    final = saved(third)
++    assert final[LEGACY] == raw
++    assert [row["ordinal"] for row in final[EPOCHS]["archived"]] == [0, 1]
++    assert final[EPOCHS]["archived"][0]["state"] == initial[EPOCHS]["active"]["state"]
++    assert final[EPOCHS]["archived"][1]["state"] == middle[EPOCHS]["active"]["state"]
++    assert final[EPOCHS]["active"]["ordinal"] == 2
++    assert third.active.enabled and third.active.source == A
++    assert not any(third.active.counts.values()) and not any(third.active.bin_n) and not third.active.pending
++
++
++def test_archive_count_limit_refuses_atomically_and_remains_latched(monkeypatch: pytest.MonkeyPatch) -> None:
++    value = host(monkeypatch, A, 9000)
++    for index in range(1, 5):
++        state = saved(value)
++        value = host(monkeypatch, f"{index:064x}", 9000 + index)
++        value.restore(state, 9000 + index)
++        assert value.error is None
++    before = saved(value)
++    refused = host(monkeypatch, B, 9010)
++    refused.restore(before, 9010)
++    after = saved(refused)
++    assert refused.error == "epoch_capacity" and not refused.active.enabled
++    assert after[LEGACY] == before[LEGACY]
++    assert after[EPOCHS] == {**before[EPOCHS], "error": "epoch_capacity"}
++    assert len(after[EPOCHS]["archived"]) == 4
++    retry = host(monkeypatch, B, 9020)
++    retry.restore(after, 9020)
++    assert saved(retry) == after and retry.current_panel() is None
++
++
++def test_joint_byte_limit_reserves_latch_and_counts_duplicated_legacy(monkeypatch: pytest.MonkeyPatch) -> None:
++    value = host(monkeypatch, A, 9000)
++    before = saved(value)
++    reserved = {**before[EPOCHS], "error": max(epochs.HOST_ERRORS, key=len)}
++    boundary = len(epochs.encoded({LEGACY: before[LEGACY], EPOCHS: reserved, MARKER: epochs.SCHEMA}))
++    monkeypatch.setattr(epochs, "MAX_BYTES", boundary)
++    assert saved(value) == before  # exact reserved boundary fits
++    changed = host(monkeypatch, B, 9010)
++    changed.restore(before, 9010)
++    assert changed.error == "epoch_capacity"
++    after = saved(changed)
++    assert after[EPOCHS] == {**before[EPOCHS], "error": "epoch_capacity"}
++    assert len(epochs.encoded(after)) <= boundary
++    retry = host(monkeypatch, B, 9020)
++    retry.restore(after, 9020)
++    assert saved(retry) == after
++
++
++@pytest.mark.parametrize("corruption", ["null", "missing_active", "legacy_digest", "state_digest", "ordinal",
++                                         "source", "protocol", "time", "counts", "truncated", "extra"])
++def test_authoritative_envelope_corruption_never_falls_back_to_legacy(
++        monkeypatch: pytest.MonkeyPatch, corruption: str) -> None:
++    value = host(monkeypatch, A, 9000)
++    state = saved(value)
++    newer = host(monkeypatch, B, 9010)
++    newer.restore(state, 9010)
++    state = saved(newer)
++    raw = state[EPOCHS]
++    if corruption == "null":
++        state[EPOCHS] = None
++    elif corruption == "missing_active":
++        del raw["active"]
++    elif corruption == "legacy_digest":
++        raw["legacy_sha256"] = "0" * 64
++    elif corruption == "state_digest":
++        raw["archived"][0]["state"]["last_at"] -= 1
++    elif corruption == "ordinal":
++        raw["active"]["ordinal"] = 0
++    elif corruption == "source":
++        raw["active"]["source_fingerprint"] = A
++    elif corruption == "protocol":
++        raw["active"]["protocol"] = "unrecognized"
++    elif corruption == "time":
++        raw["archived"][0]["closed_at"] = 8000
++    elif corruption == "counts":
++        raw["active"]["state"]["counts"]["scored"] = -1
++    elif corruption == "truncated":
++        raw["archived"] = []
++    else:
++        raw["extra"] = "private untrusted string"
++    restored = host(monkeypatch, B, 9020)
++    restored.restore(state, 9020)
++    assert not restored.active.enabled and restored.current_panel() is None
++    assert saved(restored)[LEGACY] == state[LEGACY]
++    blocked = saved(restored)[EPOCHS]
++    assert blocked["active"] is None and blocked["error"] == "epoch_state_invalid"
++    assert "private" not in json.dumps(restored.panel())
++
++
++def test_unknown_prediction_protocol_requires_discrete_migration(monkeypatch: pytest.MonkeyPatch) -> None:
++    raw = host(monkeypatch, A, 9000).active.state()
++    raw["protocol"] = "some-future-calibration-v3"
++    value = host(monkeypatch, B, 9010)
++    value.restore({LEGACY: raw}, 9010)
++    assert value.error == "epoch_protocol_unsupported" and not value.active.enabled
++    assert saved(value)[LEGACY] == raw
++    assert value.current_panel() is None
++    assert "some-future" not in json.dumps(value.panel())
++
++
++@pytest.mark.parametrize("unsafe", ["nan", "cycle", "oversize"])
++def test_unsafe_raw_cannot_poison_optional_serialization(monkeypatch: pytest.MonkeyPatch, unsafe: str) -> None:
++    raw = host(monkeypatch, A, 9000).active.state()
++    if unsafe == "nan":
++        raw["last_at"] = float("nan")
++    elif unsafe == "cycle":
++        raw["pending"]["self"] = raw
++    else:
++        raw["extra"] = "x" * (epochs.MAX_STATE_BYTES + 1)
++    value = host(monkeypatch, B, 9010)
++    value.restore({LEGACY: raw}, 9010)
++    assert not value.active.enabled and saved(value) == {LEGACY: None, EPOCHS: None, MARKER: epochs.SCHEMA}
++    json.dumps(saved(value), allow_nan=False)
++
++
++def test_runtime_optional_corruption_retains_last_safe_envelope(monkeypatch: pytest.MonkeyPatch) -> None:
++    value = host(monkeypatch, A, 9000)
++    before = saved(value)
++    value.active.counts["forecasts"] = float("nan")
++    after = saved(value)
++    assert after[EPOCHS] == {**before[EPOCHS], "error": "epoch_method_failed"}
++    assert not value.active.enabled
++    json.dumps(after, allow_nan=False)
++
++
++def test_arena_real_restart_preserves_legacy_and_v1_residents_and_write_order(tmp_path: Path,
++        monkeypatch: pytest.MonkeyPatch) -> None:
++    from nightcrawler import kalshi_arena as arena
++    town, view, clock = setup(tmp_path)
++    w = admit(town, view, clock)
++    forecast(town, view, clock)
++    receive(town, view, clock, 1900, [("o", [(w.slug, True)])])
++    tick(town, view, clock, 1900)
++    original = town.state(1900)
++    # Synthetic legacy checkpoint exactly represents the previous producer format.
++    original[LEGACY] = original.pop(EPOCHS)["active"]["state"]
++    del original[MARKER]
++    town.path.write_text(json.dumps(original))
++    monkeypatch.setattr(probability, "fingerprint", lambda: B)
++    clock[0] = 2000
++    restored = KalshiArena(town.config, lambda: view, clock=lambda: clock[0])
++    state = restored.state(2000)
++    assert state[LEGACY] == original[LEGACY] == state[EPOCHS]["archived"][0]["state"]
++    assert restored.learning_probability.enabled and restored.learning_probability.counts["scored"] == 0
++    assert state["learning"] == {**original["learning"], "last_at": 2000}
++    for key in ("residents", "town", "events", "feed"):
++        assert state[key] == original[key]
++    writes: list[tuple[str, bool]] = []
++    original_write = arena._write
++
++    def record(path: Path, text: str, *, durable: bool = False) -> None:
++        writes.append((path.name, durable))
++        original_write(path, text, durable=durable)
++
++    monkeypatch.setattr(arena, "_write", record)
++    restored._save(2000)
++    assert writes == [("state.json", True), ("panel.json", False)]
++    panel = json.loads(restored.panel_path.read_text())
++    assert panel[LEGACY]["scored"] == 0
++    assert panel[EPOCHS]["archived"][0]["scored"] == 1
++    assert _kalshi_probability_epochs_view(panel[EPOCHS]) == panel[EPOCHS]
++
++
++def test_lineage_page_allowlist_rejects_untrusted_strings_and_raw_states(monkeypatch: pytest.MonkeyPatch) -> None:
++    value = host(monkeypatch, B, 9000)
++    value.restore({LEGACY: history(monkeypatch)}, 9000)
++    panel = value.panel()
++    panel["private"] = panel["archived"][0]["private"] = "untrusted-private"
++    panel["archived"][0]["state"] = {"arbitrary": "untrusted-private"}
++    assert "untrusted-private" not in json.dumps(_kalshi_probability_epochs_view(panel))
++    panel["archived"][0]["protocol"] = "untrusted-private"
++    assert _kalshi_probability_epochs_view(panel) is None
++
++
++def test_epoch_host_is_a_real_fingerprint_dependency() -> None:
++    assert "kalshi_probability_epochs.py" in probability.SOURCE_FILES
++
++
++@pytest.mark.parametrize("corruption", ["null", "digest", "state", "missing_active", "missing_marker"])
++def test_malformed_active_preserves_all_valid_archives_and_stays_blocked(
++        monkeypatch: pytest.MonkeyPatch, corruption: str) -> None:
++    value = host(monkeypatch, A, 9000)
++    for index in range(1, 4):
++        prior = saved(value)
++        value = host(monkeypatch, f"{index:064x}", 9000 + index)
++        value.restore(prior, 9000 + index)
++    prior = saved(value)
++    archives = copy.deepcopy(prior[EPOCHS]["archived"])
++    if corruption == "null":
++        prior[EPOCHS]["active"] = None
++    elif corruption == "digest":
++        prior[EPOCHS]["active"]["state_sha256"] = "0" * 64
++    elif corruption == "missing_active":
++        del prior[EPOCHS]["active"]
++    elif corruption == "missing_marker":
++        del prior[MARKER]
++    else:
++        prior[EPOCHS]["active"]["state"]["last_at"] = float("nan")
++    restored = host(monkeypatch, B, 9010)
++    restored.restore(prior, 9010)
++    blocked = saved(restored)
++    assert blocked[EPOCHS]["active"] is None
++    assert blocked[EPOCHS]["archived"] == archives and blocked[LEGACY] == prior[LEGACY]
++    assert restored.current_panel() is None and not restored.active.enabled
++    assert _kalshi_probability_epochs_view(restored.panel()) == restored.panel()
++    restarted = host(monkeypatch, B, 9020)
++    restarted.restore(blocked, 9020)
++    assert saved(restarted) == blocked
++    json.dumps(blocked, allow_nan=False)
++
++
++def test_corrupt_middle_archive_retains_only_proven_contiguous_prefix(monkeypatch: pytest.MonkeyPatch) -> None:
++    value = host(monkeypatch, A, 9000)
++    for index in range(1, 4):
++        prior = saved(value)
++        value = host(monkeypatch, f"{index:064x}", 9000 + index)
++        value.restore(prior, 9000 + index)
++    prior = saved(value)
++    retained = copy.deepcopy(prior[EPOCHS]["archived"][:1])
++    prior[EPOCHS]["archived"][1]["state_sha256"] = "0" * 64
++    value = host(monkeypatch, B, 9010)
++    value.restore(prior, 9010)
++    blocked = saved(value)
++    assert blocked[EPOCHS]["archived"] == retained and blocked[EPOCHS]["active"] is None
++    restarted = host(monkeypatch, B, 9020)
++    restarted.restore(blocked, 9020)
++    assert saved(restarted) == blocked
++
++
++def test_host_construction_failure_disables_orphan_observer_and_preserves_arena(tmp_path: Path,
++        monkeypatch: pytest.MonkeyPatch) -> None:
++    from nightcrawler import kalshi_arena as arena
++
++    def broken(*args: Any) -> None:
++        raise RuntimeError("synthetic host construction failure")
++
++    monkeypatch.setattr(arena, "ProbabilityEpochs", broken)
++    town, view, clock = setup(tmp_path)
++    assert not town.learning_probability.enabled and town.learning.enabled
++    admit(town, view, clock)
++    forecast(town, view, clock)
++    assert town.learning_probability.counts["forecasts"] == 0
++    town._save(1300)
++    assert len(town.residents) == 2
++    assert json.loads(town.path.read_text())[EPOCHS] is None
++
++
++@pytest.mark.parametrize("method", ["restore", "checkpoint", "current_panel", "panel", "status"])
++def test_host_method_failure_cannot_reset_arena_or_break_saves(tmp_path: Path,
++        monkeypatch: pytest.MonkeyPatch, method: str) -> None:
++    town, view, clock = setup(tmp_path)
++    before = town.state(900)
++
++    def broken(*args: Any) -> None:
++        raise RuntimeError("synthetic host method failure")
++
++    if method == "restore":
++        town.directory.mkdir(parents=True, exist_ok=True)
++        town.path.write_text(json.dumps(before))
++        monkeypatch.setattr(ProbabilityEpochs, method, broken)
++        town = KalshiArena(town.config, lambda: view, clock=lambda: clock[0])
++    else:
++        monkeypatch.setattr(town._probability_epochs, method, broken)
++        if method == "status":
++            town._probability_epoch_call("status", 900)
++    town._save(900)
++    after = json.loads(town.path.read_text())
++    panel = json.loads(town.panel_path.read_text())
++    if method == "checkpoint":
++        assert after[EPOCHS]["active"] == before[EPOCHS]["active"]
++    for key in ("learning", "residents", "town", "events", "feed"):
++        assert after[key] == before[key]
++    assert not town.learning_probability.enabled and town.learning.enabled
++    assert not list(town.directory.glob("state.json.bad-*"))
++    assert panel.get(LEGACY) is None
++
++
++def fill_dense(learner: ProbabilityLearning, base: int) -> None:
++    """Maximum retained actual receipts, labels and frozen pending forecasts."""
++    for index in range(probability.MAX_RECENT):
++        w = window(base + 1000 + index * 1000)
++        w = replace(w, slug=w.slug.ljust(128, "x"))
++        learner.discover([w], w.start - 1)
++        predict(learner, w, w.start + 300)
++        learner.labels_received([(w.slug, bool(index % 2))], w.end)
++        learner.advance([w], 100, .001, w.end, w.end)
++    pending = [window(base + 65000 + index) for index in range(probability.MAX_PENDING)]
++    pending = [replace(w, slug=w.slug.ljust(128, "x")) for w in pending]
++    learner.discover(pending, base + 64950)
++    for w in pending:
++        predict(learner, w, w.start + 300)
++    assert len(learner.pending) == probability.MAX_PENDING
++    assert len(learner.labels) == len(learner.recent) == probability.MAX_RECENT
++
++
++def dense_host(monkeypatch: pytest.MonkeyPatch, current_source: str) -> ProbabilityEpochs:
++    value = host(monkeypatch, A, 0)
++    fill_dense(value.active, 0)
++    for index in range(1, 5):
++        prior = {LEGACY: value.active.state()} if index == 1 else saved(value)
++        source = current_source if index == 4 else f"{index:064x}"
++        value = host(monkeypatch, source, index * 100000)
++        value.restore(prior, index * 100000)
++        fill_dense(value.active, index * 100000)
++    return value
++
++
++def test_maximum_retained_history_is_bounded_json_and_panel(monkeypatch: pytest.MonkeyPatch) -> None:
++    value = dense_host(monkeypatch, B)
++    state = saved(value)
++    assert len(state[EPOCHS]["archived"]) == 4
++    assert len(epochs.encoded(state)) <= epochs.MAX_BYTES
++    for record in [*state[EPOCHS]["archived"], state[EPOCHS]["active"]]:
++        assert len(epochs.encoded(record["state"])) <= epochs.MAX_STATE_BYTES
++        assert record["state"]["counts"]["forecasts"] == 96
++        assert record["state"]["counts"]["scored"] == 64
++    assert len(epochs.encoded(value.panel())) < 256 * 1024
++    assert _kalshi_probability_epochs_view(value.panel()) == value.panel()
++
++
++def test_one_startup_lineage_receipt_separates_archived_scores_from_current(
++        tmp_path: Path, monkeypatch: pytest.MonkeyPatch, caplog: pytest.LogCaptureFixture) -> None:
++    town, view, clock = setup(tmp_path)
++    state = town.state(900)
++    state.pop(EPOCHS)
++    del state[MARKER]
++    state[LEGACY] = history(monkeypatch)
++    town.directory.mkdir(parents=True, exist_ok=True)
++    town.path.write_text(json.dumps(state))
++    clock[0] = 9000
++    monkeypatch.setattr(probability, "fingerprint", lambda: B)
++    caplog.set_level(logging.INFO, logger="nightcrawler.kalshi_probability_epochs")
++    restored = KalshiArena(town.config, lambda: view, clock=lambda: clock[0])
++    restored._save(9000)
++    restored.step(9000)
++    receipts = [r.message for r in caplog.records if r.message.startswith("kalshi_probability_epoch_status ")]
++    assert len(receipts) == 1
++    payload = json.loads(receipts[0].split(" ", 1)[1])
++    assert payload["enabled"] and payload["current"]["scored"] == payload["current"]["forecasts"] == 0
++    assert payload["current"]["brier_baseline"] is None
++    assert payload["active_ordinal"] == 1 and payload["archived"][0]["scored"] == 5
++    assert payload["legacy_sha256"] == epochs.digest(state[LEGACY])
++    assert not {"state", "pending", "labels", "recent"} & payload.keys()
++    assert "KXBTC15M" not in receipts[0]
++
++
++@pytest.mark.parametrize("missing", [EPOCHS, MARKER])
++def test_independently_missing_new_lineage_field_never_reimports_frozen_legacy(
++        monkeypatch: pytest.MonkeyPatch, missing: str) -> None:
++    value = host(monkeypatch, B, 9000)
++    value.restore({LEGACY: history(monkeypatch)}, 9000)
++    state = saved(value)
++    del state[missing]
++    restarted = host(monkeypatch, B, 9010)
++    restarted.restore(state, 9010)
++    assert restarted.error == "epoch_state_invalid" and restarted.current_panel() is None
++    assert not restarted.active.enabled and saved(restarted)[LEGACY] == state[LEGACY]
++
++
++def test_real_arena_page_separates_old_scores_from_fresh_epoch(make_settings: Any,
++        monkeypatch: pytest.MonkeyPatch) -> None:
++    from nightcrawler import pagestate
++    settings = make_settings(KALSHI_ARENA_ENABLED=True)
++    town, view, clock = setup(settings.data_dir)
++    raw = town.state(900)
++    del raw[EPOCHS]
++    del raw[MARKER]
++    raw[LEGACY] = history(monkeypatch)
++    town.directory.mkdir(parents=True, exist_ok=True)
++    town.path.write_text(json.dumps(raw))
++    clock[0] = 9000
++    monkeypatch.setattr(probability, "fingerprint", lambda: B)
++    restored = KalshiArena(town.config, lambda: view, clock=lambda: clock[0])
++    restored._save(9000)
++    block = pagestate.kalshi_arena_block(settings, 9000)
++    assert block[LEGACY]["scored"] == 0 and block[LEGACY]["brier_baseline"] is None
++    assert block[EPOCHS]["archived"][0]["scored"] == 5
++    assert block[EPOCHS]["archived"][0]["source_fingerprint"] == A
++    assert block[LEGACY]["source_fingerprint"] == block[LEGACY]["history_source_fingerprint"] == B
++    assert block["learning"] is not None and block["population"] == 2
+diff --git a/tests/test_kalshi_probability_arena.py b/tests/test_kalshi_probability_arena.py
+index fe48b57..83b23b5 100644
+--- a/tests/test_kalshi_probability_arena.py
++++ b/tests/test_kalshi_probability_arena.py
+@@ -163,9 +163,12 @@ def test_frozen_v2_survives_restart_and_does_not_migrate_v1(tmp_path: Path) -> N
+     assert restored.learning_probability.counts["scored"] == 1
+     saved = restored.state(1900)
+     del saved["learning_probability"]
++    del saved["learning_probability_epochs"]
+     restored.path.write_text(json.dumps(saved))
+     fresh = KalshiArena(town.config, lambda: view, clock=lambda: clock[0])
+-    assert fresh.learning_probability.enabled and fresh.learning_probability.counts["scored"] == 0
++    # A loaded checkpoint with missing probability history is not a fresh install.
++    assert not fresh.learning_probability.enabled
++    assert fresh.panel(1900)["learning_probability"] is None
+     assert fresh.learning.state() == restored.learning.state()
+ 
+ 
+diff --git a/tests/test_kalshi_arena_page.py b/tests/test_kalshi_arena_page.py
+index 7439fc3..6658167 100644
+--- a/tests/test_kalshi_arena_page.py
++++ b/tests/test_kalshi_arena_page.py
+@@ -110,7 +110,7 @@ def test_the_towns_own_panel_has_every_fixture_field(make_settings: Any, fake_cl
+     model = CASES["fresh_with_candidate"]["kalshi_arena"]
+     # Older saved panels retain the exact fixture contract; current producers add
+     # optional probability evidence, separate from every existing money field.
+-    assert set(block) == set(model) | {"learning", "learning_probability"}
++    assert set(block) == set(model) | {"learning", "learning_probability", "learning_probability_epochs"}
+     assert block["learning"] is not None and block["learning"]["live_application"] is False
+     assert block["learning_probability"] is not None
+     assert block["learning_probability"]["live_application"] is False

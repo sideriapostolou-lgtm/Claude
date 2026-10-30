@@ -1,0 +1,9 @@
+{
+  "unrelated_tracked_src_byte_equal": 177,
+  "unexpected_source_differences": [],
+  "unexpected_build_differences": [],
+  "all_strict_learner_method_ASTs_identical": true,
+  "observer_fingerprint": "23e2ca80d3c04415256bf3fc237ba017d56733a59219d718e86c554eaa1f1d25",
+  "v1_fingerprint": "b6112b7ef8955b20af734157c1e7f5ec533bf98f70e034558f06670578c391f2",
+  "note": "Three existing src files plus one new child host; seven reviewed source/test paths. No controller/model/risk/ledger/polydesk/V1 changes."
+}

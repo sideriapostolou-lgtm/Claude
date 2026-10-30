@@ -1,0 +1,29 @@
+{
+  "timestamp": "2026-10-14T16:47:30.917373900Z",
+  "as_of": 1791996441.2272882,
+  "mode": "live",
+  "status": "REAL MONEY (Kalshi)",
+  "reason": "pair_cap",
+  "waiting": "",
+  "integrity_error": null,
+  "cash_usd": 37.3427,
+  "open_risk_usd": 2.45,
+  "open_cost_usd": 2.45,
+  "reserved_usd": 0,
+  "at_risk_usd": 2.45,
+  "open_orders": 0,
+  "positions": 1,
+  "day_pnl": -0.006600000000002118,
+  "total_pnl": -9.948700000000006,
+  "caps": {
+    "window_usd": 10,
+    "open_usd": 20,
+    "day_stop_usd": 6,
+    "clip": 5,
+    "total_stop_usd": 10
+  },
+  "total_halted": false,
+  "day_stop_latched": false,
+  "commit": "e8db34ee34d95411ac7f695f704ceb82ef8e32d5",
+  "deployment": "f707494f-1b45-4610-9488-def9796b5923"
+}

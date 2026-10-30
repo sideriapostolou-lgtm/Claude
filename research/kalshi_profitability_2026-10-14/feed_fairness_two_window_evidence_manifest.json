@@ -1,0 +1,44 @@
+{
+  "scope": "Closed fixed first two complete post-restart Kalshi windows and bounded publication tail; overall EXEC remains open for freshness attribution.",
+  "source_commit": "c8e37e5504aad04da0521b3f95c17f86dac42899",
+  "members": [
+    {
+      "path": "post-fairness-closed-complete.json",
+      "bytes": 23055473,
+      "sha256": "12cb101030c3b9ded3a6a25f593fbb0830c9203ad0338043999f7bc43da96cfd"
+    },
+    {
+      "path": "post-fairness-closed-complete-initial-classifier.json",
+      "bytes": 23054912,
+      "sha256": "655dfd0dbd8c62a51da53a5b1326b24fdfdef9a461a87c0cb65e0dd880838394"
+    },
+    {
+      "path": "post-fairness-two-window-independent-audit.json",
+      "bytes": 194559,
+      "sha256": "4aab5a20c2c9574a3c92a80e4f3d17bf0d818200e9ee929a0e7c14a01b669813"
+    },
+    {
+      "path": "feed-fairness-work-metrics-inventory.json",
+      "bytes": 22985,
+      "sha256": "d529f69136a67c735c3f3a8ea133eb38b8db906eac0ce61d00db77766b26a79a"
+    }
+  ],
+  "provenance": {
+    "initial_classifier_preserved": true,
+    "original_queries_equal_across_classifier_versions": true,
+    "original_events_equal_across_classifier_versions": true,
+    "classifier_correction": "Derived durable-intent recognition includes longer completing-a-half-filled-pair lock states; raw messages unchanged.",
+    "original_work_inventory_preserved": "Published standalone derivative adds independent endpoint/activity confound and corrects interval wording; original is here unchanged."
+  },
+  "limits": [
+    "No causal improvement or profitability claim.",
+    "Read-resumption work-detail omissions8/3 and whole-cycle span omissions17/34 are different overlapping populations.",
+    "Actual read marks/read-bin retention are separately complete; quiet reads lack individual marks.",
+    "Latest status20reports precedes later trace21reports; trace completion and logger/ingestion timestamps differ.",
+    "TJR historical data/costs missing, paper/live disabled, automation unchanged."
+  ],
+  "archive": "feed_fairness_two_window_evidence.zip",
+  "archive_bytes": 5498164,
+  "archive_sha256": "d102c23b2a0211f717989dfa35314f5e9378504df79e57807b8bd4c84c04cce2",
+  "checks": "All member hashes, readback/CRC/JSON and credential-pattern checks passed."
+}

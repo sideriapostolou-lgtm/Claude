@@ -1,0 +1,41 @@
+[
+ {
+  "mint": "HMYd9tosnUXuNHmq7pXmoePRVBLBBjA3JBfydq6upump",
+  "metadata": {
+   "name": "Super Intelligence SI276",
+   "symbol": "SI276",
+   "uri": "https://ipfs.io/ipfs/bafkreigzgcgwkxtwmbtmx5qosmnebncasgypy27sdbyzsymfjepvwmpyoa",
+   "mutable": false,
+   "updateAuthority": "11111111111111111111111111111111"
+  },
+  "user_visits": 55243,
+  "visits": 71575,
+  "score": 1
+ },
+ {
+  "mint": "F6EDRhRzXGmkBabhSHdAnqx26XLhG6NCa83wwuqFpump",
+  "metadata": {
+   "name": "ECSTASY",
+   "symbol": "ECSTASY",
+   "uri": "https://ipfs.io/ipfs/bafkreiewi4o45vbeiibybmc5wnn52ee3f3dxg2dft3srd4pqasfwixsudq",
+   "mutable": false,
+   "updateAuthority": "11111111111111111111111111111111"
+  },
+  "user_visits": 51985,
+  "visits": 71938,
+  "score": 1
+ },
+ {
+  "mint": "HbPDWSqu8hpVMX6gMjwMDGe5rVgicWo3Qh3Jaojypump",
+  "metadata": {
+   "name": "Frank Ashford",
+   "symbol": "Frank",
+   "uri": "https://ipfs.io/ipfs/bafkreiccut2s2qorkpllb57ondakpksbslzkvtywsqfzkugrldje7hayxe",
+   "mutable": false,
+   "updateAuthority": "11111111111111111111111111111111"
+  },
+  "user_visits": 40269,
+  "visits": 53947,
+  "score": 1
+ }
+]

@@ -1,0 +1,33 @@
+{
+  "request": {
+    "request": {
+      "url": "https://api.elections.kalshi.com/trade-api/v2/markets/KXBTC15M-26OCT151545-45",
+      "method": "GET",
+      "authentication": "none",
+      "timeout_s": 15
+    },
+    "before_utc": "2026-10-15T19:48:25.131844+00:00",
+    "after_utc": "2026-10-15T19:48:26.399765+00:00",
+    "http_status": 200,
+    "headers": {
+      "content-type": "application/json",
+      "date": "Thu, 15 Oct 2026 19:48:26 GMT"
+    },
+    "error_type": null,
+    "body_sha256": "cc8ef3e7fa7a08af9dde325c896590c2db8d1ff3d2662da958ce7c207d47f7bd",
+    "body_bytes": 2227
+  },
+  "market": {
+    "ticker": "KXBTC15M-26OCT151545-45",
+    "status": "finalized",
+    "result": "no",
+    "settlement_value": null,
+    "settlement_value_dollars": "0.0000",
+    "floor_strike": 82439.21,
+    "expiration_value": "82334.05",
+    "open_time": "2026-10-15T19:30:00Z",
+    "close_time": "2026-10-15T19:45:00Z",
+    "settlement_ts": "2026-10-15T19:45:06.818557Z",
+    "settlement_time": null
+  }
+}

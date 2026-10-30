@@ -1,0 +1,36 @@
+import importlib.util, tempfile, json, hashlib, contextlib, io
+from pathlib import Path
+P=Path('/workspace/nightcrawler-input-causes/research/kalshi_input_causes_2026-10-15/audit_capture.py')
+spec=importlib.util.spec_from_file_location('parser_review',P);m=importlib.util.module_from_spec(spec);spec.loader.exec_module(m)
+results=[]
+def msg(event,payload):return '2026-10-15T17:00:00.123Z INFO '+m.LOGGERS[event]+': '+event+' '+json.dumps(payload,separators=(',',':'))
+def native(event,payload):return {'structuredContent':{'deploy':[{'timestamp':'2026-10-15T17:00:00.123Z','message':msg(event,payload)}]}}
+with tempfile.TemporaryDirectory() as tmp:
+ d=Path(tmp);m.HERE=d;p=d/'raw.json'
+ for label,data in [('toplist',[]),('topnull',None),('nullstructured',{'structuredContent':None}),('nulldeploy',{'structuredContent':{'deploy':None}}),('toolerror',{'isError':True}),('rowmissingtime',{'structuredContent':{'deploy':[{'message':msg('kalshi_online_learning_unknown',{})}]}})]:
+  p.write_text(json.dumps(data));rows,errors=m.originals(p,'kalshi_online_learning_unknown');assert not rows and errors,label;results.append({'case':label,'pass':True,'errors':errors})
+ p.write_text('badjson');assert m.originals(p,'kalshi_online_learning_unknown')[1];results.append({'case':'badjson','pass':True})
+ declaration={'start':1000,'end':1900,'arena_source_sha256':'a'*64,'learner_fingerprint':'b'*64};(d/'CAPTURE_DECLARATION.json').write_text(json.dumps(declaration))
+ diagnostic={'window':'KXBTC15M-review','at':1300,'pending':{'start':1000,'end':1900},'disposition':'unknown','reason':'pregap','arena_source_sha256':'a'*64,'source_fingerprint':'b'*64,'protocol':'v1','mode':'observe_only','live_application':False}
+ unknown={'window':diagnostic['window'],'at':1300,'reason':'pregap','source_fingerprint':'b'*64,'protocol':'v1'}
+ queries=[]
+ for file,event,payload in [('d1.json','kalshi_learning_input_diagnostic',diagnostic),('d2.json','kalshi_learning_input_diagnostic',diagnostic),('u1.json','kalshi_online_learning_unknown',unknown),('u2.json','kalshi_online_learning_unknown',unknown)]:
+  (d/file).write_text(json.dumps(native(event,payload)));queries.append({'file':file,'event':event,'limit':10})
+ (d/'CAPTURE_REQUESTS.json').write_text(json.dumps({'queries':queries}))
+ with contextlib.redirect_stdout(io.StringIO()):m.main()
+ audit=json.loads((d/'CAPTURE_AUDIT.json').read_text());assert len(audit['diagnostic'])==1 and audit['diagnostic'][0]['query_files']==['d1.json','d2.json'];assert audit['joins'][0]['matched_original_receipts']==1;results.append({'case':'overlap_dedup_provenance_join','pass':True})
+ diagnostic['disposition']='scored'
+ for f in ['d1.json','d2.json']:(d/f).write_text(json.dumps(native('kalshi_learning_input_diagnostic',diagnostic)))
+ with contextlib.redirect_stdout(io.StringIO()):m.main()
+ audit=json.loads((d/'CAPTURE_AUDIT.json').read_text());assert audit['joins'][0]['error']=='unsupported slot disposition';results.append({'case':'unsupported_disposition','pass':True})
+ diagnostic['disposition']='unknown';diagnostic['pending']=['invalid']
+ for f in ['d1.json','d2.json']:(d/f).write_text(json.dumps(native('kalshi_learning_input_diagnostic',diagnostic)))
+ try:
+  with contextlib.redirect_stdout(io.StringIO()):m.main()
+ except Exception as e:results.append({'case':'malformed_payload_pending','pass':False,'exception':type(e).__name__,'detail':str(e)})
+ diagnostic['pending']={'start':1000,'end':1900};unknown['source_fingerprint']='c'*64
+ for f in ['d1.json','d2.json']:(d/f).write_text(json.dumps(native('kalshi_learning_input_diagnostic',diagnostic)))
+ for f in ['u1.json','u2.json']:(d/f).write_text(json.dumps(native('kalshi_online_learning_unknown',unknown)))
+ with contextlib.redirect_stdout(io.StringIO()):m.main()
+ audit=json.loads((d/'CAPTURE_AUDIT.json').read_text());results.append({'case':'mismatched_receipt_source','pass':audit['joins'][0]['matched_original_receipts']==0,'join':audit['joins'][0]})
+print(json.dumps({'source_sha256':hashlib.sha256(P.read_bytes()).hexdigest(),'results':results},indent=2))

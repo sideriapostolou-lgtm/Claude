@@ -1,0 +1,39 @@
+{
+  "finished_utc": "2026-10-16T02:06:05.397780+00:00",
+  "scope": "Own offline research implementation only, not rerun live application suite",
+  "pytest": {
+    "passed": 95,
+    "failed": 0,
+    "includes": "43core+19root+19collector+14independent fake cases; no network/historical tests"
+  },
+  "mypy": {
+    "passed": true,
+    "files": 10,
+    "check_untyped_defs": true
+  },
+  "ruff": {
+    "passed": true,
+    "files": 10,
+    "isolated_rules": "E4,E7,E9,F,I",
+    "format_pass": true
+  },
+  "preserved_initial_failures": [
+    "Missing opposite quote and raw reverse clock cases",
+    "Signed fee-rounding fakes",
+    "cached response size limit",
+    "receipt filename glob collision",
+    "strict mypy19 type-only fixture errors corrected; core unchanged"
+  ],
+  "implementation_files": {
+    "sol-replay/replay.py": "4bb43b0848b3fd3ad2eba73d90f9786f5ef4119ca4e60887d98dc3ab32be93da",
+    "sol-replay/test_verify_data.py": "8e6f9fb04c5e4683bdbebd6bde77daf281e46ee428f8418abd796263e9cf6dcb",
+    "sol-replay/run_partition.py": "99543027428a048227691579e82fda20ae34f673a171b01aa848acf280060fee",
+    "sol-replay/test_replay.py": "6bfec48f5941eb929d3a8ff2dfd0806adfe225a18cf41388997874a47a493143",
+    "sol-replay/test_runner.py": "bc4d865014d7487d9d5d5ea9a956880d802b3dae7f34099cc613a67e1af36de8",
+    "sol-replay/evaluate.py": "8bb3100c77c4fa3889e2b3f7691b55988b23df13ac44f10d0d96bbdfc02c9ca1",
+    "sol-replay/test_evaluate.py": "1d2a5a5324b9676f72fae4fd68fac1ba47c0e2e8042794f025608697d18e2100",
+    "sol-replay/verify_data.py": "cf5460292896392955d9ba360c7b9d36d96936fc6617287b524b94a6d3a1a52e",
+    "root-data/fetch_data.py": "9cf50ddba2ab5c86d30971f6f30801149d92f4cd429f33ee1527eb732c23024f",
+    "root-data/test_fetch_data.py": "453cb9f0e9a7a4e23fc6703155b155230225baa7ff44bfca66a4e869a5f542ce"
+  }
+}
