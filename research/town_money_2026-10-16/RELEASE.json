@@ -1,0 +1,260 @@
+{
+  "scope": "Bounded app-release evidence; not a complete financial audit or profitability result.",
+  "verified_at_utc": "2026-10-16 18:53:11 UTC",
+  "verified_at_pacific": "October 16, 2026, 11:53 AM PDT",
+  "pull_request": "https://github.com/sideriapostolou-lgtm/Claude/pull/74",
+  "tested_commit": "19290dd4df084a6d06f7929c6e50be77a26189f1",
+  "running_commit": "e72f4b8b86dc812ab333a45d54151ae44f8c713f",
+  "merged_tree_equals_tested_tree": true,
+  "deployment": {
+    "id": "a717faa1-3c47-4a62-9b74-277da85b0fc6",
+    "status": "SUCCESS",
+    "source": "e72f4b8b86dc812ab333a45d54151ae44f8c713f",
+    "created_at": "2026-10-16T18:49:10.352Z",
+    "success_at": "2026-10-16T18:50:25.620Z"
+  },
+  "services": [
+    {
+      "name": "bot",
+      "state": "online",
+      "deployments": [
+        {
+          "id": "a717faa1-3c47-4a62-9b74-277da85b0fc6",
+          "status": "SUCCESS",
+          "createdAt": "2026-10-16T18:49:10.352Z",
+          "statusUpdatedAt": "2026-10-16T18:50:25.620Z"
+        }
+      ],
+      "replicas": {
+        "running": 1,
+        "crashed": 0,
+        "total": 1
+      },
+      "issues": {
+        "warningCount": 0,
+        "criticalCount": 0
+      }
+    },
+    {
+      "name": "kalshi-recorder",
+      "state": "online",
+      "deployments": [
+        {
+          "id": "8453f919-b891-4aa7-8478-6fcf6b9c24ee",
+          "status": "SUCCESS",
+          "createdAt": "2026-10-14T16:36:40.384Z",
+          "statusUpdatedAt": "2026-10-14T16:38:15.302Z"
+        }
+      ],
+      "replicas": {
+        "running": 1,
+        "crashed": 0,
+        "total": 1
+      },
+      "issues": {
+        "warningCount": 0,
+        "criticalCount": 0
+      }
+    }
+  ],
+  "polymarket_startup": [
+    {
+      "timestamp": "2026-10-16T18:50:22.229879158Z",
+      "message": "2026-10-16T18:50:22Z INFO nightcrawler.polydesk: polydesk_started theta=0.97 hours=1 ticket_usd=20 poll_s=90 (LIVE: 10 contract(s) per order)"
+    }
+  ],
+  "kalshi_before": [
+    {
+      "timestamp": "2026-10-16T18:46:52.115662308Z",
+      "as_of": 1792176411.726515,
+      "mode": "live",
+      "authenticated": true,
+      "reason": "Reconciling an uncertain order; no new orders",
+      "waiting": "Reconciling an uncertain order; no new orders",
+      "cash_usd": 49.0135,
+      "total": {
+        "day": null,
+        "windows": 217,
+        "fills": 938,
+        "latency": null,
+        "scorecard": null,
+        "settled_windows": 235,
+        "fees_usd": 3.51482,
+        "locked_usd": 8.163132337662324,
+        "directional_usd": -33.89103233766233,
+        "pnl_usd": -25.72790000000001,
+        "worst_usd": -2.9791999999999987,
+        "take_attempts": 39,
+        "take_fills": 17,
+        "maker_orders": 9226,
+        "maker_fills": 678,
+        "locks": 160,
+        "lock_fills": 127,
+        "take_fill_rate": 0.4358974358974359,
+        "maker_fill_rate": 0.07348796878387166,
+        "avg_latency_ms": 3891.903632826643,
+        "latency_definition": "durable real decision to venue fill timestamp; maker includes resting time"
+      },
+      "caps": {
+        "window_usd": 20,
+        "open_usd": 40,
+        "day_stop_usd": 12,
+        "clip": 5,
+        "total_stop_usd": 10
+      },
+      "total_halted": false,
+      "day_stop_latched": false,
+      "integrity_error": null,
+      "positions": 0,
+      "reserved_usd": 1.47,
+      "at_risk_usd": 1.47,
+      "open_cost_usd": 0
+    }
+  ],
+  "kalshi_after": [
+    {
+      "timestamp": "2026-10-16T18:52:06.345227878Z",
+      "as_of": 1792176726.0921307,
+      "mode": "live",
+      "authenticated": true,
+      "reason": "Kalshi account data stale",
+      "waiting": "Kalshi account data stale",
+      "cash_usd": 48.7807,
+      "total": {
+        "day": null,
+        "windows": 218,
+        "fills": 940,
+        "latency": null,
+        "scorecard": null,
+        "settled_windows": 235,
+        "fees_usd": 3.51482,
+        "locked_usd": 8.163132337662324,
+        "directional_usd": -33.89103233766233,
+        "pnl_usd": -25.72790000000001,
+        "worst_usd": -2.9791999999999987,
+        "take_attempts": 39,
+        "take_fills": 17,
+        "maker_orders": 9245,
+        "maker_fills": 680,
+        "locks": 160,
+        "lock_fills": 127,
+        "take_fill_rate": 0.4358974358974359,
+        "maker_fill_rate": 0.07355327203893997,
+        "avg_latency_ms": 3882.5575423690507,
+        "latency_definition": "durable real decision to venue fill timestamp; maker includes resting time"
+      },
+      "caps": {
+        "window_usd": 20,
+        "open_usd": 40,
+        "day_stop_usd": 12,
+        "clip": 5,
+        "total_stop_usd": 10
+      },
+      "day_stop_latched": false,
+      "total_halted": false,
+      "integrity_error": null,
+      "positions": 1,
+      "reserved_usd": 0,
+      "at_risk_usd": 0.23280000000000012,
+      "open_cost_usd": 2.2328
+    }
+  ],
+  "kalshi_interpretation": "Native reports through 11:54:07 AM PDT retain LIVE/authenticated mode, unchanged caps and prior cumulative losses. They show account-stale and uncertain-order waits, not uninterrupted order submission. No live settings or safeguards were changed and no direct order/transfer API action was issued by this task. Native totals are not the new endpoint's independently validated Pacific-day result.",
+  "http_checks": [
+    {
+      "path": "/healthz",
+      "status": 200,
+      "duration_ms": 476.1,
+      "cache_control": "no-store",
+      "checked_at": "2026-10-16T18:50:52.529590+00:00"
+    },
+    {
+      "path": "/api/town",
+      "status": 401,
+      "duration_ms": 731.9,
+      "cache_control": "no-store",
+      "checked_at": "2026-10-16T18:50:53.261557+00:00"
+    },
+    {
+      "path": "/world",
+      "status": 401,
+      "duration_ms": 338.5,
+      "cache_control": "no-store",
+      "checked_at": "2026-10-16T18:50:53.600070+00:00"
+    }
+  ],
+  "log_checks": {
+    "start_utc": "2026-10-16T18:50:00Z",
+    "end_utc": "2026-10-16T18:53:11Z",
+    "traceback_lines": 0,
+    "town_state_failed_lines": 0,
+    "note": "Bounded filtered logs; not a guarantee of no historical errors."
+  },
+  "successful_authenticated_money_latency_samples": [],
+  "validation": {
+    "full_pytest_passed": 6248,
+    "full_pytest_skipped": 14,
+    "full_pytest_seconds": 295.1,
+    "mypy_source_files": 134,
+    "ruff_changed_or_new_python_files": 18,
+    "independent_targeted_passed": 144,
+    "browser_receipt": "BROWSER_CHECKS.json",
+    "browser_fixture": "Synthetic only, not production account data."
+  },
+  "remaining": [
+    "Authenticated production money response/rendering and latency have not been inspected; there are no returned GET /api/town HTTP200 latency buckets in the bounded query.",
+    "Unpersisted account reconciliation timestamps remain unknown; the native account-stale wait is retained.",
+    "Full operating handoff, capacity/backups, missing Operations/Engineering registry and broader owner product acceptance remain on existing records."
+  ],
+  "financial_or_configuration_changes": false,
+  "kalshi_followups": [
+    {
+      "timestamp": "2026-10-16T18:53:07.026033593Z",
+      "as_of": 1792176786.5039017,
+      "mode": "live",
+      "authenticated": true,
+      "reason": "Reconciling an uncertain order; no new orders",
+      "waiting": "Reconciling an uncertain order; no new orders",
+      "cash_usd": 48.7807,
+      "total_pnl_usd": -25.72790000000001,
+      "caps": {
+        "window_usd": 20,
+        "open_usd": 40,
+        "day_stop_usd": 12,
+        "clip": 5,
+        "total_stop_usd": 10
+      },
+      "day_stop_latched": false,
+      "total_halted": false,
+      "integrity_error": null,
+      "positions": 1,
+      "reserved_usd": 0.64,
+      "at_risk_usd": 0.6936000000000001,
+      "open_cost_usd": 2.2328
+    },
+    {
+      "timestamp": "2026-10-16T18:54:07.968112928Z",
+      "as_of": 1792176847.4473324,
+      "mode": "live",
+      "authenticated": true,
+      "reason": "imbalance",
+      "waiting": "Kalshi account data stale",
+      "cash_usd": 48.7807,
+      "total_pnl_usd": -25.72790000000001,
+      "caps": {
+        "window_usd": 20,
+        "open_usd": 40,
+        "day_stop_usd": 12,
+        "clip": 5,
+        "total_stop_usd": 10
+      },
+      "day_stop_latched": false,
+      "total_halted": false,
+      "integrity_error": null,
+      "positions": 1,
+      "reserved_usd": 0.38,
+      "at_risk_usd": 0.5064000000000002,
+      "open_cost_usd": 2.2328
+    }
+  ]
+}

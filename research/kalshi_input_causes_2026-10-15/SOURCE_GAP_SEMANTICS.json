@@ -1,0 +1,265 @@
+{
+  "scope": "Read-only offline source semantics. No production queries, source edits, financial actions, or target-window causal finding.",
+  "source_commit": "962d887cc79e15fa6660f74a9d75bb148d4adbb5",
+  "source_sha256": {
+    "src/nightcrawler/speeddesk.py": "79a8ad7fc10879035297e2af4d87af1bff758b4f89c2adae3464fe812235477d",
+    "src/nightcrawler/speeddesk_venues.py": "54f0c2eaea909621f24734d8cd73cdd46f2ea711d885269b6892c564bc9dff51",
+    "src/nightcrawler/speeddesk_kalshi.py": "53727b3d3f2ec6790469d53d8fb330f7501ad1838c558c887ea95c54840d8f82",
+    "src/nightcrawler/speeddesk_kalshi_ws.py": "d76e9dfa6a026f796f11503642a373a5a0f2799da8dabadf078c565591f82112",
+    "src/nightcrawler/speeddesk_feeds.py": "4a942d649af275cc6ad7b467462236e66c9a629cab0920e1a1adb3c24982dffd",
+    "src/nightcrawler/kalshi_arena.py": "091ea297b1fed8973be3c78e74184e6ea71fa8f36e808e67449f433c88d19a0e",
+    "src/nightcrawler/kalshi_online_learning.py": "16a14ff7d8bb933d4eb8e4251d0fdcf943c81e6f8c6f8f1720ced3d5e14f5fa8"
+  },
+  "target_capture": "Root-owned fixed 2026-10-15 17:30-17:45 UTC plus 17:47 tail. No target diagnostics supplied or examined in this analysis.",
+  "primary_findings": [
+    {
+      "fact": "The child trade_stream boolean is the venue router aggregate any(status.trade_stream), not Kalshi socket connectivity or a Kalshi-only freshness certificate.",
+      "refs": [
+        "src/nightcrawler/speeddesk_venues.py:39-41",
+        "src/nightcrawler/speeddesk.py:343-345",
+        "src/nightcrawler/kalshi_arena.py:613-614"
+      ]
+    },
+    {
+      "fact": "The Kalshi adapter trade_stream is bool(maker_windows), where maker windows are the union of eligible REST and WS windows. Healthy Bitcoin or book updates alone do not establish eligible recent trade tape.",
+      "refs": [
+        "src/nightcrawler/speeddesk_kalshi.py:184-192",
+        "src/nightcrawler/speeddesk_kalshi_ws.py:317-335"
+      ]
+    },
+    {
+      "fact": "Every aggregate status callback queues a gap wire record, even unchanged false state; V1 permanently stores a preforecast gap on an active pending window for false booleans or explicit slug. This is broader than the falling-edge cancellation logic.",
+      "refs": [
+        "src/nightcrawler/speeddesk.py:328-345",
+        "src/nightcrawler/kalshi_arena.py:1535-1554",
+        "src/nightcrawler/kalshi_online_learning.py:161-171"
+      ]
+    },
+    {
+      "fact": "A Kalshi adapter true-to-false transition creates explicit gaps for the union of current and previous known venue windows. Those Kalshi slugs reach the child even if another venue keeps aggregate trade_stream true.",
+      "refs": [
+        "src/nightcrawler/speeddesk_venues.py:27-41"
+      ]
+    }
+  ],
+  "status_path": [
+    {
+      "stage": "Kalshi producer status",
+      "semantics": "_report merges changes into sticky adapter status but defaults gap_windows to []; _publish recomputes maker availability. _ws_report strips gap_windows from sticky WS status, invalidates REST eligibility for reported tickers, then republishes explicit gaps.",
+      "refs": [
+        "src/nightcrawler/speeddesk_kalshi.py:179-199"
+      ]
+    },
+    {
+      "stage": "Venue routing",
+      "semantics": "Router retains per-venue status, adds all current/previous venue windows on adapter true-to-false trade_stream, propagates explicit string gap slugs intersected with those windows, derives coinbase solely from the polymarket_us LiveFeeds status, derives trade_stream via any venue. maker_windows filters each adapter by its own stream status.",
+      "refs": [
+        "src/nightcrawler/speeddesk_venues.py:27-51"
+      ]
+    },
+    {
+      "stage": "Runner on_status",
+      "semantics": "On false availability clear last-fresh evidence; remove explicit-gap coverage. On falling stream/BTC or explicit gaps invalidate live snapshot. Falling global stream/BTC cancels all practice orders, else explicit slugs cancel by window. Full status is passed to live callback; arena receives only slugs and two coerced booleans on every callback.",
+      "refs": [
+        "src/nightcrawler/speeddesk.py:321-345"
+      ]
+    },
+    {
+      "stage": "Arena wire and frame",
+      "semantics": "g record has exactly tag, slug tuple, trade_stream bool, coinbase bool. No producer timestamp, reason, venue, eligibility ages, event id, or connection identity. Frame now sampled at start of _flush is sent with batch sequence and drop count; event can already have waited in parent FIFO before that sample. It is a frame clock, not status occurrence or exact socket send completion.",
+      "refs": [
+        "src/nightcrawler/kalshi_arena.py:613-614",
+        "src/nightcrawler/kalshi_arena.py:691-692",
+        "src/nightcrawler/kalshi_arena.py:707-727",
+        "src/nightcrawler/kalshi_arena.py:741-743"
+      ]
+    },
+    {
+      "stage": "Child receive/apply",
+      "semantics": "receive samples child clock then enqueues g event; drain applies FIFO later at child now. Multiple received batches retain separate frame contexts. Snapshot windows are discovered before drain/advance. Thus a gap produced/received before window start but applied after start may count as an active V1 gap; the unchanged wire cannot recover its producer occurrence.",
+      "refs": [
+        "src/nightcrawler/kalshi_arena.py:1333-1370",
+        "src/nightcrawler/kalshi_arena.py:1408-1419",
+        "src/nightcrawler/kalshi_arena.py:1492-1495",
+        "src/nightcrawler/kalshi_arena.py:1529-1530"
+      ]
+    },
+    {
+      "stage": "Learner",
+      "semantics": "gap always updates global feed_ok=trade_stream and coinbase; for start<=apply_now<end, false feed_ok or selected slug writes pregap if forecast None, else post_gaps. Recovery resets feed_ok but never clears stored pregap. degrade differs: start<=now only, no end bound. At horizon300-305s the learner rejects stored pregap OR degraded map OR current feed_ok false. Child supplies an empty degraded map; sticky simulator degradation is not replayed as untimed learner history.",
+      "refs": [
+        "src/nightcrawler/kalshi_online_learning.py:151-171",
+        "src/nightcrawler/kalshi_online_learning.py:263-276",
+        "src/nightcrawler/kalshi_arena.py:1417-1419"
+      ]
+    }
+  ],
+  "producer_false_or_explicit_gap_routes": [
+    {
+      "route": "Quiet accepted-trade expiry",
+      "what_can_happen": "WS book and connection can remain fresh while last accepted non-block trade is older than3s, so ws_maker_windows becomes empty. Its disappearance explicitly gaps the ticker even if ws_books stays fresh. REST maker eligibility also expires after3s since last qualifying actual print; successful empty/no-fresh-print polls do not refresh it. This route is plausible source semantics, not an attribution of the target slot.",
+      "refs": [
+        "src/nightcrawler/speeddesk_kalshi_ws.py:331-335",
+        "src/nightcrawler/speeddesk_kalshi_ws.py:165-184",
+        "src/nightcrawler/speeddesk_kalshi.py:184-192",
+        "src/nightcrawler/speeddesk_kalshi.py:318-326"
+      ]
+    },
+    {
+      "route": "Fresh-book eligibility disappears",
+      "what_can_happen": "WS fresh_books requires connected and both local book receipt and exchange time in[0,3]s. Losing fresh book membership generates explicit gaps from old-fresh. A healthy local connection alone is insufficient; initial untimestamped snapshot is not a proven fresh book.",
+      "refs": [
+        "src/nightcrawler/speeddesk_kalshi_ws.py:317-338",
+        "src/nightcrawler/speeddesk_kalshi_ws.py:230-236"
+      ]
+    },
+    {
+      "route": "WS protocol/freshness/sequence rejection or disconnect",
+      "what_can_happen": "MarketDataGap can arise for timestamp, sequence, malformed/ambiguous frame, reversed time, invalid quantity/price/depth or changed market set. Session finally marks disconnected and invalidates all tickers before awaited close; reconnect status gets flattened into booleans/slugs for the child.",
+      "refs": [
+        "src/nightcrawler/speeddesk_kalshi_ws.py:72-80",
+        "src/nightcrawler/speeddesk_kalshi_ws.py:135-184",
+        "src/nightcrawler/speeddesk_kalshi_ws.py:208-238",
+        "src/nightcrawler/speeddesk_kalshi_ws.py:359-380",
+        "src/nightcrawler/speeddesk_kalshi_ws.py:402-430"
+      ]
+    },
+    {
+      "route": "Transport transition",
+      "what_can_happen": "Switching book.source between transports discards REST eligibility and explicitly gaps the ticker before delivering the new book, preserving maker queue uncertainty even if prices match.",
+      "refs": [
+        "src/nightcrawler/speeddesk_kalshi.py:201-211"
+      ]
+    },
+    {
+      "route": "Metadata/window-set transition or metadata failure",
+      "what_can_happen": "Changing discovered window set clears REST eligibility and reports trade_stream false and all old windows as gaps, then replaces windows. Metadata errors report metadata_unavailable plus false and old slugs before clearing windows. This can invalidate active learning despite healthy BTC or available books.",
+      "refs": [
+        "src/nightcrawler/speeddesk_kalshi.py:246-258"
+      ]
+    },
+    {
+      "route": "Book REST failure",
+      "what_can_happen": "A failed/invalid REST book fetch removes REST eligibility and publishes book_unavailable plus explicit ticker gap.",
+      "refs": [
+        "src/nightcrawler/speeddesk_kalshi.py:276-288"
+      ]
+    },
+    {
+      "route": "Trade tape REST error/incomplete pagination",
+      "what_can_happen": "A failed or incomplete tape poll removes REST eligibility and publishes trade_tape_gap plus explicit ticker; successful no-new-print is a different upstream case but wire has no reason.",
+      "refs": [
+        "src/nightcrawler/speeddesk_kalshi.py:303-332"
+      ]
+    },
+    {
+      "route": "Feed stop",
+      "what_can_happen": "Kalshi run finally reports stopped,false,empty maker list,all windows gaps.",
+      "refs": [
+        "src/nightcrawler/speeddesk_kalshi.py:379-383"
+      ]
+    },
+    {
+      "route": "Coinbase status not connected",
+      "what_can_happen": "Coinbase bool is true while any one Coinbase feed socket is up; both down/connecting makes child bool false. A connected status does not prove fresh BTC tick; actual BTC age is separately checked by learner at due. Individual connection failures, duplicates, no recent accepted tick and future-stamped rejections are not encoded in g.",
+      "refs": [
+        "src/nightcrawler/speeddesk_feeds.py:388-401",
+        "src/nightcrawler/speeddesk_feeds.py:418-440",
+        "src/nightcrawler/speeddesk_venues.py:39-41",
+        "src/nightcrawler/kalshi_online_learning.py:272-276"
+      ]
+    }
+  ],
+  "permanent_v1_pregap_truth_table": [
+    {
+      "condition": "admitted unforecast pending; start<=child apply<end; explicit slug,trade=true,coinbase=true",
+      "effect": "row.pregap=explicit_feed_gap; later healthy statuses cannot clear it"
+    },
+    {
+      "condition": "admitted unforecast pending; active; trade=false and/or coinbase=false; slug absent",
+      "effect": "all active pending rows receive explicit_feed_gap, not only one venue"
+    },
+    {
+      "condition": "prestart gap applied before start; false flags",
+      "effect": "no effective row pregap yet; global feed_ok false can still exclude at due if unrecovered"
+    },
+    {
+      "condition": "prestart produced/received gap queued until application at/after start",
+      "effect": "active row pregap possible according to application clock; producer occurrence unknown"
+    },
+    {
+      "condition": "postforecast active gap",
+      "effect": "only post_gaps; existing frozen forecast remains scoreable; no second slot diagnostic"
+    },
+    {
+      "condition": "postend gap, forecast None",
+      "effect": "gap does not set row pregap (end gate); a local degrade can, because degrade has no end gate"
+    },
+    {
+      "condition": "late due pass elapsed>305",
+      "effect": "actual reason late wins before pregap even when causes exist"
+    },
+    {
+      "condition": "terms/label termination before horizon check",
+      "effect": "actual terms_changed/outcome_known/invalid_label/etc wins; a cause observation alone does not determine final disposition"
+    }
+  ],
+  "other_child_routes": [
+    {
+      "route": "sequence discontinuity/drop count increase/missing ladder",
+      "effect": "feed_dropped degrade; drop timestamp can be replayed on new admission using original child drop clock, with no prestart active cause fabricated",
+      "refs": [
+        "src/nightcrawler/kalshi_arena.py:1300-1311",
+        "src/nightcrawler/kalshi_arena.py:1339-1351",
+        "src/nightcrawler/kalshi_arena.py:1356-1386"
+      ]
+    },
+    {
+      "route": "late book/trade in inbox",
+      "effect": "if actual drain age>3s, feed_late degrade at existing later clock call. Diagnostic distinguishes actual check clock/age and later effective call; trade uses received_at when present else at.",
+      "refs": [
+        "src/nightcrawler/kalshi_arena.py:1389-1402",
+        "src/nightcrawler/kalshi_arena.py:1497-1519"
+      ]
+    }
+  ],
+  "unchanged_wire_cannot_distinguish": [
+    "Quiet accepted-trade expiry versus real trade-feed loss behind trade_stream=false or explicit slug.",
+    "A failed REST tape poll versus successful quiet poll versus WS maker-age expiry from the same child flags.",
+    "Book staleness, missing engine timestamp, protocol/sequence rejection, transport change, metadata transition, REST failure or shutdown behind the same explicit slug.",
+    "Whether aggregate trade_stream false originated in Kalshi, another venue, or simultaneous adapter states; true also does not certify Kalshi availability.",
+    "Which Coinbase connection failed; connected socket versus fresh accepted tick; genuine upstream gap versus source-local callback processing delay.",
+    "Producer on_status occurrence, parent FIFO time, unique event-to-frame join, or upstream root cause. Batch timestamp is not occurrence and excludes earlier parent FIFO residence."
+  ],
+  "next_options": [
+    {
+      "option": "Use current fixed target capture first; zero source changes",
+      "status": "Required first inference boundary, not yet an observed result",
+      "measure": "Join exact target ticker/first-last effective child diagnostic/frame identities/clock validity/actual disposition/counters. Preserve null producer occurrence and unknown coverage. First/last flagtrade_streamfalse can support maker-availability hypothesis but cannot establish quietexpiry. Do not use nearest healthy status as proof no intervening gaps."
+    },
+    {
+      "option": "Bounded prospective producer eligibility observer; preserve V1 and existing wire",
+      "status": "Design candidate only, conditional on actual target flags",
+      "measure": "At relevant eligible-to-ineligible changes capture fixed booleans and bounded ages for Kalshi connected,freshbook membership,book receipt/source timestamps,last accepted nonblocktrade age,REST eligible trade age,transport,window-set transition,validated reason enum; plus aggregate venue booleans and Coinbase connection/tick-age facts. Retain first/last and fixed counters per<=32 target windows; one bounded summary/window; no arbitrary payloads/headers. Callback occurrence wall+monotonic clocks must be explicitly labeled. Measure overhead on parent event loop before release.",
+      "limit": "Without correlation carried across parent FIFO/frame, separately logged producer observation remains potentially ambiguous when repeated identical gap tuples exist. It improves hypothesis discrimination, not a unique exact causal join."
+    },
+    {
+      "option": "Exact prospective producer-to-child correlation",
+      "status": "Larger separate scope/design, not allowed by current child-only patch",
+      "measure": "To establish unique source occurrence -> enqueue -> frame -> receive -> apply, specify versioned optional correlation ID/producer occurrence/reason/eligibility facts with strict bounds and validation, or an equivalent parent-side map connecting existing batchseq to exact status instance. Include parent FIFO residence explicitly. Test false/recovered statuses queued acrossstart,simultaneousflags,invalidclocks,drops/restarts and overhead. Do not silently add fields to released g wire.",
+      "limit": "Requires independent review of parent/live-loop overhead; does not authorize changed trading admission or money."
+    },
+    {
+      "option": "Prospective probability-input-quality V2",
+      "status": "Only if evidence shows maker-tape availability wrongly vetoes otherwise valid probability inputs; not an approved correction",
+      "measure": "Pre-register required BTC/strike/officialoutcome quality, forecast horizon, admission/unknown/restart policy and separate protocol/history identity before testing. Keep V1 state/counters/unknowns byte-preserved. Evaluate prospective out-of-sample forecast calibration/accuracy with no backfill; separately assess latency/execution.",
+      "limit": "No profitableedge or allgapsfixed claim; no changing live strategy, risk, caps, stops or settings."
+    }
+  ],
+  "limits": [
+    "Static source semantics, not proof that any listed route occurred in the fixed capture.",
+    "No production queries or source edits.",
+    "No strategy/model/protocol/financial changes.",
+    "Source line references reflect recorded exact source commit and file hashes."
+  ]
+}

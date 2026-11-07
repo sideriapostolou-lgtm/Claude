@@ -1,0 +1,51 @@
+{
+  "accepted_orders": 50,
+  "cancel_decision_to_ack": {
+    "max_ms": 9922.0,
+    "n": 51,
+    "p50_ms": 487.9,
+    "p95_ms": 6703.4
+  },
+  "cancel_receipts": 51,
+  "cancel_states": {
+    "not resting on Kalshi (404); reservation retained until reconciled": 11,
+    "requested; reservation retained until fills reconcile": 40
+  },
+  "fill_receipts": 11,
+  "inverse_pnl_usd": null,
+  "limitations": [
+    "A short observational sample, not an A/B test of the optional pull setting.",
+    "Open-window costs are not realized losses; only settlement receipts contribute to P&L.",
+    "Cancel latency includes reply processing; it does not prove when liquidity disappeared.",
+    "Accepted orders, intents, fills and cancelled quantities are different measurements.",
+    "Opposing executable books and queue evidence are absent; inverse profit is unmeasurable."
+  ],
+  "order_decision_to_ack": {
+    "max_ms": 2633.79,
+    "n": 49,
+    "p50_ms": 121.582,
+    "p95_ms": 1690.064
+  },
+  "scope": "2026-10-14 14:05\u201314:25 UTC, deployment 02907385; no earlier cohorts pooled",
+  "settled_directional_usd": 2.220446049250313e-16,
+  "settled_locked_usd": -1.0167000000000004,
+  "settled_pnl_usd": -1.0167000000000002,
+  "windows": {
+    "KXBTC15M-26OCT141015-15": {
+      "cost_usd": 6.0,
+      "down": 5.0,
+      "fees_usd": 0.0167,
+      "fills": 2,
+      "settled_pnl_usd": -1.0167000000000002,
+      "up": 5.0
+    },
+    "KXBTC15M-26OCT141030-30": {
+      "cost_usd": 10.000000000000002,
+      "down": 10.0,
+      "fees_usd": 0.0,
+      "fills": 9,
+      "settled_pnl_usd": null,
+      "up": 14.0
+    }
+  }
+}

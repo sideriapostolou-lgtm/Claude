@@ -1,0 +1,174 @@
+{
+  "recorded_at_pacific": "2026-10-15T08:38:27.228792-07:00",
+  "scope": "Local candidate only; this research archive does not change deployed application source.",
+  "base": "91250c6598f4b866d7601ac0ead3e66ba55996cd",
+  "patch_sha256": "f90a860d89700e09d4351fc585ebfe807cee9dc41b65405160dc7fb788dff427",
+  "source_files": {
+    "src/nightcrawler/kalshi_arena.py": {
+      "bytes": 117423,
+      "sha256": "1fb07bf1d530b51620647dfa7b1b4afc1164eeeb095521b11a9eb2b8220d47ca"
+    },
+    "tests/test_kalshi_online_learning_input_chronology.py": {
+      "bytes": 8653,
+      "sha256": "31281d37de5f0da440c15348d80aa38fa6401540843fcef0106249fc813801fb"
+    }
+  },
+  "full_pytest": {
+    "exit_code": 0,
+    "passed": 5695,
+    "skipped": 14,
+    "seconds": 318.17
+  },
+  "targeted": {
+    "exit_code": 0,
+    "passed": 85
+  },
+  "mypy": {
+    "exit_code": 0,
+    "files": 128
+  },
+  "ruff": {
+    "exit_code": 0,
+    "files": 2
+  },
+  "independent_review": "ACCEPTED",
+  "root_verified_original_hashes_source_and_log": true,
+  "archive": "INPUT_CHRONOLOGY_PREPARATION.zip",
+  "bytes": 59505,
+  "sha256": "17725c6fe159de77967b82bf44166eeff9fd7087e55535c8e619de2c52530bb4",
+  "member_count": 26,
+  "crc_and_member_bytes_verified": true,
+  "recognized_credential_matches": 0,
+  "members": [
+    {
+      "name": "INPUT_CHRONOLOGY_PREPARATION.md",
+      "bytes": 5828,
+      "sha256": "17391034f2478cf2a34674b28fdee2d2a70a6bcdedadc17d5e16eea88d1a64bd"
+    },
+    {
+      "name": "candidate-frozen-manifest.json",
+      "bytes": 4490,
+      "sha256": "10baca73bc9dea835d88060d2144176595b0aebb3f4513708cfed194b7f11563"
+    },
+    {
+      "name": "frozen/CANDIDATE_HANDOFF.md",
+      "bytes": 5485,
+      "sha256": "d9dc1c395843a8ff9d95ae23a3a7967a2d75a85d5220cb575e00c83910a24356"
+    },
+    {
+      "name": "frozen/candidate-current-mypy.json",
+      "bytes": 151,
+      "sha256": "cd73377e99b030498c375d823ef16e0a2a7a6cd62e48f4d914be151076194c80"
+    },
+    {
+      "name": "frozen/candidate-current-mypy.log",
+      "bytes": 45,
+      "sha256": "5525ee69f7acc60739d39ebd40e8c0169c4d79d0b48708365b122aee5ada2f48"
+    },
+    {
+      "name": "frozen/candidate-current-ruff.json",
+      "bytes": 243,
+      "sha256": "5720ef0167a68e9b9144982a30953bf5760232e1822c9d0bc56d021cb2f7fa41"
+    },
+    {
+      "name": "frozen/candidate-current-ruff.log",
+      "bytes": 19,
+      "sha256": "82b3e6a6c090a57601d22943bd23fca9218d1031dbe5a7b754092f9a156b4f18"
+    },
+    {
+      "name": "frozen/candidate-current-targeted.json",
+      "bytes": 296,
+      "sha256": "42d8a96e4896ca53da173e87aa853f027fed25a29dd06c78dca835cf23a49b46"
+    },
+    {
+      "name": "frozen/candidate-current-targeted.log",
+      "bytes": 179,
+      "sha256": "c63197d0e78fce77321295f78101a6b1d52dd32990df669b063463844be7a7d4"
+    },
+    {
+      "name": "frozen/candidate-full-pytest.json",
+      "bytes": 139,
+      "sha256": "5216ddf7f5ced662c59091d978229b31bcf055d7d718e9ccb0ae605225ccc906"
+    },
+    {
+      "name": "frozen/candidate-full-pytest.log",
+      "bytes": 8008,
+      "sha256": "5cb3381a48f276324d52931b142b7ab6eebacb4ac09e52249a29ddd060ac01d8"
+    },
+    {
+      "name": "frozen/candidate-initial-focused.json",
+      "bytes": 467,
+      "sha256": "10c99287909bb12f4ce77c856f1524516c80412ef44fe4cf66fb1007a85e6f78"
+    },
+    {
+      "name": "frozen/candidate-initial-focused.log",
+      "bytes": 458,
+      "sha256": "b111d58782b630ba12c557a65deee407b7538c1eedf13535299921969bd6f1d3"
+    },
+    {
+      "name": "frozen/candidate-mypy.json",
+      "bytes": 152,
+      "sha256": "af1f6ec523485c5695dcb0cb8404895866981b01243652791f7c0f305bf84815"
+    },
+    {
+      "name": "frozen/candidate-mypy.log",
+      "bytes": 45,
+      "sha256": "5525ee69f7acc60739d39ebd40e8c0169c4d79d0b48708365b122aee5ada2f48"
+    },
+    {
+      "name": "frozen/candidate-private-scan.json",
+      "bytes": 532,
+      "sha256": "1c9bad55af8ac8505c7b253c64404a3ad2349610f0c1ca831c55b8ef5af257ee"
+    },
+    {
+      "name": "frozen/candidate-red-missing-ladder.json",
+      "bytes": 129,
+      "sha256": "2c5760e9d30a24acf0601ae940c65ad0143b3381fb2b54c297dfa7ab37fbc022"
+    },
+    {
+      "name": "frozen/candidate-red-missing-ladder.log",
+      "bytes": 1465,
+      "sha256": "8768085c998fa28b27fabe0acd34100462c588990cd624ab32b24ca551ab2a04"
+    },
+    {
+      "name": "frozen/candidate-test-fixture-id-failure.json",
+      "bytes": 152,
+      "sha256": "b4f9edc1771106bc2f21c2ac49a1f156213fb9915b4bd1bb61848557a2fb5d57"
+    },
+    {
+      "name": "frozen/candidate-test-fixture-id-failure.log",
+      "bytes": 2263,
+      "sha256": "1b67389e56736958dc21d596a72d85cdcb5ce78c5de4ef36e0e282605c0e6aa4"
+    },
+    {
+      "name": "frozen/candidate.patch",
+      "bytes": 13755,
+      "sha256": "f90a860d89700e09d4351fc585ebfe807cee9dc41b65405160dc7fb788dff427"
+    },
+    {
+      "name": "frozen/independent-candidate-review.json",
+      "bytes": 3776,
+      "sha256": "1000e978313ec7a18281e46d3545337293fa1349b0bbeec8c3dba67aac98640d"
+    },
+    {
+      "name": "frozen/source-manifest.json",
+      "bytes": 1031,
+      "sha256": "d3758e8b694a08c613a4120747c6a8dfbbc100437a1d5a60dbdfd237d6c04151"
+    },
+    {
+      "name": "frozen/src/nightcrawler/kalshi_arena.py",
+      "bytes": 117423,
+      "sha256": "1fb07bf1d530b51620647dfa7b1b4afc1164eeeb095521b11a9eb2b8220d47ca"
+    },
+    {
+      "name": "frozen/tests/test_kalshi_online_learning_input_chronology.py",
+      "bytes": 8653,
+      "sha256": "31281d37de5f0da440c15348d80aa38fa6401540843fcef0106249fc813801fb"
+    },
+    {
+      "name": "package_candidate.py",
+      "bytes": 3432,
+      "sha256": "78a9906712240df5f85891915b3f1bed16cac1978b4f5d6b703e5b0e9af8cbb3"
+    }
+  ]
+}

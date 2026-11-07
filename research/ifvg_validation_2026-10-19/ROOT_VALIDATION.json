@@ -1,0 +1,102 @@
+{
+  "recorded_at_utc": "2026-10-19T22:06:08.456030+00:00",
+  "scope": "Standalone exploratory research only; no app/runtime gate claim",
+  "pre_price_checks": {
+    "initial_final_source_pytest": "106passed,72subtests,0.58seconds",
+    "corrected_reader_pytest": "108passed,72subtests,0.63seconds",
+    "ruff": "all research Python passed",
+    "mypy": "success,2 standalone source files"
+  },
+  "first_attempt": {
+    "recorded_at_utc": "2026-10-19T22:04:28.607039+00:00",
+    "attempt": "first frozen replay",
+    "exit_code": 1,
+    "output_file_created": false,
+    "error": "row 1: invalid source record (time data 'timestamp' does not match format '%Y-%m-%d %H:%M:%S')",
+    "failure_stage": "First CSV record, before parsing OHLC or invoking simulator",
+    "cause": "Ingestion assumed no header; exact sample header is timestamp,open,high,low,close,volume",
+    "preserved_sources": {
+      "test_study.py.txt": "24f339dd9b9e9c25ef9e7b71e8be19d075cfa337b1c6aaed47156efe365a07e0",
+      "EVALUATION.md.txt": "274ee2edc8ad1dc687c96bfed8e7b05d805d5681d2031650570f8a9861f0dbe6",
+      "RUN_MANIFEST.json.txt": "686c2829c57dabdf68d6c43a67a823616c82e3f29af0dc24d358d49b34516774",
+      "run_study.py.txt": "6e9d820aabc18776d7c6a316e9016dd24a94d87238f0f92a058eda5ce03fe76e"
+    },
+    "strategy_dates_costs_changed": false,
+    "completed_price_replays": 0
+  },
+  "successful_replays": 1,
+  "successful_command": "python run_study.py --data /private/path/MNQ_1min_sample.csv --manifest RUN_MANIFEST_CORRECTED.json --output RESULTS_CORRECTED.json",
+  "output_sha256": "1277f713102bd856ea2bcb45028ad4741b2fe5defa63218d6c4393280289df7a",
+  "successful_output_time_utc": "2026-10-19T22:05:01.399377+00:00",
+  "source_hashes": {
+    "simulator.py": "69caef01eb392211342524b2fc3bc695f5cb31eab9d6d64763a4fc4503c2615b",
+    "run_study.py": "e71008ad7604de1464eb63519457644254596cc16e80c0d76ad86fbb1fe35b0c",
+    "EVALUATION.md": "f43925d6a91017094b1acd10885c413eb2e43c61a77e2e7d22f92f32e8097dcf",
+    "../ifvg_intake_2026-10-19/V1_RULES.md": "59e43db6904ce48ff0da9e0c4e144a11e160c9c577c86339963c9e1b51aa6d18"
+  },
+  "results": {
+    "sessions": 11,
+    "decisions": {
+      "NO_TRADE": 6,
+      "REJECTED": 3,
+      "TRADE": 2
+    },
+    "unresolved_dates": [],
+    "closed_trades": 2,
+    "net_wins": 1,
+    "net_losses": 1,
+    "net_flat": 0,
+    "win_fraction": "1/2",
+    "known_closed_gross_after_friction_usd": "-168.50",
+    "known_closed_fees_usd": "4.00",
+    "known_closed_net_usd": "-172.50",
+    "known_entry_fees_on_unresolved_usd": "0.00",
+    "period_trading_net_usd": "-172.50",
+    "mean_per_closed_trade_usd": "-86.25",
+    "mean_per_scheduled_session_usd": "-15.68",
+    "worst_closed_trade_usd": "-286.50",
+    "worst_known_day_usd": "-286.50",
+    "longest_known_closed_loss_streak": 1,
+    "session_end_max_drawdown_usd": "286.50",
+    "net_without_best_day_usd": "-286.50",
+    "ambiguous_closed_trades": 0,
+    "planned_entry_risk_usd": [
+      "58.00",
+      "283.50"
+    ],
+    "operating_net_usd": null,
+    "operating_net_reason": "Actual trading/platform/data costs unverified; reported fees are assumptions."
+  },
+  "limitations": [
+    "Unknown root-series adjustment, roll map and individual contract identity",
+    "11 days only, with five earlier and six later fixed chronological sessions",
+    "Next-open and intrabar fills are OHLC approximations, not observed execution",
+    "Hypothetical fees/slippage; actual business costs and operating net unknown",
+    "Cash calendar checked; independent CME halt history unverified",
+    "No raw sample redistribution; licensed actual-contract validation still needed"
+  ],
+  "retained_pre_replay_failures": [
+    "Simulator initial lint and five synthetic fixture expectations corrected before prices; see IMPLEMENTATION.json",
+    "Independent initial Ruff findings corrected before prices; see INDEPENDENT_REVIEW.json",
+    "Runner initial Ruff12 findings incl2B023 closurebindings fixed before prices",
+    "Standalone mypy4 simulator typing errors fixed via typed records before prices; no outcome change",
+    "First frozen attempt failed exact header metadata mismatch; preserved original source/manifest/error; strictreader correction reviewed before price replay"
+  ],
+  "no_tuning_after_outcomes": true,
+  "raw_data_published": false,
+  "app_changed": false,
+  "live_execution_enabled": false,
+  "paper_trading_started": false,
+  "independent_results_review": "RESULTS_INDEPENDENT_REVIEW.json (separate verification record)",
+  "independent_historical_review": {
+    "assertions_passed": 2433,
+    "scenarios": 9,
+    "scenario_days": 99,
+    "summary_blocks": 27,
+    "result_hash_verified_by_root": true,
+    "review_script_hash_verified_by_root": true,
+    "source_manifest_verified_by_root": true,
+    "receipt_sha256": "968dcc328521c12881bd54615bda198de8f5ff584d5021b10b84aba3765fcf18"
+  },
+  "root_final_accounting_checks": "All nine cases:11interior days,2closed trades, exact gross minus fees, fee rate, negative total and unknown boundary; all JSON parses and four source bindings pass"
+}

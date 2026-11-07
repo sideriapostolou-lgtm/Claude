@@ -1,0 +1,61 @@
+{
+  "schema": 1,
+  "format": "ordered base64 -> XZ -> UTF-8 JSON files[path,text]",
+  "archive_sha256": "b9db17f459a0fcda18f7c77d70cce3212d67eeafd9107ffc6b787f0a99b3917f",
+  "unpacked_sha256": "f4985b4cf7765899cfe67e4821591580be0ae1d95852fc59af6dfebd7f8925d7",
+  "archive_bytes": 30688,
+  "unpacked_bytes": 1253785,
+  "encoded_characters": 40920,
+  "parts": [
+    {
+      "path": "RUNTIME_EVIDENCE_01.b64.txt",
+      "sha256": "85d7208d016183c5461bd90de9e790391c9494635edba9f1e8c8fa0532e29b56",
+      "bytes": 40001
+    },
+    {
+      "path": "RUNTIME_EVIDENCE_02.b64.txt",
+      "sha256": "fe08d557b7721adf51a752cc0d2f10b293ba46a7e764150862508f264a98c254",
+      "bytes": 921
+    }
+  ],
+  "files": [
+    {
+      "path": "size-review-2026-10-16/since_update_money.json",
+      "bytes": 16141,
+      "sha256": "5ce9e6029e6d49788f41b671fe25d97db2a62c7807f0870cf9fc98ad3ee2b1e8"
+    },
+    {
+      "path": "size-review-2026-10-16/latest_status.json",
+      "bytes": 471495,
+      "sha256": "9888db109a0412569083294a2eea5e305d728a8c4ac877d9d48d91da519c299a"
+    },
+    {
+      "path": "size-review-2026-10-16/astra/STATUS_REVIEW.md",
+      "bytes": 4652,
+      "sha256": "f3796ca08334f3e1af68ccfaca3aa22447bd72ec7766df23f9071e218c981e82"
+    },
+    {
+      "path": "size-review-2026-10-16/astra/STATUS_ANALYSIS.json",
+      "bytes": 487776,
+      "sha256": "583045ef9d91c4e59eb58615d473245590c1ef5668623c461d2b9a666eb6e7db"
+    },
+    {
+      "path": "size-review-2026-10-16/astra/status_audit.py",
+      "bytes": 6726,
+      "sha256": "f3ad6235c63509adba3c53a68a1b5718e751b9907b04a572be09b3555b4e8df0"
+    },
+    {
+      "path": "paired-entry-2026-10-16/native/warm_financial.json",
+      "bytes": 116803,
+      "sha256": "b114873d0b35367be112439ce15858058fc587bf5f5eb9ce407a01b5bc29335d"
+    }
+  ],
+  "roundtrip": "all selected original bytes and hashes match",
+  "scope": "Explicit selected original receipts/reviews/analysis only. Service metadata is labeled selected; no raw-volume or continuous-market-coverage certificate.",
+  "excluded": [
+    "Unrelated owner orders/activity",
+    "Private operating handoffs and credential values",
+    "Full deployment creator/contact metadata",
+    "Sealed research TEST and unselected historical raw tapes"
+  ]
+}

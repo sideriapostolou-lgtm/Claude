@@ -1,0 +1,145 @@
+{
+  "before": {
+    "current_time": "2026-10-15 19:23:22 UTC"
+  },
+  "after": {
+    "current_time": "2026-10-15 19:23:22 UTC"
+  },
+  "request": {
+    "projectId": "75750847-85c0-41a3-a2a7-b7f2201a51e9",
+    "environmentId": "17f7b0e0-104c-4903-9484-0106748b3cdb",
+    "deploymentId": "2e88601d-c9c7-474f-add8-72c0a13c1a4b",
+    "startDate": "2026-10-15T19:22:00Z",
+    "endDate": "2026-10-15T19:23:15Z",
+    "limit": 20,
+    "filter": "\"speeddesk_\""
+  },
+  "result": {
+    "content": [
+      {
+        "type": "text",
+        "text": "**Deployment 2e88601d-c9c7-474f-add8-72c0a13c1a4b** [SUCCESS]\nservice: f84d3b52-002f-44cb-931e-bc9e3e097e97, env: 17f7b0e0-104c-4903-9484-0106748b3cdb\n\n### Deploy logs (10)\n2026-10-15T19:22:17.876243248Z info 2026-10-15T19:22:17Z INFO nightcrawler.speeddesk_coins: speeddesk_coins_started mode=PRACTICE coins=eth,sol,xrp,doge\n2026-10-15T19:22:17.876246718Z info 2026-10-15T19:22:17Z INFO nightcrawler.speeddesk_coins: speeddesk_coin_started {\"mode\":\"practice\",\"coin\":\"eth\",\"venue\":\"kalshi\",\"at\":1792092137.8215878,\"real_orders\":false,\"series\":\"KXETH15M\",\"config\":{\"take_edge\":1.0,\"make_edge\":0.03,\"clip\":25.0,\"pair_cap\":0.99,\"max_imbalance\":0.25,\"window_usd\":20.0,\"open_usd\":20.0,\"day_stop_usd\":10.0,\"cutoff_s\":60.0,\"latency_ms\":250.0,\"stale_s\":3.0,\"reprice\":0.01,\"sigma_min_samples\":120,\"sigma_warmup_s\":3600.0}}\n2026-10-15T19:22:17.946865816Z info 2026-10-15T19:22:17Z INFO nightcrawler.speeddesk_coins: speeddesk_coin_started {\"mode\":\"practice\",\"coin\":\"sol\",\"venue\":\"kalshi\",\"at\":1792092137.886704,\"real_orders\":false,\"series\":\"KXSOL15M\",\"config\":{\"take_edge\":1.0,\"make_edge\":0.03,\"clip\":25.0,\"pair_cap\":0.99,\"max_imbalance\":0.25,\"window_usd\":20.0,\"open_usd\":20.0,\"day_stop_usd\":10.0,\"cutoff_s\":60.0,\"latency_ms\":250.0,\"stale_s\":3.0,\"reprice\":0.01,\"sigma_min_samples\":120,\"sigma_warmup_s\":3600.0}}\n2026-10-15T19:22:18.017833721Z info 2026-10-15T19:22:17Z INFO nightcrawler.speeddesk_coins: speeddesk_coin_started {\"mode\":\"practice\",\"coin\":\"xrp\",\"venue\":\"kalshi\",\"at\":1792092137.9488258,\"real_orders\":false,\"series\":\"KXXRP15M\",\"config\":{\"take_edge\":1.0,\"make_edge\":0.03,\"clip\":25.0,\"pair_cap\":0.99,\"max_imbalance\":0.25,\"window_usd\":20.0,\"open_usd\":20.0,\"day_stop_usd\":10.0,\"cutoff_s\":60.0,\"latency_ms\":250.0,\"stale_s\":3.0,\"reprice\":0.01,\"sigma_min_samples\":120,\"sigma_warmup_s\":3600.0}}\n2026-10-15T19:22:22.435771593Z info 2026-10-15T19:22:22Z INFO nightcrawler.speeddesk_coins: speeddesk_coin_started {\"mode\":\"practice\",\"coin\":\"doge\",\"venue\":\"kalshi\",\"at\":1792092138.0112326,\"real_orders\":false,\"series\":\"KXDOGE15M\",\"config\":{\"take_edge\":1.0,\"make_edge\":0.03,\"clip\":25.0,\"pair_cap\":0.99,\"max_imbalance\":0.25,\"window_usd\":20.0,\"open_usd\":20.0,\"day_stop_usd\":10.0,\"cutoff_s\":60.0,\"latency_ms\":250.0,\"stale_s\":3.0,\"reprice\":0.01,\"sigma_min_samples\":120,\"sigma_warmup_s\":3600.0}}\n2026-10-15T19:22:22.472190589Z info 2026-10-15T19:22:22Z INFO nightcrawler.speeddesk_kalshi: speeddesk_feed_kalshi_started mode=MARKET_DATA series=KXETH15M websocket=False books_max_hz=0.5\n2026-10-15T19:22:22.472194779Z info 2026-10-15T19:22:22Z INFO nightcrawler.speeddesk_kalshi: speeddesk_feed_kalshi_started mode=MARKET_DATA series=KXSOL15M websocket=False books_max_hz=0.5\n2026-10-15T19:22:22.472198409Z info 2026-10-15T19:22:22Z INFO nightcrawler.speeddesk_kalshi: speeddesk_feed_kalshi_started mode=MARKET_DATA series=KXXRP15M websocket=False books_max_hz=0.5\n2026-10-15T19:22:22.472203049Z info 2026-10-15T19:22:22Z INFO nightcrawler.speeddesk_kalshi: speeddesk_feed_kalshi_started mode=MARKET_DATA series=KXDOGE15M websocket=False books_max_hz=0.5\n2026-10-15T19:22:22.665254812Z info 2026-10-15T19:22:22Z INFO nightcrawler.speeddesk_coins: speeddesk_coins_coinbase_connected products=DOGE-USD,ETH-USD,SOL-USD,XRP-USD"
+      }
+    ],
+    "structuredContent": {
+      "scope": "deployment",
+      "deploymentId": "2e88601d-c9c7-474f-add8-72c0a13c1a4b",
+      "serviceId": "f84d3b52-002f-44cb-931e-bc9e3e097e97",
+      "environmentId": "17f7b0e0-104c-4903-9484-0106748b3cdb",
+      "status": "SUCCESS",
+      "deploy": [
+        {
+          "timestamp": "2026-10-15T19:22:17.876243248Z",
+          "severity": "info",
+          "message": "2026-10-15T19:22:17Z INFO nightcrawler.speeddesk_coins: speeddesk_coins_started mode=PRACTICE coins=eth,sol,xrp,doge",
+          "attributes": [
+            {
+              "key": "level",
+              "value": "\"info\""
+            }
+          ]
+        },
+        {
+          "timestamp": "2026-10-15T19:22:17.876246718Z",
+          "severity": "info",
+          "message": "2026-10-15T19:22:17Z INFO nightcrawler.speeddesk_coins: speeddesk_coin_started {\"mode\":\"practice\",\"coin\":\"eth\",\"venue\":\"kalshi\",\"at\":1792092137.8215878,\"real_orders\":false,\"series\":\"KXETH15M\",\"config\":{\"take_edge\":1.0,\"make_edge\":0.03,\"clip\":25.0,\"pair_cap\":0.99,\"max_imbalance\":0.25,\"window_usd\":20.0,\"open_usd\":20.0,\"day_stop_usd\":10.0,\"cutoff_s\":60.0,\"latency_ms\":250.0,\"stale_s\":3.0,\"reprice\":0.01,\"sigma_min_samples\":120,\"sigma_warmup_s\":3600.0}}",
+          "attributes": [
+            {
+              "key": "level",
+              "value": "\"info\""
+            }
+          ]
+        },
+        {
+          "timestamp": "2026-10-15T19:22:17.946865816Z",
+          "severity": "info",
+          "message": "2026-10-15T19:22:17Z INFO nightcrawler.speeddesk_coins: speeddesk_coin_started {\"mode\":\"practice\",\"coin\":\"sol\",\"venue\":\"kalshi\",\"at\":1792092137.886704,\"real_orders\":false,\"series\":\"KXSOL15M\",\"config\":{\"take_edge\":1.0,\"make_edge\":0.03,\"clip\":25.0,\"pair_cap\":0.99,\"max_imbalance\":0.25,\"window_usd\":20.0,\"open_usd\":20.0,\"day_stop_usd\":10.0,\"cutoff_s\":60.0,\"latency_ms\":250.0,\"stale_s\":3.0,\"reprice\":0.01,\"sigma_min_samples\":120,\"sigma_warmup_s\":3600.0}}",
+          "attributes": [
+            {
+              "key": "level",
+              "value": "\"info\""
+            }
+          ]
+        },
+        {
+          "timestamp": "2026-10-15T19:22:18.017833721Z",
+          "severity": "info",
+          "message": "2026-10-15T19:22:17Z INFO nightcrawler.speeddesk_coins: speeddesk_coin_started {\"mode\":\"practice\",\"coin\":\"xrp\",\"venue\":\"kalshi\",\"at\":1792092137.9488258,\"real_orders\":false,\"series\":\"KXXRP15M\",\"config\":{\"take_edge\":1.0,\"make_edge\":0.03,\"clip\":25.0,\"pair_cap\":0.99,\"max_imbalance\":0.25,\"window_usd\":20.0,\"open_usd\":20.0,\"day_stop_usd\":10.0,\"cutoff_s\":60.0,\"latency_ms\":250.0,\"stale_s\":3.0,\"reprice\":0.01,\"sigma_min_samples\":120,\"sigma_warmup_s\":3600.0}}",
+          "attributes": [
+            {
+              "key": "level",
+              "value": "\"info\""
+            }
+          ]
+        },
+        {
+          "timestamp": "2026-10-15T19:22:22.435771593Z",
+          "severity": "info",
+          "message": "2026-10-15T19:22:22Z INFO nightcrawler.speeddesk_coins: speeddesk_coin_started {\"mode\":\"practice\",\"coin\":\"doge\",\"venue\":\"kalshi\",\"at\":1792092138.0112326,\"real_orders\":false,\"series\":\"KXDOGE15M\",\"config\":{\"take_edge\":1.0,\"make_edge\":0.03,\"clip\":25.0,\"pair_cap\":0.99,\"max_imbalance\":0.25,\"window_usd\":20.0,\"open_usd\":20.0,\"day_stop_usd\":10.0,\"cutoff_s\":60.0,\"latency_ms\":250.0,\"stale_s\":3.0,\"reprice\":0.01,\"sigma_min_samples\":120,\"sigma_warmup_s\":3600.0}}",
+          "attributes": [
+            {
+              "key": "level",
+              "value": "\"info\""
+            }
+          ]
+        },
+        {
+          "timestamp": "2026-10-15T19:22:22.472190589Z",
+          "severity": "info",
+          "message": "2026-10-15T19:22:22Z INFO nightcrawler.speeddesk_kalshi: speeddesk_feed_kalshi_started mode=MARKET_DATA series=KXETH15M websocket=False books_max_hz=0.5",
+          "attributes": [
+            {
+              "key": "level",
+              "value": "\"info\""
+            }
+          ]
+        },
+        {
+          "timestamp": "2026-10-15T19:22:22.472194779Z",
+          "severity": "info",
+          "message": "2026-10-15T19:22:22Z INFO nightcrawler.speeddesk_kalshi: speeddesk_feed_kalshi_started mode=MARKET_DATA series=KXSOL15M websocket=False books_max_hz=0.5",
+          "attributes": [
+            {
+              "key": "level",
+              "value": "\"info\""
+            }
+          ]
+        },
+        {
+          "timestamp": "2026-10-15T19:22:22.472198409Z",
+          "severity": "info",
+          "message": "2026-10-15T19:22:22Z INFO nightcrawler.speeddesk_kalshi: speeddesk_feed_kalshi_started mode=MARKET_DATA series=KXXRP15M websocket=False books_max_hz=0.5",
+          "attributes": [
+            {
+              "key": "level",
+              "value": "\"info\""
+            }
+          ]
+        },
+        {
+          "timestamp": "2026-10-15T19:22:22.472203049Z",
+          "severity": "info",
+          "message": "2026-10-15T19:22:22Z INFO nightcrawler.speeddesk_kalshi: speeddesk_feed_kalshi_started mode=MARKET_DATA series=KXDOGE15M websocket=False books_max_hz=0.5",
+          "attributes": [
+            {
+              "key": "level",
+              "value": "\"info\""
+            }
+          ]
+        },
+        {
+          "timestamp": "2026-10-15T19:22:22.665254812Z",
+          "severity": "info",
+          "message": "2026-10-15T19:22:22Z INFO nightcrawler.speeddesk_coins: speeddesk_coins_coinbase_connected products=DOGE-USD,ETH-USD,SOL-USD,XRP-USD",
+          "attributes": [
+            {
+              "key": "level",
+              "value": "\"info\""
+            }
+          ]
+        }
+      ]
+    },
+    "isError": false
+  }
+}

@@ -1,0 +1,33 @@
+{
+  "at_utc": "2026-10-15T20:43:42.424860+00:00",
+  "application_base": "8c8681a032a6181c49915ba88ba38d0818dc69d3",
+  "remote_docs_base": "51c565681b294163a18c755a02bc8ed51b1e831a",
+  "local_equivalent_docs_base": "279d80990252be48c829386a6d2c189b6f3ccde5",
+  "other_tracked_src_files_byte_equal": 178,
+  "build_files_byte_equal": true,
+  "source_tests": {
+    "src/nightcrawler/speeddesk_kalshi.py": {
+      "sha256": "7946b64f9f1441ea8b02b1d17f5b2d400d7c8e7a65897eed8974373dac3ae9b9",
+      "bytes": 20805
+    },
+    "src/nightcrawler/speeddesk_kalshi_ws.py": {
+      "sha256": "1eef6d36a0b5aaf3a00680c0aedec057e163aac8fc8d63e3e213b01124b4337b",
+      "bytes": 24458
+    },
+    "tests/test_speeddesk_kalshi_rest_recovery.py": {
+      "sha256": "dab6f4f862388488e19a2d61b3848359849790dc3b07191614e2e140cd299fad",
+      "bytes": 13116
+    }
+  },
+  "pytest": {
+    "passed": 5939,
+    "existing_skips": 14,
+    "captured_exit": 0,
+    "seconds": 321.8887631969992
+  },
+  "mypy_source_files": 129,
+  "ruff_python_files": 3,
+  "independent_review": "accepted exact v2",
+  "live_money_settings_or_strategy_change": false,
+  "deployed": false
+}

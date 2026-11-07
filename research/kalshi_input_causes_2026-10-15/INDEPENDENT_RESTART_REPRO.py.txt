@@ -1,0 +1,41 @@
+import json,re,hashlib,datetime,math,subprocess
+from pathlib import Path
+ROOT=Path('/workspace/nightcrawler-input-causes');D=ROOT/'research/kalshi_input_causes_2026-10-15'
+used={}
+def read(name):
+ p=D/name;used[name]=hashlib.sha256(p.read_bytes()).hexdigest();return json.loads(p.read_text())
+def rows(name,event,logger='nightcrawler.speeddesk'):
+ raw=read(name)['structuredContent']['deploy'];out=[]
+ pattern=r'\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?Z INFO '+re.escape(logger)+': '+re.escape(event)+r' (\{[^\n]*\})'
+ for r in raw:
+  m=re.fullmatch(pattern,r['message'])
+  if m:out.append({'timestamp':r['timestamp'],'payload':json.loads(m.group(1))})
+ return raw,out
+audit=read('RESTART_READY_AUDIT.json');decl=read('CAPTURE_DECLARATION.json');release=read('RELEASE_SOURCE.json');platform=read('ready_platform.selected.json')
+braw,bs=rows('release_before_status.native.json','speeddesk_live_status');araw,ars=rows('ready_live.native.json','speeddesk_live_status');b=max(bs,key=lambda r:r['timestamp']);a=max(ars,key=lambda r:r['timestamp']);assert b['timestamp']==audit['before_original_timestamp'];assert a['timestamp']==audit['after_ready_original_timestamp']
+def value(row,path):
+ x=row
+ for key in path.split('.'):x=x[key]
+ return x
+fields=[]
+for claimed in audit['fields']:
+ p=claimed['path'];bv=value(b['payload'],p);av=value(a['payload'],p);assert bv==av==claimed['before']==claimed['after'],p;fields.append({'path':p,'value':bv,'equal':True})
+assert len(fields)==67
+before,after=b['payload'],a['payload'];assert before['total_halted'] is after['total_halted'] is False
+assert after['mode']==after['configured_mode']=='live' and after['authenticated'] is after['trading_now'] is True and after['waiting']=='' and after['reason']=='balancing_only'
+controls={}
+for name,event in [('resume','resume'),('day_reset','day_reset'),('integrity','integrity_reset')]:
+ raw,original=rows('ready_'+name+'.native.json','speeddesk_live_'+event);assert len(raw)==5 and len(original)==1;assert original[0]['payload']['state']=='ignored; this value was already used';controls[name]={'raw_rows':len(raw),'original_rows':original,'excluded_nested_or_other':len(raw)-len(original)}
+health=read('ready_platform_health.native.json')['structuredContent'];services={s['serviceName']:s for s in health['services']};assert all(s['state']=='online' for s in services.values());assert services['bot']['activeDeployments'][0]['id']==decl['deployment_id'];assert services['kalshi-recorder']['activeDeployments'][0]['id']=='8453f919-b891-4aa7-8478-6fcf6b9c24ee';assert platform['selected_deployment']['status']=='SUCCESS' and platform['selected_deployment']['commitHash']==decl['source_commit']
+poly=read('startup_polydesk.native.json')['structuredContent']['deploy'];assert len(poly)==1 and re.fullmatch(r'\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z INFO nightcrawler.polydesk: polydesk_started .*\(LIVE: 10 contract\(s\) per order\)',poly[0]['message'])
+_,learning=rows('startup_learning_retry.native.json','kalshi_online_learning_status','nightcrawler.kalshi_online_learning');assert len(learning)==1;lp=learning[0]['payload'];assert lp['mode']=='observe_only' and lp['live_application'] is False and lp['learning']['enabled'] is True and lp['source_fingerprint']==decl['learner_fingerprint']
+hard=read('ready_hardening.native.json')['structuredContent']['deploy'];assert len(hard)==1 and re.fullmatch(r'.* INFO nightcrawler.kalshi_arena: kalshi_arena_hardened nice=19 sched=idle as_limit=1073741824 oom_score_adj=1000 applied=True',hard[0]['message'])
+def dt(s):return datetime.datetime.fromisoformat(s.replace('Z','+00:00'))
+verified=dt(decl['verification_completed_utc']);declared=dt(decl['declared_at_utc']);start=dt(decl['start_utc']);end=dt(decl['end_utc']);tail=dt(decl['tail_end_utc']);margin=(start-verified).total_seconds();assert margin==decl['verification_margin_s']==184 and verified<declared<start and margin>=30;assert end.timestamp()-start.timestamp()==900 and tail.timestamp()-end.timestamp()==120;assert start.timestamp()==math.ceil((verified.timestamp()+30)/900)*900
+merge=decl['source_commit'];candidate=release['candidate'];trees={}
+for path,claimed in release['app_test_build_git_objects_equal'].items():
+ left=subprocess.check_output(['git','rev-parse',merge+':'+path],cwd=ROOT,text=True).strip();right=subprocess.check_output(['git','rev-parse',candidate+':'+path],cwd=ROOT,text=True).strip();assert left==right==claimed;trees[path]=left
+sourcehash=hashlib.sha256(subprocess.check_output(['git','show',merge+':src/nightcrawler/kalshi_arena.py'],cwd=ROOT)).hexdigest();assert sourcehash==decl['arena_source_sha256']=='091ea297b1fed8973be3c78e74184e6ea71fa8f36e808e67449f433c88d19a0e'
+now=datetime.datetime.now(datetime.timezone.utc)
+result={'reviewed_at_utc':now.isoformat(),'review_completed_before_window':now<start,'decision':'Saved original restart readings and selected67fields/controls reconcile; prospective capture gate passed with184s completed-verification margin.','before':b['timestamp'],'after_ready':a['timestamp'],'selected_fields':fields,'extra_total_halted_check':{'before':before['total_halted'],'after':after['total_halted']},'readiness':{k:after[k] for k in ['mode','configured_mode','authenticated','trading_now','waiting','reason','cash_usd','open_risk_usd','open_orders','positions']},'controls':controls,'platform':'bot c64e8199 SUCCESS active; recorder8453 unchanged; bothonline','learning':'enabled observe_only, sourcefingerprint matches; no predictive/profit claim','source_merge':merge,'source_sha256':sourcehash,'app_test_build_trees':trees,'gate':{'verified':verified.isoformat(),'declared':declared.isoformat(),'start':start.isoformat(),'end':end.isoformat(),'tail_end':tail.isoformat(),'margin_s':margin,'first_eligible_quarterhour':True},'original_hashes':used,'limits':['Saved connector originals and local Git objects only; no network/production mutations.','67selectedfields plus totalhalted are not full native ledger/volume/controlstate export.','Cold initial17:23:57 row excluded as unready; fresh17:24:57 row used.','Root verificationcompletion timestamp supported by saved before/afterplatform receipt; reviewer did not independently issue platform query.','No future source coverage, profitability or input-cause claim.']}
+Path('/workspace/input-cause-restart-gate-review.json').write_text(json.dumps(result,indent=2)+'\n');print(json.dumps({k:result[k] for k in ['reviewed_at_utc','review_completed_before_window','decision','gate']}))

@@ -1,0 +1,30 @@
+{
+  "reviewed_at_utc": "2026-10-15T17:15:46.001923+00:00",
+  "decision": "Final v5 benchmark identity, raw-sample statistics, declared envelope and unchanged source/test verified; no remaining resource-review blocker.",
+  "source_sha256": "091ea297b1fed8973be3c78e74184e6ea71fa8f36e808e67449f433c88d19a0e",
+  "test_sha256": "239793d141ec481a66ec72acd3ab5f7fcff90bfdd00d02fcaeef5207caf355b0",
+  "benchmark_json_sha256": "c98ac99262d00dfddf526a55adf2cdd772e4105e1ee72af6fdfffef99328d735",
+  "benchmark_harness_sha256": "dd98e3cf5f64db43d9dce5593cbbab059c1c099f3dd0d49a51f989ee980b6737",
+  "samples_recalculated": 540,
+  "measurement": {
+    "maximum_observed_synthetic_json_bytes": 2497,
+    "retained_diagnostic_bytes": 63862,
+    "normal_32_incremental_median_cpu_ms": 0.222346,
+    "burst_32_incremental_median_cpu_ms": 1.2068340000000002
+  },
+  "limits": {
+    "maximum_single_diagnostic_json_bytes": 8192,
+    "maximum_retained_diagnostic_memory_bytes_at_32_pending": 262144,
+    "normal_non_due_32_pending_max_median_incremental_child_step_cpu_ms": 2,
+    "burst_32_due_max_median_incremental_child_step_cpu_ms": 20,
+    "benchmark_method": "actual KalshiArena.step, interleaved enabled/disabled variants, deterministic fake observations/clocks, isolated unchanged save/evaluate configuration, bounded in-memory diagnostic log sink. Record exact setups, trial counts, raw samples, CPU/wall distribution, source identity and limitations. No production or peak-load guarantee."
+  },
+  "queued_metadata": {
+    "per_queued_event_tuple_increment_bytes": 8,
+    "deep_frame_context_bytes": 144,
+    "sharing": "One immutable context tuple shared by records in a decoded frame. No second queue; worst one context per frame. Not included in diagnostic object size; total depends on original queued frames/events. Parent PENDING_MAX16384 is not a child-inbox RSS proof."
+  },
+  "method_review": "Actual child step, interleaved immutablebase/disabled/enabled,45trials for each4scenarios; deterministic clocks and in-memory logging, disk/status/evaluation notdue; no benchmark rerun. Independently recalculated every median/p95/max and incremental median CPU from540 retained samples.",
+  "limitations": "Local synthetic CPU/wall benchmark with128-character slugs, full finite frame clocks/sequence, first/last effective causes. Maximum JSON size is observed fixture size, not a formal schema upper bound. Diagnostic object size excludes added inbox tuples/frame contexts, reported separately. Does not measure production contention, stdout/backpressure, network, full parent overhead or peak server load; base comparison measures actual unchanged source alongside observerdisabled/enabled. No profit or production latency proof.",
+  "repository_checks": "Root-reported full v5 pytest5744passed/14existing skips302.58s exit0, mypy128/Ruff5 pass; not rerun by reviewer. Earlier independent59targets and actualbase behaviorcomparison retained in v5review."
+}

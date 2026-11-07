@@ -1,0 +1,12 @@
+{
+  "actual_restore_checks": "pass",
+  "old_scored": 5,
+  "old_unknown": 1,
+  "missing_raw_restore_is_noop": true,
+  "mismatch_masks_original_disable_reason": true,
+  "archive_probe_state_is_not_exact_original": true,
+  "design_transition_checks": "pass",
+  "source_flip": "A->B->A produces separate empty third epoch",
+  "retention": "capacity refusal leaves all input history exact",
+  "limits": "transition function is design-only; complete schema/lineage/byte-cap/arena integration not implemented"
+}

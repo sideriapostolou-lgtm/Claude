@@ -1,0 +1,9 @@
+# Worker scope and continuity
+
+Recorded 2026-10-15T09:59:19.883367-07:00 (source UTC 2026-10-15T16:59:19.883367+00:00). Integration owner: Codex. Requested model launches accepted: Sol implementation, Astra independent architecture/source review, Luna bounded evidence inventory; no billing/performance superiority claim. Follow [AGENTS](../../AGENTS.md), [coordination](../../docs/COORDINATION.md), [model workflow](../../docs/MODEL_WORKFLOW.md), newest [worklog](../../docs/WORKLOG.md) and [declared plan](PLAN.json).
+
+Clean worktree `/workspace/nightcrawler-input-causes`, branch `codex/kalshi-input-causes`, base `3ce8a0b92f53916768a3e1c09cac700281d3c1cd`. All older dirty worktrees are preserved. Sol alone writes `src/nightcrawler/kalshi_arena.py` and `tests/test_kalshi_learning_diagnostic.py`; root owns this research record, offline benchmark, integration and releases. Astra is read-only; Luna inventories existing public evidence without trading/research conclusions. Neither worker can commit, deploy or change accounts/financial controls.
+
+No trading-policy adjustment, budgets/resume, variable, key, parent-wire, save-cadence, pure learner fingerprint/history, venue-feed or sealed-TEST work is authorized in this task. Root owns the exact reviewed release under standing approval, retaining safe minutes and verifying actual source/account state. Diagnostic logging is observation only: cause flags and available clocks, explicit absent producer timing, no invented causal attribution or profitable strategy. Original prechecks, failures, superseded patches/benchmarks and final exact receipts are retained separately.
+
+The complete private handoff remains outside Git and these research archives. Browser/account access and external automation migration remain unverified. Today's3:45PM Pacific recorder checkpoint is retained; authentic TJR development bars/costs remain a separate blocker. No timers are changed or duplicated.

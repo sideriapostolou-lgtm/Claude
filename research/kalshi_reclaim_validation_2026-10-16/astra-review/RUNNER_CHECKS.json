@@ -1,0 +1,86 @@
+{
+  "timestamp_utc": "2026-10-16T02:05:28.584036+00:00",
+  "source_hashes_before": {
+    "root-data/fetch_data.py": "44be31050f66d11cba338f4c8e9215bf02a63cce6a2e96676aa4007367229a64",
+    "root-data/test_fetch_data.py": "453cb9f0e9a7a4e23fc6703155b155230225baa7ff44bfca66a4e869a5f542ce",
+    "sol-replay/run_partition.py": "99543027428a048227691579e82fda20ae34f673a171b01aa848acf280060fee",
+    "sol-replay/verify_data.py": "cf5460292896392955d9ba360c7b9d36d96936fc6617287b524b94a6d3a1a52e",
+    "sol-replay/evaluate.py": "8bb3100c77c4fa3889e2b3f7691b55988b23df13ac44f10d0d96bbdfc02c9ca1",
+    "sol-replay/test_runner.py": "bc4d865014d7487d9d5d5ea9a956880d802b3dae7f34099cc613a67e1af36de8",
+    "sol-replay/test_verify_data.py": "8e6f9fb04c5e4683bdbebd6bde77daf281e46ee428f8418abd796263e9cf6dcb",
+    "sol-replay/test_evaluate.py": "1d2a5a5324b9676f72fae4fd68fac1ba47c0e2e8042794f025608697d18e2100",
+    "RULE_CARDS.json": "709bc21b38223442ca8844aedef99eb43e3dbac9096d85b3b8c5ee9b7d1319bc",
+    "PROTOCOL.md": "91ff9c423b9b0ea4a594db9815ff0dc654a447baef23be63fa5b98338b64707b",
+    "PROTOCOL_AMENDMENT_1.md": "ee1d913f19e71310835df7ed344ece22bf33f53225a3eaeb74e9d9707d5db938",
+    "sol-replay/FROZEN_CONFIG.json": "7b9e7ac78dd429d54a0b5544aba99714a3b655dfe7afcb0c9936fb2b01f2361b",
+    "astra-review/test_independent_runner.py": "e25d57db54618b3c7977c3aa4405bd6c53a95722c0c6561d1432dbd72103b816",
+    "astra-review/test_independent_replay.py": "aa5acec9d942ccdf842465945dbe5d421a07452b24aef07f5ff8d5ff4a940840"
+  },
+  "source_hashes_after": {
+    "root-data/fetch_data.py": "44be31050f66d11cba338f4c8e9215bf02a63cce6a2e96676aa4007367229a64",
+    "root-data/test_fetch_data.py": "453cb9f0e9a7a4e23fc6703155b155230225baa7ff44bfca66a4e869a5f542ce",
+    "sol-replay/run_partition.py": "99543027428a048227691579e82fda20ae34f673a171b01aa848acf280060fee",
+    "sol-replay/verify_data.py": "cf5460292896392955d9ba360c7b9d36d96936fc6617287b524b94a6d3a1a52e",
+    "sol-replay/evaluate.py": "8bb3100c77c4fa3889e2b3f7691b55988b23df13ac44f10d0d96bbdfc02c9ca1",
+    "sol-replay/test_runner.py": "bc4d865014d7487d9d5d5ea9a956880d802b3dae7f34099cc613a67e1af36de8",
+    "sol-replay/test_verify_data.py": "8e6f9fb04c5e4683bdbebd6bde77daf281e46ee428f8418abd796263e9cf6dcb",
+    "sol-replay/test_evaluate.py": "1d2a5a5324b9676f72fae4fd68fac1ba47c0e2e8042794f025608697d18e2100",
+    "RULE_CARDS.json": "709bc21b38223442ca8844aedef99eb43e3dbac9096d85b3b8c5ee9b7d1319bc",
+    "PROTOCOL.md": "91ff9c423b9b0ea4a594db9815ff0dc654a447baef23be63fa5b98338b64707b",
+    "PROTOCOL_AMENDMENT_1.md": "ee1d913f19e71310835df7ed344ece22bf33f53225a3eaeb74e9d9707d5db938",
+    "sol-replay/FROZEN_CONFIG.json": "7b9e7ac78dd429d54a0b5544aba99714a3b655dfe7afcb0c9936fb2b01f2361b",
+    "astra-review/test_independent_runner.py": "e25d57db54618b3c7977c3aa4405bd6c53a95722c0c6561d1432dbd72103b816",
+    "astra-review/test_independent_replay.py": "aa5acec9d942ccdf842465945dbe5d421a07452b24aef07f5ff8d5ff4a940840"
+  },
+  "all_reviewed_bytes_unchanged": true,
+  "checks": [
+    {
+      "command": [
+        "<python>",
+        "-m",
+        "unittest",
+        "test_runner",
+        "test_verify_data",
+        "test_evaluate"
+      ],
+      "cwd": "<experiment>/sol-replay",
+      "exit_code": 0,
+      "stdout": "",
+      "stderr": "...................\n----------------------------------------------------------------------\nRan 19 tests in 0.050s\n\nOK\n"
+    },
+    {
+      "command": [
+        "<python>",
+        "-m",
+        "unittest",
+        "test_fetch_data"
+      ],
+      "cwd": "<experiment>/root-data",
+      "exit_code": 0,
+      "stdout": "",
+      "stderr": "...................\n----------------------------------------------------------------------\nRan 19 tests in 0.013s\n\nOK\n"
+    },
+    {
+      "command": [
+        "<python>",
+        "<experiment>/astra-review/test_independent_runner.py"
+      ],
+      "cwd": "<experiment>",
+      "exit_code": 0,
+      "stdout": "",
+      "stderr": "..\n----------------------------------------------------------------------\nRan 2 tests in 0.034s\n\nOK\n"
+    },
+    {
+      "command": [
+        "<python>",
+        "<experiment>/astra-review/test_independent_replay.py"
+      ],
+      "cwd": "<experiment>",
+      "exit_code": 0,
+      "stdout": "",
+      "stderr": "............\n----------------------------------------------------------------------\nRan 12 tests in 0.003s\n\nOK\n"
+    }
+  ],
+  "datasets_opened_by_reviewer": [],
+  "outcome_exposure": "Parent disclosed VAL summary3primaryfills+0.5681 after core freeze while review pending; no historical files or confirmation outcomes read; no strategy change requested from this disclosure."
+}

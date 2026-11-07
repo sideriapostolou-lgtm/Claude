@@ -1,0 +1,7 @@
+extract/extract_oct15_utc.py: passed; outputs byte-identical
+astra/audit_oct15_cohort.py: passed; outputs byte-identical
+astra/audit_actual_attribution.py: passed; outputs byte-identical
+audit_runtime.py: passed; outputs byte-identical
+astra/audit_pr71_retention.py: passed; outputs byte-identical
+audit_pending.py: passed; outputs byte-identical
+143 exact originals restored; no network, credentials or trading used.

@@ -1,0 +1,19 @@
+{
+  "checked_at_utc": "2026-10-15T17:31:02Z",
+  "isError": false,
+  "deployments": [
+    {
+      "id": "246a9f9c-e1ad-4361-b3a5-b96cde0d2780",
+      "status": "SKIPPED",
+      "commit": "962d887cc79e15fa6660f74a9d75bb148d4adbb5",
+      "updatedAt": "2026-10-15T17:28:04.067Z"
+    },
+    {
+      "id": "c64e8199-4ce2-4234-ac53-63905e22231d",
+      "status": "SUCCESS",
+      "commit": "ff05beb654095ce91fefe24adfb2a94eea22be39",
+      "updatedAt": "2026-10-15T17:22:53.432Z"
+    }
+  ],
+  "note": "Selected derivative; creator/contact fields omitted. Docs publication skipped; exact source deployment unchanged."
+}

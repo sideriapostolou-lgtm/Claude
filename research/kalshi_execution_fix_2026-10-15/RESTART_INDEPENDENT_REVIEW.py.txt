@@ -1,0 +1,95 @@
+import json,re,hashlib,datetime,subprocess
+from pathlib import Path
+from collections import Counter
+R=Path('/workspace/nightcrawler-live-correction/research/kalshi_execution_fix_2026-10-15')
+def read(n):return json.loads((R/n).read_text())
+checks=[];hashes={}
+def original(stem,event,logger='speeddesk'):
+ native=read(stem+'.native.json');sc=native['structuredContent'];req=read(stem+'.request.json')['request'];rows=sc['deploy']
+ assert not native.get('isError') and len(rows)<req['limit']
+ assert sc['deploymentId']==req['deploymentId'] and sc['environmentId']==req['environmentId']
+ pat=re.compile(r'^\d{4}-\d\d-\d\dT\S+ INFO nightcrawler\.'+logger+r': '+event+r' (\{.*\})$')
+ result=[];seen=set()
+ for row in rows:
+  stamp=row['timestamp'];assert datetime.datetime.fromisoformat(req['startDate'])<=datetime.datetime.fromisoformat(stamp)<=datetime.datetime.fromisoformat(req['endDate'])
+  match=pat.fullmatch(row['message'])
+  if match:
+   key=(stamp,row['message'])
+   if key in seen:continue
+   seen.add(key);result.append({'timestamp':stamp,'payload':json.loads(match[1])})
+ saved=R/(stem+'.originals.json')
+ if saved.exists():assert result==json.loads(saved.read_text())
+ checks.append({'stem':stem,'deployment':sc['deploymentId'],'raw':len(rows),'originals':len(result),'nested_or_other_excluded':len(rows)-len(result),'limit':req['limit'],'bounds':[req['startDate'],req['endDate']]})
+ for suffix in ('.native.json','.request.json'):hashes[stem+suffix]=hashlib.sha256((R/(stem+suffix)).read_bytes()).hexdigest()
+ return result
+before=original('BEFORE_STATUS','speeddesk_live_status')[-1]
+heart=original('HEARTBEATS','speeddesk_live_status');latest=heart[-1]['payload']
+selected=read('BEFORE_SELECTED.json');assert before['timestamp']==selected['original_timestamp']
+def field(obj,key):
+ for part in key.split('.'):obj=obj[part]
+ return obj
+comparisons=[]
+for key,value in selected['fields'].items():
+ assert value==field(before['payload'],key)
+ comparisons.append({'path':key,'before':value,'after':field(latest,key),'equal':value==field(latest,key)})
+assert len(comparisons)==67
+controls={name:original('START_'+name,name) for name in ['speeddesk_live_resume','speeddesk_live_day_reset','speeddesk_live_integrity_reset']}
+assert all(len(rows)==1 and rows[0]['payload']['state']=='ignored; this value was already used' for rows in controls.values())
+learner=original('START_kalshi_online_learning_status','kalshi_online_learning_status','kalshi_online_learning')
+# Original logger is nightcrawler.kalshi_online_learning; nested statuses do not qualify.
+assert len(learner)==1
+learning=learner[0]['payload']['learning']
+assert (learning['forecasts'],learning['scored'],learning['unknown'])==(0,0,19)
+assert learning['exclusions']['startup_inside']==2 and learning['exclusions']['pregap']==17 and learning['error'] is None
+assert learner[0]['payload']['mode']=='observe_only' and not learner[0]['payload']['live_application'] and not learner[0]['payload']['profitability_proven']
+assert learner[0]['payload']['protocol']=='kalshi-online-calibration-v1-h300-g5-b10-prior20'
+assert learner[0]['payload']['source_fingerprint']=='b6112b7ef8955b20af734157c1e7f5ec533bf98f70e034558f06670578c391f2'
+oldfills=original('OLD_RELEASE_FILL','speeddesk_live_fill');newfills=original('NEW_FILL','speeddesk_live_fill')
+oldorders=original('OLD_RELEASE_ORDER','speeddesk_live_order');neworders=original('NEW_ORDER','speeddesk_live_order')
+settles=original('OLD_RELEASE_SETTLE','speeddesk_live_settlement')
+assert len(settles)==1
+joined=[]
+for fills,orders in ((oldfills,oldorders),(newfills,neworders)):
+ for f in fills:
+  p=f['payload']; related=[r for r in orders if r['payload']['client_order_id']==p['client_order_id']]
+  durable=[r for r in related if r['payload']['state']=='durable intent'];acked=[r for r in related if r['payload']['state']=='accepted; waiting for real fills']
+  assert len(durable)==len(acked)==1
+  assert acked[0]['payload']['order_id']==p['order_id']
+  assert all(durable[0]['payload'][k]==p[k] for k in ('window','side','size','price'))
+  joined.append({'fill':f,'durable':durable[0],'accepted':acked[0]})
+def ordercounts(rows):
+ durable={r['payload']['client_order_id'] for r in rows if r['payload']['state']=='durable intent'}
+ accepted={r['payload']['client_order_id'] for r in rows if r['payload']['state']=='accepted; waiting for real fills'}
+ return {'durable':len(durable),'accepted':len(accepted),'missing_ack':sorted(durable-accepted),'ack_without_durable':sorted(accepted-durable)}
+counts={'old':ordercounts(oldorders),'new':ordercounts(neworders)}
+assert counts['old']['durable']==44 and counts['old']['accepted']==43 and counts['new']['durable']==counts['new']['accepted']==5
+assert len(oldfills)==len(newfills)==1
+fills=[r['payload'] for r in oldfills+newfills]
+assert fills[0]['window']==fills[1]['window'] and {f['side'] for f in fills}=={'up','down'} and all(f['size']==1 and f['fee_usd']==0 and not f['is_taker'] for f in fills)
+cost=sum(f['price']*f['size'] for f in fills);expectedcash=before['payload']['cash_usd']-cost+1
+assert abs(latest['cash_usd']-expectedcash)<1e-10 and abs(latest['open_cost_usd']-cost)<1e-10
+assert all(latest[k]==0 for k in ['open_risk_usd','reserved_usd','open_orders','positions'])
+s=settles[0]['payload'];assert all(s[k]==0 for k in ['up_shares','down_shares','cost_usd','fee_usd','payout_usd','pnl_usd'])
+assert latest['today']['pnl_usd']==before['payload']['today']['pnl_usd'] and latest['total']['pnl_usd']==before['payload']['total']['pnl_usd']
+for scope in ('today','total'):
+ assert latest[scope]['fills']-before['payload'][scope]['fills']==2
+ assert latest[scope]['maker_orders']-before['payload'][scope]['maker_orders']==49
+ assert latest[scope]['maker_fills']-before['payload'][scope]['maker_fills']==2
+ assert latest[scope]['settled_windows']-before['payload'][scope]['settled_windows']==1
+assert latest['trading_now'] and latest['waiting']=='' and latest['authenticated'] and latest['mode']==latest['configured_mode']=='live'
+assert all(not r['payload']['trading_now'] and r['payload']['waiting']=='Kalshi account data stale' for r in heart[:2])
+assert not latest['total_halted'] and not latest['day_stop_latched'] and not latest['integrity_error'] and not latest['cleanup_pending']
+assert latest['caps']==before['payload']['caps'] and latest['ladder']['rung']==0 and not latest['ladder']['promotion']['ready']
+trace=read('TRACEBACK.native.json');assert trace['structuredContent']['deploy']==[] and not trace['isError']
+health=read('HEALTH_AFTER_SUCCESS.native.json')['structuredContent'];assert all(s['state']=='online' and not s['hasIssues'] for s in health['services'])
+source=read('DEPLOYED_SOURCE.native.json')['structuredContent'];actualblob=subprocess.check_output(['git','hash-object','src/nightcrawler/speeddesk_live.py'],cwd=R.parents[1],text=True).strip();assert actualblob==source['sha']
+poly=read('POLYDESK_STARTED.native.json');polyrows=poly['structuredContent']['deploy']
+assert len(polyrows)==1 and re.fullmatch(r'\d{4}-\d\d-\d\dT\S+ INFO nightcrawler\.polydesk: polydesk_started .+ \(LIVE: 10 contract\(s\) per order\)',polyrows[0]['message'])
+assert poly['structuredContent']['deploymentId']=='c1fda55b-72fd-47b3-9801-dffec83b9e8b'
+assert trace['structuredContent']['deploymentId']==read('TRACEBACK.request.json')['request']['deploymentId']
+source_text=(R.parents[1]/'src/nightcrawler/speeddesk_live.py').read_text();assert source['content'] in source_text
+cold=heart[0]['payload'];coldcompare=[{'path':k,'equal':v==field(cold,k)} for k,v in selected['fields'].items()]
+assert sum(c['equal'] for c in coldcompare)==51
+result={'decision':'ACCEPT bounded release/restart verification with stated evidence limits','queries':checks,'cold_status_comparison':{'equal':51,'different':16},'polydesk_original':polyrows[0],'comparison':comparisons,'equal':sum(c['equal'] for c in comparisons),'changed':[c for c in comparisons if not c['equal']],'heartbeats':[{'timestamp':r['timestamp'],**{k:r['payload'][k] for k in ('at','mode','configured_mode','authenticated','trading_now','waiting','cash_usd','cash_at','as_of')},'account_age_s':None,'cash_observation_age_at_record_s':r['payload']['at']-r['payload']['cash_at'],'panel_to_record_s':r['payload']['at']-r['payload']['as_of']} for r in heart],'controls':controls,'learner':learner,'orders':counts,'fill_joins':joined,'settlement':settles,'cash_arithmetic':{'before':before['payload']['cash_usd'],'maker_fills_cost':cost,'paired_credit':1,'expected_after':expectedcash,'observed_after':latest['cash_usd'],'settled_pnl_added':0,'scope':'Arithmetic consistency of selected records, not native ledger proof. Paired cost.80 remains unsettled; do not book hypothetical+.20 as realized profit.'},'source':{'git_blob':actualblob,'github_url':source['display_url'],'sha256':hashlib.sha256((R.parents[1]/'src/nightcrawler/speeddesk_live.py').read_bytes()).hexdigest()},'deployment':read('DEPLOYMENT_SUCCESS.selected.json'),'health':{'both_online':True,'issues':0,'recorder_unchanged':health['services'][1]['activeDeployments'][0]['id']},'traceback':{'raw':0,'request':read('TRACEBACK.request.json')},'limits':['First two stale heartbeats are retained, not treated as ready; latest readiness is point evidence only.','Exact account timestamp/age is unpublished. as_of measures panel clock, not account age; correction remains in force.','Old missing acknowledgement retained; durable intents are not all confirmed venue orders.','No full native ledger/cash reconciliation, uninterrupted health, profit/edge, historical loss recovery or EXEC closure claim.','Learner startup original is0forecasts/0scored/19unknown with expected protocol/source; no independent immediate prerelease learner original in this bounded input set, so unchanged numerical-history assertion relies on root baseline evidence.','Live source and readiness established, but no production stale-lock rejection or saved dollars measured; postrelease fills are maker fills, not lock-path validation.','No new production query or source/public repository write performed by reviewer.'],'input_sha256':hashes}
+Path('/workspace/kalshi-lock-restart-review.json').write_text(json.dumps(result,indent=2)+'\n')
+print(json.dumps({'decision':result['decision'],'equal':result['equal'],'changed':result['changed'],'orders':counts,'cash':result['cash_arithmetic']},indent=2))

@@ -1,0 +1,194 @@
+"""Independent read-only review. No network, keys, live orders, persistence or repository edits.
+
+Recommendation: make pending REST completions subordinate to CURRENT authoritative
+WS state for the SAME admitted window. Book/tape failure must not invalidate a
+newer, still-fresh WS recovery. Keep genuine failure invalidation, tape pagination
+atomicity and request-start clocks. See printed deterministic cases and source refs.
+
+Harness first attempt preserved in tool output: after three reproduced races, fake cancel lacked keyword reason; corrected fixture only.
+Source inspected: app 8c8681a; checkout HEAD 5d19e7a (docs). Source hashes printed.
+Not proof that this race caused historic production gaps/losses or that fixing it
+improves P&L. Gap occurrence time across child/window boundaries is separate work.
+
+REVIEW FINDINGS (2026-10-15):
+- Narrow correction: suppress only obsolete REST *failure* invalidation when the
+  admitted ticker currently has authoritative fresh WS data for that channel.
+  Book errors: speeddesk_kalshi.py:285-287, including malformed responses raised
+  at279-280. Tape errors:328-331. Successful book replies already defer to current
+  fresh_books at281-284. Keep request clocks, poll budgets and pagination atomicity.
+- Prefer fresh_maker_windows() accessor on KalshiMarketWS, reused by _report,
+  deriving current fresh_books plus 0 <= now-trade_at <= STALE_S; no cached list.
+  The bounds reject NaN/infinity and reversed time. fresh_books:317-321 checks
+  connected, receipt AND source time. Tape suppression additionally requires the
+  actual feed transport to be websocket. No await between authority check/mutation.
+- Cached _ws_status:195 and publication:188-192 are snapshots, not current proof.
+  Repros show stale cached maker authority with expired books AND separately fresh
+  books but expired prints. A cached-list-only guard would mask real data loss.
+- No generation/session counter is required for this narrow exception correction:
+  current valid channel authority is sufficient even if another session recovered.
+  Reject removed ticker completion before status/cursor mutation. Do not mistake
+  metadata window object identity for a generation: refresh replaces objects even
+  during routine rediscovery. Re-admission acceptance of an older valid REST reply
+  exists today, demonstrated here, but no harmful consequence has been proved.
+  Defer success-path admission epoch work. _timing_session is diagnostic, not an
+  existing correctness fence (speeddesk_kalshi_ws.py:263,386).
+- Actual downstream consequence: SpeedRunner.on_status:328-340 clears recovered
+  book state, cancels simulated makers and invalidates the live snapshot even with
+  aggregate trade_stream=true. Live _book_reason:1125-1136 then blocks sends/locks
+  with missing books; _cancel_unsafe can cancel resting bids on stale-feed reason.
+  It does NOT itself confirm real-order cancellation or release live reservations.
+  Live twin/markout invalidation:1073-1082. Arena gap:1565-1584 preserves exclusion.
+  Avoidable interruptions and exposure-management delays are plausible; magnitude,
+  historic losses caused, strategy quality and profit impact are not established.
+- Untimed parent gap is independently real: kalshi_arena.py:614-615 serializes
+  only flags/slugs, child1559-1560 applies its consume-time now. Requires producer
+  occurrence/admission context and separate wire/chronology tests; do not bundle.
+
+MINIMUM PATCH ACCEPTANCE:
+1. Pending book timeout and malformed reply after fresh same-ticker WS recovery:
+   no new gap, no cleared recovered books, no cache invalidation; rate slot retained.
+2. Pending paginated tape failure after fresh WS book+print: no delivered partial
+   tape/new gap/cursor mutation; pagination completeness remains mandatory.
+3. No WS, disconnected, sequence invalidation, expired source/receipt, expired or
+   absent/future/nonfinite print: preserve fail-closed behavior. A book-only recovery
+   is insufficient for tape suppression. Assert stale cached lists do not authorize.
+4. Removed ticker: stale completion cannot change current venue health or revive
+   its cursor. Same-ticker normal rediscovery should not spuriously invalidate data.
+5. Failure before recovery emits its genuine original gap; later recovery does not
+   erase it or backfill V1/V2 history. Another ticker's recovery cannot suppress it.
+6. Current valid REST fallback success, trade completion, snapshot-without-engine-
+   timestamp, inclusive 3s boundary, transport switch and stop behavior unchanged.
+7. Verify downstream actual on_status leaves recovered books present after obsolete
+   failure; safety guards still reject a later genuine gap. Root runs full required
+   tests/mypy/changed Ruff, records exact patch identity and independent patch review.
+
+Fixture limitations: synthetic real WS state (no network frames/credentials), actual
+producer methods and actual SpeedRunner.on_status with inert cancellation sink.
+Eleven deterministic scenarios reproduced; this is not a full-suite rerun. No TEST
+partition, production connector, order or financial controls were accessed.
+"""
+import asyncio
+import hashlib
+import json
+import sys
+import threading
+from dataclasses import dataclass, field
+from pathlib import Path
+from types import SimpleNamespace
+
+ROOT = Path('/workspace/nightcrawler-probability-learning')
+sys.path.insert(0, str(ROOT / 'src'))
+from nightcrawler.speeddesk_kalshi import KalshiFeeds
+from nightcrawler.speeddesk_kalshi_ws import KalshiMarketWS, MarketState
+from nightcrawler.speeddesk_model import Book, Level, Window
+from nightcrawler.speeddesk import SpeedRunner
+
+TICKER = 'KXBTC15M-26OCT151545-45'
+START = 1800000000.0
+
+@dataclass
+class Snapshot:
+    books: dict = field(default_factory=dict)
+    maker_windows: frozenset = frozenset()
+
+async def scenario(kind, action, outcome='error'):
+    clock = [START + 1]
+    started = asyncio.Event()
+    release = threading.Event()
+    loop = asyncio.get_running_loop()
+    statuses, received, cancellations = [], [], []
+    settings = SimpleNamespace(speeddesk_kalshi_ws_enabled=False)
+    model = SimpleNamespace(books={}, cancel=lambda *args, **kwargs: cancellations.append((args,kwargs)) or [])
+    runner = SimpleNamespace(
+        evidence=SimpleNamespace(last_fresh={TICKER}), feed_status={'coinbase':'connected','trade_stream':True},
+        _live_market_snapshot=Snapshot(), desk=model, clock=SimpleNamespace(now=lambda:clock[0]),
+        decisions=lambda _:None, _refresh_live_snapshot=lambda:None, _live_call=lambda *_:None, arena=None)
+    def report(value):
+        statuses.append(dict(value))
+        SpeedRunner.on_status(runner, {'coinbase':'connected', **value})
+    def book(value):
+        received.append(value)
+        model.books[(value.window,value.side)] = value
+    def get(_path):
+        loop.call_soon_threadsafe(started.set)
+        assert release.wait(5), 'fake was not released'
+        if outcome == 'error':
+            raise TimeoutError('synthetic failure')
+        if outcome == 'invalid':
+            return {}
+        return {'orderbook_fp':{'yes_dollars':[['0.40','2.00']], 'no_dollars':[['0.42','2.00']]}}
+    feed = KalshiFeeds(settings, on_tick=lambda *_:None, on_book=book, on_trade=lambda _:None,
+        on_windows=lambda _:None,on_status=report,clock=lambda:clock[0],rest_get=get,websocket=False)
+    window = Window(TICKER,START,START+900,80000,venue='kalshi',venue_start_price=80000)
+    feed.windows[TICKER] = window
+    ws = KalshiMarketWS(settings,tickers=lambda:frozenset(feed.windows),on_book=feed._ws_book,
+        on_trade=lambda _:None,on_status=feed._ws_report,clock=lambda:clock[0])
+    feed._ws = None if action == 'no_ws' else ws
+    task = asyncio.create_task(feed.poll_book() if kind == 'book' else feed.poll_trades())
+    await asyncio.wait_for(started.wait(),2)
+    if action in ('recover','stale_cache','stale_trade','book_only'):
+        clock[0] += .1
+        ws.state = MarketState(frozenset({TICKER}))
+        ws.connected=True
+        ws.state.book_at[TICKER]=clock[0]
+        ws.state.exchange_at[TICKER]=clock[0]
+        if action != 'book_only':
+            ws.state.trade_at[TICKER]=clock[0]
+        ws._report()
+        for side in ('up','down'):
+            feed._ws_book(Book(TICKER,side,(Level(.4,2),),(Level(.6,2),),clock[0],'recovered',clock[0]))
+        if action in ('stale_cache','stale_trade'):
+            clock[0] += 3.01 # Do not run WS timeout reporting before pending REST resumes.
+            if action == 'stale_trade':
+                ws.state.book_at[TICKER]=clock[0]
+                ws.state.exchange_at[TICKER]=clock[0]
+    if action == 'removed':
+        feed.windows={}
+    if action == 'readmitted':
+        feed.windows={}
+        feed.windows[TICKER]=Window(TICKER,START,START+900,80000,venue='kalshi',venue_start_price=80000)
+    before = len(model.books)
+    cached = list(feed._ws_status.get('ws_maker_windows',[]))
+    fresh = sorted(ws.fresh_books())
+    release.set()
+    assert await asyncio.wait_for(task,2)
+    result = {'kind':kind,'action':action,'outcome':outcome,'books_before':before,'books_after':len(model.books),
+        'fresh_ws_at_completion':fresh,'cached_ws_makers_at_completion':cached,
+        'last_status':statuses[-1] if statuses else None,'received_sources':[v.source for v in received],
+        'cancellations':len(cancellations)}
+    if action=='recover' and outcome in ('error','invalid'):
+        assert fresh==[TICKER] and before==2 and len(model.books)==0
+        assert statuses[-1]['gap_windows']==[TICKER] and statuses[-1]['trade_stream'] is True
+    if action=='stale_cache':
+        assert not fresh and cached==[TICKER] and statuses[-1]['gap_windows']==[TICKER]
+    if action=='stale_trade':
+        assert fresh==[TICKER] and cached==[TICKER] and clock[0]-ws.state.trade_at[TICKER]>3
+    if action=='failure_first':
+        assert statuses[-1]['gap_windows']==[TICKER]
+        original_gap=dict(statuses[-1])
+        ws.connected=True
+        ws.state=MarketState(frozenset({TICKER}))
+        ws.state.book_at[TICKER]=clock[0]
+        ws.state.exchange_at[TICKER]=clock[0]
+        ws.state.trade_at[TICKER]=clock[0]
+        ws._report()
+        assert original_gap['gap_windows']==[TICKER] and not statuses[-1]['gap_windows']
+        result['later_recovery_preserves_original_gap']=True
+    if action=='readmitted':
+        assert len(received)==2 and all(v.source=='rest' for v in received)
+    return result
+
+async def main():
+    cases=[]
+    for kind,action,outcome in [
+        ('book','recover','error'),('book','recover','invalid'),('tape','recover','error'),
+        ('book','none','error'),('book','stale_cache','error'),('tape','book_only','error'),
+        ('book','removed','error'),('book','readmitted','valid'),
+        ('book','no_ws','error'),('tape','stale_trade','error'),('book','failure_first','error')]:
+        cases.append(await scenario(kind,action,outcome))
+    paths=['src/nightcrawler/speeddesk_kalshi.py','src/nightcrawler/speeddesk_kalshi_ws.py',
+           'src/nightcrawler/speeddesk.py','src/nightcrawler/speeddesk_live.py','src/nightcrawler/kalshi_arena.py']
+    print(json.dumps({'source_sha256':{p:hashlib.sha256((ROOT/p).read_bytes()).hexdigest() for p in paths},
+        'cases':cases,'historical_loss_causation':'unproved','app_tests_rerun':False},indent=2))
+
+asyncio.run(main())

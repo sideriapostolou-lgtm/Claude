@@ -1,0 +1,47 @@
+"""Independent final candidate behavior replay; actual producer/consumer methods, inert sinks."""
+from pathlib import Path
+import sys
+ROOT=Path('/workspace/nightcrawler-feed-recovery')
+sys.path.insert(0,str(ROOT/'src'))
+original=Path('/workspace/private-handoffs/claude-2026-10-15/kalshi-recovery-review/recovery_review.py').read_text()
+original=original.replace("ROOT = Path('/workspace/nightcrawler-probability-learning')", "ROOT = Path('/workspace/nightcrawler-feed-recovery')")
+original=original.replace("assert fresh==[TICKER] and before==2 and len(model.books)==0", "assert fresh==[TICKER] and before==2 and len(model.books)==2")
+original=original.replace("assert statuses[-1]['gap_windows']==[TICKER] and statuses[-1]['trade_stream'] is True", "assert statuses[-1]['gap_windows']==[] and statuses[-1]['trade_stream'] is True\n        assert not cancellations")
+exec(compile(original,'adapted_original_independent_repro','exec'),{})
+from types import SimpleNamespace
+from nightcrawler.speeddesk_kalshi_ws import KalshiMarketWS,MarketState
+from nightcrawler.weatherwatch_markets import WeatherWS
+T='KXBTC15M-26OCT151545-45'
+for cls in (KalshiMarketWS,WeatherWS):
+    out=[]
+    extra={'on_snapshot':lambda _:None} if cls is WeatherWS else {}
+    ws=cls(SimpleNamespace(),tickers=lambda:frozenset({T}),on_book=lambda _:None,on_trade=lambda _:None,on_status=out.append,clock=lambda:103.,**extra)
+    ws.connected=True
+    ws.state=MarketState(frozenset({T}))
+    ws.state.book_at[T]=ws.state.exchange_at[T]=100.
+    ws.state.trade_at[T]=103.
+    calls=[]
+    def moving_clock():
+        calls.append(1)
+        return 103. if len(calls)==1 else 103.01
+    ws._clock=moving_clock
+    assert ws.fresh_maker_windows()=={T}
+    assert len(calls)==1, 'one coherent current clock per accessor'
+    assert not ws.fresh_maker_windows(), 'next sample expires old book even with fresh print'
+    assert len(calls)==2
+    # At first captured now, a future book cannot create makers outside ws_books.
+    ws.state.book_at[T]=ws.state.exchange_at[T]=ws.state.trade_at[T]=103.01
+    calls.clear()
+    ws._report()
+    assert len(calls)==1
+    assert not out[-1]['ws_books'] and not out[-1]['ws_maker_windows']
+    ws._report()
+    assert len(calls)==2
+    assert out[-1]['ws_books']==[T] and out[-1]['ws_maker_windows']==[T]
+    # One coherent report after expiry emits a genuine invalidation.
+    ws._clock=lambda:106.02
+    ws._report()
+    assert not out[-1]['ws_books'] and not out[-1]['ws_maker_windows']
+    assert out[-1]['gap_windows']==[T]
+    print(cls.__name__+' independent clock/report checks passed')
+print('11 adapted source scenarios + 2 inherited-class clock/report scenarios passed')

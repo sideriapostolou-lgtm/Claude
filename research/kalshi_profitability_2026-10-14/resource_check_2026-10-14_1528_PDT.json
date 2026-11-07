@@ -1,0 +1,197 @@
+{
+  "observed_at_utc": "2026-10-14T22:28:14Z",
+  "observed_at_pacific": "2026-10-14 3:28 PM PDT",
+  "scope": "Production bot and recorder; one-hour resource summaries spanning multiple bot deployments.",
+  "requested_sample_s": 5,
+  "initial_request_results": [
+    {
+      "error": "Parameters failed connector schema validation: sampleRateSeconds [minimum]: Value 5.0 < minimum 30",
+      "error_code": "INVALID_ARGUMENT",
+      "error_data": {
+        "reason": "INVALID_PARAMETERS",
+        "clamp_errors": [
+          {
+            "path": [
+              "sampleRateSeconds"
+            ],
+            "message": "Value 5.0 < minimum 30",
+            "keyword": "minimum",
+            "value": 5
+          }
+        ],
+        "clamp_rewrites": []
+      }
+    },
+    {
+      "error": "Parameters failed connector schema validation: sampleRateSeconds [minimum]: Value 5.0 < minimum 30",
+      "error_code": "INVALID_ARGUMENT",
+      "error_data": {
+        "reason": "INVALID_PARAMETERS",
+        "clamp_errors": [
+          {
+            "path": [
+              "sampleRateSeconds"
+            ],
+            "message": "Value 5.0 < minimum 30",
+            "keyword": "minimum",
+            "value": 5
+          }
+        ],
+        "clamp_rewrites": []
+      }
+    }
+  ],
+  "effective_sample_s": 30,
+  "results": [
+    {
+      "service": {
+        "id": "f84d3b52-002f-44cb-931e-bc9e3e097e97",
+        "name": "bot"
+      },
+      "environment": {
+        "id": "17f7b0e0-104c-4903-9484-0106748b3cdb",
+        "name": "production"
+      },
+      "metrics": [
+        {
+          "measurement": "CPU_USAGE",
+          "current": 1.3802109666666666,
+          "average": 1.0107342732782367,
+          "min": 0,
+          "max": 1.6634880666666667,
+          "sampleCount": 121
+        },
+        {
+          "measurement": "CPU_USAGE_2",
+          "current": null,
+          "average": null,
+          "min": null,
+          "max": null,
+          "sampleCount": 0
+        },
+        {
+          "measurement": "CPU_LIMIT",
+          "current": 8,
+          "average": 7.933884297520661,
+          "min": 0,
+          "max": 8,
+          "sampleCount": 121
+        },
+        {
+          "measurement": "MEMORY_USAGE_GB",
+          "current": 1.487048704,
+          "average": 1.554436874578512,
+          "min": 0,
+          "max": 2.198319104,
+          "sampleCount": 121
+        },
+        {
+          "measurement": "MEMORY_LIMIT_GB",
+          "current": 8,
+          "average": 7.933884297520661,
+          "min": 0,
+          "max": 8,
+          "sampleCount": 121
+        }
+      ]
+    },
+    {
+      "service": {
+        "id": "736b1c8a-8311-4ee0-9043-d05f508cd821",
+        "name": "kalshi-recorder"
+      },
+      "environment": {
+        "id": "17f7b0e0-104c-4903-9484-0106748b3cdb",
+        "name": "production"
+      },
+      "metrics": [
+        {
+          "measurement": "CPU_USAGE",
+          "current": 0,
+          "average": 0.014193839393939393,
+          "min": 0,
+          "max": 0.0364234,
+          "sampleCount": 121
+        },
+        {
+          "measurement": "CPU_USAGE_2",
+          "current": null,
+          "average": null,
+          "min": null,
+          "max": null,
+          "sampleCount": 0
+        },
+        {
+          "measurement": "CPU_LIMIT",
+          "current": 8,
+          "average": 7.933884297520661,
+          "min": 0,
+          "max": 8,
+          "sampleCount": 121
+        },
+        {
+          "measurement": "MEMORY_USAGE_GB",
+          "current": 0.487866368,
+          "average": 0.501623884165289,
+          "min": 0,
+          "max": 0.525193216,
+          "sampleCount": 121
+        },
+        {
+          "measurement": "MEMORY_LIMIT_GB",
+          "current": 0.99999744,
+          "average": 0.9917329983471085,
+          "min": 0,
+          "max": 0.99999744,
+          "sampleCount": 121
+        }
+      ]
+    }
+  ],
+  "units_evidence": {
+    "search_results": {
+      "results": [
+        {
+          "url": "https://docs.railway.com/guides/right-size-cpu-memory#read-the-metrics-tab",
+          "title": "Read the Metrics tab",
+          "breadcrumb": "Railway Documentation > Right-Size CPU and Memory from Real Metrics > Read the Metrics tab",
+          "content": "CPU : processor usage in vCPU"
+        },
+        {
+          "url": "https://docs.railway.com/ai/agent-skills#workflow-coverage",
+          "title": "Workflow coverage",
+          "breadcrumb": "AI > Agent Skills > The use-railway skill > Workflow coverage",
+          "content": "Status and observability  - Check project status, query resource usage metrics (CPU, memory, network, disk), and monitor services"
+        },
+        {
+          "url": "https://docs.railway.com/cli/metrics#metric-groups",
+          "title": "Metric groups",
+          "breadcrumb": "CLI > railway metrics > Metric groups",
+          "content": "--cpu : CPU usage and limits"
+        },
+        {
+          "url": "https://docs.railway.com/observability#available-data-sources",
+          "title": "Available data sources",
+          "breadcrumb": "Railway Documentation > Observability Dashboard > Creating widgets > Available data sources",
+          "content": "CPU Usage: Track the CPU usage for various services over time"
+        },
+        {
+          "url": "https://docs.railway.com/guides/scaling-your-application#how-to-identify-your-bottleneck-using-railway-metrics",
+          "title": "How to identify your bottleneck using Railway metrics",
+          "breadcrumb": "Railway Documentation > Scaling Your Application > Rightsizing your Railway > How to identify your bottleneck using Railway metrics",
+          "content": "To identify bottlenecks, you need an accurate picture of how your services perform under low, average, and peak demand. The metrics tab of your service provides a detailed historical view into CPU usage, memory usage, network throughput, and resulting response times. The metric that shows up consistently high or spikes when things slow down is your bottleneck"
+        }
+      ]
+    },
+    "full_page_found": false,
+    "full_page_access_failure": "No page exists at \"https://docs.railway.com/guides/right-size-cpu-memory#read-the-metrics-tab\". The closest matches are below — call fetch-docs again with one of these URLs."
+  },
+  "limitations": [
+    "5-second request was rejected: minimum sampleRateSeconds30. Retried successfully at30 seconds.",
+    "CPU_USAGE_2 has zero samples; do not fabricate a metric.",
+    "Search metadata labels CPU as vCPU; full-page retrieval returned pageFound=false, so no complete documentation read is claimed.",
+    "One-hour summaries/30-second samples do not identify per-thread GIL contention, cgroup throttling or sub-second/multi-second callback causes.",
+    "Samples include zero limits/usages across deployment changes; do not interpret those as verified outages.",
+    "No infrastructure sizing, variables, deployments, financial limits or orders were changed by these read-only checks."
+  ]
+}

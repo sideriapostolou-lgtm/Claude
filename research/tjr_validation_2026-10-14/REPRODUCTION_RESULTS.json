@@ -1,0 +1,792 @@
+{
+  "generatedAtUTC": "2026-10-14T18:53:44.017Z",
+  "runtime": "v24.19.0",
+  "scope": "SYNTHETIC ONLY, no historical results",
+  "prototype": {
+    "scope": "SYNTHETIC ONLY: no historical market data",
+    "passed": 65,
+    "total": 65,
+    "failures": [],
+    "tests": [
+      {
+        "name": "complete no-sweep session has zero trades",
+        "passed": true,
+        "error": null
+      },
+      {
+        "name": "long structural sequence emits one trade",
+        "passed": true,
+        "error": null
+      },
+      {
+        "name": "one full minute delay before entry",
+        "passed": true,
+        "error": null
+      },
+      {
+        "name": "stop beyond sweep extreme and opposing target",
+        "passed": true,
+        "error": null
+      },
+      {
+        "name": "long target net includes entry friction and fees",
+        "passed": true,
+        "error": null
+      },
+      {
+        "name": "long stop net includes both aggressive fills",
+        "passed": true,
+        "error": null
+      },
+      {
+        "name": "long gap stop uses worse opening price",
+        "passed": true,
+        "error": null
+      },
+      {
+        "name": "intrabar stop target conflict flagged adverse",
+        "passed": true,
+        "error": null
+      },
+      {
+        "name": "opening target precedes later same-bar stop",
+        "passed": true,
+        "error": null
+      },
+      {
+        "name": "short symmetry target",
+        "passed": true,
+        "error": null
+      },
+      {
+        "name": "short symmetry stop",
+        "passed": true,
+        "error": null
+      },
+      {
+        "name": "short symmetry gap stop",
+        "passed": true,
+        "error": null
+      },
+      {
+        "name": "short opening target precedes later stop",
+        "passed": true,
+        "error": null
+      },
+      {
+        "name": "fixed time exit at 11:30 is distinct from entry cutoff",
+        "passed": true,
+        "error": null
+      },
+      {
+        "name": "exact target touch does not fill",
+        "passed": true,
+        "error": null
+      },
+      {
+        "name": "delay-bar target touch cancels pending entry",
+        "passed": true,
+        "error": null
+      },
+      {
+        "name": "delay-bar stop touch cancels pending entry",
+        "passed": true,
+        "error": null
+      },
+      {
+        "name": "entry gap beyond target cancels",
+        "passed": true,
+        "error": null
+      },
+      {
+        "name": "entry opening at stop cancels despite friction",
+        "passed": true,
+        "error": null
+      },
+      {
+        "name": "early sweep without prior trend consumes candidate",
+        "passed": true,
+        "error": null
+      },
+      {
+        "name": "dual-boundary first sweep rejected",
+        "passed": true,
+        "error": null
+      },
+      {
+        "name": "doji does not create or bridge a pair",
+        "passed": true,
+        "error": null
+      },
+      {
+        "name": "BOS equality does not confirm",
+        "passed": true,
+        "error": null
+      },
+      {
+        "name": "wick-only break does not confirm",
+        "passed": true,
+        "error": null
+      },
+      {
+        "name": "missing minute preserves open unresolved trade",
+        "passed": true,
+        "error": null
+      },
+      {
+        "name": "incomplete feed cannot report complete profit",
+        "passed": true,
+        "error": null
+      },
+      {
+        "name": "duplicate timestamp rejected",
+        "passed": true,
+        "error": null
+      },
+      {
+        "name": "wrong contract rejected",
+        "passed": true,
+        "error": null
+      },
+      {
+        "name": "noninteger normalized tick prices rejected",
+        "passed": true,
+        "error": null
+      },
+      {
+        "name": "impossible OHLC rejected",
+        "passed": true,
+        "error": null
+      },
+      {
+        "name": "missing costs block PnL",
+        "passed": true,
+        "error": null
+      },
+      {
+        "name": "negative fees rejected",
+        "passed": true,
+        "error": null
+      },
+      {
+        "name": "unknown preceding session blocks",
+        "passed": true,
+        "error": null
+      },
+      {
+        "name": "shortened prior session skipped without substitution",
+        "passed": true,
+        "error": null
+      },
+      {
+        "name": "shortened current session skipped",
+        "passed": true,
+        "error": null
+      },
+      {
+        "name": "bad New York open clock blocks",
+        "passed": true,
+        "error": null
+      },
+      {
+        "name": "fall DST maps 14:30 UTC to 09:30 New York",
+        "passed": true,
+        "error": null
+      },
+      {
+        "name": "October DST maps 13:30 UTC to 09:30 New York",
+        "passed": true,
+        "error": null
+      },
+      {
+        "name": "split boundaries frozen",
+        "passed": true,
+        "error": null
+      },
+      {
+        "name": "future appended bars preserve earlier event trace",
+        "passed": true,
+        "error": null
+      },
+      {
+        "name": "input not mutated and replay deterministic",
+        "passed": true,
+        "error": null
+      },
+      {
+        "name": "all scenarios charge higher fees monotonically",
+        "passed": true,
+        "error": null
+      },
+      {
+        "name": "summary keeps unresolved day denominator",
+        "passed": true,
+        "error": null
+      },
+      {
+        "name": "historical run rejects missing manifest",
+        "passed": true,
+        "error": null
+      },
+      {
+        "name": "empty historical dataset remains untested",
+        "passed": true,
+        "error": null
+      },
+      {
+        "name": "synthetic input cannot enter historical report",
+        "passed": true,
+        "error": null
+      },
+      {
+        "name": "unknown holdout exposure blocks",
+        "passed": true,
+        "error": null
+      },
+      {
+        "name": "adjusted data manifest blocks",
+        "passed": true,
+        "error": null
+      },
+      {
+        "name": "cost grid exposes all nine assumptions",
+        "passed": true,
+        "error": null
+      },
+      {
+        "name": "target at time-exit open retains resting limit price",
+        "passed": true,
+        "error": null
+      },
+      {
+        "name": "short target at cutoff retains limit price",
+        "passed": true,
+        "error": null
+      },
+      {
+        "name": "stop gap at cutoff keeps opening adverse fill",
+        "passed": true,
+        "error": null
+      },
+      {
+        "name": "time exit cannot use later intrabar target",
+        "passed": true,
+        "error": null
+      },
+      {
+        "name": "30-second shifted session timestamps rejected",
+        "passed": true,
+        "error": null
+      },
+      {
+        "name": "misaligned preceding session rejected",
+        "passed": true,
+        "error": null
+      },
+      {
+        "name": "opposite-boundary exact touch on sweep cancels",
+        "passed": true,
+        "error": null
+      },
+      {
+        "name": "short sweep opposite exact touch cancels",
+        "passed": true,
+        "error": null
+      },
+      {
+        "name": "15th subsequent candle remains eligible",
+        "passed": true,
+        "error": null
+      },
+      {
+        "name": "16th subsequent candle expires",
+        "passed": true,
+        "error": null
+      },
+      {
+        "name": "entry at 10:58 remains allowed",
+        "passed": true,
+        "error": null
+      },
+      {
+        "name": "entry at 11:00 is blocked",
+        "passed": true,
+        "error": null
+      },
+      {
+        "name": "opening exit records simulated timestamp",
+        "passed": true,
+        "error": null
+      },
+      {
+        "name": "intrabar exit preserves uncertain time interval",
+        "passed": true,
+        "error": null
+      },
+      {
+        "name": "calendar exclusions are distinct from unresolved data",
+        "passed": true,
+        "error": null
+      },
+      {
+        "name": "closed trades on incomplete days remain counted separately",
+        "passed": true,
+        "error": null
+      }
+    ]
+  },
+  "feature": {
+    "scope": "synthetic BC23 feature semantics only; no historical profitability",
+    "passed": 26,
+    "total": 26,
+    "results": [
+      {
+        "name": "two-candle high uses larger wick",
+        "pass": true
+      },
+      {
+        "name": "two-candle low uses smaller wick",
+        "pass": true
+      },
+      {
+        "name": "same colors produce no swing",
+        "pass": true
+      },
+      {
+        "name": "wick-only breach produces no BOS",
+        "pass": true
+      },
+      {
+        "name": "strict close above observes upward BOS",
+        "pass": true
+      },
+      {
+        "name": "strict close below observes downward BOS",
+        "pass": true
+      },
+      {
+        "name": "break never creates order and requires reseed",
+        "pass": true
+      },
+      {
+        "name": "BC23 exact equality is unresolved",
+        "pass": true
+      },
+      {
+        "name": "doji blocks rather than being skipped",
+        "pass": true
+      },
+      {
+        "name": "forming second candle cannot confirm swing",
+        "pass": true
+      },
+      {
+        "name": "closed data cannot be read before close",
+        "pass": true
+      },
+      {
+        "name": "late arrival is unavailable until arrival",
+        "pass": true
+      },
+      {
+        "name": "swing knowledge time is second close",
+        "pass": true
+      },
+      {
+        "name": "missing trend context blocks",
+        "pass": true
+      },
+      {
+        "name": "same-bar replacement and old-level break blocks",
+        "pass": true
+      },
+      {
+        "name": "future-known active level blocks",
+        "pass": true
+      },
+      {
+        "name": "invalid decision time blocks",
+        "pass": true
+      },
+      {
+        "name": "impossible level availability blocks",
+        "pass": true
+      },
+      {
+        "name": "nonadjacent bars block",
+        "pass": true
+      },
+      {
+        "name": "mixed symbols block",
+        "pass": true
+      },
+      {
+        "name": "malformed OHLC blocks",
+        "pass": true
+      },
+      {
+        "name": "noninteger tick prices block",
+        "pass": true
+      },
+      {
+        "name": "inputs are not mutated",
+        "pass": true
+      },
+      {
+        "name": "unambiguous latest relevant swing is retained",
+        "pass": true
+      },
+      {
+        "name": "appended future cannot alter prior output",
+        "pass": true
+      },
+      {
+        "name": "causal replay is deterministic",
+        "pass": true
+      }
+    ]
+  },
+  "derivativeCompatibility": {
+    "scope": "SYNTHETIC ONLY: no historical market data",
+    "passed": 65,
+    "total": 65,
+    "failures": [],
+    "tests": [
+      {
+        "name": "complete no-sweep session has zero trades",
+        "passed": true,
+        "error": null
+      },
+      {
+        "name": "long structural sequence emits one trade",
+        "passed": true,
+        "error": null
+      },
+      {
+        "name": "one full minute delay before entry",
+        "passed": true,
+        "error": null
+      },
+      {
+        "name": "stop beyond sweep extreme and opposing target",
+        "passed": true,
+        "error": null
+      },
+      {
+        "name": "long target net includes entry friction and fees",
+        "passed": true,
+        "error": null
+      },
+      {
+        "name": "long stop net includes both aggressive fills",
+        "passed": true,
+        "error": null
+      },
+      {
+        "name": "long gap stop uses worse opening price",
+        "passed": true,
+        "error": null
+      },
+      {
+        "name": "intrabar stop target conflict flagged adverse",
+        "passed": true,
+        "error": null
+      },
+      {
+        "name": "opening target precedes later same-bar stop",
+        "passed": true,
+        "error": null
+      },
+      {
+        "name": "short symmetry target",
+        "passed": true,
+        "error": null
+      },
+      {
+        "name": "short symmetry stop",
+        "passed": true,
+        "error": null
+      },
+      {
+        "name": "short symmetry gap stop",
+        "passed": true,
+        "error": null
+      },
+      {
+        "name": "short opening target precedes later stop",
+        "passed": true,
+        "error": null
+      },
+      {
+        "name": "fixed time exit at 11:30 is distinct from entry cutoff",
+        "passed": true,
+        "error": null
+      },
+      {
+        "name": "exact target touch does not fill",
+        "passed": true,
+        "error": null
+      },
+      {
+        "name": "delay-bar target touch cancels pending entry",
+        "passed": true,
+        "error": null
+      },
+      {
+        "name": "delay-bar stop touch cancels pending entry",
+        "passed": true,
+        "error": null
+      },
+      {
+        "name": "entry gap beyond target cancels",
+        "passed": true,
+        "error": null
+      },
+      {
+        "name": "entry opening at stop cancels despite friction",
+        "passed": true,
+        "error": null
+      },
+      {
+        "name": "early sweep without prior trend consumes candidate",
+        "passed": true,
+        "error": null
+      },
+      {
+        "name": "dual-boundary first sweep rejected",
+        "passed": true,
+        "error": null
+      },
+      {
+        "name": "doji does not create or bridge a pair",
+        "passed": true,
+        "error": null
+      },
+      {
+        "name": "BOS equality does not confirm",
+        "passed": true,
+        "error": null
+      },
+      {
+        "name": "wick-only break does not confirm",
+        "passed": true,
+        "error": null
+      },
+      {
+        "name": "missing minute preserves open unresolved trade",
+        "passed": true,
+        "error": null
+      },
+      {
+        "name": "incomplete feed cannot report complete profit",
+        "passed": true,
+        "error": null
+      },
+      {
+        "name": "duplicate timestamp rejected",
+        "passed": true,
+        "error": null
+      },
+      {
+        "name": "wrong contract rejected",
+        "passed": true,
+        "error": null
+      },
+      {
+        "name": "noninteger normalized tick prices rejected",
+        "passed": true,
+        "error": null
+      },
+      {
+        "name": "impossible OHLC rejected",
+        "passed": true,
+        "error": null
+      },
+      {
+        "name": "missing costs block PnL",
+        "passed": true,
+        "error": null
+      },
+      {
+        "name": "negative fees rejected",
+        "passed": true,
+        "error": null
+      },
+      {
+        "name": "unknown preceding session blocks",
+        "passed": true,
+        "error": null
+      },
+      {
+        "name": "shortened prior session skipped without substitution",
+        "passed": true,
+        "error": null
+      },
+      {
+        "name": "shortened current session skipped",
+        "passed": true,
+        "error": null
+      },
+      {
+        "name": "bad New York open clock blocks",
+        "passed": true,
+        "error": null
+      },
+      {
+        "name": "fall DST maps 14:30 UTC to 09:30 New York",
+        "passed": true,
+        "error": null
+      },
+      {
+        "name": "October DST maps 13:30 UTC to 09:30 New York",
+        "passed": true,
+        "error": null
+      },
+      {
+        "name": "split boundaries frozen",
+        "passed": true,
+        "error": null
+      },
+      {
+        "name": "future appended bars preserve earlier event trace",
+        "passed": true,
+        "error": null
+      },
+      {
+        "name": "input not mutated and replay deterministic",
+        "passed": true,
+        "error": null
+      },
+      {
+        "name": "all scenarios charge higher fees monotonically",
+        "passed": true,
+        "error": null
+      },
+      {
+        "name": "summary keeps unresolved day denominator",
+        "passed": true,
+        "error": null
+      },
+      {
+        "name": "historical run rejects missing manifest",
+        "passed": true,
+        "error": null
+      },
+      {
+        "name": "empty historical dataset remains untested",
+        "passed": true,
+        "error": null
+      },
+      {
+        "name": "synthetic input cannot enter historical report",
+        "passed": true,
+        "error": null
+      },
+      {
+        "name": "unknown holdout exposure blocks",
+        "passed": true,
+        "error": null
+      },
+      {
+        "name": "adjusted data manifest blocks",
+        "passed": true,
+        "error": null
+      },
+      {
+        "name": "cost grid exposes all nine assumptions",
+        "passed": true,
+        "error": null
+      },
+      {
+        "name": "target at time-exit open retains resting limit price",
+        "passed": true,
+        "error": null
+      },
+      {
+        "name": "short target at cutoff retains limit price",
+        "passed": true,
+        "error": null
+      },
+      {
+        "name": "stop gap at cutoff keeps opening adverse fill",
+        "passed": true,
+        "error": null
+      },
+      {
+        "name": "time exit cannot use later intrabar target",
+        "passed": true,
+        "error": null
+      },
+      {
+        "name": "30-second shifted session timestamps rejected",
+        "passed": true,
+        "error": null
+      },
+      {
+        "name": "misaligned preceding session rejected",
+        "passed": true,
+        "error": null
+      },
+      {
+        "name": "opposite-boundary exact touch on sweep cancels",
+        "passed": true,
+        "error": null
+      },
+      {
+        "name": "short sweep opposite exact touch cancels",
+        "passed": true,
+        "error": null
+      },
+      {
+        "name": "15th subsequent candle remains eligible",
+        "passed": true,
+        "error": null
+      },
+      {
+        "name": "16th subsequent candle expires",
+        "passed": true,
+        "error": null
+      },
+      {
+        "name": "entry at 10:58 remains allowed",
+        "passed": true,
+        "error": null
+      },
+      {
+        "name": "entry at 11:00 is blocked",
+        "passed": true,
+        "error": null
+      },
+      {
+        "name": "opening exit records simulated timestamp",
+        "passed": true,
+        "error": null
+      },
+      {
+        "name": "intrabar exit preserves uncertain time interval",
+        "passed": true,
+        "error": null
+      },
+      {
+        "name": "calendar exclusions are distinct from unresolved data",
+        "passed": true,
+        "error": null
+      },
+      {
+        "name": "closed trades on incomplete days remain counted separately",
+        "passed": true,
+        "error": null
+      }
+    ]
+  },
+  "hashes": {
+    "originalCombined": "7008b3c3da5f087f7371740d6ceb98725b56585e45cbd31a89f903c1a3ee141f",
+    "originalEngine": "c33084666c94fd4256cdc0b26421e88f9c992ccd344adf78ec8cf95b069b1b2e",
+    "originalTests": "42aaeb83912761a23ab5898b6dd987f95020b32322ba276db794ea1dbdb3e0b9",
+    "feature": "b51750e013f6a72fac10e59b3a5530b0468d09f4eab81cd7fddcf02c525d289c",
+    "derivative": "00befa923a4eaf0b32013999ca4cc9c1819ac942e2afceeedb8d713f00141c52"
+  },
+  "historicalTradesTested": 0,
+  "paperTradingStarted": false,
+  "liveExecutionEnabled": false
+}

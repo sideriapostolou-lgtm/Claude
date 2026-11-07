@@ -1,0 +1,116 @@
+{
+  "source_sha256": "2471adff4eca63ee6abba73031da75793ae5e1b3cb0468e30e1e2d6b9934efd5",
+  "rows": [
+    {
+      "case": "fresh",
+      "account_age": 0.0,
+      "cash_age": 0.0,
+      "waiting": "",
+      "authenticated": true,
+      "lock_guard": true,
+      "naive_can_lock": "order_pending",
+      "self_pending": true,
+      "lock_sent": true
+    },
+    {
+      "case": "account_age_4",
+      "account_age": 4.0,
+      "cash_age": 4.0,
+      "waiting": "Kalshi account data stale",
+      "authenticated": true,
+      "lock_guard": false,
+      "naive_can_lock": "order_pending",
+      "self_pending": true,
+      "lock_sent": false
+    },
+    {
+      "case": "cash_age_6",
+      "account_age": 0.0,
+      "cash_age": 6.0,
+      "waiting": "",
+      "authenticated": true,
+      "lock_guard": false,
+      "naive_can_lock": "cash_stale",
+      "self_pending": true,
+      "lock_sent": false
+    },
+    {
+      "case": "both_age_6",
+      "account_age": 6.0,
+      "cash_age": 6.0,
+      "waiting": "Kalshi account data stale",
+      "authenticated": true,
+      "lock_guard": false,
+      "naive_can_lock": "cash_stale",
+      "self_pending": true,
+      "lock_sent": false
+    },
+    {
+      "case": "account_missing",
+      "account_age": null,
+      "cash_age": 0.0,
+      "waiting": "Kalshi account data stale",
+      "authenticated": true,
+      "lock_guard": false,
+      "naive_can_lock": "order_pending",
+      "self_pending": true,
+      "lock_sent": false
+    },
+    {
+      "case": "auth_lost",
+      "account_age": 0.0,
+      "cash_age": 0.0,
+      "waiting": "",
+      "authenticated": false,
+      "lock_guard": false,
+      "naive_can_lock": "order_pending",
+      "self_pending": true,
+      "lock_sent": false
+    },
+    {
+      "case": "day_stop",
+      "account_age": 0.0,
+      "cash_age": 0.0,
+      "waiting": "",
+      "authenticated": true,
+      "lock_guard": true,
+      "naive_can_lock": "order_pending",
+      "self_pending": true,
+      "lock_sent": true
+    },
+    {
+      "case": "total_loss_stop",
+      "account_age": 0.0,
+      "cash_age": 0.0,
+      "waiting": "",
+      "authenticated": true,
+      "lock_guard": true,
+      "naive_can_lock": "order_pending",
+      "self_pending": true,
+      "lock_sent": true
+    },
+    {
+      "case": "paper",
+      "account_age": 0.0,
+      "cash_age": 0.0,
+      "waiting": "",
+      "authenticated": true,
+      "lock_guard": false,
+      "naive_can_lock": "order_pending",
+      "self_pending": true,
+      "lock_sent": false
+    },
+    {
+      "case": "shutdown",
+      "account_age": 0.0,
+      "cash_age": 0.0,
+      "waiting": "",
+      "authenticated": true,
+      "lock_guard": false,
+      "naive_can_lock": "order_pending",
+      "self_pending": true,
+      "lock_sent": false
+    }
+  ],
+  "scope": "Offline fake account only; no network or historical loss attribution. Fresh quote after fake transport wait isolates account/cash freshness."
+}

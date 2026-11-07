@@ -1,0 +1,113 @@
+{
+  "schema_version": 1,
+  "created_at_utc": "2026-10-19T22:01:03.040468+00:00",
+  "strategy_version": "OWNER_SWEEP_IFVG_MNQ_v1",
+  "scope": "Standalone stdlib offline simulation and synthetic regression tests only; no market outcomes inspected by implementation worker.",
+  "base_remote_sha_prefix": "608c9531",
+  "source_hashes_sha256": {
+    "research/ifvg_validation_2026-10-19/simulator.py": "69caef01eb392211342524b2fc3bc695f5cb31eab9d6d64763a4fc4503c2615b",
+    "research/ifvg_validation_2026-10-19/test_simulator.py": "a0e3b6a94294e1481edacbe157a96a01bc6e76165e121010a143b9fb2e363261",
+    "research/ifvg_intake_2026-10-19/V1_RULES.md": "59e43db6904ce48ff0da9e0c4e144a11e160c9c577c86339963c9e1b51aa6d18"
+  },
+  "interpreter": "/workspace/nightcrawler-daily/.venv/bin/python",
+  "verification": {
+    "implementation_tests": {
+      "command": "/workspace/nightcrawler-daily/.venv/bin/python -m unittest discover -s research/ifvg_validation_2026-10-19 -p test_simulator.py -v",
+      "result": "PASS",
+      "test_methods": 32,
+      "elapsed_seconds": 0.225,
+      "fixtures": "synthetic_only"
+    },
+    "ruff": {
+      "command": "/workspace/nightcrawler-daily/.venv/bin/ruff check research/ifvg_validation_2026-10-19/simulator.py research/ifvg_validation_2026-10-19/test_simulator.py",
+      "result": "PASS"
+    },
+    "application_suite": "NOT_RUN: unrelated standalone research module; no production source imports or changes",
+    "independent_review": "Separate worker owns independent_test.py and INDEPENDENT_REVIEW records; see their final exact-source receipt.",
+    "standalone_mypy": {
+      "command": "/workspace/nightcrawler-daily/.venv/bin/python -m mypy --follow-imports=skip research/ifvg_validation_2026-10-19/simulator.py research/ifvg_validation_2026-10-19/run_study.py",
+      "result": "PASS",
+      "source_files_checked": 2,
+      "scope": "Type checks only; no runner execution or market outcomes inspected."
+    }
+  },
+  "preserved_initial_failures": [
+    {
+      "stage": "Initial simulator Ruff",
+      "findings": [
+        "UP035 Iterable import location",
+        "TRY004 invalid timestamp type should raise TypeError",
+        "FURB157 Decimal constructor style",
+        "TRY004 non-Bar input should raise TypeError"
+      ],
+      "resolution": "Adjusted imports/exception classes/constructor; no signal or execution rule changed."
+    },
+    {
+      "stage": "Initial implementation unittest",
+      "test_methods": 31,
+      "failed_subtest_assertions": 5,
+      "findings": [
+        "Four mirror/near-stop fixture assertions expected rejection for raw short entry111/112 below stop113. Adverse short-entry friction decreases entry and increases positive structural risk, so these opens are valid.",
+        "One age10 fixture accidentally closed below its own bullish-gap lower boundary before sweep, correctly retiring that gap."
+      ],
+      "resolution": "Corrected expectations for valid near-stop opens, and held post-gap closes at the boundary to preserve eligibility; no simulator logic changed for these failures."
+    },
+    {
+      "stage": "Initial implementation-test Ruff",
+      "findings": [
+        "RUF100 unused E402 noqa under repository Ruff configuration"
+      ],
+      "resolution": "Removed unused directive."
+    },
+    {
+      "stage": "Root standalone mypy before any replay",
+      "findings": [
+        "Two indexed-assignment failures from result[attempt] inferred as object",
+        "Two int|string gap-bound comparison failures from heterogeneous unannotated gap dictionary"
+      ],
+      "resolution": "Added GapRecord and AttemptRecord TypedDicts, typed result dictionary and local attempt reference; no type ignores, signal, accounting or serialization changes.",
+      "original_source_sha256": "ef9b629bb6ff8baa4a5eb0dfa08aa0d85c63e6962547c8befaa024828af36e77"
+    }
+  ],
+  "regression_coverage": [
+    "Long/short mirrored stop and target accounting; all nine frozen fee/friction cases",
+    "First attempt consumed; first strict inversion only; opposite sweep checked first",
+    "Most recent eligible gap selection filters prior inversions; tenth gap age and tenth confirmation allowed; eleventh excluded",
+    "Equal gap/sweep/inversion/target boundaries; wick-only inversion not accepted; prior-crossed levels allowed",
+    "Next-open causal entry; raw at/beyond-stop rejection; inclusive structural extreme through confirmation; cutoff before11:00",
+    "Opening gaps before extrema; stop friction; target trade-through without improvement; stop-first intrabar ambiguity",
+    "11:30 opening resting exits before adverse time exit; later11:30 extrema ignored",
+    "Missing reference/pre-gap/scan/confirmation/entry/outcome retained unresolved; no resume after required hole",
+    "Known closed loss and rejected terminal attempt require no later data; valid future-row changes cannot change prior terminal result",
+    "NY midnight and historical DST offsets; excluded reference endpoints; regular/shortened/closed/unknown calendar statuses",
+    "OHLC tick type/extrema; UTC aware aligned timestamps; duplicates; epoch-minute conversion; unsorted rows",
+    "Intrabar exit timestamp is interval start with next-minute end; opening exits explicitly OPEN"
+  ],
+  "interface": {
+    "Bar": "Bar(timestamp: aware UTC datetime or integer epoch-minute; open, high, low, close: integer 0.25-point ticks)",
+    "simulate_day": "simulate_day(bars, session_date: date or ISO date, fee_per_side: Decimal USD or integer cents=100, friction_ticks: frozen1/2/4=2, calendar_status=REGULAR) -> JSON-serializable dict",
+    "calendar_status": "REGULAR is caller attestation of independent exchange-calendar verification; SHORTENED/CLOSED exclude; UNKNOWN/INCOMPLETE unresolved.",
+    "decisions": [
+      "TRADE",
+      "REJECTED",
+      "NO_TRADE",
+      "UNRESOLVED",
+      "EXCLUDED"
+    ],
+    "money": "Exact two-decimal USD strings; one contract at$0.50/tick; unresolved full-outcome gross/fees/net null; known entry fee retained inside open trade.",
+    "exit_times": "exit_timestamp is exact modeled open for OPEN basis, or start of minute interval for INTRABAR_INTERVAL with exit_interval_end; no intrabar fill timestamp inferred.",
+    "coverage": "Incremental scheduled UTC slots grouped by required phase; stops at first incomplete phase or terminal decision. required_missing lists known missing required slots, not a manufactured whole-day checklist."
+  },
+  "limitations": [
+    "OHLC execution approximation does not prove actual tradability, exchange queue fills, spread/slippage, fees or latency.",
+    "Only predeclared sensitivity costs accepted; actual independent cost evidence and operating costs remain runner/report responsibilities.",
+    "Caller must verify contract identity, timestamp start convention, regular calendar, licensing, exact dataset hashes/date splits and actual-versus-proxy provenance before any result claims.",
+    "Input validates all supplied rows, including later irrelevant rows; malformed rows raise ValueError/TypeError instead of producing a trade decision.",
+    "Unknown calendar status can be unresolved without missing bar timestamps; coverage.complete remains false.",
+    "No production deployment, live orders, broker/config imports, network calls, paid purchase, old holdout or TEST access performed."
+  ],
+  "spec_ambiguities_raised": [],
+  "historical_results": null,
+  "profitability_claim": null,
+  "updated_at_utc": "2026-10-19T22:02:02.153039+00:00"
+}

@@ -1,0 +1,141 @@
+[
+ {
+  "chainId": "solana",
+  "dexId": "pumpswap",
+  "url": "https://dexscreener.com/solana/2uzutqejcxcr1eswmdgtpqewm5pcekewrsnvrpc1ehs1",
+  "pairAddress": "2uZuTQEjcXcR1ESwMdGTpqEwM5PCekEwrSNVRPc1EhS1",
+  "baseToken": {
+   "address": "8ZCmwpW3MtC5UpNcZf7U4HMvRNTo71syU11BDiAFpump",
+   "name": "Gary the Cat",
+   "symbol": "Gary"
+  },
+  "quoteToken": {
+   "address": "So11111111111111111111111111111111111111112",
+   "name": "Wrapped SOL",
+   "symbol": "SOL"
+  },
+  "priceNative": "0.000006356",
+  "priceUsd": "0.0006941",
+  "txns": {
+   "m5": {
+    "buys": 381,
+    "sells": 151
+   },
+   "h1": {
+    "buys": 4370,
+    "sells": 2153
+   },
+   "h6": {
+    "buys": 9647,
+    "sells": 5103
+   },
+   "h24": {
+    "buys": 9647,
+    "sells": 5103
+   }
+  },
+  "volume": {
+   "h24": 968844.91,
+   "h6": 968844.91,
+   "h1": 373682.77,
+   "m5": 16524.48
+  },
+  "priceChange": {
+   "m5": -10.27,
+   "h1": 15.02,
+   "h6": 495,
+   "h24": 495
+  },
+  "liquidity": {
+   "usd": 73411.54,
+   "base": 54318887,
+   "quote": 327.02938
+  },
+  "fdv": 690008,
+  "marketCap": 690008,
+  "pairCreatedAt": 1791466106000,
+  "info": {
+   "imageUrl": "https://cdn.dexscreener.com/cms/images/08Jbo9o0nghZEHOp?width=800&height=800&quality=95&format=auto",
+   "header": "https://cdn.dexscreener.com/cms/images/x1094YFpE8fTwpjO?width=1500&height=500&quality=95&format=auto",
+   "openGraph": "https://cdn.dexscreener.com/token-images/og/solana/8ZCmwpW3MtC5UpNcZf7U4HMvRNTo71syU11BDiAFpump?timestamp=1791473400000",
+   "websites": [
+    {
+     "url": "https://garycat.fun",
+     "label": "Website"
+    }
+   ],
+   "socials": [
+    {
+     "url": "https://x.com/GaryCatX",
+     "type": "twitter"
+    }
+   ]
+  }
+ },
+ {
+  "chainId": "solana",
+  "dexId": "pumpfun",
+  "url": "https://dexscreener.com/solana/flhp2icq9tnsxtuhe2avs3dhnh9ihkjczxay2nepkelu",
+  "pairAddress": "FLhP2iCq9TNSxtUhE2aVs3DHnh9ihkJCzXaY2nePkeLu",
+  "baseToken": {
+   "address": "8ZCmwpW3MtC5UpNcZf7U4HMvRNTo71syU11BDiAFpump",
+   "name": "Gary the Cat",
+   "symbol": "Gary"
+  },
+  "quoteToken": {
+   "address": "So11111111111111111111111111111111111111112",
+   "name": "Wrapped SOL",
+   "symbol": "SOL"
+  },
+  "priceNative": "0.0000001962",
+  "priceUsd": "0.00002207",
+  "txns": {
+   "m5": {
+    "buys": 0,
+    "sells": 0
+   },
+   "h1": {
+    "buys": 0,
+    "sells": 0
+   },
+   "h6": {
+    "buys": 7,
+    "sells": 0
+   },
+   "h24": {
+    "buys": 7,
+    "sells": 0
+   }
+  },
+  "volume": {
+   "h24": 5066.66,
+   "h6": 5066.66,
+   "h1": 0,
+   "m5": 0
+  },
+  "priceChange": {
+   "h6": 597,
+   "h24": 597
+  },
+  "fdv": 22078.19,
+  "marketCap": 22078.19,
+  "pairCreatedAt": 1791466106000,
+  "info": {
+   "imageUrl": "https://cdn.dexscreener.com/cms/images/08Jbo9o0nghZEHOp?width=800&height=800&quality=95&format=auto",
+   "header": "https://cdn.dexscreener.com/cms/images/x1094YFpE8fTwpjO?width=1500&height=500&quality=95&format=auto",
+   "openGraph": "https://cdn.dexscreener.com/token-images/og/solana/8ZCmwpW3MtC5UpNcZf7U4HMvRNTo71syU11BDiAFpump?timestamp=1791473400000",
+   "websites": [
+    {
+     "url": "https://garycat.fun",
+     "label": "Website"
+    }
+   ],
+   "socials": [
+    {
+     "url": "https://x.com/GaryCatX",
+     "type": "twitter"
+    }
+   ]
+  }
+ }
+]

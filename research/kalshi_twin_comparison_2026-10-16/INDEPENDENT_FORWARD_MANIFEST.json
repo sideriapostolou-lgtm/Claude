@@ -1,0 +1,18 @@
+{
+  "hashes": {
+    "FIXED_WINDOW_CHECKS.json": "7c8b5668509bb1da244c518dc3380ca6d62b94cf2494d321aa884189a13eafcf",
+    "FIXED_WINDOW_REVIEW.md": "bef124be04087b3c9f724dab6ec421bd2c917c140638020b24f50c29a0dd00e1",
+    "audit_fixed_window.py": "a381ce5253ed96f0b87200edabd1a8d8762c80dac50a36b82aadab4a5493f81c",
+    "native_receipts.py": "4731ed48a793c58197dcb892b48b552f6f2fff898770edaf30fc1521e6c90eef",
+    "test_native_receipts.py": "5b36b022d00dd74d9adf25e8b1318b75dc6f931d80139ae6f944b42be26cf017",
+    "forward_audit.py": "c6204d2707c1a153a69b45344ef2004b993849db587c297863a0caa45b60a228",
+    "test_forward_audit.py": "e78d8259e0280fff3c643ab8dc5be391ca2bca2f3be2f2b21753afbe2fb23ee9"
+  },
+  "receipt_checks": 32,
+  "receipt_checks_pass": true,
+  "regression_tests": "4 passed in 0.03s",
+  "ruff": "isolated E4,E7,E9,F,I and formatting passed",
+  "initial_style_failures": "Import order and two multiple-statements-on-line warnings fixed by isolated Ruff/format; no strategy or source edits.",
+  "generic_originals_preserved": true,
+  "source_application_edited": false
+}

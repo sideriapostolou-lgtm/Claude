@@ -1,0 +1,81 @@
+{
+  "task": "independent bounded preparation archive integrity inventory",
+  "archive": {
+    "path": "/workspace/nightcrawler-probability-learning/research/kalshi_probability_learning_2026-10-15/PREPARATION.zip",
+    "bytes": 73624,
+    "expected_bytes": 73624,
+    "sha256": "5e14bf92167051e6494825a5752163d31325a789cbf704055a3917371ae553c3",
+    "expected_sha256": "5e14bf92167051e6494825a5752163d31325a789cbf704055a3917371ae553c3",
+    "zip_member_count": 44,
+    "manifest_member_count": 44,
+    "crc_members_read": 44,
+    "members_matching_manifest_size_sha": 44,
+    "local_members_checked": 44,
+    "local_members_byte_identical": 44,
+    "json_members": 21,
+    "json_members_valid": 21,
+    "zip_testzip_bad_member": null,
+    "missing_or_extra_members": 0
+  },
+  "manifest": {
+    "path": "/workspace/nightcrawler-probability-learning/research/kalshi_probability_learning_2026-10-15/PREPARATION_MANIFEST.json",
+    "sha256": "1c52267d79639849d0ff585a0aa96fc4e2ff82657db766b795c2af852e1ff309"
+  },
+  "bounded_sensitive_pattern_scan": {
+    "scope": "archived member contents only",
+    "patterns_checked": [
+      "pem_private_key",
+      "sk_style_credential",
+      "bearer_credential",
+      "credential_assignment",
+      "private_attachment_reference"
+    ],
+    "hit_count": 0,
+    "hits_redacted": [],
+    "credential_values_recorded": false,
+    "private_attachment_contents_accessed": false
+  },
+  "captured_final_checks": {
+    "full_pytest_summary_from_log": "5884 passed, 14 skipped in 319.03s (0:05:19)",
+    "captured_full_exit": 0,
+    "mypy_files": 129,
+    "ruff_changed_python_files": 7,
+    "source_hash_freeze_before_after_identical": true,
+    "seven_frozen_file_hashes": {
+      "src/nightcrawler/kalshi_probability_learning.py": "a21b903ccbef0775f48f2a13322dc7ebfc4c831d381599a45993ebb218e22113",
+      "src/nightcrawler/kalshi_arena.py": "f183d7f66de018126445effcde714992808a36527e7a30f35ad36782fdd55d7b",
+      "src/nightcrawler/pagestate.py": "5367079109d34e03d0d9690266d1068750c09e0987917cab915b411198bca616",
+      "tests/test_kalshi_probability_learning.py": "62256a835e8c5e62ca68de5698e683c013af01184cb230c747e05743fb7ac016",
+      "tests/test_kalshi_probability_arena.py": "b7f300752a72c0345543bef8222be0f1b80f122f0eaab33ca5edcabb0eb8b082",
+      "tests/test_kalshi_probability_learning_page.py": "c72897a137e1fc81e98dfb962bc3169ee036d353408994fe3fc4b2ff2af356b7",
+      "tests/test_kalshi_arena_page.py": "d00afdaa5b01b1c4d996dcbf5d7e280218c37705d5dfc4b2166fdb0eae48fe29"
+    },
+    "review_source_hashes_match_frozen_hashes": true,
+    "exact_review_status": "Independent exact-source review accepted; required full-suite/release/production verification remain root-owned gates.",
+    "full_pytest_execution_receipt": {
+      "start_utc": "2026-10-15T19:03:37.351400+00:00",
+      "end_utc": "2026-10-15T19:08:58.125551+00:00",
+      "elapsed_s": 320.7741654499987,
+      "exit_code": 0
+    }
+  },
+  "preserved_superseded_checks": {
+    "focused_v1": "81 passed in 0.44s",
+    "focused_v2": "89 passed in 0.51s",
+    "focused_v3": "94 passed in 0.47s",
+    "learning_focused": "1 failed, 59 passed; failed test test_bounded_history_labels_and_json_state (labels expected 64, observed 1)",
+    "focused_final": "1 failed, 320 passed, 1 skipped; failed test test_a_flush_of_a_busy_market_costs_well_under_half_a_millisecond",
+    "root_early_panel_contract": "67 passed plus 1 assertion failure for newly added optional learning_probability field; corrected expectation receipt reports 68 passed, followed by one additional test and final rerun",
+    "ruff_v1": "2 findings; later import-fix receipt says 1 fixed, 0 remaining; final changed-file Ruff receipt exit 0"
+  },
+  "preserved_resource_attempt1": {
+    "status": "failed_harness_fixture_not_source",
+    "failure": "checkpoint pending/recent/labels capacity assertion",
+    "cause": "Synthetic consecutive windows discovered10seconds before next start, but preceding label was already at same next start: fixture reversed clock. Corrected by separating synthetic development windows1800seconds.",
+    "source_changed": false,
+    "raw_timing_trials": "not emitted before assertion; no passing resource claim from attempt1"
+  },
+  "error_count": 0,
+  "errors": [],
+  "scope": "No tests rerun. No source or production access/mutation. Only the preparation archive, its manifest/local copies, and archived check receipts were read. No strategy/live-performance conclusion."
+}

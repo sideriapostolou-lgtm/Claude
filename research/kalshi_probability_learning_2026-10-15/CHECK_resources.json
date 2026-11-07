@@ -1,0 +1,24 @@
+{
+  "scope": "Local synthetic V2 method CPU only; no production contention, socket or full-child wall-time certification.",
+  "empty_batch": {
+    "trials": 1000,
+    "records_per_batch": 0,
+    "median_cpu_ms": 0.001954,
+    "p99_cpu_ms": 0.0054,
+    "max_cpu_ms": 0.077946
+  },
+  "max_normal_wire_event_burst": {
+    "trials": 1000,
+    "records_per_batch": 1024,
+    "median_cpu_ms": 0.16656549999999998,
+    "p99_cpu_ms": 0.271357,
+    "max_cpu_ms": 0.466602
+  },
+  "after_1000_scores": {
+    "state_json_bytes": 40636,
+    "recent": 64,
+    "labels": 64,
+    "pending": 0,
+    "scored": 1000
+  }
+}

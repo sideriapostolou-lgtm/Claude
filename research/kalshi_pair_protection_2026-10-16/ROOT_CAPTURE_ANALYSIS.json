@@ -1,0 +1,3684 @@
+{
+  "scope": "Fixed primary9:15\u20139:30PM PDT October15/tail9:32, native returned receipts only; primary settlement in tail; successor separate.",
+  "queries": [
+    {
+      "name": "forward_orders_00",
+      "sha256": "63c34b939d37692886db445ac9caf1b27b09a3ce84152239ec227e56e9d2ad28",
+      "rows": 35,
+      "before": {
+        "current_time": "2026-10-16 04:32:09 UTC"
+      },
+      "after": {
+        "current_time": "2026-10-16 04:32:09 UTC"
+      },
+      "request": {
+        "projectId": "75750847-85c0-41a3-a2a7-b7f2201a51e9",
+        "deploymentId": "2af8d2be-77f7-4738-ab67-33c37c09b86b",
+        "startDate": "2026-10-16T04:15:00Z",
+        "endDate": "2026-10-16T04:20:00Z",
+        "filter": "\"nightcrawler.speeddesk: speeddesk_live_order \"",
+        "limit": 500,
+        "types": [
+          "deploy"
+        ]
+      }
+    },
+    {
+      "name": "forward_orders_01",
+      "sha256": "689f6a7ae4e502d320e6121b36c6edac9ac9625a4106e28b63f559b1f0376110",
+      "rows": 0,
+      "before": {
+        "current_time": "2026-10-16 04:32:09 UTC"
+      },
+      "after": {
+        "current_time": "2026-10-16 04:32:09 UTC"
+      },
+      "request": {
+        "projectId": "75750847-85c0-41a3-a2a7-b7f2201a51e9",
+        "deploymentId": "2af8d2be-77f7-4738-ab67-33c37c09b86b",
+        "startDate": "2026-10-16T04:20:00Z",
+        "endDate": "2026-10-16T04:25:00Z",
+        "filter": "\"nightcrawler.speeddesk: speeddesk_live_order \"",
+        "limit": 500,
+        "types": [
+          "deploy"
+        ]
+      }
+    },
+    {
+      "name": "forward_orders_02",
+      "sha256": "b2ce664d8053dae2a63d5ac58432ad0d2bef73a11b02913eff818a97eed33a48",
+      "rows": 0,
+      "before": {
+        "current_time": "2026-10-16 04:32:09 UTC"
+      },
+      "after": {
+        "current_time": "2026-10-16 04:32:09 UTC"
+      },
+      "request": {
+        "projectId": "75750847-85c0-41a3-a2a7-b7f2201a51e9",
+        "deploymentId": "2af8d2be-77f7-4738-ab67-33c37c09b86b",
+        "startDate": "2026-10-16T04:25:00Z",
+        "endDate": "2026-10-16T04:30:00Z",
+        "filter": "\"nightcrawler.speeddesk: speeddesk_live_order \"",
+        "limit": 500,
+        "types": [
+          "deploy"
+        ]
+      }
+    },
+    {
+      "name": "forward_orders_tail",
+      "sha256": "e16eafd65cb013070eb32a4bd008c964ae5afd6533a91a70883056cfd2ef77cf",
+      "rows": 32,
+      "before": {
+        "current_time": "2026-10-16 04:32:09 UTC"
+      },
+      "after": {
+        "current_time": "2026-10-16 04:32:09 UTC"
+      },
+      "request": {
+        "projectId": "75750847-85c0-41a3-a2a7-b7f2201a51e9",
+        "deploymentId": "2af8d2be-77f7-4738-ab67-33c37c09b86b",
+        "startDate": "2026-10-16T04:30:00Z",
+        "endDate": "2026-10-16T04:32:00Z",
+        "filter": "\"nightcrawler.speeddesk: speeddesk_live_order \"",
+        "limit": 500,
+        "types": [
+          "deploy"
+        ]
+      }
+    },
+    {
+      "name": "forward_money",
+      "sha256": "43a2adc1f77bd1b3846d174c9f3ff993de3ef6e2c28df81c916e26568632d5af",
+      "rows": 38,
+      "before": {
+        "current_time": "2026-10-16 04:32:09 UTC"
+      },
+      "after": {
+        "current_time": "2026-10-16 04:32:09 UTC"
+      },
+      "request": {
+        "projectId": "75750847-85c0-41a3-a2a7-b7f2201a51e9",
+        "deploymentId": "2af8d2be-77f7-4738-ab67-33c37c09b86b",
+        "startDate": "2026-10-16T04:15:00Z",
+        "endDate": "2026-10-16T04:32:00Z",
+        "filter": "\"nightcrawler.speeddesk: speeddesk_live_fill \" OR \"nightcrawler.speeddesk: speeddesk_live_cancel \" OR \"nightcrawler.speeddesk: speeddesk_live_settlement \" OR \"nightcrawler.speeddesk: speeddesk_live_pair_protected \" OR \"nightcrawler.speeddesk: speeddesk_live_reject \" OR \"nightcrawler.speeddesk: speeddesk_live_stop \"",
+        "limit": 500,
+        "types": [
+          "deploy"
+        ]
+      }
+    },
+    {
+      "name": "forward_twin",
+      "sha256": "f9cd98e12eeccd700a9f430d3ed79d1083ada2d6e0ce1849c8d20ff0e7985180",
+      "rows": 139,
+      "before": {
+        "current_time": "2026-10-16 04:32:20 UTC"
+      },
+      "after": {
+        "current_time": "2026-10-16 04:32:20 UTC"
+      },
+      "request": {
+        "projectId": "75750847-85c0-41a3-a2a7-b7f2201a51e9",
+        "deploymentId": "2af8d2be-77f7-4738-ab67-33c37c09b86b",
+        "startDate": "2026-10-16T04:15:00Z",
+        "endDate": "2026-10-16T04:32:00Z",
+        "filter": "\"nightcrawler.speeddesk: speeddesk_twin \" OR \"nightcrawler.speeddesk: speeddesk_twin_settlement \" OR \"nightcrawler.speeddesk: speeddesk_twin_trace \"",
+        "limit": 500,
+        "types": [
+          "deploy"
+        ]
+      }
+    },
+    {
+      "name": "forward_probability",
+      "sha256": "61f3058814b68bb5a93a3e10da0d5a3a43a4587af99603d11cb4db27146cc832",
+      "rows": 7,
+      "before": {
+        "current_time": "2026-10-16 04:32:20 UTC"
+      },
+      "after": {
+        "current_time": "2026-10-16 04:32:21 UTC"
+      },
+      "request": {
+        "projectId": "75750847-85c0-41a3-a2a7-b7f2201a51e9",
+        "deploymentId": "2af8d2be-77f7-4738-ab67-33c37c09b86b",
+        "startDate": "2026-10-16T04:15:00Z",
+        "endDate": "2026-10-16T04:32:00Z",
+        "filter": "\"nightcrawler.kalshi_probability_learning: kalshi_probability_learning_\"",
+        "limit": 500,
+        "types": [
+          "deploy"
+        ]
+      }
+    },
+    {
+      "name": "forward_warnings",
+      "sha256": "475537fa7124d7c90356a6412add0d0f967ac84597abd0a21fdffa9359fcffcb",
+      "rows": 28,
+      "before": {
+        "current_time": "2026-10-16 04:32:20 UTC"
+      },
+      "after": {
+        "current_time": "2026-10-16 04:32:20 UTC"
+      },
+      "request": {
+        "projectId": "75750847-85c0-41a3-a2a7-b7f2201a51e9",
+        "deploymentId": "2af8d2be-77f7-4738-ab67-33c37c09b86b",
+        "startDate": "2026-10-16T04:15:00Z",
+        "endDate": "2026-10-16T04:32:00Z",
+        "filter": "\" WARNING \" OR \" ERROR \" OR \"Traceback\"",
+        "limit": 500,
+        "types": [
+          "deploy"
+        ]
+      }
+    },
+    {
+      "name": "forward_status",
+      "sha256": "8463609bdf1b5aca060019e15fa5f5cfcd08c68b9604c9f35c468d0671e6f26b",
+      "rows": 34,
+      "before": {
+        "current_time": "2026-10-16 04:32:20 UTC"
+      },
+      "after": {
+        "current_time": "2026-10-16 04:32:21 UTC"
+      },
+      "request": {
+        "projectId": "75750847-85c0-41a3-a2a7-b7f2201a51e9",
+        "deploymentId": "2af8d2be-77f7-4738-ab67-33c37c09b86b",
+        "startDate": "2026-10-16T04:15:00Z",
+        "endDate": "2026-10-16T04:32:00Z",
+        "filter": "\"nightcrawler.speeddesk: speeddesk_live_status \" OR \"nightcrawler.speeddesk: speeddesk_status \"",
+        "limit": 500,
+        "types": [
+          "deploy"
+        ]
+      }
+    },
+    {
+      "name": "forward_diagnostics",
+      "sha256": "493eb91626256826ff6e96f3814a54077b61ce0ba7130ed4def45b0c039be4e8",
+      "rows": 65,
+      "before": {
+        "current_time": "2026-10-16 04:32:20 UTC"
+      },
+      "after": {
+        "current_time": "2026-10-16 04:32:20 UTC"
+      },
+      "request": {
+        "projectId": "75750847-85c0-41a3-a2a7-b7f2201a51e9",
+        "deploymentId": "2af8d2be-77f7-4738-ab67-33c37c09b86b",
+        "startDate": "2026-10-16T04:15:00Z",
+        "endDate": "2026-10-16T04:32:00Z",
+        "filter": "\"nightcrawler.speeddesk: speeddesk_reconcile_trace \" OR \"nightcrawler.speeddesk_kalshi_ws: speeddesk_feed_kalshi_ws_timing \"",
+        "limit": 500,
+        "types": [
+          "deploy"
+        ]
+      }
+    },
+    {
+      "name": "forward_window_practice_traceback",
+      "sha256": "b51bfcae14a61dc27e8de66fa2b885e5c691bfac70c6bd077563c5ae3220a4a0",
+      "rows": 3,
+      "before": {
+        "current_time": "2026-10-16 04:33:27 UTC"
+      },
+      "after": {
+        "current_time": "2026-10-16 04:33:28 UTC"
+      },
+      "request": {
+        "projectId": "75750847-85c0-41a3-a2a7-b7f2201a51e9",
+        "deploymentId": "2af8d2be-77f7-4738-ab67-33c37c09b86b",
+        "startDate": "2026-10-16T04:15:00Z",
+        "endDate": "2026-10-16T04:32:00Z",
+        "filter": "\"nightcrawler.speeddesk: speeddesk_window \" OR \"Traceback\"",
+        "limit": 100,
+        "types": [
+          "deploy"
+        ]
+      }
+    }
+  ],
+  "checks": [
+    {
+      "name": "forward_orders_00.source_and_success",
+      "passed": true
+    },
+    {
+      "name": "forward_orders_00.unsaturated",
+      "passed": true
+    },
+    {
+      "name": "forward_orders_00.closed_query",
+      "passed": true
+    },
+    {
+      "name": "forward_orders_01.source_and_success",
+      "passed": true
+    },
+    {
+      "name": "forward_orders_01.unsaturated",
+      "passed": true
+    },
+    {
+      "name": "forward_orders_01.closed_query",
+      "passed": true
+    },
+    {
+      "name": "forward_orders_02.source_and_success",
+      "passed": true
+    },
+    {
+      "name": "forward_orders_02.unsaturated",
+      "passed": true
+    },
+    {
+      "name": "forward_orders_02.closed_query",
+      "passed": true
+    },
+    {
+      "name": "forward_orders_tail.source_and_success",
+      "passed": true
+    },
+    {
+      "name": "forward_orders_tail.unsaturated",
+      "passed": true
+    },
+    {
+      "name": "forward_orders_tail.closed_query",
+      "passed": true
+    },
+    {
+      "name": "forward_money.source_and_success",
+      "passed": true
+    },
+    {
+      "name": "forward_money.unsaturated",
+      "passed": true
+    },
+    {
+      "name": "forward_money.closed_query",
+      "passed": true
+    },
+    {
+      "name": "forward_twin.source_and_success",
+      "passed": true
+    },
+    {
+      "name": "forward_twin.unsaturated",
+      "passed": true
+    },
+    {
+      "name": "forward_twin.closed_query",
+      "passed": true
+    },
+    {
+      "name": "forward_probability.source_and_success",
+      "passed": true
+    },
+    {
+      "name": "forward_probability.unsaturated",
+      "passed": true
+    },
+    {
+      "name": "forward_probability.closed_query",
+      "passed": true
+    },
+    {
+      "name": "forward_warnings.source_and_success",
+      "passed": true
+    },
+    {
+      "name": "forward_warnings.unsaturated",
+      "passed": true
+    },
+    {
+      "name": "forward_warnings.closed_query",
+      "passed": true
+    },
+    {
+      "name": "forward_status.source_and_success",
+      "passed": true
+    },
+    {
+      "name": "forward_status.unsaturated",
+      "passed": true
+    },
+    {
+      "name": "forward_status.closed_query",
+      "passed": true
+    },
+    {
+      "name": "forward_diagnostics.source_and_success",
+      "passed": true
+    },
+    {
+      "name": "forward_diagnostics.unsaturated",
+      "passed": true
+    },
+    {
+      "name": "forward_diagnostics.closed_query",
+      "passed": true
+    },
+    {
+      "name": "forward_window_practice_traceback.source_and_success",
+      "passed": true
+    },
+    {
+      "name": "forward_window_practice_traceback.unsaturated",
+      "passed": true
+    },
+    {
+      "name": "forward_window_practice_traceback.closed_query",
+      "passed": true
+    },
+    {
+      "name": "two_unique_real_fills",
+      "passed": true
+    },
+    {
+      "name": "actual_side_labels_and_prices",
+      "passed": true
+    },
+    {
+      "name": "actual_maker_zero_fees",
+      "passed": true
+    },
+    {
+      "name": "all_fill_order_identities_join",
+      "passed": true
+    },
+    {
+      "name": "18_intents_17_acknowledged",
+      "passed": true
+    },
+    {
+      "name": "single_400_preserved",
+      "passed": true
+    },
+    {
+      "name": "one_positive_pair_marker",
+      "passed": true
+    },
+    {
+      "name": "all_target_new_intents_pre_marker_both_clocks",
+      "passed": true
+    },
+    {
+      "name": "all_target_acks_pre_marker_both_clocks",
+      "passed": true
+    },
+    {
+      "name": "no_postmarker_target_actual_fill",
+      "passed": true
+    },
+    {
+      "name": "no_lock_in_target",
+      "passed": true
+    },
+    {
+      "name": "one_actual_settlement",
+      "passed": true
+    },
+    {
+      "name": "settlement_ledger_totals",
+      "passed": true
+    },
+    {
+      "name": "actual_pnl_and_split",
+      "passed": true
+    },
+    {
+      "name": "paired_credit_not_doubled",
+      "passed": true
+    },
+    {
+      "name": "official_final_yes",
+      "passed": true
+    },
+    {
+      "name": "twin_separate_loss",
+      "passed": true
+    },
+    {
+      "name": "standalone_practice_zero",
+      "passed": true
+    },
+    {
+      "name": "retained_real_cumulative_loss",
+      "passed": true
+    },
+    {
+      "name": "retained_actual_day_loss",
+      "passed": true
+    },
+    {
+      "name": "caps_unchanged",
+      "passed": true
+    },
+    {
+      "name": "ladder0_and_no_resets",
+      "passed": true
+    },
+    {
+      "name": "one_new_historical_marker_count",
+      "passed": true
+    },
+    {
+      "name": "successor_separate_up_one_41c",
+      "passed": true
+    },
+    {
+      "name": "cash_change_matches_actual_pair_and_successor",
+      "passed": true
+    },
+    {
+      "name": "nonflat_successor_risk_and_reserve",
+      "passed": true
+    },
+    {
+      "name": "one_frozen_forecast_score",
+      "passed": true
+    },
+    {
+      "name": "observer_only",
+      "passed": true
+    }
+  ],
+  "all_passed": true,
+  "distinct_original_rows": 381,
+  "event_counts": {
+    "speeddesk_live_order": 67,
+    "speeddesk_live_cancel": 31,
+    "speeddesk_live_settlement": 2,
+    "speeddesk_live_reject": 1,
+    "speeddesk_live_fill": 3,
+    "speeddesk_live_pair_protected": 1,
+    "speeddesk_twin": 67,
+    "speeddesk_twin_trace": 70,
+    "speeddesk_twin_settlement": 2,
+    "kalshi_probability_learning_scored": 2,
+    "kalshi_probability_learning_status": 4,
+    "kalshi_probability_learning_forecast": 1,
+    "speeddesk_live_status": 17,
+    "speeddesk_feed_kalshi_ws_timing": 53,
+    "speeddesk_reconcile_trace": 12,
+    "speeddesk_window": 3
+  },
+  "excluded": [
+    {
+      "timestamp": "2026-10-16T04:15:08.463288748Z",
+      "kind": "plaintext",
+      "event": "speeddesk_feed_kalshi_ws_gap",
+      "logger": "nightcrawler.speeddesk_kalshi_ws",
+      "level": "WARNING",
+      "message": "reason=market_set_changed reader_kind=speeddesk reader_instance=1 reader_process=1 reader_session=6"
+    },
+    {
+      "timestamp": "2026-10-16T04:15:17.875434355Z",
+      "kind": "plaintext",
+      "event": "speeddesk_feed_kalshi_ws_gap",
+      "logger": "nightcrawler.speeddesk_kalshi_ws",
+      "level": "WARNING",
+      "message": "reason=timestamp_missing_or_stale:orderbook_snapshot_network:age_s=5.486 reader_kind=derived_market_reader reader_instance=2 reader_process=1 reader_session=8"
+    },
+    {
+      "timestamp": "2026-10-16T04:15:42.061726929Z",
+      "kind": "plaintext",
+      "event": "speeddesk_feed_kalshi_ws_gap",
+      "logger": "nightcrawler.speeddesk_kalshi_ws",
+      "level": "WARNING",
+      "message": "reason=timestamp_missing_or_stale:orderbook_delta_network:age_s=3.012 reader_kind=speeddesk reader_instance=1 reader_process=1 reader_session=7"
+    },
+    {
+      "timestamp": "2026-10-16T04:16:06.159827324Z",
+      "kind": "plaintext",
+      "event": "speeddesk_feed_kalshi_ws_gap",
+      "logger": "nightcrawler.speeddesk_kalshi_ws",
+      "level": "WARNING",
+      "message": "reason=timestamp_missing_or_stale:orderbook_snapshot_network:age_s=4.965 reader_kind=derived_market_reader reader_instance=2 reader_process=1 reader_session=9"
+    },
+    {
+      "timestamp": "2026-10-16T04:17:07.018042673Z",
+      "kind": "plaintext",
+      "event": "speeddesk_feed_kalshi_ws_gap",
+      "logger": "nightcrawler.speeddesk_kalshi_ws",
+      "level": "WARNING",
+      "message": "reason=timestamp_missing_or_stale:orderbook_snapshot_network:age_s=6.107 reader_kind=derived_market_reader reader_instance=2 reader_process=1 reader_session=10"
+    },
+    {
+      "timestamp": "2026-10-16T04:17:10.080488325Z",
+      "kind": "plaintext",
+      "event": "speeddesk_feed_kalshi_ws_gap",
+      "logger": "nightcrawler.speeddesk_kalshi_ws",
+      "level": "WARNING",
+      "message": "reason=timestamp_missing_or_stale:orderbook_delta_network:age_s=3.522 reader_kind=speeddesk reader_instance=1 reader_process=1 reader_session=8"
+    },
+    {
+      "timestamp": "2026-10-16T04:17:50.647703932Z",
+      "kind": "plaintext",
+      "event": "speeddesk_feed_kalshi_ws_gap",
+      "logger": "nightcrawler.speeddesk_kalshi_ws",
+      "level": "WARNING",
+      "message": "reason=TimeoutError reader_kind=derived_market_reader reader_instance=2 reader_process=1 reader_session=None"
+    },
+    {
+      "timestamp": "2026-10-16T04:18:35.830922894Z",
+      "kind": "plaintext",
+      "event": "speeddesk_feed_kalshi_ws_gap",
+      "logger": "nightcrawler.speeddesk_kalshi_ws",
+      "level": "WARNING",
+      "message": "reason=TimeoutError reader_kind=derived_market_reader reader_instance=2 reader_process=1 reader_session=None"
+    },
+    {
+      "timestamp": "2026-10-16T04:19:17.801789874Z",
+      "kind": "plaintext",
+      "event": "speeddesk_feed_kalshi_ws_gap",
+      "logger": "nightcrawler.speeddesk_kalshi_ws",
+      "level": "WARNING",
+      "message": "reason=TimeoutError reader_kind=derived_market_reader reader_instance=2 reader_process=1 reader_session=None"
+    },
+    {
+      "timestamp": "2026-10-16T04:19:23.911889382Z",
+      "kind": "plaintext",
+      "event": "speeddesk_feed_kalshi_trade_gap",
+      "logger": "nightcrawler.speeddesk_kalshi",
+      "level": "WARNING",
+      "message": "error=ValueError invalidated=True"
+    },
+    {
+      "timestamp": "2026-10-16T04:19:25.697258916Z",
+      "kind": "plaintext",
+      "event": "speeddesk_feed_kalshi_ws_gap",
+      "logger": "nightcrawler.speeddesk_kalshi_ws",
+      "level": "WARNING",
+      "message": "reason=timestamp_missing_or_stale:orderbook_delta_network:age_s=3.105 reader_kind=speeddesk reader_instance=1 reader_process=1 reader_session=9"
+    },
+    {
+      "timestamp": "2026-10-16T04:20:08.371642206Z",
+      "kind": "plaintext",
+      "event": "speeddesk_feed_kalshi_ws_gap",
+      "logger": "nightcrawler.speeddesk_kalshi_ws",
+      "level": "WARNING",
+      "message": "reason=TimeoutError reader_kind=derived_market_reader reader_instance=2 reader_process=1 reader_session=None"
+    },
+    {
+      "timestamp": "2026-10-16T04:20:14.019134166Z",
+      "kind": "plaintext",
+      "event": "speeddesk_feed_kalshi_ws_gap",
+      "logger": "nightcrawler.speeddesk_kalshi_ws",
+      "level": "WARNING",
+      "message": "reason=timestamp_missing_or_stale:book_engine:age_s=3.000 reader_kind=speeddesk reader_instance=1 reader_process=1 reader_session=10"
+    },
+    {
+      "timestamp": "2026-10-16T04:20:21.494297732Z",
+      "kind": "plaintext",
+      "event": "speeddesk_feed_kalshi_ws_gap",
+      "logger": "nightcrawler.speeddesk_kalshi_ws",
+      "level": "WARNING",
+      "message": "reason=timestamp_missing_or_stale:orderbook_delta_network:age_s=3.000 reader_kind=speeddesk reader_instance=1 reader_process=1 reader_session=11"
+    },
+    {
+      "timestamp": "2026-10-16T04:20:44.336844904Z",
+      "kind": "plaintext",
+      "event": "speeddesk_feed_kalshi_ws_gap",
+      "logger": "nightcrawler.speeddesk_kalshi_ws",
+      "level": "WARNING",
+      "message": "reason=timestamp_missing_or_stale:orderbook_snapshot_network:age_s=3.923 reader_kind=derived_market_reader reader_instance=2 reader_process=1 reader_session=11"
+    },
+    {
+      "timestamp": "2026-10-16T04:21:33.863764438Z",
+      "kind": "plaintext",
+      "event": "speeddesk_feed_kalshi_ws_gap",
+      "logger": "nightcrawler.speeddesk_kalshi_ws",
+      "level": "WARNING",
+      "message": "reason=timestamp_missing_or_stale:orderbook_snapshot_network:age_s=6.013 reader_kind=derived_market_reader reader_instance=2 reader_process=1 reader_session=12"
+    },
+    {
+      "timestamp": "2026-10-16T04:21:44.145327355Z",
+      "kind": "plaintext",
+      "event": "speeddesk_feed_kalshi_ws_gap",
+      "logger": "nightcrawler.speeddesk_kalshi_ws",
+      "level": "WARNING",
+      "message": "reason=timestamp_missing_or_stale:orderbook_delta_network:age_s=3.063 reader_kind=speeddesk reader_instance=1 reader_process=1 reader_session=12"
+    },
+    {
+      "timestamp": "2026-10-16T04:22:16.336532914Z",
+      "kind": "plaintext",
+      "event": "speeddesk_feed_kalshi_ws_gap",
+      "logger": "nightcrawler.speeddesk_kalshi_ws",
+      "level": "WARNING",
+      "message": "reason=timestamp_missing_or_stale:orderbook_snapshot_network:age_s=3.403 reader_kind=derived_market_reader reader_instance=2 reader_process=1 reader_session=13"
+    },
+    {
+      "timestamp": "2026-10-16T04:22:55.916628764Z",
+      "kind": "plaintext",
+      "event": "speeddesk_feed_kalshi_ws_gap",
+      "logger": "nightcrawler.speeddesk_kalshi_ws",
+      "level": "WARNING",
+      "message": "reason=timestamp_missing_or_stale:orderbook_snapshot_network:age_s=3.001 reader_kind=derived_market_reader reader_instance=2 reader_process=1 reader_session=14"
+    },
+    {
+      "timestamp": "2026-10-16T04:23:15.703938871Z",
+      "kind": "plaintext",
+      "event": "speeddesk_feed_kalshi_trade_gap",
+      "logger": "nightcrawler.speeddesk_kalshi",
+      "level": "WARNING",
+      "message": "error=ValueError invalidated=True"
+    },
+    {
+      "timestamp": "2026-10-16T04:23:15.705615154Z",
+      "kind": "plaintext",
+      "event": "speeddesk_feed_kalshi_ws_gap",
+      "logger": "nightcrawler.speeddesk_kalshi_ws",
+      "level": "WARNING",
+      "message": "reason=timestamp_missing_or_stale:orderbook_delta_network:age_s=3.036 reader_kind=speeddesk reader_instance=1 reader_process=1 reader_session=13"
+    },
+    {
+      "timestamp": "2026-10-16T04:23:30.942657933Z",
+      "kind": "plaintext",
+      "event": "weatherwatch_paused",
+      "logger": "nightcrawler.weatherwatch",
+      "level": "WARNING",
+      "message": "reason=Callback queue capacity exceeded; capture has a gap"
+    },
+    {
+      "timestamp": "2026-10-16T04:24:48.817512939Z",
+      "kind": "plaintext",
+      "event": "speeddesk_feed_kalshi_ws_gap",
+      "logger": "nightcrawler.speeddesk_kalshi_ws",
+      "level": "WARNING",
+      "message": "reason=timestamp_missing_or_stale:orderbook_delta_network:age_s=3.281 reader_kind=speeddesk reader_instance=1 reader_process=1 reader_session=14"
+    },
+    {
+      "timestamp": "2026-10-16T04:25:10.371151874Z",
+      "kind": "plaintext",
+      "event": "speeddesk_feed_kalshi_ws_gap",
+      "logger": "nightcrawler.speeddesk_kalshi_ws",
+      "level": "WARNING",
+      "message": "reason=timestamp_missing_or_stale:orderbook_delta_network:age_s=3.027 reader_kind=speeddesk reader_instance=1 reader_process=1 reader_session=15"
+    },
+    {
+      "timestamp": "2026-10-16T04:25:27.260957061Z",
+      "kind": "plaintext",
+      "event": "speeddesk_feed_kalshi_ws_gap",
+      "logger": "nightcrawler.speeddesk_kalshi_ws",
+      "level": "WARNING",
+      "message": "reason=timestamp_missing_or_stale:orderbook_delta_network:age_s=3.010 reader_kind=speeddesk reader_instance=1 reader_process=1 reader_session=16"
+    },
+    {
+      "timestamp": "2026-10-16T04:26:14.674433407Z",
+      "kind": "plaintext",
+      "event": "speeddesk_feed_kalshi_ws_gap",
+      "logger": "nightcrawler.speeddesk_kalshi_ws",
+      "level": "WARNING",
+      "message": "reason=timestamp_missing_or_stale:book_engine:age_s=3.000 reader_kind=speeddesk reader_instance=1 reader_process=1 reader_session=17"
+    },
+    {
+      "timestamp": "2026-10-16T04:30:10.807435149Z",
+      "kind": "plaintext",
+      "event": "speeddesk_feed_kalshi_ws_gap",
+      "logger": "nightcrawler.speeddesk_kalshi_ws",
+      "level": "WARNING",
+      "message": "reason=market_set_changed reader_kind=speeddesk reader_instance=1 reader_process=1 reader_session=18"
+    },
+    {
+      "timestamp": "2026-10-16T04:30:46.707579299Z",
+      "kind": "plaintext",
+      "event": "speeddesk_feed_kalshi_ws_gap",
+      "logger": "nightcrawler.speeddesk_kalshi_ws",
+      "level": "WARNING",
+      "message": "reason=timestamp_missing_or_stale:orderbook_delta_network:age_s=3.245 reader_kind=speeddesk reader_instance=1 reader_process=1 reader_session=19"
+    },
+    {
+      "timestamp": "2026-10-16T04:15:26.501398434Z",
+      "kind": "truncated_json",
+      "event": "speeddesk_status",
+      "bytes": 81920
+    },
+    {
+      "timestamp": "2026-10-16T04:16:26.576072233Z",
+      "kind": "truncated_json",
+      "event": "speeddesk_status",
+      "bytes": 81920
+    },
+    {
+      "timestamp": "2026-10-16T04:17:26.657174429Z",
+      "kind": "truncated_json",
+      "event": "speeddesk_status",
+      "bytes": 81920
+    },
+    {
+      "timestamp": "2026-10-16T04:18:26.578755278Z",
+      "kind": "truncated_json",
+      "event": "speeddesk_status",
+      "bytes": 81920
+    },
+    {
+      "timestamp": "2026-10-16T04:19:26.659906195Z",
+      "kind": "truncated_json",
+      "event": "speeddesk_status",
+      "bytes": 81920
+    },
+    {
+      "timestamp": "2026-10-16T04:20:26.704963867Z",
+      "kind": "truncated_json",
+      "event": "speeddesk_status",
+      "bytes": 81920
+    },
+    {
+      "timestamp": "2026-10-16T04:21:26.939107018Z",
+      "kind": "truncated_json",
+      "event": "speeddesk_status",
+      "bytes": 81920
+    },
+    {
+      "timestamp": "2026-10-16T04:22:27.052336112Z",
+      "kind": "truncated_json",
+      "event": "speeddesk_status",
+      "bytes": 81920
+    },
+    {
+      "timestamp": "2026-10-16T04:23:27.105318081Z",
+      "kind": "truncated_json",
+      "event": "speeddesk_status",
+      "bytes": 81920
+    },
+    {
+      "timestamp": "2026-10-16T04:24:27.490045169Z",
+      "kind": "truncated_json",
+      "event": "speeddesk_status",
+      "bytes": 81920
+    },
+    {
+      "timestamp": "2026-10-16T04:25:27.224231636Z",
+      "kind": "truncated_json",
+      "event": "speeddesk_status",
+      "bytes": 81920
+    },
+    {
+      "timestamp": "2026-10-16T04:26:27.624421480Z",
+      "kind": "truncated_json",
+      "event": "speeddesk_status",
+      "bytes": 81920
+    },
+    {
+      "timestamp": "2026-10-16T04:27:27.471130527Z",
+      "kind": "truncated_json",
+      "event": "speeddesk_status",
+      "bytes": 81920
+    },
+    {
+      "timestamp": "2026-10-16T04:28:27.796485054Z",
+      "kind": "truncated_json",
+      "event": "speeddesk_status",
+      "bytes": 81920
+    },
+    {
+      "timestamp": "2026-10-16T04:29:27.493802067Z",
+      "kind": "truncated_json",
+      "event": "speeddesk_status",
+      "bytes": 81920
+    },
+    {
+      "timestamp": "2026-10-16T04:30:27.523088829Z",
+      "kind": "truncated_json",
+      "event": "speeddesk_status",
+      "bytes": 81920
+    },
+    {
+      "timestamp": "2026-10-16T04:31:27.805499173Z",
+      "kind": "truncated_json",
+      "event": "speeddesk_status",
+      "bytes": 81920
+    }
+  ],
+  "actual": {
+    "fills": [
+      {
+        "timestamp": "2026-10-16T04:16:27.432933453Z",
+        "event": "speeddesk_live_fill",
+        "logger": "nightcrawler.speeddesk",
+        "payload": {
+          "at": "1792124185.98085",
+          "venue": "kalshi",
+          "fill_id": "0724495f-4779-af47-b218-be172b24bd70",
+          "order_id": "01a142ec-e1d8-7479-b748-5747db5e80b8",
+          "client_order_id": "nc-speed-79b65c18dd074daca8fab581289e6836",
+          "window": "KXBTC15M-26OCT160030-30",
+          "side": "up",
+          "price": "0.32",
+          "size": "1.0",
+          "fee_usd": "0.0",
+          "is_taker": false
+        }
+      },
+      {
+        "timestamp": "2026-10-16T04:17:15.639167721Z",
+        "event": "speeddesk_live_fill",
+        "logger": "nightcrawler.speeddesk",
+        "payload": {
+          "at": "1792124234.448657",
+          "venue": "kalshi",
+          "fill_id": "0724495b-0169-a399-0bf1-63571ea0d648",
+          "order_id": "01a142ed-a528-784b-8295-fdd1fe205440",
+          "client_order_id": "nc-speed-67f54cb2376a47d186c447f0fe6f99a8",
+          "window": "KXBTC15M-26OCT160030-30",
+          "side": "down",
+          "price": "0.56",
+          "size": "1.0",
+          "fee_usd": "0.0",
+          "is_taker": false
+        }
+      }
+    ],
+    "intents": 18,
+    "acknowledged_orders": 17,
+    "filled_distinct_orders": 2,
+    "fills_per_acknowledged_order": "0.1176470588235294117647058824",
+    "actual_principal_usd": "0.880",
+    "actual_fees_usd": "0.0",
+    "pnl_usd": "0.120",
+    "locked_usd": "0.120",
+    "direction_usd": 0,
+    "marker": {
+      "timestamp": "2026-10-16T04:17:15.639172561Z",
+      "event": "speeddesk_live_pair_protected",
+      "logger": "nightcrawler.speeddesk",
+      "payload": {
+        "at": "1792124235.0107355",
+        "venue": "kalshi",
+        "window": "KXBTC15M-26OCT160030-30",
+        "payout_usd": "1.0",
+        "cost_usd": "0.8800000000000001",
+        "inventory_floor_usd": "0.11999999999999988",
+        "state": "Positive full pair; no new directional buys; prior reservations remain"
+      }
+    },
+    "new_intents_after_marker": 0,
+    "settlement": {
+      "timestamp": "2026-10-16T04:30:05.347475328Z",
+      "event": "speeddesk_live_settlement",
+      "logger": "nightcrawler.speeddesk",
+      "payload": {
+        "at": "1792125001.819245",
+        "venue": "kalshi",
+        "window": "KXBTC15M-26OCT160030-30",
+        "settlement_id": "kalshi:KXBTC15M-26OCT160030-30",
+        "up_wins": true,
+        "up_shares": "1.0",
+        "down_shares": "1.0",
+        "cost_usd": "0.8800000000000001",
+        "fee_usd": "0.0",
+        "paired_credit_usd": "1.0",
+        "net_payout_usd": "0.0",
+        "payout_usd": "1.0",
+        "locked_usd": "0.11999999999999988",
+        "direction_usd": "0.0",
+        "pnl_usd": "0.11999999999999988",
+        "observed_at": "1792125004.9147468",
+        "time_source": "venue settled_time"
+      }
+    },
+    "practice_twin": {
+      "timestamp": "2026-10-16T04:30:07.432577731Z",
+      "event": "speeddesk_twin_settlement",
+      "logger": "nightcrawler.speeddesk",
+      "payload": {
+        "at": "1792125006.3389876",
+        "venue": "kalshi",
+        "window": "KXBTC15M-26OCT160030-30",
+        "up_wins": true,
+        "up_shares": "0.0",
+        "down_shares": "1.0",
+        "cost_usd": "0.56",
+        "fee_usd": "0.0",
+        "payout_usd": "0.0",
+        "locked_usd": "0.0",
+        "direction_usd": "-0.56",
+        "pnl_usd": "-0.56"
+      }
+    },
+    "standalone_practice": {
+      "timestamp": "2026-10-16T04:30:06.674119191Z",
+      "event": "speeddesk_window",
+      "logger": "nightcrawler.speeddesk",
+      "payload": {
+        "mode": "practice",
+        "window": "KXBTC15M-26OCT160030-30",
+        "at": "1792125006.3389876",
+        "up_wins": true,
+        "up_shares": "0.0",
+        "down_shares": "0.0",
+        "cost_usd": "0.0",
+        "fee_usd": "0.0",
+        "payout_usd": "0.0",
+        "locked_usd": "0.0",
+        "direction_usd": "0.0",
+        "pnl_usd": "0.0",
+        "side": "both",
+        "price": null,
+        "size": "0.0",
+        "fair": null,
+        "edge": null,
+        "latency_ms": null,
+        "bitcoin_price": "81975.96",
+        "bitcoin_staleness_s": "0.2556726932525635",
+        "venue": "kalshi"
+      }
+    }
+  },
+  "last_status": {
+    "timestamp": "2026-10-16T04:31:36.622896351Z",
+    "event": "speeddesk_live_status",
+    "logger": "nightcrawler.speeddesk",
+    "payload": {
+      "at": "1792125096.4477668",
+      "venue": "kalshi",
+      "mode": "live",
+      "configured_mode": "live",
+      "status": "REAL MONEY (Kalshi)",
+      "reason": "balancing_only",
+      "trading_now": true,
+      "waiting": "",
+      "as_of": "1792125096.4169843",
+      "authenticated": true,
+      "fee_precision_verified": true,
+      "fee_precision_usd": "0.0001",
+      "cash_usd": "25.6245",
+      "cash_at": "1792125095.7453432",
+      "reserved_usd": "0.44",
+      "open_risk_usd": "0.41",
+      "open_cost_usd": "0.41",
+      "at_risk_usd": "0.41",
+      "open_orders": 1,
+      "positions": 1,
+      "total_halted": false,
+      "day_stop_latched": false,
+      "real_orders_available": true,
+      "integrity_error": null,
+      "pair_protection": {
+        "protected_windows": [],
+        "total_windows": 99
+      },
+      "integrity_reset": null,
+      "cleanup_pending": false,
+      "caps": {
+        "window_usd": "10.0",
+        "open_usd": "20.0",
+        "day_stop_usd": "6.0",
+        "clip": "5.0",
+        "total_stop_usd": "10.0"
+      },
+      "ladder": {
+        "enabled": true,
+        "rung": 0,
+        "ladder_rung": 0,
+        "max_window_usd": "20.0",
+        "configured_max_window_usd": "50000.0",
+        "top_rung": 2,
+        "limits": {
+          "window_usd": "10.0",
+          "open_usd": "20.0",
+          "day_stop_usd": "6.0",
+          "clip": "5.0",
+          "total_stop_usd": "10.0"
+        },
+        "change_pending": false,
+        "recheck_pending": false,
+        "effective_from": null,
+        "pending_limits": null,
+        "rung_started_at": "1791923645.5061624",
+        "start_pnl_usd": "-3.746099999999995",
+        "promotion": {
+          "ready": false,
+          "blocked": [
+            "gain",
+            "house_money",
+            "stops",
+            "cash"
+          ],
+          "rung": 0,
+          "next_rung": 1,
+          "next_limits": {
+            "window_usd": "15.0",
+            "open_usd": "30.0",
+            "day_stop_usd": "9.0",
+            "clip": "5.0",
+            "total_stop_usd": "10.0"
+          },
+          "windows": 138,
+          "windows_needed": 96,
+          "gain_usd": "-19.960800000000006",
+          "at_risk_usd": "0.41",
+          "gain_counted_usd": "-20.370800000000006",
+          "gain_needed_usd": "25.653393933860666",
+          "sigma_usd": "1.0918809561162879",
+          "sd_usd": "1.0918809561162879",
+          "room_usd": "-14.116900000000001",
+          "room_needed_usd": "24.75",
+          "available_cash_usd": "25.1845",
+          "cash_needed_usd": "30.0",
+          "last_stop_at": "1792108799.7182086",
+          "quiet_from": "1792195199.7182086",
+          "recheck": false
+        },
+        "demotion": {
+          "due": false,
+          "rung": 0,
+          "peak_pnl_usd": "-3.746099999999995",
+          "total_pnl_usd": "-23.7069",
+          "giveback_usd": "19.960800000000006",
+          "giveback_limit_usd": "6.0",
+          "line_usd": null,
+          "at_floor": true
+        },
+        "last_change": null
+      },
+      "today": {
+        "day": "2026-10-16",
+        "windows": 19,
+        "fills": 78,
+        "latency": {
+          "btc_exchange_to_decision": {
+            "unit": "ms",
+            "scope": "real_kalshi",
+            "cohort": "intents_created_on_utc_day",
+            "started_at": "1791843345.3511775",
+            "complete": true,
+            "partial_day": false,
+            "applicable": true,
+            "observations": 846,
+            "samples": 846,
+            "missing": 0,
+            "invalid": 0,
+            "errors": 0,
+            "timeouts": 0,
+            "overflow": false,
+            "median_ms": "253.90686304308474",
+            "p95_ms": "1228.1952942721546",
+            "limitation": "Age of accepted Coinbase input; exchange/local clock uncertainty remains"
+          },
+          "btc_receipt_to_decision": {
+            "unit": "ms",
+            "scope": "real_kalshi",
+            "cohort": "intents_created_on_utc_day",
+            "started_at": "1791843345.3511775",
+            "complete": true,
+            "partial_day": false,
+            "applicable": true,
+            "observations": 846,
+            "samples": 846,
+            "missing": 0,
+            "invalid": 0,
+            "errors": 0,
+            "timeouts": 0,
+            "overflow": false,
+            "median_ms": "203.00758420489728",
+            "p95_ms": "1101.1755191721022",
+            "limitation": "Age since strategy callback receipt; not pure computation or proven trigger reaction"
+          },
+          "decision_to_ack": {
+            "unit": "ms",
+            "scope": "real_kalshi",
+            "cohort": "intents_created_on_utc_day",
+            "started_at": "1791843345.3511775",
+            "complete": true,
+            "partial_day": false,
+            "applicable": true,
+            "observations": 846,
+            "samples": 829,
+            "missing": 0,
+            "invalid": 0,
+            "errors": 17,
+            "timeouts": 0,
+            "overflow": false,
+            "median_ms": "91.12931927666068",
+            "p95_ms": "334.6810848452151",
+            "limitation": "Decision to observed validated exchange acknowledgement; includes journal, queue and HTTP time",
+            "pending_or_lost_ack": 0
+          }
+        },
+        "scorecard": {
+          "version": 1,
+          "scope": "real",
+          "venue": "kalshi",
+          "day": "2026-10-16",
+          "cohort": "window end UTC day",
+          "population": "fully observed windows with complete fill history",
+          "coverage_basis": "complete window discovery and recorded ledger history; market availability reported separately",
+          "status": "partial",
+          "day_complete": false,
+          "utc_day_ended": false,
+          "reasons": [
+            "UTC day is still open",
+            "Full-day discovery and recording coverage is not certified",
+            "Some window coverage or fill history is missing or invalid"
+          ],
+          "eligible_windows": 19,
+          "complete_windows": 8,
+          "unknown_coverage_windows": 0,
+          "gap_windows": 11,
+          "invalid_windows": 0,
+          "invalid_fill_windows": 0,
+          "invalid_settlement_windows": 0,
+          "traded_windows": 7,
+          "zero_fill_windows": 1,
+          "fills": 29,
+          "fills_per_window": "3.625",
+          "fills_per_traded_window": "4.142857142857143",
+          "both_sides_windows": 7,
+          "both_sides_share": "0.875",
+          "both_sides_traded_share": "1.0",
+          "median_imbalance": "0.0",
+          "imbalance_basis": "final quantity imbalance in traded fully observed windows",
+          "taker_fill_share": "0.1724137931034483",
+          "known_role_taker_share": "0.1724137931034483",
+          "role_coverage": "1.0",
+          "unknown_role_fills": 0,
+          "matched_pairs": "47.0",
+          "matched_pair_cost_usd": "0.9518702127659575",
+          "matched_pair_fees_usd": "0.10339999999999999",
+          "unmatched_fees_usd": "0.0",
+          "fees_usd": "0.10339999999999999",
+          "settled_traded_windows": 7,
+          "unsettled_traded_windows": 0,
+          "settled_pnl_usd": "0.7696000000000016",
+          "locked_usd": "2.2621",
+          "directional_usd": "-1.4924999999999984",
+          "pnl_usd": "0.7696000000000016",
+          "pnl_per_window_usd": "0.0962000000000002",
+          "worst_window_usd": "-1.9392999999999994",
+          "worst_window_basis": "settled traded fully observed windows",
+          "full_cohort_worst_usd": "-1.9392999999999994",
+          "cap_change_allowed": false,
+          "automatic_promotion": false,
+          "observed_window_seconds": "16877.458959817886",
+          "fresh_market_window_seconds": "16457.97300720215",
+          "fresh_market_fraction": "0.975145194924517",
+          "availability_basis": "window-seconds; fresh BTC, both books and verified trades; known stale intervals retained",
+          "evidence_started_at": "1791843345.3511834",
+          "evidence_restore_error": false,
+          "clock_reversals": 0
+        },
+        "settled_windows": 18,
+        "fees_usd": "0.2671",
+        "locked_usd": "1.2241832167832174",
+        "directional_usd": "-5.439283216783216",
+        "pnl_usd": "-4.215099999999999",
+        "worst_usd": "-2.8509",
+        "take_attempts": 0,
+        "take_fills": 0,
+        "maker_orders": 846,
+        "maker_fills": 62,
+        "locks": 14,
+        "lock_fills": 12,
+        "take_fill_rate": null,
+        "maker_fill_rate": "0.07328605200945626",
+        "avg_latency_ms": "4770.04142963525",
+        "latency_definition": "durable real decision to venue fill timestamp; maker includes resting time"
+      },
+      "total": {
+        "day": null,
+        "windows": 199,
+        "fills": 904,
+        "latency": null,
+        "scorecard": null,
+        "settled_windows": 213,
+        "fees_usd": "3.38382",
+        "locked_usd": "4.9041323376623245",
+        "directional_usd": "-28.611032337662333",
+        "pnl_usd": "-23.706900000000008",
+        "worst_usd": "-2.9791999999999987",
+        "take_attempts": 39,
+        "take_fills": 17,
+        "maker_orders": 7847,
+        "maker_fills": 649,
+        "locks": 156,
+        "lock_fills": 123,
+        "take_fill_rate": "0.4358974358974359",
+        "maker_fill_rate": "0.08270676691729323",
+        "avg_latency_ms": "3924.8672190999923",
+        "latency_definition": "durable real decision to venue fill timestamp; maker includes resting time"
+      },
+      "practice_twin": {
+        "day": "2026-10-16",
+        "windows": "9.0",
+        "settled_windows": "9.0",
+        "fills": "11.0",
+        "locked_usd": "0.5099999999999998",
+        "directional_usd": "0.6300000000000008",
+        "pnl_usd": "1.1400000000000006",
+        "won": "4.0",
+        "lost": "5.0",
+        "worst_usd": "-2.04",
+        "take_attempts": 0,
+        "take_fills": 0,
+        "maker_orders": "769.0",
+        "maker_fills": "11.0",
+        "take_fill_rate": null,
+        "maker_fill_rate": "0.014304291287386216",
+        "avg_latency_ms": "8391.49663665078",
+        "venue": "kalshi",
+        "reporting_complete": true,
+        "fill_rate_basis": "orders_placed_on_day",
+        "latency": {
+          "btc_exchange_to_decision": {
+            "unit": "ms",
+            "scope": "practice_twin",
+            "cohort": "intents_created_on_utc_day",
+            "started_at": "1791843345.3511775",
+            "complete": true,
+            "partial_day": false,
+            "applicable": true,
+            "observations": 769,
+            "samples": 769,
+            "missing": 0,
+            "invalid": 0,
+            "errors": 0,
+            "timeouts": 0,
+            "overflow": false,
+            "median_ms": "244.09718438982964",
+            "p95_ms": "1158.102860674262",
+            "limitation": "Age of accepted Coinbase input; exchange/local clock uncertainty remains"
+          },
+          "btc_receipt_to_decision": {
+            "unit": "ms",
+            "scope": "practice_twin",
+            "cohort": "intents_created_on_utc_day",
+            "started_at": "1791843345.3511775",
+            "complete": true,
+            "partial_day": false,
+            "applicable": true,
+            "observations": 769,
+            "samples": 769,
+            "missing": 0,
+            "invalid": 0,
+            "errors": 0,
+            "timeouts": 0,
+            "overflow": false,
+            "median_ms": "196.3725839741528",
+            "p95_ms": "1059.3977752141654",
+            "limitation": "Age since strategy callback receipt; not pure computation or proven trigger reaction"
+          },
+          "decision_to_ack": {
+            "unit": "ms",
+            "scope": "practice_twin",
+            "cohort": "intents_created_on_utc_day",
+            "started_at": "1791843345.3511775",
+            "complete": true,
+            "partial_day": false,
+            "applicable": false,
+            "observations": 0,
+            "samples": 0,
+            "missing": 0,
+            "invalid": 0,
+            "errors": 0,
+            "timeouts": 0,
+            "overflow": false,
+            "median_ms": null,
+            "p95_ms": null,
+            "limitation": "Decision to observed validated exchange acknowledgement; includes journal, queue and HTTP time"
+          }
+        },
+        "scorecard": {
+          "version": 1,
+          "scope": "practice_twin",
+          "venue": "kalshi",
+          "day": "2026-10-16",
+          "cohort": "window end UTC day",
+          "population": "fully observed windows with complete fill history",
+          "coverage_basis": "complete window discovery and recorded ledger history; market availability reported separately",
+          "status": "partial",
+          "day_complete": false,
+          "utc_day_ended": false,
+          "reasons": [
+            "UTC day is still open",
+            "Full-day discovery and recording coverage is not certified",
+            "Some window coverage or fill history is missing or invalid"
+          ],
+          "eligible_windows": 19,
+          "complete_windows": 8,
+          "unknown_coverage_windows": 0,
+          "gap_windows": 11,
+          "invalid_windows": 0,
+          "invalid_fill_windows": 0,
+          "invalid_settlement_windows": 0,
+          "traded_windows": 5,
+          "zero_fill_windows": 3,
+          "fills": 7,
+          "fills_per_window": "0.875",
+          "fills_per_traded_window": "1.4",
+          "both_sides_windows": 1,
+          "both_sides_share": "0.125",
+          "both_sides_traded_share": "0.2",
+          "median_imbalance": "1.0",
+          "imbalance_basis": "final quantity imbalance in traded fully observed windows",
+          "taker_fill_share": "0.0",
+          "known_role_taker_share": "0.0",
+          "role_coverage": "1.0",
+          "unknown_role_fills": 0,
+          "matched_pairs": "3.0",
+          "matched_pair_cost_usd": "0.8300000000000001",
+          "matched_pair_fees_usd": "0.0",
+          "unmatched_fees_usd": "0.0",
+          "fees_usd": "0.0",
+          "settled_traded_windows": 5,
+          "unsettled_traded_windows": 0,
+          "settled_pnl_usd": "0.3300000000000005",
+          "locked_usd": "0.5099999999999998",
+          "directional_usd": "-0.17999999999999927",
+          "pnl_usd": "0.3300000000000005",
+          "pnl_per_window_usd": "0.041250000000000064",
+          "worst_window_usd": "-2.04",
+          "worst_window_basis": "settled traded fully observed windows",
+          "full_cohort_worst_usd": "-2.04",
+          "cap_change_allowed": false,
+          "automatic_promotion": false,
+          "observed_window_seconds": "16877.458959817886",
+          "fresh_market_window_seconds": "16457.97300720215",
+          "fresh_market_fraction": "0.975145194924517",
+          "availability_basis": "window-seconds; fresh BTC, both books and verified trades; known stale intervals retained",
+          "evidence_started_at": "1791843345.3511834",
+          "evidence_restore_error": false,
+          "clock_reversals": 0
+        }
+      },
+      "twin_trace": {
+        "enabled": true,
+        "version": 1,
+        "session": "aaf595d8f5114d928ecf18c439805efe",
+        "pending": 0,
+        "max_pending": 128,
+        "pending_dropped": 0,
+        "terminal_cached": 31,
+        "max_terminal": 256,
+        "terminal_evicted": 0,
+        "identities_omitted": 0,
+        "helper_failures": 0,
+        "helper_error": null,
+        "publication_dropped": 0,
+        "publication_unknown_batches": 0,
+        "max_published_pending": 128,
+        "publication": "next_existing_checkpoint"
+      },
+      "reports": {
+        "2026-10-12": {
+          "day": "2026-10-12",
+          "real": {
+            "day": "2026-10-12",
+            "windows": 2,
+            "fills": 3,
+            "latency": {
+              "btc_exchange_to_decision": {
+                "unit": "ms",
+                "scope": "real_kalshi",
+                "cohort": "intents_created_on_utc_day",
+                "started_at": "1791843345.3511775",
+                "complete": true,
+                "partial_day": true,
+                "applicable": true,
+                "observations": 51,
+                "samples": 51,
+                "missing": 0,
+                "invalid": 0,
+                "errors": 0,
+                "timeouts": 0,
+                "overflow": false,
+                "median_ms": "502.79222894459963",
+                "p95_ms": "1029.86229211092",
+                "limitation": "Age of accepted Coinbase input; exchange/local clock uncertainty remains"
+              },
+              "btc_receipt_to_decision": {
+                "unit": "ms",
+                "scope": "real_kalshi",
+                "cohort": "intents_created_on_utc_day",
+                "started_at": "1791843345.3511775",
+                "complete": true,
+                "partial_day": true,
+                "applicable": true,
+                "observations": 51,
+                "samples": 51,
+                "missing": 0,
+                "invalid": 0,
+                "errors": 0,
+                "timeouts": 0,
+                "overflow": false,
+                "median_ms": "342.43844682350755",
+                "p95_ms": "869.1114261746407",
+                "limitation": "Age since strategy callback receipt; not pure computation or proven trigger reaction"
+              },
+              "decision_to_ack": {
+                "unit": "ms",
+                "scope": "real_kalshi",
+                "cohort": "intents_created_on_utc_day",
+                "started_at": "1791843345.3511775",
+                "complete": true,
+                "partial_day": true,
+                "applicable": true,
+                "observations": 51,
+                "samples": 27,
+                "missing": 0,
+                "invalid": 0,
+                "errors": 24,
+                "timeouts": 0,
+                "overflow": false,
+                "median_ms": "558.0246862955391",
+                "p95_ms": "2379.6487310901284",
+                "limitation": "Decision to observed validated exchange acknowledgement; includes journal, queue and HTTP time",
+                "pending_or_lost_ack": 0
+              }
+            },
+            "scorecard": {
+              "version": 1,
+              "scope": "real",
+              "venue": "kalshi",
+              "day": "2026-10-12",
+              "cohort": "window end UTC day",
+              "population": "fully observed windows with complete fill history",
+              "coverage_basis": "complete window discovery and recorded ledger history; market availability reported separately",
+              "status": "partial",
+              "day_complete": false,
+              "utc_day_ended": true,
+              "reasons": [
+                "Full-day discovery and recording coverage is not certified",
+                "Some window coverage or fill history is missing or invalid"
+              ],
+              "eligible_windows": 19,
+              "complete_windows": 0,
+              "unknown_coverage_windows": 14,
+              "gap_windows": 5,
+              "invalid_windows": 0,
+              "invalid_fill_windows": 0,
+              "invalid_settlement_windows": 0,
+              "traded_windows": 0,
+              "zero_fill_windows": 0,
+              "fills": 0,
+              "fills_per_window": null,
+              "fills_per_traded_window": null,
+              "both_sides_windows": 0,
+              "both_sides_share": null,
+              "both_sides_traded_share": null,
+              "median_imbalance": null,
+              "imbalance_basis": "final quantity imbalance in traded fully observed windows",
+              "taker_fill_share": null,
+              "known_role_taker_share": null,
+              "role_coverage": null,
+              "unknown_role_fills": 0,
+              "matched_pairs": "0.0",
+              "matched_pair_cost_usd": null,
+              "matched_pair_fees_usd": null,
+              "unmatched_fees_usd": null,
+              "fees_usd": null,
+              "settled_traded_windows": 0,
+              "unsettled_traded_windows": 0,
+              "settled_pnl_usd": null,
+              "locked_usd": null,
+              "directional_usd": null,
+              "pnl_usd": null,
+              "pnl_per_window_usd": null,
+              "worst_window_usd": null,
+              "worst_window_basis": "settled traded fully observed windows",
+              "full_cohort_worst_usd": null,
+              "cap_change_allowed": false,
+              "automatic_promotion": false,
+              "observed_window_seconds": "5161.085710763931",
+              "fresh_market_window_seconds": "4810.258069992065",
+              "fresh_market_fraction": "0.9320244498090428",
+              "availability_basis": "window-seconds; fresh BTC, both books and verified trades; known stale intervals retained",
+              "evidence_started_at": "1791843345.3511834",
+              "evidence_restore_error": false,
+              "clock_reversals": 0
+            },
+            "settled_windows": 2,
+            "fees_usd": "0.06970000000000001",
+            "locked_usd": "0.0",
+            "directional_usd": "1.0653000000000001",
+            "pnl_usd": "1.0653000000000001",
+            "worst_usd": "0.0",
+            "take_attempts": 21,
+            "take_fills": 2,
+            "maker_orders": 30,
+            "maker_fills": 1,
+            "locks": 0,
+            "lock_fills": 0,
+            "take_fill_rate": "0.09523809523809523",
+            "maker_fill_rate": "0.03333333333333333",
+            "avg_latency_ms": "572.3930199941",
+            "latency_definition": "durable real decision to venue fill timestamp; maker includes resting time"
+          },
+          "practice_twin": {
+            "day": "2026-10-12",
+            "windows": "3.0",
+            "settled_windows": "2.0",
+            "fills": "4.0",
+            "locked_usd": "0.9252999999999999",
+            "directional_usd": "-0.29689999999999994",
+            "pnl_usd": "0.6284",
+            "won": "1.0",
+            "lost": "1.0",
+            "worst_usd": "-0.29690000000000005",
+            "take_attempts": "4.0",
+            "take_fills": "3.0",
+            "maker_orders": "24.0",
+            "maker_fills": "1.0",
+            "take_fill_rate": "0.75",
+            "maker_fill_rate": "0.041666666666666664",
+            "avg_latency_ms": "768.3150768280029",
+            "venue": "kalshi",
+            "reporting_complete": true,
+            "fill_rate_basis": "orders_placed_on_day",
+            "latency": {
+              "btc_exchange_to_decision": {
+                "unit": "ms",
+                "scope": "practice_twin",
+                "cohort": "intents_created_on_utc_day",
+                "started_at": "1791843345.3511775",
+                "complete": true,
+                "partial_day": true,
+                "applicable": true,
+                "observations": 28,
+                "samples": 28,
+                "missing": 0,
+                "invalid": 0,
+                "errors": 0,
+                "timeouts": 0,
+                "overflow": false,
+                "median_ms": "475.4726127721369",
+                "p95_ms": "880.1775365136564",
+                "limitation": "Age of accepted Coinbase input; exchange/local clock uncertainty remains"
+              },
+              "btc_receipt_to_decision": {
+                "unit": "ms",
+                "scope": "practice_twin",
+                "cohort": "intents_created_on_utc_day",
+                "started_at": "1791843345.3511775",
+                "complete": true,
+                "partial_day": true,
+                "applicable": true,
+                "observations": 28,
+                "samples": 28,
+                "missing": 0,
+                "invalid": 0,
+                "errors": 0,
+                "timeouts": 0,
+                "overflow": false,
+                "median_ms": "342.3701000865549",
+                "p95_ms": "709.5763022080064",
+                "limitation": "Age since strategy callback receipt; not pure computation or proven trigger reaction"
+              },
+              "decision_to_ack": {
+                "unit": "ms",
+                "scope": "practice_twin",
+                "cohort": "intents_created_on_utc_day",
+                "started_at": "1791843345.3511775",
+                "complete": true,
+                "partial_day": true,
+                "applicable": false,
+                "observations": 0,
+                "samples": 0,
+                "missing": 0,
+                "invalid": 0,
+                "errors": 0,
+                "timeouts": 0,
+                "overflow": false,
+                "median_ms": null,
+                "p95_ms": null,
+                "limitation": "Decision to observed validated exchange acknowledgement; includes journal, queue and HTTP time"
+              }
+            },
+            "scorecard": {
+              "version": 1,
+              "scope": "practice_twin",
+              "venue": "kalshi",
+              "day": "2026-10-12",
+              "cohort": "window end UTC day",
+              "population": "fully observed windows with complete fill history",
+              "coverage_basis": "complete window discovery and recorded ledger history; market availability reported separately",
+              "status": "partial",
+              "day_complete": false,
+              "utc_day_ended": true,
+              "reasons": [
+                "Full-day discovery and recording coverage is not certified",
+                "Some window coverage or fill history is missing or invalid"
+              ],
+              "eligible_windows": 19,
+              "complete_windows": 0,
+              "unknown_coverage_windows": 14,
+              "gap_windows": 5,
+              "invalid_windows": 0,
+              "invalid_fill_windows": 0,
+              "invalid_settlement_windows": 0,
+              "traded_windows": 0,
+              "zero_fill_windows": 0,
+              "fills": 0,
+              "fills_per_window": null,
+              "fills_per_traded_window": null,
+              "both_sides_windows": 0,
+              "both_sides_share": null,
+              "both_sides_traded_share": null,
+              "median_imbalance": null,
+              "imbalance_basis": "final quantity imbalance in traded fully observed windows",
+              "taker_fill_share": null,
+              "known_role_taker_share": null,
+              "role_coverage": null,
+              "unknown_role_fills": 0,
+              "matched_pairs": "0.0",
+              "matched_pair_cost_usd": null,
+              "matched_pair_fees_usd": null,
+              "unmatched_fees_usd": null,
+              "fees_usd": null,
+              "settled_traded_windows": 0,
+              "unsettled_traded_windows": 0,
+              "settled_pnl_usd": null,
+              "locked_usd": null,
+              "directional_usd": null,
+              "pnl_usd": null,
+              "pnl_per_window_usd": null,
+              "worst_window_usd": null,
+              "worst_window_basis": "settled traded fully observed windows",
+              "full_cohort_worst_usd": null,
+              "cap_change_allowed": false,
+              "automatic_promotion": false,
+              "observed_window_seconds": "5161.085710763931",
+              "fresh_market_window_seconds": "4810.258069992065",
+              "fresh_market_fraction": "0.9320244498090428",
+              "availability_basis": "window-seconds; fresh BTC, both books and verified trades; known stale intervals retained",
+              "evidence_started_at": "1791843345.3511834",
+              "evidence_restore_error": false,
+              "clock_reversals": 0
+            }
+          }
+        },
+        "2026-10-13": {
+          "day": "2026-10-13",
+          "real": {
+            "day": "2026-10-13",
+            "windows": 68,
+            "fills": 299,
+            "latency": {
+              "btc_exchange_to_decision": {
+                "unit": "ms",
+                "scope": "real_kalshi",
+                "cohort": "intents_created_on_utc_day",
+                "started_at": "1791843345.3511775",
+                "complete": true,
+                "partial_day": false,
+                "applicable": true,
+                "observations": 1535,
+                "samples": 1535,
+                "missing": 0,
+                "invalid": 0,
+                "errors": 0,
+                "timeouts": 0,
+                "overflow": false,
+                "median_ms": "457.4163858778775",
+                "p95_ms": "1408.5497185587883",
+                "limitation": "Age of accepted Coinbase input; exchange/local clock uncertainty remains"
+              },
+              "btc_receipt_to_decision": {
+                "unit": "ms",
+                "scope": "real_kalshi",
+                "cohort": "intents_created_on_utc_day",
+                "started_at": "1791843345.3511775",
+                "complete": true,
+                "partial_day": false,
+                "applicable": true,
+                "observations": 1535,
+                "samples": 1535,
+                "missing": 0,
+                "invalid": 0,
+                "errors": 0,
+                "timeouts": 0,
+                "overflow": false,
+                "median_ms": "335.8255159109831",
+                "p95_ms": "1159.13670277223",
+                "limitation": "Age since strategy callback receipt; not pure computation or proven trigger reaction"
+              },
+              "decision_to_ack": {
+                "unit": "ms",
+                "scope": "real_kalshi",
+                "cohort": "intents_created_on_utc_day",
+                "started_at": "1791843345.3511775",
+                "complete": true,
+                "partial_day": false,
+                "applicable": true,
+                "observations": 1535,
+                "samples": 1514,
+                "missing": 0,
+                "invalid": 0,
+                "errors": 21,
+                "timeouts": 0,
+                "overflow": false,
+                "median_ms": "347.5819684099406",
+                "p95_ms": "1228.8702107034624",
+                "limitation": "Decision to observed validated exchange acknowledgement; includes journal, queue and HTTP time",
+                "pending_or_lost_ack": 0
+              }
+            },
+            "scorecard": {
+              "version": 1,
+              "scope": "real",
+              "venue": "kalshi",
+              "day": "2026-10-13",
+              "cohort": "window end UTC day",
+              "population": "fully observed windows with complete fill history",
+              "coverage_basis": "complete window discovery and recorded ledger history; market availability reported separately",
+              "status": "partial",
+              "day_complete": false,
+              "utc_day_ended": true,
+              "reasons": [
+                "Full-day discovery and recording coverage is not certified",
+                "Some window coverage or fill history is missing or invalid"
+              ],
+              "eligible_windows": 96,
+              "complete_windows": 6,
+              "unknown_coverage_windows": 0,
+              "gap_windows": 90,
+              "invalid_windows": 0,
+              "invalid_fill_windows": 0,
+              "invalid_settlement_windows": 0,
+              "traded_windows": 4,
+              "zero_fill_windows": 2,
+              "fills": 6,
+              "fills_per_window": "1.0",
+              "fills_per_traded_window": "1.5",
+              "both_sides_windows": 1,
+              "both_sides_share": "0.16666666666666666",
+              "both_sides_traded_share": "0.25",
+              "median_imbalance": "1.0",
+              "imbalance_basis": "final quantity imbalance in traded fully observed windows",
+              "taker_fill_share": "0.16666666666666666",
+              "known_role_taker_share": "0.16666666666666666",
+              "role_coverage": "1.0",
+              "unknown_role_fills": 0,
+              "matched_pairs": "2.0",
+              "matched_pair_cost_usd": "0.7341666666666666",
+              "matched_pair_fees_usd": "0.035",
+              "unmatched_fees_usd": "0.0",
+              "fees_usd": "0.035",
+              "settled_traded_windows": 4,
+              "unsettled_traded_windows": 0,
+              "settled_pnl_usd": "-2.915",
+              "locked_usd": "0.5316666666666667",
+              "directional_usd": "-3.4466666666666663",
+              "pnl_usd": "-2.915",
+              "pnl_per_window_usd": "-0.48583333333333334",
+              "worst_window_usd": "-1.5",
+              "worst_window_basis": "settled traded fully observed windows",
+              "full_cohort_worst_usd": "-1.5",
+              "cap_change_allowed": false,
+              "automatic_promotion": false,
+              "observed_window_seconds": "84787.89368104935",
+              "fresh_market_window_seconds": "82986.1922249794",
+              "fresh_market_fraction": "0.9787504869168293",
+              "availability_basis": "window-seconds; fresh BTC, both books and verified trades; known stale intervals retained",
+              "evidence_started_at": "1791843345.3511834",
+              "evidence_restore_error": false,
+              "clock_reversals": 0
+            },
+            "settled_windows": 71,
+            "fees_usd": "1.50042",
+            "locked_usd": "-0.25656062271062496",
+            "directional_usd": "-10.750839377289378",
+            "pnl_usd": "-11.007400000000002",
+            "worst_usd": "-2.9791999999999987",
+            "take_attempts": 18,
+            "take_fills": 15,
+            "maker_orders": 1517,
+            "maker_fills": 203,
+            "locks": 49,
+            "lock_fills": 43,
+            "take_fill_rate": "0.8333333333333334",
+            "maker_fill_rate": "0.13381674357284112",
+            "avg_latency_ms": "5106.7440107644325",
+            "latency_definition": "durable real decision to venue fill timestamp; maker includes resting time"
+          },
+          "practice_twin": {
+            "day": "2026-10-13",
+            "windows": "25.0",
+            "settled_windows": "26.0",
+            "fills": "44.0",
+            "locked_usd": "3.9948333333333323",
+            "directional_usd": "-10.878133333333333",
+            "pnl_usd": "-6.883300000000001",
+            "won": "11.0",
+            "lost": "15.0",
+            "worst_usd": "-2.8499999999999996",
+            "take_attempts": "15.0",
+            "take_fills": "13.0",
+            "maker_orders": "632.0",
+            "maker_fills": "30.0",
+            "take_fill_rate": "0.8666666666666667",
+            "maker_fill_rate": "0.04746835443037975",
+            "avg_latency_ms": "6673.674550923434",
+            "venue": "kalshi",
+            "reporting_complete": true,
+            "fill_rate_basis": "orders_placed_on_day",
+            "latency": {
+              "btc_exchange_to_decision": {
+                "unit": "ms",
+                "scope": "practice_twin",
+                "cohort": "intents_created_on_utc_day",
+                "started_at": "1791843345.3511775",
+                "complete": true,
+                "partial_day": false,
+                "applicable": true,
+                "observations": 647,
+                "samples": 647,
+                "missing": 0,
+                "invalid": 0,
+                "errors": 0,
+                "timeouts": 0,
+                "overflow": false,
+                "median_ms": "429.09388104453683",
+                "p95_ms": "1330.4711570963264",
+                "limitation": "Age of accepted Coinbase input; exchange/local clock uncertainty remains"
+              },
+              "btc_receipt_to_decision": {
+                "unit": "ms",
+                "scope": "practice_twin",
+                "cohort": "intents_created_on_utc_day",
+                "started_at": "1791843345.3511775",
+                "complete": true,
+                "partial_day": false,
+                "applicable": true,
+                "observations": 647,
+                "samples": 647,
+                "missing": 0,
+                "invalid": 0,
+                "errors": 0,
+                "timeouts": 0,
+                "overflow": false,
+                "median_ms": "326.29656977951527",
+                "p95_ms": "1131.8337442353368",
+                "limitation": "Age since strategy callback receipt; not pure computation or proven trigger reaction"
+              },
+              "decision_to_ack": {
+                "unit": "ms",
+                "scope": "practice_twin",
+                "cohort": "intents_created_on_utc_day",
+                "started_at": "1791843345.3511775",
+                "complete": true,
+                "partial_day": false,
+                "applicable": false,
+                "observations": 0,
+                "samples": 0,
+                "missing": 0,
+                "invalid": 0,
+                "errors": 0,
+                "timeouts": 0,
+                "overflow": false,
+                "median_ms": null,
+                "p95_ms": null,
+                "limitation": "Decision to observed validated exchange acknowledgement; includes journal, queue and HTTP time"
+              }
+            },
+            "scorecard": {
+              "version": 1,
+              "scope": "practice_twin",
+              "venue": "kalshi",
+              "day": "2026-10-13",
+              "cohort": "window end UTC day",
+              "population": "fully observed windows with complete fill history",
+              "coverage_basis": "complete window discovery and recorded ledger history; market availability reported separately",
+              "status": "partial",
+              "day_complete": false,
+              "utc_day_ended": true,
+              "reasons": [
+                "Full-day discovery and recording coverage is not certified",
+                "Some window coverage or fill history is missing or invalid"
+              ],
+              "eligible_windows": 96,
+              "complete_windows": 6,
+              "unknown_coverage_windows": 0,
+              "gap_windows": 90,
+              "invalid_windows": 0,
+              "invalid_fill_windows": 0,
+              "invalid_settlement_windows": 0,
+              "traded_windows": 3,
+              "zero_fill_windows": 3,
+              "fills": 5,
+              "fills_per_window": "0.8333333333333334",
+              "fills_per_traded_window": "1.6666666666666667",
+              "both_sides_windows": 1,
+              "both_sides_share": "0.16666666666666666",
+              "both_sides_traded_share": "0.3333333333333333",
+              "median_imbalance": "1.0",
+              "imbalance_basis": "final quantity imbalance in traded fully observed windows",
+              "taker_fill_share": "0.2",
+              "known_role_taker_share": "0.2",
+              "role_coverage": "1.0",
+              "unknown_role_fills": 0,
+              "matched_pairs": "1.0",
+              "matched_pair_cost_usd": "0.6675",
+              "matched_pair_fees_usd": "0.0175",
+              "unmatched_fees_usd": "0.0175",
+              "fees_usd": "0.035",
+              "settled_traded_windows": 3,
+              "unsettled_traded_windows": 0,
+              "settled_pnl_usd": "-1.5949999999999998",
+              "locked_usd": "0.3325",
+              "directional_usd": "-1.9274999999999998",
+              "pnl_usd": "-1.5949999999999998",
+              "pnl_per_window_usd": "-0.2658333333333333",
+              "worst_window_usd": "-1.5",
+              "worst_window_basis": "settled traded fully observed windows",
+              "full_cohort_worst_usd": "-1.5",
+              "cap_change_allowed": false,
+              "automatic_promotion": false,
+              "observed_window_seconds": "84787.89368104935",
+              "fresh_market_window_seconds": "82986.1922249794",
+              "fresh_market_fraction": "0.9787504869168293",
+              "availability_basis": "window-seconds; fresh BTC, both books and verified trades; known stale intervals retained",
+              "evidence_started_at": "1791843345.3511834",
+              "evidence_restore_error": false,
+              "clock_reversals": 0
+            }
+          }
+        },
+        "2026-10-14": {
+          "day": "2026-10-14",
+          "real": {
+            "day": "2026-10-14",
+            "windows": 41,
+            "fills": 222,
+            "latency": {
+              "btc_exchange_to_decision": {
+                "unit": "ms",
+                "scope": "real_kalshi",
+                "cohort": "intents_created_on_utc_day",
+                "started_at": "1791843345.3511775",
+                "complete": true,
+                "partial_day": false,
+                "applicable": true,
+                "observations": 1872,
+                "samples": 1872,
+                "missing": 0,
+                "invalid": 0,
+                "errors": 0,
+                "timeouts": 0,
+                "overflow": false,
+                "median_ms": "213.8295213226229",
+                "p95_ms": "916.7150352150202",
+                "limitation": "Age of accepted Coinbase input; exchange/local clock uncertainty remains"
+              },
+              "btc_receipt_to_decision": {
+                "unit": "ms",
+                "scope": "real_kalshi",
+                "cohort": "intents_created_on_utc_day",
+                "started_at": "1791843345.3511775",
+                "complete": true,
+                "partial_day": false,
+                "applicable": true,
+                "observations": 1872,
+                "samples": 1872,
+                "missing": 0,
+                "invalid": 0,
+                "errors": 0,
+                "timeouts": 0,
+                "overflow": false,
+                "median_ms": "154.01256759651005",
+                "p95_ms": "725.2382133156061",
+                "limitation": "Age since strategy callback receipt; not pure computation or proven trigger reaction"
+              },
+              "decision_to_ack": {
+                "unit": "ms",
+                "scope": "real_kalshi",
+                "cohort": "intents_created_on_utc_day",
+                "started_at": "1791843345.3511775",
+                "complete": true,
+                "partial_day": false,
+                "applicable": true,
+                "observations": 1872,
+                "samples": 1854,
+                "missing": 0,
+                "invalid": 0,
+                "errors": 18,
+                "timeouts": 0,
+                "overflow": false,
+                "median_ms": "94.47284718044102",
+                "p95_ms": "740.1028391905129",
+                "limitation": "Decision to observed validated exchange acknowledgement; includes journal, queue and HTTP time",
+                "pending_or_lost_ack": 0
+              }
+            },
+            "scorecard": {
+              "version": 1,
+              "scope": "real",
+              "venue": "kalshi",
+              "day": "2026-10-14",
+              "cohort": "window end UTC day",
+              "population": "fully observed windows with complete fill history",
+              "coverage_basis": "complete window discovery and recorded ledger history; market availability reported separately",
+              "status": "partial",
+              "day_complete": false,
+              "utc_day_ended": true,
+              "reasons": [
+                "Full-day discovery and recording coverage is not certified",
+                "Some window coverage or fill history is missing or invalid"
+              ],
+              "eligible_windows": 96,
+              "complete_windows": 0,
+              "unknown_coverage_windows": 0,
+              "gap_windows": 96,
+              "invalid_windows": 0,
+              "invalid_fill_windows": 0,
+              "invalid_settlement_windows": 0,
+              "traded_windows": 0,
+              "zero_fill_windows": 0,
+              "fills": 0,
+              "fills_per_window": null,
+              "fills_per_traded_window": null,
+              "both_sides_windows": 0,
+              "both_sides_share": null,
+              "both_sides_traded_share": null,
+              "median_imbalance": null,
+              "imbalance_basis": "final quantity imbalance in traded fully observed windows",
+              "taker_fill_share": null,
+              "known_role_taker_share": null,
+              "role_coverage": null,
+              "unknown_role_fills": 0,
+              "matched_pairs": "0.0",
+              "matched_pair_cost_usd": null,
+              "matched_pair_fees_usd": null,
+              "unmatched_fees_usd": null,
+              "fees_usd": null,
+              "settled_traded_windows": 0,
+              "unsettled_traded_windows": 0,
+              "settled_pnl_usd": null,
+              "locked_usd": null,
+              "directional_usd": null,
+              "pnl_usd": null,
+              "pnl_per_window_usd": null,
+              "worst_window_usd": null,
+              "worst_window_basis": "settled traded fully observed windows",
+              "full_cohort_worst_usd": null,
+              "cap_change_allowed": false,
+              "automatic_promotion": false,
+              "observed_window_seconds": "83213.0475115776",
+              "fresh_market_window_seconds": "80125.2873723507",
+              "fresh_market_fraction": "0.9628933174356185",
+              "availability_basis": "window-seconds; fresh BTC, both books and verified trades; known stale intervals retained",
+              "evidence_started_at": "1791843345.3511834",
+              "evidence_restore_error": false,
+              "clock_reversals": 0
+            },
+            "settled_windows": 51,
+            "fees_usd": "0.7011",
+            "locked_usd": "-0.564641025641027",
+            "directional_usd": "-3.940358974358971",
+            "pnl_usd": "-4.504999999999998",
+            "worst_usd": "-2.15",
+            "take_attempts": 0,
+            "take_fills": 0,
+            "maker_orders": 1872,
+            "maker_fills": 159,
+            "locks": 32,
+            "lock_fills": 29,
+            "take_fill_rate": null,
+            "maker_fill_rate": "0.08493589743589744",
+            "avg_latency_ms": "3178.333187363838",
+            "latency_definition": "durable real decision to venue fill timestamp; maker includes resting time"
+          },
+          "practice_twin": {
+            "day": "2026-10-14",
+            "windows": "67.0",
+            "settled_windows": "67.0",
+            "fills": "199.0",
+            "locked_usd": "33.648223193473186",
+            "directional_usd": "-21.418223193473196",
+            "pnl_usd": "12.229999999999995",
+            "won": "37.0",
+            "lost": "29.0",
+            "worst_usd": "-3.1",
+            "take_attempts": 0,
+            "take_fills": 0,
+            "maker_orders": "4746.0",
+            "maker_fills": "193.0",
+            "take_fill_rate": null,
+            "maker_fill_rate": "0.04066582385166456",
+            "avg_latency_ms": "6536.755796652942",
+            "venue": "kalshi",
+            "reporting_complete": true,
+            "fill_rate_basis": "orders_placed_on_day",
+            "latency": {
+              "btc_exchange_to_decision": {
+                "unit": "ms",
+                "scope": "practice_twin",
+                "cohort": "intents_created_on_utc_day",
+                "started_at": "1791843345.3511775",
+                "complete": true,
+                "partial_day": false,
+                "applicable": true,
+                "observations": 1513,
+                "samples": 1513,
+                "missing": 0,
+                "invalid": 0,
+                "errors": 0,
+                "timeouts": 0,
+                "overflow": false,
+                "median_ms": "203.4881617873907",
+                "p95_ms": "895.6194412894547",
+                "limitation": "Age of accepted Coinbase input; exchange/local clock uncertainty remains"
+              },
+              "btc_receipt_to_decision": {
+                "unit": "ms",
+                "scope": "practice_twin",
+                "cohort": "intents_created_on_utc_day",
+                "started_at": "1791843345.3511775",
+                "complete": true,
+                "partial_day": false,
+                "applicable": true,
+                "observations": 1513,
+                "samples": 1513,
+                "missing": 0,
+                "invalid": 0,
+                "errors": 0,
+                "timeouts": 0,
+                "overflow": false,
+                "median_ms": "143.99083703756332",
+                "p95_ms": "724.7859220951796",
+                "limitation": "Age since strategy callback receipt; not pure computation or proven trigger reaction"
+              },
+              "decision_to_ack": {
+                "unit": "ms",
+                "scope": "practice_twin",
+                "cohort": "intents_created_on_utc_day",
+                "started_at": "1791843345.3511775",
+                "complete": true,
+                "partial_day": false,
+                "applicable": false,
+                "observations": 0,
+                "samples": 0,
+                "missing": 0,
+                "invalid": 0,
+                "errors": 0,
+                "timeouts": 0,
+                "overflow": false,
+                "median_ms": null,
+                "p95_ms": null,
+                "limitation": "Decision to observed validated exchange acknowledgement; includes journal, queue and HTTP time"
+              }
+            },
+            "scorecard": {
+              "version": 1,
+              "scope": "practice_twin",
+              "venue": "kalshi",
+              "day": "2026-10-14",
+              "cohort": "window end UTC day",
+              "population": "fully observed windows with complete fill history",
+              "coverage_basis": "complete window discovery and recorded ledger history; market availability reported separately",
+              "status": "partial",
+              "day_complete": false,
+              "utc_day_ended": true,
+              "reasons": [
+                "Full-day discovery and recording coverage is not certified",
+                "Some window coverage or fill history is missing or invalid"
+              ],
+              "eligible_windows": 96,
+              "complete_windows": 0,
+              "unknown_coverage_windows": 0,
+              "gap_windows": 96,
+              "invalid_windows": 0,
+              "invalid_fill_windows": 0,
+              "invalid_settlement_windows": 0,
+              "traded_windows": 0,
+              "zero_fill_windows": 0,
+              "fills": 0,
+              "fills_per_window": null,
+              "fills_per_traded_window": null,
+              "both_sides_windows": 0,
+              "both_sides_share": null,
+              "both_sides_traded_share": null,
+              "median_imbalance": null,
+              "imbalance_basis": "final quantity imbalance in traded fully observed windows",
+              "taker_fill_share": null,
+              "known_role_taker_share": null,
+              "role_coverage": null,
+              "unknown_role_fills": 0,
+              "matched_pairs": "0.0",
+              "matched_pair_cost_usd": null,
+              "matched_pair_fees_usd": null,
+              "unmatched_fees_usd": null,
+              "fees_usd": null,
+              "settled_traded_windows": 0,
+              "unsettled_traded_windows": 0,
+              "settled_pnl_usd": null,
+              "locked_usd": null,
+              "directional_usd": null,
+              "pnl_usd": null,
+              "pnl_per_window_usd": null,
+              "worst_window_usd": null,
+              "worst_window_basis": "settled traded fully observed windows",
+              "full_cohort_worst_usd": null,
+              "cap_change_allowed": false,
+              "automatic_promotion": false,
+              "observed_window_seconds": "83213.0475115776",
+              "fresh_market_window_seconds": "80125.2873723507",
+              "fresh_market_fraction": "0.9628933174356185",
+              "availability_basis": "window-seconds; fresh BTC, both books and verified trades; known stale intervals retained",
+              "evidence_started_at": "1791843345.3511834",
+              "evidence_restore_error": false,
+              "clock_reversals": 0
+            }
+          }
+        },
+        "2026-10-15": {
+          "day": "2026-10-15",
+          "real": {
+            "day": "2026-10-15",
+            "windows": 69,
+            "fills": 302,
+            "latency": {
+              "btc_exchange_to_decision": {
+                "unit": "ms",
+                "scope": "real_kalshi",
+                "cohort": "intents_created_on_utc_day",
+                "started_at": "1791843345.3511775",
+                "complete": true,
+                "partial_day": false,
+                "applicable": true,
+                "observations": 3582,
+                "samples": 3582,
+                "missing": 0,
+                "invalid": 0,
+                "errors": 0,
+                "timeouts": 0,
+                "overflow": false,
+                "median_ms": "222.96836832538247",
+                "p95_ms": "809.786566067487",
+                "limitation": "Age of accepted Coinbase input; exchange/local clock uncertainty remains"
+              },
+              "btc_receipt_to_decision": {
+                "unit": "ms",
+                "scope": "real_kalshi",
+                "cohort": "intents_created_on_utc_day",
+                "started_at": "1791843345.3511775",
+                "complete": true,
+                "partial_day": false,
+                "applicable": true,
+                "observations": 3582,
+                "samples": 3582,
+                "missing": 0,
+                "invalid": 0,
+                "errors": 0,
+                "timeouts": 0,
+                "overflow": false,
+                "median_ms": "167.6201680675149",
+                "p95_ms": "709.717177785933",
+                "limitation": "Age since strategy callback receipt; not pure computation or proven trigger reaction"
+              },
+              "decision_to_ack": {
+                "unit": "ms",
+                "scope": "real_kalshi",
+                "cohort": "intents_created_on_utc_day",
+                "started_at": "1791843345.3511775",
+                "complete": true,
+                "partial_day": false,
+                "applicable": true,
+                "observations": 3582,
+                "samples": 3505,
+                "missing": 0,
+                "invalid": 0,
+                "errors": 77,
+                "timeouts": 0,
+                "overflow": false,
+                "median_ms": "81.85902191326022",
+                "p95_ms": "349.6475061401725",
+                "limitation": "Decision to observed validated exchange acknowledgement; includes journal, queue and HTTP time",
+                "pending_or_lost_ack": 0
+              }
+            },
+            "scorecard": {
+              "version": 1,
+              "scope": "real",
+              "venue": "kalshi",
+              "day": "2026-10-15",
+              "cohort": "window end UTC day",
+              "population": "fully observed windows with complete fill history",
+              "coverage_basis": "complete window discovery and recorded ledger history; market availability reported separately",
+              "status": "partial",
+              "day_complete": false,
+              "utc_day_ended": true,
+              "reasons": [
+                "Full-day discovery and recording coverage is not certified",
+                "Some window coverage or fill history is missing or invalid"
+              ],
+              "eligible_windows": 88,
+              "complete_windows": 29,
+              "unknown_coverage_windows": 0,
+              "gap_windows": 59,
+              "invalid_windows": 0,
+              "invalid_fill_windows": 0,
+              "invalid_settlement_windows": 0,
+              "traded_windows": 26,
+              "zero_fill_windows": 3,
+              "fills": 124,
+              "fills_per_window": "4.275862068965517",
+              "fills_per_traded_window": "4.769230769230769",
+              "both_sides_windows": 22,
+              "both_sides_share": "0.7586206896551724",
+              "both_sides_traded_share": "0.8461538461538461",
+              "median_imbalance": "0.0",
+              "imbalance_basis": "final quantity imbalance in traded fully observed windows",
+              "taker_fill_share": "0.1532258064516129",
+              "known_role_taker_share": "0.1532258064516129",
+              "role_coverage": "1.0",
+              "unknown_role_fills": 0,
+              "matched_pairs": "167.83",
+              "matched_pair_cost_usd": "1.0272344038610497",
+              "matched_pair_fees_usd": "0.3744",
+              "unmatched_fees_usd": "0.0",
+              "fees_usd": "0.3744",
+              "settled_traded_windows": 26,
+              "unsettled_traded_windows": 0,
+              "settled_pnl_usd": "-10.002800000000006",
+              "locked_usd": "-4.570750000000006",
+              "directional_usd": "-5.432049999999999",
+              "pnl_usd": "-10.002800000000006",
+              "pnl_per_window_usd": "-0.3449241379310347",
+              "worst_window_usd": "-2.7667",
+              "worst_window_basis": "settled traded fully observed windows",
+              "full_cohort_worst_usd": "-2.7667",
+              "cap_change_allowed": false,
+              "automatic_promotion": false,
+              "observed_window_seconds": "78221.32432866096",
+              "fresh_market_window_seconds": "74473.17172527313",
+              "fresh_market_fraction": "0.9520827263465996",
+              "availability_basis": "window-seconds; fresh BTC, both books and verified trades; known stale intervals retained",
+              "evidence_started_at": "1791843345.3511834",
+              "evidence_restore_error": false,
+              "clock_reversals": 0
+            },
+            "settled_windows": 71,
+            "fees_usd": "0.8455",
+            "locked_usd": "4.501150769230759",
+            "directional_usd": "-9.545850769230768",
+            "pnl_usd": "-5.044700000000009",
+            "worst_usd": "-2.7667",
+            "take_attempts": 0,
+            "take_fills": 0,
+            "maker_orders": 3582,
+            "maker_fills": 224,
+            "locks": 61,
+            "lock_fills": 39,
+            "take_fill_rate": null,
+            "maker_fill_rate": "0.06253489670575098",
+            "avg_latency_ms": "3148.5478732422107",
+            "latency_definition": "durable real decision to venue fill timestamp; maker includes resting time"
+          },
+          "practice_twin": {
+            "day": "2026-10-15",
+            "windows": "14.0",
+            "settled_windows": "14.0",
+            "fills": "14.0",
+            "locked_usd": "0.0",
+            "directional_usd": "0.49999999999999967",
+            "pnl_usd": "0.49999999999999967",
+            "won": "8.0",
+            "lost": "6.0",
+            "worst_usd": "-2.3000000000000003",
+            "take_attempts": 0,
+            "take_fills": 0,
+            "maker_orders": "3314.0",
+            "maker_fills": "14.0",
+            "take_fill_rate": null,
+            "maker_fill_rate": "0.004224502112251056",
+            "avg_latency_ms": "6552.3669719696045",
+            "venue": "kalshi",
+            "reporting_complete": true,
+            "fill_rate_basis": "orders_placed_on_day",
+            "latency": {
+              "btc_exchange_to_decision": {
+                "unit": "ms",
+                "scope": "practice_twin",
+                "cohort": "intents_created_on_utc_day",
+                "started_at": "1791843345.3511775",
+                "complete": true,
+                "partial_day": false,
+                "applicable": true,
+                "observations": 3314,
+                "samples": 3314,
+                "missing": 0,
+                "invalid": 0,
+                "errors": 0,
+                "timeouts": 0,
+                "overflow": false,
+                "median_ms": "218.95735198631883",
+                "p95_ms": "810.8731238171458",
+                "limitation": "Age of accepted Coinbase input; exchange/local clock uncertainty remains"
+              },
+              "btc_receipt_to_decision": {
+                "unit": "ms",
+                "scope": "practice_twin",
+                "cohort": "intents_created_on_utc_day",
+                "started_at": "1791843345.3511775",
+                "complete": true,
+                "partial_day": false,
+                "applicable": true,
+                "observations": 3314,
+                "samples": 3314,
+                "missing": 0,
+                "invalid": 0,
+                "errors": 0,
+                "timeouts": 0,
+                "overflow": false,
+                "median_ms": "165.52406665869057",
+                "p95_ms": "709.4650431536138",
+                "limitation": "Age since strategy callback receipt; not pure computation or proven trigger reaction"
+              },
+              "decision_to_ack": {
+                "unit": "ms",
+                "scope": "practice_twin",
+                "cohort": "intents_created_on_utc_day",
+                "started_at": "1791843345.3511775",
+                "complete": true,
+                "partial_day": false,
+                "applicable": false,
+                "observations": 0,
+                "samples": 0,
+                "missing": 0,
+                "invalid": 0,
+                "errors": 0,
+                "timeouts": 0,
+                "overflow": false,
+                "median_ms": null,
+                "p95_ms": null,
+                "limitation": "Decision to observed validated exchange acknowledgement; includes journal, queue and HTTP time"
+              }
+            },
+            "scorecard": {
+              "version": 1,
+              "scope": "practice_twin",
+              "venue": "kalshi",
+              "day": "2026-10-15",
+              "cohort": "window end UTC day",
+              "population": "fully observed windows with complete fill history",
+              "coverage_basis": "complete window discovery and recorded ledger history; market availability reported separately",
+              "status": "partial",
+              "day_complete": false,
+              "utc_day_ended": true,
+              "reasons": [
+                "Full-day discovery and recording coverage is not certified",
+                "Some window coverage or fill history is missing or invalid"
+              ],
+              "eligible_windows": 88,
+              "complete_windows": 29,
+              "unknown_coverage_windows": 0,
+              "gap_windows": 59,
+              "invalid_windows": 0,
+              "invalid_fill_windows": 0,
+              "invalid_settlement_windows": 0,
+              "traded_windows": 4,
+              "zero_fill_windows": 25,
+              "fills": 4,
+              "fills_per_window": "0.13793103448275862",
+              "fills_per_traded_window": "1.0",
+              "both_sides_windows": 0,
+              "both_sides_share": "0.0",
+              "both_sides_traded_share": "0.0",
+              "median_imbalance": "1.0",
+              "imbalance_basis": "final quantity imbalance in traded fully observed windows",
+              "taker_fill_share": "0.0",
+              "known_role_taker_share": "0.0",
+              "role_coverage": "1.0",
+              "unknown_role_fills": 0,
+              "matched_pairs": "0.0",
+              "matched_pair_cost_usd": null,
+              "matched_pair_fees_usd": "0.0",
+              "unmatched_fees_usd": "0.0",
+              "fees_usd": "0.0",
+              "settled_traded_windows": 4,
+              "unsettled_traded_windows": 0,
+              "settled_pnl_usd": "1.6099999999999999",
+              "locked_usd": "0.0",
+              "directional_usd": "1.6099999999999999",
+              "pnl_usd": "1.6099999999999999",
+              "pnl_per_window_usd": "0.05551724137931034",
+              "worst_window_usd": "-0.44",
+              "worst_window_basis": "settled traded fully observed windows",
+              "full_cohort_worst_usd": "-0.44",
+              "cap_change_allowed": false,
+              "automatic_promotion": false,
+              "observed_window_seconds": "78221.32432866096",
+              "fresh_market_window_seconds": "74473.17172527313",
+              "fresh_market_fraction": "0.9520827263465996",
+              "availability_basis": "window-seconds; fresh BTC, both books and verified trades; known stale intervals retained",
+              "evidence_started_at": "1791843345.3511834",
+              "evidence_restore_error": false,
+              "clock_reversals": 0
+            }
+          }
+        }
+      },
+      "pull": {
+        "enabled": false,
+        "move": "0.01",
+        "lookback_s": "5.0",
+        "hold_s": "5.0",
+        "since": null,
+        "first_live": "1791938263.6392145",
+        "day": "2026-10-16",
+        "held": {},
+        "pulls_today": 0,
+        "bids_pulled_today": 0,
+        "pulls_31d": 874,
+        "bids_pulled_31d": 28,
+        "since_pull": null,
+        "week_before": null
+      },
+      "fill_markouts": {
+        "enabled": true,
+        "mode": "diagnostic",
+        "fill_source": "real",
+        "session_id": "44e699e8b4468a141d31",
+        "protocol_version": 2,
+        "basis": "fills_batch_return",
+        "liquidity_scope": "isolated_fill_not_joint_inventory_liquidation",
+        "session_only": true,
+        "earlier_pending_unknown": true,
+        "restored_pending": false,
+        "started_at": "1792123704.7725313",
+        "horizons_s": [
+          1,
+          5,
+          30
+        ],
+        "sampling_method": "first_post_horizon_websocket_update",
+        "max_age_s": "0.5",
+        "max_levels_per_side": 512,
+        "max_measurements_per_book": 8,
+        "pending_fills": 0,
+        "max_pending": 1024,
+        "dedup_entries": 4,
+        "dedup_capacity": 8192,
+        "counts": {
+          "observed_fills": 4,
+          "gap_horizons": 8,
+          "measured_horizons": 4,
+          "full_depth_horizons": 4
+        },
+        "gap_reasons": {
+          "book_stale": 7,
+          "book_before_horizon": 1
+        },
+        "not_realized_pnl": true,
+        "exit_latency_not_simulated": true,
+        "error": null,
+        "own_depth_policy": "all_original_bot_order_sizes_in_window"
+      },
+      "latest_events": [
+        {
+          "event": "speeddesk_cancel",
+          "at": "1792125088.3354716",
+          "venue": "kalshi",
+          "window": "KXBTC15M-26OCT160045-45",
+          "side": "down",
+          "price": "0.51",
+          "size": "1.0",
+          "fair": "0.5468989674189825",
+          "edge": "0.036898967418982465",
+          "latency_ms": "2563.810348510742",
+          "bitcoin_price": "81990.59",
+          "bitcoin_staleness_s": "0.26500654220581055",
+          "reason": "reprice",
+          "order_id": 9502,
+          "fee_usd": "0.0",
+          "kind": "rest"
+        },
+        {
+          "event": "speeddesk_live_cancel",
+          "at": "1792125088.4212356",
+          "venue": {
+            "ts_ms": 1792125088355,
+            "sent_ms": "1792125088335.5",
+            "acked_ms": "1792125088421.2",
+            "offset_ms": "-23.4",
+            "rtt_ms": "85.7"
+          },
+          "client_order_id": "nc-speed-784355c3e63e49208568c8c5377e00f2",
+          "order_id": "01a142fa-a548-772b-8e09-70baca61bbf0",
+          "window": "KXBTC15M-26OCT160045-45",
+          "reason": "reprice",
+          "state": "requested; reservation retained until fills reconcile",
+          "reduced_by": "1.00",
+          "timing": {
+            "decision_to_ack_ms": "85.7",
+            "send_to_ack_ms": "85.7"
+          }
+        },
+        {
+          "event": "speeddesk_live_order",
+          "at": "1792125089.9153783",
+          "venue": "kalshi",
+          "client_order_id": "nc-speed-5b0aa0db73ee43948844c49d18df9828",
+          "window": "KXBTC15M-26OCT160045-45",
+          "side": "down",
+          "kind": "rest",
+          "price": "0.45",
+          "size": "1.0",
+          "fair": "0.4891117820205986",
+          "state": "durable intent",
+          "timing": [
+            {
+              "metric": "btc_exchange_to_decision",
+              "scope": "real_kalshi",
+              "at": "1792125089.9152873",
+              "value_ms": "359.81228901073337",
+              "status": "ok"
+            },
+            {
+              "metric": "btc_receipt_to_decision",
+              "scope": "real_kalshi",
+              "at": "1792125089.9152873",
+              "value_ms": "348.59326435253024",
+              "status": "ok"
+            }
+          ]
+        },
+        {
+          "event": "speeddesk_rest",
+          "at": "1792125089.9152873",
+          "venue": "kalshi",
+          "window": "KXBTC15M-26OCT160045-45",
+          "side": "down",
+          "price": "0.45",
+          "size": "1.0",
+          "fair": "0.4891117820205986",
+          "edge": "0.03911178202059856",
+          "latency_ms": "0.0",
+          "bitcoin_price": "82006.43",
+          "bitcoin_staleness_s": "0.35980725288391113",
+          "reason": "",
+          "order_id": 9503,
+          "fee_usd": "0.0",
+          "kind": "rest"
+        },
+        {
+          "event": "speeddesk_live_order",
+          "at": "1792125089.980628",
+          "venue": {
+            "ts_ms": 1792125089967,
+            "sent_ms": "1792125089933.8",
+            "acked_ms": "1792125089980.6",
+            "offset_ms": "9.8",
+            "rtt_ms": "46.8"
+          },
+          "client_order_id": "nc-speed-5b0aa0db73ee43948844c49d18df9828",
+          "order_id": "01a142fa-b4e8-7b55-98c1-0d9fc5aabc35",
+          "window": "KXBTC15M-26OCT160045-45",
+          "state": "accepted; waiting for real fills",
+          "timing": {
+            "metric": "decision_to_ack",
+            "scope": "real_kalshi",
+            "at": "1792125089.9152873",
+            "value_ms": "65.28328265994787",
+            "status": "ok"
+          },
+          "stages": {
+            "save_ms": "6.091482006013393",
+            "decision_to_send_ms": "18.453557044267654",
+            "send_to_ack_ms": "46.82972561568022"
+          }
+        },
+        {
+          "event": "speeddesk_cancel",
+          "at": "1792125092.0320861",
+          "venue": "kalshi",
+          "window": "KXBTC15M-26OCT160045-45",
+          "side": "down",
+          "price": "0.45",
+          "size": "1.0",
+          "fair": "0.4891117820205986",
+          "edge": "0.03911178202059856",
+          "latency_ms": "2116.7988777160645",
+          "bitcoin_price": "82010.71",
+          "bitcoin_staleness_s": "0.13034605979919434",
+          "reason": "reprice",
+          "order_id": 9503,
+          "fee_usd": "0.0",
+          "kind": "rest"
+        },
+        {
+          "event": "speeddesk_live_cancel",
+          "at": "1792125092.0776258",
+          "venue": {
+            "ts_ms": 1792125092051,
+            "sent_ms": "1792125092032.2",
+            "acked_ms": "1792125092077.6",
+            "offset_ms": "-3.9",
+            "rtt_ms": "45.5"
+          },
+          "client_order_id": "nc-speed-5b0aa0db73ee43948844c49d18df9828",
+          "order_id": "01a142fa-b4e8-7b55-98c1-0d9fc5aabc35",
+          "window": "KXBTC15M-26OCT160045-45",
+          "reason": "reprice",
+          "state": "requested; reservation retained until fills reconcile",
+          "reduced_by": "1.00",
+          "timing": {
+            "decision_to_ack_ms": "45.5",
+            "send_to_ack_ms": "45.4"
+          }
+        },
+        {
+          "event": "speeddesk_live_order",
+          "at": "1792125093.8857932",
+          "venue": "kalshi",
+          "client_order_id": "nc-speed-20cb8a0f790644a6863276610e73f229",
+          "window": "KXBTC15M-26OCT160045-45",
+          "side": "down",
+          "kind": "rest",
+          "price": "0.44",
+          "size": "1.0",
+          "fair": "0.4768385400298367",
+          "state": "durable intent",
+          "timing": [
+            {
+              "metric": "btc_exchange_to_decision",
+              "scope": "real_kalshi",
+              "at": "1792125093.885699",
+              "value_ms": "443.4988950379193",
+              "status": "ok"
+            },
+            {
+              "metric": "btc_receipt_to_decision",
+              "scope": "real_kalshi",
+              "at": "1792125093.885699",
+              "value_ms": "435.230300296098",
+              "status": "ok"
+            }
+          ]
+        },
+        {
+          "event": "speeddesk_rest",
+          "at": "1792125093.885699",
+          "venue": "kalshi",
+          "window": "KXBTC15M-26OCT160045-45",
+          "side": "down",
+          "price": "0.44",
+          "size": "1.0",
+          "fair": "0.4768385400298367",
+          "edge": "0.03683854002983672",
+          "latency_ms": "0.0",
+          "bitcoin_price": "82010.71",
+          "bitcoin_staleness_s": "0.44350409507751465",
+          "reason": "",
+          "order_id": 9504,
+          "fee_usd": "0.0",
+          "kind": "rest"
+        },
+        {
+          "event": "speeddesk_live_order",
+          "at": "1792125093.9641569",
+          "venue": {
+            "ts_ms": 1792125093935,
+            "sent_ms": "1792125093907.0",
+            "acked_ms": "1792125093964.1",
+            "offset_ms": "-0.6",
+            "rtt_ms": "57.1"
+          },
+          "client_order_id": "nc-speed-20cb8a0f790644a6863276610e73f229",
+          "order_id": "01a142fa-c488-71b5-95c9-8acac7b296f9",
+          "window": "KXBTC15M-26OCT160045-45",
+          "state": "accepted; waiting for real fills",
+          "timing": {
+            "metric": "decision_to_ack",
+            "scope": "real_kalshi",
+            "at": "1792125093.885699",
+            "value_ms": "78.3867328427732",
+            "status": "ok"
+          },
+          "stages": {
+            "save_ms": "12.459434103220701",
+            "decision_to_send_ms": "21.273599937558174",
+            "send_to_ack_ms": "57.113132905215025"
+          }
+        }
+      ],
+      "save": {
+        "last_ms": "142.11310306563973",
+        "build_ms": "16.589469276368618",
+        "ledger_ms": "125.49390504136682",
+        "mirror_ms": null,
+        "archived_windows": 314,
+        "saved_orders": 117
+      },
+      "reconcile": {
+        "ms": {
+          "recent_ms": {
+            "n": 47,
+            "median_ms": "366.6",
+            "p90_ms": "713.0",
+            "max_ms": "834.8"
+          },
+          "list_orders_ms": {
+            "n": 96,
+            "median_ms": "68.3",
+            "p90_ms": "113.8",
+            "max_ms": "1514.0"
+          },
+          "fills_ms": {
+            "n": 48,
+            "median_ms": "59.0",
+            "p90_ms": "104.3",
+            "max_ms": "382.1"
+          },
+          "positions_ms": {
+            "n": 48,
+            "median_ms": "58.0",
+            "p90_ms": "115.7",
+            "max_ms": "375.0"
+          },
+          "balance_ms": {
+            "n": 48,
+            "median_ms": "59.0",
+            "p90_ms": "117.6",
+            "max_ms": "453.5"
+          },
+          "full_ms": {
+            "n": 1,
+            "median_ms": "2773.1",
+            "p90_ms": "2773.1",
+            "max_ms": "2773.1"
+          }
+        },
+        "counts": {
+          "pages": 206,
+          "rows": 19517,
+          "bytes": 15142743,
+          "check_position_mismatch": 1,
+          "check_order_list_behind_fills": 1
+        },
+        "last": {
+          "full": false,
+          "ms": "450.6",
+          "failed": false,
+          "checks": {},
+          "reads": [
+            {
+              "read": "list_orders",
+              "ms": "194.1",
+              "rows": 29,
+              "pages": 1,
+              "bytes": 23041
+            },
+            {
+              "read": "fills",
+              "ms": "72.4",
+              "rows": 3,
+              "pages": 1,
+              "bytes": 1554
+            },
+            {
+              "read": "list_orders",
+              "ms": "71.3",
+              "rows": 29,
+              "pages": 1,
+              "bytes": 23041
+            },
+            {
+              "read": "positions",
+              "ms": "55.5",
+              "rows": 3,
+              "pages": 1,
+              "bytes": 1402
+            },
+            {
+              "read": "balance",
+              "ms": "51.5",
+              "rows": null,
+              "pages": null,
+              "bytes": null
+            }
+          ]
+        }
+      },
+      "reconcile_trace": {
+        "mode": "diagnostic",
+        "enabled": true,
+        "version": 1,
+        "counts": {
+          "cycles": 927,
+          "reported": 14,
+          "quiet": 913,
+          "suppressed": 0
+        },
+        "max_reports_per_60s": 12,
+        "max_reads": 12,
+        "max_new_fills": 16,
+        "max_cancel_spans_per_read": 8,
+        "previous_fills_returned_at": "1792125095.562105",
+        "session_only": true,
+        "callback_work": {
+          "enabled": true,
+          "error": null,
+          "completed": 2571610,
+          "quiet": 2552693,
+          "evicted": 18405,
+          "errors": 0,
+          "retained": 512,
+          "max_spans": 512,
+          "max_details": 32,
+          "slow_threshold_ms": "5.0",
+          "sections": {
+            "coinbase_decode": {
+              "count": 21443,
+              "quiet": 21443,
+              "slow": 0,
+              "max_wall_ms": "0.6442461162805557",
+              "max_cpu_ms": "0.15904100001762345"
+            },
+            "feed_book": {
+              "count": 1505106,
+              "quiet": 1504862,
+              "slow": 244,
+              "max_wall_ms": "303.0031630769372",
+              "max_cpu_ms": "301.836977000022"
+            },
+            "feed_status": {
+              "count": 376,
+              "quiet": 375,
+              "slow": 1,
+              "max_wall_ms": "581.2581460922956",
+              "max_cpu_ms": "394.187297000002"
+            },
+            "feed_tick": {
+              "count": 6580,
+              "quiet": 6578,
+              "slow": 2,
+              "max_wall_ms": "9.40561294555664",
+              "max_cpu_ms": "2.8434939999897324"
+            },
+            "feed_trade": {
+              "count": 224874,
+              "quiet": 224833,
+              "slow": 41,
+              "max_wall_ms": "30.20967310294509",
+              "max_cpu_ms": "9.562641000002259"
+            },
+            "feed_windows": {
+              "count": 183,
+              "quiet": 180,
+              "slow": 3,
+              "max_wall_ms": "7.973831612616777",
+              "max_cpu_ms": "7.868048999966959"
+            },
+            "kalshi_decode_apply": {
+              "count": 793778,
+              "quiet": 793767,
+              "slow": 11,
+              "max_wall_ms": "257.6469429768622",
+              "max_cpu_ms": "249.31193800000528"
+            },
+            "live_checkpoint": {
+              "count": 320,
+              "quiet": 0,
+              "slow": 320,
+              "max_wall_ms": "725.5077390000224",
+              "max_cpu_ms": "472.46283499998754"
+            },
+            "live_ledger": {
+              "count": 320,
+              "quiet": 0,
+              "slow": 320,
+              "max_wall_ms": "503.36145190522075",
+              "max_cpu_ms": "314.9485320000025"
+            },
+            "live_logs": {
+              "count": 320,
+              "quiet": 298,
+              "slow": 22,
+              "max_wall_ms": "19.322876818478107",
+              "max_cpu_ms": "1.8187320000038198"
+            },
+            "live_mirror": {
+              "count": 121,
+              "quiet": 0,
+              "slow": 121,
+              "max_wall_ms": "425.7414098829031",
+              "max_cpu_ms": "384.7429030000171"
+            },
+            "live_panel": {
+              "count": 456,
+              "quiet": 0,
+              "slow": 456,
+              "max_wall_ms": "306.2415858730674",
+              "max_cpu_ms": "296.10049199999366"
+            },
+            "live_reports": {
+              "count": 22,
+              "quiet": 0,
+              "slow": 22,
+              "max_wall_ms": "167.85254795104265",
+              "max_cpu_ms": "131.80970600001274"
+            },
+            "live_state": {
+              "count": 320,
+              "quiet": 0,
+              "slow": 320,
+              "max_wall_ms": "259.0883541852236",
+              "max_cpu_ms": "254.25687500001004"
+            },
+            "practice_checkpoint": {
+              "count": 284,
+              "quiet": 0,
+              "slow": 284,
+              "max_wall_ms": "620.6908863969147",
+              "max_cpu_ms": "459.60447599998133"
+            },
+            "practice_daily_reports": {
+              "count": 284,
+              "quiet": 0,
+              "slow": 284,
+              "max_wall_ms": "357.57802706211805",
+              "max_cpu_ms": "347.62737500000185"
+            },
+            "practice_ledger": {
+              "count": 284,
+              "quiet": 0,
+              "slow": 284,
+              "max_wall_ms": "497.614701744169",
+              "max_cpu_ms": "347.2665240000197"
+            },
+            "practice_logs": {
+              "count": 284,
+              "quiet": 272,
+              "slow": 12,
+              "max_wall_ms": "14.601789880543947",
+              "max_cpu_ms": "1.861302000008891"
+            },
+            "practice_mirror": {
+              "count": 284,
+              "quiet": 0,
+              "slow": 284,
+              "max_wall_ms": "265.7856848090887",
+              "max_cpu_ms": "36.51800099999036"
+            },
+            "practice_panel": {
+              "count": 311,
+              "quiet": 0,
+              "slow": 311,
+              "max_wall_ms": "347.1331801265478",
+              "max_cpu_ms": "304.65605099999493"
+            },
+            "practice_state": {
+              "count": 284,
+              "quiet": 0,
+              "slow": 284,
+              "max_wall_ms": "358.96542901173234",
+              "max_cpu_ms": "313.82326199997124"
+            },
+            "practice_step": {
+              "count": 15376,
+              "quiet": 85,
+              "slow": 15291,
+              "max_wall_ms": "640.5677297152579",
+              "max_cpu_ms": "472.0919799999592"
+            }
+          },
+          "all_sync_work_lower_bound": {
+            "capacity": 512,
+            "bin_ms": "31.25",
+            "retention_s": "16.0",
+            "top_level_spans": 2568067,
+            "clipped_spans": 0,
+            "scope": "completed top-level synchronous work; conservative fully contained bins"
+          },
+          "cpu_basis": "thread CPU; full and nested spans are not additive"
+        },
+        "publication": "next_existing_checkpoint",
+        "buffered": 0,
+        "buffer_dropped": 0
+      },
+      "phases": {
+        "heartbeat": {
+          "n": 805,
+          "median_ms": "0.0",
+          "p90_ms": "0.1",
+          "max_ms": "592.1"
+        },
+        "step": {
+          "n": 805,
+          "median_ms": "1.9",
+          "p90_ms": "3.7",
+          "max_ms": "3292.1"
+        },
+        "observe": {
+          "n": 805,
+          "median_ms": "1.3",
+          "p90_ms": "1.9",
+          "max_ms": "21.5"
+        },
+        "cancel_unsafe": {
+          "n": 1610,
+          "median_ms": "0.1",
+          "p90_ms": "0.1",
+          "max_ms": "48.7"
+        },
+        "reconcile": {
+          "n": 48,
+          "median_ms": "366.6",
+          "p90_ms": "730.9",
+          "max_ms": "2773.2"
+        },
+        "lock": {
+          "n": 805,
+          "median_ms": "0.1",
+          "p90_ms": "0.2",
+          "max_ms": "5.3"
+        },
+        "decide": {
+          "n": 805,
+          "median_ms": "0.2",
+          "p90_ms": "0.5",
+          "max_ms": "405.4"
+        }
+      },
+      "loop": {
+        "ms": {
+          "event_loop_lag": {
+            "n": 2467,
+            "median_ms": "2.8",
+            "p90_ms": "20.2",
+            "max_ms": "599.9"
+          },
+          "cancel_worker_queue": {
+            "n": 10,
+            "median_ms": "2.3",
+            "p90_ms": "11.5",
+            "max_ms": "301.3"
+          },
+          "cancel_worker_resume": {
+            "n": 10,
+            "median_ms": "4.3",
+            "p90_ms": "41.4",
+            "max_ms": "55.4"
+          },
+          "cancel_decision_to_ack": {
+            "n": 10,
+            "median_ms": "43.0",
+            "p90_ms": "85.7",
+            "max_ms": "350.0"
+          },
+          "cancel_send_to_ack": {
+            "n": 10,
+            "median_ms": "42.9",
+            "p90_ms": "85.7",
+            "max_ms": "349.9"
+          },
+          "list_orders_worker_queue": {
+            "n": 96,
+            "median_ms": "4.2",
+            "p90_ms": "18.8",
+            "max_ms": "81.5"
+          },
+          "list_orders_worker_resume": {
+            "n": 96,
+            "median_ms": "4.4",
+            "p90_ms": "25.6",
+            "max_ms": "117.1"
+          },
+          "fills_worker_queue": {
+            "n": 48,
+            "median_ms": "2.2",
+            "p90_ms": "11.7",
+            "max_ms": "18.3"
+          },
+          "fills_worker_resume": {
+            "n": 48,
+            "median_ms": "6.2",
+            "p90_ms": "62.9",
+            "max_ms": "325.2"
+          },
+          "positions_worker_queue": {
+            "n": 48,
+            "median_ms": "1.3",
+            "p90_ms": "7.7",
+            "max_ms": "15.7"
+          },
+          "positions_worker_resume": {
+            "n": 48,
+            "median_ms": "2.6",
+            "p90_ms": "37.9",
+            "max_ms": "67.5"
+          },
+          "balance_worker_queue": {
+            "n": 48,
+            "median_ms": "1.4",
+            "p90_ms": "14.2",
+            "max_ms": "39.5"
+          },
+          "balance_worker_resume": {
+            "n": 48,
+            "median_ms": "4.4",
+            "p90_ms": "107.5",
+            "max_ms": "574.9"
+          },
+          "create_order_worker_queue": {
+            "n": 10,
+            "median_ms": "5.8",
+            "p90_ms": "13.3",
+            "max_ms": "19.2"
+          },
+          "create_order_worker_resume": {
+            "n": 10,
+            "median_ms": "5.7",
+            "p90_ms": "43.6",
+            "max_ms": "341.8"
+          }
+        },
+        "counts": {}
+      },
+      "clock": {
+        "coinbase": {
+          "offset_ms": "2.2",
+          "rtt_ms": "74.4",
+          "at": "1792125091.3339825",
+          "samples": 1,
+          "fresh": true
+        },
+        "kalshi": {
+          "offset_ms": "-2.4",
+          "rtt_ms": "32.5",
+          "at": "1792125041.00368",
+          "samples": 19,
+          "fresh": true
+        }
+      },
+      "requests": {
+        "ms": {
+          "cancel_lock_wait_ms": {
+            "n": 10,
+            "median_ms": "0.0",
+            "p90_ms": "0.0",
+            "max_ms": "0.0"
+          },
+          "cancel_rate_wait_ms": {
+            "n": 10,
+            "median_ms": "0.0",
+            "p90_ms": "0.0",
+            "max_ms": "0.0"
+          },
+          "cancel_prepare_ms": {
+            "n": 10,
+            "median_ms": "1.7",
+            "p90_ms": "2.9",
+            "max_ms": "5.2"
+          },
+          "cancel_http_ms": {
+            "n": 10,
+            "median_ms": "29.7",
+            "p90_ms": "39.0",
+            "max_ms": "39.5"
+          },
+          "cancel_decode_ms": {
+            "n": 10,
+            "median_ms": "0.0",
+            "p90_ms": "0.0",
+            "max_ms": "0.0"
+          },
+          "cancel_total_ms": {
+            "n": 10,
+            "median_ms": "34.7",
+            "p90_ms": "41.2",
+            "max_ms": "41.7"
+          },
+          "list_orders_lock_wait_ms": {
+            "n": 110,
+            "median_ms": "0.0",
+            "p90_ms": "0.0",
+            "max_ms": "0.0"
+          },
+          "list_orders_rate_wait_ms": {
+            "n": 110,
+            "median_ms": "0.0",
+            "p90_ms": "0.0",
+            "max_ms": "0.0"
+          },
+          "list_orders_prepare_ms": {
+            "n": 110,
+            "median_ms": "0.7",
+            "p90_ms": "8.3",
+            "max_ms": "18.7"
+          },
+          "list_orders_http_ms": {
+            "n": 110,
+            "median_ms": "51.5",
+            "p90_ms": "83.4",
+            "max_ms": "362.4"
+          },
+          "list_orders_decode_ms": {
+            "n": 110,
+            "median_ms": "0.2",
+            "p90_ms": "5.3",
+            "max_ms": "15.2"
+          },
+          "list_orders_total_ms": {
+            "n": 110,
+            "median_ms": "56.7",
+            "p90_ms": "91.8",
+            "max_ms": "367.7"
+          },
+          "fills_lock_wait_ms": {
+            "n": 48,
+            "median_ms": "0.0",
+            "p90_ms": "0.0",
+            "max_ms": "0.0"
+          },
+          "fills_rate_wait_ms": {
+            "n": 48,
+            "median_ms": "0.0",
+            "p90_ms": "0.0",
+            "max_ms": "0.0"
+          },
+          "fills_prepare_ms": {
+            "n": 48,
+            "median_ms": "0.3",
+            "p90_ms": "10.5",
+            "max_ms": "23.4"
+          },
+          "fills_http_ms": {
+            "n": 48,
+            "median_ms": "41.7",
+            "p90_ms": "58.8",
+            "max_ms": "197.9"
+          },
+          "fills_decode_ms": {
+            "n": 48,
+            "median_ms": "0.0",
+            "p90_ms": "0.0",
+            "max_ms": "5.4"
+          },
+          "fills_total_ms": {
+            "n": 48,
+            "median_ms": "43.9",
+            "p90_ms": "69.1",
+            "max_ms": "203.4"
+          },
+          "positions_lock_wait_ms": {
+            "n": 48,
+            "median_ms": "0.0",
+            "p90_ms": "0.0",
+            "max_ms": "0.0"
+          },
+          "positions_rate_wait_ms": {
+            "n": 48,
+            "median_ms": "0.0",
+            "p90_ms": "0.0",
+            "max_ms": "0.0"
+          },
+          "positions_prepare_ms": {
+            "n": 48,
+            "median_ms": "0.2",
+            "p90_ms": "8.7",
+            "max_ms": "23.4"
+          },
+          "positions_http_ms": {
+            "n": 48,
+            "median_ms": "45.5",
+            "p90_ms": "74.8",
+            "max_ms": "342.8"
+          },
+          "positions_decode_ms": {
+            "n": 48,
+            "median_ms": "0.0",
+            "p90_ms": "0.0",
+            "max_ms": "0.1"
+          },
+          "positions_total_ms": {
+            "n": 48,
+            "median_ms": "48.4",
+            "p90_ms": "79.8",
+            "max_ms": "343.7"
+          },
+          "balance_lock_wait_ms": {
+            "n": 48,
+            "median_ms": "0.0",
+            "p90_ms": "0.0",
+            "max_ms": "0.0"
+          },
+          "balance_rate_wait_ms": {
+            "n": 48,
+            "median_ms": "0.0",
+            "p90_ms": "0.0",
+            "max_ms": "0.0"
+          },
+          "balance_prepare_ms": {
+            "n": 48,
+            "median_ms": "1.0",
+            "p90_ms": "7.8",
+            "max_ms": "14.9"
+          },
+          "balance_http_ms": {
+            "n": 48,
+            "median_ms": "42.0",
+            "p90_ms": "61.9",
+            "max_ms": "283.2"
+          },
+          "balance_decode_ms": {
+            "n": 48,
+            "median_ms": "0.0",
+            "p90_ms": "0.0",
+            "max_ms": "0.0"
+          },
+          "balance_total_ms": {
+            "n": 48,
+            "median_ms": "44.5",
+            "p90_ms": "71.1",
+            "max_ms": "285.1"
+          },
+          "create_order_lock_wait_ms": {
+            "n": 10,
+            "median_ms": "0.0",
+            "p90_ms": "0.0",
+            "max_ms": "0.0"
+          },
+          "create_order_rate_wait_ms": {
+            "n": 10,
+            "median_ms": "0.0",
+            "p90_ms": "0.0",
+            "max_ms": "0.0"
+          },
+          "create_order_prepare_ms": {
+            "n": 10,
+            "median_ms": "2.1",
+            "p90_ms": "6.5",
+            "max_ms": "12.2"
+          },
+          "create_order_http_ms": {
+            "n": 10,
+            "median_ms": "45.0",
+            "p90_ms": "51.3",
+            "max_ms": "55.9"
+          },
+          "create_order_decode_ms": {
+            "n": 10,
+            "median_ms": "0.0",
+            "p90_ms": "0.0",
+            "max_ms": "0.0"
+          },
+          "create_order_total_ms": {
+            "n": 10,
+            "median_ms": "50.5",
+            "p90_ms": "53.4",
+            "max_ms": "68.1"
+          }
+        },
+        "counts": {
+          "dropped": 0,
+          "cancel_ok": 9,
+          "list_orders_ok": 110,
+          "fills_ok": 48,
+          "positions_ok": 48,
+          "balance_ok": 48,
+          "create_order_ok": 10,
+          "cancel_error": 1
+        }
+      }
+    }
+  },
+  "forecast": [
+    {
+      "timestamp": "2026-10-16T04:20:08.372423185Z",
+      "event": "kalshi_probability_learning_forecast",
+      "logger": "nightcrawler.kalshi_probability_learning",
+      "payload": {
+        "at": "1792124400.0684988",
+        "mode": "observe_only",
+        "live_application": false,
+        "profitability_proven": false,
+        "protocol": "kalshi-probability-calibration-v2-h300-g5-b10-prior20",
+        "source_fingerprint": "f2652c6b9f5f4732b5ac865d72c4748df250ad73b38d493387f9dfc478dcff6c",
+        "window": "KXBTC15M-26OCT160030-30",
+        "p": "0.5960738960144819",
+        "q": "0.5618033878386799",
+        "bin": 5,
+        "n": 3,
+        "wins": 1,
+        "spot": "81979.59",
+        "sigma": "0.00006117820040940785",
+        "bitcoin_at": "1792124399.514704",
+        "opening": "81950.72",
+        "venue_start_price": "81950.72",
+        "batch_at": "1792124399.965512",
+        "terms": [
+          "1792124100.0",
+          "1792125000.0",
+          "81950.72",
+          "81950.72",
+          "0.07",
+          "0.0",
+          "0.01",
+          "0.01",
+          "kalshi",
+          "kalshi"
+        ]
+      }
+    }
+  ],
+  "scored": [
+    {
+      "timestamp": "2026-10-16T04:30:06.865560459Z",
+      "event": "kalshi_probability_learning_scored",
+      "logger": "nightcrawler.kalshi_probability_learning",
+      "payload": {
+        "at": "1792125006.8226829",
+        "mode": "observe_only",
+        "live_application": false,
+        "profitability_proven": false,
+        "protocol": "kalshi-probability-calibration-v2-h300-g5-b10-prior20",
+        "source_fingerprint": "f2652c6b9f5f4732b5ac865d72c4748df250ad73b38d493387f9dfc478dcff6c",
+        "window": "KXBTC15M-26OCT160030-30",
+        "status": "scored",
+        "outcome": true,
+        "forecast": {
+          "p": "0.5960738960144819",
+          "q": "0.5618033878386799",
+          "bin": 5,
+          "n": 3,
+          "wins": 1,
+          "at": "1792124400.0684988",
+          "spot": "81979.59",
+          "sigma": "0.00006117820040940785",
+          "bitcoin_at": "1792124399.514704",
+          "opening": "81950.72",
+          "venue_start_price": "81950.72",
+          "batch_at": "1792124399.965512",
+          "terms": [
+            "1792124100.0",
+            "1792125000.0",
+            "81950.72",
+            "81950.72",
+            "0.07",
+            "0.0",
+            "0.01",
+            "0.01",
+            "kalshi",
+            "kalshi"
+          ],
+          "protocol": "kalshi-probability-calibration-v2-h300-g5-b10-prior20",
+          "source_fingerprint": "f2652c6b9f5f4732b5ac865d72c4748df250ad73b38d493387f9dfc478dcff6c"
+        },
+        "post_gaps": [],
+        "scored_at": "1792125006.8226829"
+      }
+    }
+  ],
+  "timing": {
+    "sampled_full_reconciliations": 9,
+    "full_median_ms": "3775.844",
+    "full_min_ms": "3264.805",
+    "full_max_ms": "5230.901",
+    "ws_counts_by_reader_event_receipt": [
+      [
+        [
+          "speeddesk",
+          "status",
+          "known"
+        ],
+        21
+      ],
+      [
+        [
+          "derived_market_reader",
+          "status",
+          "known"
+        ],
+        4
+      ],
+      [
+        [
+          "derived_market_reader",
+          "gap",
+          "overflow"
+        ],
+        4
+      ],
+      [
+        [
+          "speeddesk",
+          "gap",
+          "overflow"
+        ],
+        12
+      ],
+      [
+        [
+          "derived_market_reader",
+          "status",
+          "overflow"
+        ],
+        4
+      ],
+      [
+        [
+          "derived_market_reader",
+          "gap",
+          "known"
+        ],
+        4
+      ],
+      [
+        [
+          "speeddesk",
+          "status",
+          "overflow"
+        ],
+        4
+      ]
+    ],
+    "known_receipt_max_ms": "6055.826419964433"
+  },
+  "limits": [
+    "Filtered log queries do not certify continuous market prints, real queue positions or raw volumes.",
+    "No residual-protection cancel or delayed-send race naturally exercised; source fakes cover them.",
+    "18target intents include one rejected400 and not all become real orders. Publication order can differ from local event order.",
+    "No executable counterfactual or profit attribution. Practice mismatch and initial-unmatched losses remain open."
+  ]
+}

@@ -1,0 +1,28 @@
+{
+ "configs": [
+  {
+   "age_hi_min": 115.0,
+   "age_lo_min": 30.0,
+   "alive_mcap_usd": 6000.0,
+   "alive_vol_usd_15m": 1500.0,
+   "class": "OPERATOR",
+   "class_rule": "g1.classify(g1.g1_features(snap)) at the decision",
+   "exit": "tight",
+   "exit_by_age_s": 10680.0,
+   "fill": "common.FillConfig(exit_delay_bars=1): worst, latency 30 s, entry-bar exits, next-bar exits",
+   "max_hold_s": 1800.0,
+   "placebo": "judged control: same timing on ANY alive coin (class unmatched); diagnostic: class-matched",
+   "r0_seed": 0,
+   "size_usd": 20.0,
+   "stop_pct": 0.35,
+   "timing": "t60",
+   "version": "o1-v1"
+  }
+ ],
+ "hashes": [
+  "861f8a100f1d"
+ ],
+ "hypothesis": "O1",
+ "note": "o1-v1: PREREG 9 top-2 rule: ['t60|tight']",
+ "written_utc": "2026-10-09 05:29:57"
+}

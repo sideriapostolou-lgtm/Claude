@@ -1,0 +1,133 @@
+{
+  "candidate": "d0d3ea4f752e1363b74dc6c840d6e73ab6a24b58",
+  "merge": "c9301a1f5d102cc7ed1403c89bc19a6118942d95",
+  "tree": "a8ee2f2039057a6cfc97d484dd8fe392ab193991",
+  "files": [
+    {
+      "path": "docs/COORDINATION.md",
+      "sha": "1b8162e567eee99821f764240d55b76d6b69570d",
+      "match": true
+    },
+    {
+      "path": "docs/KALSHI_SHARD_CASH.md",
+      "sha": "d19553400f496b4d390ce81ff803bf0d1487d73f",
+      "match": true
+    },
+    {
+      "path": "docs/WORKLOG.md",
+      "sha": "220672a99f4b808059d28a99191d039f7698d76d",
+      "match": true
+    },
+    {
+      "path": "research/kalshi_shard_cash_2026-10-16/API_REVIEW.md",
+      "sha": "81bcad4bb933497b50a0e23b8b75231c113361d8",
+      "match": true
+    },
+    {
+      "path": "research/kalshi_shard_cash_2026-10-16/BEFORE.json",
+      "sha": "e3c3ba2ff87f3abbfda852313af08ceb86cc302d",
+      "match": true
+    },
+    {
+      "path": "research/kalshi_shard_cash_2026-10-16/CHECKS.json",
+      "sha": "9755a5a9b9c48bbf41886526f66c2859ac8b31c9",
+      "match": true
+    },
+    {
+      "path": "research/kalshi_shard_cash_2026-10-16/IMPLEMENTATION_HANDOFF.md",
+      "sha": "a2c3c4e6a00725926028d8a63bc4686cbb53e132",
+      "match": true
+    },
+    {
+      "path": "research/kalshi_shard_cash_2026-10-16/INDEPENDENT_REVIEW.md",
+      "sha": "82011951b932faf48d7f29827057c7fb3b6e79ee",
+      "match": true
+    },
+    {
+      "path": "research/kalshi_shard_cash_2026-10-16/REPORT.md",
+      "sha": "744f1fe37ce554fbd3caf6355c8d372670f5926a",
+      "match": true
+    },
+    {
+      "path": "research/kalshi_shard_cash_2026-10-16/SOURCE_MANIFEST.json",
+      "sha": "b1635495451f25e4ad2ded58c5e09ef449539916",
+      "match": true
+    },
+    {
+      "path": "research/kalshi_shard_cash_2026-10-16/verify_restart.py",
+      "sha": "a65d23243b5b46a54441f8a561ce3f20da37c678",
+      "match": true
+    },
+    {
+      "path": "src/nightcrawler/speeddesk_kalshi.py",
+      "sha": "85d8e88568e23cf8956e56ac1840e05ef5d9a7b1",
+      "match": true
+    },
+    {
+      "path": "src/nightcrawler/speeddesk_live.py",
+      "sha": "f9794b06a6ad4107ed098629accfcb7e7d303f06",
+      "match": true
+    },
+    {
+      "path": "src/nightcrawler/speeddesk_live_cash.py",
+      "sha": "5b073aa06daa041265397defe83e167d342826e7",
+      "match": true
+    },
+    {
+      "path": "src/nightcrawler/speeddesk_live_model.py",
+      "sha": "7c4fc891172b4b735363749c787c683dab10900d",
+      "match": true
+    },
+    {
+      "path": "src/nightcrawler/speeddesk_model.py",
+      "sha": "b7f4df851ac299b49ab4392aac6bc823a195ad61",
+      "match": true
+    },
+    {
+      "path": "tests/test_speeddesk_live.py",
+      "sha": "d38551af75be48c26782c7ccd156da8533bdc0c6",
+      "match": true
+    },
+    {
+      "path": "tests/test_speeddesk_live_cash.py",
+      "sha": "1fbc93a5eb38f4470f4eb89cd472829dcc631428",
+      "match": true
+    },
+    {
+      "path": "tests/test_speeddesk_live_desk_property.py",
+      "sha": "4fb9fe5649ed1ab8ba4ace89309b00619b05b5de",
+      "match": true
+    },
+    {
+      "path": "tests/test_speeddesk_live_killpoints.py",
+      "sha": "64b4cf5c3cd6a5d2db462f0c3305c90a39fa22d6",
+      "match": true
+    },
+    {
+      "path": "tests/test_speeddesk_live_reads.py",
+      "sha": "4b1d0a96dbc882134ba89a6fc8d421ae72faa69d",
+      "match": true
+    },
+    {
+      "path": "tests/test_speeddesk_live_safety.py",
+      "sha": "2962a224bb375df088299f2fc69835db6c2cae45",
+      "match": true
+    },
+    {
+      "path": "tests/test_speeddesk_lock_send_freshness.py",
+      "sha": "dbcc1a36bb10ee7eca6019653b5a93186d05da51",
+      "match": true
+    },
+    {
+      "path": "tests/test_speeddesk_readtrace.py",
+      "sha": "149272f2cbf9ca5a21a5c0a2388bd59853c6a8eb",
+      "match": true
+    }
+  ],
+  "checks": {
+    "all_uploaded_blobs_match_local_git_hash": true,
+    "remote_tree_matches_local_staged_tree": true,
+    "merge_tree_matches_candidate": true
+  },
+  "scope": "Source/evidence byte equality, not production behavior"
+}

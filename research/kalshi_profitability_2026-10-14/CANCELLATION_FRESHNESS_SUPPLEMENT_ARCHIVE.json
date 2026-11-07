@@ -1,0 +1,121 @@
+{
+  "created_utc": "2026-10-15T12:55:37.547992+00:00",
+  "archive": {
+    "file": "CANCELLATION_FRESHNESS_SUPPLEMENT.zip",
+    "members": 24,
+    "bytes": 243059,
+    "sha256": "1c16eb4b0a783658802e8443b17ef4de7e760469cadb21229078891ca7f4704b"
+  },
+  "scope": "Supplemental original root monitor/final production-status/deployment-history/recorder evidence, selected cash reconciliation, original bounded historical point recovery and failed offline parser history. No new production query or mutation.",
+  "verification": {
+    "crc": "pass",
+    "exact_member_names": "pass",
+    "every_member_bytes_and_sha256": "pass",
+    "private_recognized_pattern_scan": "zero flags; bounded patterns, not all possible secret formats"
+  },
+  "sources": {
+    "cancel-historical-gap-points-20261015/recovery-1.json": {
+      "bytes": 102315,
+      "sha256": "4390c8726edfec7849c5d577202c48ff76323aac792bdc40aaf129eac6d32ff2"
+    },
+    "cancel-historical-gap-points-20261015/recovery-2.json": {
+      "bytes": 102403,
+      "sha256": "102d55fb954e64ccce25e8b07dbbf8999f09547899e996d27a6e8242ba2bab9f"
+    },
+    "cancel-historical-gap-points-20261015/recovery-3.json": {
+      "bytes": 102397,
+      "sha256": "4857cfa0507c171bd083378016f21d587e1708353b89a8976ab83479d9a98eae"
+    },
+    "cancel-historical-gap-points-20261015/recovery-4.json": {
+      "bytes": 102375,
+      "sha256": "63a4b26a6d91b6bd6d1e1214945556c4e0a84708ddcf2da7abd3fba9fe252d01"
+    },
+    "cancel-historical-gap-points-20261015/recovery-5.json": {
+      "bytes": 102407,
+      "sha256": "1f66eb9fcb74575947c774ebd9f9535601292b8671c4b29e3dfefa5906e69d21"
+    },
+    "cancel-historical-gap-points-20261015/recovery-6.json": {
+      "bytes": 102393,
+      "sha256": "fed85b424acab3ace445c97c4ced6ae738f441858c63930fc3c15efdbad68b20"
+    },
+    "cancel-historical-gap-points-20261015/recovery-7.json": {
+      "bytes": 102373,
+      "sha256": "78babaf356da0bc59de9df59a80ceaa65bbd800435b289894272564c155a188f"
+    },
+    "cancel-historical-gap-points-20261015/recovery-8.json": {
+      "bytes": 102427,
+      "sha256": "c5c4b26612c58ecff75eea85ef95d5b120d69efae73ee47b922652927e8e0da1"
+    },
+    "cancel-historical-gap-points-20261015/recovery-manifest.json": {
+      "bytes": 1857,
+      "sha256": "c624c26ef15783f69c73edf19f8f9529aebc2aef4d495617ba4eb491fe9e28f7"
+    },
+    "cancel-historical-gap-points-20261015/root-verified-points.json": {
+      "bytes": 5644,
+      "sha256": "41a4cc765b89bfe402b1acf4d7f9e6fcd13deea7b37d3f3ca013eef0085d3af9"
+    },
+    "cancel-release-20261015/audit_final_root.py": {
+      "bytes": 7579,
+      "sha256": "1099adfcc229e368f2ddf6090b2e22b46c360ee05c595c8943a87f959e979464"
+    },
+    "cancel-release-20261015/audit_final_root_pre_lock_parser.py": {
+      "bytes": 7427,
+      "sha256": "fae09997a74cf73ea84dc4828d64a304e88bed6593b4c66fe65706854823b649"
+    },
+    "cancel-release-20261015/cash-reconciliation-root-final.json": {
+      "bytes": 3874,
+      "sha256": "d5366924fbf70923e8a356d8a93a65fe42eb79c4f952caf3733654060af48c8d"
+    },
+    "cancel-release-20261015/final-deployments.json": {
+      "bytes": 6866,
+      "sha256": "53ab3946f7acf329dbf0032601dcefa794406924d552897acd9bcb249d298734"
+    },
+    "cancel-release-20261015/final-environment.json": {
+      "bytes": 2953,
+      "sha256": "ddd195e8679be77e7b53cc352332db97b0484c3fa635be191ba8dfcb5b8d124c"
+    },
+    "cancel-release-20261015/final-evidence-context.json": {
+      "bytes": 1299,
+      "sha256": "08c39a40a97d2d84f34543508cca66e982c3a78376e5f65cbd25c1a6993352e0"
+    },
+    "cancel-release-20261015/final-status.json": {
+      "bytes": 211040,
+      "sha256": "e8d268594be7ef93973dfb8c69d8d10c93c1ceb361effc128a75542d2b8b6a97"
+    },
+    "cancel-release-20261015/final-tracebacks.json": {
+      "bytes": 644,
+      "sha256": "bc7693486aed954609f04e18cef9d7a5838fff8118b253933a6860d7f6a8f0c8"
+    },
+    "cancel-release-20261015/first-window-static-legs.json": {
+      "bytes": 629,
+      "sha256": "be2b0f8103332b13a08c146d313ad55524ee44215ac8d8b97d21c3ec2d612274"
+    },
+    "cancel-release-20261015/monitor-status-1221.json": {
+      "bytes": 209286,
+      "sha256": "187a3f7b893d8d68233b2d6eb204bed8d050a1bbe5fc13d3205474df5ecedce9"
+    },
+    "cancel-release-20261015/monitor-status-1225.json": {
+      "bytes": 101555,
+      "sha256": "7d06c7e5699dabc28b3b5a71a2a7137d1732cc26c504faf1f2584fc15c5da0a1"
+    },
+    "cancel-release-20261015/monitor-status-1239.json": {
+      "bytes": 101293,
+      "sha256": "32c4b82a74979eae7900682893189066bf0a1b9a9dd39e1758734b45a70bdf9b"
+    },
+    "cancel-release-20261015/recorder-hour-1200.json": {
+      "bytes": 10367,
+      "sha256": "9d34f257d5ee5d27b091dbce6c5df5f3df6d12c3ffa5302a18ddbd6f1830029c"
+    },
+    "cancel-release-20261015/root-final-audit-parser-correction.json": {
+      "bytes": 504,
+      "sha256": "057e8170c0190c2198ffd386484379820ba974d13719f9c4d3af0281201c63f8"
+    }
+  },
+  "limitations": [
+    "Final status includes next partial filled cost and reserves; it is not fixed-window P&L.",
+    "Recorder manifest counts are reported coverage, coverage_certified=false, no raw sealed data inspected.",
+    "Selected cash arithmetic is not full native cash transaction, order terminal-state or stop-anchor export.",
+    "Pending old zero-change staged environment patch is retained in raw health, untouched and not live.",
+    "Eight points do not fill eight unknown intervals or establish no between-sample activity."
+  ]
+}

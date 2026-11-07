@@ -1,0 +1,235 @@
+{
+  "schema_version": 1,
+  "source_commit": "c8e37e5504aad04da0521b3f95c17f86dac42899",
+  "raw_receipt_sha256": "12cb101030c3b9ded3a6a25f593fbb0830c9203ad0338043999f7bc43da96cfd",
+  "raw_receipt_bytes": 23055473,
+  "collection_state": "closed_two_windows_and_bounded_tail",
+  "collection_complete": true,
+  "collector_jobs_running": false,
+  "last_persisted_at": "2026-10-15T00:32:22.559Z",
+  "windows": [
+    {
+      "start_pacific": "2026-10-14T17:00:00-07:00",
+      "end_pacific": "2026-10-14T17:15:00-07:00",
+      "ticker": "KXBTC15M-26OCT142015-15",
+      "real_fills": 6,
+      "shares": {
+        "up": "12",
+        "down": "12"
+      },
+      "durable_intents": 125,
+      "accepted_order_ids": 124,
+      "cancel_states": {
+        "requested; reservation retained until fills reconcile": 117,
+        "not resting on Kalshi (404); reservation retained until reconciled": 6
+      },
+      "settlement": {
+        "settlement_id": "kalshi:KXBTC15M-26OCT142015-15",
+        "venue_at": 1792023304.153022,
+        "observed_at": 1792023308.5723126,
+        "gross_fill_cost_usd": "11.58",
+        "fees_usd": "0.0698",
+        "payout_usd": "12",
+        "net_decimal_usd": "0.3502",
+        "logged_pnl_usd": 0.35020000000000095,
+        "logged_locked_usd": 0.35020000000000073,
+        "logged_directional_usd": 2.220446049250313e-16,
+        "logged_math_agrees_with_decimal": true
+      },
+      "selected_cycles": 7,
+      "selected_reads": 35,
+      "selected_actual_resume_max_ms": 512.814,
+      "covering_status_intervals": 16,
+      "contained_status_intervals": 14,
+      "covering_loop_lag_max_ms": 1046,
+      "read_or_bin_retention_loss": false,
+      "read_resume_work_span_details_omitted": 8,
+      "whole_cycle_callback_work_span_details_omitted": 17,
+      "work_omission_scope": "Different observer queries can overlap; do not sum omissions as distinct work. Actual read marks and read/bin retention remain separately complete."
+    },
+    {
+      "start_pacific": "2026-10-14T17:15:00-07:00",
+      "end_pacific": "2026-10-14T17:30:00-07:00",
+      "ticker": "KXBTC15M-26OCT142030-30",
+      "real_fills": 11,
+      "shares": {
+        "up": "12",
+        "down": "12.00"
+      },
+      "durable_intents": 105,
+      "accepted_order_ids": 101,
+      "cancel_states": {
+        "requested; reservation retained until fills reconcile": 91,
+        "not resting on Kalshi (404); reservation retained until reconciled": 11
+      },
+      "settlement": {
+        "settlement_id": "kalshi:KXBTC15M-26OCT142030-30",
+        "venue_at": 1792024204.145574,
+        "observed_at": 1792024208.1950498,
+        "gross_fill_cost_usd": "10.7900",
+        "fees_usd": "0.0448",
+        "payout_usd": "12",
+        "net_decimal_usd": "1.1652",
+        "logged_pnl_usd": 1.1651999999999987,
+        "logged_locked_usd": 1.1651999999999982,
+        "logged_directional_usd": 4.440892098500626e-16,
+        "logged_math_agrees_with_decimal": true
+      },
+      "selected_cycles": 10,
+      "selected_reads": 50,
+      "selected_actual_resume_max_ms": 639.372,
+      "covering_status_intervals": 16,
+      "contained_status_intervals": 14,
+      "covering_loop_lag_max_ms": 1280.3,
+      "read_or_bin_retention_loss": false,
+      "read_resume_work_span_details_omitted": 3,
+      "whole_cycle_callback_work_span_details_omitted": 34,
+      "work_omission_scope": "Different observer queries can overlap; do not sum omissions as distinct work. Actual read marks and read/bin retention remain separately complete."
+    }
+  ],
+  "total_real_net_locked_usd": "1.5154",
+  "directional_residual": "Floating-point noise; no material directional P&L in these two windows.",
+  "finite_local_recurrence_evidence": {
+    "threshold_ms": 3000,
+    "new_coarse_engineering_criterion_not_existing_SLO": true,
+    "target_interval_union_complete": true,
+    "distinct_covering_intervals": 31,
+    "covering_interval_maxima": {
+      "event_loop_lag": 1280.3,
+      "list_orders_worker_queue": 859.8,
+      "list_orders_worker_resume": 1127.5,
+      "fills_worker_queue": 732.8,
+      "fills_worker_resume": 737.9,
+      "positions_worker_queue": 264.3,
+      "positions_worker_resume": 1043.6,
+      "balance_worker_queue": 396.7,
+      "balance_worker_resume": 885.8,
+      "settlements_worker_queue": 168.1,
+      "settlements_worker_resume": 338.3,
+      "create_order_worker_queue": 197.9,
+      "create_order_worker_resume": 752.2,
+      "cancel_worker_queue": 522.9,
+      "cancel_worker_resume": 1239.5,
+      "cancel_decision_to_ack": 1316.3,
+      "cancel_send_to_ack": 1316.3
+    },
+    "maximum_covering_status_sample_n": 2771,
+    "sample_cap_hits": [],
+    "observer_enabled_error_clear": true,
+    "suppression_drop_unchanged_zero": true,
+    "all_status_counter_active_balances_0_or_1": true,
+    "report_counter_max": 21,
+    "unique_original_reported_cycles": 21,
+    "all_session_report_count_reconciles": true,
+    "counter_interval_anomalies": [],
+    "endpoint_cohorts": [
+      {
+        "target_end": "2026-10-15T00:15:00Z",
+        "endpoint_status_at": 1792023316.7531927,
+        "endpoint_begun_cycles": 956,
+        "later_completion_proof_at": 1792023376.8434649,
+        "endpoint_cohort_finished": true,
+        "publication_tail_status_buffered": 0,
+        "state": "verified"
+      },
+      {
+        "target_end": "2026-10-15T00:30:00Z",
+        "endpoint_status_at": 1792024221.2942002,
+        "endpoint_begun_cycles": 1574,
+        "later_completion_proof_at": 1792024281.4092362,
+        "endpoint_cohort_finished": true,
+        "publication_tail_status_buffered": 0,
+        "state": "verified"
+      }
+    ],
+    "selected_intersecting_cycles": 17,
+    "selected_intersecting_reads": 85,
+    "actual_read_resume_max_ms": 639.372,
+    "required_marks_missing": [],
+    "reads_omitted": [],
+    "negative_claim_scope": "Completed actual-read gap at least3000ms implies slow eligible cycle; selected observer delivery, counts, cap and endpoint cohort evidence retained. Unselected quiet reads lack individual marks. Status done-callback endpoint is different from coroutine resume.",
+    "overall_task_gate": "OPEN_FOR_ROOT_FRESHNESS_AND_REMAINING_MECHANISM_REVIEW",
+    "freshness_limit": "Repeated original source-age, trade-gap and market-set warnings are retained. This bounded receipt alone cannot establish no freshness regression, source age equals local read delay, or closure of another identified scheduling surface."
+  },
+  "final_minute_status": {
+    "as_of_epoch": 1792024281.4092362,
+    "as_of_pacific": "2026-10-14T17:31:21.409236-07:00",
+    "cash_usd": 37.1197,
+    "cash_at": 1792024280.8767664,
+    "open_cost_usd": 4.7,
+    "open_risk_usd": 0,
+    "reserved_usd": 1.62,
+    "open_orders": 1,
+    "at_risk_usd": 1.62,
+    "reason": "Reconciling an uncertain order; no new orders",
+    "mode": "live",
+    "authenticated": true,
+    "total_halted": false,
+    "day_stop_latched": false,
+    "integrity_error": null,
+    "caps": {
+      "window_usd": 10,
+      "open_usd": 20,
+      "day_stop_usd": 6,
+      "clip": 5,
+      "total_stop_usd": 10
+    },
+    "cumulative_settled_pnl_usd": -12.921700000000001,
+    "cumulative_fees_usd": 2.38582,
+    "cumulative_locked_usd": 0.704198351648347,
+    "cumulative_directional_usd": -13.625898351648349,
+    "ladder_rung": 0,
+    "ladder_promotion_ready": false,
+    "trace_counts": {
+      "cycles": 1619,
+      "reported": 20,
+      "quiet": 1599,
+      "suppressed": 0
+    }
+  },
+  "later_original_trace": {
+    "cycle": 1647,
+    "counts": {
+      "cycles": 1647,
+      "reported": 21,
+      "quiet": 1626,
+      "suppressed": 0
+    },
+    "note": "Payload completion00:31:51.952420UTC precedes logger wall00:31:53UTC and Railway logged time00:31:53.445464025UTC. Its21reports follow the earlier minute status20; not a mismatch.",
+    "trace_completion_at_epoch": 1792024311.9524198,
+    "railway_logged_at_utc": "2026-10-15T00:31:53.445464025Z",
+    "producer_logger_wall_utc": "2026-10-15T00:31:53Z"
+  },
+  "warning_classes": {
+    "source_age": 53,
+    "market_set_transition": 2,
+    "REST_trade_gap_ValueError": 3,
+    "total_logged_in_target_period": 58
+  },
+  "scope_and_gaps": [
+    "Real results only; practice events in raw receipt are not promoted into real P&L.",
+    "Two positive windows do not demonstrate a profitable strategy or causal scheduling improvement.",
+    "Coarse3000ms absence evidence does not assess all-read250ms or subsecond performance.",
+    "Read-resumption work queries omit8/3span details; whole-cycle callback_work queries omit17/34. Different overlapping populations, never sum as distinct missing work. Actual read/bin retention loss is separately false.",
+    "Raw feed/counterfactual traffic and exact wake-source attribution are absent.",
+    "Dated status fields are not current cash, a full raw ledger export, or direct stop-anchor verification.",
+    "No new production, source, financial, variable, resume or order action."
+  ],
+  "task_complete": false,
+  "task_open_reason": "Freshness warnings and their remaining contributing mechanism need attribution.",
+  "strategy_comparison_started": false,
+  "TJR_status": "Unfinished/blocked on authentic development bars and verified costs; historical P&L null, paper not started/live disabled, automation unchanged.",
+  "next_evidence_step": "Attribute source age using original receive/processing timestamps and controller wake/activity records, separating provider delay, buffered local backlog and clock effects. Existing endpoint-confounded callback counts cannot isolate the cause.",
+  "independent_final_audit_status": "ACCEPTED_WITH_RECORDED_LIMITATIONS_AND_CORRECTED_OMISSION_TIMESTAMP_WORDING",
+  "independent_final_audit": {
+    "archive_member": "post-fairness-two-window-independent-audit.json",
+    "bytes": 194559,
+    "sha256": "4aab5a20c2c9574a3c92a80e4f3d17bf0d818200e9ee929a0e7c14a01b669813",
+    "verdict": "Financial and bounded local recurrence evidence agrees; overall EXEC remains open for source-age attribution."
+  },
+  "evidence_archive": {
+    "archive": "feed_fairness_two_window_evidence.zip",
+    "archive_bytes": 5498164,
+    "archive_sha256": "d102c23b2a0211f717989dfa35314f5e9378504df79e57807b8bd4c84c04cce2"
+  }
+}

@@ -1,0 +1,60 @@
+{
+  "checked_at_utc": "2026-10-19T20:44:04.835752+00:00",
+  "scope": "offline synthetic metadata-helper validation only",
+  "source_sha256": {
+    "test_inventory_independent.py": "02fac0e16a54debacd0b60d9328bbba25a792879ae91abee10fe6c503f7ff99b",
+    "test_inventory_metadata.py": "744456379c8e6a5cbcd4f4ae0509a6c4f492943e44bdc04c64f663b68c7e29b1",
+    "inventory_metadata.py": "e02812647346b2532a9cc0b8eb0287d9f08fdf7d2fbd6c7459bd72e388c4abad"
+  },
+  "checks": [
+    {
+      "command": [
+        "/workspace/nightcrawler-daily/.venv/bin/python",
+        "-m",
+        "pytest",
+        "-q",
+        "research/storage_recovery_2026-10-19/test_inventory_metadata.py",
+        "research/storage_recovery_2026-10-19/test_inventory_independent.py"
+      ],
+      "exit_code": 0,
+      "stdout": "..............................................................           [100%]\n62 passed in 0.17s\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "/workspace/nightcrawler-daily/.venv/bin/ruff",
+        "check",
+        "research/storage_recovery_2026-10-19/inventory_metadata.py",
+        "research/storage_recovery_2026-10-19/test_inventory_metadata.py",
+        "research/storage_recovery_2026-10-19/test_inventory_independent.py"
+      ],
+      "exit_code": 0,
+      "stdout": "All checks passed!\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "git",
+        "diff",
+        "--check"
+      ],
+      "exit_code": 0,
+      "stdout": "",
+      "stderr": ""
+    }
+  ],
+  "not_verified": [
+    "Production execution or raw files",
+    "Filesystem free space or current financial state",
+    "Coherent database/WAL/history preservation",
+    "Fresh venue account reconciliation",
+    "Application full-suite recovery gates",
+    "Profitable trading"
+  ],
+  "prior_root_checks": [
+    "Initial source37passed/Ruff clean",
+    "Mountidentity revision42passed/Ruff clean",
+    "Ambiguity fix46passed/Ruff clean"
+  ],
+  "prior_failed_checks": "Retained in INVENTORY_VALIDATION.json and INDEPENDENT_REVIEW.json; not waived."
+}

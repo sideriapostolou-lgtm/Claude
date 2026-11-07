@@ -1,0 +1,20 @@
+{
+  "scope": "Read-only recorder health; saved manifest/index metadata, no raw volume or TEST/outcome rows accessed",
+  "period": "Oct16UTC = Oct15 5PM through Oct16 5PM PDT",
+  "latest": "Oct17 8:00:05.544814915 AM PDT receipt, covers 7–8AM",
+  "latestManifest": "13348d86d92c7115467f14f67fbcd7c3ec765762d32567b786ada15676c0ee2b",
+  "known429": [
+    {
+      "period": "2026-10-16T02:00:00Z/2026-10-16T03:00:00Z",
+      "pacific": "Oct15 7–8PM PDT",
+      "lane": "trades",
+      "count": 1,
+      "requests": 2118,
+      "ok": 2117
+    }
+  ],
+  "missing429": "Other lane-hour 429 values are null, not zero; all error values null",
+  "storageGrowth": "Oct16UTC 316218232bytes/day; latest24h 292979608bytes/day; last hour12132123bytes",
+  "limitations": "All receipts coverage_certified=false, segment_hashes_reverified=false, per_venue_spot_ticks_verified=false. Coarse fresh minutes do not establish depth, uninterrupted coverage, raw completeness, fills or profit. Storage is recorder-owned dated saved bytes, not platform disk-free or cost/retention certification.",
+  "docLookup": "docs/KALSHI_RECORDER.md 404 at current head and named branch, successfully read at recorder source a0782b743a31369fe25ddf6d2eea96df8511cd8d."
+}

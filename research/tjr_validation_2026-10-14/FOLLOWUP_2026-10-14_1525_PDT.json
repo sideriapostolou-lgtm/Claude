@@ -1,0 +1,90 @@
+{
+  "checked_at_utc": "2026-10-14T22:25:27Z",
+  "checked_at_pacific": "2026-10-14 3:25:27 PM PDT",
+  "branch_head": "67c54a6",
+  "github_files": [
+    {
+      "path": "AGENTS.md",
+      "blob_sha": "389266a51ccba3d21072371fd680bc8e4aff2af9"
+    },
+    {
+      "path": "docs/COORDINATION.md",
+      "blob_sha": "cd12081e8c33b8d7342f0a697d3357c634c77387"
+    },
+    {
+      "path": "docs/WORKLOG.md",
+      "blob_sha": "83bf0098534007cb49a57f53436aff0e81e74c0d"
+    },
+    {
+      "path": "research/tjr_validation_2026-10-14/HISTORICAL_STATUS.json",
+      "blob_sha": "e079d3c762ced81b2262a5261ab164f291e3d5ac"
+    }
+  ],
+  "priority_gate": {
+    "earlier_explicit_offline_reprioritization": true,
+    "active_execution_first_task_complete": false,
+    "pr47_recorded_release_verification_complete": true,
+    "pr53_partial_fix_deployed": true,
+    "reminder_authorizes_new_production_actions": false
+  },
+  "page_deltas": [
+    {
+      "page_id": "page_d0294998a7cc8191b771278fbfb98a2f",
+      "after_sequence": 2,
+      "through_sequence": 2,
+      "markdown_diff": "",
+      "changes": [],
+      "changed_blocks": [],
+      "deleted_block_ids": [],
+      "truncated": false,
+      "resync_required": false
+    },
+    {
+      "page_id": "page_33c0bb7e8dac81919e012fc502bae98a",
+      "after_sequence": 1,
+      "through_sequence": 1,
+      "markdown_diff": "",
+      "changes": [],
+      "changed_blocks": [],
+      "deleted_block_ids": [],
+      "truncated": false,
+      "resync_required": false
+    }
+  ],
+  "historical_status": {
+    "status": "BLOCKED",
+    "reason": "VERIFIED_ACTUAL_MNQZ2025_DATA_BUNDLE_MISSING",
+    "generatedAtUTC": "2026-10-14T18:55:39.000Z",
+    "protocol": {
+      "version": "TJR_DEVELOPMENT_RUNNER_v1",
+      "sourceVersion": "TJR_BC23_MNQZ25_SWEEP_BOS_v0.1.1_calendar",
+      "contract": "MNQZ2025",
+      "warmup": "2025-09-19",
+      "start": "2025-09-22",
+      "end": "2025-10-31",
+      "partition": "DEVELOPMENT",
+      "holdout": [
+        "2025-11-03",
+        "2025-12-12"
+      ],
+      "liveExecutionEnabled": false,
+      "priceUnit": "INTEGER_TICKS",
+      "tickSize": 0.25,
+      "tickUSD": 0.5,
+      "assumedBarAvailability": "INTERVAL_CLOSE",
+      "observedLatency": false
+    },
+    "historicalTradesTested": 0,
+    "historicalPnlUSD": null,
+    "holdoutOpened": false,
+    "holdoutExposureStatus": "NOT_ACCESSED_NO_INPUT",
+    "holdoutReplayed": false,
+    "paperTradingStarted": false,
+    "liveExecutionEnabled": false,
+    "performanceClaimAllowed": false
+  },
+  "new_recorded_development_data": false,
+  "new_recorded_cost_evidence": false,
+  "decision": "Remain active/blocked and unfinished; keep paper/live disabled. No repeated source reconstruction, historical probes, tests or changed-blocker owner notification. Leave follow-up automation unchanged.",
+  "next": "When authorized genuine MNQZ2025 Sep19-Oct31 development bars and mapping/license/timestamp/account-cost evidence arrive, verify normalization/costs and run frozen development scenarios before holdout. A later paper run also needs a verified current contract/feed/runtime."
+}

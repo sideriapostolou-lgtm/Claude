@@ -1,0 +1,60 @@
+{
+  "name": "amis",
+  "retrieved_at": "2026-10-13T18:57:34.721971+00:00",
+  "url": "https://data-api.polymarket.com/trades?user=0xc1a58674dbcc1d3208f7e61a0a8b252162caf290&limit=500&offset=0&takerOnly=false",
+  "status": 200,
+  "sha256": "4e49c7e6a6a9038adbf0e0c5880dc5f79e53a401a3d43f973f4489fe850569b7",
+  "n": 500,
+  "min_timestamp": 1776757338,
+  "max_timestamp": 1791577498,
+  "buy_count": 328,
+  "sell_count": 172,
+  "price_median": 0.94,
+  "size_median": 315.2,
+  "buy_outcomes": {
+    "No": 326,
+    "Yes": 2
+  },
+  "titles": [
+    [
+      "Will Silver (SI) hit (HIGH) $210 by end of June?",
+      51
+    ],
+    [
+      "Will Hyperliquid dip to $20 by December 31, 2026?",
+      50
+    ],
+    [
+      "Will Crude Oil (CL) hit (HIGH) $200 by end of June?",
+      38
+    ],
+    [
+      "Will Silver (SI) hit (HIGH) $250 by end of June?",
+      22
+    ],
+    [
+      "Will WTI Crude Oil (WTI) hit (HIGH) $130 in July?",
+      19
+    ],
+    [
+      "Will Crude Oil (CL) hit (LOW) $55 by end of June?",
+      16
+    ],
+    [
+      "Will Silver (SI) hit (LOW) $60 by end of June?",
+      15
+    ],
+    [
+      "Will Hyperliquid dip to $16 by December 31, 2026?",
+      14
+    ],
+    [
+      "Will Lighter reach $12 before 2027?",
+      13
+    ],
+    [
+      "Will Hyperliquid reach $200 by December 31, 2026?",
+      13
+    ]
+  ]
+}

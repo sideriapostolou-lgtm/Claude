@@ -1,0 +1,63 @@
+{
+  "review_at_utc": "2026-10-15T20:36:20.794879+00:00",
+  "status": "accept exact candidate v2 source; root final freeze/full checks/release verification pending",
+  "head": "279d80990252be48c829386a6d2c189b6f3ccde5",
+  "base_app": "8c8681a032a6181c49915ba88ba38d0818dc69d3",
+  "files": {
+    "src/nightcrawler/speeddesk_kalshi.py": {
+      "sha256": "7946b64f9f1441ea8b02b1d17f5b2d400d7c8e7a65897eed8974373dac3ae9b9",
+      "bytes": 20805
+    },
+    "src/nightcrawler/speeddesk_kalshi_ws.py": {
+      "sha256": "1eef6d36a0b5aaf3a00680c0aedec057e163aac8fc8d63e3e213b01124b4337b",
+      "bytes": 24458
+    },
+    "tests/test_speeddesk_kalshi_rest_recovery.py": {
+      "sha256": "dab6f4f862388488e19a2d61b3848359849790dc3b07191614e2e140cd299fad",
+      "bytes": 13116
+    }
+  },
+  "patch_sha256": "d956bf9e5b98fec667a47beb24332af9448131e1c54e94ac9337690bd0775b0a",
+  "patch_bytes": 18750,
+  "reconstructed_patch_identical": true,
+  "independent_checks": {
+    "corrected_focused": "169 passed in 1.62s; exit0",
+    "standalone": "11 adapted original-source scenarios plus BTC and inherited WeatherWS clock/report scenarios; exit0",
+    "baseline": "11 scenarios on unchanged app reproduced current defect; recovery books2->0",
+    "initial_candidate": "168 focused passed, independent moving-clock probe found stale-book authorization/inconsistent report; corrected before acceptance",
+    "initial_harness_error": "Default interpreter requests unavailable; initial fake cancel lacked keyword reason; corrected fixture only; original tool output retained",
+    "initial_focused_command_error": "Nonexistent tests/test_weather_ws.py caused exit4/no tests; corrected to tests/test_weatherwatch_markets.py"
+  },
+  "findings": [
+    "No remaining blocking finding in exact v2 bytes.",
+    "Failure guards require admitted same ticker, delivered websocket transport, connected source/receipt-fresh book; tape additionally requires actual finite/bounded current print age. Cached status never authorizes suppression.",
+    "Suppressed errors mutate neither published health nor tape cursors nor REST trade clocks. Ordinary failures retain original invalidation/cursor behavior. Poll rate accounting and successful REST paths unchanged.",
+    "One captured now is shared by book/source/print predicates and report; inclusive3s retained. Forward expiry/future-to-current checks and WeatherWS inheritance independently exercised.",
+    "No generation counter needed: current relevant authority suffices across sessions; retired requests no longer overwrite current venue status. Success-path re-admission epoch remains separately unproved concern.",
+    "Only two production modules changed: poll_book/poll_trades failure blocks; fresh_books signature compatible with existing noarg callers; new maker accessor; _report coherent clock. Order/risk/accounting/fees/settings, caps/stops/budgets/variables, V1/V2 protocols/history unchanged.",
+    "This suppresses only the new obsolete failure event; prior genuine gap/exclusion retained. No backfill or known-gap erasure.",
+    "Proven false gaps can block sends/locks and cancel simulated makers/trigger real bid safety cancellation; historic losses caused and P&L benefits unproved.",
+    "Untimed producer gaps across window start, cached aggregate publication staleness, and unrelated execution delays remain outside this patch."
+  ],
+  "source_refs": {
+    "failure_guards": "speeddesk_kalshi.py:285-297,334-346",
+    "authoritative_freshness": "speeddesk_kalshi_ws.py:317-346",
+    "actual_downstream_invalidation": "speeddesk.py:322-345",
+    "live_book_guard": "speeddesk_live.py:1125-1136",
+    "live_cancel_path": "speeddesk_live.py:1178-1227"
+  },
+  "artifact_hashes": {
+    "recovery_review.py": "704d4c8f38378d392d2465016f8e54221b40131e29372251ecfe15eef3912899",
+    "accessor_clock_review.py": "2d7c4a9465d0c2e60a37ed2afb5993146170c1d98dadf2e40e5f994fadec5277",
+    "accessor_clock_initial.stdout": "d26d44a3be5a1ef56097b647506717bebe0f2021f05951e9379fb2fa9807d34c",
+    "candidate_independent.py": "d3c11edb972c618fd6537fe242eaa71b05d1243f10ec2f1016c48286f4a43414",
+    "candidate_independent.stdout": "619e09544bd60ec59ac85b6eaa7f0ef5998a9c650c73ede8479e7027bc466899",
+    "initial_focused.stdout": "c77069864ed2834d99f780e7a0335a21a1a48d98642656c9b1cbc478f0e164f1",
+    "corrected_focused.stdout": "4adc6c76226783adefcf2e582a49fc85f5adcb9fc74b5fdd47a0305074f0c14d"
+  },
+  "limitations": [
+    "No full pytest, mypy or Ruff rerun by reviewer; Sol reported mypy/Ruff and root owns required full gates.",
+    "No production/connectors/credentials/orders/release actions. No heldout or sealed TEST access.",
+    "Review fixes source correctness; continuous production causation/coverage/profit not certified."
+  ]
+}

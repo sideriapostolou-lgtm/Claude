@@ -1,0 +1,130 @@
+{
+ "data": {
+  "id": "solana_2uZuTQEjcXcR1ESwMdGTpqEwM5PCekEwrSNVRPc1EhS1",
+  "type": "pool",
+  "attributes": {
+   "base_token_price_usd": "0.000686904353446920770313881075749476456138007418817586382488293625",
+   "base_token_price_native_currency": "0.00000631017685832871",
+   "quote_token_price_usd": "109.129394249550772713974090078331657306872537225",
+   "quote_token_price_native_currency": "1.0",
+   "base_token_price_quote_token": "0.000006310176858",
+   "quote_token_price_base_token": "158474.163633007",
+   "address": "2uZuTQEjcXcR1ESwMdGTpqEwM5PCekEwrSNVRPc1EhS1",
+   "name": "Gary / SOL",
+   "pool_name": "Gary / SOL",
+   "pool_fee_percentage": null,
+   "pool_created_at": "2026-10-08T13:28:26Z",
+   "fdv_usd": "659272.511055906",
+   "market_cap_usd": null,
+   "price_change_percentage": {
+    "m5": "-5.862",
+    "m15": "-10.173",
+    "m30": "17.974",
+    "h1": "20.178",
+    "h6": "469.481",
+    "h24": "469.481"
+   },
+   "transactions": {
+    "m5": {
+     "buys": 115,
+     "sells": 40,
+     "buyers": 43,
+     "sellers": 16
+    },
+    "m15": {
+     "buys": 783,
+     "sells": 402,
+     "buyers": 247,
+     "sellers": 139
+    },
+    "m30": {
+     "buys": 1624,
+     "sells": 911,
+     "buyers": 923,
+     "sellers": 559
+    },
+    "h1": {
+     "buys": 4160,
+     "sells": 2044,
+     "buyers": 3045,
+     "sellers": 1507
+    },
+    "h6": {
+     "buys": 9611,
+     "sells": 5086,
+     "buyers": 6600,
+     "sellers": 3672
+    },
+    "h24": {
+     "buys": 9611,
+     "sells": 5086,
+     "buyers": 6600,
+     "sellers": 3672
+    }
+   },
+   "volume_usd": {
+    "m5": "3163.6932136982",
+    "m15": "39624.0348041768",
+    "m30": "101708.597705003",
+    "h1": "344588.902511484",
+    "h6": "965515.839963246",
+    "h24": "965515.839963246"
+   },
+   "reserve_in_usd": "73520.3799",
+   "locked_liquidity_percentage": "100.0"
+  },
+  "relationships": {
+   "base_token": {
+    "data": {
+     "id": "solana_8ZCmwpW3MtC5UpNcZf7U4HMvRNTo71syU11BDiAFpump",
+     "type": "token"
+    }
+   },
+   "quote_token": {
+    "data": {
+     "id": "solana_So11111111111111111111111111111111111111112",
+     "type": "token"
+    }
+   },
+   "dex": {
+    "data": {
+     "id": "pumpswap",
+     "type": "dex"
+    }
+   }
+  }
+ },
+ "included": [
+  {
+   "id": "solana_8ZCmwpW3MtC5UpNcZf7U4HMvRNTo71syU11BDiAFpump",
+   "type": "token",
+   "attributes": {
+    "address": "8ZCmwpW3MtC5UpNcZf7U4HMvRNTo71syU11BDiAFpump",
+    "name": "Gary the Cat",
+    "symbol": "Gary",
+    "decimals": 6,
+    "image_url": "https://assets.geckoterminal.com/ti0a2ik1ddk0z7lvyyvuehzze44y",
+    "coingecko_coin_id": null
+   }
+  },
+  {
+   "id": "solana_So11111111111111111111111111111111111111112",
+   "type": "token",
+   "attributes": {
+    "address": "So11111111111111111111111111111111111111112",
+    "name": "Wrapped SOL",
+    "symbol": "SOL",
+    "decimals": 9,
+    "image_url": "https://coin-images.coingecko.com/coins/images/21629/large/solana.jpg?1696520989",
+    "coingecko_coin_id": "wrapped-solana"
+   }
+  },
+  {
+   "id": "pumpswap",
+   "type": "dex",
+   "attributes": {
+    "name": "PumpSwap"
+   }
+  }
+ ]
+}

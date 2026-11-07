@@ -1,0 +1,27 @@
+import json,sys
+from pathlib import Path
+from unittest.mock import patch
+ROOT=Path('/workspace/nightcrawler-probability-epochs');sys.path.insert(0,str(ROOT/'src'))
+from nightcrawler.kalshi_probability_learning import ProbabilityLearning
+from nightcrawler.kalshi_probability_epochs import ProbabilityEpochs,LEGACY
+from nightcrawler.speeddesk_model import Window
+if '--frozen-v2' in sys.argv:
+    import hashlib,types
+    patchtext=Path('/workspace/kalshi-probability-epoch-checks/epochs-v2.patch').read_text()
+    section=patchtext.split('diff --git a/src/nightcrawler/kalshi_probability_epochs.py b/src/nightcrawler/kalshi_probability_epochs.py\n',1)[1].split('diff --git ',1)[0]
+    source='\n'.join(line[1:] for line in section.splitlines() if line.startswith('+') and not line.startswith('+++'))+'\n'
+    assert hashlib.sha256(source.encode()).hexdigest()=='520f5769f3a059a6022005f427fa35ab59bac113466c40c41019a634bf04d05c'
+    module=types.ModuleType('nightcrawler._epoch_v2_probe');module.__package__='nightcrawler'
+    exec(compile(source,'frozen_v2_host','exec'),module.__dict__)
+    ProbabilityEpochs=module.ProbabilityEpochs
+old=ProbabilityLearning(900)
+w=Window('KXBTC15M-review',1000,1900,100,venue_start_price=100,venue='kalshi')
+old.discover([w],900)
+raw=old.state()
+active=ProbabilityLearning(1100);host=ProbabilityEpochs(active,1100)
+receipts=[]
+def log(fmt,*args,**kwargs):
+    value=fmt%args
+    if value.startswith('kalshi_probability_learning_unknown '):receipts.append(value)
+with patch('nightcrawler.kalshi_probability_learning.log.info',log):host.restore({LEGACY:raw},1100)
+print(json.dumps({'unknown_receipts':len(receipts),'actual_unknown_count':active.counts['unknown'],'actual_error':host.error,'receipts':receipts},indent=2))

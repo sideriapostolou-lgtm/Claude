@@ -1,0 +1,67 @@
+{
+  "timestamp": "2026-10-16T00:31:01.535839820Z",
+  "mode": "live",
+  "reason": "Window has not started",
+  "trading_now": true,
+  "authenticated": true,
+  "waiting": "",
+  "cash_usd": 30.3796,
+  "reserved_usd": 1.6500000000000001,
+  "open_cost_usd": 0,
+  "open_risk_usd": 0,
+  "at_risk_usd": 1.6500000000000001,
+  "open_orders": 1,
+  "positions": 0,
+  "total_halted": false,
+  "day_stop_latched": false,
+  "integrity_error": null,
+  "caps": {
+    "window_usd": 10,
+    "open_usd": 20,
+    "day_stop_usd": 6,
+    "clip": 5,
+    "total_stop_usd": 10
+  },
+  "ladder": {
+    "rung": 0,
+    "promotion_ready": false
+  },
+  "total": {
+    "day": null,
+    "windows": 182,
+    "fills": 840,
+    "latency": null,
+    "scorecard": null,
+    "settled_windows": 197,
+    "fees_usd": 3.11672,
+    "locked_usd": 4.299040029970016,
+    "directional_usd": -23.66084002997003,
+    "pnl_usd": -19.36180000000001,
+    "worst_usd": -2.9791999999999987,
+    "take_attempts": 39,
+    "take_fills": 17,
+    "maker_orders": 7112,
+    "maker_fills": 600,
+    "locks": 142,
+    "lock_fills": 111,
+    "take_fill_rate": 0.4358974358974359,
+    "maker_fill_rate": 0.0843644544431946,
+    "avg_latency_ms": 3846.1870412786297,
+    "latency_definition": "durable real decision to venue fill timestamp; maker includes resting time"
+  },
+  "today": {
+    "day": "2026-10-16",
+    "settled_windows": 2,
+    "fills": 14,
+    "fees_usd": 0,
+    "locked_usd": 0.6190909090909097,
+    "directional_usd": -0.4890909090909107,
+    "pnl_usd": 0.129999999999999
+  },
+  "practice_twin": {
+    "day": "2026-10-16",
+    "fills": 0,
+    "pnl_usd": 0,
+    "reporting_complete": true
+  }
+}

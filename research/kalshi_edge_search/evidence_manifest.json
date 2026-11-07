@@ -1,0 +1,111 @@
+{
+  "collected_on": "2026-10-13",
+  "kind": "Public API evidence and explicitly labeled illustrative arithmetic, no account data",
+  "files": [
+    {
+      "path": "arithmetic.json",
+      "sha256": "76041d871723f0392aa536fff92954aceab0c64706110c77e7f13522dffd8eae",
+      "bytes": 1490
+    },
+    {
+      "path": "book_sample/KXBTC15M-metadata.json",
+      "sha256": "2461db4e1fa337f2a941c16dc2529b416bc16f94a42cc7f2fba713459ad4537d",
+      "bytes": 3070
+    },
+    {
+      "path": "book_sample/KXBTC15M-round1.json",
+      "sha256": "931bf084809c09f0c74c8855882d1983f0f4b8d77c219e6ff6a96f7f04af25e0",
+      "bytes": 14783
+    },
+    {
+      "path": "book_sample/KXBTC15M-round2.json",
+      "sha256": "b201b157869dc6a6e666e9e6eb588be198a0ffb99136f77255bc4390ab573bcb",
+      "bytes": 14726
+    },
+    {
+      "path": "book_sample/KXBTC15M-round3.json",
+      "sha256": "13e53939d020a66f5fc4c7bfe9e018d70f618a65cc7c2b9b0f337d6535025cd2",
+      "bytes": 14725
+    },
+    {
+      "path": "book_sample/KXETH15M-metadata.json",
+      "sha256": "fc7988b721bb7bca1d391df658291e9e989c509f0644753213733c3b7a9bfbda",
+      "bytes": 3073
+    },
+    {
+      "path": "book_sample/KXETH15M-round1.json",
+      "sha256": "b3298a238a3e9665d5ddabd6397a5dc0325afb991fdd692c2450bc7a05d8f5dd",
+      "bytes": 13700
+    },
+    {
+      "path": "book_sample/KXETH15M-round2.json",
+      "sha256": "9c010122cc9b12e994ce4352f8519cbda44303bbb39f4309572587ae263e289c",
+      "bytes": 13699
+    },
+    {
+      "path": "book_sample/KXETH15M-round3.json",
+      "sha256": "949ede73ac4520b2bd9614ee9536779dec5aed180e8899f3132ac21c09ab0588",
+      "bytes": 13702
+    },
+    {
+      "path": "book_sample/KXSOL15M-metadata.json",
+      "sha256": "af26df98fd1b6893e952d0f2a69dbe8835f16e55f51879b629cd340f207213ab",
+      "bytes": 3072
+    },
+    {
+      "path": "book_sample/KXSOL15M-round1.json",
+      "sha256": "a04db27d64c9a6d9e8bc417e2a28d89a95c5bac771a4b88f198beac70defab0c",
+      "bytes": 13105
+    },
+    {
+      "path": "book_sample/KXSOL15M-round2.json",
+      "sha256": "02cd5eeb2d14a12ea0ed4beae0e352f62079dd7fc919ed429fa1779116923783",
+      "bytes": 13112
+    },
+    {
+      "path": "book_sample/KXSOL15M-round3.json",
+      "sha256": "79b6ccc26be7230ea61de51cdd26cb37e5798cf3996210234ad0ad4cec35d2c5",
+      "bytes": 13112
+    },
+    {
+      "path": "book_sample/KXXRP15M-metadata.json",
+      "sha256": "1f8df623b711eddd32aadbc6a4c04e1330b8a88c1f92e07a6387a12509c063a7",
+      "bytes": 3068
+    },
+    {
+      "path": "book_sample/KXXRP15M-round1.json",
+      "sha256": "f11068120b442aaeb27bfb4623ce3915ea921a9c9f81d6fba45396178dab8fb0",
+      "bytes": 12084
+    },
+    {
+      "path": "book_sample/KXXRP15M-round2.json",
+      "sha256": "0d073e66ca1bbfb6c28cdde32614052d94b390f2504f1ab3377fb11b7a9db6f2",
+      "bytes": 12205
+    },
+    {
+      "path": "book_sample/KXXRP15M-round3.json",
+      "sha256": "e7b7c5a1cdb036f2720c5a2f1d87558057f930235a536b1d5c75c01bc8b6d555",
+      "bytes": 12207
+    },
+    {
+      "path": "book_sample/protocol.json",
+      "sha256": "c8d095b8b3bf54d70a0c2fc72723a16b58c57a7a9e347ba8b7e46f4b5c180b97",
+      "bytes": 728
+    },
+    {
+      "path": "book_sample/requests.json",
+      "sha256": "9937000b429df65579898f6d6f12e2659f7e39272a46a4e6f9f7581d354ed6b5",
+      "bytes": 3918
+    },
+    {
+      "path": "book_sample/summary.json",
+      "sha256": "6a28ec5749500f5d44dad8fcc70f1979a940bb32dd545c9f994fab29623a5c37",
+      "bytes": 17873
+    },
+    {
+      "path": "incentives_summary.json",
+      "sha256": "6e2baa6841e175b690570c939063f5281ddd39f3e9de6d1536cb4820e9eeac0c",
+      "bytes": 858
+    }
+  ]
+}

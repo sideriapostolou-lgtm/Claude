@@ -1,0 +1,9 @@
+{
+  "commit": "7555aedafccdcd214e9c8231ae641deb60b87587",
+  "all26_public_files_exact_readback": true,
+  "all26_manifest_files_hash_verified": true,
+  "required_paths_complete": true,
+  "verification_utc": "2026-10-16T02:08:51.341586+00:00",
+  "confirmation_absent_before_first_get": true,
+  "freeze_sha256": "1f5d25709009fe13748c9bf37f81be1018430789cb701e9284c8e6d6c76f4da7"
+}

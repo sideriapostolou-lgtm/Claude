@@ -1,0 +1,77 @@
+{
+  "reviewed_at_utc": "2026-10-15T17:42:24.863274+00:00",
+  "status": "Prospective design review only; not implemented, benchmarked, authorized release, chosen correction or upstream attribution.",
+  "design_sha256": "857681a944a1df301e986f342b2538800b0c120f8176d2f0cda08b8433810d00",
+  "semantics_sha256": "98fc500c01e18a33a5e6c2765b7db73610b2bc8a39e57a969dda3358cc95209e",
+  "source_files_verified": {
+    "src/nightcrawler/speeddesk.py": "79a8ad7fc10879035297e2af4d87af1bff758b4f89c2adae3464fe812235477d",
+    "src/nightcrawler/speeddesk_venues.py": "54f0c2eaea909621f24734d8cd73cdd46f2ea711d885269b6892c564bc9dff51",
+    "src/nightcrawler/speeddesk_kalshi.py": "53727b3d3f2ec6790469d53d8fb330f7501ad1838c558c887ea95c54840d8f82",
+    "src/nightcrawler/speeddesk_kalshi_ws.py": "d76e9dfa6a026f796f11503642a373a5a0f2799da8dabadf078c565591f82112",
+    "src/nightcrawler/kalshi_arena.py": "091ea297b1fed8973be3c78e74184e6ea71fa8f36e808e67449f433c88d19a0e",
+    "src/nightcrawler/kalshi_online_learning.py": "16a14ff7d8bb933d4eb8e4251d0fdcf943c81e6f8c6f8f1720ced3d5e14f5fa8"
+  },
+  "assessment": "Semantic map and causal uncertainty are sound. Exact producer-to-child correlation is a justified next measurement candidate after fixed capture closure, but the proposed minimum schema and2KiB-per-callback allowance are larger than necessary. Resolve throughput/lifetime bounds before implementation.",
+  "minimum_useful_measurement": [
+    "Measure which exact producer/router branch supplied each selected explicit slug, with immutable per-event identity and producer callback observation time. Preserve simultaneous per-slug reasons and distinguish producer membership loss from router-added stream-fall gaps.",
+    "Prefer one small optional context on the existing g record if a separately scoped wire extension is accepted. A process/link epoch plus one unique parent callback sequence carried by that g is enough for exact association; producer_seq plus aggregate_seq plus frame ordinal are not all required when context travels with its event.",
+    "Keep reason masks and only facts needed to distinguish WS freshbook loss, maker membership loss, adapter transition/failure and router injection. Reuse original gap-slug positions rather than repeating up to32 strings. Per-slug masks are required: a global union mask can falsely assign tickerA's book loss to tickerB's maker loss.",
+    "If FIFO residence is included, two same-parent monotonic observation points adjacent to successful enqueue and actual dequeue are sufficient. Existing frame/child clocks retain current meanings. Defer socketfirstattempt/completion, encode-stage clocks, broad age snapshots and redundant counters until evidence requires them.",
+    "Keep one child slot event/window with first/last observed context. Explicit context omission remains unknown; no nearest-time replacement or retrospective V1 rewrite."
+  ],
+  "blocking_design_choices_before_implementation": [
+    {
+      "issue": "Outstanding budget does not cap sustained hot-path work",
+      "evidence": "128atoms/256KiB can recycle indefinitely; 1000callbacks/s with2KiB atoms is roughly2MiB/s of added wire payload plus repeated allocation/validation. This is an arithmetic illustration, not a measured callback rate.",
+      "required": "Choose smaller fixed primitive schema and predeclared sustained byte/context rate cap plus pending/current-frame capacity. Test omission before expensive allocation; fixed omission counters only. No repeated serialization solely to estimate length."
+    },
+    {
+      "issue": "32ticker facts versus2KiB atom is inconsistent at worst-length slugs",
+      "evidence": "32*128bytes of ticker text alone exceeds4KiB before field overhead.",
+      "required": "Reference original g slug indices, cap per-slug primitives and mark uncovered indices unavailable. Do not silently truncate a reason union or alter original slugs/order."
+    },
+    {
+      "issue": "Accounting lifetime crosses original queue and partial socket frame",
+      "evidence": "_encode pops items before _send; _send retains data[written:] in self.out and repeated flushes may only drain that out. _put may discard events when notrunning/full; _stop_link clears both pending andout.",
+      "required": "Transfer reserved credit pending->currentencodedframe->partialout; release frame-level credits only on complete send or close/failure. Refund unsuccessful append/originaldrop. Do not release at pop or first partialsend. Bound temporary object+marshal+out-copy memory separately from logical payload budget."
+    },
+    {
+      "issue": "Optional bytes can cross existing frame limit or change frame slicing",
+      "evidence": "Reader rejects frames above FRAME_MAX64MiB. CPU-budgeted _encode slicing and socketpressure are existing behavior-sensitive boundaries.",
+      "required": "Ensure optional metadata cannot make a formerly valid frame exceed frame limit; safe omission path and boundary fixtures. No fallback that replays original _encode/pop/book-baseline operations. Measure producer/router/link CPU, actual slicing/dropcounts, framebytes and partialsend behavior."
+    },
+    {
+      "issue": "Final record ordinal only required for out-of-band map option",
+      "evidence": "_flush records outcome_index before m, then _encode adds FIFO records, then outcomes may be inserted before those events.",
+      "required": "For byte-identical-wire mapping enumerate final items after optional outcomes insertion, or proven exact adjustment. Cover with/without w/k/m/o and delayed outcomes while FIFO remains. Never use g-only ordinal or preinsert queue offset. For in-band immutableeventID do not add redundant ordinal infrastructure."
+    },
+    {
+      "issue": "Call-scope carrier lifetime",
+      "evidence": "ContextVar reset protects current context but asynchronously spawned tasks can inherit a copied context that outlives reset. Synchronous callbacks can nest and exceptions can escape.",
+      "required": "Keep carrier restricted to existing synchronous chain with try/finally reset, absent/invalid means unknown, and test inherited tasks/threads/nestedcallbacks. No statusdict private keys reaching live status or persistence."
+    }
+  ],
+  "option_order": [
+    {
+      "option": "Small in-band optional primitive context",
+      "assessment": "Least correlation machinery if wire extension is in scope; still requires separate parent/live-loop independent review and measured overhead. Proposed first prototype target could be<=256-512bytes/context after explicit schema accounting, not accepted guarantee."
+    },
+    {
+      "option": "Bounded parent map plus actual child ordinal",
+      "assessment": "Use only if exact wirebytes must remain unchanged. More retention/export/instance-join machinery and parentlog work; not inherently safer.120s expiry cannot support5min-slot joins without prior export. Exportcap saturation must report unavailable correlations."
+    },
+    {
+      "option": "Separate channel or sidecar",
+      "assessment": "Overengineered for this first branch-attribution question; adds lifecycle/reordering/backpressure/FD/task work without removing need for exact keys."
+    }
+  ],
+  "required_acceptance_additions": [
+    "Benchmark realistic and adversarial sustained callback rates, not just peak pending count; include exhausted-rate/capacity cheap fallback path.",
+    "Test one producer event containing different per-slug simultaneous reasons and omitted subset, repeated identical events, multiple g in one frame, event beforestart applied afterstart, allframeprefix/outcomeinsertion combinations.",
+    "Test notrunning/fullpending, encodeexception, sendBlockingIOError/zero/partial/full, oldoutcompletion followed by newframe sameflush, childdeath/close, epochreuse and memorycredit reconciliation.",
+    "Preserve original callback arguments/order, cancellation/invalidation priority, g firstfour fields/FIFO, books/trades/outcomes/drop accounting, V1/model/history/state/savecadence. Added observation timing cannot replace decision clocks.",
+    "Original valid g must still apply if context malformed/oversize/unavailable; never disable learner or drop original event because optional observer failed."
+  ],
+  "actual_capture_limit": "Observed slot establishes current child first/last effective explicit_slug with aggregate stream and Coinbase flags true. Those aggregate flags do not certify Kalshi-specific maker availability. It does not identify quiet expiry versus book/source/metadata/transport/router cause. Finaltail remains pending at this review; no source action follows automatically.",
+  "no_mutations": "Read-only source/design inspection; saved only this private review, no source/publicdocs/network/production writes."
+}

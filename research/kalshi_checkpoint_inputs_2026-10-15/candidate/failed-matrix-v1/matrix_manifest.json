@@ -1,0 +1,284 @@
+{
+  "runs": [
+    {
+      "label": "zero-timing-baseline-1",
+      "fixture": "zero",
+      "mode": "timing",
+      "variant": "baseline",
+      "rep": 1,
+      "command_argv": [
+        "/usr/bin/env",
+        "-i",
+        "PATH=/usr/bin:/bin",
+        "PYTHONPATH=/workspace/nightcrawler-practice-checkpoint/src:/workspace/nightcrawler-practice-checkpoint/tests",
+        "/workspace/shared/nightcrawler-venv/bin/python",
+        "-B",
+        "/workspace/private-handoffs/claude-2026-10-15/checkpoint-profile/candidate/profile_pair.py",
+        "zero",
+        "timing",
+        "baseline",
+        "zero-timing-baseline-1"
+      ],
+      "stdout": "zero-timing-baseline-1.stdout.json",
+      "stderr": "zero-timing-baseline-1.stderr.txt",
+      "rss_peak_sampled_kib": 50024,
+      "experiment_disk_peak_sampled_bytes": 1818220,
+      "exit_code": 0,
+      "elapsed_s": 0.4179292089975206,
+      "stdout_sha256": "5de609501b82d7f580249ae490f620de71be86408074de25731a2c4042936951",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "label": "zero-timing-candidate-1",
+      "fixture": "zero",
+      "mode": "timing",
+      "variant": "candidate",
+      "rep": 1,
+      "command_argv": [
+        "/usr/bin/env",
+        "-i",
+        "PATH=/usr/bin:/bin",
+        "PYTHONPATH=/workspace/nightcrawler-practice-checkpoint/src:/workspace/nightcrawler-practice-checkpoint/tests",
+        "/workspace/shared/nightcrawler-venv/bin/python",
+        "-B",
+        "/workspace/private-handoffs/claude-2026-10-15/checkpoint-profile/candidate/profile_pair.py",
+        "zero",
+        "timing",
+        "candidate",
+        "zero-timing-candidate-1"
+      ],
+      "stdout": "zero-timing-candidate-1.stdout.json",
+      "stderr": "zero-timing-candidate-1.stderr.txt",
+      "rss_peak_sampled_kib": 48064,
+      "experiment_disk_peak_sampled_bytes": 1851721,
+      "exit_code": 0,
+      "elapsed_s": 0.40838270100357477,
+      "stdout_sha256": "ec2cde5102973f06d77638b63c82a890f489362a8523df87f982f940e45762b0",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "label": "zero-timing-baseline-2",
+      "fixture": "zero",
+      "mode": "timing",
+      "variant": "baseline",
+      "rep": 2,
+      "command_argv": [
+        "/usr/bin/env",
+        "-i",
+        "PATH=/usr/bin:/bin",
+        "PYTHONPATH=/workspace/nightcrawler-practice-checkpoint/src:/workspace/nightcrawler-practice-checkpoint/tests",
+        "/workspace/shared/nightcrawler-venv/bin/python",
+        "-B",
+        "/workspace/private-handoffs/claude-2026-10-15/checkpoint-profile/candidate/profile_pair.py",
+        "zero",
+        "timing",
+        "baseline",
+        "zero-timing-baseline-2"
+      ],
+      "stdout": "zero-timing-baseline-2.stdout.json",
+      "stderr": "zero-timing-baseline-2.stderr.txt",
+      "rss_peak_sampled_kib": 49100,
+      "experiment_disk_peak_sampled_bytes": 1899430,
+      "exit_code": 0,
+      "elapsed_s": 0.4294572840008186,
+      "stdout_sha256": "c8dade064da27788525a5ede0f0aa4ea7c6d73c8dec5a802418731feb1fa94f7",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "label": "zero-timing-candidate-2",
+      "fixture": "zero",
+      "mode": "timing",
+      "variant": "candidate",
+      "rep": 2,
+      "command_argv": [
+        "/usr/bin/env",
+        "-i",
+        "PATH=/usr/bin:/bin",
+        "PYTHONPATH=/workspace/nightcrawler-practice-checkpoint/src:/workspace/nightcrawler-practice-checkpoint/tests",
+        "/workspace/shared/nightcrawler-venv/bin/python",
+        "-B",
+        "/workspace/private-handoffs/claude-2026-10-15/checkpoint-profile/candidate/profile_pair.py",
+        "zero",
+        "timing",
+        "candidate",
+        "zero-timing-candidate-2"
+      ],
+      "stdout": "zero-timing-candidate-2.stdout.json",
+      "stderr": "zero-timing-candidate-2.stderr.txt",
+      "rss_peak_sampled_kib": 48228,
+      "experiment_disk_peak_sampled_bytes": 1874750,
+      "exit_code": 0,
+      "elapsed_s": 0.37049570798990317,
+      "stdout_sha256": "c7db1497e3906375cff328884d2cfdc6a5b2c7c1f5cc29d07a9c02c6803cc27f",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "label": "zero-timing-baseline-3",
+      "fixture": "zero",
+      "mode": "timing",
+      "variant": "baseline",
+      "rep": 3,
+      "command_argv": [
+        "/usr/bin/env",
+        "-i",
+        "PATH=/usr/bin:/bin",
+        "PYTHONPATH=/workspace/nightcrawler-practice-checkpoint/src:/workspace/nightcrawler-practice-checkpoint/tests",
+        "/workspace/shared/nightcrawler-venv/bin/python",
+        "-B",
+        "/workspace/private-handoffs/claude-2026-10-15/checkpoint-profile/candidate/profile_pair.py",
+        "zero",
+        "timing",
+        "baseline",
+        "zero-timing-baseline-3"
+      ],
+      "stdout": "zero-timing-baseline-3.stdout.json",
+      "stderr": "zero-timing-baseline-3.stderr.txt",
+      "rss_peak_sampled_kib": 50152,
+      "experiment_disk_peak_sampled_bytes": 1880808,
+      "exit_code": 0,
+      "elapsed_s": 0.4374873010092415,
+      "stdout_sha256": "c6ef064d6ed66ddd25946dca1e398d7b2d86f97c985d2e237fbcff87285f265f",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "label": "zero-timing-candidate-3",
+      "fixture": "zero",
+      "mode": "timing",
+      "variant": "candidate",
+      "rep": 3,
+      "command_argv": [
+        "/usr/bin/env",
+        "-i",
+        "PATH=/usr/bin:/bin",
+        "PYTHONPATH=/workspace/nightcrawler-practice-checkpoint/src:/workspace/nightcrawler-practice-checkpoint/tests",
+        "/workspace/shared/nightcrawler-venv/bin/python",
+        "-B",
+        "/workspace/private-handoffs/claude-2026-10-15/checkpoint-profile/candidate/profile_pair.py",
+        "zero",
+        "timing",
+        "candidate",
+        "zero-timing-candidate-3"
+      ],
+      "stdout": "zero-timing-candidate-3.stdout.json",
+      "stderr": "zero-timing-candidate-3.stderr.txt",
+      "rss_peak_sampled_kib": 46924,
+      "experiment_disk_peak_sampled_bytes": 1886854,
+      "exit_code": 0,
+      "elapsed_s": 0.4069548059924273,
+      "stdout_sha256": "d6c6d219d7cac142bd1bad2b32077b325fc883e7581cade370b73551e9b6003b",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "label": "one-timing-baseline-1",
+      "fixture": "one",
+      "mode": "timing",
+      "variant": "baseline",
+      "rep": 1,
+      "command_argv": [
+        "/usr/bin/env",
+        "-i",
+        "PATH=/usr/bin:/bin",
+        "PYTHONPATH=/workspace/nightcrawler-practice-checkpoint/src:/workspace/nightcrawler-practice-checkpoint/tests",
+        "/workspace/shared/nightcrawler-venv/bin/python",
+        "-B",
+        "/workspace/private-handoffs/claude-2026-10-15/checkpoint-profile/candidate/profile_pair.py",
+        "one",
+        "timing",
+        "baseline",
+        "one-timing-baseline-1"
+      ],
+      "stdout": "one-timing-baseline-1.stdout.json",
+      "stderr": "one-timing-baseline-1.stderr.txt",
+      "rss_peak_sampled_kib": 49120,
+      "experiment_disk_peak_sampled_bytes": 1584842,
+      "exit_code": 1,
+      "elapsed_s": 0.3948462030093651,
+      "stdout_sha256": "a9bae57c09f9f475f1e34bca66077f6583a6be3630aa7b036acd0a3c31964924",
+      "stderr_sha256": "e88910688ea4a202915bdf85835f4b78188a32046fa3b1e2f0e50517b836b73b"
+    }
+  ],
+  "source_hashes": {
+    "src/nightcrawler/speeddesk.py": "eb9146263a881ba2ef6645c03585ca78c7bc0e1d9f03cb5177028d483e403ef4",
+    "src/nightcrawler/speeddesk_model.py": "50ba3b4f78c6efd031fdcd8bb1cb1a59ea2988973c341b9ad275345d70de7429",
+    "src/nightcrawler/speeddesk_metrics.py": "b6bb72ac1ec236f4fa70a39b5b4c9303ba3648211618c4e9739a99b782eef127",
+    "src/nightcrawler/speeddesk_scorecard.py": "5fd51b95ee1aed89585e8035c911302058dd155cbe4e3fad1b0e8076505cede4",
+    "src/nightcrawler/ledger.py": "c9b5268048381293a11dba514d8b66eeff7a7636b1685332fd9464fbf21f358c",
+    "tests/test_speeddesk_checkpoint_settlements.py": "3eb15e8f138cbe47ef99b5b6fa76ac6ce6db4751bcba7e76b1d0d5585e13ca30",
+    "tests/test_speeddesk_runtime.py": "e4720a88592ef4789867aafbdb229fa829ffe3d1d21ca038c77eb35d59442907",
+    "tests/test_speeddesk_snapshot_cache.py": "0964b08cf0231cf5aa9c26bccbc5febf214d41eb6d15af832ac07b2451393d6d"
+  },
+  "harness_sha256": "3624defde7a8919b7082f71050d7143ddac6c737e3545e57a9caf05abc8a3c41",
+  "baseline_source_sha256": "79a8ad7fc10879035297e2af4d87af1bff758b4f89c2adae3464fe812235477d",
+  "resource_scope": "whole private experiment tree <=100MiB; child <=60s <=256MiB RSS/AS; no simultaneous children",
+  "actual_comparisons": [
+    {
+      "fixture": "zero",
+      "checks": [
+        {
+          "phase": "first",
+          "kind": "kv",
+          "bytes": 32004,
+          "sha256": "3f4516ccf9800c3baaa976a1cf05ab44bf0211d5562a46da51fbbde2a512e8f3",
+          "byte_equal": true
+        },
+        {
+          "phase": "first",
+          "kind": "mirror",
+          "bytes": 32004,
+          "sha256": "3f4516ccf9800c3baaa976a1cf05ab44bf0211d5562a46da51fbbde2a512e8f3",
+          "byte_equal": true
+        },
+        {
+          "phase": "first",
+          "kind": "receipts",
+          "bytes": 12914,
+          "sha256": "60375a82fb05e6de8ceee0388492fdb439f8431c59e48050ae5268d6ebc42db3",
+          "byte_equal": true
+        },
+        {
+          "phase": "correction",
+          "kind": "kv",
+          "bytes": 32786,
+          "sha256": "cc5d02f6b6631b93f03ddcef18f2eed9de5aa9ca7ae584bcbe6705180aa22ea2",
+          "byte_equal": true
+        },
+        {
+          "phase": "correction",
+          "kind": "mirror",
+          "bytes": 32786,
+          "sha256": "cc5d02f6b6631b93f03ddcef18f2eed9de5aa9ca7ae584bcbe6705180aa22ea2",
+          "byte_equal": true
+        },
+        {
+          "phase": "correction",
+          "kind": "receipts",
+          "bytes": 22782,
+          "sha256": "25c2b5aa823a3a757e741708cb2291ff15c1306cbe37201c38d9c4af389194fa",
+          "byte_equal": true
+        },
+        {
+          "phase": "steady",
+          "kind": "kv",
+          "bytes": 32786,
+          "sha256": "cc5d02f6b6631b93f03ddcef18f2eed9de5aa9ca7ae584bcbe6705180aa22ea2",
+          "byte_equal": true
+        },
+        {
+          "phase": "steady",
+          "kind": "mirror",
+          "bytes": 32786,
+          "sha256": "cc5d02f6b6631b93f03ddcef18f2eed9de5aa9ca7ae584bcbe6705180aa22ea2",
+          "byte_equal": true
+        },
+        {
+          "phase": "steady",
+          "kind": "receipts",
+          "bytes": 22782,
+          "sha256": "25c2b5aa823a3a757e741708cb2291ff15c1306cbe37201c38d9c4af389194fa",
+          "byte_equal": true
+        }
+      ]
+    }
+  ],
+  "complete_source_test_patch_sha256": "ca26dabdd6ec568c566ed616752de7e8e895ee04ae04cfe28598043933b5ed6c"
+}

@@ -1,0 +1,7 @@
+{
+  "status": "failed_harness_fixture_not_source",
+  "failure": "checkpoint pending/recent/labels capacity assertion",
+  "cause": "Synthetic consecutive windows discovered10seconds before next start, but preceding label was already at same next start: fixture reversed clock. Corrected by separating synthetic development windows1800seconds.",
+  "source_changed": false,
+  "raw_timing_trials": "not emitted before assertion; no passing resource claim from attempt1"
+}

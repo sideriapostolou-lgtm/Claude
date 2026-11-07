@@ -1,0 +1,377 @@
+{
+ "hypothesis": "Z4",
+ "version": "z4-v1",
+ "stage": "debug",
+ "split": "final_train",
+ "utc": "2026-10-09 03:23:40",
+ "provisional": false,
+ "debug_only": true,
+ "prereg_sha256": "16d14b16f51cacda9bc795e3509853eb8616fc8c849709a4df94f622982763a4",
+ "rerun_reason": null,
+ "coverage": {
+  "split": "final_train",
+  "bounds_utc": [
+   "2026-10-07 19:37:30",
+   "2026-10-08 08:06:47"
+  ],
+  "debug_only": true,
+  "graduates_in_split": 644,
+  "tradeable": 450,
+  "usable": 450,
+  "excluded": {
+   "mayhem": 129,
+   "not_sol_quoted": 65
+  },
+  "created_inexact": 0,
+  "has_create0": 44,
+  "chain_hours_scanned_frac": 1.0,
+  "days": [
+   {
+    "day": "2026-10-07",
+    "hours_in_split": 5,
+    "curve_hours": 5,
+    "b2_hours": 5,
+    "b2_hours_midrun": 0,
+    "coins_created": 294,
+    "tradeable": 196,
+    "usable": 196,
+    "usable_frac": 1.0,
+    "partial": false
+   },
+   {
+    "day": "2026-10-08",
+    "hours_in_split": 9,
+    "curve_hours": 9,
+    "b2_hours": 9,
+    "b2_hours_midrun": 0,
+    "coins_created": 350,
+    "tradeable": 254,
+    "usable": 254,
+    "usable_frac": 1.0,
+    "partial": false
+   }
+  ],
+  "days_expected": 0.52,
+  "days_full": 2,
+  "curve_span_utc": [
+   "2026-10-01 21:00:00",
+   "2026-10-09 00:00:00"
+  ],
+  "b2_span_utc": [
+   "2026-10-07 19:00:00",
+   "2026-10-08 19:00:00"
+  ],
+  "completeness_source": "raw_chunks",
+  "parquet_snapshot_utc": "2026-10-09 02:53:25",
+  "b2_hours_needed": 24,
+  "b2_hours_done": 24,
+  "b2_hours_midrun": [],
+  "sol_usd": {
+   "series_utc": [
+    "2026-09-15 00:00:00",
+    "2026-10-08 23:59:00"
+   ],
+   "constant_fallback": false,
+   "lookahead_coins": 0,
+   "stale_coins": 0
+  },
+  "power": {
+   "entry_bar_coins": {
+    "need": 40,
+    "have_usable_coins": 450,
+    "ok": true
+   },
+   "x1_r0_trades_5_seeds": {
+    "need": 200,
+    "max_possible": 2250,
+    "ok": true
+   },
+   "g1_flagged_coins_val": {
+    "need": 200,
+    "max_possible": 450,
+    "ok": true
+   }
+  },
+  "underpowered": false,
+  "complete": true,
+  "notes": [],
+  "from_flow": true
+ },
+ "n_coins": 450,
+ "span_days": 0.5203240740740741,
+ "live_branches": null,
+ "history": {
+  "splits": [
+   "final_train"
+  ],
+  "record_coins": 450,
+  "records": 450,
+  "structure_coins": 708,
+  "structure_named": 585,
+  "tokens": 753,
+  "first_structure_g_utc": "2026-10-07 19:37:30"
+ },
+ "event_counts": {
+  "coins": 450,
+  "alive_at_decision": 137,
+  "by_N": {
+   "3h": {
+    "status_all": {
+     "solo": 287,
+     "eligible": 118,
+     "unknown": 32,
+     "pending": 13
+    },
+    "member_any": 131,
+    "host_entries": 41,
+    "host_per_day": 78.79704600053385,
+    "host_crowd": 7,
+    "host_exact_clone": 30,
+    "host_instant": 33,
+    "host_warmup": 7,
+    "host_keys": 32,
+    "top_keys": {
+     "oil": 4,
+     "fund": 3,
+     "gta": 2,
+     "nvidia": 2,
+     "digital": 2,
+     "apple": 2,
+     "craft": 1,
+     "muse": 1,
+     "human": 1,
+     "cat": 1,
+     "fish": 1,
+     "nyt": 1
+    },
+    "mom_th0.25_entries": 2,
+    "mom_th0.25_per_day": 3.843758341489456,
+    "mom_th1_entries": 1,
+    "mom_th1_per_day": 1.921879170744728
+   },
+   "12h": {
+    "status_all": {
+     "solo": 228,
+     "eligible": 178,
+     "unknown": 32,
+     "pending": 12
+    },
+    "member_any": 190,
+    "host_entries": 55,
+    "host_per_day": 105.70335439096004,
+    "host_crowd": 23,
+    "host_exact_clone": 42,
+    "host_instant": 42,
+    "host_warmup": 54,
+    "host_keys": 39,
+    "top_keys": {
+     "oil": 4,
+     "cat": 3,
+     "nvidia": 3,
+     "fund": 3,
+     "apple": 3,
+     "evernorthxrp": 2,
+     "gta": 2,
+     "tank": 2,
+     "states": 2,
+     "american": 2,
+     "craft": 1,
+     "muse": 1
+    },
+    "mom_th0.25_entries": 4,
+    "mom_th0.25_per_day": 7.687516682978912,
+    "mom_th1_entries": 0,
+    "mom_th1_per_day": 0.0
+   }
+  }
+ },
+ "configs": {
+  "mom|N3h|th0.25": {
+   "config": "mom|N3h|th0.25",
+   "params_hash": "5eabf6719169",
+   "hypothesis": "Z4",
+   "n": 2,
+   "n_coins": 2,
+   "n_keys": 2,
+   "tags": {
+    "hot|few": 2
+   },
+   "n_exact_clone": 2,
+   "n_instant": 2,
+   "n_warmup": 1,
+   "n_placebo": 38,
+   "placebo_draws_per_signal": 19.0,
+   "horizon_exits": 0,
+   "trial": {
+    "config": "Z4|5eabf6719169|cfg:a06543feac6c",
+    "new_trial": false,
+    "n_trials_total": 2575
+   },
+   "returns": "hidden on the debug split (never choose parameters on FINAL data)"
+  },
+  "mom|N3h|th1": {
+   "config": "mom|N3h|th1",
+   "params_hash": "0621c24e5d38",
+   "hypothesis": "Z4",
+   "n": 1,
+   "n_coins": 1,
+   "n_keys": 1,
+   "tags": {
+    "hot|few": 1
+   },
+   "n_exact_clone": 1,
+   "n_instant": 1,
+   "n_warmup": 0,
+   "n_placebo": 18,
+   "placebo_draws_per_signal": 18.0,
+   "horizon_exits": 0,
+   "trial": {
+    "config": "Z4|0621c24e5d38|cfg:a06543feac6c",
+    "new_trial": false,
+    "n_trials_total": 2575
+   },
+   "returns": "hidden on the debug split (never choose parameters on FINAL data)"
+  },
+  "mom|N12h|th0.25": {
+   "config": "mom|N12h|th0.25",
+   "params_hash": "164075efb971",
+   "hypothesis": "Z4",
+   "n": 4,
+   "n_coins": 4,
+   "n_keys": 4,
+   "tags": {
+    "hot|few": 3,
+    "hot|crowd": 1
+   },
+   "n_exact_clone": 4,
+   "n_instant": 3,
+   "n_warmup": 4,
+   "n_placebo": 80,
+   "placebo_draws_per_signal": 20.0,
+   "horizon_exits": 0,
+   "trial": {
+    "config": "Z4|164075efb971|cfg:a06543feac6c",
+    "new_trial": false,
+    "n_trials_total": 2575
+   },
+   "returns": "hidden on the debug split (never choose parameters on FINAL data)"
+  },
+  "mom|N12h|th1": {
+   "config": "mom|N12h|th1",
+   "params_hash": "7ae60a50613b",
+   "hypothesis": "Z4",
+   "n": 0,
+   "n_coins": 0,
+   "n_keys": 0,
+   "tags": {},
+   "n_exact_clone": 0,
+   "n_instant": 0,
+   "n_warmup": 0,
+   "n_placebo": 0,
+   "placebo_draws_per_signal": null,
+   "horizon_exits": 0,
+   "trial": {
+    "config": "Z4|7ae60a50613b|cfg:a06543feac6c",
+    "new_trial": false,
+    "n_trials_total": 2575
+   },
+   "returns": "hidden on the debug split (never choose parameters on FINAL data)"
+  },
+  "host|N3h": {
+   "config": "host|N3h",
+   "params_hash": "a5e006e52e32",
+   "hypothesis": "Z4-host",
+   "n": 41,
+   "n_coins": 41,
+   "n_keys": 32,
+   "tags": {
+    "cold|few": 32,
+    "cold|crowd": 7,
+    "hot|few": 2
+   },
+   "n_exact_clone": 30,
+   "n_instant": 33,
+   "n_warmup": 7,
+   "n_placebo": 714,
+   "placebo_draws_per_signal": 17.414634146341463,
+   "horizon_exits": 0,
+   "trial": {
+    "config": "Z4-host|a5e006e52e32|cfg:a06543feac6c",
+    "new_trial": false,
+    "n_trials_total": 2575
+   },
+   "returns": "hidden on the debug split (never choose parameters on FINAL data)"
+  },
+  "host|N12h": {
+   "config": "host|N12h",
+   "params_hash": "2b41e98d6edd",
+   "hypothesis": "Z4-host",
+   "n": 55,
+   "n_coins": 55,
+   "n_keys": 39,
+   "tags": {
+    "cold|few": 29,
+    "cold|crowd": 22,
+    "hot|few": 3,
+    "hot|crowd": 1
+   },
+   "n_exact_clone": 42,
+   "n_instant": 42,
+   "n_warmup": 54,
+   "n_placebo": 1058,
+   "placebo_draws_per_signal": 19.236363636363638,
+   "horizon_exits": 0,
+   "trial": {
+    "config": "Z4-host|2b41e98d6edd|cfg:a06543feac6c",
+    "new_trial": false,
+    "n_trials_total": 2575
+   },
+   "returns": "hidden on the debug split (never choose parameters on FINAL data)"
+  }
+ },
+ "entries_per_day": {
+  "mom|N3h|th0.25": 3.843758341489456,
+  "mom|N3h|th1": 1.921879170744728,
+  "mom|N12h|th0.25": 7.687516682978912,
+  "mom|N12h|th1": 0.0,
+  "host|N3h": 78.79704600053385,
+  "host|N12h": 105.70335439096004
+ },
+ "veto": {
+  "host|N3h": {
+   "flag": "heat >= 0.25 at the host entry (tag 'hot')",
+   "n_host": 41,
+   "n_flagged": 2,
+   "n_unflagged": 39,
+   "trial": {
+    "config": "Z4-exh|8c3ebd56cf10",
+    "new_trial": false,
+    "n_trials_total": 2575,
+    "hypothesis_configs": 0,
+    "over_variant_limit": false,
+    "family_val_looks": 0
+   }
+  },
+  "host|N12h": {
+   "flag": "heat >= 0.25 at the host entry (tag 'hot')",
+   "n_host": 55,
+   "n_flagged": 4,
+   "n_unflagged": 51,
+   "trial": {
+    "config": "Z4-exh|4a5655904292",
+    "new_trial": false,
+    "n_trials_total": 2575,
+    "hypothesis_configs": 0,
+    "over_variant_limit": false,
+    "family_val_looks": 0
+   }
+  }
+ },
+ "decision": {
+  "verdict": "DEBUG",
+  "note": "mechanics and counts only; returns hidden"
+ },
+ "runtime_s": 5.4,
+ "n_trials_total": 2575,
+ "overall": "PENDING (no official TRAIN run)"
+}

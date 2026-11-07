@@ -1,0 +1,51 @@
+{
+  "root_full_suite": {
+    "cwd": "/workspace/nightcrawler-entry-evidence",
+    "command": "env PYTHONPATH=/workspace/nightcrawler-entry-evidence/src:/workspace/nightcrawler-entry-evidence/tests /workspace/shared/nightcrawler-venv/bin/python -m pytest -q",
+    "stdout": "FULL_PYTEST_1.log",
+    "patch_sha256": "b9a08ba4a1981123dfb6e2e00bf3d1bb1d24f43df69050ff1dab29a339ee7e09",
+    "network": "test fakes/no authenticated network",
+    "result": "6163 passed, 14 skipped in 307.74s (0:05:07)",
+    "start_bounds_utc": [
+      "2026-10-16T06:46:54Z",
+      "2026-10-16T06:47:41Z"
+    ],
+    "start_time_precision": "launch occurred between these observed clock calls; exact launch wall clock was not captured",
+    "exit_code": 0,
+    "completed_observed_before_utc": "2026-10-16T06:52:16Z"
+  },
+  "root_identity_scan": {
+    "patch_sha256": "b9a08ba4a1981123dfb6e2e00bf3d1bb1d24f43df69050ff1dab29a339ee7e09",
+    "files": {
+      "src/nightcrawler/speeddesk_kalshi_client.py": "fb9c2258fa307a6174b3e376cdf3be80ac2022c0d33f1afd0fbedfa1f7ade07c",
+      "src/nightcrawler/speeddesk_live.py": "56ff19197d38d6f5f5d8296ef7dab68e4c06abc1eddb661fcd794d824cf63acb",
+      "src/nightcrawler/speeddesk_live_queue.py": "896dff19ad8a002cebd3933a5c37b47eb7edc4935e01b83448dc808d16558286",
+      "tests/test_speeddesk_live_queue.py": "e122d7fc0008d6934b7d0584aa713752ff35b8ad81d4a62bf4517e2a57663381",
+      "tests/test_speeddesk_queue_reader.py": "e38410e4304f7437bd8ee4b7b395d6047d2c8e5f226ea340390bdb9510eeb873"
+    },
+    "fingerprint": "f2652c6b9f5f4732b5ac865d72c4748df250ad73b38d493387f9dfc478dcff6c",
+    "privacy_scan": "no private-key blocks, sk-/jup_ tokens or long literal credential assignments; reviewed long hashes/owned order identifiers as provenance, not secrets",
+    "diff_check": "git diff --check clean",
+    "authority": "no order/rule/risk/limit/config/model/feed/learner changes"
+  },
+  "implementation_focused": "........................................................................ [ 24%]\n........................................................................ [ 48%]\n........................................................................ [ 73%]\n........................................................................ [ 97%]\n......                                                                   [100%]\n294 passed in 17.08s",
+  "mypy": "Success: no issues found in 132 source files",
+  "ruff": "All checks passed!",
+  "independent_review": {
+    "decision": "accept_exact_diagnostic_source_scope_subject_to_root_full_suite_and_release_retention",
+    "patch_sha256": "b9a08ba4a1981123dfb6e2e00bf3d1bb1d24f43df69050ff1dab29a339ee7e09",
+    "independent_tests": 27,
+    "implementation_tests_rerun": 69,
+    "total_passed": 96,
+    "elapsed_s": 0.85,
+    "full_suite": "pending_root",
+    "production_calls": false,
+    "application_source_edits": false,
+    "files": {
+      "EXACT_IMPLEMENTATION_REVIEW.md": "ecf2b364c9553c847b314e319361c4e7a71e9987b3dcb645ecce4f9901bea901",
+      "EXACT_HASH_VERIFICATION.json": "2615e319c46ffeb00f5e606ca12754234b19263961f442061b871064f932a2e8",
+      "test_independent_queue.py": "d744ada23ef94a41eaceff671e1fcd91d3d9b28724558fef25b327319678530b",
+      "RESOURCE_ENVELOPE.json": "2553dea4981e29ce2b8fe71b6de752ed35540d8c42c400ecec1506941a8d2380"
+    }
+  }
+}

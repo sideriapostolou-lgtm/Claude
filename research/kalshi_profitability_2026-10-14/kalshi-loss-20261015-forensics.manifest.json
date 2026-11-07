@@ -1,0 +1,296 @@
+{
+  "created_utc": "2026-10-15T11:34:43.777343+00:00",
+  "archive": {
+    "file": "kalshi-loss-20261015-forensics.zip",
+    "bytes": 1532592,
+    "sha256": "52dd7460f9ce2f8d4fc59d70dfeac3cba1be27cc37c139cc0fd2198e4f15da19",
+    "members": 59,
+    "uncompressed_bytes": 25090049
+  },
+  "inclusion_scope": [
+    "all files recursively under kalshi-loss-20261015-cohort/ including frozen v1 and v2",
+    "all files recursively under practice-profile-20261015-current/ including pycache originals",
+    "five explicitly assigned root JSON files"
+  ],
+  "omissions": [],
+  "secret_pattern_scan": {
+    "files": 59,
+    "categories": [
+      "private_key",
+      "provider_token",
+      "credential_assignment",
+      "bearer_value"
+    ],
+    "flags": [],
+    "limitation": "bounded pattern scan, not a guarantee all possible secrets can be recognized"
+  },
+  "verification": {
+    "crc": "pass",
+    "exact_member_names": "pass",
+    "every_member_byte_equality": "pass",
+    "every_member_sha256": "pass",
+    "every_current_source_byte_equality": "pass"
+  },
+  "root_fill_phrase_query_provenance": {
+    "file": "kalshi-loss-20261015-root-fill-phrase.json",
+    "query": {
+      "projectId": "75750847-85c0-41a3-a2a7-b7f2201a51e9",
+      "deploymentId": "fc0a73e9-f052-435a-94b2-ce7b1272f36e",
+      "environmentId": "17f7b0e0-104c-4903-9484-0106748b3cdb",
+      "startDate": "2026-10-15T05:30:00Z",
+      "endDate": "2026-10-15T11:18:00Z",
+      "filter": "\"nightcrawler.speeddesk: speeddesk_live_fill\"",
+      "limit": 500,
+      "types": [
+        "deploy"
+      ]
+    },
+    "source": "1e8d0be07b280292fa873a2f5da9b22dd02f28c3",
+    "note": "Root supplied exact query provenance; original response bytes are unchanged."
+  },
+  "limitations": [
+    "Eight 07:00\u201309:00 UTC trading slots remain unknown; observed 15-slot P&L is not full cohort P&L.",
+    "Static realized-leg decomposition is not a tested alternative policy or assumed alternative fills.",
+    "practice-profile-20261015-current is deferred synthetic profiling evidence, not a selected optimization or proof of production cause. Preserve original errors/reproductions and limitations.",
+    "Root status/health receipts are dated observations, not current cash/readiness or continuous health.",
+    "No production queries or mutations were made during packaging."
+  ],
+  "sources": {
+    "kalshi-loss-20261015-cohort/REPORT.md": {
+      "bytes": 4550,
+      "sha256": "4005c3484e0d073c7cb5f9ffc1fea9621b5630372df64244929170db29b11da8"
+    },
+    "kalshi-loss-20261015-cohort/audit.json": {
+      "bytes": 20204,
+      "sha256": "902cd929988e86f94d5d90edf7c7b389d16423cc2a1874dbd85bc1eb0abc3ea6"
+    },
+    "kalshi-loss-20261015-cohort/audit.py": {
+      "bytes": 5265,
+      "sha256": "33151a3b32fa3f15973c5f2402a75ae60a028300cb9686f2c0e7acbe28457c7f"
+    },
+    "kalshi-loss-20261015-cohort/fill-0530-0830.json": {
+      "bytes": 601,
+      "sha256": "38ff6ea66642e4e42a32b5034bcbddc57de9d3e813db046347183013c7016fbb"
+    },
+    "kalshi-loss-20261015-cohort/fill-0830-1118.json": {
+      "bytes": 601,
+      "sha256": "e9c48f0e26764c17581ac8b8178f8043e5d9a1d729a4ab06030b852ed317c071"
+    },
+    "kalshi-loss-20261015-cohort/fill-full.json": {
+      "bytes": 601,
+      "sha256": "8213dbef35444cbf67a5a638447dc851e0f61b371887034ed0df8c5b14130cd6"
+    },
+    "kalshi-loss-20261015-cohort/manifest.json": {
+      "bytes": 1014,
+      "sha256": "91e8687224c845465262663441534de7702b0812d2cce6280b0b2682e4652bdd"
+    },
+    "kalshi-loss-20261015-cohort/settlement-full.json": {
+      "bytes": 332916,
+      "sha256": "18908fa1eb794382eb4de73c625c5552e979ff28bf4a599a27619978bb171b4c"
+    },
+    "kalshi-loss-20261015-cohort/table.md": {
+      "bytes": 2550,
+      "sha256": "1fc9202f307578c8a2763b11cb6cd8c1048e9f44fbb469da3117024b4d79cc8f"
+    },
+    "kalshi-loss-20261015-cohort/v2/REPORT.md": {
+      "bytes": 6894,
+      "sha256": "b9995fcd4492eb1bc59a79a3088fb2116456844b838cd407c19085931e4545c9"
+    },
+    "kalshi-loss-20261015-cohort/v2/audit.json": {
+      "bytes": 409297,
+      "sha256": "a1c37c720827906dfacad6c1f7b43a8db80cbdbb882de5cc481a76d2b68c0df9"
+    },
+    "kalshi-loss-20261015-cohort/v2/audit.py": {
+      "bytes": 6769,
+      "sha256": "9ba9df450e1ac2e80ac178c8e8d9ccd6f6be15968fc4f55d0ab7816089d52ebc"
+    },
+    "kalshi-loss-20261015-cohort/v2/cancel-last3.json": {
+      "bytes": 228894,
+      "sha256": "d08266bd09d94992bfd05d5dd10e3c818120ec5776fd0b0e86878a993274c824"
+    },
+    "kalshi-loss-20261015-cohort/v2/cancel-worst.json": {
+      "bytes": 135539,
+      "sha256": "7a695d6e6b0b73a35528d9c2527f37cc49072eef4f87a2384a75ab615a6a4013"
+    },
+    "kalshi-loss-20261015-cohort/v2/exact-source-settlement.txt": {
+      "bytes": 632,
+      "sha256": "620cfd510eafd670fdf99d77088990472c11d3a7604d33d4a8a976123d66a714"
+    },
+    "kalshi-loss-20261015-cohort/v2/fills-root-original.json": {
+      "bytes": 101866,
+      "sha256": "2951584c560a1dfdc8a552dc6f81c7260e6d1870b3a437468d0dfea03027d7a7"
+    },
+    "kalshi-loss-20261015-cohort/v2/manifest.json": {
+      "bytes": 2783,
+      "sha256": "9e3b40225d78159acbbc24273f467d9d2e46a6ccedf76abc9165b732a0de9caa"
+    },
+    "kalshi-loss-20261015-cohort/v2/orders-0530-0600.json": {
+      "bytes": 558038,
+      "sha256": "d40a6ccffdbe17d57ec9ff471f4d0ed6ba7891d500937f7d75eb5e6618bdaebb"
+    },
+    "kalshi-loss-20261015-cohort/v2/orders-0530-0630.json": {
+      "bytes": 811660,
+      "sha256": "323ce315dd32e9b8f11a24e0d9b9f42d84cfe638e876473da06340effbf9cc3c"
+    },
+    "kalshi-loss-20261015-cohort/v2/orders-0600-0630.json": {
+      "bytes": 340039,
+      "sha256": "f36d0160b5fa407b413ce02b86d262200d23b8a9ae363c75b31f93de2daba2c3"
+    },
+    "kalshi-loss-20261015-cohort/v2/orders-0630-0730.json": {
+      "bytes": 740508,
+      "sha256": "c122a394b014d47bfb91cebb7b887dc4d07d39b30c8bfd8f6653d8f4677417e0"
+    },
+    "kalshi-loss-20261015-cohort/v2/orders-0730-0830.json": {
+      "bytes": 1018,
+      "sha256": "a14f6876f85977717d04bf5359689d85d2aea86aab046bb0b0b4355d05c528b7"
+    },
+    "kalshi-loss-20261015-cohort/v2/orders-0830-0930.json": {
+      "bytes": 459117,
+      "sha256": "01edc5e855d555d4c53ff049cb77c69015a1232f4cf43043bcbd9c219d6b1692"
+    },
+    "kalshi-loss-20261015-cohort/v2/orders-0930-1030.json": {
+      "bytes": 672519,
+      "sha256": "4884e7a83d7e867d296fa9207b043c69fbe70f56fa40a97494d98da23d4ba21b"
+    },
+    "kalshi-loss-20261015-cohort/v2/orders-1030-1118.json": {
+      "bytes": 553224,
+      "sha256": "a741aeec2c237e8157ed3ee0661548a4f79696dc132a9f2435ffa2f2f51fcaa5"
+    },
+    "kalshi-loss-20261015-cohort/v2/rejects.json": {
+      "bytes": 4433,
+      "sha256": "9a79300f91fe48c5042af981d2ca8b8e649a8a90d5b9ea65eae7a5b011099c63"
+    },
+    "kalshi-loss-20261015-cohort/v2/run-summary.json": {
+      "bytes": 2084,
+      "sha256": "171f48621c8eee32ebc72a3e1c703b9ececfd03614c7756f3440cbd02b1383dd"
+    },
+    "kalshi-loss-20261015-cohort/v2/settlements.json": {
+      "bytes": 23583,
+      "sha256": "ae70909adea1707f3bd99774771b2ed0097de44e3cb48a42dd348e3ae6ebb5ff"
+    },
+    "kalshi-loss-20261015-cohort/v2/static-decomposition-totals.json": {
+      "bytes": 282,
+      "sha256": "ea4e129fe0d30f1349eb7f9656a127f06f282dd2549c26963e5c6fc189e71cdb"
+    },
+    "kalshi-loss-20261015-cohort/v2/static-decomposition.md": {
+      "bytes": 964,
+      "sha256": "fc26bea549e6b5af553e4e535e6e2cf2c3718756d44e62a40d4d77a8ca3e9364"
+    },
+    "kalshi-loss-20261015-cohort/v2/table.md": {
+      "bytes": 2525,
+      "sha256": "ec439d98d909bfe6223b305bb426414688b8d9a57c481e911c69700431091195"
+    },
+    "kalshi-loss-20261015-root-deployments.json": {
+      "bytes": 15237,
+      "sha256": "241f6a7f20f9df1aab8d837ec9decf16e2554d8819aa458ac5008b4e63a06c93"
+    },
+    "kalshi-loss-20261015-root-fill-phrase.json": {
+      "bytes": 99350,
+      "sha256": "9019e3767c08aa5d1fd1938ea70f65e69590dc65e0124643c26bc5503258e7d8"
+    },
+    "kalshi-loss-20261015-root-fills.json": {
+      "bytes": 196,
+      "sha256": "526e2247277f8c1a88878691c8a7a5c1c028d0412f282da63dde6cd3e68ace6e"
+    },
+    "kalshi-loss-20261015-root-health.json": {
+      "bytes": 2735,
+      "sha256": "bf70edd597a4651bc1203dfb8f82fb65cae4e01e2eba6aee9b9e25988925d65c"
+    },
+    "kalshi-loss-20261015-root-status.json": {
+      "bytes": 306167,
+      "sha256": "5ecf6419ad45bea8e9efa051f48b733c58aa39caaa3edff0e4a6bf999b84c3e8"
+    },
+    "practice-profile-20261015-current/__pycache__/position_helper.cpython-312.pyc": {
+      "bytes": 2348,
+      "sha256": "7498926828f656aefef83ab5a10b5fb13cfa8be106b05086702d9ff681e99f4e"
+    },
+    "practice-profile-20261015-current/__pycache__/profile.cpython-312.pyc": {
+      "bytes": 14257,
+      "sha256": "d7069ed656da4fb31a397e9e4118220d8306be5aec1e115574cd6fea920ff3d9"
+    },
+    "practice-profile-20261015-current/cancel-final-tests-original-method.log": {
+      "bytes": 42299,
+      "sha256": "cde131b3cebdc7eef5cfdca7a66b72e531b8ab93ac662c6ac9e4a0741152ff7e"
+    },
+    "practice-profile-20261015-current/cancel-frozen-manifest.json": {
+      "bytes": 1325,
+      "sha256": "4c5126e0269d5c651bae21fd63c0f6d4895f578197b038121f7da80ee226c868"
+    },
+    "practice-profile-20261015-current/cancel-frozen.patch": {
+      "bytes": 13010,
+      "sha256": "537035a4a6d49714b930a4c3001841020cc13619978ceb676eb4008d00daf3a4"
+    },
+    "practice-profile-20261015-current/cancel-mypy.log": {
+      "bytes": 45,
+      "sha256": "9936b895f3d463c7f667ddb1f2e5420b3fc7f48d3362f8497d22ce95dcb2b9ab"
+    },
+    "practice-profile-20261015-current/cancel-old-source-reproduction-final.log": {
+      "bytes": 39566,
+      "sha256": "5d241458744915520e9ff19a5d649d9a5febaec34c344ded62bf61b7a76fe325"
+    },
+    "practice-profile-20261015-current/cancel-old-source-reproduction-v2.log": {
+      "bytes": 34791,
+      "sha256": "096c2722e3f55a2c467782fa013f92f7d6f3a224d44885f3d5473c62b8a2b0fa"
+    },
+    "practice-profile-20261015-current/cancel-old-source-reproduction-v3.log": {
+      "bytes": 49429,
+      "sha256": "5c2a1d960e7c734557f5dfd8a2c548fae78205f9fe93d0cc633fcbeabfa3bcb9"
+    },
+    "practice-profile-20261015-current/cancel-old-source-reproduction.log": {
+      "bytes": 28401,
+      "sha256": "dc32a11dbe591f9b0d0bcfb67ffb345851a561f3080deb64f3a1164f00f02dee"
+    },
+    "practice-profile-20261015-current/cancel-ruff.log": {
+      "bytes": 19,
+      "sha256": "82b3e6a6c090a57601d22943bd23fca9218d1031dbe5a7b754092f9a156b4f18"
+    },
+    "practice-profile-20261015-current/cancel-targeted.log": {
+      "bytes": 261,
+      "sha256": "99160e4d053a4f9130b3976678ef06e2c444178f7f698237e6755e6430f77064"
+    },
+    "practice-profile-20261015-current/cancel_reproduce_original.py": {
+      "bytes": 1030,
+      "sha256": "8b472ceff851edbb535659830a9cbcb817ef9194405a4590bb8a5ddad96948b3"
+    },
+    "practice-profile-20261015-current/full-companion.json": {
+      "bytes": 18793350,
+      "sha256": "4d82719eb573236b5b8a5c06fa30fafd20b0cd904997d14ec962a0108ed35f2e"
+    },
+    "practice-profile-20261015-current/full-companion.log": {
+      "bytes": 22194,
+      "sha256": "6e0b3d2135db950527ff42d57cfa0bde87a5e3a5e721d5c1a31eb9f1066df5e4"
+    },
+    "practice-profile-20261015-current/full_companion.py": {
+      "bytes": 11794,
+      "sha256": "2939ad157f8d35f605dca5f4c6d7969b40626335b756d659d019b4f7749e25b5"
+    },
+    "practice-profile-20261015-current/manifest.json": {
+      "bytes": 1186,
+      "sha256": "155fcd56f50b65e71722c2d0955f3aab5e46576193f2e2d065a3566038565142"
+    },
+    "practice-profile-20261015-current/position-result.json": {
+      "bytes": 90772,
+      "sha256": "52be1722f0bdf2f938fe179d0fe47d15e64e3473220bc18b6602bf701d86a5f6"
+    },
+    "practice-profile-20261015-current/position_benchmark.py": {
+      "bytes": 9428,
+      "sha256": "356e963299842ab551cfa67faa29cd4c651b8650a46b1d538618650f9f7a7421"
+    },
+    "practice-profile-20261015-current/position_contracts.py": {
+      "bytes": 1560,
+      "sha256": "169d3dc75790f5fc19842d159aa0f512c9786783cddbe624c8772021828959e9"
+    },
+    "practice-profile-20261015-current/position_helper.py": {
+      "bytes": 752,
+      "sha256": "7319e87461842825b9cc45ce7b09492dc657d4746aed2fa1ea05924335b71a15"
+    },
+    "practice-profile-20261015-current/result.json": {
+      "bytes": 70837,
+      "sha256": "24a9c4152443dd5a666352f21a139a1426e9565c6ec508304367f29dbbbb126d"
+    },
+    "practice-profile-20261015-current/run_profile.py": {
+      "bytes": 6740,
+      "sha256": "7d540cebe61ebfe51132a5f3be7575209d95d6256bf5f6d89577f03cec663ff2"
+    }
+  }
+}

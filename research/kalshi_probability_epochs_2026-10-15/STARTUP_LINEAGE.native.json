@@ -1,0 +1,45 @@
+{
+  "request": {
+    "projectId": "75750847-85c0-41a3-a2a7-b7f2201a51e9",
+    "deploymentId": "66e6e7e4-30d9-4628-a234-f2a8e97dad19",
+    "startDate": "2026-10-15T21:33:20Z",
+    "endDate": "2026-10-15T21:35:00Z",
+    "limit": 20,
+    "filter": "\"INFO nightcrawler.kalshi_probability_epochs: kalshi_probability_epoch_status \""
+  },
+  "before": {
+    "current_time": "2026-10-15 21:34:43 UTC"
+  },
+  "result": {
+    "content": [
+      {
+        "type": "text",
+        "text": "**Deployment 66e6e7e4-30d9-4628-a234-f2a8e97dad19** [SUCCESS]\nservice: f84d3b52-002f-44cb-931e-bc9e3e097e97, env: 17f7b0e0-104c-4903-9484-0106748b3cdb\n\n### Deploy logs (1)\n2026-10-15T21:34:41.020422766Z info 2026-10-15T21:34:40Z INFO nightcrawler.kalshi_probability_epochs: kalshi_probability_epoch_status {\"at\":1792100080.7403116,\"schema\":1,\"mode\":\"observe_only\",\"live_application\":false,\"profitability_proven\":false,\"error\":null,\"current_source_fingerprint\":\"23e2ca80d3c04415256bf3fc237ba017d56733a59219d718e86c554eaa1f1d25\",\"active_ordinal\":1,\"current_available\":true,\"archived\":[{\"ordinal\":0,\"protocol\":\"kalshi-probability-calibration-v2-h300-g5-b10-prior20\",\"source_fingerprint\":\"e79897062a3ebbd61fe5dc70617f02c44bb7d29c9dbf51e23940459686653c7c\",\"opened_at\":null,\"closed_at\":1792100080.7403116,\"forecasts\":5,\"scored\":5,\"unknown\":1,\"pending\":0,\"brier_baseline\":0.18726215950008984,\"brier_shadow\":0.1796062816651917,\"pending_frozen_unresolved\":true}],\"retained_active\":null,\"enabled\":true,\"current\":{\"mode\":\"observe_only\",\"enabled\":true,\"live_application\":false,\"profitability_proven\":false,\"protocol\":\"kalshi-probability-calibration-v2-h300-g5-b10-prior20\",\"source_fingerprint\":\"23e2ca80d3c04415256bf3fc237ba017d56733a59219d718e86c554eaa1f1d25\",\"history_protocol\":\"kalshi-probability-calibration-v2-h300-g5-b10-prior20\",\"history_source_fingerprint\":\"23e2ca80d3c04415256bf3fc237ba017d56733a59219d718e86c554eaa1f1d25\",\"forecast_horizon_s\":300,\"grace_s\":5,\"bins\":10,\"pending\":0,\"forecasts\":0,\"scored\":0,\"unknown\":0,\"brier_baseline\":null,\"brier_shadow\":null,\"error\":null,\"coverage\":\"conditional fresh-input probabilities; continuous coverage and profitability not certified\",\"exclusions\":{\"startup_inside\":0,\"late\":0,\"invalid\":0,\"pregap\":0,\"terms_changed\":0,\"missing_label\":0,\"outcome_known\":0,\"invalid_label\":0,\"capacity\":0,\"invalid_batch\":0,\"invalid_strike\":0}},\"legacy_sha256\":\"2c881bf39f84b3c6c131be00f2e7b1fc554a48ff111316dacb54eca09db910bf\"}"
+      }
+    ],
+    "structuredContent": {
+      "scope": "deployment",
+      "deploymentId": "66e6e7e4-30d9-4628-a234-f2a8e97dad19",
+      "serviceId": "f84d3b52-002f-44cb-931e-bc9e3e097e97",
+      "environmentId": "17f7b0e0-104c-4903-9484-0106748b3cdb",
+      "status": "SUCCESS",
+      "deploy": [
+        {
+          "timestamp": "2026-10-15T21:34:41.020422766Z",
+          "severity": "info",
+          "message": "2026-10-15T21:34:40Z INFO nightcrawler.kalshi_probability_epochs: kalshi_probability_epoch_status {\"at\":1792100080.7403116,\"schema\":1,\"mode\":\"observe_only\",\"live_application\":false,\"profitability_proven\":false,\"error\":null,\"current_source_fingerprint\":\"23e2ca80d3c04415256bf3fc237ba017d56733a59219d718e86c554eaa1f1d25\",\"active_ordinal\":1,\"current_available\":true,\"archived\":[{\"ordinal\":0,\"protocol\":\"kalshi-probability-calibration-v2-h300-g5-b10-prior20\",\"source_fingerprint\":\"e79897062a3ebbd61fe5dc70617f02c44bb7d29c9dbf51e23940459686653c7c\",\"opened_at\":null,\"closed_at\":1792100080.7403116,\"forecasts\":5,\"scored\":5,\"unknown\":1,\"pending\":0,\"brier_baseline\":0.18726215950008984,\"brier_shadow\":0.1796062816651917,\"pending_frozen_unresolved\":true}],\"retained_active\":null,\"enabled\":true,\"current\":{\"mode\":\"observe_only\",\"enabled\":true,\"live_application\":false,\"profitability_proven\":false,\"protocol\":\"kalshi-probability-calibration-v2-h300-g5-b10-prior20\",\"source_fingerprint\":\"23e2ca80d3c04415256bf3fc237ba017d56733a59219d718e86c554eaa1f1d25\",\"history_protocol\":\"kalshi-probability-calibration-v2-h300-g5-b10-prior20\",\"history_source_fingerprint\":\"23e2ca80d3c04415256bf3fc237ba017d56733a59219d718e86c554eaa1f1d25\",\"forecast_horizon_s\":300,\"grace_s\":5,\"bins\":10,\"pending\":0,\"forecasts\":0,\"scored\":0,\"unknown\":0,\"brier_baseline\":null,\"brier_shadow\":null,\"error\":null,\"coverage\":\"conditional fresh-input probabilities; continuous coverage and profitability not certified\",\"exclusions\":{\"startup_inside\":0,\"late\":0,\"invalid\":0,\"pregap\":0,\"terms_changed\":0,\"missing_label\":0,\"outcome_known\":0,\"invalid_label\":0,\"capacity\":0,\"invalid_batch\":0,\"invalid_strike\":0}},\"legacy_sha256\":\"2c881bf39f84b3c6c131be00f2e7b1fc554a48ff111316dacb54eca09db910bf\"}",
+          "attributes": [
+            {
+              "key": "level",
+              "value": "\"info\""
+            }
+          ]
+        }
+      ]
+    },
+    "isError": false
+  },
+  "after": {
+    "current_time": "2026-10-15 21:34:44 UTC"
+  }
+}

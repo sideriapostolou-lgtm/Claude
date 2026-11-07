@@ -1,0 +1,69 @@
+"""Sequential alternating baseline/candidate subprocesses; no live/network access."""
+import gzip, subprocess, time, json, hashlib, sys
+from pathlib import Path
+OUT=Path('/workspace/private-handoffs/claude-2026-10-15/checkpoint-profile/candidate')
+ALL=OUT.parent
+ROOT=Path('/workspace/nightcrawler-practice-checkpoint')
+PY='/workspace/shared/nightcrawler-venv/bin/python'
+def digest(p): return hashlib.sha256(p.read_bytes()).hexdigest()
+tracked=['src/nightcrawler/speeddesk.py','src/nightcrawler/speeddesk_model.py','src/nightcrawler/speeddesk_metrics.py','src/nightcrawler/speeddesk_scorecard.py','src/nightcrawler/ledger.py','tests/test_speeddesk_checkpoint_settlements.py','tests/test_speeddesk_runtime.py','tests/test_speeddesk_snapshot_cache.py']
+manifest={'runs':[],'source_hashes':{f:digest(ROOT/f) for f in tracked},'harness_sha256':digest(OUT/'profile_pair.py'),'baseline_source_sha256':digest(ALL/'immutable_speeddesk_f77e1ad.py.txt'),'resource_scope':'whole private experiment tree <=100MiB; child <=60s <=256MiB RSS/AS; no simultaneous children','actual_comparisons':[]}
+(OUT/'frozen.patch').write_bytes(subprocess.check_output(['git','diff','--','src/nightcrawler/speeddesk.py'],cwd=ROOT))
+# Include new test in exact patch hash without requiring git index mutations.
+newtest=(ROOT/'tests/test_speeddesk_checkpoint_settlements.py').read_bytes()
+patch=(OUT/'frozen.patch').read_bytes()+b'\nNEW_TEST_BYTES\n'+newtest
+manifest['complete_source_test_patch_sha256']=hashlib.sha256(patch).hexdigest()
+for fixture in ['zero','one','1day','fixed7days','7days','31days','older35days']:
+    modes=[('timing',3)] if fixture in ['zero','one','fixed7days'] else [('timing',3),('count',1),('allocation',1)]
+    for mode,repeats in modes:
+        for rep in range(repeats):
+            pair=[]
+            for variant in ['baseline','candidate']:
+                label=f'{fixture}-{mode}-{variant}-{rep+1}'
+                cmd=['/usr/bin/env','-i','PATH=/usr/bin:/bin',f'PYTHONPATH={ROOT}/src:{ROOT}/tests',PY,'-B',str(OUT/'profile_pair.py'),fixture,mode,variant,label]
+                row={'label':label,'fixture':fixture,'mode':mode,'variant':variant,'rep':rep+1,'command_argv':cmd,'stdout':f'{label}.stdout.json','stderr':f'{label}.stderr.txt','rss_peak_sampled_kib':0,'experiment_disk_peak_sampled_bytes':0}
+                before={f:digest(ROOT/f) for f in tracked}
+                assert before==manifest['source_hashes'] and digest(OUT/'profile_pair.py')==manifest['harness_sha256']
+                start=time.monotonic()
+                with (OUT/row['stdout']).open('w') as stdout,(OUT/row['stderr']).open('w') as stderr:
+                    proc=subprocess.Popen(cmd,cwd=ROOT,stdout=stdout,stderr=stderr,env={})
+                    while proc.poll() is None:
+                        elapsed=time.monotonic()-start
+                        try:
+                            status=Path(f'/proc/{proc.pid}/status').read_text()
+                            rss=next((int(line.split()[1]) for line in status.splitlines() if line.startswith('VmRSS:')),0)
+                        except FileNotFoundError: rss=0
+                        disk=sum(p.stat().st_size for p in ALL.rglob('*') if p.is_file())
+                        row['rss_peak_sampled_kib']=max(row['rss_peak_sampled_kib'],rss)
+                        row['experiment_disk_peak_sampled_bytes']=max(row['experiment_disk_peak_sampled_bytes'],disk)
+                        if elapsed>60 or rss>256*1024 or disk>100*1024**2:
+                            row['aborted_budget']={'elapsed_s':elapsed,'rss_kib':rss,'disk_bytes':disk};proc.kill();break
+                        time.sleep(.02)
+                    row['exit_code']=proc.wait()
+                row['elapsed_s']=time.monotonic()-start
+                row['stdout_sha256']=digest(OUT/row['stdout']);row['stderr_sha256']=digest(OUT/row['stderr'])
+                manifest['runs'].append(row)
+                (OUT/'matrix_manifest.json').write_text(json.dumps(manifest,indent=2)+'\n')
+                print(label,row['exit_code'],round(row['elapsed_s'],3),flush=True)
+                if row['exit_code']!=0: print('FAILED STOP; originals retained',flush=True);sys.exit(1)
+                result=json.loads((OUT/row['stdout']).read_text()); assert result['status']=='passed'
+                pair.append((row,result))
+            assert pair[0][1]['output_phases']==pair[1][1]['output_phases']
+            assert pair[0][1]['receipts']==pair[1][1]['receipts']
+            assert pair[0][1]['mirror_sha256']==pair[1][1]['mirror_sha256']
+            assert all(pair[0][1]['operations'][k]['clock_calls']==pair[1][1]['operations'][k]['clock_calls'] for k in ['checkpoint','daily_reports','summary'])
+            if mode=='timing' and rep==0:
+                checks=[]
+                for phase in ['first','correction','steady']:
+                    for kind in ['kv','mirror','receipts']:
+                        a=gzip.decompress((OUT/f'{pair[0][0]["label"]}.{phase}.{kind}.gz').read_bytes())
+                        b=gzip.decompress((OUT/f'{pair[1][0]["label"]}.{phase}.{kind}.gz').read_bytes())
+                        assert a==b
+                        checks.append({'phase':phase,'kind':kind,'bytes':len(a),'sha256':hashlib.sha256(a).hexdigest(),'byte_equal':True})
+                manifest['actual_comparisons'].append({'fixture':fixture,'checks':checks})
+manifest['source_hashes_after']={f:digest(ROOT/f) for f in tracked}
+assert manifest['source_hashes_after']==manifest['source_hashes']
+assert digest(OUT/'profile_pair.py')==manifest['harness_sha256']
+manifest['status']='passed'
+(OUT/'matrix_manifest.json').write_text(json.dumps(manifest,indent=2)+'\n')
+print('ALL PASSED',flush=True)

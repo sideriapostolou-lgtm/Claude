@@ -1,0 +1,77 @@
+{
+  "source_sha256": "5ee9d12ef27bc8ad0c324b299868df69535627a5f873eddcc3ff4e448ba88fb4",
+  "results": [
+    {
+      "case": "toplist",
+      "pass": true,
+      "errors": [
+        "native result is not a dictionary"
+      ]
+    },
+    {
+      "case": "topnull",
+      "pass": true,
+      "errors": [
+        "native result is not a dictionary"
+      ]
+    },
+    {
+      "case": "nullstructured",
+      "pass": true,
+      "errors": [
+        "no structured deploy log array"
+      ]
+    },
+    {
+      "case": "nulldeploy",
+      "pass": true,
+      "errors": [
+        "no structured deploy log array"
+      ]
+    },
+    {
+      "case": "toolerror",
+      "pass": true,
+      "errors": [
+        "tool returned isError"
+      ]
+    },
+    {
+      "case": "rowmissingtime",
+      "pass": true,
+      "errors": [
+        "invalid original row: KeyError"
+      ]
+    },
+    {
+      "case": "badjson",
+      "pass": true
+    },
+    {
+      "case": "overlap_dedup_provenance_join",
+      "pass": true
+    },
+    {
+      "case": "unsupported_disposition",
+      "pass": true
+    },
+    {
+      "case": "malformed_payload_pending",
+      "pass": false,
+      "exception": "AttributeError",
+      "detail": "'list' object has no attribute 'get'"
+    },
+    {
+      "case": "mismatched_receipt_source",
+      "pass": false,
+      "join": {
+        "window": "KXBTC15M-review",
+        "disposition": "unknown",
+        "matched_original_receipts": 1,
+        "arena_source_match": true,
+        "learner_source_match": true,
+        "observe_only": true
+      }
+    }
+  ]
+}

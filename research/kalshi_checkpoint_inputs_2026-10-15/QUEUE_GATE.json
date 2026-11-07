@@ -1,0 +1,20 @@
+{
+  "checked_at": "2026-10-15 22:31:29 UTC",
+  "repository": "sideriapostolou-lgtm/Claude",
+  "branch": "claude/nightcrawler-memecoin-bot-Gwnb1S",
+  "records": {
+    "coordination_blob": "3fef0bdf31fe81de9da8d33cfb60e066ae44a9d6",
+    "agents_blob": "b255009f031242a1b3deabdaa43667c40ed05299",
+    "worklog_blob": "db6ee81438a52cc6d9abf835b9b26a386c1a7b36"
+  },
+  "pr47": {
+    "number": 47,
+    "state": "closed",
+    "merged": true,
+    "merged_at": "2026-10-14T16:21:49Z",
+    "merge_commit_sha": "e8db34ee34d95411ac7f695f704ceb82ef8e32d5"
+  },
+  "gate": "CLOSED: active Kalshi EXEC/learning work and operating transfer remain open; PR47 separately completed deployment/evidence recorded; merge alone was not used to clear gate",
+  "TJR": "LAST/queued/blocked, authentic MNQ bars/costs missing; historical profitability null, paper not started/live disabled; saved source/tests preserved; no Pages/research/holdout/paper/execution/schedule change or unchanged notification",
+  "authority": "This queue follow-up supplies no deploy/trade/variable/cap/reset authority. Active Kalshi release work retains separate prior standing authorization; no money setting/action follows."
+}

@@ -1,0 +1,80 @@
+I001 [*] Import block is un-sorted or un-formatted
+  --> src/nightcrawler/kalshi_arena.py:49:1
+   |
+47 |   """
+48 |
+49 | / from __future__ import annotations
+50 | |
+51 | | import contextlib
+52 | | import fcntl
+53 | | import hashlib
+54 | | import json
+55 | | import logging
+56 | | import marshal
+57 | | import math
+58 | | import os
+59 | | import random
+60 | | import signal
+61 | | import socket
+62 | | import struct
+63 | | import subprocess
+64 | | import sys
+65 | | import time
+66 | | from collections import deque
+67 | | from collections.abc import Callable, Mapping, Sequence
+68 | | from dataclasses import dataclass, field, fields, replace
+69 | | from datetime import UTC, date, datetime
+70 | | from itertools import compress, count
+71 | | from operator import is_not
+72 | | from pathlib import Path
+73 | | from typing import TYPE_CHECKING, Any, Protocol
+74 | |
+75 | | from .deskguard import LOSING, PHRASES, WINNING, judge
+76 | | from .kalshi_probability_learning import ProbabilityLearning
+77 | | from .kalshi_online_learning import (
+78 | |     GRACE,
+79 | |     HORIZON,
+80 | |     MAX_LABELS,
+81 | |     MAX_PENDING,
+82 | |     MAX_RECENT,
+83 | |     OnlineLearning,
+84 | | )
+85 | | from .speeddesk_model import (
+86 | |     BitcoinTape,
+87 | |     Book,
+88 | |     Level,
+89 | |     PracticeDesk,
+90 | |     Side,
+91 | |     SpeedConfig,
+92 | |     Trade,
+93 | |     Window,
+94 | | )
+   | |_^
+95 |
+96 |   if TYPE_CHECKING:
+   |
+help: Organize imports
+   |
+75 | from .deskguard import LOSING, PHRASES, WINNING, judge
+   - from .kalshi_probability_learning import ProbabilityLearning
+76 | from .kalshi_online_learning import (
+--------------------------------------------------------------------------------
+83 | )
+84 + from .kalshi_probability_learning import ProbabilityLearning
+85 | from .speeddesk_model import (
+   |
+
+SIM102 Use a single `if` statement instead of nested `if` statements
+   --> src/nightcrawler/kalshi_probability_learning.py:449:17
+    |
+447 |                   if row["forecast"] is None and row["start"] <= now:
+448 |                       self._finish(slug, "startup_inside", now)
+449 | /                 elif row["forecast"] is not None:
+450 | |                     if "child_restart_gap" not in row["post_gaps"]:
+    | |___________________________________________________________________^
+451 |                           row["post_gaps"].append("child_restart_gap")
+    |
+help: Combine `if` statements using `and`
+
+Found 2 errors.
+[*] 1 fixable with the `--fix` option.

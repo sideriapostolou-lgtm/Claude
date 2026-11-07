@@ -1,0 +1,11 @@
+{
+  "projectId": "75750847-85c0-41a3-a2a7-b7f2201a51e9",
+  "environmentId": "17f7b0e0-104c-4903-9484-0106748b3cdb",
+  "deploymentId": "c64e8199-4ce2-4234-ac53-63905e22231d",
+  "startDate": "2026-10-15T17:19:46Z",
+  "endDate": "2026-10-15T17:25:16Z",
+  "filter": "\"speeddesk_live_integrity_reset\"",
+  "limit": 10,
+  "before_clock": "2026-10-15 17:25:16 UTC",
+  "after_batch_clock": "2026-10-15 17:25:21 UTC"
+}

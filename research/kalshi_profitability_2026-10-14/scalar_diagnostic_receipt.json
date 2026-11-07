@@ -1,0 +1,115 @@
+{
+  "generated_at_utc": "2026-10-14T22:07:00Z",
+  "generated_at_pacific": "2026-10-14 3:07 PM PDT",
+  "source_test_bundle_sha256": "1861501781778aad10f9aa7f83c1f2f02f12ce2b287a5d9ab99e06a743bce835",
+  "archive": "scalar_diagnostic_evidence.zip",
+  "archive_sha256": "7e1ffd780c18ff8a813dc595b9a0966d561eb7ce74c0bf9c3109a6326879c3ac",
+  "contents": {
+    "exec-delay-scalar-arena-comparison.json": {
+      "bytes": 3251,
+      "sha256": "513f85e6a93a24cfdb0f09a8689054d63beea5de07389ae979104deb2f978626"
+    },
+    "exec-delay-scalar-arena-diagnostic.py": {
+      "bytes": 15393,
+      "sha256": "c9ee5288fd60d7852d43ace9c9df7cfa461352420355105816699ebf6de45e6c"
+    },
+    "exec-delay-scalar-arena-diagnostic.stdout": {
+      "bytes": 8078,
+      "sha256": "0cd9ee400a3a4250b8a6ecee3d8c6449d62c068894fda8259c7e8bfb00f28025"
+    },
+    "exec-delay-scalar-arena-fresh-baseline.json": {
+      "bytes": 3523507,
+      "sha256": "3504f9df6f8fa330fe4c183de2bae53aeef5c2ac3ef82ee051b7a8fd16a0253a"
+    },
+    "exec-delay-scalar-arena-fresh-observer.json": {
+      "bytes": 3535164,
+      "sha256": "6ed5c043df954e9629190bd073b290fedec81a62e969ffc1e083252ae6da00a4"
+    },
+    "exec-delay-scalar-arena-prior_modules_gc-baseline.json": {
+      "bytes": 3524991,
+      "sha256": "a347376c16fd27f5aa50216efea382aaf834b34dafacf38c1f04413d1db4f9ae"
+    },
+    "exec-delay-scalar-arena-prior_modules_gc-observer.json": {
+      "bytes": 3532037,
+      "sha256": "28a88bc2be75049175b4e3463cebbd7e92e3dea63080371c1d887d86add73dbe"
+    },
+    "exec-delay-scalar-flush-0-baseline.json": {
+      "bytes": 87701,
+      "sha256": "d3ae7102f8da69b40ff22a2a88d75089d6cbf1f4c2d446a7d4dc883946a0a591"
+    },
+    "exec-delay-scalar-flush-1-candidate.json": {
+      "bytes": 87781,
+      "sha256": "4d9e42631b765b5e3ce16f642bc25c68d9d591bc9b4434f7532b9adc46d5d8da"
+    },
+    "exec-delay-scalar-flush-2-candidate.json": {
+      "bytes": 87741,
+      "sha256": "7625dd4c874c7fd3e40a3ad4d49da9ae0c856e9c59fbf7fb3ddbbc14ba9fb196"
+    },
+    "exec-delay-scalar-flush-3-baseline.json": {
+      "bytes": 87780,
+      "sha256": "0179b35f6a5e4158b5469bbd898396ce7341c2947e1ba5fb077e3f72b671822a"
+    },
+    "exec-delay-scalar-flush-comparison.json": {
+      "bytes": 3390,
+      "sha256": "e4e7cf03c5936fd9e57a7ec346a4d6a674e7a0d09014780accad46c4d03785cd"
+    },
+    "exec-delay-scalar-flush-diagnostic.py": {
+      "bytes": 13134,
+      "sha256": "307e7cc49b9739d27446cf3c5f6fcc824781d3b58a5e47961c8d42e24036fffb"
+    },
+    "exec-delay-scalar-flush-diagnostic.stdout": {
+      "bytes": 16842,
+      "sha256": "bf5718ef3634f3c1d2c7561cd023e637457655736e43f339998562f1063fb1f1"
+    },
+    "exec-delay-scalar-flush-staged-0-baseline.json": {
+      "bytes": 761243,
+      "sha256": "ec48fd1210b3172599ebf80c9d08b26fa17cdd0fbd230111282b2460133bd472"
+    },
+    "exec-delay-scalar-flush-staged-1-candidate.json": {
+      "bytes": 762362,
+      "sha256": "50c3cf3ba91433297099243ca62ec62ead7e21c02e2c79732f69c442c446edd4"
+    },
+    "exec-delay-scalar-flush-staged-2-candidate.json": {
+      "bytes": 761170,
+      "sha256": "14dcd0297a69cab0fc87061780b89ad2f2306fe8396db1b062c12cbaa9419dea"
+    },
+    "exec-delay-scalar-flush-staged-3-baseline.json": {
+      "bytes": 761832,
+      "sha256": "8ba2df8deef563085f28b438f7663119edf865d710048a4e5186e1b34d1d9cf5"
+    },
+    "exec-delay-scalar-flush-staged-comparison.json": {
+      "bytes": 3355,
+      "sha256": "8773527e333236471d5e5be769ed8a00908db7560881f22c9c3d7e8a598f36c2"
+    },
+    "exec-delay-scalar-flush-staged-diagnostic.py": {
+      "bytes": 17271,
+      "sha256": "7ec00c33b247ebbd77763021c71d7c56f02c0ad2be8433408ce9d2ad0c7745a0"
+    },
+    "exec-delay-scalar-flush-staged-diagnostic.stdout": {
+      "bytes": 16807,
+      "sha256": "469d1de1444d42b7e6a8de56732663f5b8f3ea8426568db1b6af807b862c3222"
+    },
+    "exec-delay-scalar-full-pytest-final.log": {
+      "bytes": 7688,
+      "sha256": "9724d6a8deb63d9c5d975387f36aee084f2767f5ed7ed97efb02584c02d1f684"
+    },
+    "exec-delay-scalar-full-pytest.log": {
+      "bytes": 13466,
+      "sha256": "25ef21bb962d10af4199129484a0517a0772621948d80015b0b2ae67c6950eca"
+    }
+  },
+  "checks": {
+    "targeted": "107 passed",
+    "first_full": "5455 passed,14 skipped,1 failed; unchanged arena CPU-tail p99 .805634ms vs .5ms",
+    "serialized_full": "5456 passed,14 skipped in300.22s",
+    "mypy": "125 source files, clean",
+    "ruff": "all3 changed Python files, clean"
+  },
+  "limitations": [
+    "Synthetic inputs only; no market backtest or profit evidence.",
+    "Original full-suite timing-failure cause remains unknown; no thresholds were changed.",
+    "Archive retains every raw sample/result and exact original session diagnostic scripts; scripts retain session-specific paths/helper names, not a portability claim.",
+    "Controlled runs are not a substitute for full pytest green.",
+    "Archive contains the failed and successful full logs, not a claim all historical runs passed."
+  ]
+}

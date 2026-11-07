@@ -1,0 +1,22 @@
+{
+  "checked_at_utc": "2026-10-14T18:49:00Z",
+  "checked_at_pacific": "2026-10-14 11:49 AM PDT",
+  "read_shape": "full",
+  "comparison": "Every returned block ID and exact markdown SHA-256 versus preserved source manifest; no changes",
+  "pages": [
+    {
+      "page_id": "page_d0294998a7cc8191b771278fbfb98a2f",
+      "block_count": 92,
+      "saved_block_count": 92,
+      "changed_blocks": [],
+      "identical": true
+    },
+    {
+      "page_id": "page_33c0bb7e8dac81919e012fc502bae98a",
+      "block_count": 32,
+      "saved_block_count": 32,
+      "changed_blocks": [],
+      "identical": true
+    }
+  ]
+}

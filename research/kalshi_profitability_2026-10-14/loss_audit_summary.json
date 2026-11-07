@@ -1,0 +1,61 @@
+{
+  "scope": "Accounting of published Oct 13 real fills, 16:00-23:15 UTC; not a policy backtest",
+  "sources": {
+    "windows.csv": "90bda3e1e34b634d3d9f5a342633866c1a95b39e7918d765e14c54b051202be0",
+    "orders.csv": "9d79ceee777efa2d7e50d8076b1ba31d3c4c400d1fca05b6a8690525b23531ee"
+  },
+  "window_rows": 29,
+  "order_intent_rows": 750,
+  "order_intents_by_kind": {
+    "lock": 23,
+    "rest": 727
+  },
+  "counts": {
+    "rest_orders_with_fills": 123,
+    "lock_orders_with_fills": 22,
+    "prelock_unbalanced_windows": 27,
+    "prelock_heavy_side_lost": 23,
+    "wins": 10,
+    "losses": 18,
+    "flat": 1,
+    "both_sides_filled_windows": 28,
+    "final_unbalanced_windows": 6,
+    "fee_changed_win_to_loss": 0
+  },
+  "contracts": {
+    "rest_filled_contracts": "447.0000",
+    "lock_filled_contracts": "84.0000"
+  },
+  "usd": {
+    "rest_fees": "0.0000",
+    "lock_fees": "0.6264",
+    "maker_pair_gross": "10.3173",
+    "lock_pair_gross": "-17.0079",
+    "unmatched_gross": "-4.5984",
+    "fees": "0.6264",
+    "fill_cost": "269.2890",
+    "settlement_cost": "269.2890",
+    "payout": "258.0000",
+    "fill_reconstructed_net": "-11.9154",
+    "published_settlement_net": "-11.9154",
+    "published_locked_net": "-7.3170",
+    "published_direction_net": "-4.5985",
+    "actual_lock_leg_net": "0.8246",
+    "actual_maker_legs_without_locks_net": "-12.7400"
+  },
+  "worst_window_net_usd": "-2.9792",
+  "mean_window_net_usd": "-0.4109",
+  "reconciliation": {
+    "max_window_cost_rounding_difference_usd": "0.0000",
+    "max_window_fee_difference_usd": "0.0000",
+    "max_window_quantity_difference": "1E-15",
+    "aggregate_cost_rounding_difference_usd": "0.0000"
+  },
+  "inversion": {
+    "executable_inverse_pnl": null,
+    "reason": "Missing contemporaneous opposing executable books, timing, queue, and independent policy state",
+    "signal_significance": null,
+    "reason_no_significance": "Selected losing interval, dependent windows, no pre-registered independent confirmation"
+  },
+  "heldout_test_accessed": false
+}

@@ -1,0 +1,133 @@
+{
+  "checkedAtUTC": "2026-10-14T18:52:06.798629+00:00",
+  "checkedAtPacific": "2026-10-14T11:52:06.798629-07:00",
+  "status": "BLOCKED_ACTUAL_CONTRACT_DEVELOPMENT_DATA_MISSING",
+  "canonicalContract": "MNQZ2025",
+  "requestedDevelopment": {
+    "warmup": "2025-09-19",
+    "start": "2025-09-22",
+    "endInclusive": "2025-10-31",
+    "cashSessionTimezone": "America/New_York",
+    "cashSession": "09:30-16:00",
+    "scheduledDevelopmentSessions": 30,
+    "warmupSessions": 1,
+    "minimumExpectedCashSessionBarsIncludingWarmup": 12090
+  },
+  "holdout": {
+    "start": "2025-11-03",
+    "endInclusive": "2025-12-12",
+    "priceDataDownloaded": false,
+    "outcomesInspected": false
+  },
+  "developmentPriceBarsRetrieved": 0,
+  "historicalStrategyRuns": 0,
+  "paperTradingStarted": false,
+  "liveExecutionEnabled": false,
+  "accessChecks": [
+    {
+      "provider": "Databento",
+      "documentation": "https://databento.com/docs/quickstart/set-up",
+      "documentationResult": "Official documentation requires an API key; historical data is usage-based or flat-rate. Signup/free-credit offer is not an existing entitlement.",
+      "endpoint": "https://hist.databento.com/v0/metadata.list_datasets",
+      "request": "GET without Authorization; metadata only",
+      "httpStatus": 401,
+      "responseCase": "auth_authentication_failed",
+      "responseMessage": "Authentication failed.",
+      "authenticatedRequestMade": false,
+      "candidateDataset": "GLBX.MDP3",
+      "candidateRawSymbol": "MNQZ5",
+      "symbolVerified": false,
+      "requiredNext": "Owner-provided entitled development export plus instrument definition, or an existing authorized data connection. Candidate raw symbol must resolve to December 2025 actual contract before download."
+    },
+    {
+      "provider": "FirstRate Data",
+      "documentation": "https://firstratedata.com/i/futures/MNQ",
+      "endpoint": "https://frd001.s3.us-east-2.amazonaws.com/frd_sample_futures_MNQ.zip",
+      "httpStatus": 200,
+      "bytes": 291676,
+      "sha256": "2ebfa1573a0aedd32b72b921c819800ddfc6cf9cad3e5170498f701a8b9ecd6e",
+      "sampleFile": "MNQ_1min_sample.csv",
+      "dataRows": 16235,
+      "firstTimestampLocal": "2026-09-28 00:00:00",
+      "lastTimestampLocal": "2026-10-13 18:34:00",
+      "timezone": "US Eastern, vendor readme",
+      "sampleColumns": [
+        "timestamp",
+        "open",
+        "high",
+        "low",
+        "close",
+        "volume"
+      ],
+      "contractIdentityVerified": false,
+      "rejection": "Wrong dates; root-symbol sample has no per-row contract identity. Sample readme lists last individual contract MNQZ24 despite 2026 continuous history; no proof of MNQZ25 available in this sample.",
+      "inspected": "ZIP names, readme, column names, row counts, timestamp bounds only; no OHLC outcomes or strategy run.",
+      "rawSavedOrCommitted": false
+    },
+    {
+      "provider": "Portara",
+      "documentation": "https://portaracqg.com/futures/int/mnq/",
+      "endpoint": "https://portaradownloadersampledata.s3.amazonaws.com/1%20Minute/MNQ/MNQ2026M.txt",
+      "httpStatus": 200,
+      "bytes": 49183,
+      "sha256": "b93a3c1aafbdadf6224fd80d0e644fb46947415162963adcd42eec6a3bb9f979",
+      "providerDeclaredContract": "MNQ2026M",
+      "dataRows": 896,
+      "firstTimestampLocal": "2026-06-15 08:04",
+      "lastTimestampLocal": "2026-06-15 23:59",
+      "timezone": "America/Chicago, vendor page default",
+      "rejection": "Wrong contract/date; one partial day lacks preceding cash session, so even a separate protocol pilot lacks required prior high/low.",
+      "inspected": "Vendor structured metadata, column names, row count, timestamp bounds only; no OHLC outcomes or strategy run.",
+      "rawSavedOrCommitted": false,
+      "licenseUrl": "https://portaracqg.com/license/",
+      "licenseNote": "Page explicitly offers public sample. Purchased data license permits research within organization and forbids raw redistribution. Did not infer purchased entitlement or redistribute sample."
+    },
+    {
+      "provider": "CME DataMine",
+      "documentation": "https://www.cmegroup.com/datamine/datamine-api.html",
+      "result": "Official documentation requires an entitled API ID and purchased historical files for all API calls; no entitled account established. No authenticated request or purchase made."
+    },
+    {
+      "provider": "NinjaTrader public fee PDF",
+      "endpoint": "https://ninjatrader.com/PDF/ninjatrader_futures_commissions.pdf",
+      "result": "Connectedweb fetch returned 404. Search-index fee snippet not accepted as actual account fee evidence."
+    }
+  ],
+  "calendar": {
+    "file": "VERIFIED_DEVELOPMENT_CALENDAR.json",
+    "sha256": "2cd1ee6a8cf10588d9dc6255151984d31a2d338dae864e107817ad429e76fb3a",
+    "plannedCashCalendarVerified": true,
+    "actualCMEAvailabilityOrDataCoverageVerified": false,
+    "regularIncludingWarmup": 31,
+    "closedWeekendDates": 12,
+    "earlyCloseDates": 0,
+    "scope": "Scheduled cash sessions only; actual venue halts and missing feed intervals require bars/market status evidence."
+  },
+  "costs": {
+    "actualAccountFeePerSideUSD": null,
+    "spreadOrSlippageMeasured": false,
+    "platformOrDataCostsUSD": null,
+    "accountProviderVerified": false,
+    "scenarioFeesPerSideUSD": [
+      0.5,
+      1,
+      1.5
+    ],
+    "scenarioAggressiveFrictionTicks": [
+      1,
+      2,
+      4
+    ],
+    "scenarioStatus": "Frozen sensitivity assumptions, not broker quotes or observed execution."
+  },
+  "requiredOwnerInput": "Existing authorized MNQ December 2025 1-minute development CSV/DBN export plus vendor contract definition/license/timezone/bar label metadata and actual fee statement. Supply September 19\u2013October 31 only; retain November 3\u2013December 12 holdout separately unopened. Do not paste credentials into chat.",
+  "actionsNotTaken": [
+    "No account creation",
+    "No paid data purchase",
+    "No trading orders",
+    "No production service changes",
+    "No secret inspection",
+    "No continuous/CFD substitution",
+    "No holdout price download"
+  ]
+}

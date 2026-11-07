@@ -1,0 +1,282 @@
+{
+ "cells": [
+  {
+   "hours": 0.016666666666666666,
+   "key": "theta0.95|H0.0166667",
+   "summary": {
+    "bid_side_share": 0.3124684138329363,
+    "by_family": {
+     "crypto": {
+      "mean_net": -0.0012501079432200224,
+      "mean_p_exec": 0.9588737231350498,
+      "n": 10448,
+      "total_usd": -261.222555815256,
+      "win_rate": 0.9597052067381318
+     }
+    },
+    "calibration_gap": 0.0008314836030819395,
+    "ci95": [
+     -0.006206217152826872,
+     0.004091445556076683
+    ],
+    "daily": {
+     "max_drawdown_usd": -808.7073235111192,
+     "n_days": 46,
+     "sharpe": -1.6620102025152088,
+     "total_usd": -261.2225558152557
+    },
+    "lock_h_mean": 0.033206933542334276,
+    "lock_h_median": 0.019166666666666665,
+    "longest_losing_streak": 3,
+    "losses": 421,
+    "mean_net": -0.0012501079432200224,
+    "mean_p_exec": 0.9588737231350498,
+    "mean_pnl_usd": -0.025002158864400457,
+    "missed": 3403,
+    "n": 10448,
+    "n_events": 10439,
+    "trades_per_day": 227.1304347826087,
+    "win_rate": 0.9597052067381318,
+    "worst_case_net": 0.040956345868874144,
+    "worst_pnl_usd": -21.372
+   },
+   "theta": 0.95
+  },
+  {
+   "hours": 0.08333333333333333,
+   "key": "theta0.95|H0.0833333",
+   "summary": {
+    "bid_side_share": 0.2814965483234714,
+    "by_family": {
+     "crypto": {
+      "mean_net": -0.005165059075508106,
+      "mean_p_exec": 0.9498366799002689,
+      "n": 14131,
+      "total_usd": -1459.7489959201014,
+      "win_rate": 0.9486235935177978
+     }
+    },
+    "calibration_gap": -0.0012130863824710847,
+    "ci95": [
+     -0.009761715817364847,
+     -0.0006968976546828829
+    ],
+    "daily": {
+     "max_drawdown_usd": -1666.9809235820883,
+     "n_days": 46,
+     "sharpe": -6.914550556777108,
+     "total_usd": -1459.7489959201007
+    },
+    "lock_h_mean": 0.0624697235014442,
+    "lock_h_median": 0.0375,
+    "longest_losing_streak": 4,
+    "losses": 726,
+    "mean_net": -0.005165059075508106,
+    "mean_p_exec": 0.9498366799002689,
+    "mean_pnl_usd": -0.10330118151016215,
+    "missed": 2093,
+    "n": 14131,
+    "n_events": 14115,
+    "trades_per_day": 307.19565217391306,
+    "win_rate": 0.9486235935177978,
+    "worst_case_net": 0.04903354930331088,
+    "worst_pnl_usd": -21.372
+   },
+   "theta": 0.95
+  },
+  {
+   "hours": 0.016666666666666666,
+   "key": "theta0.97|H0.0166667",
+   "summary": {
+    "bid_side_share": 0.3260483034523633,
+    "by_family": {
+     "crypto": {
+      "mean_net": -0.0010824322501741892,
+      "mean_p_exec": 0.9691691802667393,
+      "n": 9185,
+      "total_usd": -198.84280435699867,
+      "win_rate": 0.9704953728905825
+     }
+    },
+    "calibration_gap": 0.0013261926238432586,
+    "ci95": [
+     -0.005482254506393561,
+     0.0031198308570864032
+    ],
+    "daily": {
+     "max_drawdown_usd": -483.7342319729645,
+     "n_days": 46,
+     "sharpe": -1.4218913650515879,
+     "total_usd": -198.8428043569986
+    },
+    "lock_h_mean": 0.03157883475295199,
+    "lock_h_median": 0.01888888888888889,
+    "longest_losing_streak": 3,
+    "losses": 271,
+    "mean_net": -0.0010824322501741892,
+    "mean_p_exec": 0.9691691802667393,
+    "mean_pnl_usd": -0.021648645003483798,
+    "missed": 4313,
+    "n": 9185,
+    "n_events": 9178,
+    "trades_per_day": 199.67391304347825,
+    "win_rate": 0.9704953728905825,
+    "worst_case_net": 0.02938171735545478,
+    "worst_pnl_usd": -21.386
+   },
+   "theta": 0.97
+  },
+  {
+   "hours": 0.08333333333333333,
+   "key": "theta0.97|H0.0833333",
+   "summary": {
+    "bid_side_share": 0.2890403180011357,
+    "by_family": {
+     "crypto": {
+      "mean_net": -0.0023464818959144226,
+      "mean_p_exec": 0.9663438977012031,
+      "n": 12718,
+      "total_usd": -596.8511350447928,
+      "win_rate": 0.965324736593804
+     }
+    },
+    "calibration_gap": -0.0010191611073990803,
+    "ci95": [
+     -0.007297140167311002,
+     0.003552239140156479
+    ],
+    "daily": {
+     "max_drawdown_usd": -803.7639636349143,
+     "n_days": 46,
+     "sharpe": -2.4253436738682117,
+     "total_usd": -596.8511350447925
+    },
+    "lock_h_mean": 0.06102376304092338,
+    "lock_h_median": 0.034166666666666665,
+    "longest_losing_streak": 4,
+    "losses": 441,
+    "mean_net": -0.0023464818959144226,
+    "mean_p_exec": 0.9663438977012031,
+    "mean_pnl_usd": -0.046929637918288476,
+    "missed": 3131,
+    "n": 12718,
+    "n_events": 12702,
+    "trades_per_day": 276.4782608695652,
+    "win_rate": 0.965324736593804,
+    "worst_case_net": 0.03361238525224019,
+    "worst_pnl_usd": -21.386
+   },
+   "theta": 0.97
+  },
+  {
+   "hours": 0.016666666666666666,
+   "key": "theta0.99|H0.0166667",
+   "summary": {
+    "bid_side_share": 0.4075507463865414,
+    "by_family": {
+     "crypto": {
+      "mean_net": 0.0009615739831983221,
+      "mean_p_exec": 0.9779457824957357,
+      "n": 6097,
+      "total_usd": 117.25433151120349,
+      "win_rate": 0.9799901590946367
+     }
+    },
+    "calibration_gap": 0.0020443765989009988,
+    "ci95": [
+     -0.003669401474411672,
+     0.00578265948515467
+    ],
+    "daily": {
+     "max_drawdown_usd": -207.30708202342942,
+     "n_days": 46,
+     "sharpe": 1.174879399725527,
+     "total_usd": 117.25433151120353
+    },
+    "lock_h_mean": 0.030218647322455643,
+    "lock_h_median": 0.018333333333333333,
+    "longest_losing_streak": 2,
+    "losses": 122,
+    "mean_net": 0.0009615739831983221,
+    "mean_p_exec": 0.9779457824957357,
+    "mean_pnl_usd": 0.019231479663966457,
+    "missed": 6564,
+    "n": 6097,
+    "n_events": 6094,
+    "trades_per_day": 132.54347826086956,
+    "win_rate": 0.9799901590946367,
+    "worst_case_net": 0.021250667224489247,
+    "worst_pnl_usd": -21.386
+   },
+   "theta": 0.99
+  },
+  {
+   "hours": 0.08333333333333333,
+   "key": "theta0.99|H0.0833333",
+   "summary": {
+    "bid_side_share": 0.39947989597919586,
+    "by_family": {
+     "crypto": {
+      "mean_net": -1.0549392499645333e-05,
+      "mean_p_exec": 0.9798564914001656,
+      "n": 9066,
+      "total_usd": -1.912815848035251,
+      "win_rate": 0.9790425766600486
+     }
+    },
+    "calibration_gap": -0.0008139147401170499,
+    "ci95": [
+     -0.005229152409458439,
+     0.007053686668907986
+    ],
+    "daily": {
+     "max_drawdown_usd": -377.9208631686272,
+     "n_days": 46,
+     "sharpe": -0.009214095302101847,
+     "total_usd": -1.9128158480351658
+    },
+    "lock_h_mean": 0.06286096924850484,
+    "lock_h_median": 0.03166666666666667,
+    "longest_losing_streak": 2,
+    "losses": 190,
+    "mean_net": -1.0549392499645333e-05,
+    "mean_p_exec": 0.9798564914001656,
+    "mean_pnl_usd": -0.00021098784999285804,
+    "missed": 5931,
+    "n": 9066,
+    "n_events": 9054,
+    "trades_per_day": 197.08695652173913,
+    "win_rate": 0.9790425766600486,
+    "worst_case_net": 0.021311458158557645,
+    "worst_pnl_usd": -21.386
+   },
+   "theta": 0.99
+  }
+ ],
+ "coverage": {
+  "eligible": 40350,
+  "share": 1.0,
+  "with_tape": 40350
+ },
+ "decision": "NO EDGE on TRAIN (no cell qualifies)",
+ "families": {
+  "crypto": 18226,
+  "culture": 628,
+  "economics": 87,
+  "finance": 275,
+  "mentions": 34,
+  "none": 393,
+  "politics": 250,
+  "sports": 18064,
+  "tech": 143,
+  "weather": 1544
+ },
+ "hyp": "P3",
+ "n_markets": 39644,
+ "n_trials_total": 2873,
+ "prereg_sha256": "6785d8d2b857ea42dd66f44880abcb59c45b2765539e4211843e96a173dcecb6",
+ "selected": null,
+ "split": "train",
+ "stage": "train",
+ "utc": "2026-10-09T18:01:21+00:00"
+}

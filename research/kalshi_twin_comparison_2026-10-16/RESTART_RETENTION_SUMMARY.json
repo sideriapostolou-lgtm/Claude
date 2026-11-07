@@ -1,0 +1,45 @@
+{
+  "scope": "Reported-subtree retention only; complete raw ledger/history/archives not independently read.",
+  "checks": {
+    "archive_summaries_exact_equal": true,
+    "legacy_hash_equal": true,
+    "active_ordinal_2_unchanged": true,
+    "source_fingerprint_equal": true,
+    "epoch_current_equals_probability": true,
+    "learning_tenth_score_retained": true,
+    "unknown_increment_matches_startup_inside": true,
+    "brier_baseline_roundoff_consistent": true,
+    "brier_shadow_roundoff_consistent": true,
+    "selected_financial_state_exact_equal_pre_old_ready_fresh": true,
+    "total_summary_exact_equal_old_ready_fresh": true,
+    "today_financial_counts_equal_old_ready_fresh": true,
+    "maker_attempt_increment_already_in_old_process": true,
+    "same_reported_twin_financial_counts_old_ready_fresh": true,
+    "three_existing_controls_ignored": true,
+    "ladder_restored_same_limits": true,
+    "first_status_not_ready": true,
+    "later_status_ready_as_observed": true,
+    "readiness_more_than_120s_before_declared_open": true
+  },
+  "expected_brier": {
+    "baseline": {
+      "expected_from_serialized_prior_mean": "0.2445658540415873421612858279",
+      "observed": "0.24456585404158732",
+      "absolute_difference": "2.21612858279E-17"
+    },
+    "shadow": {
+      "expected_from_serialized_prior_mean": "0.2503683222179011881612858279",
+      "observed": "0.2503683222179012",
+      "absolute_difference": "1.18387141721E-17"
+    }
+  },
+  "limitations": [
+    "Zero new reservation is not proof of complete cancellations or zero inventory.",
+    "Selected old-process query contains no additional fill beyond final pre baseline; not full account proof.",
+    "Reported archive summaries and legacy hash equality do not verify entire archive or ledger bytes.",
+    "Readiness was observed at a point in time, not continuous future health.",
+    "Application commit/tree/deployment success and publication readbacks are root-supplied evidence, not independently fetched by this audit."
+  ],
+  "full_original_sha256": "0d2175408d640c698146293a63d609b26ce09d3136aaf2593d8873ab395128c0",
+  "full_original_in_runtime_archive": "astra/RESTART_RETENTION_CHECKS.json"
+}

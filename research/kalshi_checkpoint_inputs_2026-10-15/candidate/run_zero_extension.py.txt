@@ -1,0 +1,63 @@
+import subprocess,time,json,hashlib,gzip,statistics,math
+from pathlib import Path
+OUT=Path('/workspace/private-handoffs/claude-2026-10-15/checkpoint-profile/candidate');ALL=OUT.parent
+ROOT=Path('/workspace/nightcrawler-practice-checkpoint');PY='/workspace/shared/nightcrawler-venv/bin/python'
+def sha(p):return hashlib.sha256(p.read_bytes()).hexdigest()
+plan=json.loads((OUT/'ZERO_EXTENSION_PLAN.json').read_text())
+source=ROOT/'src/nightcrawler/speeddesk.py';test=ROOT/'tests/test_speeddesk_checkpoint_settlements.py'
+fixed=(sha(source),sha(test),sha(OUT/'profile_pair.py'),sha(OUT/'zero_extension_profile.py'))
+manifest={'plan_sha256':sha(OUT/'ZERO_EXTENSION_PLAN.json'),'fixed_hashes':fixed,'runs':[]}
+counts={'baseline':0,'candidate':0}
+for index,symbol in enumerate(plan['schedule'].replace(' ','')):
+    variant='baseline' if symbol=='A' else 'candidate';counts[variant]+=1
+    label=f'zero-extension-{variant}-{counts[variant]}'
+    assert fixed==(sha(source),sha(test),sha(OUT/'profile_pair.py'),sha(OUT/'zero_extension_profile.py'))
+    cmd=['/usr/bin/env','-i','PATH=/usr/bin:/bin',f'PYTHONPATH={ROOT}/src:{ROOT}/tests',PY,'-B',str(OUT/'zero_extension_profile.py'),'zero','timing',variant,label]
+    row={'index':index,'label':label,'variant':variant,'command_argv':cmd,'stdout':label+'.stdout.json','stderr':label+'.stderr.txt','max_RSS_kib':0,'max_disk_bytes':0}
+    start=time.monotonic()
+    with (OUT/row['stdout']).open('w') as stdout,(OUT/row['stderr']).open('w') as stderr:
+        proc=subprocess.Popen(cmd,cwd=ROOT,stdout=stdout,stderr=stderr,env={})
+        while proc.poll() is None:
+            elapsed=time.monotonic()-start
+            try:
+                lines=Path(f'/proc/{proc.pid}/status').read_text().splitlines()
+                rss=next((int(x.split()[1]) for x in lines if x.startswith('VmRSS:')),0)
+            except FileNotFoundError:rss=0
+            disk=sum(p.stat().st_size for p in ALL.rglob('*') if p.is_file())
+            row['max_RSS_kib']=max(row['max_RSS_kib'],rss);row['max_disk_bytes']=max(row['max_disk_bytes'],disk)
+            if elapsed>60 or rss>256*1024 or disk>100*1024**2:row['cap_abort']=True;proc.kill();break
+            time.sleep(.02)
+        row['exit_code']=proc.wait()
+    row['elapsed_s']=time.monotonic()-start;row['stdout_sha256']=sha(OUT/row['stdout']);row['stderr_sha256']=sha(OUT/row['stderr'])
+    manifest['runs'].append(row);(OUT/'ZERO_EXTENSION_MANIFEST.json').write_text(json.dumps(manifest,indent=2)+'\n')
+    print(label,row['exit_code'],round(row['elapsed_s'],3),flush=True)
+    assert row['exit_code']==0
+results=[json.loads((OUT/r['stdout']).read_text()) for r in manifest['runs']]
+assert all(d['output_phases']==results[0]['output_phases'] for d in results)
+assert all(d['runtime_forbidden_attempts']==0 for d in results)
+assert all(d['operations']['checkpoint']['clock_calls']==results[0]['operations']['checkpoint']['clock_calls'] for d in results)
+for phase in ['first','correction','steady']:
+    for kind in ['mirror','kv','receipts']:
+        a=gzip.decompress((OUT/f'zero-extension-baseline-1.{phase}.{kind}.gz').read_bytes())
+        b=gzip.decompress((OUT/f'zero-extension-candidate-1.{phase}.{kind}.gz').read_bytes())
+        assert a==b
+summary={'status':'all_children_and_parity_passed','initial_main_gate_failure_retained':True,'processes':{},'paired':{},'limits':{'max_elapsed_s':max(r['elapsed_s'] for r in manifest['runs']),'max_RSS_kib':max(r['max_RSS_kib'] for r in manifest['runs']),'max_disk_bytes':max(r['max_disk_bytes'] for r in manifest['runs'])}}
+def dist(xs):return {'n':len(xs),'median':statistics.median(xs),'p95_nearest_rank':sorted(xs)[math.ceil(.95*len(xs))-1],'min':min(xs),'max':max(xs)}
+for variant in ['baseline','candidate']:
+    data=[d for row,d in zip(manifest['runs'],results,strict=True) if row['variant']==variant]
+    summary['processes'][variant]={m:dist([d['operations']['checkpoint'][m]['median'] for d in data]) for m in ['wall_ms','thread_cpu_ms']}
+    summary['processes'][variant]['pooled_250_samples']={m:dist([s[m] for d in data for s in d['operations']['checkpoint']['samples']]) for m in ['wall_ms','thread_cpu_ms']}
+for metric in ['wall_ms','thread_cpu_ms']:
+    ratios=[];diffs=[]
+    for i in range(0,20,2):
+        rows=manifest['runs'][i:i+2];ds=results[i:i+2]
+        b=next(d for row,d in zip(rows,ds,strict=True) if row['variant']=='baseline')['operations']['checkpoint'][metric]['median']
+        c=next(d for row,d in zip(rows,ds,strict=True) if row['variant']=='candidate')['operations']['checkpoint'][metric]['median']
+        ratios.append(c/b);diffs.append(c-b)
+    summary['paired'][metric]={'ratios':ratios,'ratio_distribution':dist(ratios),'difference_ms':diffs,'difference_ms_distribution':dist(diffs),'pairs_gt_5percent':sum(r>1.05 for r in ratios),'paired_median_gt_5percent':statistics.median(ratios)>1.05}
+summary['extension_primary_gate_passed']=not any(x['paired_median_gt_5percent'] for x in summary['paired'].values())
+assert fixed==(sha(source),sha(test),sha(OUT/'profile_pair.py'),sha(OUT/'zero_extension_profile.py'))
+manifest['status']='passed';manifest['actual_full_byte_parity']=True
+(OUT/'ZERO_EXTENSION_MANIFEST.json').write_text(json.dumps(manifest,indent=2)+'\n')
+(OUT/'ZERO_EXTENSION_SUMMARY.json').write_text(json.dumps(summary,indent=2)+'\n')
+print(json.dumps(summary),flush=True)

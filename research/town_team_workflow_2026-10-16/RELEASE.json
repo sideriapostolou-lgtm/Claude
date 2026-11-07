@@ -1,0 +1,244 @@
+{
+  "checked_at": "2026-10-16T15:53:00Z",
+  "pr": 73,
+  "head": "f32b4e5ca4cf8a12fe3b0227afd08dee25d7b48c",
+  "merge": "b3ca7b76670de8a32a0cdcf9301666c6a89a6641",
+  "tree": "54edb8b17a6e7bc93acde9946bb33e0fb8cfcd2e",
+  "base": "edba1a3eb313351a93f06edf46f73a125a3a099a",
+  "local_source_base": "7cebb3b8b665811faeb58c31f96d48d86e5ef686",
+  "review_patch_sha256": "83f7aa84dc524893b3d1af4072b44e6fa5148e3690b0c0605054218bd3704d11",
+  "validation": {
+    "pytest_passed": 6234,
+    "skipped": 14,
+    "seconds": 336.87,
+    "mypy_files": 134,
+    "ruff_python_files": 8,
+    "independent_selected_tests": 39,
+    "credential_pattern_findings": 0
+  },
+  "files": [
+    {
+      "path": "src/nightcrawler/world3d.py",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "d25e2ff0ea60ae064188f2770c7c8c9a9756a9f4"
+    },
+    {
+      "path": "src/nightcrawler/worldtycoon.py",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "7212f6f9fdc7c41108beccd2fb6c8eb52cdda2ca"
+    },
+    {
+      "path": "src/nightcrawler/worldtycoon_connections.py",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "227668c2419a9f1913cfa5e810e357dc95454309"
+    },
+    {
+      "path": "src/nightcrawler/worldtycoon_workflow.py",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "6eca1a850177df167b3f51ded7b232c26fd4fdd2"
+    },
+    {
+      "path": "tests/test_world_auth.py",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "30842a244f6760c58346f8f4f6c74b72a5a6ec66"
+    },
+    {
+      "path": "tests/test_world_tycoon.py",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "74d738ee341e2c4061664344700799aa310f2cd0"
+    },
+    {
+      "path": "tests/test_world_tycoon_connections.py",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "94740d9b5df419b05a8ad4f5301264bb6392483e"
+    },
+    {
+      "path": "tests/test_world_tycoon_workflow.py",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "826c05f6ccc11d9d7261ecf9fbcfcb9d578743d5"
+    },
+    {
+      "path": "docs/TOWN_CONNECTIONS.md",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "928294c04c422de2a6ae57b90bd1785e3272f837"
+    }
+  ],
+  "browser": {
+    "before_cash": "$25.00",
+    "after_cash": "—",
+    "after_profit": "—",
+    "panel_closed": true,
+    "after_business": {
+      "sources": {},
+      "appliedAt": 1792165247.204,
+      "played": [],
+      "skipped": 0,
+      "queued": 0
+    },
+    "recovered": {
+      "cash": "$25.00",
+      "business": {
+        "sources": {
+          "polymarket_us": false,
+          "kalshi": true
+        },
+        "appliedAt": 1792165262.565,
+        "played": [],
+        "skipped": 0,
+        "queued": 0
+      }
+    },
+    "errors": [],
+    "fixture": "synthetic local only"
+  },
+  "limits": {
+    "preview": "Synthetic local fixtures, not production balances.",
+    "production_visual": "Unauthenticated /world is HTTP401; owner browser session not available.",
+    "takeover": "Instructions and verified connector/source access are preserved privately; browser/host/routine/source gaps remain open.",
+    "research": "No held-out data consumed. No profitability claim. No trading rules, money limits, reset tokens, Railway variables or order actions changed."
+  },
+  "checked_at_pacific": "October 16, 2026, 8:53 AM PDT",
+  "deployment": {
+    "id": "85c368ff-1118-4a3c-8401-852874f00b43",
+    "status": "SUCCESS",
+    "created_at": "2026-10-16T15:47:15.229Z",
+    "updated_at": "2026-10-16T15:48:27.855Z",
+    "commit": "b3ca7b76670de8a32a0cdcf9301666c6a89a6641",
+    "polymarket_live_startup": "2026-10-16T15:48:24.546863909Z",
+    "healthz": 200,
+    "unauthenticated_world": 401,
+    "traceback_query": {
+      "start": "2026-10-16T15:47:00Z",
+      "end": "2026-10-16T15:52:30Z",
+      "returned": 0,
+      "complete_coverage_claim": false
+    }
+  },
+  "runtime": {
+    "warm": {
+      "timestamp": "2026-10-16T15:46:10.531932860Z",
+      "mode": "live",
+      "authenticated": true,
+      "reason": "Kalshi account data stale",
+      "trading_now": false,
+      "cash_usd": 48.7333,
+      "open_risk_usd": 2.15,
+      "open_cost_usd": 2.15,
+      "open_orders": 0,
+      "day_stop_latched": false,
+      "total_halted": false,
+      "integrity_error": null,
+      "caps": {
+        "window_usd": 10,
+        "open_usd": 20,
+        "day_stop_usd": 6,
+        "clip": 5,
+        "total_stop_usd": 10
+      },
+      "utc_day_pnl_usd": -4.3663,
+      "lifetime_pnl_usd": -23.858100000000007
+    },
+    "post": {
+      "timestamp": "2026-10-16T15:52:26.600521904Z",
+      "mode": "live",
+      "authenticated": true,
+      "reason": "pair_protected",
+      "trading_now": true,
+      "cash_usd": 51.2833,
+      "open_risk_usd": 0,
+      "open_cost_usd": 4.6,
+      "open_orders": 0,
+      "day_stop_latched": false,
+      "total_halted": false,
+      "integrity_error": null,
+      "caps": {
+        "window_usd": 10,
+        "open_usd": 20,
+        "day_stop_usd": 6,
+        "clip": 5,
+        "total_stop_usd": 10
+      },
+      "utc_day_pnl_usd": -4.3663,
+      "lifetime_pnl_usd": -23.858100000000007
+    },
+    "caps_equal": true,
+    "day_pnl_equal": true,
+    "total_pnl_equal": true,
+    "transient": "8:50:23 and 8:51:26 AM PDT native status reported account data stale; 8:52:26.600 AM report is authenticated live/pair_protected with trading_now true.",
+    "cash_caveat": "Cash and risk changed while trading continued before shutdown. Cash change is not profit. Retained open cost $4.60 belongs to a protected pair, not yet settled at this evidence time."
+  },
+  "scope": "Town presentation and auth-cache clearing only; no trading rules, accounting, controls, variables, funding or orders changed.",
+  "takeover": {
+    "private_audit_commits": [
+      "976c99c7bac21012e5d74ee91df2b12010159a2c",
+      "073fcd63499e8e4d0b9b4f3e7a680e4005e3471f"
+    ],
+    "additional_repo_content_reads": 18,
+    "complete_operating_handoff": false,
+    "next": "Obtain outstanding routine status and permitted browser/host/raw-volume/source evidence through existing private checklist; never copy credentials or private inventories into this repository.",
+    "public_inventory": "Counts and scope only; details remain in private handoff vault."
+  },
+  "resume_verification": {
+    "checked_at": "2026-10-16T16:37:00Z",
+    "checked_at_pacific": "October 16, 2026, 9:37 AM PDT",
+    "source": "b3ca7b76670de8a32a0cdcf9301666c6a89a6641",
+    "same_bot_deployment": true,
+    "bot_online_replicas": "1/1",
+    "recorder_online_replicas": "1/1",
+    "recorder_deployment": "8453f919-b891-4aa7-8478-6fcf6b9c24ee",
+    "credential_values_read": false,
+    "healthz": 200,
+    "unauthenticated_world": 401,
+    "bounded_tracebacks": {
+      "start": "2026-10-16T15:47:00Z",
+      "end": "2026-10-16T16:37:00Z",
+      "returned": 0,
+      "complete_log_coverage_claim": false
+    },
+    "native": {
+      "timestamp": "2026-10-16T16:35:34.983784079Z",
+      "mode": "live",
+      "authenticated": true,
+      "reason": "pair_protected",
+      "trading_now": true,
+      "cash_usd": 51.8333,
+      "open_risk_usd": 0,
+      "open_cost_usd": 4.6,
+      "open_orders": 0,
+      "day_stop_latched": false,
+      "total_halted": false,
+      "integrity_error": null,
+      "caps": {
+        "window_usd": 10,
+        "open_usd": 20,
+        "day_stop_usd": 6,
+        "clip": 5,
+        "total_stop_usd": 10
+      },
+      "utc_day_pnl_usd": -3.8162999999999996,
+      "lifetime_pnl_usd": -23.30810000000001
+    },
+    "limitations": "Read-only sampled status, not complete account/volume coverage. UI update does not establish profitable trading. No owner-authenticated production browser session."
+  },
+  "queue_gate": {
+    "checked_at_pacific": "October 16, 2026, 9:36 AM PDT",
+    "independent_review": true,
+    "pr47_historically_complete": true,
+    "pr47_merge": "e8db34ee",
+    "pr47_merged_at_pacific": "October 14, 2026, 9:21:49 AM PDT",
+    "deployment_evidence_blob": "33c13fb39f85c958e322b8afbcaecfc052d6531b",
+    "higher_priority_work_cleared": false,
+    "status": "TJR-MNQ-001 LAST / queued / blocked",
+    "pages_read": false,
+    "automation_changed": false
+  }
+}

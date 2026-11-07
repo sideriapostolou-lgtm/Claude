@@ -1,0 +1,683 @@
+{
+  "projection": true,
+  "source": "Bounded native speeddesk_live_status rows; selected fields/events only",
+  "provider_rows": 5,
+  "limit": 10,
+  "rows": [
+    {
+      "timestamp": "2026-10-16T17:10:29.483587665Z",
+      "reason": "pair_cap",
+      "waiting": "",
+      "events": [
+        {
+          "event": "speeddesk_cancel",
+          "at": 1792170218.4375176,
+          "venue": "kalshi",
+          "window": "KXBTC15M-26OCT161315-15",
+          "side": "down",
+          "price": 0.65,
+          "size": 5,
+          "fair": 0.6836122746083415,
+          "edge": 0.033612274608341486,
+          "latency_ms": 1633.7766647338867,
+          "bitcoin_price": 81257.07,
+          "bitcoin_staleness_s": 0.02608966827392578,
+          "reason": "venue_feed_gap",
+          "order_id": 10513,
+          "fee_usd": 0,
+          "kind": "rest"
+        },
+        {
+          "event": "speeddesk_live_cancel",
+          "at": 1792170218.499476,
+          "venue": {
+            "ts_ms": 1792170218458,
+            "sent_ms": 1792170218441.7,
+            "acked_ms": 1792170218499.5,
+            "offset_ms": -12.6,
+            "rtt_ms": 57.8
+          },
+          "client_order_id": "nc-speed-1ce3c0926159444b9694d78353165b55",
+          "order_id": "01a145ab-4a40-72c4-932c-080fc41556e0",
+          "window": "KXBTC15M-26OCT161315-15",
+          "reason": "reprice",
+          "state": "requested; reservation retained until fills reconcile",
+          "reduced_by": "5.00",
+          "timing": {
+            "decision_to_ack_ms": 57.8,
+            "send_to_ack_ms": 57.8
+          }
+        },
+        {
+          "event": "speeddesk_cancel",
+          "at": 1792170220.1522486,
+          "venue": "kalshi",
+          "window": "KXBTC15M-26OCT161315-15",
+          "side": "down",
+          "price": 0.65,
+          "size": 5,
+          "fair": 0.6841617385653016,
+          "edge": 0.03416173856530158,
+          "latency_ms": 460.74604988098145,
+          "bitcoin_price": 81247.77,
+          "bitcoin_staleness_s": 0.05618453025817871,
+          "reason": "reprice",
+          "order_id": 10514,
+          "fee_usd": 0,
+          "kind": "rest"
+        },
+        {
+          "event": "speeddesk_live_cancel",
+          "at": 1792170220.2176876,
+          "venue": {
+            "ts_ms": 1792170220180,
+            "sent_ms": 1792170220152.3,
+            "acked_ms": 1792170220217.7,
+            "offset_ms": -5,
+            "rtt_ms": 65.4
+          },
+          "client_order_id": "nc-speed-83c64a93647d4b7585c8c7f0a064cffe",
+          "order_id": "01a145ab-55f8-7509-a49d-9e1d620126eb",
+          "window": "KXBTC15M-26OCT161315-15",
+          "reason": "reprice",
+          "state": "requested; reservation retained until fills reconcile",
+          "reduced_by": "5.00",
+          "timing": {
+            "decision_to_ack_ms": 65.4,
+            "send_to_ack_ms": 65.3
+          }
+        }
+      ],
+      "markouts": {
+        "enabled": true,
+        "mode": "diagnostic",
+        "fill_source": "real",
+        "session_id": "9156b0b0ad013ef63c81",
+        "protocol_version": 2,
+        "basis": "fills_batch_return",
+        "liquidity_scope": "isolated_fill_not_joint_inventory_liquidation",
+        "session_only": true,
+        "earlier_pending_unknown": true,
+        "restored_pending": false,
+        "started_at": 1792169717.0150077,
+        "horizons_s": [
+          1,
+          5,
+          30
+        ],
+        "sampling_method": "first_post_horizon_websocket_update",
+        "max_age_s": 0.5,
+        "max_levels_per_side": 512,
+        "max_measurements_per_book": 8,
+        "pending_fills": 0,
+        "max_pending": 1024,
+        "dedup_entries": 1,
+        "dedup_capacity": 8192,
+        "counts": {
+          "observed_fills": 1,
+          "gap_horizons": 3
+        },
+        "gap_reasons": {
+          "book_stale": 1,
+          "venue_feed_gap": 2
+        },
+        "not_realized_pnl": true,
+        "exit_latency_not_simulated": true,
+        "error": null,
+        "own_depth_policy": "all_original_bot_order_sizes_in_window"
+      }
+    },
+    {
+      "timestamp": "2026-10-16T17:11:29.865479372Z",
+      "reason": "Window has not started",
+      "waiting": "",
+      "events": [
+        {
+          "event": "speeddesk_cancel",
+          "at": 1792170218.4375176,
+          "venue": "kalshi",
+          "window": "KXBTC15M-26OCT161315-15",
+          "side": "down",
+          "price": 0.65,
+          "size": 5,
+          "fair": 0.6836122746083415,
+          "edge": 0.033612274608341486,
+          "latency_ms": 1633.7766647338867,
+          "bitcoin_price": 81257.07,
+          "bitcoin_staleness_s": 0.02608966827392578,
+          "reason": "venue_feed_gap",
+          "order_id": 10513,
+          "fee_usd": 0,
+          "kind": "rest"
+        },
+        {
+          "event": "speeddesk_live_cancel",
+          "at": 1792170218.499476,
+          "venue": {
+            "ts_ms": 1792170218458,
+            "sent_ms": 1792170218441.7,
+            "acked_ms": 1792170218499.5,
+            "offset_ms": -12.6,
+            "rtt_ms": 57.8
+          },
+          "client_order_id": "nc-speed-1ce3c0926159444b9694d78353165b55",
+          "order_id": "01a145ab-4a40-72c4-932c-080fc41556e0",
+          "window": "KXBTC15M-26OCT161315-15",
+          "reason": "reprice",
+          "state": "requested; reservation retained until fills reconcile",
+          "reduced_by": "5.00",
+          "timing": {
+            "decision_to_ack_ms": 57.8,
+            "send_to_ack_ms": 57.8
+          }
+        },
+        {
+          "event": "speeddesk_cancel",
+          "at": 1792170220.1522486,
+          "venue": "kalshi",
+          "window": "KXBTC15M-26OCT161315-15",
+          "side": "down",
+          "price": 0.65,
+          "size": 5,
+          "fair": 0.6841617385653016,
+          "edge": 0.03416173856530158,
+          "latency_ms": 460.74604988098145,
+          "bitcoin_price": 81247.77,
+          "bitcoin_staleness_s": 0.05618453025817871,
+          "reason": "reprice",
+          "order_id": 10514,
+          "fee_usd": 0,
+          "kind": "rest"
+        },
+        {
+          "event": "speeddesk_live_cancel",
+          "at": 1792170220.2176876,
+          "venue": {
+            "ts_ms": 1792170220180,
+            "sent_ms": 1792170220152.3,
+            "acked_ms": 1792170220217.7,
+            "offset_ms": -5,
+            "rtt_ms": 65.4
+          },
+          "client_order_id": "nc-speed-83c64a93647d4b7585c8c7f0a064cffe",
+          "order_id": "01a145ab-55f8-7509-a49d-9e1d620126eb",
+          "window": "KXBTC15M-26OCT161315-15",
+          "reason": "reprice",
+          "state": "requested; reservation retained until fills reconcile",
+          "reduced_by": "5.00",
+          "timing": {
+            "decision_to_ack_ms": 65.4,
+            "send_to_ack_ms": 65.3
+          }
+        },
+        {
+          "event": "speeddesk_live_lock",
+          "at": 1792170660.2385705,
+          "venue": "kalshi",
+          "window": "KXBTC15M-26OCT161315-15",
+          "side": "down",
+          "size": 5,
+          "state": "waiting to complete the pair",
+          "reason": "lock_price"
+        }
+      ],
+      "markouts": {
+        "enabled": true,
+        "mode": "diagnostic",
+        "fill_source": "real",
+        "session_id": "9156b0b0ad013ef63c81",
+        "protocol_version": 2,
+        "basis": "fills_batch_return",
+        "liquidity_scope": "isolated_fill_not_joint_inventory_liquidation",
+        "session_only": true,
+        "earlier_pending_unknown": true,
+        "restored_pending": false,
+        "started_at": 1792169717.0150077,
+        "horizons_s": [
+          1,
+          5,
+          30
+        ],
+        "sampling_method": "first_post_horizon_websocket_update",
+        "max_age_s": 0.5,
+        "max_levels_per_side": 512,
+        "max_measurements_per_book": 8,
+        "pending_fills": 0,
+        "max_pending": 1024,
+        "dedup_entries": 1,
+        "dedup_capacity": 8192,
+        "counts": {
+          "observed_fills": 1,
+          "gap_horizons": 3
+        },
+        "gap_reasons": {
+          "book_stale": 1,
+          "venue_feed_gap": 2
+        },
+        "not_realized_pnl": true,
+        "exit_latency_not_simulated": true,
+        "error": null,
+        "own_depth_policy": "all_original_bot_order_sizes_in_window"
+      }
+    },
+    {
+      "timestamp": "2026-10-16T17:12:30.150967861Z",
+      "reason": "Window has not started",
+      "waiting": "",
+      "events": [
+        {
+          "event": "speeddesk_cancel",
+          "at": 1792170218.4375176,
+          "venue": "kalshi",
+          "window": "KXBTC15M-26OCT161315-15",
+          "side": "down",
+          "price": 0.65,
+          "size": 5,
+          "fair": 0.6836122746083415,
+          "edge": 0.033612274608341486,
+          "latency_ms": 1633.7766647338867,
+          "bitcoin_price": 81257.07,
+          "bitcoin_staleness_s": 0.02608966827392578,
+          "reason": "venue_feed_gap",
+          "order_id": 10513,
+          "fee_usd": 0,
+          "kind": "rest"
+        },
+        {
+          "event": "speeddesk_live_cancel",
+          "at": 1792170218.499476,
+          "venue": {
+            "ts_ms": 1792170218458,
+            "sent_ms": 1792170218441.7,
+            "acked_ms": 1792170218499.5,
+            "offset_ms": -12.6,
+            "rtt_ms": 57.8
+          },
+          "client_order_id": "nc-speed-1ce3c0926159444b9694d78353165b55",
+          "order_id": "01a145ab-4a40-72c4-932c-080fc41556e0",
+          "window": "KXBTC15M-26OCT161315-15",
+          "reason": "reprice",
+          "state": "requested; reservation retained until fills reconcile",
+          "reduced_by": "5.00",
+          "timing": {
+            "decision_to_ack_ms": 57.8,
+            "send_to_ack_ms": 57.8
+          }
+        },
+        {
+          "event": "speeddesk_cancel",
+          "at": 1792170220.1522486,
+          "venue": "kalshi",
+          "window": "KXBTC15M-26OCT161315-15",
+          "side": "down",
+          "price": 0.65,
+          "size": 5,
+          "fair": 0.6841617385653016,
+          "edge": 0.03416173856530158,
+          "latency_ms": 460.74604988098145,
+          "bitcoin_price": 81247.77,
+          "bitcoin_staleness_s": 0.05618453025817871,
+          "reason": "reprice",
+          "order_id": 10514,
+          "fee_usd": 0,
+          "kind": "rest"
+        },
+        {
+          "event": "speeddesk_live_cancel",
+          "at": 1792170220.2176876,
+          "venue": {
+            "ts_ms": 1792170220180,
+            "sent_ms": 1792170220152.3,
+            "acked_ms": 1792170220217.7,
+            "offset_ms": -5,
+            "rtt_ms": 65.4
+          },
+          "client_order_id": "nc-speed-83c64a93647d4b7585c8c7f0a064cffe",
+          "order_id": "01a145ab-55f8-7509-a49d-9e1d620126eb",
+          "window": "KXBTC15M-26OCT161315-15",
+          "reason": "reprice",
+          "state": "requested; reservation retained until fills reconcile",
+          "reduced_by": "5.00",
+          "timing": {
+            "decision_to_ack_ms": 65.4,
+            "send_to_ack_ms": 65.3
+          }
+        },
+        {
+          "event": "speeddesk_live_lock",
+          "at": 1792170660.2385705,
+          "venue": "kalshi",
+          "window": "KXBTC15M-26OCT161315-15",
+          "side": "down",
+          "size": 5,
+          "state": "waiting to complete the pair",
+          "reason": "lock_price"
+        }
+      ],
+      "markouts": {
+        "enabled": true,
+        "mode": "diagnostic",
+        "fill_source": "real",
+        "session_id": "9156b0b0ad013ef63c81",
+        "protocol_version": 2,
+        "basis": "fills_batch_return",
+        "liquidity_scope": "isolated_fill_not_joint_inventory_liquidation",
+        "session_only": true,
+        "earlier_pending_unknown": true,
+        "restored_pending": false,
+        "started_at": 1792169717.0150077,
+        "horizons_s": [
+          1,
+          5,
+          30
+        ],
+        "sampling_method": "first_post_horizon_websocket_update",
+        "max_age_s": 0.5,
+        "max_levels_per_side": 512,
+        "max_measurements_per_book": 8,
+        "pending_fills": 0,
+        "max_pending": 1024,
+        "dedup_entries": 1,
+        "dedup_capacity": 8192,
+        "counts": {
+          "observed_fills": 1,
+          "gap_horizons": 3
+        },
+        "gap_reasons": {
+          "book_stale": 1,
+          "venue_feed_gap": 2
+        },
+        "not_realized_pnl": true,
+        "exit_latency_not_simulated": true,
+        "error": null,
+        "own_depth_policy": "all_original_bot_order_sizes_in_window"
+      }
+    },
+    {
+      "timestamp": "2026-10-16T17:13:29.784384829Z",
+      "reason": "Window has not started",
+      "waiting": "",
+      "events": [
+        {
+          "event": "speeddesk_cancel",
+          "at": 1792170218.4375176,
+          "venue": "kalshi",
+          "window": "KXBTC15M-26OCT161315-15",
+          "side": "down",
+          "price": 0.65,
+          "size": 5,
+          "fair": 0.6836122746083415,
+          "edge": 0.033612274608341486,
+          "latency_ms": 1633.7766647338867,
+          "bitcoin_price": 81257.07,
+          "bitcoin_staleness_s": 0.02608966827392578,
+          "reason": "venue_feed_gap",
+          "order_id": 10513,
+          "fee_usd": 0,
+          "kind": "rest"
+        },
+        {
+          "event": "speeddesk_live_cancel",
+          "at": 1792170218.499476,
+          "venue": {
+            "ts_ms": 1792170218458,
+            "sent_ms": 1792170218441.7,
+            "acked_ms": 1792170218499.5,
+            "offset_ms": -12.6,
+            "rtt_ms": 57.8
+          },
+          "client_order_id": "nc-speed-1ce3c0926159444b9694d78353165b55",
+          "order_id": "01a145ab-4a40-72c4-932c-080fc41556e0",
+          "window": "KXBTC15M-26OCT161315-15",
+          "reason": "reprice",
+          "state": "requested; reservation retained until fills reconcile",
+          "reduced_by": "5.00",
+          "timing": {
+            "decision_to_ack_ms": 57.8,
+            "send_to_ack_ms": 57.8
+          }
+        },
+        {
+          "event": "speeddesk_cancel",
+          "at": 1792170220.1522486,
+          "venue": "kalshi",
+          "window": "KXBTC15M-26OCT161315-15",
+          "side": "down",
+          "price": 0.65,
+          "size": 5,
+          "fair": 0.6841617385653016,
+          "edge": 0.03416173856530158,
+          "latency_ms": 460.74604988098145,
+          "bitcoin_price": 81247.77,
+          "bitcoin_staleness_s": 0.05618453025817871,
+          "reason": "reprice",
+          "order_id": 10514,
+          "fee_usd": 0,
+          "kind": "rest"
+        },
+        {
+          "event": "speeddesk_live_cancel",
+          "at": 1792170220.2176876,
+          "venue": {
+            "ts_ms": 1792170220180,
+            "sent_ms": 1792170220152.3,
+            "acked_ms": 1792170220217.7,
+            "offset_ms": -5,
+            "rtt_ms": 65.4
+          },
+          "client_order_id": "nc-speed-83c64a93647d4b7585c8c7f0a064cffe",
+          "order_id": "01a145ab-55f8-7509-a49d-9e1d620126eb",
+          "window": "KXBTC15M-26OCT161315-15",
+          "reason": "reprice",
+          "state": "requested; reservation retained until fills reconcile",
+          "reduced_by": "5.00",
+          "timing": {
+            "decision_to_ack_ms": 65.4,
+            "send_to_ack_ms": 65.3
+          }
+        },
+        {
+          "event": "speeddesk_live_lock",
+          "at": 1792170660.2385705,
+          "venue": "kalshi",
+          "window": "KXBTC15M-26OCT161315-15",
+          "side": "down",
+          "size": 5,
+          "state": "waiting to complete the pair",
+          "reason": "lock_price"
+        },
+        {
+          "event": "speeddesk_live_lock",
+          "at": 1792170760.8743634,
+          "venue": "kalshi",
+          "window": "KXBTC15M-26OCT161315-15",
+          "side": "down",
+          "size": 5,
+          "state": "waiting to complete the pair",
+          "reason": "no_ask"
+        }
+      ],
+      "markouts": {
+        "enabled": true,
+        "mode": "diagnostic",
+        "fill_source": "real",
+        "session_id": "9156b0b0ad013ef63c81",
+        "protocol_version": 2,
+        "basis": "fills_batch_return",
+        "liquidity_scope": "isolated_fill_not_joint_inventory_liquidation",
+        "session_only": true,
+        "earlier_pending_unknown": true,
+        "restored_pending": false,
+        "started_at": 1792169717.0150077,
+        "horizons_s": [
+          1,
+          5,
+          30
+        ],
+        "sampling_method": "first_post_horizon_websocket_update",
+        "max_age_s": 0.5,
+        "max_levels_per_side": 512,
+        "max_measurements_per_book": 8,
+        "pending_fills": 0,
+        "max_pending": 1024,
+        "dedup_entries": 1,
+        "dedup_capacity": 8192,
+        "counts": {
+          "observed_fills": 1,
+          "gap_horizons": 3
+        },
+        "gap_reasons": {
+          "book_stale": 1,
+          "venue_feed_gap": 2
+        },
+        "not_realized_pnl": true,
+        "exit_latency_not_simulated": true,
+        "error": null,
+        "own_depth_policy": "all_original_bot_order_sizes_in_window"
+      }
+    },
+    {
+      "timestamp": "2026-10-16T17:14:30.222300237Z",
+      "reason": "Window has not started",
+      "waiting": "",
+      "events": [
+        {
+          "event": "speeddesk_cancel",
+          "at": 1792170218.4375176,
+          "venue": "kalshi",
+          "window": "KXBTC15M-26OCT161315-15",
+          "side": "down",
+          "price": 0.65,
+          "size": 5,
+          "fair": 0.6836122746083415,
+          "edge": 0.033612274608341486,
+          "latency_ms": 1633.7766647338867,
+          "bitcoin_price": 81257.07,
+          "bitcoin_staleness_s": 0.02608966827392578,
+          "reason": "venue_feed_gap",
+          "order_id": 10513,
+          "fee_usd": 0,
+          "kind": "rest"
+        },
+        {
+          "event": "speeddesk_live_cancel",
+          "at": 1792170218.499476,
+          "venue": {
+            "ts_ms": 1792170218458,
+            "sent_ms": 1792170218441.7,
+            "acked_ms": 1792170218499.5,
+            "offset_ms": -12.6,
+            "rtt_ms": 57.8
+          },
+          "client_order_id": "nc-speed-1ce3c0926159444b9694d78353165b55",
+          "order_id": "01a145ab-4a40-72c4-932c-080fc41556e0",
+          "window": "KXBTC15M-26OCT161315-15",
+          "reason": "reprice",
+          "state": "requested; reservation retained until fills reconcile",
+          "reduced_by": "5.00",
+          "timing": {
+            "decision_to_ack_ms": 57.8,
+            "send_to_ack_ms": 57.8
+          }
+        },
+        {
+          "event": "speeddesk_cancel",
+          "at": 1792170220.1522486,
+          "venue": "kalshi",
+          "window": "KXBTC15M-26OCT161315-15",
+          "side": "down",
+          "price": 0.65,
+          "size": 5,
+          "fair": 0.6841617385653016,
+          "edge": 0.03416173856530158,
+          "latency_ms": 460.74604988098145,
+          "bitcoin_price": 81247.77,
+          "bitcoin_staleness_s": 0.05618453025817871,
+          "reason": "reprice",
+          "order_id": 10514,
+          "fee_usd": 0,
+          "kind": "rest"
+        },
+        {
+          "event": "speeddesk_live_cancel",
+          "at": 1792170220.2176876,
+          "venue": {
+            "ts_ms": 1792170220180,
+            "sent_ms": 1792170220152.3,
+            "acked_ms": 1792170220217.7,
+            "offset_ms": -5,
+            "rtt_ms": 65.4
+          },
+          "client_order_id": "nc-speed-83c64a93647d4b7585c8c7f0a064cffe",
+          "order_id": "01a145ab-55f8-7509-a49d-9e1d620126eb",
+          "window": "KXBTC15M-26OCT161315-15",
+          "reason": "reprice",
+          "state": "requested; reservation retained until fills reconcile",
+          "reduced_by": "5.00",
+          "timing": {
+            "decision_to_ack_ms": 65.4,
+            "send_to_ack_ms": 65.3
+          }
+        },
+        {
+          "event": "speeddesk_live_lock",
+          "at": 1792170660.2385705,
+          "venue": "kalshi",
+          "window": "KXBTC15M-26OCT161315-15",
+          "side": "down",
+          "size": 5,
+          "state": "waiting to complete the pair",
+          "reason": "lock_price"
+        },
+        {
+          "event": "speeddesk_live_lock",
+          "at": 1792170760.8743634,
+          "venue": "kalshi",
+          "window": "KXBTC15M-26OCT161315-15",
+          "side": "down",
+          "size": 5,
+          "state": "waiting to complete the pair",
+          "reason": "no_ask"
+        }
+      ],
+      "markouts": {
+        "enabled": true,
+        "mode": "diagnostic",
+        "fill_source": "real",
+        "session_id": "9156b0b0ad013ef63c81",
+        "protocol_version": 2,
+        "basis": "fills_batch_return",
+        "liquidity_scope": "isolated_fill_not_joint_inventory_liquidation",
+        "session_only": true,
+        "earlier_pending_unknown": true,
+        "restored_pending": false,
+        "started_at": 1792169717.0150077,
+        "horizons_s": [
+          1,
+          5,
+          30
+        ],
+        "sampling_method": "first_post_horizon_websocket_update",
+        "max_age_s": 0.5,
+        "max_levels_per_side": 512,
+        "max_measurements_per_book": 8,
+        "pending_fills": 0,
+        "max_pending": 1024,
+        "dedup_entries": 1,
+        "dedup_capacity": 8192,
+        "counts": {
+          "observed_fills": 1,
+          "gap_horizons": 3
+        },
+        "gap_reasons": {
+          "book_stale": 1,
+          "venue_feed_gap": 2
+        },
+        "not_realized_pnl": true,
+        "exit_latency_not_simulated": true,
+        "error": null,
+        "own_depth_policy": "all_original_bot_order_sizes_in_window"
+      }
+    }
+  ]
+}

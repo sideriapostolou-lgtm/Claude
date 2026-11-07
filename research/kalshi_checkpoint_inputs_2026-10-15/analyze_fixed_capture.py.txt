@@ -1,0 +1,101 @@
+"""Offline extraction only: anchored originals, duplicate checks, Decimal arithmetic."""
+from __future__ import annotations
+
+import hashlib
+import json
+import re
+from collections import Counter
+from decimal import Decimal as D
+from pathlib import Path
+
+BASE = Path(__file__).resolve().parent
+TICKER = 'KXBTC15M-26OCT152030-30'
+PATTERN = re.compile(r'^(\S+) (INFO|WARNING|ERROR) nightcrawler\.([a-z_]+): ([a-z_]+) (.*)$', re.S)
+
+
+def wrappers(x):
+    if isinstance(x, dict):
+        if 'request' in x and 'result' in x:
+            yield x
+        else:
+            for value in x.values():
+                yield from wrappers(value)
+    elif isinstance(x, list):
+        for value in x:
+            yield from wrappers(value)
+
+
+def main():
+    files = sorted(BASE.glob('CAPTURE_*.native.json'))
+    originals, seen, errors, queries, manifest = [], {}, [], [], {}
+    for path in files:
+        raw = path.read_bytes()
+        manifest[path.name] = hashlib.sha256(raw).hexdigest()
+        for w in wrappers(json.loads(raw)):
+            result = w['result']
+            data = result.get('structuredContent', {})
+            rows = data.get('deploy')
+            if not isinstance(rows, list):
+                errors.append({'file': path.name, 'reason': 'no_native_deploy_rows'})
+                continue
+            queries.append({'file': path.name, 'count': len(rows), 'request': w['request'],
+                            'before': w.get('before'), 'after': w.get('after'),
+                            'isError': result.get('isError', False)})
+            for row in rows:
+                key = row['timestamp'], row['message']
+                if key in seen:
+                    continue
+                seen[key] = True
+                m = PATTERN.fullmatch(row['message'])
+                if not m:
+                    continue
+                app_at, level, logger, event, body = m.groups()
+                if not body.startswith('{'):
+                    continue
+                try:
+                    payload = json.loads(body, parse_float=D)
+                except json.JSONDecodeError as e:
+                    errors.append({'file': path.name, 'timestamp': row['timestamp'],
+                                   'event': event, 'message_bytes': len(row['message'].encode()),
+                                   'reason': 'invalid_or_truncated_json', 'error_position': e.pos})
+                    continue
+                originals.append({'timestamp': row['timestamp'], 'app_at': app_at,
+                                  'logger': logger, 'event': event, 'payload': payload})
+    target = [r for r in originals if r['payload'].get('window') == TICKER]
+    fills = {}
+    for r in target:
+        if r['logger'] != 'speeddesk' or r['event'] != 'speeddesk_live_fill':
+            continue
+        fill = r['payload']
+        if fill['fill_id'] in fills:
+            if fills[fill['fill_id']]['payload'] != fill:
+                errors.append({'reason': 'conflicting_fill_id', 'fill_id': fill['fill_id']})
+        else:
+            fills[fill['fill_id']] = r
+    q, cost = {}, {}
+    for side in ('up', 'down'):
+        selected = [r['payload'] for r in fills.values() if r['payload']['side'] == side]
+        q[side] = sum((D(str(p['size'])) for p in selected), D(0))
+        cost[side] = sum((D(str(p['size'])) * D(str(p['price'])) for p in selected), D(0))
+    fees = sum((D(str(r['payload']['fee_usd'])) for r in fills.values()), D(0))
+    result = {'kind': 'BOUNDED_ORIGINAL_CAPTURE_NOT_RAW_LEDGER_CERTIFICATION',
+              'ticker': TICKER, 'manifest': manifest, 'queries': queries,
+              'distinct_original_event_counts': dict(Counter(r['event'] for r in originals)),
+              'errors': errors, 'target_events': target,
+              'live_original_fills': list(fills.values()),
+              'live_arithmetic': {'shares': q, 'cost_by_side': cost,
+                                  'total_cost': sum(cost.values()), 'fees': fees},
+              'live_status_originals': [r for r in originals if r['logger'] == 'speeddesk' and r['event'] == 'speeddesk_live_status'],
+              'probability_status_originals': [r for r in originals if r['logger'] == 'kalshi_probability_learning' and r['event'] == 'kalshi_probability_learning_status'],
+              'coverage_certified': False}
+    out = BASE / 'ROOT_CAPTURE_EXTRACTION.json'
+    out.write_text(json.dumps(result, indent=2, default=str) + '\n')
+    print(json.dumps({'output': str(out), 'sha256': hashlib.sha256(out.read_bytes()).hexdigest(),
+                      'queries': len(queries), 'errors': errors,
+                      'events': result['distinct_original_event_counts'],
+                      'target_event_counts': dict(Counter(r['event'] for r in target)),
+                      'unique_live_fill_ids': len(fills), 'arithmetic': result['live_arithmetic']}, default=str))
+
+
+if __name__ == '__main__':
+    main()

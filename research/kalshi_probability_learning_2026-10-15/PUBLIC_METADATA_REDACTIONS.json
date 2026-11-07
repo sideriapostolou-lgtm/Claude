@@ -1,0 +1,127 @@
+{
+  "scope": "Untracked runtime deployment-list originals only; immutable/tracked originals untouched.",
+  "files": [
+    {
+      "original_file": "DEPLOYMENT_BUILDING_1.native.json",
+      "original_sha256": "132b8a42d460f9625fcec89ab66294909db6c1ec0b0c52ec360a059c8dc4abfd",
+      "public_derivative": "DEPLOYMENT_BUILDING_1.public-redacted.json",
+      "public_sha256": "293bc5f27893a06c72aea59ddb6fa232a208ea75d4dca765bebe549a5eb19004",
+      "redacted_paths": [
+        "$.result.structuredContent.deployments[0].creator",
+        "$.result.structuredContent.deployments[1].creator",
+        "$.result.structuredContent.deployments[2].creator"
+      ],
+      "original_retained_private": true
+    },
+    {
+      "original_file": "DEPLOYMENT_BUILDING_2.native.json",
+      "original_sha256": "d3218d126cf7e10800bb91018c1433a7f44abc96ab7ff6e6530fadd66b9f123e",
+      "public_derivative": "DEPLOYMENT_BUILDING_2.public-redacted.json",
+      "public_sha256": "c1d1a8dd9369579e36c0c5c4c03f4d6ac5a4f157c6feddc75d481f4cf452c537",
+      "redacted_paths": [
+        "$.result.structuredContent.deployments[0].creator",
+        "$.result.structuredContent.deployments[1].creator",
+        "$.result.structuredContent.deployments[2].creator"
+      ],
+      "original_retained_private": true
+    },
+    {
+      "original_file": "DEPLOYMENT_BUILDING_3.native.json",
+      "original_sha256": "a49a23a78e5b3f3322870dca367173f869151cdf0b29d897403fe502c98abe35",
+      "public_derivative": "DEPLOYMENT_BUILDING_3.public-redacted.json",
+      "public_sha256": "b58225ccee44c53d421f8438467b8840534209681e32fa55a8b640884643dc2d",
+      "redacted_paths": [
+        "$.result.structuredContent.deployments[0].creator",
+        "$.result.structuredContent.deployments[1].creator",
+        "$.result.structuredContent.deployments[2].creator"
+      ],
+      "original_retained_private": true
+    },
+    {
+      "original_file": "DEPLOYMENT_BUILDING_4.native.json",
+      "original_sha256": "eda9390c61724c130b01189501d2a07aa1501cc688a101eecb3f6a003974ac82",
+      "public_derivative": "DEPLOYMENT_BUILDING_4.public-redacted.json",
+      "public_sha256": "1ac57e9bbeb5f10b53591473c614419d1f86ce6d2d4b47c01f6dfc56364fbc63",
+      "redacted_paths": [
+        "$.result.structuredContent.deployments[0].creator",
+        "$.result.structuredContent.deployments[1].creator",
+        "$.result.structuredContent.deployments[2].creator"
+      ],
+      "original_retained_private": true
+    },
+    {
+      "original_file": "DEPLOYMENT_BUILDING_5.native.json",
+      "original_sha256": "d76f99d72e6c7db5fcd5c7a4506d77fc2ccd7f14710f79d26e40e91132ba3758",
+      "public_derivative": "DEPLOYMENT_BUILDING_5.public-redacted.json",
+      "public_sha256": "eb4debe7e7093708d41d1acde5cc436ce5559e9e7844e73f75b63130615b7f38",
+      "redacted_paths": [
+        "$.result.structuredContent.deployments[0].creator",
+        "$.result.structuredContent.deployments[1].creator",
+        "$.result.structuredContent.deployments[2].creator"
+      ],
+      "original_retained_private": true
+    },
+    {
+      "original_file": "DEPLOYMENT_BUILDING_6.native.json",
+      "original_sha256": "7d1997742dae10fe26636c2c50dbe66fb7aca5af5173c35b883a8cadc99888ae",
+      "public_derivative": "DEPLOYMENT_BUILDING_6.public-redacted.json",
+      "public_sha256": "47c77ce0abc73441e80f6a2aae781ed00a8fff30025b275c6a54a7b48e9a5c9c",
+      "redacted_paths": [
+        "$.result.structuredContent.deployments[0].creator",
+        "$.result.structuredContent.deployments[1].creator",
+        "$.result.structuredContent.deployments[2].creator"
+      ],
+      "original_retained_private": true
+    },
+    {
+      "original_file": "DEPLOYMENT_BUILDING_7.native.json",
+      "original_sha256": "de5e9bf125f0cadb27f0a54848708bb6c7fd84444e0e3fecf04de0e428bf12b0",
+      "public_derivative": "DEPLOYMENT_BUILDING_7.public-redacted.json",
+      "public_sha256": "9e24261410f57abcfb187ac546f4359750c6b88cecec04ac6509343e25d14f71",
+      "redacted_paths": [
+        "$.result.structuredContent.deployments[0].creator",
+        "$.result.structuredContent.deployments[1].creator",
+        "$.result.structuredContent.deployments[2].creator"
+      ],
+      "original_retained_private": true
+    },
+    {
+      "original_file": "DEPLOYMENT_ROLLOUT.native.json",
+      "original_sha256": "9b4855b96e0469e7ccf58ff27e24bbc6e6811c906eb9972cf65e6bb77f47a9d6",
+      "public_derivative": "DEPLOYMENT_ROLLOUT.public-redacted.json",
+      "public_sha256": "6fb523dd7d899df61472c1e1b42fe1cad1aa13dbbf547e8bb1e6065e8a4a079e",
+      "redacted_paths": [
+        "$.result.structuredContent.deployments[0].creator",
+        "$.result.structuredContent.deployments[1].creator",
+        "$.result.structuredContent.deployments[2].creator"
+      ],
+      "original_retained_private": true
+    },
+    {
+      "original_file": "POST_DECLARATION_DEPLOYMENTS.native.json",
+      "original_sha256": "6e5840b99b7d1c998c571f185b31f07c761ab058a8bd5cea52d411081a555209",
+      "public_derivative": "POST_DECLARATION_DEPLOYMENTS.public-redacted.json",
+      "public_sha256": "ca38ad645ef551940a4443b0ae11e28ed61e400f3c7c8f182318ea14307ffc6f",
+      "redacted_paths": [
+        "$.result.structuredContent.deployments[0].creator",
+        "$.result.structuredContent.deployments[1].creator",
+        "$.result.structuredContent.deployments[2].creator"
+      ],
+      "original_retained_private": true
+    },
+    {
+      "original_file": "POST_SLOT_DEPLOYMENTS.native.json",
+      "original_sha256": "954ac8bdd3c2f00447fb41290c0a9e348486a5d4217b65ca26fb8a17279a8618",
+      "public_derivative": "POST_SLOT_DEPLOYMENTS.public-redacted.json",
+      "public_sha256": "09b4ce580b4580cb8de34c10ab58d2e4b4b5069de6f426e76f48da1f3f03a141",
+      "redacted_paths": [
+        "$.result.structuredContent.deployments[0].creator",
+        "$.result.structuredContent.deployments[1].creator",
+        "$.result.structuredContent.deployments[2].creator"
+      ],
+      "original_retained_private": true
+    }
+  ],
+  "secret_or_privateattachment_findings": 0,
+  "limitations": "Exact original bytes for these contact-bearing metadata responses are private; public copies are explicitly redacted derivatives, not native originals."
+}

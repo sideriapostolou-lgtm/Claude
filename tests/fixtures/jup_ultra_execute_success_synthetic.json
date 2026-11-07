@@ -1,0 +1,19 @@
+{
+ "_synthetic": "Shape per Jupiter Ultra /execute docs; values invented for tests. Not a real transaction.",
+ "status": "Success",
+ "signature": "5ynthetic1111111111111111111111111111111111111111111111111111111111111111111111111111",
+ "slot": "454600000",
+ "code": 0,
+ "inputAmountResult": "100000000",
+ "outputAmountResult": "16200000000",
+ "totalInputAmount": "100000000",
+ "totalOutputAmount": "16200000000",
+ "swapEvents": [
+  {
+   "inputMint": "So11111111111111111111111111111111111111112",
+   "inputAmount": "100000000",
+   "outputMint": "DoVAVzViX8Bjy3r15nwikSaSbzE6dV4ovd28aWpJpump",
+   "outputAmount": "16200000000"
+  }
+ ]
+}

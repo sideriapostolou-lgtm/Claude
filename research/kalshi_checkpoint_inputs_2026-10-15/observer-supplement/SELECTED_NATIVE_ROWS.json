@@ -1,0 +1,57 @@
+[
+  {
+    "timestamp": "2026-10-15T22:05:08.143316590Z",
+    "severity": "info",
+    "message": "2026-10-15T22:05:00Z INFO nightcrawler.kalshi_probability_learning: kalshi_probability_learning_forecast {\"at\":1792101900.0906367,\"mode\":\"observe_only\",\"live_application\":false,\"profitability_proven\":false,\"protocol\":\"kalshi-probability-calibration-v2-h300-g5-b10-prior20\",\"source_fingerprint\":\"23e2ca80d3c04415256bf3fc237ba017d56733a59219d718e86c554eaa1f1d25\",\"window\":\"KXBTC15M-26OCT151815-15\",\"p\":0.9084374925959551,\"q\":0.9084374925959551,\"bin\":9,\"n\":0,\"wins\":0,\"spot\":82445.73,\"sigma\":4.8556475347135454e-05,\"bitcoin_at\":1792101899.688186,\"opening\":82319.67,\"venue_start_price\":82319.67,\"batch_at\":1792101900.0581207,\"terms\":[1792101600.0,1792102500.0,82319.67,82319.67,0.07,0.0,0.01,0.01,\"kalshi\",\"kalshi\"]}",
+    "attributes": [
+      {
+        "key": "level",
+        "value": "\"info\""
+      }
+    ]
+  },
+  {
+    "timestamp": "2026-10-15T22:15:29.886318445Z",
+    "severity": "info",
+    "message": "2026-10-15T22:15:29Z INFO nightcrawler.kalshi_probability_learning: kalshi_probability_learning_scored {\"at\":1792102529.869674,\"mode\":\"observe_only\",\"live_application\":false,\"profitability_proven\":false,\"protocol\":\"kalshi-probability-calibration-v2-h300-g5-b10-prior20\",\"source_fingerprint\":\"23e2ca80d3c04415256bf3fc237ba017d56733a59219d718e86c554eaa1f1d25\",\"window\":\"KXBTC15M-26OCT151815-15\",\"status\":\"scored\",\"outcome\":true,\"forecast\":{\"p\":0.9084374925959551,\"q\":0.9084374925959551,\"bin\":9,\"n\":0,\"wins\":0,\"at\":1792101900.0906367,\"spot\":82445.73,\"sigma\":4.8556475347135454e-05,\"bitcoin_at\":1792101899.688186,\"opening\":82319.67,\"venue_start_price\":82319.67,\"batch_at\":1792101900.0581207,\"terms\":[1792101600.0,1792102500.0,82319.67,82319.67,0.07,0.0,0.01,0.01,\"kalshi\",\"kalshi\"],\"protocol\":\"kalshi-probability-calibration-v2-h300-g5-b10-prior20\",\"source_fingerprint\":\"23e2ca80d3c04415256bf3fc237ba017d56733a59219d718e86c554eaa1f1d25\"},\"post_gaps\":[],\"scored_at\":1792102529.869674}",
+    "attributes": [
+      {
+        "key": "level",
+        "value": "\"info\""
+      }
+    ]
+  },
+  {
+    "timestamp": "2026-10-15T22:00:52.027782936Z",
+    "severity": "info",
+    "message": "2026-10-15T22:00:52Z INFO nightcrawler.kalshi_probability_learning: kalshi_probability_learning_status {\"at\":1792101652.0108252,\"mode\":\"observe_only\",\"live_application\":false,\"profitability_proven\":false,\"protocol\":\"kalshi-probability-calibration-v2-h300-g5-b10-prior20\",\"source_fingerprint\":\"23e2ca80d3c04415256bf3fc237ba017d56733a59219d718e86c554eaa1f1d25\",\"learning\":{\"mode\":\"observe_only\",\"enabled\":true,\"live_application\":false,\"profitability_proven\":false,\"protocol\":\"kalshi-probability-calibration-v2-h300-g5-b10-prior20\",\"source_fingerprint\":\"23e2ca80d3c04415256bf3fc237ba017d56733a59219d718e86c554eaa1f1d25\",\"history_protocol\":\"kalshi-probability-calibration-v2-h300-g5-b10-prior20\",\"history_source_fingerprint\":\"23e2ca80d3c04415256bf3fc237ba017d56733a59219d718e86c554eaa1f1d25\",\"forecast_horizon_s\":300,\"grace_s\":5,\"bins\":10,\"pending\":0,\"forecasts\":0,\"scored\":0,\"unknown\":2,\"brier_baseline\":null,\"brier_shadow\":null,\"error\":null,\"coverage\":\"conditional fresh-input probabilities; continuous coverage and profitability not certified\",\"exclusions\":{\"startup_inside\":1,\"late\":0,\"invalid\":1,\"pregap\":0,\"terms_changed\":0,\"missing_label\":0,\"outcome_known\":0,\"invalid_label\":0,\"capacity\":0,\"invalid_batch\":0,\"invalid_strike\":0}}}",
+    "attributes": [
+      {
+        "key": "level",
+        "value": "\"info\""
+      }
+    ]
+  },
+  {
+    "timestamp": "2026-10-15T22:21:16.667667527Z",
+    "severity": "info",
+    "message": "2026-10-15T22:21:13Z INFO nightcrawler.kalshi_probability_learning: kalshi_probability_learning_status {\"at\":1792102873.7101223,\"mode\":\"observe_only\",\"live_application\":false,\"profitability_proven\":false,\"protocol\":\"kalshi-probability-calibration-v2-h300-g5-b10-prior20\",\"source_fingerprint\":\"23e2ca80d3c04415256bf3fc237ba017d56733a59219d718e86c554eaa1f1d25\",\"learning\":{\"mode\":\"observe_only\",\"enabled\":true,\"live_application\":false,\"profitability_proven\":false,\"protocol\":\"kalshi-probability-calibration-v2-h300-g5-b10-prior20\",\"source_fingerprint\":\"23e2ca80d3c04415256bf3fc237ba017d56733a59219d718e86c554eaa1f1d25\",\"history_protocol\":\"kalshi-probability-calibration-v2-h300-g5-b10-prior20\",\"history_source_fingerprint\":\"23e2ca80d3c04415256bf3fc237ba017d56733a59219d718e86c554eaa1f1d25\",\"forecast_horizon_s\":300,\"grace_s\":5,\"bins\":10,\"pending\":1,\"forecasts\":2,\"scored\":1,\"unknown\":2,\"brier_baseline\":0.008383692762115782,\"brier_shadow\":0.008383692762115782,\"error\":null,\"coverage\":\"conditional fresh-input probabilities; continuous coverage and profitability not certified\",\"exclusions\":{\"startup_inside\":1,\"late\":0,\"invalid\":1,\"pregap\":0,\"terms_changed\":0,\"missing_label\":0,\"outcome_known\":0,\"invalid_label\":0,\"capacity\":0,\"invalid_batch\":0,\"invalid_strike\":0}}}",
+    "attributes": [
+      {
+        "key": "level",
+        "value": "\"info\""
+      }
+    ]
+  },
+  {
+    "timestamp": "2026-10-15T22:20:00.071404112Z",
+    "severity": "info",
+    "message": "2026-10-15T22:20:00Z INFO nightcrawler.kalshi_probability_learning: kalshi_probability_learning_forecast {\"at\":1792102800.0653737,\"mode\":\"observe_only\",\"live_application\":false,\"profitability_proven\":false,\"protocol\":\"kalshi-probability-calibration-v2-h300-g5-b10-prior20\",\"source_fingerprint\":\"23e2ca80d3c04415256bf3fc237ba017d56733a59219d718e86c554eaa1f1d25\",\"window\":\"KXBTC15M-26OCT151830-30\",\"p\":0.2138387913915002,\"q\":0.21383879139150022,\"bin\":2,\"n\":0,\"wins\":0,\"spot\":82298.71,\"sigma\":4.7159791686242395e-05,\"bitcoin_at\":1792102798.467374,\"opening\":82371.62,\"venue_start_price\":82371.62,\"batch_at\":1792102800.0218341,\"terms\":[1792102500.0,1792103400.0,82371.62,82371.62,0.07,0.0,0.01,0.01,\"kalshi\",\"kalshi\"]}",
+    "attributes": [
+      {
+        "key": "level",
+        "value": "\"info\""
+      }
+    ]
+  }
+]

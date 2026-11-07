@@ -1,0 +1,11 @@
+{
+  "recorded_at_utc": "2026-10-15T19:53:13.294787+00:00",
+  "older_worklog_preserved_exactly": true,
+  "older_coordination_preserved_exactly": true,
+  "prior_sha256": {
+    "WORKLOG": "10654dbf2bfe450457cb1de7da24dc3f0c292e25383b96df89929fb6e5df85ee",
+    "COORDINATION": "3470a4a04f7b29156090a965f1cbbc3b27d0c87de2469b1e94bb3645fd5eb04b"
+  },
+  "changes": "Newest-first additive entries; frozen protocol text only status updated, original design in snapshot/preparation unchanged.",
+  "source_changed": false
+}

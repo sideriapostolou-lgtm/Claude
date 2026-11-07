@@ -1,0 +1,10 @@
+{
+  "recorded_at_utc": "2026-10-16T04:38:29.245065+00:00",
+  "archive_files": 55,
+  "archive_parts": 6,
+  "all_original_bytes_roundtrip": true,
+  "five_independent_analysis_scripts_exact_output_bytes": true,
+  "portable_runtime_cli_financial_counts_issues_equal": true,
+  "source_tests_rerun": false,
+  "limits": "Artifact integrity and receipt arithmetic only; no continuous coverage or profitable expectancy certificate."
+}

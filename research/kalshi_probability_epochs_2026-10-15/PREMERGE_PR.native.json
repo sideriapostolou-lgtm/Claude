@@ -1,0 +1,56 @@
+{
+  "before": {
+    "current_time": "2026-10-15 21:31:53 UTC"
+  },
+  "result": {
+    "content": [
+      {
+        "type": "text",
+        "text": "Action completed."
+      }
+    ],
+    "structuredContent": {
+      "url": "https://github.com/sideriapostolou-lgtm/Claude/pull/66",
+      "number": 66,
+      "state": "open",
+      "merged": false,
+      "mergeable": true,
+      "draft": false,
+      "body": "LIVE ON MERGE: restarts the existing real-money bots. Repairs the observe-only probability collector; trading decisions and money limits stay unchanged.\n\nThe upstream feed correction changed a strict source fingerprint and paused the observer. Keep its five old scores as an immutable archive and start distinct zeroed calibration for the new source. Same-source restarts retain their exclusions; malformed, missing, disabled or exhausted history fails the optional collector closed. No old score is relabeled, pooled or erased to show better performance.\n\nChecked exact v4: 5,992 tests passed / 14 existing skips; mypy on 130 source files and Ruff on all seven changed Python files. Independent exact review, INFO-level regression, financial isolation and populated-history resource checks pass. All strict learner methods and 177 other tracked source files/build files are unchanged. Rejected drafts, the interrupted run and the prior full-suite test-boundary failure remain in research/kalshi_probability_epochs_2026-10-15/.\n\nThe prior fixed live window made $0.16 from an 84-cent pair, with the observer disabled. That is not proof of learning or consistent profitability; main feed delays remain open.\n\nMerge under standing approval in safe minutes, verify the exact Railway commit, normal Polymarket startup, financial/used-control retention, five archived scores versus fresh current zero, then a newly declared future forecast-to-official-score cycle. No Railway variables, caps, stops, resume/day budgets, manual orders or Polymarket code changes. Kalshi first; all unfinished work stays queued and TJR remains last.\n\nPre-release account update (2:30:28 PM Pacific): Kalshi's existing daily loss stop is latched, mode PRACTICE, zero reported open positions/orders, cash $30.2496, cumulative settled trading P&L -$19.4918. This release must retain that stop and every loss. No budget reset or real-trading resumption is authorized by this source release.",
+      "title": "LIVE ON MERGE: touches real money \u2014 preserve probability learning history",
+      "base": "claude/nightcrawler-memecoin-bot-Gwnb1S",
+      "base_sha": "04aee72b65786b5c7a3c3e20d71aa992b41db5ff",
+      "head": "codex/probability-epochs-20261015",
+      "head_sha": "1cca7075afc90dda1e335043b2e3d683a4b1d744",
+      "head_repo_id": 1150297109,
+      "head_repo_full_name": "sideriapostolou-lgtm/Claude",
+      "merge_commit_sha": "fba686b8d28bdae09aee8aad5c04b82284347da5",
+      "user": {
+        "login": "sideriapostolou-lgtm",
+        "name": "sideriapostolou-lgtm",
+        "email": null,
+        "avatar_url": "https://avatars.githubusercontent.com/u/259493492?v=4",
+        "id": 259493492
+      },
+      "requested_reviewers": null,
+      "requested_team_reviewers": null,
+      "diff": null,
+      "comments": null,
+      "created_at": "2026-10-15T21:27:11Z",
+      "updated_at": "2026-10-15T21:31:55Z",
+      "closed_at": null,
+      "merged_at": null,
+      "commits": 1,
+      "changed_files": 60,
+      "additions": 7383,
+      "deletions": 12,
+      "display_url": "https://github.com/sideriapostolou-lgtm/Claude/pull/66",
+      "display_title": "LIVE ON MERGE: touches real money \u2014 preserve probability learning history"
+    },
+    "isError": false
+  },
+  "after": {
+    "current_time": "2026-10-15 21:32:13 UTC"
+  },
+  "retrieval_note": "PR description update result; before is enclosing premerge inspection clock, not exact PR-update start"
+}

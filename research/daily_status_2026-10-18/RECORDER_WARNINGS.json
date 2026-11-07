@@ -1,0 +1,330 @@
+{
+  "request": {
+    "projectId": "75750847-85c0-41a3-a2a7-b7f2201a51e9",
+    "deploymentId": "8453f919-b891-4aa7-8478-6fcf6b9c24ee",
+    "startDate": "2026-10-17T00:00:00Z",
+    "endDate": "2026-10-18T15:24:00Z",
+    "filter": "(\"Traceback\" OR \"No space left\" OR \"storage_pressure\" OR \"low_disk\" OR \"WARNING\" OR \"ERROR\") AND -\"kalshi_recorder_evidence\"",
+    "limit": 100,
+    "types": [
+      "deploy"
+    ]
+  },
+  "result": {
+    "scope": "deployment",
+    "deploymentId": "8453f919-b891-4aa7-8478-6fcf6b9c24ee",
+    "serviceId": "736b1c8a-8311-4ee0-9043-d05f508cd821",
+    "environmentId": "17f7b0e0-104c-4903-9484-0106748b3cdb",
+    "status": "SUCCESS",
+    "deploy": [
+      {
+        "timestamp": "2026-10-17T02:19:18.900442588Z",
+        "severity": "info",
+        "message": "2026-10-17 02:19:16,754 WARNING nightcrawler.kalshi_recorder kalshi_recorder_spot_disconnected venue=coinbase error=ConnectionClosedError",
+        "attributes": [
+          {
+            "key": "level",
+            "value": "\"info\""
+          }
+        ]
+      },
+      {
+        "timestamp": "2026-10-17T02:19:22.238906660Z",
+        "severity": "info",
+        "message": "2026-10-17 02:19:22,232 WARNING nightcrawler.kalshi_recorder kalshi_recorder_gap lane=spot cause=spot_reconnected",
+        "attributes": [
+          {
+            "key": "level",
+            "value": "\"info\""
+          }
+        ]
+      },
+      {
+        "timestamp": "2026-10-17T05:18:29.976012831Z",
+        "severity": "info",
+        "message": "2026-10-17 05:18:21,143 WARNING nightcrawler.kalshi_recorder kalshi_recorder_spot_disconnected venue=kraken error=ConnectionClosedError",
+        "attributes": [
+          {
+            "key": "level",
+            "value": "\"info\""
+          }
+        ]
+      },
+      {
+        "timestamp": "2026-10-17T05:18:29.976025641Z",
+        "severity": "info",
+        "message": "2026-10-17 05:18:27,388 WARNING nightcrawler.kalshi_recorder kalshi_recorder_gap lane=spot cause=spot_reconnected",
+        "attributes": [
+          {
+            "key": "level",
+            "value": "\"info\""
+          }
+        ]
+      },
+      {
+        "timestamp": "2026-10-17T05:41:20.999099054Z",
+        "severity": "info",
+        "message": "2026-10-17 05:41:14,201 WARNING nightcrawler.kalshi_recorder kalshi_recorder_spot_disconnected venue=kraken error=ConnectionClosedError",
+        "attributes": [
+          {
+            "key": "level",
+            "value": "\"info\""
+          }
+        ]
+      },
+      {
+        "timestamp": "2026-10-17T05:41:20.999104123Z",
+        "severity": "info",
+        "message": "2026-10-17 05:41:20,459 WARNING nightcrawler.kalshi_recorder kalshi_recorder_gap lane=spot cause=spot_reconnected",
+        "attributes": [
+          {
+            "key": "level",
+            "value": "\"info\""
+          }
+        ]
+      },
+      {
+        "timestamp": "2026-10-17T07:07:46.478723910Z",
+        "severity": "info",
+        "message": "2026-10-17 07:07:40,072 WARNING nightcrawler.kalshi_recorder kalshi_recorder_spot_disconnected venue=kraken error=ConnectionClosedError",
+        "attributes": [
+          {
+            "key": "level",
+            "value": "\"info\""
+          }
+        ]
+      },
+      {
+        "timestamp": "2026-10-17T07:07:46.567748401Z",
+        "severity": "info",
+        "message": "2026-10-17 07:07:46,558 WARNING nightcrawler.kalshi_recorder kalshi_recorder_gap lane=spot cause=spot_reconnected",
+        "attributes": [
+          {
+            "key": "level",
+            "value": "\"info\""
+          }
+        ]
+      },
+      {
+        "timestamp": "2026-10-17T14:24:35.671594936Z",
+        "severity": "info",
+        "message": "2026-10-17 14:24:27,419 WARNING nightcrawler.kalshi_recorder kalshi_recorder_spot_disconnected venue=coinbase error=ConnectionClosedError",
+        "attributes": [
+          {
+            "key": "level",
+            "value": "\"info\""
+          }
+        ]
+      },
+      {
+        "timestamp": "2026-10-17T14:24:35.671610576Z",
+        "severity": "info",
+        "message": "2026-10-17 14:24:32,760 WARNING nightcrawler.kalshi_recorder kalshi_recorder_gap lane=spot cause=spot_reconnected",
+        "attributes": [
+          {
+            "key": "level",
+            "value": "\"info\""
+          }
+        ]
+      },
+      {
+        "timestamp": "2026-10-17T14:27:46.303523095Z",
+        "severity": "info",
+        "message": "2026-10-17 14:27:43,415 WARNING nightcrawler.kalshi_recorder kalshi_recorder_spot_disconnected venue=kraken error=ConnectionClosedError",
+        "attributes": [
+          {
+            "key": "level",
+            "value": "\"info\""
+          }
+        ]
+      },
+      {
+        "timestamp": "2026-10-17T14:27:49.653170905Z",
+        "severity": "info",
+        "message": "2026-10-17 14:27:49,626 WARNING nightcrawler.kalshi_recorder kalshi_recorder_gap lane=spot cause=spot_reconnected",
+        "attributes": [
+          {
+            "key": "level",
+            "value": "\"info\""
+          }
+        ]
+      },
+      {
+        "timestamp": "2026-10-17T15:21:14.854339186Z",
+        "severity": "info",
+        "message": "2026-10-17 15:21:10,011 WARNING nightcrawler.kalshi_recorder kalshi_recorder_spot_disconnected venue=kraken error=ConnectionClosedError",
+        "attributes": [
+          {
+            "key": "level",
+            "value": "\"info\""
+          }
+        ]
+      },
+      {
+        "timestamp": "2026-10-17T15:21:16.422823792Z",
+        "severity": "info",
+        "message": "2026-10-17 15:21:16,421 WARNING nightcrawler.kalshi_recorder kalshi_recorder_gap lane=spot cause=spot_reconnected",
+        "attributes": [
+          {
+            "key": "level",
+            "value": "\"info\""
+          }
+        ]
+      },
+      {
+        "timestamp": "2026-10-17T16:10:41.243807693Z",
+        "severity": "info",
+        "message": "2026-10-17 16:10:31,352 WARNING nightcrawler.kalshi_recorder kalshi_recorder_spot_disconnected venue=kraken error=ConnectionClosedError",
+        "attributes": [
+          {
+            "key": "level",
+            "value": "\"info\""
+          }
+        ]
+      },
+      {
+        "timestamp": "2026-10-17T16:10:41.243811663Z",
+        "severity": "info",
+        "message": "2026-10-17 16:10:37,582 WARNING nightcrawler.kalshi_recorder kalshi_recorder_gap lane=spot cause=spot_reconnected",
+        "attributes": [
+          {
+            "key": "level",
+            "value": "\"info\""
+          }
+        ]
+      },
+      {
+        "timestamp": "2026-10-17T18:02:08.521763579Z",
+        "severity": "info",
+        "message": "2026-10-17 18:01:59,788 WARNING nightcrawler.kalshi_recorder kalshi_recorder_spot_disconnected venue=kraken error=ConnectionClosedError",
+        "attributes": [
+          {
+            "key": "level",
+            "value": "\"info\""
+          }
+        ]
+      },
+      {
+        "timestamp": "2026-10-17T18:02:08.521769899Z",
+        "severity": "info",
+        "message": "2026-10-17 18:02:06,050 WARNING nightcrawler.kalshi_recorder kalshi_recorder_gap lane=spot cause=spot_reconnected",
+        "attributes": [
+          {
+            "key": "level",
+            "value": "\"info\""
+          }
+        ]
+      },
+      {
+        "timestamp": "2026-10-17T22:11:53.642937919Z",
+        "severity": "info",
+        "message": "2026-10-17 22:11:53,408 WARNING nightcrawler.kalshi_recorder kalshi_recorder_spot_disconnected venue=kraken error=ConnectionClosedError",
+        "attributes": [
+          {
+            "key": "level",
+            "value": "\"info\""
+          }
+        ]
+      },
+      {
+        "timestamp": "2026-10-17T22:11:59.643922261Z",
+        "severity": "info",
+        "message": "2026-10-17 22:11:59,641 WARNING nightcrawler.kalshi_recorder kalshi_recorder_gap lane=spot cause=spot_reconnected",
+        "attributes": [
+          {
+            "key": "level",
+            "value": "\"info\""
+          }
+        ]
+      },
+      {
+        "timestamp": "2026-10-18T07:56:35.502449458Z",
+        "severity": "info",
+        "message": "2026-10-18 07:56:25,838 WARNING nightcrawler.kalshi_recorder kalshi_recorder_spot_disconnected venue=kraken error=ConnectionClosedError",
+        "attributes": [
+          {
+            "key": "level",
+            "value": "\"info\""
+          }
+        ]
+      },
+      {
+        "timestamp": "2026-10-18T07:56:35.502453888Z",
+        "severity": "info",
+        "message": "2026-10-18 07:56:32,067 WARNING nightcrawler.kalshi_recorder kalshi_recorder_gap lane=spot cause=spot_reconnected",
+        "attributes": [
+          {
+            "key": "level",
+            "value": "\"info\""
+          }
+        ]
+      },
+      {
+        "timestamp": "2026-10-18T09:03:40.204418381Z",
+        "severity": "info",
+        "message": "2026-10-18 09:03:34,943 WARNING nightcrawler.kalshi_recorder kalshi_recorder_spot_disconnected venue=kraken error=ConnectionClosedError",
+        "attributes": [
+          {
+            "key": "level",
+            "value": "\"info\""
+          }
+        ]
+      },
+      {
+        "timestamp": "2026-10-18T09:03:41.325924621Z",
+        "severity": "info",
+        "message": "2026-10-18 09:03:41,173 WARNING nightcrawler.kalshi_recorder kalshi_recorder_gap lane=spot cause=spot_reconnected",
+        "attributes": [
+          {
+            "key": "level",
+            "value": "\"info\""
+          }
+        ]
+      },
+      {
+        "timestamp": "2026-10-18T09:45:03.016721717Z",
+        "severity": "info",
+        "message": "2026-10-18 09:45:01,776 WARNING nightcrawler.kalshi_recorder kalshi_recorder_spot_disconnected venue=kraken error=ConnectionClosedError",
+        "attributes": [
+          {
+            "key": "level",
+            "value": "\"info\""
+          }
+        ]
+      },
+      {
+        "timestamp": "2026-10-18T09:45:08.070288706Z",
+        "severity": "info",
+        "message": "2026-10-18 09:45:08,058 WARNING nightcrawler.kalshi_recorder kalshi_recorder_gap lane=spot cause=spot_reconnected",
+        "attributes": [
+          {
+            "key": "level",
+            "value": "\"info\""
+          }
+        ]
+      },
+      {
+        "timestamp": "2026-10-18T12:02:46.637988258Z",
+        "severity": "info",
+        "message": "2026-10-18 12:02:40,994 WARNING nightcrawler.kalshi_recorder kalshi_recorder_spot_disconnected venue=kraken error=ConnectionClosedError",
+        "attributes": [
+          {
+            "key": "level",
+            "value": "\"info\""
+          }
+        ]
+      },
+      {
+        "timestamp": "2026-10-18T12:02:47.247520540Z",
+        "severity": "info",
+        "message": "2026-10-18 12:02:47,244 WARNING nightcrawler.kalshi_recorder kalshi_recorder_gap lane=spot cause=spot_reconnected",
+        "attributes": [
+          {
+            "key": "level",
+            "value": "\"info\""
+          }
+        ]
+      }
+    ]
+  }
+}

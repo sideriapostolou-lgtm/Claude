@@ -1,0 +1,31 @@
+{
+  "protocol_id": "RCL-2026-10-16-v1",
+  "source_sha": "d5a55bf10c02ddc2b429eec78b1fd847fa1b6760",
+  "observational_not_executable": true,
+  "authority": "none; offline research only",
+  "primary_contract_count": "1",
+  "execution_delays_ms": [1000, 3000],
+  "primary_execution_delay_ms": 1000,
+  "exit_policies": ["current_70_80", "both_70", "hold_to_official_settlement"],
+  "current_targets_dollars": {"RECLAIM_70": "0.70", "NO_RECLAIM_80": "0.80"},
+  "retired_lanes_excluded": ["BTC_FADE_90"],
+  "quality_policy": {
+    "bar_guard_ms": 1000,
+    "sample_edge_tolerance_ms": 1000,
+    "max_sample_gap_ms": 1500,
+    "min_samples_per_minute": 60,
+    "signal_quote_max_age_ms": 2000,
+    "execution_snapshot_timeout_ms": 2000,
+    "execution_max_gap_ms": 3000,
+    "ema_warmup_bars": 32,
+    "require_all_prior_candidate_bars": true
+  },
+  "sample_ohlc_parameters": "diagnostic helpers only; official historical side candles are primary",
+  "entry_policy": "first qualifying m6..m9 signal; one IOC-like attempt per market; decision ask limit",
+  "minimum_remaining_ms_at_entry": 300000,
+  "execution_price_validity": "strict0<p<1 proxy modeling constraint; not a venue endpoint-rejection claim; OHLC accepts[0,1]",
+  "fee_model": "0.07*N*p*(1-p); per-fill ceil6dp model; cumulative signed net revenue floor4dp per order",
+  "context_clock": "first5 ending T+5m, assumed available +1000ms; 32 complete 15m prior closes over exact8h; EMA21 seed first",
+  "positive_screen_and_bootstrap": "root aggregation layer must implement frozen protocol; not implemented by core primitives",
+  "confirmation_access": "none during construction; root must record final review/freeze before access"
+}

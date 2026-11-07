@@ -1,0 +1,61 @@
+{
+  "task": "bounded source-cadence inspection; evidence publication only",
+  "inspected_ref": {
+    "repository": "sideriapostolou-lgtm/Claude",
+    "commit": "a0782b743a31369fe25ddf6d2eea96df8511cd8d",
+    "files": [
+      {
+        "path": "src/nightcrawler/kalshi_recorder.py",
+        "github_blob_sha": "e7ab5cc20087d34f179997801a51c9c1a0579d68",
+        "relevant_source_lines": [
+          {
+            "lines": "748-751",
+            "snippet": "self.store.seal_hour(now)\nif now >= self.hour_started + 3600:\n    self.write_manifest(self.hour_started, self.hour_started + 3600)\n    self.hour_started = math.floor(now / 3600) * 3600"
+          },
+          {
+            "lines": "821-822, 857-861",
+            "snippet": "def write_manifest(self, start, end, *, partial=False):  # hourly coverage manifest\n...\natomic_json(path, manifest)\nself.emit(\"telemetry\", \"coverage_manifest\", ...)\nreport_manifest(self.root, name, now=self.wall(), source=\"saved_partial_manifest\" if partial else \"saved_hourly_manifest\")"
+          },
+          {
+            "lines": "1646-1651",
+            "snippet": "log.info(\"kalshi_recorder_started mode=READ_ONLY_PUBLIC ...\")\nreport_previous_hour(self.root, self.wall())"
+          }
+        ]
+      },
+      {
+        "path": "src/nightcrawler/kalshi_recorder_evidence.py",
+        "github_blob_sha": "41caa386fcfec91e502166b03ba07a9074dc0d23",
+        "relevant_source_lines": [
+          {
+            "lines": "165-183",
+            "snippet": "report_manifest initializes observed_at from now, reads/projects the saved hourly manifest, sets available/unavailable metadata, then logs `kalshi_recorder_evidence`."
+          },
+          {
+            "lines": "188-190",
+            "snippet": "report_previous_hour selects floor(now/3600)*3600 - 3600 and reports that prior hourly manifest with source=previous_hour_startup."
+          }
+        ]
+      }
+    ]
+  },
+  "cadence_conclusion": {
+    "classification": "The empty 23:45–23:56 UTC log window is expected under the inspected publication cadence; by itself it is not evidence of a missing heartbeat.",
+    "basis": "Runtime emits a saved-manifest evidence log when an hourly manifest is written after its hour completes. Housekeeping checks at minute granularity; there is no periodic application heartbeat in these inspected paths. Startup also emits a one-time receipt for the immediately preceding hour.",
+    "expected_next_event": "The next scheduled hourly evidence should be logged just after the 00:00 UTC boundary when housekeeping seals/writes the completed 23:00–00:00 hour. This is a cadence expectation, not confirmation that it will occur.",
+    "timestamp_fields": "The logged `observed_at` is `self.wall()` at publication; the platform log timestamp may be slightly later. The manifest period is the completed hour [start,end)."
+  },
+  "observed_log_receipt": {
+    "source_snapshot": "/workspace/shared/recorder-status-2355.json",
+    "source_snapshot_sha256": "b845fe43cd0d24d24b6a1d02637eff3fa12b5726c560ef92b63548556b9e38a5",
+    "query_23_00_to_23_56_utc": {
+      "returned_rows": 1,
+      "latest_platform_timestamp": "2026-10-14T23:00:04.784126955Z",
+      "application_timestamp": "2026-10-14 23:00:00,769",
+      "prefix": "kalshi_recorder_evidence"
+    },
+    "query_23_45_to_23_56_utc": {
+      "returned_rows": 0
+    }
+  },
+  "limits": "Source cadence explains the quiet interval but cannot prove recorder liveness, successful persistence, coverage completeness, or that the next hourly event will appear. This inspection did not read raw feed rows, replay data, or TEST outcomes, and made no production changes."
+}

@@ -1,0 +1,511 @@
+{
+  "request": {
+    "projectId": "75750847-85c0-41a3-a2a7-b7f2201a51e9",
+    "environmentId": "17f7b0e0-104c-4903-9484-0106748b3cdb",
+    "deploymentId": "2e88601d-c9c7-474f-add8-72c0a13c1a4b",
+    "types": [
+      "build"
+    ],
+    "limit": 15
+  },
+  "before": {
+    "current_time": "2026-10-15 19:21:58 UTC"
+  },
+  "after": {
+    "current_time": "2026-10-15 19:21:58 UTC"
+  },
+  "result": {
+    "content": [
+      {
+        "type": "text",
+        "text": "**Deployment 2e88601d-c9c7-474f-add8-72c0a13c1a4b** [BUILDING]\nservice: f84d3b52-002f-44cb-931e-bc9e3e097e97, env: 17f7b0e0-104c-4903-9484-0106748b3cdb\n\n### Build logs (16)\n2026-10-15T19:20:59.849152280Z info Downloading h11-0.16.0-py3-none-any.whl (37 kB)\n\n2026-10-15T19:20:59.927027726Z info Building wheels for collected packages: nightcrawler\n\n2026-10-15T19:20:59.928340868Z info   Building wheel for nightcrawler (pyproject.toml): started\n\n2026-10-15T19:21:02.199093626Z info   Building wheel for nightcrawler (pyproject.toml): finished with status 'done'\n\n2026-10-15T19:21:02.237265995Z info   Created wheel for nightcrawler: filename=nightcrawler-0.1.0-py3-none-any.whl size=22019571 sha256=012aaac73bb5492b2d07e20df0cdb5bf5ced21fa8f6f8236ca4df4cf1c73517e\n\n2026-10-15T19:21:02.237455219Z info   Stored in directory: /tmp/pip-ephem-wheel-cache-11fadyuy/wheels/54/1b/b7/aa63e25c8f14f4f2ae7b04e6097bdecb770e455c5c1ee0a600\n\n2026-10-15T19:21:02.243068406Z info Successfully built nightcrawler\n\n2026-10-15T19:21:02.309751750Z info Installing collected packages: websockets, urllib3, typing-extensions, truststore, sniffio, pycparser, jsonalias, jiter, idna, h11, docstring-parser, charset_normalizer, certifi, annotated-types, typing-inspection, solders, requests, pydantic-core, opentelemetry-api, httpcore2, httpcore, cffi, anyio, pynacl, pydantic, httpx2, httpx, cryptography, polymarket-us, anthropic, nightcrawler\n\n2026-10-15T19:21:09.256739487Z info Successfully installed annotated-types-0.8.0 anthropic-1.14.0 anyio-4.15.1 certifi-2026.7.22 cffi-2.1.1 charset_normalizer-3.5.2 cryptography-50.0.2 docstring-parser-0.18.0 h11-0.16.0 httpcore-1.0.9 httpcore2-2.13.1 httpx-0.28.1 httpx2-2.13.1 idna-3.20 jiter-0.17.0 jsonalias-0.1.1 nightcrawler-0.1.0 opentelemetry-api-1.45.1 polymarket-us-2.4.1 pycparser-3.11 pydantic-2.14.1 pydantic-core-2.50.1 pynacl-1.6.2 requests-2.34.2 sniffio-1.3.1 solders-0.29.0 truststore-0.10.5 typing-extensions-4.16.0 typing-inspection-0.4.4 urllib3-2.8.0 websockets-15.0.1\n\n2026-10-15T19:21:09.257278396Z info WARNING: Running pip as the 'root' user can result in broken permissions and conflicting behaviour with the system package manager, possibly rendering your system unusable. It is recommended to use a virtual environment instead: https://pip.pypa.io/warnings/venv. Use the --root-user-action option if you know what you are doing and want to suppress this warning.\n\n2026-10-15T19:21:16.281161498Z info [6/6] RUN pip install \".[live,judge]\"     && python -c \"import nightcrawler.cli, solders, anthropic\"\n2026-10-15T19:21:16.664121948Z info exporting to docker image format\n2026-10-15T19:21:42.270861999Z info exporting to docker image format\n2026-10-15T19:21:48.490915468Z info containerimage.descriptor: eyJtZWRpYVR5cGUiOiJhcHBsaWNhdGlvbi92bmQub2NpLmltYWdlLm1hbmlmZXN0LnYxK2pzb24iLCJkaWdlc3QiOiJzaGEyNTY6Y2M3YjZiMmRmZmFiYzczMWM0NzMwZGY2NzhlYmE3Y2ZmZTk1MDRkNTcxNTY2NWQ1ZWNkZGE1OTA2MThkNzU0YiIsInNpemUiOjIwMDcsImFubm90YXRpb25zIjp7Im9yZy5vcGVuY29udGFpbmVycy5pbWFnZS5jcmVhdGVkIjoiMjAyNi0xMC0xNVQxOToyMTo0MFoifSwicGxhdGZvcm0iOnsiYXJjaGl0ZWN0dXJlIjoiYW1kNjQiLCJvcyI6ImxpbnV4In19\n2026-10-15T19:21:48.490920706Z info containerimage.config.digest: sha256:5ef981505514419ca343786ebe37100b8c30de1ce1b839d3a163cced4b91fe1b\n2026-10-15T19:21:48.490925433Z info containerimage.digest: sha256:cc7b6b2dffabc731c4730df678eba7cffe9504d5715665d5ecdda590618d754b"
+      }
+    ],
+    "structuredContent": {
+      "scope": "deployment",
+      "deploymentId": "2e88601d-c9c7-474f-add8-72c0a13c1a4b",
+      "serviceId": "f84d3b52-002f-44cb-931e-bc9e3e097e97",
+      "environmentId": "17f7b0e0-104c-4903-9484-0106748b3cdb",
+      "status": "BUILDING",
+      "build": [
+        {
+          "timestamp": "2026-10-15T19:20:59.849152280Z",
+          "severity": "info",
+          "message": "Downloading h11-0.16.0-py3-none-any.whl (37 kB)\n",
+          "attributes": [
+            {
+              "key": "level",
+              "value": "\"info\""
+            },
+            {
+              "key": "source",
+              "value": "\"buildkit\""
+            },
+            {
+              "key": "type",
+              "value": "\"log\""
+            },
+            {
+              "key": "vertex",
+              "value": "\"sha256:d56169e5a6a39ce5fbac6a63b187b5905239354962de25680908728d6794ba71\""
+            },
+            {
+              "key": "stream",
+              "value": "1"
+            },
+            {
+              "key": "data",
+              "value": "\"RG93bmxvYWRpbmcgaDExLTAuMTYuMC1weTMtbm9uZS1hbnkud2hsICgzNyBrQikK\""
+            },
+            {
+              "key": "timestamp",
+              "value": "\"2026-10-15T19:20:59.848656586Z\""
+            }
+          ]
+        },
+        {
+          "timestamp": "2026-10-15T19:20:59.927027726Z",
+          "severity": "info",
+          "message": "Building wheels for collected packages: nightcrawler\n",
+          "attributes": [
+            {
+              "key": "level",
+              "value": "\"info\""
+            },
+            {
+              "key": "source",
+              "value": "\"buildkit\""
+            },
+            {
+              "key": "type",
+              "value": "\"log\""
+            },
+            {
+              "key": "vertex",
+              "value": "\"sha256:d56169e5a6a39ce5fbac6a63b187b5905239354962de25680908728d6794ba71\""
+            },
+            {
+              "key": "stream",
+              "value": "1"
+            },
+            {
+              "key": "data",
+              "value": "\"QnVpbGRpbmcgd2hlZWxzIGZvciBjb2xsZWN0ZWQgcGFja2FnZXM6IG5pZ2h0Y3Jhd2xlcgo=\""
+            },
+            {
+              "key": "timestamp",
+              "value": "\"2026-10-15T19:20:59.926639614Z\""
+            }
+          ]
+        },
+        {
+          "timestamp": "2026-10-15T19:20:59.928340868Z",
+          "severity": "info",
+          "message": "  Building wheel for nightcrawler (pyproject.toml): started\n",
+          "attributes": [
+            {
+              "key": "level",
+              "value": "\"info\""
+            },
+            {
+              "key": "source",
+              "value": "\"buildkit\""
+            },
+            {
+              "key": "type",
+              "value": "\"log\""
+            },
+            {
+              "key": "vertex",
+              "value": "\"sha256:d56169e5a6a39ce5fbac6a63b187b5905239354962de25680908728d6794ba71\""
+            },
+            {
+              "key": "stream",
+              "value": "1"
+            },
+            {
+              "key": "data",
+              "value": "\"ICBCdWlsZGluZyB3aGVlbCBmb3IgbmlnaHRjcmF3bGVyIChweXByb2plY3QudG9tbCk6IHN0YXJ0ZWQK\""
+            },
+            {
+              "key": "timestamp",
+              "value": "\"2026-10-15T19:20:59.928026646Z\""
+            }
+          ]
+        },
+        {
+          "timestamp": "2026-10-15T19:21:02.199093626Z",
+          "severity": "info",
+          "message": "  Building wheel for nightcrawler (pyproject.toml): finished with status 'done'\n",
+          "attributes": [
+            {
+              "key": "level",
+              "value": "\"info\""
+            },
+            {
+              "key": "source",
+              "value": "\"buildkit\""
+            },
+            {
+              "key": "type",
+              "value": "\"log\""
+            },
+            {
+              "key": "vertex",
+              "value": "\"sha256:d56169e5a6a39ce5fbac6a63b187b5905239354962de25680908728d6794ba71\""
+            },
+            {
+              "key": "stream",
+              "value": "1"
+            },
+            {
+              "key": "data",
+              "value": "\"ICBCdWlsZGluZyB3aGVlbCBmb3IgbmlnaHRjcmF3bGVyIChweXByb2plY3QudG9tbCk6IGZpbmlzaGVkIHdpdGggc3RhdHVzICdkb25lJwo=\""
+            },
+            {
+              "key": "timestamp",
+              "value": "\"2026-10-15T19:21:02.198606474Z\""
+            }
+          ]
+        },
+        {
+          "timestamp": "2026-10-15T19:21:02.237265995Z",
+          "severity": "info",
+          "message": "  Created wheel for nightcrawler: filename=nightcrawler-0.1.0-py3-none-any.whl size=22019571 sha256=012aaac73bb5492b2d07e20df0cdb5bf5ced21fa8f6f8236ca4df4cf1c73517e\n",
+          "attributes": [
+            {
+              "key": "level",
+              "value": "\"info\""
+            },
+            {
+              "key": "source",
+              "value": "\"buildkit\""
+            },
+            {
+              "key": "type",
+              "value": "\"log\""
+            },
+            {
+              "key": "vertex",
+              "value": "\"sha256:d56169e5a6a39ce5fbac6a63b187b5905239354962de25680908728d6794ba71\""
+            },
+            {
+              "key": "stream",
+              "value": "1"
+            },
+            {
+              "key": "data",
+              "value": "\"ICBDcmVhdGVkIHdoZWVsIGZvciBuaWdodGNyYXdsZXI6IGZpbGVuYW1lPW5pZ2h0Y3Jhd2xlci0wLjEuMC1weTMtbm9uZS1hbnkud2hsIHNpemU9MjIwMTk1NzEgc2hhMjU2PTAxMmFhYWM3M2JiNTQ5MmIyZDA3ZTIwZGYwY2RiNWJmNWNlZDIxZmE4ZjZmODIzNmNhNGRmNGNmMWM3MzUxN2UK\""
+            },
+            {
+              "key": "timestamp",
+              "value": "\"2026-10-15T19:21:02.236695689Z\""
+            }
+          ]
+        },
+        {
+          "timestamp": "2026-10-15T19:21:02.237455219Z",
+          "severity": "info",
+          "message": "  Stored in directory: /tmp/pip-ephem-wheel-cache-11fadyuy/wheels/54/1b/b7/aa63e25c8f14f4f2ae7b04e6097bdecb770e455c5c1ee0a600\n",
+          "attributes": [
+            {
+              "key": "level",
+              "value": "\"info\""
+            },
+            {
+              "key": "source",
+              "value": "\"buildkit\""
+            },
+            {
+              "key": "type",
+              "value": "\"log\""
+            },
+            {
+              "key": "vertex",
+              "value": "\"sha256:d56169e5a6a39ce5fbac6a63b187b5905239354962de25680908728d6794ba71\""
+            },
+            {
+              "key": "stream",
+              "value": "1"
+            },
+            {
+              "key": "data",
+              "value": "\"ICBTdG9yZWQgaW4gZGlyZWN0b3J5OiAvdG1wL3BpcC1lcGhlbS13aGVlbC1jYWNoZS0xMWZhZHl1eS93aGVlbHMvNTQvMWIvYjcvYWE2M2UyNWM4ZjE0ZjRmMmFlN2IwNGU2MDk3YmRlY2I3NzBlNDU1YzVjMWVlMGE2MDAK\""
+            },
+            {
+              "key": "timestamp",
+              "value": "\"2026-10-15T19:21:02.237072254Z\""
+            }
+          ]
+        },
+        {
+          "timestamp": "2026-10-15T19:21:02.243068406Z",
+          "severity": "info",
+          "message": "Successfully built nightcrawler\n",
+          "attributes": [
+            {
+              "key": "level",
+              "value": "\"info\""
+            },
+            {
+              "key": "source",
+              "value": "\"buildkit\""
+            },
+            {
+              "key": "type",
+              "value": "\"log\""
+            },
+            {
+              "key": "vertex",
+              "value": "\"sha256:d56169e5a6a39ce5fbac6a63b187b5905239354962de25680908728d6794ba71\""
+            },
+            {
+              "key": "stream",
+              "value": "1"
+            },
+            {
+              "key": "data",
+              "value": "\"U3VjY2Vzc2Z1bGx5IGJ1aWx0IG5pZ2h0Y3Jhd2xlcgo=\""
+            },
+            {
+              "key": "timestamp",
+              "value": "\"2026-10-15T19:21:02.242919372Z\""
+            }
+          ]
+        },
+        {
+          "timestamp": "2026-10-15T19:21:02.309751750Z",
+          "severity": "info",
+          "message": "Installing collected packages: websockets, urllib3, typing-extensions, truststore, sniffio, pycparser, jsonalias, jiter, idna, h11, docstring-parser, charset_normalizer, certifi, annotated-types, typing-inspection, solders, requests, pydantic-core, opentelemetry-api, httpcore2, httpcore, cffi, anyio, pynacl, pydantic, httpx2, httpx, cryptography, polymarket-us, anthropic, nightcrawler\n",
+          "attributes": [
+            {
+              "key": "level",
+              "value": "\"info\""
+            },
+            {
+              "key": "source",
+              "value": "\"buildkit\""
+            },
+            {
+              "key": "type",
+              "value": "\"log\""
+            },
+            {
+              "key": "vertex",
+              "value": "\"sha256:d56169e5a6a39ce5fbac6a63b187b5905239354962de25680908728d6794ba71\""
+            },
+            {
+              "key": "stream",
+              "value": "1"
+            },
+            {
+              "key": "data",
+              "value": "\"SW5zdGFsbGluZyBjb2xsZWN0ZWQgcGFja2FnZXM6IHdlYnNvY2tldHMsIHVybGxpYjMsIHR5cGluZy1leHRlbnNpb25zLCB0cnVzdHN0b3JlLCBzbmlmZmlvLCBweWNwYXJzZXIsIGpzb25hbGlhcywgaml0ZXIsIGlkbmEsIGgxMSwgZG9jc3RyaW5nLXBhcnNlciwgY2hhcnNldF9ub3JtYWxpemVyLCBjZXJ0aWZpLCBhbm5vdGF0ZWQtdHlwZXMsIHR5cGluZy1pbnNwZWN0aW9uLCBzb2xkZXJzLCByZXF1ZXN0cywgcHlkYW50aWMtY29yZSwgb3BlbnRlbGVtZXRyeS1hcGksIGh0dHBjb3JlMiwgaHR0cGNvcmUsIGNmZmksIGFueWlvLCBweW5hY2wsIHB5ZGFudGljLCBodHRweDIsIGh0dHB4LCBjcnlwdG9ncmFwaHksIHBvbHltYXJrZXQtdXMsIGFudGhyb3BpYywgbmlnaHRjcmF3bGVyCg==\""
+            },
+            {
+              "key": "timestamp",
+              "value": "\"2026-10-15T19:21:02.309229065Z\""
+            }
+          ]
+        },
+        {
+          "timestamp": "2026-10-15T19:21:09.256739487Z",
+          "severity": "info",
+          "message": "Successfully installed annotated-types-0.8.0 anthropic-1.14.0 anyio-4.15.1 certifi-2026.7.22 cffi-2.1.1 charset_normalizer-3.5.2 cryptography-50.0.2 docstring-parser-0.18.0 h11-0.16.0 httpcore-1.0.9 httpcore2-2.13.1 httpx-0.28.1 httpx2-2.13.1 idna-3.20 jiter-0.17.0 jsonalias-0.1.1 nightcrawler-0.1.0 opentelemetry-api-1.45.1 polymarket-us-2.4.1 pycparser-3.11 pydantic-2.14.1 pydantic-core-2.50.1 pynacl-1.6.2 requests-2.34.2 sniffio-1.3.1 solders-0.29.0 truststore-0.10.5 typing-extensions-4.16.0 typing-inspection-0.4.4 urllib3-2.8.0 websockets-15.0.1\n",
+          "attributes": [
+            {
+              "key": "level",
+              "value": "\"info\""
+            },
+            {
+              "key": "source",
+              "value": "\"buildkit\""
+            },
+            {
+              "key": "type",
+              "value": "\"log\""
+            },
+            {
+              "key": "vertex",
+              "value": "\"sha256:d56169e5a6a39ce5fbac6a63b187b5905239354962de25680908728d6794ba71\""
+            },
+            {
+              "key": "stream",
+              "value": "1"
+            },
+            {
+              "key": "data",
+              "value": "\"U3VjY2Vzc2Z1bGx5IGluc3RhbGxlZCBhbm5vdGF0ZWQtdHlwZXMtMC44LjAgYW50aHJvcGljLTEuMTQuMCBhbnlpby00LjE1LjEgY2VydGlmaS0yMDI2LjcuMjIgY2ZmaS0yLjEuMSBjaGFyc2V0X25vcm1hbGl6ZXItMy41LjIgY3J5cHRvZ3JhcGh5LTUwLjAuMiBkb2NzdHJpbmctcGFyc2VyLTAuMTguMCBoMTEtMC4xNi4wIGh0dHBjb3JlLTEuMC45IGh0dHBjb3JlMi0yLjEzLjEgaHR0cHgtMC4yOC4xIGh0dHB4Mi0yLjEzLjEgaWRuYS0zLjIwIGppdGVyLTAuMTcuMCBqc29uYWxpYXMtMC4xLjEgbmlnaHRjcmF3bGVyLTAuMS4wIG9wZW50ZWxlbWV0cnktYXBpLTEuNDUuMSBwb2x5bWFya2V0LXVzLTIuNC4xIHB5Y3BhcnNlci0zLjExIHB5ZGFudGljLTIuMTQuMSBweWRhbnRpYy1jb3JlLTIuNTAuMSBweW5hY2wtMS42LjIgcmVxdWVzdHMtMi4zNC4yIHNuaWZmaW8tMS4zLjEgc29sZGVycy0wLjI5LjAgdHJ1c3RzdG9yZS0wLjEwLjUgdHlwaW5nLWV4dGVuc2lvbnMtNC4xNi4wIHR5cGluZy1pbnNwZWN0aW9uLTAuNC40IHVybGxpYjMtMi44LjAgd2Vic29ja2V0cy0xNS4wLjEK\""
+            },
+            {
+              "key": "timestamp",
+              "value": "\"2026-10-15T19:21:09.256185605Z\""
+            }
+          ]
+        },
+        {
+          "timestamp": "2026-10-15T19:21:09.257278396Z",
+          "severity": "info",
+          "message": "WARNING: Running pip as the 'root' user can result in broken permissions and conflicting behaviour with the system package manager, possibly rendering your system unusable. It is recommended to use a virtual environment instead: https://pip.pypa.io/warnings/venv. Use the --root-user-action option if you know what you are doing and want to suppress this warning.\n",
+          "attributes": [
+            {
+              "key": "level",
+              "value": "\"info\""
+            },
+            {
+              "key": "source",
+              "value": "\"buildkit\""
+            },
+            {
+              "key": "type",
+              "value": "\"log\""
+            },
+            {
+              "key": "vertex",
+              "value": "\"sha256:d56169e5a6a39ce5fbac6a63b187b5905239354962de25680908728d6794ba71\""
+            },
+            {
+              "key": "stream",
+              "value": "2"
+            },
+            {
+              "key": "data",
+              "value": "\"V0FSTklORzogUnVubmluZyBwaXAgYXMgdGhlICdyb290JyB1c2VyIGNhbiByZXN1bHQgaW4gYnJva2VuIHBlcm1pc3Npb25zIGFuZCBjb25mbGljdGluZyBiZWhhdmlvdXIgd2l0aCB0aGUgc3lzdGVtIHBhY2thZ2UgbWFuYWdlciwgcG9zc2libHkgcmVuZGVyaW5nIHlvdXIgc3lzdGVtIHVudXNhYmxlLiBJdCBpcyByZWNvbW1lbmRlZCB0byB1c2UgYSB2aXJ0dWFsIGVudmlyb25tZW50IGluc3RlYWQ6IGh0dHBzOi8vcGlwLnB5cGEuaW8vd2FybmluZ3MvdmVudi4gVXNlIHRoZSAtLXJvb3QtdXNlci1hY3Rpb24gb3B0aW9uIGlmIHlvdSBrbm93IHdoYXQgeW91IGFyZSBkb2luZyBhbmQgd2FudCB0byBzdXBwcmVzcyB0aGlzIHdhcm5pbmcuCg==\""
+            },
+            {
+              "key": "timestamp",
+              "value": "\"2026-10-15T19:21:09.256842842Z\""
+            }
+          ]
+        },
+        {
+          "timestamp": "2026-10-15T19:21:16.281161498Z",
+          "severity": "info",
+          "message": "[6/6] RUN pip install \".[live,judge]\"     && python -c \"import nightcrawler.cli, solders, anthropic\"",
+          "attributes": [
+            {
+              "key": "level",
+              "value": "\"info\""
+            },
+            {
+              "key": "source",
+              "value": "\"buildkit\""
+            },
+            {
+              "key": "type",
+              "value": "\"vertex\""
+            },
+            {
+              "key": "digest",
+              "value": "\"sha256:d56169e5a6a39ce5fbac6a63b187b5905239354962de25680908728d6794ba71\""
+            },
+            {
+              "key": "inputs",
+              "value": "[\"sha256:73cd2a6bd59cf5743b6af7c7a8354c1b3858314e113c0cb423b86e019199ff47\"]"
+            },
+            {
+              "key": "started",
+              "value": "\"2026-10-15T19:20:36.060165134Z\""
+            },
+            {
+              "key": "completed",
+              "value": "\"2026-10-15T19:21:16.280598403Z\""
+            }
+          ]
+        },
+        {
+          "timestamp": "2026-10-15T19:21:16.664121948Z",
+          "severity": "info",
+          "message": "exporting to docker image format",
+          "attributes": [
+            {
+              "key": "level",
+              "value": "\"info\""
+            },
+            {
+              "key": "source",
+              "value": "\"buildkit\""
+            },
+            {
+              "key": "type",
+              "value": "\"vertex\""
+            },
+            {
+              "key": "digest",
+              "value": "\"sha256:81f2252894a0cde41d48096e180a647f86f813b3c91f63ff61f9f97726b0a9af\""
+            },
+            {
+              "key": "started",
+              "value": "\"2026-10-15T19:21:16.663492493Z\""
+            }
+          ]
+        },
+        {
+          "timestamp": "2026-10-15T19:21:42.270861999Z",
+          "severity": "info",
+          "message": "exporting to docker image format",
+          "attributes": [
+            {
+              "key": "level",
+              "value": "\"info\""
+            },
+            {
+              "key": "source",
+              "value": "\"buildkit\""
+            },
+            {
+              "key": "type",
+              "value": "\"vertex\""
+            },
+            {
+              "key": "digest",
+              "value": "\"sha256:81f2252894a0cde41d48096e180a647f86f813b3c91f63ff61f9f97726b0a9af\""
+            },
+            {
+              "key": "started",
+              "value": "\"2026-10-15T19:21:16.663492493Z\""
+            },
+            {
+              "key": "completed",
+              "value": "\"2026-10-15T19:21:42.270473957Z\""
+            }
+          ]
+        },
+        {
+          "timestamp": "2026-10-15T19:21:48.490915468Z",
+          "severity": "info",
+          "message": "containerimage.descriptor: eyJtZWRpYVR5cGUiOiJhcHBsaWNhdGlvbi92bmQub2NpLmltYWdlLm1hbmlmZXN0LnYxK2pzb24iLCJkaWdlc3QiOiJzaGEyNTY6Y2M3YjZiMmRmZmFiYzczMWM0NzMwZGY2NzhlYmE3Y2ZmZTk1MDRkNTcxNTY2NWQ1ZWNkZGE1OTA2MThkNzU0YiIsInNpemUiOjIwMDcsImFubm90YXRpb25zIjp7Im9yZy5vcGVuY29udGFpbmVycy5pbWFnZS5jcmVhdGVkIjoiMjAyNi0xMC0xNVQxOToyMTo0MFoifSwicGxhdGZvcm0iOnsiYXJjaGl0ZWN0dXJlIjoiYW1kNjQiLCJvcyI6ImxpbnV4In19",
+          "attributes": [
+            {
+              "key": "level",
+              "value": "\"info\""
+            }
+          ]
+        },
+        {
+          "timestamp": "2026-10-15T19:21:48.490920706Z",
+          "severity": "info",
+          "message": "containerimage.config.digest: sha256:5ef981505514419ca343786ebe37100b8c30de1ce1b839d3a163cced4b91fe1b",
+          "attributes": [
+            {
+              "key": "level",
+              "value": "\"info\""
+            }
+          ]
+        },
+        {
+          "timestamp": "2026-10-15T19:21:48.490925433Z",
+          "severity": "info",
+          "message": "containerimage.digest: sha256:cc7b6b2dffabc731c4730df678eba7cffe9504d5715665d5ecdda590618d754b",
+          "attributes": [
+            {
+              "key": "level",
+              "value": "\"info\""
+            }
+          ]
+        }
+      ]
+    },
+    "isError": false
+  }
+}

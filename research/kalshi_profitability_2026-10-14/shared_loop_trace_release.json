@@ -1,0 +1,2040 @@
+{
+  "observed_at_utc": "2026-10-14T22:01:00Z",
+  "observed_at_pacific": "2026-10-14 3:01 PM PDT",
+  "project_id": "75750847-85c0-41a3-a2a7-b7f2201a51e9",
+  "bot_service_id": "f84d3b52-002f-44cb-931e-bc9e3e097e97",
+  "pr": 52,
+  "source_commit": "0d93fe3c764d2ac743661e681ca1911ec1bf81a9",
+  "deployment": {
+    "id": "f430e059-29ac-4596-8303-32d7c4c4edd7",
+    "status": "SUCCESS",
+    "createdAt": "2026-10-14T21:36:43.138Z",
+    "updatedAt": "2026-10-14T21:55:20.563Z",
+    "meta": {
+      "reason": "deploy",
+      "commitMessage": "feat: attribute shared-loop execution delays (touches real money) (#52)",
+      "commitHash": "0d93fe3c764d2ac743661e681ca1911ec1bf81a9",
+      "branch": "claude/nightcrawler-memecoin-bot-Gwnb1S"
+    }
+  },
+  "platform_health": {
+    "environment": {
+      "id": "17f7b0e0-104c-4903-9484-0106748b3cdb",
+      "name": "production"
+    },
+    "services": [
+      {
+        "serviceId": "f84d3b52-002f-44cb-931e-bc9e3e097e97",
+        "serviceName": "bot",
+        "state": "online",
+        "statusText": "Online",
+        "activeDeployments": [
+          {
+            "id": "f430e059-29ac-4596-8303-32d7c4c4edd7",
+            "status": "SUCCESS",
+            "createdAt": "2026-10-14T21:36:43.138Z",
+            "statusUpdatedAt": "2026-10-14T21:55:20.562Z"
+          }
+        ],
+        "replicaStatus": {
+          "running": 1,
+          "crashed": 0,
+          "total": 1
+        },
+        "cronJob": null,
+        "issues": {
+          "warningCount": 0,
+          "criticalCount": 0
+        },
+        "recentFailures": 0,
+        "recentFailedDeployments": [],
+        "hasIssues": false,
+        "isCronJob": false,
+        "hasVolume": true
+      },
+      {
+        "serviceId": "736b1c8a-8311-4ee0-9043-d05f508cd821",
+        "serviceName": "kalshi-recorder",
+        "state": "online",
+        "statusText": "Online",
+        "activeDeployments": [
+          {
+            "id": "8453f919-b891-4aa7-8478-6fcf6b9c24ee",
+            "status": "SUCCESS",
+            "createdAt": "2026-10-14T16:36:40.384Z",
+            "statusUpdatedAt": "2026-10-14T16:38:15.302Z"
+          }
+        ],
+        "replicaStatus": {
+          "running": 1,
+          "crashed": 0,
+          "total": 1
+        },
+        "cronJob": null,
+        "issues": {
+          "warningCount": 0,
+          "criticalCount": 0
+        },
+        "recentFailures": 0,
+        "recentFailedDeployments": [],
+        "hasIssues": false,
+        "isCronJob": false,
+        "hasVolume": true
+      }
+    ],
+    "pendingWork": [
+      {
+        "id": "patch:9a84e13c-3caf-4a85-b5f5-d9a2fcb8a021",
+        "kind": "EnvironmentPatch",
+        "status": "staged",
+        "changes": [],
+        "startedAt": "2026-10-12T16:21:53.480Z",
+        "workflowId": "commitChanges/17f7b0e0-104c-4903-9484-0106748b3cdb/9a84e13c-3caf-4a85-b5f5-d9a2fcb8a021"
+      }
+    ],
+    "summary": {
+      "totalServices": 2,
+      "servicesWithIssues": 0,
+      "totalFailures": 0
+    }
+  },
+  "polydesk_startup": [
+    {
+      "timestamp": "2026-10-14T21:55:15.721227710Z",
+      "message": "2026-10-14T21:55:15Z INFO nightcrawler.polydesk: polydesk_started theta=0.97 hours=1 ticket_usd=20 poll_s=90 (LIVE: 10 contract(s) per order)"
+    }
+  ],
+  "pre_restart": [
+    {
+      "timestamp": "2026-10-14T21:54:36.329235413Z",
+      "at": 1792014876.0641434,
+      "venue": "kalshi",
+      "mode": "live",
+      "configured_mode": "live",
+      "status": "REAL MONEY (Kalshi)",
+      "reason": "balancing_only",
+      "authenticated": true,
+      "cash_usd": 34.5899,
+      "cash_at": 1792014875.9979348,
+      "reserved_usd": 0,
+      "open_risk_usd": 2.4000000000000004,
+      "open_cost_usd": 2.4000000000000004,
+      "at_risk_usd": 2.4000000000000004,
+      "open_orders": 0,
+      "positions": 1,
+      "total_halted": false,
+      "day_stop_latched": false,
+      "integrity_error": null,
+      "cleanup_pending": false,
+      "caps": {
+        "window_usd": 10,
+        "open_usd": 20,
+        "day_stop_usd": 6,
+        "clip": 5,
+        "total_stop_usd": 10
+      },
+      "total": {
+        "day": null,
+        "windows": 103,
+        "fills": 507,
+        "latency": null,
+        "scorecard": null,
+        "settled_windows": 116,
+        "fees_usd": 2.23862,
+        "locked_usd": 0.5443983516483487,
+        "directional_usd": -13.295898351648349,
+        "pnl_usd": -12.7515,
+        "worst_usd": -2.9791999999999987,
+        "take_attempts": 39,
+        "take_fills": 17,
+        "maker_orders": 3292,
+        "maker_fills": 349,
+        "locks": 78,
+        "lock_fills": 70,
+        "take_fill_rate": 0.4358974358974359,
+        "maker_fill_rate": 0.1060145808019441,
+        "avg_latency_ms": 4346.918555166829,
+        "latency_definition": "durable real decision to venue fill timestamp; maker includes resting time"
+      },
+      "resume_history_events": []
+    }
+  ],
+  "post_restart": [
+    {
+      "timestamp": "2026-10-14T21:55:40.170152453Z",
+      "at": 1792014938.7357082,
+      "venue": "kalshi",
+      "mode": "live",
+      "configured_mode": "live",
+      "status": "REAL MONEY (Kalshi)",
+      "reason": "balancing_only",
+      "authenticated": true,
+      "cash_usd": 34.5899,
+      "cash_at": 1792014938.6687267,
+      "reserved_usd": 0,
+      "open_risk_usd": 2.4000000000000004,
+      "open_cost_usd": 2.4000000000000004,
+      "at_risk_usd": 2.4000000000000004,
+      "open_orders": 0,
+      "positions": 1,
+      "total_halted": false,
+      "day_stop_latched": false,
+      "integrity_error": null,
+      "cleanup_pending": false,
+      "caps": {
+        "window_usd": 10,
+        "open_usd": 20,
+        "day_stop_usd": 6,
+        "clip": 5,
+        "total_stop_usd": 10
+      },
+      "total": {
+        "day": null,
+        "windows": 103,
+        "fills": 507,
+        "latency": null,
+        "scorecard": null,
+        "settled_windows": 116,
+        "fees_usd": 2.23862,
+        "locked_usd": 0.5443983516483487,
+        "directional_usd": -13.295898351648349,
+        "pnl_usd": -12.7515,
+        "worst_usd": -2.9791999999999987,
+        "take_attempts": 39,
+        "take_fills": 17,
+        "maker_orders": 3292,
+        "maker_fills": 349,
+        "locks": 78,
+        "lock_fills": 70,
+        "take_fill_rate": 0.4358974358974359,
+        "maker_fill_rate": 0.1060145808019441,
+        "avg_latency_ms": 4346.918555166829,
+        "latency_definition": "durable real decision to venue fill timestamp; maker includes resting time"
+      },
+      "resume_history_events": [
+        {
+          "event": "speeddesk_live_resume",
+          "state": "ignored; this value was already used",
+          "total_pnl_usd": -12.751500000000004
+        },
+        {
+          "event": "speeddesk_live_integrity_reset",
+          "state": "ignored; this value was already used"
+        },
+        {
+          "event": "speeddesk_live_day_reset",
+          "state": "ignored; this value was already used"
+        }
+      ]
+    },
+    {
+      "timestamp": "2026-10-14T21:56:39.685271122Z",
+      "at": 1792014999.3067544,
+      "venue": "kalshi",
+      "mode": "live",
+      "configured_mode": "live",
+      "status": "REAL MONEY (Kalshi)",
+      "reason": "Window has not started",
+      "authenticated": true,
+      "cash_usd": 35.0702,
+      "cash_at": 1792014999.2409222,
+      "reserved_usd": 0,
+      "open_risk_usd": 1.9197000000000006,
+      "open_cost_usd": 4.919700000000001,
+      "at_risk_usd": 1.9197000000000006,
+      "open_orders": 0,
+      "positions": 0,
+      "total_halted": false,
+      "day_stop_latched": false,
+      "integrity_error": null,
+      "cleanup_pending": false,
+      "caps": {
+        "window_usd": 10,
+        "open_usd": 20,
+        "day_stop_usd": 6,
+        "clip": 5,
+        "total_stop_usd": 10
+      },
+      "total": {
+        "day": null,
+        "windows": 103,
+        "fills": 509,
+        "latency": null,
+        "scorecard": null,
+        "settled_windows": 116,
+        "fees_usd": 2.26832,
+        "locked_usd": 0.5443983516483487,
+        "directional_usd": -13.295898351648349,
+        "pnl_usd": -12.7515,
+        "worst_usd": -2.9791999999999987,
+        "take_attempts": 39,
+        "take_fills": 17,
+        "maker_orders": 3292,
+        "maker_fills": 349,
+        "locks": 80,
+        "lock_fills": 71,
+        "take_fill_rate": 0.4358974358974359,
+        "maker_fill_rate": 0.1060145808019441,
+        "avg_latency_ms": 4346.918555166829,
+        "latency_definition": "durable real decision to venue fill timestamp; maker includes resting time"
+      },
+      "resume_history_events": [
+        {
+          "event": "speeddesk_live_resume",
+          "state": "ignored; this value was already used",
+          "total_pnl_usd": -12.751500000000004
+        },
+        {
+          "event": "speeddesk_live_integrity_reset",
+          "state": "ignored; this value was already used"
+        },
+        {
+          "event": "speeddesk_live_day_reset",
+          "state": "ignored; this value was already used"
+        }
+      ]
+    },
+    {
+      "timestamp": "2026-10-14T21:57:42.513745354Z",
+      "at": 1792015059.4155874,
+      "venue": "kalshi",
+      "mode": "live",
+      "configured_mode": "live",
+      "status": "REAL MONEY (Kalshi)",
+      "reason": "Window has not started",
+      "authenticated": true,
+      "cash_usd": 35.0702,
+      "cash_at": 1792015059.2640576,
+      "reserved_usd": 0,
+      "open_risk_usd": 1.9197000000000006,
+      "open_cost_usd": 4.919700000000001,
+      "at_risk_usd": 1.9197000000000006,
+      "open_orders": 0,
+      "positions": 0,
+      "total_halted": false,
+      "day_stop_latched": false,
+      "integrity_error": null,
+      "cleanup_pending": false,
+      "caps": {
+        "window_usd": 10,
+        "open_usd": 20,
+        "day_stop_usd": 6,
+        "clip": 5,
+        "total_stop_usd": 10
+      },
+      "total": {
+        "day": null,
+        "windows": 103,
+        "fills": 509,
+        "latency": null,
+        "scorecard": null,
+        "settled_windows": 116,
+        "fees_usd": 2.26832,
+        "locked_usd": 0.5443983516483487,
+        "directional_usd": -13.295898351648349,
+        "pnl_usd": -12.7515,
+        "worst_usd": -2.9791999999999987,
+        "take_attempts": 39,
+        "take_fills": 17,
+        "maker_orders": 3292,
+        "maker_fills": 349,
+        "locks": 80,
+        "lock_fills": 71,
+        "take_fill_rate": 0.4358974358974359,
+        "maker_fill_rate": 0.1060145808019441,
+        "avg_latency_ms": 4346.918555166829,
+        "latency_definition": "durable real decision to venue fill timestamp; maker includes resting time"
+      },
+      "resume_history_events": [
+        {
+          "event": "speeddesk_live_resume",
+          "state": "ignored; this value was already used",
+          "total_pnl_usd": -12.751500000000004
+        },
+        {
+          "event": "speeddesk_live_integrity_reset",
+          "state": "ignored; this value was already used"
+        },
+        {
+          "event": "speeddesk_live_day_reset",
+          "state": "ignored; this value was already used"
+        }
+      ]
+    },
+    {
+      "timestamp": "2026-10-14T21:58:40.785119547Z",
+      "at": 1792015119.8644233,
+      "venue": "kalshi",
+      "mode": "live",
+      "configured_mode": "live",
+      "status": "REAL MONEY (Kalshi)",
+      "reason": "Window has not started",
+      "authenticated": true,
+      "cash_usd": 35.0702,
+      "cash_at": 1792015119.8048947,
+      "reserved_usd": 0,
+      "open_risk_usd": 1.9197000000000006,
+      "open_cost_usd": 4.919700000000001,
+      "at_risk_usd": 1.9197000000000006,
+      "open_orders": 0,
+      "positions": 0,
+      "total_halted": false,
+      "day_stop_latched": false,
+      "integrity_error": null,
+      "cleanup_pending": false,
+      "caps": {
+        "window_usd": 10,
+        "open_usd": 20,
+        "day_stop_usd": 6,
+        "clip": 5,
+        "total_stop_usd": 10
+      },
+      "total": {
+        "day": null,
+        "windows": 103,
+        "fills": 509,
+        "latency": null,
+        "scorecard": null,
+        "settled_windows": 116,
+        "fees_usd": 2.26832,
+        "locked_usd": 0.5443983516483487,
+        "directional_usd": -13.295898351648349,
+        "pnl_usd": -12.7515,
+        "worst_usd": -2.9791999999999987,
+        "take_attempts": 39,
+        "take_fills": 17,
+        "maker_orders": 3292,
+        "maker_fills": 349,
+        "locks": 80,
+        "lock_fills": 71,
+        "take_fill_rate": 0.4358974358974359,
+        "maker_fill_rate": 0.1060145808019441,
+        "avg_latency_ms": 4346.918555166829,
+        "latency_definition": "durable real decision to venue fill timestamp; maker includes resting time"
+      },
+      "resume_history_events": [
+        {
+          "event": "speeddesk_live_resume",
+          "state": "ignored; this value was already used",
+          "total_pnl_usd": -12.751500000000004
+        },
+        {
+          "event": "speeddesk_live_integrity_reset",
+          "state": "ignored; this value was already used"
+        },
+        {
+          "event": "speeddesk_live_day_reset",
+          "state": "ignored; this value was already used"
+        }
+      ]
+    },
+    {
+      "timestamp": "2026-10-14T21:59:41.067199027Z",
+      "at": 1792015180.421432,
+      "venue": "kalshi",
+      "mode": "live",
+      "configured_mode": "live",
+      "status": "REAL MONEY (Kalshi)",
+      "reason": "Window has not started",
+      "authenticated": true,
+      "cash_usd": 35.0702,
+      "cash_at": 1792015180.365648,
+      "reserved_usd": 0,
+      "open_risk_usd": 1.9197000000000006,
+      "open_cost_usd": 4.919700000000001,
+      "at_risk_usd": 1.9197000000000006,
+      "open_orders": 0,
+      "positions": 0,
+      "total_halted": false,
+      "day_stop_latched": false,
+      "integrity_error": null,
+      "cleanup_pending": false,
+      "caps": {
+        "window_usd": 10,
+        "open_usd": 20,
+        "day_stop_usd": 6,
+        "clip": 5,
+        "total_stop_usd": 10
+      },
+      "total": {
+        "day": null,
+        "windows": 103,
+        "fills": 509,
+        "latency": null,
+        "scorecard": null,
+        "settled_windows": 116,
+        "fees_usd": 2.26832,
+        "locked_usd": 0.5443983516483487,
+        "directional_usd": -13.295898351648349,
+        "pnl_usd": -12.7515,
+        "worst_usd": -2.9791999999999987,
+        "take_attempts": 39,
+        "take_fills": 17,
+        "maker_orders": 3292,
+        "maker_fills": 349,
+        "locks": 80,
+        "lock_fills": 71,
+        "take_fill_rate": 0.4358974358974359,
+        "maker_fill_rate": 0.1060145808019441,
+        "avg_latency_ms": 4346.918555166829,
+        "latency_definition": "durable real decision to venue fill timestamp; maker includes resting time"
+      },
+      "resume_history_events": [
+        {
+          "event": "speeddesk_live_resume",
+          "state": "ignored; this value was already used",
+          "total_pnl_usd": -12.751500000000004
+        },
+        {
+          "event": "speeddesk_live_integrity_reset",
+          "state": "ignored; this value was already used"
+        },
+        {
+          "event": "speeddesk_live_day_reset",
+          "state": "ignored; this value was already used"
+        }
+      ]
+    }
+  ],
+  "traces": [
+    {
+      "timestamp": "2026-10-14T21:56:08.567904726Z",
+      "data": {
+        "at": 1792014967.4071355,
+        "venue": "kalshi",
+        "mode": "diagnostic",
+        "version": 1,
+        "cycle": 16,
+        "started_at": 1792014966.0750382,
+        "full": false,
+        "retry_remaining_s": 0,
+        "previous_fills_returned_at": 1792014965.1050532,
+        "marks_ms": {
+          "fills_wrapper_returned": 684.649,
+          "checkpoint_started": 1087.287,
+          "checkpoint_completed": 1331.859
+        },
+        "new_fills": [
+          {
+            "fill_id": "0725cdc3-3d29-9e8e-cb31-40099b0a43aa",
+            "venue_fill_at": 1792014965.492795,
+            "registered_ms": 685.229
+          },
+          {
+            "fill_id": "0725cdc3-3d29-956d-f8c6-630d2e58b320",
+            "venue_fill_at": 1792014965.492795,
+            "registered_ms": 685.354
+          }
+        ],
+        "new_fills_omitted": 0,
+        "reads_omitted": 0,
+        "elapsed_ms": 1332.097,
+        "failed": false,
+        "reads": [
+          {
+            "read": "list_orders",
+            "marks_ms": {
+              "submitted": 0.137,
+              "worker_started": 210.068,
+              "worker_completed": 288.678,
+              "coroutine_resumed": 600.606,
+              "wrapper_returned": 600.73
+            },
+            "rows": 39,
+            "pages": 1,
+            "bytes": 30903,
+            "cancel_calls": 2,
+            "cancel_ms": 0.205,
+            "cancel_spans": [],
+            "cancel_spans_omitted": 0
+          },
+          {
+            "read": "fills",
+            "marks_ms": {
+              "submitted": 600.952,
+              "worker_started": 602.827,
+              "worker_completed": 639.751,
+              "coroutine_resumed": 684.511,
+              "wrapper_returned": 684.646
+            },
+            "rows": 5,
+            "pages": 1,
+            "bytes": 2572,
+            "cancel_calls": 1,
+            "cancel_ms": 0.112,
+            "cancel_spans": [],
+            "cancel_spans_omitted": 0
+          },
+          {
+            "read": "list_orders",
+            "marks_ms": {
+              "submitted": 685.423,
+              "worker_started": 705.585,
+              "worker_completed": 790.475,
+              "coroutine_resumed": 809.236,
+              "wrapper_returned": 809.341
+            },
+            "rows": 39,
+            "pages": 1,
+            "bytes": 30903,
+            "cancel_calls": 2,
+            "cancel_ms": 0.169,
+            "cancel_spans": [],
+            "cancel_spans_omitted": 0
+          },
+          {
+            "read": "positions",
+            "marks_ms": {
+              "submitted": 809.777,
+              "worker_started": 834.848,
+              "worker_completed": 887.353,
+              "coroutine_resumed": 948.112,
+              "wrapper_returned": 948.22
+            },
+            "rows": 3,
+            "pages": 1,
+            "bytes": 1405,
+            "cancel_calls": 2,
+            "cancel_ms": 0.185,
+            "cancel_spans": [],
+            "cancel_spans_omitted": 0
+          },
+          {
+            "read": "balance",
+            "marks_ms": {
+              "submitted": 949.291,
+              "worker_started": 990.65,
+              "worker_completed": 1040.375,
+              "coroutine_resumed": 1087.163,
+              "wrapper_returned": 1087.274
+            },
+            "rows": null,
+            "pages": null,
+            "bytes": null,
+            "cancel_calls": 2,
+            "cancel_ms": 0.21,
+            "cancel_spans": [],
+            "cancel_spans_omitted": 0
+          }
+        ],
+        "counts": {
+          "cycles": 16,
+          "reported": 1,
+          "quiet": 15,
+          "suppressed": 0
+        },
+        "clock_basis": "monotonic_offsets_from_started_at",
+        "worker_complete_basis": "entire_client_callback_not_http_arrival",
+        "not_realized_pnl": true,
+        "max_reports_per_60s": 12,
+        "callback_work": {
+          "enabled": true,
+          "error": null,
+          "start_mono": 3546072.512550472,
+          "end_mono": 3546073.844690147,
+          "interval_wall_ms": 1332.139675039798,
+          "spans": [
+            {
+              "name": "feed_trade",
+              "span_id": 38466,
+              "parent_id": null,
+              "start_mono": 3546072.62498192,
+              "end_mono": 3546072.631797257,
+              "wall_ms": 6.815337110310793,
+              "cpu_ms": 0.1475600000002686,
+              "overlap_start_mono": 3546072.62498192,
+              "overlap_end_mono": 3546072.631797257,
+              "overlap_wall_ms": 6.815337110310793
+            },
+            {
+              "name": "feed_book",
+              "span_id": 38539,
+              "parent_id": null,
+              "start_mono": 3546072.7221619,
+              "end_mono": 3546072.737477838,
+              "wall_ms": 15.315938275307417,
+              "cpu_ms": 0.257271000000614,
+              "overlap_start_mono": 3546072.7221619,
+              "overlap_end_mono": 3546072.737477838,
+              "overlap_wall_ms": 15.315938275307417
+            },
+            {
+              "name": "feed_book",
+              "span_id": 38672,
+              "parent_id": null,
+              "start_mono": 3546072.754693309,
+              "end_mono": 3546072.763098732,
+              "wall_ms": 8.405423257499933,
+              "cpu_ms": 0.34366099999871835,
+              "overlap_start_mono": 3546072.754693309,
+              "overlap_end_mono": 3546072.763098732,
+              "overlap_wall_ms": 8.405423257499933
+            },
+            {
+              "name": "practice_step",
+              "span_id": 38701,
+              "parent_id": null,
+              "start_mono": 3546072.767935337,
+              "end_mono": 3546073.004865363,
+              "wall_ms": 236.93002574145794,
+              "cpu_ms": 135.76898699999873,
+              "overlap_start_mono": 3546072.767935337,
+              "overlap_end_mono": 3546073.004865363,
+              "overlap_wall_ms": 236.93002574145794
+            },
+            {
+              "name": "practice_checkpoint",
+              "span_id": 38702,
+              "parent_id": 38701,
+              "start_mono": 3546072.771695342,
+              "end_mono": 3546072.986779231,
+              "wall_ms": 215.08388919755816,
+              "cpu_ms": 127.14824500000077,
+              "overlap_start_mono": 3546072.771695342,
+              "overlap_end_mono": 3546072.986779231,
+              "overlap_wall_ms": 215.08388919755816
+            },
+            {
+              "name": "practice_daily_reports",
+              "span_id": 38703,
+              "parent_id": 38702,
+              "start_mono": 3546072.771702672,
+              "end_mono": 3546072.789525657,
+              "wall_ms": 17.82298507168889,
+              "cpu_ms": 10.932351999999312,
+              "overlap_start_mono": 3546072.771702672,
+              "overlap_end_mono": 3546072.789525657,
+              "overlap_wall_ms": 17.82298507168889
+            },
+            {
+              "name": "practice_state",
+              "span_id": 38704,
+              "parent_id": 38702,
+              "start_mono": 3546072.789570686,
+              "end_mono": 3546072.886865775,
+              "wall_ms": 97.29508915916085,
+              "cpu_ms": 61.4500919999994,
+              "overlap_start_mono": 3546072.789570686,
+              "overlap_end_mono": 3546072.886865775,
+              "overlap_wall_ms": 97.29508915916085
+            },
+            {
+              "name": "practice_panel",
+              "span_id": 38705,
+              "parent_id": 38704,
+              "start_mono": 3546072.799310616,
+              "end_mono": 3546072.886855215,
+              "wall_ms": 87.54459861665964,
+              "cpu_ms": 55.5586349999988,
+              "overlap_start_mono": 3546072.799310616,
+              "overlap_end_mono": 3546072.886855215,
+              "overlap_wall_ms": 87.54459861665964
+            },
+            {
+              "name": "live_panel",
+              "span_id": 38706,
+              "parent_id": 38705,
+              "start_mono": 3546072.810122696,
+              "end_mono": 3546072.886810876,
+              "wall_ms": 76.68817974627018,
+              "cpu_ms": 49.2750570000009,
+              "overlap_start_mono": 3546072.810122696,
+              "overlap_end_mono": 3546072.886810876,
+              "overlap_wall_ms": 76.68817974627018
+            },
+            {
+              "name": "practice_ledger",
+              "span_id": 38707,
+              "parent_id": 38702,
+              "start_mono": 3546072.886877035,
+              "end_mono": 3546072.962955241,
+              "wall_ms": 76.07820630073547,
+              "cpu_ms": 39.415114999998835,
+              "overlap_start_mono": 3546072.886877035,
+              "overlap_end_mono": 3546072.962955241,
+              "overlap_wall_ms": 76.07820630073547
+            },
+            {
+              "name": "practice_mirror",
+              "span_id": 38709,
+              "parent_id": 38702,
+              "start_mono": 3546072.962993551,
+              "end_mono": 3546072.98566715,
+              "wall_ms": 22.67359895631671,
+              "cpu_ms": 14.141554000000056,
+              "overlap_start_mono": 3546072.962993551,
+              "overlap_end_mono": 3546072.98566715,
+              "overlap_wall_ms": 22.67359895631671
+            },
+            {
+              "name": "practice_step",
+              "span_id": 38961,
+              "parent_id": null,
+              "start_mono": 3546073.095805831,
+              "end_mono": 3546073.105317623,
+              "wall_ms": 9.511792100965977,
+              "cpu_ms": 7.116178000000417,
+              "overlap_start_mono": 3546073.095805831,
+              "overlap_end_mono": 3546073.105317623,
+              "overlap_wall_ms": 9.511792100965977
+            },
+            {
+              "name": "practice_step",
+              "span_id": 39011,
+              "parent_id": null,
+              "start_mono": 3546073.191801682,
+              "end_mono": 3546073.196991024,
+              "wall_ms": 5.189341958612204,
+              "cpu_ms": 4.935586000000214,
+              "overlap_start_mono": 3546073.191801682,
+              "overlap_end_mono": 3546073.196991024,
+              "overlap_wall_ms": 5.189341958612204
+            },
+            {
+              "name": "practice_step",
+              "span_id": 39202,
+              "parent_id": null,
+              "start_mono": 3546073.253869817,
+              "end_mono": 3546073.275961282,
+              "wall_ms": 22.091465070843697,
+              "cpu_ms": 12.58438400000017,
+              "overlap_start_mono": 3546073.253869817,
+              "overlap_end_mono": 3546073.275961282,
+              "overlap_wall_ms": 22.091465070843697
+            },
+            {
+              "name": "practice_step",
+              "span_id": 39282,
+              "parent_id": null,
+              "start_mono": 3546073.335869519,
+              "end_mono": 3546073.349974158,
+              "wall_ms": 14.104639180004597,
+              "cpu_ms": 7.267879999998783,
+              "overlap_start_mono": 3546073.335869519,
+              "overlap_end_mono": 3546073.349974158,
+              "overlap_wall_ms": 14.104639180004597
+            },
+            {
+              "name": "practice_step",
+              "span_id": 39360,
+              "parent_id": null,
+              "start_mono": 3546073.430668621,
+              "end_mono": 3546073.446021819,
+              "wall_ms": 15.353198163211346,
+              "cpu_ms": 5.1943769999986955,
+              "overlap_start_mono": 3546073.430668621,
+              "overlap_end_mono": 3546073.446021819,
+              "overlap_wall_ms": 15.353198163211346
+            },
+            {
+              "name": "practice_step",
+              "span_id": 39538,
+              "parent_id": null,
+              "start_mono": 3546073.57221653,
+              "end_mono": 3546073.581249457,
+              "wall_ms": 9.032926987856627,
+              "cpu_ms": 4.2951640000001845,
+              "overlap_start_mono": 3546073.57221653,
+              "overlap_end_mono": 3546073.581249457,
+              "overlap_wall_ms": 9.032926987856627
+            },
+            {
+              "name": "live_checkpoint",
+              "span_id": 39548,
+              "parent_id": null,
+              "start_mono": 3546073.599846614,
+              "end_mono": 3546073.84438519,
+              "wall_ms": 244.53857587650418,
+              "cpu_ms": 71.74666099999882,
+              "overlap_start_mono": 3546073.599846614,
+              "overlap_end_mono": 3546073.84438519,
+              "overlap_wall_ms": 244.53857587650418
+            },
+            {
+              "name": "live_state",
+              "span_id": 39549,
+              "parent_id": 39548,
+              "start_mono": 3546073.600910284,
+              "end_mono": 3546073.615096193,
+              "wall_ms": 14.18590871617198,
+              "cpu_ms": 12.703846000000851,
+              "overlap_start_mono": 3546073.600910284,
+              "overlap_end_mono": 3546073.615096193,
+              "overlap_wall_ms": 14.18590871617198
+            },
+            {
+              "name": "live_ledger",
+              "span_id": 39550,
+              "parent_id": 39548,
+              "start_mono": 3546073.615135043,
+              "end_mono": 3546073.842132851,
+              "wall_ms": 226.99780808761716,
+              "cpu_ms": 55.756382000000215,
+              "overlap_start_mono": 3546073.615135043,
+              "overlap_end_mono": 3546073.842132851,
+              "overlap_wall_ms": 226.99780808761716
+            }
+          ],
+          "retained_overlapping_spans": 20,
+          "omitted_spans": 0,
+          "covered_wall_ms": 587.2886637225747,
+          "unattributed_wall_ms": 744.8510113172233,
+          "retention_loss": false,
+          "evicted_spans": 0,
+          "before_observation": false,
+          "active_spans": 0,
+          "quiet_spans_total": 39183,
+          "coverage_scope": "completed retained slow synchronous spans only",
+          "cpu_basis": "full span thread CPU; not apportioned to overlap; nested values are not additive"
+        },
+        "read_resume_work": [
+          {
+            "read": "list_orders",
+            "enabled": true,
+            "error": null,
+            "start_mono": 3546072.801228472,
+            "end_mono": 3546073.113156472,
+            "interval_wall_ms": 311.9279998354614,
+            "spans": [
+              {
+                "name": "practice_step",
+                "span_id": 38701,
+                "parent_id": null,
+                "start_mono": 3546072.767935337,
+                "end_mono": 3546073.004865363,
+                "wall_ms": 236.93002574145794,
+                "cpu_ms": 135.76898699999873,
+                "overlap_start_mono": 3546072.801228472,
+                "overlap_end_mono": 3546073.004865363,
+                "overlap_wall_ms": 203.6368907429278
+              },
+              {
+                "name": "practice_checkpoint",
+                "span_id": 38702,
+                "parent_id": 38701,
+                "start_mono": 3546072.771695342,
+                "end_mono": 3546072.986779231,
+                "wall_ms": 215.08388919755816,
+                "cpu_ms": 127.14824500000077,
+                "overlap_start_mono": 3546072.801228472,
+                "overlap_end_mono": 3546072.986779231,
+                "overlap_wall_ms": 185.55075908079743
+              },
+              {
+                "name": "practice_state",
+                "span_id": 38704,
+                "parent_id": 38702,
+                "start_mono": 3546072.789570686,
+                "end_mono": 3546072.886865775,
+                "wall_ms": 97.29508915916085,
+                "cpu_ms": 61.4500919999994,
+                "overlap_start_mono": 3546072.801228472,
+                "overlap_end_mono": 3546072.886865775,
+                "overlap_wall_ms": 85.6373030692339
+              },
+              {
+                "name": "practice_panel",
+                "span_id": 38705,
+                "parent_id": 38704,
+                "start_mono": 3546072.799310616,
+                "end_mono": 3546072.886855215,
+                "wall_ms": 87.54459861665964,
+                "cpu_ms": 55.5586349999988,
+                "overlap_start_mono": 3546072.801228472,
+                "overlap_end_mono": 3546072.886855215,
+                "overlap_wall_ms": 85.62674280256033
+              },
+              {
+                "name": "live_panel",
+                "span_id": 38706,
+                "parent_id": 38705,
+                "start_mono": 3546072.810122696,
+                "end_mono": 3546072.886810876,
+                "wall_ms": 76.68817974627018,
+                "cpu_ms": 49.2750570000009,
+                "overlap_start_mono": 3546072.810122696,
+                "overlap_end_mono": 3546072.886810876,
+                "overlap_wall_ms": 76.68817974627018
+              },
+              {
+                "name": "practice_ledger",
+                "span_id": 38707,
+                "parent_id": 38702,
+                "start_mono": 3546072.886877035,
+                "end_mono": 3546072.962955241,
+                "wall_ms": 76.07820630073547,
+                "cpu_ms": 39.415114999998835,
+                "overlap_start_mono": 3546072.886877035,
+                "overlap_end_mono": 3546072.962955241,
+                "overlap_wall_ms": 76.07820630073547
+              },
+              {
+                "name": "practice_mirror",
+                "span_id": 38709,
+                "parent_id": 38702,
+                "start_mono": 3546072.962993551,
+                "end_mono": 3546072.98566715,
+                "wall_ms": 22.67359895631671,
+                "cpu_ms": 14.141554000000056,
+                "overlap_start_mono": 3546072.962993551,
+                "overlap_end_mono": 3546072.98566715,
+                "overlap_wall_ms": 22.67359895631671
+              },
+              {
+                "name": "practice_step",
+                "span_id": 38961,
+                "parent_id": null,
+                "start_mono": 3546073.095805831,
+                "end_mono": 3546073.105317623,
+                "wall_ms": 9.511792100965977,
+                "cpu_ms": 7.116178000000417,
+                "overlap_start_mono": 3546073.095805831,
+                "overlap_end_mono": 3546073.105317623,
+                "overlap_wall_ms": 9.511792100965977
+              }
+            ],
+            "retained_overlapping_spans": 8,
+            "omitted_spans": 0,
+            "covered_wall_ms": 213.14868284389377,
+            "unattributed_wall_ms": 98.77931699156761,
+            "retention_loss": false,
+            "evicted_spans": 0,
+            "before_observation": false,
+            "active_spans": 0,
+            "quiet_spans_total": 39183,
+            "coverage_scope": "completed retained slow synchronous spans only",
+            "cpu_basis": "full span thread CPU; not apportioned to overlap; nested values are not additive"
+          },
+          {
+            "read": "fills",
+            "enabled": true,
+            "error": null,
+            "start_mono": 3546073.1523014717,
+            "end_mono": 3546073.1970614716,
+            "interval_wall_ms": 44.759999960660934,
+            "spans": [
+              {
+                "name": "practice_step",
+                "span_id": 39011,
+                "parent_id": null,
+                "start_mono": 3546073.191801682,
+                "end_mono": 3546073.196991024,
+                "wall_ms": 5.189341958612204,
+                "cpu_ms": 4.935586000000214,
+                "overlap_start_mono": 3546073.191801682,
+                "overlap_end_mono": 3546073.196991024,
+                "overlap_wall_ms": 5.189341958612204
+              }
+            ],
+            "retained_overlapping_spans": 1,
+            "omitted_spans": 0,
+            "covered_wall_ms": 5.189341958612204,
+            "unattributed_wall_ms": 39.57065800204873,
+            "retention_loss": false,
+            "evicted_spans": 0,
+            "before_observation": false,
+            "active_spans": 0,
+            "quiet_spans_total": 39183,
+            "coverage_scope": "completed retained slow synchronous spans only",
+            "cpu_basis": "full span thread CPU; not apportioned to overlap; nested values are not additive"
+          },
+          {
+            "read": "list_orders",
+            "enabled": true,
+            "error": null,
+            "start_mono": 3546073.303025472,
+            "end_mono": 3546073.3217864716,
+            "interval_wall_ms": 18.76099966466427,
+            "spans": [],
+            "retained_overlapping_spans": 0,
+            "omitted_spans": 0,
+            "covered_wall_ms": 0,
+            "unattributed_wall_ms": 18.76099966466427,
+            "retention_loss": false,
+            "evicted_spans": 0,
+            "before_observation": false,
+            "active_spans": 0,
+            "quiet_spans_total": 39183,
+            "coverage_scope": "completed retained slow synchronous spans only",
+            "cpu_basis": "full span thread CPU; not apportioned to overlap; nested values are not additive"
+          },
+          {
+            "read": "positions",
+            "enabled": true,
+            "error": null,
+            "start_mono": 3546073.399903472,
+            "end_mono": 3546073.4606624716,
+            "interval_wall_ms": 60.758999548852444,
+            "spans": [
+              {
+                "name": "practice_step",
+                "span_id": 39360,
+                "parent_id": null,
+                "start_mono": 3546073.430668621,
+                "end_mono": 3546073.446021819,
+                "wall_ms": 15.353198163211346,
+                "cpu_ms": 5.1943769999986955,
+                "overlap_start_mono": 3546073.430668621,
+                "overlap_end_mono": 3546073.446021819,
+                "overlap_wall_ms": 15.353198163211346
+              }
+            ],
+            "retained_overlapping_spans": 1,
+            "omitted_spans": 0,
+            "covered_wall_ms": 15.353198163211346,
+            "unattributed_wall_ms": 45.4058013856411,
+            "retention_loss": false,
+            "evicted_spans": 0,
+            "before_observation": false,
+            "active_spans": 0,
+            "quiet_spans_total": 39183,
+            "coverage_scope": "completed retained slow synchronous spans only",
+            "cpu_basis": "full span thread CPU; not apportioned to overlap; nested values are not additive"
+          },
+          {
+            "read": "balance",
+            "enabled": true,
+            "error": null,
+            "start_mono": 3546073.5529254717,
+            "end_mono": 3546073.5997134717,
+            "interval_wall_ms": 46.78800003603101,
+            "spans": [
+              {
+                "name": "practice_step",
+                "span_id": 39538,
+                "parent_id": null,
+                "start_mono": 3546073.57221653,
+                "end_mono": 3546073.581249457,
+                "wall_ms": 9.032926987856627,
+                "cpu_ms": 4.2951640000001845,
+                "overlap_start_mono": 3546073.57221653,
+                "overlap_end_mono": 3546073.581249457,
+                "overlap_wall_ms": 9.032926987856627
+              }
+            ],
+            "retained_overlapping_spans": 1,
+            "omitted_spans": 0,
+            "covered_wall_ms": 9.032926987856627,
+            "unattributed_wall_ms": 37.75507304817438,
+            "retention_loss": false,
+            "evicted_spans": 0,
+            "before_observation": false,
+            "active_spans": 0,
+            "quiet_spans_total": 39183,
+            "coverage_scope": "completed retained slow synchronous spans only",
+            "cpu_basis": "full span thread CPU; not apportioned to overlap; nested values are not additive"
+          }
+        ]
+      }
+    },
+    {
+      "timestamp": "2026-10-14T22:00:03.969088453Z",
+      "data": {
+        "at": 1792015203.8517866,
+        "venue": "kalshi",
+        "mode": "diagnostic",
+        "version": 1,
+        "cycle": 163,
+        "started_at": 1792015199.9086835,
+        "full": false,
+        "retry_remaining_s": 0,
+        "previous_fills_returned_at": 1792015198.4921043,
+        "marks_ms": {
+          "fills_wrapper_returned": 115.827
+        },
+        "new_fills": [],
+        "new_fills_omitted": 0,
+        "reads_omitted": 0,
+        "elapsed_ms": 3943.103,
+        "failed": false,
+        "reads": [
+          {
+            "read": "list_orders",
+            "marks_ms": {
+              "submitted": 0.164,
+              "worker_started": 0.346,
+              "worker_completed": 49.98,
+              "coroutine_resumed": 50.647,
+              "wrapper_returned": 50.716
+            },
+            "rows": 31,
+            "pages": 1,
+            "bytes": 24552,
+            "cancel_calls": 1,
+            "cancel_ms": 0.047,
+            "cancel_spans": [],
+            "cancel_spans_omitted": 0
+          },
+          {
+            "read": "fills",
+            "marks_ms": {
+              "submitted": 50.892,
+              "worker_started": 51.131,
+              "worker_completed": 101.299,
+              "coroutine_resumed": 115.758,
+              "wrapper_returned": 115.824
+            },
+            "rows": 3,
+            "pages": 1,
+            "bytes": 1552,
+            "cancel_calls": 1,
+            "cancel_ms": 0.041,
+            "cancel_spans": [],
+            "cancel_spans_omitted": 0
+          },
+          {
+            "read": "list_orders",
+            "marks_ms": {
+              "submitted": 116.774,
+              "worker_started": 143.995,
+              "worker_completed": 231.622,
+              "coroutine_resumed": 1403.204,
+              "wrapper_returned": 1403.273
+            },
+            "rows": 31,
+            "pages": 1,
+            "bytes": 24552,
+            "cancel_calls": 1,
+            "cancel_ms": 0.045,
+            "cancel_spans": [],
+            "cancel_spans_omitted": 0
+          },
+          {
+            "read": "positions",
+            "marks_ms": {
+              "submitted": 1403.652,
+              "worker_started": 1847.952,
+              "worker_completed": 1891.036,
+              "coroutine_resumed": 3705.205,
+              "wrapper_returned": 3705.28
+            },
+            "rows": 3,
+            "pages": 1,
+            "bytes": 1405,
+            "cancel_calls": 2,
+            "cancel_ms": 0.099,
+            "cancel_spans": [],
+            "cancel_spans_omitted": 0
+          },
+          {
+            "read": "settlements",
+            "marks_ms": {
+              "submitted": 3705.735,
+              "worker_started": 3718.444,
+              "worker_completed": 3810.216,
+              "coroutine_resumed": 3867.573,
+              "wrapper_returned": 3867.622
+            },
+            "rows": 102,
+            "pages": 1,
+            "bytes": 32692,
+            "cancel_calls": 2,
+            "cancel_ms": 0.075,
+            "cancel_spans": [],
+            "cancel_spans_omitted": 0
+          },
+          {
+            "read": "balance",
+            "marks_ms": {
+              "submitted": 3868.487,
+              "worker_started": 3868.68,
+              "worker_completed": 3914.956,
+              "coroutine_resumed": 3942.786,
+              "wrapper_returned": 3942.855
+            },
+            "rows": null,
+            "pages": null,
+            "bytes": null,
+            "cancel_calls": 1,
+            "cancel_ms": 0.046,
+            "cancel_spans": [],
+            "cancel_spans_omitted": 0
+          }
+        ],
+        "counts": {
+          "cycles": 163,
+          "reported": 2,
+          "quiet": 161,
+          "suppressed": 0
+        },
+        "clock_basis": "monotonic_offsets_from_started_at",
+        "worker_complete_basis": "entire_client_callback_not_http_arrival",
+        "not_realized_pnl": true,
+        "max_reports_per_60s": 12,
+        "callback_work": {
+          "enabled": true,
+          "error": null,
+          "start_mono": 3546306.346195793,
+          "end_mono": 3546310.289334671,
+          "interval_wall_ms": 3943.138878326863,
+          "spans": [
+            {
+              "name": "practice_step",
+              "span_id": 366057,
+              "parent_id": null,
+              "start_mono": 3546306.37295351,
+              "end_mono": 3546306.395663821,
+              "wall_ms": 22.710311226546764,
+              "cpu_ms": 21.000775999993948,
+              "overlap_start_mono": 3546306.37295351,
+              "overlap_end_mono": 3546306.395663821,
+              "overlap_wall_ms": 22.710311226546764
+            },
+            {
+              "name": "practice_step",
+              "span_id": 366070,
+              "parent_id": null,
+              "start_mono": 3546306.45443375,
+              "end_mono": 3546306.461831288,
+              "wall_ms": 7.397538051009178,
+              "cpu_ms": 6.758067000006918,
+              "overlap_start_mono": 3546306.45443375,
+              "overlap_end_mono": 3546306.461831288,
+              "overlap_wall_ms": 7.397538051009178
+            },
+            {
+              "name": "feed_book",
+              "span_id": 366117,
+              "parent_id": null,
+              "start_mono": 3546306.484956527,
+              "end_mono": 3546306.490609849,
+              "wall_ms": 5.653321743011475,
+              "cpu_ms": 0.20870999999544892,
+              "overlap_start_mono": 3546306.484956527,
+              "overlap_end_mono": 3546306.490609849,
+              "overlap_wall_ms": 5.653321743011475
+            },
+            {
+              "name": "feed_book",
+              "span_id": 368188,
+              "parent_id": null,
+              "start_mono": 3546306.762790481,
+              "end_mono": 3546306.768297685,
+              "wall_ms": 5.507203750312328,
+              "cpu_ms": 0.24010100000282364,
+              "overlap_start_mono": 3546306.762790481,
+              "overlap_end_mono": 3546306.768297685,
+              "overlap_wall_ms": 5.507203750312328
+            },
+            {
+              "name": "feed_book",
+              "span_id": 369130,
+              "parent_id": null,
+              "start_mono": 3546306.849180675,
+              "end_mono": 3546306.855684855,
+              "wall_ms": 6.504179909825325,
+              "cpu_ms": 6.326447000006397,
+              "overlap_start_mono": 3546306.849180675,
+              "overlap_end_mono": 3546306.855684855,
+              "overlap_wall_ms": 6.504179909825325
+            },
+            {
+              "name": "feed_book",
+              "span_id": 371263,
+              "parent_id": null,
+              "start_mono": 3546307.030447597,
+              "end_mono": 3546307.036329679,
+              "wall_ms": 5.882082041352987,
+              "cpu_ms": 0.16613000001086675,
+              "overlap_start_mono": 3546307.030447597,
+              "overlap_end_mono": 3546307.036329679,
+              "overlap_wall_ms": 5.882082041352987
+            },
+            {
+              "name": "feed_book",
+              "span_id": 371438,
+              "parent_id": null,
+              "start_mono": 3546307.050740794,
+              "end_mono": 3546307.063190337,
+              "wall_ms": 12.449542991816998,
+              "cpu_ms": 11.503384000008054,
+              "overlap_start_mono": 3546307.050740794,
+              "overlap_end_mono": 3546307.063190337,
+              "overlap_wall_ms": 12.449542991816998
+            },
+            {
+              "name": "feed_book",
+              "span_id": 374046,
+              "parent_id": null,
+              "start_mono": 3546307.533819797,
+              "end_mono": 3546307.549232769,
+              "wall_ms": 15.412971843034029,
+              "cpu_ms": 0.5984609999956092,
+              "overlap_start_mono": 3546307.533819797,
+              "overlap_end_mono": 3546307.549232769,
+              "overlap_wall_ms": 15.412971843034029
+            },
+            {
+              "name": "practice_step",
+              "span_id": 375497,
+              "parent_id": null,
+              "start_mono": 3546307.732535903,
+              "end_mono": 3546307.749337102,
+              "wall_ms": 16.801198944449425,
+              "cpu_ms": 9.273141999997847,
+              "overlap_start_mono": 3546307.732535903,
+              "overlap_end_mono": 3546307.749337102,
+              "overlap_wall_ms": 16.801198944449425
+            },
+            {
+              "name": "feed_book",
+              "span_id": 375675,
+              "parent_id": null,
+              "start_mono": 3546308.21594273,
+              "end_mono": 3546308.225077032,
+              "wall_ms": 9.134301915764809,
+              "cpu_ms": 0.5031400000063968,
+              "overlap_start_mono": 3546308.21594273,
+              "overlap_end_mono": 3546308.225077032,
+              "overlap_wall_ms": 9.134301915764809
+            },
+            {
+              "name": "feed_book",
+              "span_id": 375903,
+              "parent_id": null,
+              "start_mono": 3546308.268932987,
+              "end_mono": 3546308.274623949,
+              "wall_ms": 5.690962076187134,
+              "cpu_ms": 0.35076100000708266,
+              "overlap_start_mono": 3546308.268932987,
+              "overlap_end_mono": 3546308.274623949,
+              "overlap_wall_ms": 5.690962076187134
+            },
+            {
+              "name": "feed_book",
+              "span_id": 377627,
+              "parent_id": null,
+              "start_mono": 3546308.518985814,
+              "end_mono": 3546308.524907475,
+              "wall_ms": 5.921660922467709,
+              "cpu_ms": 0.21660000000167656,
+              "overlap_start_mono": 3546308.518985814,
+              "overlap_end_mono": 3546308.524907475,
+              "overlap_wall_ms": 5.921660922467709
+            },
+            {
+              "name": "feed_book",
+              "span_id": 377672,
+              "parent_id": null,
+              "start_mono": 3546308.52992967,
+              "end_mono": 3546308.535456143,
+              "wall_ms": 5.526472814381123,
+              "cpu_ms": 0.43814099998940037,
+              "overlap_start_mono": 3546308.52992967,
+              "overlap_end_mono": 3546308.535456143,
+              "overlap_wall_ms": 5.526472814381123
+            },
+            {
+              "name": "feed_book",
+              "span_id": 377711,
+              "parent_id": null,
+              "start_mono": 3546308.540184878,
+              "end_mono": 3546308.553097698,
+              "wall_ms": 12.912820093333721,
+              "cpu_ms": 0.6074310000059313,
+              "overlap_start_mono": 3546308.540184878,
+              "overlap_end_mono": 3546308.553097698,
+              "overlap_wall_ms": 12.912820093333721
+            },
+            {
+              "name": "feed_book",
+              "span_id": 378873,
+              "parent_id": null,
+              "start_mono": 3546308.759420749,
+              "end_mono": 3546309.100630842,
+              "wall_ms": 341.21009334921837,
+              "cpu_ms": 139.5424399999996,
+              "overlap_start_mono": 3546308.759420749,
+              "overlap_end_mono": 3546309.100630842,
+              "overlap_wall_ms": 341.21009334921837
+            },
+            {
+              "name": "practice_checkpoint",
+              "span_id": 378874,
+              "parent_id": 378873,
+              "start_mono": 3546308.759886928,
+              "end_mono": 3546309.100599162,
+              "wall_ms": 340.71223391219974,
+              "cpu_ms": 139.04532899999822,
+              "overlap_start_mono": 3546308.759886928,
+              "overlap_end_mono": 3546309.100599162,
+              "overlap_wall_ms": 340.71223391219974
+            },
+            {
+              "name": "practice_daily_reports",
+              "span_id": 378875,
+              "parent_id": 378874,
+              "start_mono": 3546308.759896328,
+              "end_mono": 3546308.772454569,
+              "wall_ms": 12.558240909129381,
+              "cpu_ms": 11.244953000002056,
+              "overlap_start_mono": 3546308.759896328,
+              "overlap_end_mono": 3546308.772454569,
+              "overlap_wall_ms": 12.558240909129381
+            },
+            {
+              "name": "practice_state",
+              "span_id": 378876,
+              "parent_id": 378874,
+              "start_mono": 3546308.772483208,
+              "end_mono": 3546308.847807255,
+              "wall_ms": 75.32404689118266,
+              "cpu_ms": 61.958129999993616,
+              "overlap_start_mono": 3546308.772483208,
+              "overlap_end_mono": 3546308.847807255,
+              "overlap_wall_ms": 75.32404689118266
+            },
+            {
+              "name": "practice_panel",
+              "span_id": 378877,
+              "parent_id": 378876,
+              "start_mono": 3546308.780658013,
+              "end_mono": 3546308.847794915,
+              "wall_ms": 67.13690189644694,
+              "cpu_ms": 56.29203299999119,
+              "overlap_start_mono": 3546308.780658013,
+              "overlap_end_mono": 3546308.847794915,
+              "overlap_wall_ms": 67.13690189644694
+            },
+            {
+              "name": "live_panel",
+              "span_id": 378878,
+              "parent_id": 378877,
+              "start_mono": 3546308.78808357,
+              "end_mono": 3546308.847748505,
+              "wall_ms": 59.66493487358093,
+              "cpu_ms": 48.85127500000408,
+              "overlap_start_mono": 3546308.78808357,
+              "overlap_end_mono": 3546308.847748505,
+              "overlap_wall_ms": 59.66493487358093
+            },
+            {
+              "name": "practice_ledger",
+              "span_id": 378879,
+              "parent_id": 378874,
+              "start_mono": 3546308.847822365,
+              "end_mono": 3546309.07557954,
+              "wall_ms": 227.75717498734593,
+              "cpu_ms": 45.370883000003914,
+              "overlap_start_mono": 3546308.847822365,
+              "overlap_end_mono": 3546309.07557954,
+              "overlap_wall_ms": 227.75717498734593
+            },
+            {
+              "name": "practice_mirror",
+              "span_id": 378881,
+              "parent_id": 378874,
+              "start_mono": 3546309.075872198,
+              "end_mono": 3546309.098780858,
+              "wall_ms": 22.908659651875496,
+              "cpu_ms": 18.318860999997355,
+              "overlap_start_mono": 3546309.075872198,
+              "overlap_end_mono": 3546309.098780858,
+              "overlap_wall_ms": 22.908659651875496
+            },
+            {
+              "name": "practice_step",
+              "span_id": 380747,
+              "parent_id": null,
+              "start_mono": 3546309.361681603,
+              "end_mono": 3546309.371327273,
+              "wall_ms": 9.645670186728239,
+              "cpu_ms": 9.324350999989406,
+              "overlap_start_mono": 3546309.361681603,
+              "overlap_end_mono": 3546309.371327273,
+              "overlap_wall_ms": 9.645670186728239
+            },
+            {
+              "name": "feed_book",
+              "span_id": 381394,
+              "parent_id": null,
+              "start_mono": 3546309.805751614,
+              "end_mono": 3546309.81346636,
+              "wall_ms": 7.714746054261923,
+              "cpu_ms": 0.4823909999913667,
+              "overlap_start_mono": 3546309.805751614,
+              "overlap_end_mono": 3546309.81346636,
+              "overlap_wall_ms": 7.714746054261923
+            },
+            {
+              "name": "feed_book",
+              "span_id": 381754,
+              "parent_id": null,
+              "start_mono": 3546309.925154183,
+              "end_mono": 3546309.931363583,
+              "wall_ms": 6.20940001681447,
+              "cpu_ms": 0.39415999999903306,
+              "overlap_start_mono": 3546309.925154183,
+              "overlap_end_mono": 3546309.931363583,
+              "overlap_wall_ms": 6.20940001681447
+            },
+            {
+              "name": "feed_trade",
+              "span_id": 381799,
+              "parent_id": null,
+              "start_mono": 3546309.936194249,
+              "end_mono": 3546309.956221666,
+              "wall_ms": 20.027417223900557,
+              "cpu_ms": 0.3525700000039933,
+              "overlap_start_mono": 3546309.936194249,
+              "overlap_end_mono": 3546309.956221666,
+              "overlap_wall_ms": 20.027417223900557
+            },
+            {
+              "name": "feed_book",
+              "span_id": 382286,
+              "parent_id": null,
+              "start_mono": 3546310.022266861,
+              "end_mono": 3546310.028069273,
+              "wall_ms": 5.802412051707506,
+              "cpu_ms": 0.21994000000802316,
+              "overlap_start_mono": 3546310.022266861,
+              "overlap_end_mono": 3546310.028069273,
+              "overlap_wall_ms": 5.802412051707506
+            },
+            {
+              "name": "practice_step",
+              "span_id": 382409,
+              "parent_id": null,
+              "start_mono": 3546310.04197771,
+              "end_mono": 3546310.051317991,
+              "wall_ms": 9.340281132608652,
+              "cpu_ms": 8.948160000002758,
+              "overlap_start_mono": 3546310.04197771,
+              "overlap_end_mono": 3546310.051317991,
+              "overlap_wall_ms": 9.340281132608652
+            },
+            {
+              "name": "feed_book",
+              "span_id": 383050,
+              "parent_id": null,
+              "start_mono": 3546310.126311428,
+              "end_mono": 3546310.134792541,
+              "wall_ms": 8.481113240122795,
+              "cpu_ms": 0.2686899999986281,
+              "overlap_start_mono": 3546310.126311428,
+              "overlap_end_mono": 3546310.134792541,
+              "overlap_wall_ms": 8.481113240122795
+            },
+            {
+              "name": "feed_book",
+              "span_id": 383094,
+              "parent_id": null,
+              "start_mono": 3546310.139617177,
+              "end_mono": 3546310.145779078,
+              "wall_ms": 6.161900702863932,
+              "cpu_ms": 0.1814799999948491,
+              "overlap_start_mono": 3546310.139617177,
+              "overlap_end_mono": 3546310.145779078,
+              "overlap_wall_ms": 6.161900702863932
+            },
+            {
+              "name": "practice_step",
+              "span_id": 383337,
+              "parent_id": null,
+              "start_mono": 3546310.200120928,
+              "end_mono": 3546310.209438399,
+              "wall_ms": 9.317470714449883,
+              "cpu_ms": 9.127551000005951,
+              "overlap_start_mono": 3546310.200120928,
+              "overlap_end_mono": 3546310.209438399,
+              "overlap_wall_ms": 9.317470714449883
+            },
+            {
+              "name": "practice_step",
+              "span_id": 383477,
+              "parent_id": null,
+              "start_mono": 3546310.277230528,
+              "end_mono": 3546310.288825543,
+              "wall_ms": 11.595014948397875,
+              "cpu_ms": 8.955441000011888,
+              "overlap_start_mono": 3546310.277230528,
+              "overlap_end_mono": 3546310.288825543,
+              "overlap_wall_ms": 11.595014948397875
+            }
+          ],
+          "retained_overlapping_spans": 40,
+          "omitted_spans": 8,
+          "covered_wall_ms": 614.8956092074513,
+          "unattributed_wall_ms": 3328.2432691194117,
+          "retention_loss": false,
+          "evicted_spans": 2480,
+          "before_observation": false,
+          "active_spans": 0,
+          "quiet_spans_total": 380485,
+          "coverage_scope": "completed retained slow synchronous spans only",
+          "cpu_basis": "full span thread CPU; not apportioned to overlap; nested values are not additive"
+        },
+        "read_resume_work": [
+          {
+            "read": "list_orders",
+            "enabled": true,
+            "error": null,
+            "start_mono": 3546306.396175793,
+            "end_mono": 3546306.3968427926,
+            "interval_wall_ms": 0.6669997237622738,
+            "spans": [],
+            "retained_overlapping_spans": 0,
+            "omitted_spans": 0,
+            "covered_wall_ms": 0,
+            "unattributed_wall_ms": 0.6669997237622738,
+            "retention_loss": false,
+            "evicted_spans": 2480,
+            "before_observation": false,
+            "active_spans": 0,
+            "quiet_spans_total": 380485,
+            "coverage_scope": "completed retained slow synchronous spans only",
+            "cpu_basis": "full span thread CPU; not apportioned to overlap; nested values are not additive"
+          },
+          {
+            "read": "fills",
+            "enabled": true,
+            "error": null,
+            "start_mono": 3546306.4474947928,
+            "end_mono": 3546306.4619537927,
+            "interval_wall_ms": 14.45899996906519,
+            "spans": [
+              {
+                "name": "practice_step",
+                "span_id": 366070,
+                "parent_id": null,
+                "start_mono": 3546306.45443375,
+                "end_mono": 3546306.461831288,
+                "wall_ms": 7.397538051009178,
+                "cpu_ms": 6.758067000006918,
+                "overlap_start_mono": 3546306.45443375,
+                "overlap_end_mono": 3546306.461831288,
+                "overlap_wall_ms": 7.397538051009178
+              }
+            ],
+            "retained_overlapping_spans": 1,
+            "omitted_spans": 0,
+            "covered_wall_ms": 7.397538051009178,
+            "unattributed_wall_ms": 7.061461918056011,
+            "retention_loss": false,
+            "evicted_spans": 2480,
+            "before_observation": false,
+            "active_spans": 0,
+            "quiet_spans_total": 380485,
+            "coverage_scope": "completed retained slow synchronous spans only",
+            "cpu_basis": "full span thread CPU; not apportioned to overlap; nested values are not additive"
+          },
+          {
+            "read": "list_orders",
+            "enabled": true,
+            "error": null,
+            "start_mono": 3546306.577817793,
+            "end_mono": 3546307.749399793,
+            "interval_wall_ms": 1171.5819998644292,
+            "spans": [
+              {
+                "name": "feed_book",
+                "span_id": 368188,
+                "parent_id": null,
+                "start_mono": 3546306.762790481,
+                "end_mono": 3546306.768297685,
+                "wall_ms": 5.507203750312328,
+                "cpu_ms": 0.24010100000282364,
+                "overlap_start_mono": 3546306.762790481,
+                "overlap_end_mono": 3546306.768297685,
+                "overlap_wall_ms": 5.507203750312328
+              },
+              {
+                "name": "feed_book",
+                "span_id": 369130,
+                "parent_id": null,
+                "start_mono": 3546306.849180675,
+                "end_mono": 3546306.855684855,
+                "wall_ms": 6.504179909825325,
+                "cpu_ms": 6.326447000006397,
+                "overlap_start_mono": 3546306.849180675,
+                "overlap_end_mono": 3546306.855684855,
+                "overlap_wall_ms": 6.504179909825325
+              },
+              {
+                "name": "feed_book",
+                "span_id": 371263,
+                "parent_id": null,
+                "start_mono": 3546307.030447597,
+                "end_mono": 3546307.036329679,
+                "wall_ms": 5.882082041352987,
+                "cpu_ms": 0.16613000001086675,
+                "overlap_start_mono": 3546307.030447597,
+                "overlap_end_mono": 3546307.036329679,
+                "overlap_wall_ms": 5.882082041352987
+              },
+              {
+                "name": "feed_book",
+                "span_id": 371438,
+                "parent_id": null,
+                "start_mono": 3546307.050740794,
+                "end_mono": 3546307.063190337,
+                "wall_ms": 12.449542991816998,
+                "cpu_ms": 11.503384000008054,
+                "overlap_start_mono": 3546307.050740794,
+                "overlap_end_mono": 3546307.063190337,
+                "overlap_wall_ms": 12.449542991816998
+              },
+              {
+                "name": "feed_book",
+                "span_id": 372572,
+                "parent_id": null,
+                "start_mono": 3546307.311701202,
+                "end_mono": 3546307.317147475,
+                "wall_ms": 5.446273367851973,
+                "cpu_ms": 0.34613099998637153,
+                "overlap_start_mono": 3546307.311701202,
+                "overlap_end_mono": 3546307.317147475,
+                "overlap_wall_ms": 5.446273367851973
+              },
+              {
+                "name": "feed_book",
+                "span_id": 373068,
+                "parent_id": null,
+                "start_mono": 3546307.392085624,
+                "end_mono": 3546307.397546407,
+                "wall_ms": 5.460782907903194,
+                "cpu_ms": 0.35505099999966205,
+                "overlap_start_mono": 3546307.392085624,
+                "overlap_end_mono": 3546307.397546407,
+                "overlap_wall_ms": 5.460782907903194
+              },
+              {
+                "name": "feed_book",
+                "span_id": 374046,
+                "parent_id": null,
+                "start_mono": 3546307.533819797,
+                "end_mono": 3546307.549232769,
+                "wall_ms": 15.412971843034029,
+                "cpu_ms": 0.5984609999956092,
+                "overlap_start_mono": 3546307.533819797,
+                "overlap_end_mono": 3546307.549232769,
+                "overlap_wall_ms": 15.412971843034029
+              },
+              {
+                "name": "practice_step",
+                "span_id": 375497,
+                "parent_id": null,
+                "start_mono": 3546307.732535903,
+                "end_mono": 3546307.749337102,
+                "wall_ms": 16.801198944449425,
+                "cpu_ms": 9.273141999997847,
+                "overlap_start_mono": 3546307.732535903,
+                "overlap_end_mono": 3546307.749337102,
+                "overlap_wall_ms": 16.801198944449425
+              }
+            ],
+            "retained_overlapping_spans": 10,
+            "omitted_spans": 2,
+            "covered_wall_ms": 83.88921385630965,
+            "unattributed_wall_ms": 1087.6927860081196,
+            "retention_loss": false,
+            "evicted_spans": 2480,
+            "before_observation": false,
+            "active_spans": 0,
+            "quiet_spans_total": 380485,
+            "coverage_scope": "completed retained slow synchronous spans only",
+            "cpu_basis": "full span thread CPU; not apportioned to overlap; nested values are not additive"
+          },
+          {
+            "read": "positions",
+            "enabled": true,
+            "error": null,
+            "start_mono": 3546308.237231793,
+            "end_mono": 3546310.051400793,
+            "interval_wall_ms": 1814.168999902904,
+            "spans": [
+              {
+                "name": "feed_book",
+                "span_id": 378873,
+                "parent_id": null,
+                "start_mono": 3546308.759420749,
+                "end_mono": 3546309.100630842,
+                "wall_ms": 341.21009334921837,
+                "cpu_ms": 139.5424399999996,
+                "overlap_start_mono": 3546308.759420749,
+                "overlap_end_mono": 3546309.100630842,
+                "overlap_wall_ms": 341.21009334921837
+              },
+              {
+                "name": "practice_checkpoint",
+                "span_id": 378874,
+                "parent_id": 378873,
+                "start_mono": 3546308.759886928,
+                "end_mono": 3546309.100599162,
+                "wall_ms": 340.71223391219974,
+                "cpu_ms": 139.04532899999822,
+                "overlap_start_mono": 3546308.759886928,
+                "overlap_end_mono": 3546309.100599162,
+                "overlap_wall_ms": 340.71223391219974
+              },
+              {
+                "name": "practice_state",
+                "span_id": 378876,
+                "parent_id": 378874,
+                "start_mono": 3546308.772483208,
+                "end_mono": 3546308.847807255,
+                "wall_ms": 75.32404689118266,
+                "cpu_ms": 61.958129999993616,
+                "overlap_start_mono": 3546308.772483208,
+                "overlap_end_mono": 3546308.847807255,
+                "overlap_wall_ms": 75.32404689118266
+              },
+              {
+                "name": "practice_panel",
+                "span_id": 378877,
+                "parent_id": 378876,
+                "start_mono": 3546308.780658013,
+                "end_mono": 3546308.847794915,
+                "wall_ms": 67.13690189644694,
+                "cpu_ms": 56.29203299999119,
+                "overlap_start_mono": 3546308.780658013,
+                "overlap_end_mono": 3546308.847794915,
+                "overlap_wall_ms": 67.13690189644694
+              },
+              {
+                "name": "live_panel",
+                "span_id": 378878,
+                "parent_id": 378877,
+                "start_mono": 3546308.78808357,
+                "end_mono": 3546308.847748505,
+                "wall_ms": 59.66493487358093,
+                "cpu_ms": 48.85127500000408,
+                "overlap_start_mono": 3546308.78808357,
+                "overlap_end_mono": 3546308.847748505,
+                "overlap_wall_ms": 59.66493487358093
+              },
+              {
+                "name": "practice_ledger",
+                "span_id": 378879,
+                "parent_id": 378874,
+                "start_mono": 3546308.847822365,
+                "end_mono": 3546309.07557954,
+                "wall_ms": 227.75717498734593,
+                "cpu_ms": 45.370883000003914,
+                "overlap_start_mono": 3546308.847822365,
+                "overlap_end_mono": 3546309.07557954,
+                "overlap_wall_ms": 227.75717498734593
+              },
+              {
+                "name": "practice_mirror",
+                "span_id": 378881,
+                "parent_id": 378874,
+                "start_mono": 3546309.075872198,
+                "end_mono": 3546309.098780858,
+                "wall_ms": 22.908659651875496,
+                "cpu_ms": 18.318860999997355,
+                "overlap_start_mono": 3546309.075872198,
+                "overlap_end_mono": 3546309.098780858,
+                "overlap_wall_ms": 22.908659651875496
+              },
+              {
+                "name": "feed_trade",
+                "span_id": 381799,
+                "parent_id": null,
+                "start_mono": 3546309.936194249,
+                "end_mono": 3546309.956221666,
+                "wall_ms": 20.027417223900557,
+                "cpu_ms": 0.3525700000039933,
+                "overlap_start_mono": 3546309.936194249,
+                "overlap_end_mono": 3546309.956221666,
+                "overlap_wall_ms": 20.027417223900557
+              }
+            ],
+            "retained_overlapping_spans": 22,
+            "omitted_spans": 14,
+            "covered_wall_ms": 450.555422808975,
+            "unattributed_wall_ms": 1363.613577093929,
+            "retention_loss": false,
+            "evicted_spans": 2480,
+            "before_observation": false,
+            "active_spans": 0,
+            "quiet_spans_total": 380485,
+            "coverage_scope": "completed retained slow synchronous spans only",
+            "cpu_basis": "full span thread CPU; not apportioned to overlap; nested values are not additive"
+          },
+          {
+            "read": "settlements",
+            "enabled": true,
+            "error": null,
+            "start_mono": 3546310.1564117926,
+            "end_mono": 3546310.213768793,
+            "interval_wall_ms": 57.357000187039375,
+            "spans": [
+              {
+                "name": "practice_step",
+                "span_id": 383337,
+                "parent_id": null,
+                "start_mono": 3546310.200120928,
+                "end_mono": 3546310.209438399,
+                "wall_ms": 9.317470714449883,
+                "cpu_ms": 9.127551000005951,
+                "overlap_start_mono": 3546310.200120928,
+                "overlap_end_mono": 3546310.209438399,
+                "overlap_wall_ms": 9.317470714449883
+              }
+            ],
+            "retained_overlapping_spans": 1,
+            "omitted_spans": 0,
+            "covered_wall_ms": 9.317470714449883,
+            "unattributed_wall_ms": 48.03952947258949,
+            "retention_loss": false,
+            "evicted_spans": 2480,
+            "before_observation": false,
+            "active_spans": 0,
+            "quiet_spans_total": 380485,
+            "coverage_scope": "completed retained slow synchronous spans only",
+            "cpu_basis": "full span thread CPU; not apportioned to overlap; nested values are not additive"
+          },
+          {
+            "read": "balance",
+            "enabled": true,
+            "error": null,
+            "start_mono": 3546310.261151793,
+            "end_mono": 3546310.288981793,
+            "interval_wall_ms": 27.830000035464764,
+            "spans": [
+              {
+                "name": "practice_step",
+                "span_id": 383477,
+                "parent_id": null,
+                "start_mono": 3546310.277230528,
+                "end_mono": 3546310.288825543,
+                "wall_ms": 11.595014948397875,
+                "cpu_ms": 8.955441000011888,
+                "overlap_start_mono": 3546310.277230528,
+                "overlap_end_mono": 3546310.288825543,
+                "overlap_wall_ms": 11.595014948397875
+              }
+            ],
+            "retained_overlapping_spans": 1,
+            "omitted_spans": 0,
+            "covered_wall_ms": 11.595014948397875,
+            "unattributed_wall_ms": 16.23498508706689,
+            "retention_loss": false,
+            "evicted_spans": 2480,
+            "before_observation": false,
+            "active_spans": 0,
+            "quiet_spans_total": 380485,
+            "coverage_scope": "completed retained slow synchronous spans only",
+            "cpu_basis": "full span thread CPU; not apportioned to overlap; nested values are not additive"
+          }
+        ]
+      }
+    }
+  ],
+  "bounded_error_query": {
+    "start_utc": "2026-10-14T21:54:45Z",
+    "filter": "Traceback|ERROR|Exception",
+    "returned_rows": 0,
+    "limitation": "Text-filter response only; not exhaustive error-free coverage."
+  },
+  "limitations": [
+    "Measurement release only; execution-delay task not complete.",
+    "Nested span times are nonadditive; full-span CPU is not prorated to gap overlap.",
+    "Omitted span detail, evictions, quiet work and uncovered time remain explicit.",
+    "Restart partial window is not a completed post-fix trading window.",
+    "No financial settings, variables, orders, production deployment or risk action was performed by this read-only follow-up.",
+    "No profitability inference from timing improvements or incomplete real/practice cohorts."
+  ]
+}

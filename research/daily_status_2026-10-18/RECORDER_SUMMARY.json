@@ -1,0 +1,95 @@
+{
+  "query_entries": 40,
+  "query_limit": 100,
+  "period": {
+    "from_utc": "2026-10-17T00:00:00.000Z",
+    "to_utc": "2026-10-18T00:00:00.000Z",
+    "pacific": "October16 5PM\u2013October17 5PM PDT"
+  },
+  "hourly_periods": 24,
+  "totals": {
+    "minutes_sampled": 1440,
+    "btc15m_minutes": 1440,
+    "btc15m_fresh_minutes": 1440,
+    "trade_tape_minutes": 1440
+  },
+  "gap_records": 10,
+  "open_gap_records": 0,
+  "gap_causes": {
+    "spot_reconnected": 10
+  },
+  "non_null_429": [],
+  "all_error_values_null": true,
+  "storage_from": {
+    "cap_bytes": 4831838208,
+    "deleted_segments": 0,
+    "level": 0,
+    "used_bytes": 957132596
+  },
+  "storage_to": {
+    "cap_bytes": 4831838208,
+    "deleted_segments": 0,
+    "level": 0,
+    "used_bytes": 1236009474
+  },
+  "storage_growth_bytes": 278876878,
+  "latest24h_storage_growth_bytes": 260404875,
+  "latest": {
+    "timestamp": "2026-10-18T15:00:02.907600755Z",
+    "period": {
+      "from": 1792332000,
+      "partial": false,
+      "to": 1792335600
+    },
+    "coverage": {
+      "backfill_jobs_pending": 0,
+      "btc15m_fresh_minutes": 60,
+      "btc15m_minutes": 60,
+      "candidate_book_fresh_share": 1,
+      "minutes_sampled": 60,
+      "trade_covered_to": 1792335595,
+      "trade_tape_minutes": 60
+    },
+    "gaps": {
+      "by_cause": {},
+      "by_lane": {},
+      "open_ended_records": 0,
+      "records": 0
+    },
+    "storage": {
+      "cap_bytes": 4831838208,
+      "deleted_segments": 0,
+      "level": 0,
+      "used_bytes": 1390249157
+    },
+    "book_rtt_ms": {
+      "p50": 68.02,
+      "p95": 123.942,
+      "p99": 197.71
+    },
+    "trade_receive_lag_s": {
+      "p50": 3.676,
+      "p95": 6.869,
+      "p99": 8.282
+    },
+    "manifest_sha256": "e5ce583023996b82c3a55fd810084c64a6da27bdbec5eec77cd796b930854f23"
+  },
+  "flags": [
+    "{\"coverage_certified\":false,\"segment_hashes_reverified\":false,\"per_venue_spot_ticks_verified\":false,\"order_capability\":false,\"read_only\":true,\"rows_and_test_outcomes_read\":false}"
+  ],
+  "commits": [
+    "a0782b743a31369fe25ddf6d2eea96df8511cd8d"
+  ],
+  "sessions": [
+    "6196abf087e64f069778dfb2addee131"
+  ],
+  "gap_lanes": {
+    "spot": 10
+  },
+  "all_periods_hourly_contiguous": true,
+  "latest_storage_percent": 28.772676094538635,
+  "metrics_receipt_completed_at_utc": "2026-10-18T15:24:23Z",
+  "memory_limit_fraction": 0.9998320635700828,
+  "initial_receipts_completed_at_utc": "2026-10-18T15:24:23Z",
+  "inspection_completed_at_utc": "2026-10-18T15:24:56Z"
+}

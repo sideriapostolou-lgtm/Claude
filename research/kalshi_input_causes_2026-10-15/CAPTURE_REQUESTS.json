@@ -1,0 +1,256 @@
+{
+  "queries": [
+    {
+      "file": "capture_slot_kalshi_learning_input_diagnostic.native.json",
+      "event": "kalshi_learning_input_diagnostic",
+      "limit": 500,
+      "phase": "slot",
+      "request": {
+        "projectId": "75750847-85c0-41a3-a2a7-b7f2201a51e9",
+        "environmentId": "17f7b0e0-104c-4903-9484-0106748b3cdb",
+        "deploymentId": "c64e8199-4ce2-4234-ac53-63905e22231d",
+        "startDate": "2026-10-15T17:30:00Z",
+        "endDate": "2026-10-15T17:35:30Z",
+        "filter": "\"kalshi_learning_input_diagnostic\"",
+        "limit": 500
+      },
+      "before": {
+        "current_time": "2026-10-15 17:35:30 UTC"
+      },
+      "after": {
+        "current_time": "2026-10-15 17:35:32 UTC"
+      }
+    },
+    {
+      "file": "capture_slot_kalshi_online_learning_forecast.native.json",
+      "event": "kalshi_online_learning_forecast",
+      "limit": 500,
+      "phase": "slot",
+      "request": {
+        "projectId": "75750847-85c0-41a3-a2a7-b7f2201a51e9",
+        "environmentId": "17f7b0e0-104c-4903-9484-0106748b3cdb",
+        "deploymentId": "c64e8199-4ce2-4234-ac53-63905e22231d",
+        "startDate": "2026-10-15T17:30:00Z",
+        "endDate": "2026-10-15T17:35:30Z",
+        "filter": "\"kalshi_online_learning_forecast\"",
+        "limit": 500
+      },
+      "before": {
+        "current_time": "2026-10-15 17:35:30 UTC"
+      },
+      "after": {
+        "current_time": "2026-10-15 17:35:30 UTC"
+      }
+    },
+    {
+      "file": "capture_slot_kalshi_online_learning_status.native.json",
+      "event": "kalshi_online_learning_status",
+      "limit": 500,
+      "phase": "slot",
+      "request": {
+        "projectId": "75750847-85c0-41a3-a2a7-b7f2201a51e9",
+        "environmentId": "17f7b0e0-104c-4903-9484-0106748b3cdb",
+        "deploymentId": "c64e8199-4ce2-4234-ac53-63905e22231d",
+        "startDate": "2026-10-15T17:30:00Z",
+        "endDate": "2026-10-15T17:35:30Z",
+        "filter": "\"kalshi_online_learning_status\"",
+        "limit": 500
+      },
+      "before": {
+        "current_time": "2026-10-15 17:35:30 UTC"
+      },
+      "after": {
+        "current_time": "2026-10-15 17:35:32 UTC"
+      }
+    },
+    {
+      "file": "capture_slot_kalshi_online_learning_unknown.native.json",
+      "event": "kalshi_online_learning_unknown",
+      "limit": 500,
+      "phase": "slot",
+      "request": {
+        "projectId": "75750847-85c0-41a3-a2a7-b7f2201a51e9",
+        "environmentId": "17f7b0e0-104c-4903-9484-0106748b3cdb",
+        "deploymentId": "c64e8199-4ce2-4234-ac53-63905e22231d",
+        "startDate": "2026-10-15T17:30:00Z",
+        "endDate": "2026-10-15T17:35:30Z",
+        "filter": "\"kalshi_online_learning_unknown\"",
+        "limit": 500
+      },
+      "before": {
+        "current_time": "2026-10-15 17:35:30 UTC"
+      },
+      "after": {
+        "current_time": "2026-10-15 17:35:32 UTC"
+      }
+    },
+    {
+      "file": "capture_final_kalshi_learning_input_diagnostic.native.json",
+      "event": "kalshi_learning_input_diagnostic",
+      "limit": 500,
+      "phase": "final",
+      "request": {
+        "projectId": "75750847-85c0-41a3-a2a7-b7f2201a51e9",
+        "environmentId": "17f7b0e0-104c-4903-9484-0106748b3cdb",
+        "deploymentId": "c64e8199-4ce2-4234-ac53-63905e22231d",
+        "startDate": "2026-10-15T17:30:00Z",
+        "endDate": "2026-10-15T17:47:00Z",
+        "filter": "\"kalshi_learning_input_diagnostic\"",
+        "limit": 500
+      },
+      "before": {
+        "current_time": "2026-10-15 17:47:00 UTC"
+      },
+      "after": {
+        "current_time": "2026-10-15 17:47:09 UTC"
+      }
+    },
+    {
+      "file": "capture_final_kalshi_online_learning_forecast.native.json",
+      "event": "kalshi_online_learning_forecast",
+      "limit": 500,
+      "phase": "final",
+      "request": {
+        "projectId": "75750847-85c0-41a3-a2a7-b7f2201a51e9",
+        "environmentId": "17f7b0e0-104c-4903-9484-0106748b3cdb",
+        "deploymentId": "c64e8199-4ce2-4234-ac53-63905e22231d",
+        "startDate": "2026-10-15T17:30:00Z",
+        "endDate": "2026-10-15T17:47:00Z",
+        "filter": "\"kalshi_online_learning_forecast\"",
+        "limit": 500
+      },
+      "before": {
+        "current_time": "2026-10-15 17:47:00 UTC"
+      },
+      "after": {
+        "current_time": "2026-10-15 17:47:09 UTC"
+      }
+    },
+    {
+      "file": "capture_final_kalshi_online_learning_scored.native.json",
+      "event": "kalshi_online_learning_scored",
+      "limit": 500,
+      "phase": "final",
+      "request": {
+        "projectId": "75750847-85c0-41a3-a2a7-b7f2201a51e9",
+        "environmentId": "17f7b0e0-104c-4903-9484-0106748b3cdb",
+        "deploymentId": "c64e8199-4ce2-4234-ac53-63905e22231d",
+        "startDate": "2026-10-15T17:30:00Z",
+        "endDate": "2026-10-15T17:47:00Z",
+        "filter": "\"kalshi_online_learning_scored\"",
+        "limit": 500
+      },
+      "before": {
+        "current_time": "2026-10-15 17:47:00 UTC"
+      },
+      "after": {
+        "current_time": "2026-10-15 17:47:09 UTC"
+      }
+    },
+    {
+      "file": "capture_final_kalshi_online_learning_status.native.json",
+      "event": "kalshi_online_learning_status",
+      "limit": 500,
+      "phase": "final",
+      "request": {
+        "projectId": "75750847-85c0-41a3-a2a7-b7f2201a51e9",
+        "environmentId": "17f7b0e0-104c-4903-9484-0106748b3cdb",
+        "deploymentId": "c64e8199-4ce2-4234-ac53-63905e22231d",
+        "startDate": "2026-10-15T17:30:00Z",
+        "endDate": "2026-10-15T17:47:00Z",
+        "filter": "\"kalshi_online_learning_status\"",
+        "limit": 500
+      },
+      "before": {
+        "current_time": "2026-10-15 17:47:00 UTC"
+      },
+      "after": {
+        "current_time": "2026-10-15 17:47:09 UTC"
+      }
+    },
+    {
+      "file": "capture_final_kalshi_online_learning_unknown.native.json",
+      "event": "kalshi_online_learning_unknown",
+      "limit": 500,
+      "phase": "final",
+      "request": {
+        "projectId": "75750847-85c0-41a3-a2a7-b7f2201a51e9",
+        "environmentId": "17f7b0e0-104c-4903-9484-0106748b3cdb",
+        "deploymentId": "c64e8199-4ce2-4234-ac53-63905e22231d",
+        "startDate": "2026-10-15T17:30:00Z",
+        "endDate": "2026-10-15T17:47:00Z",
+        "filter": "\"kalshi_online_learning_unknown\"",
+        "limit": 500
+      },
+      "before": {
+        "current_time": "2026-10-15 17:47:00 UTC"
+      },
+      "after": {
+        "current_time": "2026-10-15 17:47:09 UTC"
+      }
+    },
+    {
+      "file": "capture_final_speeddesk_live_fill.native.json",
+      "event": "speeddesk_live_fill",
+      "limit": 500,
+      "phase": "final",
+      "request": {
+        "projectId": "75750847-85c0-41a3-a2a7-b7f2201a51e9",
+        "environmentId": "17f7b0e0-104c-4903-9484-0106748b3cdb",
+        "deploymentId": "c64e8199-4ce2-4234-ac53-63905e22231d",
+        "startDate": "2026-10-15T17:30:00Z",
+        "endDate": "2026-10-15T17:47:00Z",
+        "filter": "\"speeddesk_live_fill\"",
+        "limit": 500
+      },
+      "before": {
+        "current_time": "2026-10-15 17:47:00 UTC"
+      },
+      "after": {
+        "current_time": "2026-10-15 17:47:00 UTC"
+      }
+    },
+    {
+      "file": "capture_final_speeddesk_live_settlement.native.json",
+      "event": "speeddesk_live_settlement",
+      "limit": 500,
+      "phase": "final",
+      "request": {
+        "projectId": "75750847-85c0-41a3-a2a7-b7f2201a51e9",
+        "environmentId": "17f7b0e0-104c-4903-9484-0106748b3cdb",
+        "deploymentId": "c64e8199-4ce2-4234-ac53-63905e22231d",
+        "startDate": "2026-10-15T17:30:00Z",
+        "endDate": "2026-10-15T17:47:00Z",
+        "filter": "\"speeddesk_live_settlement\"",
+        "limit": 500
+      },
+      "before": {
+        "current_time": "2026-10-15 17:47:00 UTC"
+      },
+      "after": {
+        "current_time": "2026-10-15 17:47:09 UTC"
+      }
+    },
+    {
+      "file": "capture_final_speeddesk_live_status.native.json",
+      "event": "speeddesk_live_status",
+      "limit": 500,
+      "phase": "final",
+      "request": {
+        "projectId": "75750847-85c0-41a3-a2a7-b7f2201a51e9",
+        "environmentId": "17f7b0e0-104c-4903-9484-0106748b3cdb",
+        "deploymentId": "c64e8199-4ce2-4234-ac53-63905e22231d",
+        "startDate": "2026-10-15T17:30:00Z",
+        "endDate": "2026-10-15T17:47:00Z",
+        "filter": "\"speeddesk_live_status\"",
+        "limit": 500
+      },
+      "before": {
+        "current_time": "2026-10-15 17:47:00 UTC"
+      },
+      "after": {
+        "current_time": "2026-10-15 17:47:09 UTC"
+      }
+    }
+  ]
+}

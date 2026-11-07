@@ -1,0 +1,301 @@
+{
+  "archive": "/workspace/shared/ledger-stage-final-preparation.zip",
+  "archive_bytes": 313671,
+  "archive_sha256": "e3d0f35ac1408e4cd997e7d015eb1b377fe18842ce5992efddc76e2a0c308a0a",
+  "crc_verified": true,
+  "member_byte_equality_verified": true,
+  "current_bundle_declared_candidate_sha256": "668ba5b47e8ba142d0f61bc00953e264163b4b2d282acd58a8015dec59de78e9",
+  "frozen_v2_manifest": {
+    "base": "86013da3cabb28d56a829c99b0771ebdbd54b047",
+    "source_baseline": "a165f34",
+    "frozen_utc": "2026-10-15T05:25:34Z",
+    "files": {
+      "src/nightcrawler/ledger.py": {
+        "sha256": "32230b507ea32455a1c18ddd998438e8fa2fc87be0a7483918b7f4a347e87d50",
+        "bytes": 41221
+      },
+      "src/nightcrawler/ledger_timing.py": {
+        "sha256": "e9927e94583847d8f1a954f83e87ad775e918e312a6ef4e3a058ffb8c794b99e",
+        "bytes": 6856
+      },
+      "src/nightcrawler/speeddesk.py": {
+        "sha256": "bf4ce2fcc3f10c730a6851abd0d49ddfc5ba9ae391fd70ff3dabc9af4f260e05",
+        "bytes": 44011
+      },
+      "src/nightcrawler/speeddesk_live.py": {
+        "sha256": "26c9a0c5d2cecbc7ece0a7de10edd05304ddc3115b9436d2ea4119314e2bdb47",
+        "bytes": 168748
+      },
+      "src/nightcrawler/speeddesk_worktrace.py": {
+        "sha256": "22604f9ed87cbd831967d66faf078be6f00fa8119afc6195f470e35447f99b2a",
+        "bytes": 14614
+      },
+      "tests/test_ledger_timing.py": {
+        "sha256": "be06e0daf229a4bf7ee615f76377ba6b978edc169ab4b0c22f22a9f4b41722ff",
+        "bytes": 17483
+      },
+      "tests/test_checkpoint_ledger_timing.py": {
+        "sha256": "03cf5fb3ed8723346478e6305c885bb08b348a3a97e570a03a0e19fd75f436b4",
+        "bytes": 11182
+      }
+    },
+    "checks": {
+      "targeted_pytest": "175 passed in 7.12s; 60 new focused cases",
+      "ruff": "all seven changed files passed",
+      "mypy": "all five changed source files passed"
+    },
+    "scope": "Diagnostic-only; no commit, release, production query, credentials, financial policy change.",
+    "bundle_sha256_path_nul_bytes_nul_in_list_order": "668ba5b47e8ba142d0f61bc00953e264163b4b2d282acd58a8015dec59de78e9",
+    "patch_sha256": "dda8bf2e65a4c8a565e25535b64229e476f6b3a8d652b26d38b45b8db02ea143",
+    "evidence": {
+      "ledger-timing-overhead.py": "3556ac75a174eda899bc1df81c769273a8b6fb2bd8dd6f450c95924c06b0ca6a",
+      "ledger-timing-overhead.json": "19e9365fd2252b9e55b07750b56f6a46d33fb672e3aa328bf9cf2be30516ff2c",
+      "ledger-timing-file-overhead.py": "6ea3fb16dada6f85c635a7955e74c9123de259a5fe527e3b139f074b07c00f03",
+      "ledger-timing-file-overhead.json": "333d584015b4d4a2dab5f3bd58edf18019db73406c8482b4554a468dc03ba360"
+    }
+  },
+  "superseded_inputs": [
+    "ledger-stage-timing-frozen/ directory",
+    "ledger-stage-timing-frozen.tar (included)"
+  ],
+  "members": [
+    {
+      "original_path": "/workspace/shared/ledger-stage-timing-frozen-v2/candidate.patch",
+      "member": "ledger-stage-timing-frozen-v2/candidate.patch",
+      "bytes": 56588,
+      "sha256": "dda8bf2e65a4c8a565e25535b64229e476f6b3a8d652b26d38b45b8db02ea143",
+      "status": "current"
+    },
+    {
+      "original_path": "/workspace/shared/ledger-stage-timing-frozen-v2/ledger-timing-file-overhead.json",
+      "member": "ledger-stage-timing-frozen-v2/ledger-timing-file-overhead.json",
+      "bytes": 9416,
+      "sha256": "333d584015b4d4a2dab5f3bd58edf18019db73406c8482b4554a468dc03ba360",
+      "status": "current"
+    },
+    {
+      "original_path": "/workspace/shared/ledger-stage-timing-frozen-v2/ledger-timing-file-overhead.py",
+      "member": "ledger-stage-timing-frozen-v2/ledger-timing-file-overhead.py",
+      "bytes": 3082,
+      "sha256": "6ea3fb16dada6f85c635a7955e74c9123de259a5fe527e3b139f074b07c00f03",
+      "status": "current"
+    },
+    {
+      "original_path": "/workspace/shared/ledger-stage-timing-frozen-v2/ledger-timing-overhead.json",
+      "member": "ledger-stage-timing-frozen-v2/ledger-timing-overhead.json",
+      "bytes": 8803,
+      "sha256": "19e9365fd2252b9e55b07750b56f6a46d33fb672e3aa328bf9cf2be30516ff2c",
+      "status": "current"
+    },
+    {
+      "original_path": "/workspace/shared/ledger-stage-timing-frozen-v2/ledger-timing-overhead.py",
+      "member": "ledger-stage-timing-frozen-v2/ledger-timing-overhead.py",
+      "bytes": 2519,
+      "sha256": "3556ac75a174eda899bc1df81c769273a8b6fb2bd8dd6f450c95924c06b0ca6a",
+      "status": "current"
+    },
+    {
+      "original_path": "/workspace/shared/ledger-stage-timing-frozen-v2/manifest.json",
+      "member": "ledger-stage-timing-frozen-v2/manifest.json",
+      "bytes": 2161,
+      "sha256": "a7d47d8200d037dd5bb60efe372d7fa9a1f4135b47ff23fc8f88d20b5a99d2c6",
+      "status": "current"
+    },
+    {
+      "original_path": "/workspace/shared/ledger-stage-timing-frozen-v2/src/nightcrawler/ledger.py",
+      "member": "ledger-stage-timing-frozen-v2/src/nightcrawler/ledger.py",
+      "bytes": 41221,
+      "sha256": "32230b507ea32455a1c18ddd998438e8fa2fc87be0a7483918b7f4a347e87d50",
+      "status": "current"
+    },
+    {
+      "original_path": "/workspace/shared/ledger-stage-timing-frozen-v2/src/nightcrawler/ledger_timing.py",
+      "member": "ledger-stage-timing-frozen-v2/src/nightcrawler/ledger_timing.py",
+      "bytes": 6856,
+      "sha256": "e9927e94583847d8f1a954f83e87ad775e918e312a6ef4e3a058ffb8c794b99e",
+      "status": "current"
+    },
+    {
+      "original_path": "/workspace/shared/ledger-stage-timing-frozen-v2/src/nightcrawler/speeddesk.py",
+      "member": "ledger-stage-timing-frozen-v2/src/nightcrawler/speeddesk.py",
+      "bytes": 44011,
+      "sha256": "bf4ce2fcc3f10c730a6851abd0d49ddfc5ba9ae391fd70ff3dabc9af4f260e05",
+      "status": "current"
+    },
+    {
+      "original_path": "/workspace/shared/ledger-stage-timing-frozen-v2/src/nightcrawler/speeddesk_live.py",
+      "member": "ledger-stage-timing-frozen-v2/src/nightcrawler/speeddesk_live.py",
+      "bytes": 168748,
+      "sha256": "26c9a0c5d2cecbc7ece0a7de10edd05304ddc3115b9436d2ea4119314e2bdb47",
+      "status": "current"
+    },
+    {
+      "original_path": "/workspace/shared/ledger-stage-timing-frozen-v2/src/nightcrawler/speeddesk_worktrace.py",
+      "member": "ledger-stage-timing-frozen-v2/src/nightcrawler/speeddesk_worktrace.py",
+      "bytes": 14614,
+      "sha256": "22604f9ed87cbd831967d66faf078be6f00fa8119afc6195f470e35447f99b2a",
+      "status": "current"
+    },
+    {
+      "original_path": "/workspace/shared/ledger-stage-timing-frozen-v2/tests/test_checkpoint_ledger_timing.py",
+      "member": "ledger-stage-timing-frozen-v2/tests/test_checkpoint_ledger_timing.py",
+      "bytes": 11182,
+      "sha256": "03cf5fb3ed8723346478e6305c885bb08b348a3a97e570a03a0e19fd75f436b4",
+      "status": "current"
+    },
+    {
+      "original_path": "/workspace/shared/ledger-stage-timing-frozen-v2/tests/test_ledger_timing.py",
+      "member": "ledger-stage-timing-frozen-v2/tests/test_ledger_timing.py",
+      "bytes": 17483,
+      "sha256": "be06e0daf229a4bf7ee615f76377ba6b978edc169ab4b0c22f22a9f4b41722ff",
+      "status": "current"
+    },
+    {
+      "original_path": "/workspace/shared/ledger-stage-timing-frozen/candidate.patch",
+      "member": "ledger-stage-timing-frozen/candidate.patch",
+      "bytes": 56481,
+      "sha256": "76c82608ef953e6f4f56286e5028bb6e5df1548351b612c2e9f3ad431f7393f4",
+      "status": "superseded"
+    },
+    {
+      "original_path": "/workspace/shared/ledger-stage-timing-frozen/ledger-timing-file-overhead.json",
+      "member": "ledger-stage-timing-frozen/ledger-timing-file-overhead.json",
+      "bytes": 9416,
+      "sha256": "333d584015b4d4a2dab5f3bd58edf18019db73406c8482b4554a468dc03ba360",
+      "status": "superseded"
+    },
+    {
+      "original_path": "/workspace/shared/ledger-stage-timing-frozen/ledger-timing-file-overhead.py",
+      "member": "ledger-stage-timing-frozen/ledger-timing-file-overhead.py",
+      "bytes": 3082,
+      "sha256": "6ea3fb16dada6f85c635a7955e74c9123de259a5fe527e3b139f074b07c00f03",
+      "status": "superseded"
+    },
+    {
+      "original_path": "/workspace/shared/ledger-stage-timing-frozen/ledger-timing-overhead.json",
+      "member": "ledger-stage-timing-frozen/ledger-timing-overhead.json",
+      "bytes": 8803,
+      "sha256": "19e9365fd2252b9e55b07750b56f6a46d33fb672e3aa328bf9cf2be30516ff2c",
+      "status": "superseded"
+    },
+    {
+      "original_path": "/workspace/shared/ledger-stage-timing-frozen/ledger-timing-overhead.py",
+      "member": "ledger-stage-timing-frozen/ledger-timing-overhead.py",
+      "bytes": 2519,
+      "sha256": "3556ac75a174eda899bc1df81c769273a8b6fb2bd8dd6f450c95924c06b0ca6a",
+      "status": "superseded"
+    },
+    {
+      "original_path": "/workspace/shared/ledger-stage-timing-frozen/manifest.json",
+      "member": "ledger-stage-timing-frozen/manifest.json",
+      "bytes": 2161,
+      "sha256": "1899bbdf17c9603e2cf0b78f3e51afbbba39040c189453945ddac241da7201dd",
+      "status": "superseded"
+    },
+    {
+      "original_path": "/workspace/shared/ledger-stage-timing-frozen/src/nightcrawler/ledger.py",
+      "member": "ledger-stage-timing-frozen/src/nightcrawler/ledger.py",
+      "bytes": 41221,
+      "sha256": "32230b507ea32455a1c18ddd998438e8fa2fc87be0a7483918b7f4a347e87d50",
+      "status": "superseded"
+    },
+    {
+      "original_path": "/workspace/shared/ledger-stage-timing-frozen/src/nightcrawler/ledger_timing.py",
+      "member": "ledger-stage-timing-frozen/src/nightcrawler/ledger_timing.py",
+      "bytes": 6856,
+      "sha256": "e9927e94583847d8f1a954f83e87ad775e918e312a6ef4e3a058ffb8c794b99e",
+      "status": "superseded"
+    },
+    {
+      "original_path": "/workspace/shared/ledger-stage-timing-frozen/src/nightcrawler/speeddesk.py",
+      "member": "ledger-stage-timing-frozen/src/nightcrawler/speeddesk.py",
+      "bytes": 44011,
+      "sha256": "bf4ce2fcc3f10c730a6851abd0d49ddfc5ba9ae391fd70ff3dabc9af4f260e05",
+      "status": "superseded"
+    },
+    {
+      "original_path": "/workspace/shared/ledger-stage-timing-frozen/src/nightcrawler/speeddesk_live.py",
+      "member": "ledger-stage-timing-frozen/src/nightcrawler/speeddesk_live.py",
+      "bytes": 168748,
+      "sha256": "26c9a0c5d2cecbc7ece0a7de10edd05304ddc3115b9436d2ea4119314e2bdb47",
+      "status": "superseded"
+    },
+    {
+      "original_path": "/workspace/shared/ledger-stage-timing-frozen/src/nightcrawler/speeddesk_worktrace.py",
+      "member": "ledger-stage-timing-frozen/src/nightcrawler/speeddesk_worktrace.py",
+      "bytes": 14614,
+      "sha256": "22604f9ed87cbd831967d66faf078be6f00fa8119afc6195f470e35447f99b2a",
+      "status": "superseded"
+    },
+    {
+      "original_path": "/workspace/shared/ledger-stage-timing-frozen/tests/test_checkpoint_ledger_timing.py",
+      "member": "ledger-stage-timing-frozen/tests/test_checkpoint_ledger_timing.py",
+      "bytes": 11077,
+      "sha256": "ac27217b3cfb6f7bec46da4716020bb886a3cc7425aef2c46ef451134039d4c7",
+      "status": "superseded"
+    },
+    {
+      "original_path": "/workspace/shared/ledger-stage-timing-frozen/tests/test_ledger_timing.py",
+      "member": "ledger-stage-timing-frozen/tests/test_ledger_timing.py",
+      "bytes": 17483,
+      "sha256": "be06e0daf229a4bf7ee615f76377ba6b978edc169ab4b0c22f22a9f4b41722ff",
+      "status": "superseded"
+    },
+    {
+      "original_path": "/workspace/shared/ledger-stage-timing-frozen.tar",
+      "member": "ledger-stage-timing-frozen.tar",
+      "bytes": 419840,
+      "sha256": "4a3672d08467f06cbc88f1b4f97d582e21227efb71771439ad4c46fbff6c844e",
+      "status": "superseded"
+    },
+    {
+      "original_path": "/workspace/shared/ledger-stage-timing-exact-review.md",
+      "member": "ledger-stage-timing-exact-review.md",
+      "bytes": 8825,
+      "sha256": "615bd0377fac480a5afba86626ffa68427549510cde8aea1078d83950904dbfb",
+      "status": "current"
+    },
+    {
+      "original_path": "/workspace/shared/ledger-stage-timing-readiness.md",
+      "member": "ledger-stage-timing-readiness.md",
+      "bytes": 4474,
+      "sha256": "0363106fc5eb678aa5b6a3f1ccd97e1211dfe7f7a0e8097aa9d7396f741b7e03",
+      "status": "current"
+    },
+    {
+      "original_path": "/workspace/shared/ledger-stage-final-pytest.log",
+      "member": "ledger-stage-final-pytest.log",
+      "bytes": 7928,
+      "sha256": "581be9b0fa0347425cd0a262af959fa8cc9f8c72fa84f9f46f521994fc67e463",
+      "status": "current"
+    },
+    {
+      "original_path": "/workspace/shared/ledger-stage-final-pytest-exit.json",
+      "member": "ledger-stage-final-pytest-exit.json",
+      "bytes": 297,
+      "sha256": "a5ff7a3a7bc874cb561c2a2ef12726eb91eeabcc7b3cc21fee6f13be364a6fbc",
+      "status": "current"
+    },
+    {
+      "original_path": "/workspace/shared/ledger-stage-final-mypy.log",
+      "member": "ledger-stage-final-mypy.log",
+      "bytes": 45,
+      "sha256": "5525ee69f7acc60739d39ebd40e8c0169c4d79d0b48708365b122aee5ada2f48",
+      "status": "current"
+    },
+    {
+      "original_path": "/workspace/shared/ledger-stage-final-ruff.log",
+      "member": "ledger-stage-final-ruff.log",
+      "bytes": 19,
+      "sha256": "82b3e6a6c090a57601d22943bd23fca9218d1031dbe5a7b754092f9a156b4f18",
+      "status": "current"
+    },
+    {
+      "original_path": "/workspace/shared/ledger-stage-final-static-exits.json",
+      "member": "ledger-stage-final-static-exits.json",
+      "bytes": 772,
+      "sha256": "2b5f17e98a06b80449e6ab27452ed1a1ae301a84a2e70c526b35ae9b3b6d9fc6",
+      "status": "current"
+    }
+  ]
+}

@@ -1,0 +1,123 @@
+{
+  "scope": "PR #46 exact deployment, startup through 2026-10-14 15:12 UTC; bounded observation only",
+  "deployment": "08b7778c-713a-4f76-8b1c-48b62d092e97",
+  "commit": "41781df7284671da7b4ed534e5de81b2402779e7",
+  "success_at": "2026-10-14T15:08:56.193Z",
+  "statuses": [
+    {
+      "timestamp": "2026-10-14T15:08:58.359703252Z",
+      "mode": "live",
+      "authenticated": true,
+      "caps": {
+        "window_usd": 10,
+        "open_usd": 20,
+        "day_stop_usd": 6,
+        "clip": 5,
+        "total_stop_usd": 10
+      },
+      "cash_usd": 42.4546,
+      "at_risk_usd": 0,
+      "open_orders": 0,
+      "positions": 1,
+      "today_pnl_usd": 2.6552999999999995,
+      "total_pnl_usd": -7.286800000000004,
+      "integrity_error": null,
+      "total_halted": false,
+      "day_stop_latched": false,
+      "pull_enabled": false,
+      "ladder_rung": 0,
+      "reconcile_ms": 952.8,
+      "loop_lag": {
+        "n": 37,
+        "median_ms": 10.1,
+        "p90_ms": 32.5,
+        "max_ms": 379.2
+      }
+    },
+    {
+      "timestamp": "2026-10-14T15:10:17.974569026Z",
+      "mode": "live",
+      "authenticated": true,
+      "caps": {
+        "window_usd": 10,
+        "open_usd": 20,
+        "day_stop_usd": 6,
+        "clip": 5,
+        "total_stop_usd": 10
+      },
+      "cash_usd": 42.4546,
+      "at_risk_usd": 0,
+      "open_orders": 0,
+      "positions": 1,
+      "today_pnl_usd": 2.6552999999999995,
+      "total_pnl_usd": -7.286800000000004,
+      "integrity_error": null,
+      "total_halted": false,
+      "day_stop_latched": false,
+      "pull_enabled": false,
+      "ladder_rung": 0,
+      "reconcile_ms": 15580.1,
+      "loop_lag": {
+        "n": 449,
+        "median_ms": 6.9,
+        "p90_ms": 296.1,
+        "max_ms": 3572.1
+      }
+    },
+    {
+      "timestamp": "2026-10-14T15:11:10.226274170Z",
+      "mode": "live",
+      "authenticated": true,
+      "caps": {
+        "window_usd": 10,
+        "open_usd": 20,
+        "day_stop_usd": 6,
+        "clip": 5,
+        "total_stop_usd": 10
+      },
+      "cash_usd": 42.4546,
+      "at_risk_usd": 0,
+      "open_orders": 0,
+      "positions": 1,
+      "today_pnl_usd": 2.6552999999999995,
+      "total_pnl_usd": -7.286800000000004,
+      "integrity_error": null,
+      "total_halted": false,
+      "day_stop_latched": false,
+      "pull_enabled": false,
+      "ladder_rung": 0,
+      "reconcile_ms": 488.3,
+      "loop_lag": {
+        "n": 250,
+        "median_ms": 21.6,
+        "p90_ms": 490.9,
+        "max_ms": 4368.6
+      }
+    }
+  ],
+  "arena": [
+    {
+      "timestamp": "2026-10-14T15:09:56.924152830Z",
+      "message": "2026-10-14T15:09:56Z INFO nightcrawler.kalshi_arena: kalshi_arena_status residents=12 windows=0 void=64 void_feed=56 received=74806 dropped=23628 late=43380 coalesced=66216 pass_p99_ms=3.412 pass_max_ms=5.236 duty_pct=0.86 lag_s=9.26 errors=0 live_flush_us_p99=25306 live_flush_us_max=27643"
+    },
+    {
+      "timestamp": "2026-10-14T15:10:57.351057619Z",
+      "message": "2026-10-14T15:10:57Z INFO nightcrawler.kalshi_arena: kalshi_arena_status residents=12 windows=0 void=64 void_feed=56 received=121175 dropped=125308 late=79085 coalesced=109675 pass_p99_ms=2.698 pass_max_ms=4.27 duty_pct=0.63 lag_s=1.06 errors=0 live_flush_us_p99=21325 live_flush_us_max=21325"
+    }
+  ],
+  "five_minute_producer": {
+    "timestamp": "2026-10-14T15:13:56.464555034Z",
+    "message": "2026-10-14T15:13:56Z INFO nightcrawler.kalshi_arena: kalshi_arena_feed pid=23 put=250618 dropped=125308 frames=2172 kib=36155 pending=4 pending_peak=16384 blocked=0 sliced=176 flush_us_p50=310 flush_us_p99=11325 flush_us_max=27642"
+  },
+  "five_minute_child": {
+    "timestamp": "2026-10-14T15:13:52.949026672Z",
+    "message": "2026-10-14T15:13:50Z INFO nightcrawler.kalshi_arena: kalshi_arena_status residents=12 windows=0 void=64 void_feed=56 received=244497 dropped=125308 late=79085 coalesced=218129 pass_p99_ms=1.474 pass_max_ms=3.977 duty_pct=0.65 lag_s=1.09 errors=0 live_flush_us_p99=13592 live_flush_us_max=242463"
+  },
+  "limitations": [
+    "Transport capacity improved relative to PR #45 but substantial drops and lateness remain; zero complete windows.",
+    "No accepted-order, fill or cancel receipt in this deployment's bounded startup queries, so no post-patch trading-ack sample.",
+    "Cash is not profit; a position can have zero modeled loss exposure.",
+    "No strategy inversion, new budget, cap or trading-setting change.",
+    "No sustained-profit or complete-recording claim."
+  ]
+}

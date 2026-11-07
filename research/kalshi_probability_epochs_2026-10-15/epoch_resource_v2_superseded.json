@@ -1,0 +1,181 @@
+{
+  "source_sha256": {
+    "kalshi_probability_epochs.py": "520f5769f3a059a6022005f427fa35ab59bac113466c40c41019a634bf04d05c",
+    "kalshi_probability_learning.py": "43d8f527fd24aee3a7dbb33d848dcaaaf0e39089ab605deddad32dfabc1e35ab",
+    "kalshi_arena.py": "52b983cb87ba6ec593124aef525b37b2ad48ce8cabba0325f6b813d52e7a0676",
+    "pagestate.py": "d73eec093164c7a659f12b08226844fb58cfd01e96278585b255575ea8212479"
+  },
+  "source_unchanged": true,
+  "fixture": {
+    "epochs": 5,
+    "archived": 4,
+    "each": {
+      "scored": 64,
+      "pending_forecasts": 32,
+      "recent": 64,
+      "labels": 64,
+      "slug_chars": 128
+    },
+    "duplicated_legacy_scored": 64
+  },
+  "bytes": {
+    "states_including_duplicated_legacy": [
+      77775,
+      78195,
+      78195,
+      78195,
+      78195,
+      77775
+    ],
+    "joint_optional": 436561,
+    "lineage_panel": 1667,
+    "full_arena_panel": 18815
+  },
+  "cpu_ms": {
+    "checkpoint_and_json": {
+      "n": 20,
+      "mean": 23.93364945,
+      "p95": 24.570762,
+      "max": 30.253744,
+      "raw": [
+        24.202674,
+        23.912012,
+        23.126866,
+        23.719974,
+        23.684828,
+        23.768243,
+        22.718232,
+        23.709614,
+        23.170056,
+        24.570762,
+        24.191864,
+        23.807087,
+        24.226569,
+        30.253744,
+        23.405998,
+        23.983236,
+        23.060903,
+        23.018814,
+        23.260746,
+        22.880767
+      ]
+    },
+    "one_learner_state_and_json": {
+      "n": 20,
+      "mean": 2.0709336,
+      "p95": 2.183537,
+      "max": 2.491742,
+      "raw": [
+        2.061109,
+        2.086836,
+        2.01325,
+        2.491742,
+        2.177206,
+        2.040871,
+        2.032315,
+        2.021295,
+        2.028107,
+        2.004944,
+        2.011386,
+        2.006977,
+        2.007188,
+        1.999715,
+        2.016655,
+        2.183537,
+        2.178348,
+        2.004042,
+        2.042564,
+        2.010585
+      ]
+    },
+    "full_panel_and_json": {
+      "n": 20,
+      "mean": 0.3956338,
+      "p95": 0.440012,
+      "max": 0.50271,
+      "raw": [
+        0.50271,
+        0.440012,
+        0.424413,
+        0.413492,
+        0.385429,
+        0.367957,
+        0.410416,
+        0.367967,
+        0.364681,
+        0.405668,
+        0.367305,
+        0.389677,
+        0.410086,
+        0.363299,
+        0.400198,
+        0.36396,
+        0.387744,
+        0.3752,
+        0.371223,
+        0.401239
+      ]
+    },
+    "startup_restore": {
+      "n": 10,
+      "mean": 87.7481441,
+      "p95": 99.149155,
+      "max": 99.149155,
+      "raw": [
+        85.695843,
+        87.677794,
+        85.507523,
+        86.945618,
+        99.149155,
+        88.518835,
+        83.504913,
+        83.978477,
+        91.560325,
+        84.942958
+      ]
+    },
+    "steady_frame_extra": {
+      "n": 20,
+      "mean": 0.013042638,
+      "p95": 0.01877004999999999,
+      "max": 0.01977292,
+      "raw": [
+        0.0019318000000000113,
+        0.01977292,
+        0.009227329999999999,
+        0.011508080000000004,
+        0.014629030000000008,
+        0.012959100000000001,
+        0.014394569999999995,
+        0.008718280000000002,
+        0.01877004999999999,
+        0.01273949,
+        0.011402880000000004,
+        0.012121620000000007,
+        0.014031199999999994,
+        0.013303539999999996,
+        0.01126945,
+        0.01436503,
+        0.014043420000000001,
+        0.01493829,
+        0.012877149999999997,
+        0.017849529999999995
+      ]
+    }
+  },
+  "gates": {
+    "per_state_262144": true,
+    "joint_2MiB": true,
+    "full_panel_256KiB": true,
+    "checkpoint_p95_100ms": true,
+    "checkpoint_max_250ms": true,
+    "extra_frame_mean_1ms": true,
+    "save_sequence_and_durability_equal": true
+  },
+  "limits": [
+    "Synthetic local child CPU, no production contention/fsync/log-backpressure guarantee.",
+    "No profitability result. Epoch source hashes injected only for historical fixture identity.",
+    "Maximum counts/slug length populated; fixed byte hard limit independently enforced, not an assertion all mathematical float encodings maximize bytes.",
+    "Pre-host binary downgrade is unsupported; A-B-A means epoch-aware hosts."
+  ]
+}

@@ -1,0 +1,905 @@
+{
+ "hypothesis": "Y2",
+ "version": "y2-v1",
+ "stage": "train",
+ "split": "train",
+ "utc": "2026-10-09 10:43:44",
+ "provisional": false,
+ "debug_only": false,
+ "prereg_sha256": "c0ff817c736482d8e63b11cd179ec3509cf13eb548acbee9b440c454993b38e4",
+ "rerun_reason": null,
+ "coverage": {
+  "split": "train",
+  "bounds_utc": [
+   "2026-10-01 00:00:00",
+   "2026-10-05 00:00:00"
+  ],
+  "debug_only": false,
+  "graduates_in_split": 5435,
+  "tradeable": 3863,
+  "usable": 3863,
+  "excluded": {
+   "mayhem": 1422,
+   "not_sol_quoted": 150
+  },
+  "created_inexact": 943,
+  "has_create0": 943,
+  "chain_hours_scanned_frac": 1.0,
+  "days": [
+   {
+    "day": "2026-10-01",
+    "hours_in_split": 24,
+    "curve_hours": 24,
+    "b2_hours": 24,
+    "b2_hours_midrun": 0,
+    "coins_created": 1261,
+    "tradeable": 989,
+    "usable": 989,
+    "usable_frac": 1.0,
+    "partial": false
+   },
+   {
+    "day": "2026-10-02",
+    "hours_in_split": 24,
+    "curve_hours": 24,
+    "b2_hours": 24,
+    "b2_hours_midrun": 0,
+    "coins_created": 1255,
+    "tradeable": 933,
+    "usable": 933,
+    "usable_frac": 1.0,
+    "partial": false
+   },
+   {
+    "day": "2026-10-03",
+    "hours_in_split": 24,
+    "curve_hours": 24,
+    "b2_hours": 24,
+    "b2_hours_midrun": 0,
+    "coins_created": 1632,
+    "tradeable": 966,
+    "usable": 966,
+    "usable_frac": 1.0,
+    "partial": false
+   },
+   {
+    "day": "2026-10-04",
+    "hours_in_split": 24,
+    "curve_hours": 24,
+    "b2_hours": 24,
+    "b2_hours_midrun": 0,
+    "coins_created": 1287,
+    "tradeable": 975,
+    "usable": 975,
+    "usable_frac": 1.0,
+    "partial": false
+   }
+  ],
+  "days_expected": 4.0,
+  "days_full": 4,
+  "curve_span_utc": [
+   "2026-09-29 21:00:00",
+   "2026-10-09 02:00:00"
+  ],
+  "b2_span_utc": [
+   "2026-10-01 00:00:00",
+   "2026-10-05 04:00:00"
+  ],
+  "completeness_source": "raw_chunks",
+  "parquet_snapshot_utc": "2026-10-09 10:40:52",
+  "b2_hours_needed": 100,
+  "b2_hours_done": 100,
+  "b2_hours_midrun": [],
+  "sol_usd": {
+   "series_utc": [
+    "2026-09-15 00:00:00",
+    "2026-10-08 23:59:00"
+   ],
+   "constant_fallback": false,
+   "lookahead_coins": 0,
+   "stale_coins": 0
+  },
+  "power": {
+   "entry_bar_coins": {
+    "need": 40,
+    "have_usable_coins": 3863,
+    "ok": true
+   },
+   "x1_r0_trades_5_seeds": {
+    "need": 500,
+    "max_possible": 19315,
+    "ok": true
+   },
+   "g1_flagged_coins_val": {
+    "need": 200,
+    "max_possible": 3863,
+    "ok": true
+   }
+  },
+  "underpowered": false,
+  "complete": true,
+  "notes": [],
+  "from_flow": true
+ },
+ "ref_lookback": {
+  "hours": 24,
+  "problems": []
+ },
+ "n_coins": 3863,
+ "span_days": 4.0,
+ "event_counts": {
+  "usable": 3863,
+  "ineligible": {
+   "instant": 2208,
+   "curve_partial": 235
+  },
+  "eligible": 1420,
+  "eligible_warm": 1420,
+  "eligible_alive": 492,
+  "terciles": {
+   "mid": 484,
+   "top": 474,
+   "bottom": 462
+  },
+  "selector_coins": {
+   "T3": 474,
+   "T5": 278,
+   "PE11": 689
+  },
+  "selector_alive": {
+   "T3": 150,
+   "T5": 83,
+   "PE11": 169,
+   "ALL": 492
+  },
+  "n_ref_median": 342.0,
+  "n_ref_min": 297,
+  "ref_pool_size": 1736,
+  "ref_graduates_read": 6766,
+  "ref_coverage_source": "raw_curve_chunks"
+ },
+ "configs": {
+  "T3|X60": {
+   "config": "T3|X60",
+   "params_hash": "0e25686fa3ef",
+   "hypothesis": "Y2",
+   "n": 150,
+   "n_coins": 150,
+   "by_tercile_n": {
+    "top": 150
+   },
+   "n_placebo": 2940,
+   "horizon_exits": 0,
+   "trial": {
+    "config": "Y2|0e25686fa3ef|cfg:a06543feac6c",
+    "new_trial": true,
+    "n_trials_total": 2672
+   },
+   "reasons": {
+    "stop": 95,
+    "time": 55
+   },
+   "mean": -0.3959712553852258,
+   "median": -0.5197798449741607,
+   "win_rate": 0.14666666666666667,
+   "sd": 0.3365062561661255,
+   "ci90": [
+    -0.43993322416376485,
+    -0.34904107906225235
+   ],
+   "ci95": [
+    -0.44841715704049273,
+    -0.3400958155692174
+   ],
+   "ci90_block": [
+    -0.45969753170104627,
+    -0.3237209263173298
+   ],
+   "ci95_block": [
+    -0.46983190678027076,
+    -0.3090638931336836
+   ],
+   "n_blocks": 17,
+   "censored_share": 0.0,
+   "top_coin_share": null,
+   "top3_coin_share": null,
+   "mean_without_top2": -0.4137976156138261,
+   "halves": {
+    "first": -0.39816606458670556,
+    "second": -0.3937764461837461,
+    "consistent": false
+   },
+   "mean_hold_min": 33.959999999999994,
+   "deflated_sharpe": {
+    "sr": -1.176712908391646,
+    "sr0": 0.28881696108670957,
+    "dsr": 5.551115123125783e-17,
+    "n_trials": 2678,
+    "T": 150,
+    "skew": 1.685355371783329,
+    "kurtosis": 5.904692610942389
+   },
+   "placebo": {
+    "placebo_mean": -0.33395734153208106,
+    "n_placebo": 2940,
+    "n_signals_matched": 150,
+    "mean_diff": -0.0641601547599081,
+    "diff_ci95": [
+     -0.12614396801178168,
+     -1.4651969607206314e-05
+    ]
+   },
+   "placebo_unmatched": {
+    "placebo_mean": -0.33721453935474,
+    "n_placebo": 3000,
+    "n_signals_matched": 150,
+    "mean_diff": -0.05875671603048576,
+    "diff_ci95": [
+     -0.11773833789416818,
+     0.0031505210965656464
+    ]
+   },
+   "stress": {
+    "costs_x1.5": -0.40806374656136496,
+    "rent_0.22": -0.40697125538522577,
+    "same_bar_exits": -0.39780452899347263
+   },
+   "portfolio": {
+    "final_equity": 19.26434227747128,
+    "max_dd_pct": 80.73565772252871,
+    "taken": 10,
+    "skipped": 140
+   }
+  },
+  "T3|H178": {
+   "config": "T3|H178",
+   "params_hash": "7fbce04c537f",
+   "hypothesis": "Y2",
+   "n": 150,
+   "n_coins": 150,
+   "by_tercile_n": {
+    "top": 150
+   },
+   "n_placebo": 2940,
+   "horizon_exits": 0,
+   "trial": {
+    "config": "Y2|7fbce04c537f|cfg:a06543feac6c",
+    "new_trial": true,
+    "n_trials_total": 2673
+   },
+   "reasons": {
+    "stop": 108,
+    "time": 42
+   },
+   "mean": -0.40989996081986385,
+   "median": -0.5289875712452439,
+   "win_rate": 0.08666666666666667,
+   "sd": 0.4583971820441698,
+   "ci90": [
+    -0.4673976651148809,
+    -0.34451838800645845
+   ],
+   "ci95": [
+    -0.47639897712001006,
+    -0.3288594262803533
+   ],
+   "ci90_block": [
+    -0.48422297653420104,
+    -0.3217721022261908
+   ],
+   "ci95_block": [
+    -0.49569066372918114,
+    -0.3025905745217391
+   ],
+   "n_blocks": 17,
+   "censored_share": 0.0,
+   "top_coin_share": null,
+   "top3_coin_share": null,
+   "mean_without_top2": -0.442644631098781,
+   "halves": {
+    "first": -0.37108618182525854,
+    "second": -0.44871373981446927,
+    "consistent": false
+   },
+   "mean_hold_min": 59.70666666666668,
+   "deflated_sharpe": {
+    "sr": -0.8942026192045114,
+    "sr0": 0.28881696108670957,
+    "dsr": 7.96928642521344e-08,
+    "n_trials": 2678,
+    "T": 150,
+    "skew": 3.5572762806677027,
+    "kurtosis": 18.057268568646368
+   },
+   "placebo": {
+    "placebo_mean": -0.36188948101034946,
+    "n_placebo": 2940,
+    "n_signals_matched": 150,
+    "mean_diff": -0.052015691917784726,
+    "diff_ci95": [
+     -0.14205376513370996,
+     0.04177818453095137
+    ]
+   },
+   "placebo_unmatched": {
+    "placebo_mean": -0.3951103275787185,
+    "n_placebo": 3000,
+    "n_signals_matched": 150,
+    "mean_diff": -0.014789633241145446,
+    "diff_ci95": [
+     -0.08926695846368438,
+     0.0692783421461994
+    ]
+   },
+   "stress": {
+    "costs_x1.5": -0.4217860876150817,
+    "rent_0.22": -0.42089996081986386,
+    "same_bar_exits": -0.41066976331638405
+   },
+   "portfolio": {
+    "final_equity": 19.101833855848657,
+    "max_dd_pct": 80.89816614415135,
+    "taken": 13,
+    "skipped": 137
+   }
+  },
+  "T5|X60": {
+   "config": "T5|X60",
+   "params_hash": "8a569c73cebb",
+   "hypothesis": "Y2",
+   "n": 83,
+   "n_coins": 83,
+   "by_tercile_n": {
+    "top": 83
+   },
+   "n_placebo": 1625,
+   "horizon_exits": 0,
+   "trial": {
+    "config": "Y2|8a569c73cebb|cfg:a06543feac6c",
+    "new_trial": true,
+    "n_trials_total": 2674
+   },
+   "reasons": {
+    "stop": 55,
+    "time": 28
+   },
+   "mean": -0.41350591113072555,
+   "median": -0.5247883324821186,
+   "win_rate": 0.1686746987951807,
+   "sd": 0.31059233614632487,
+   "ci90": [
+    -0.46784630050901027,
+    -0.3570255737505557
+   ],
+   "ci95": [
+    -0.4775612030046215,
+    -0.3459269525092469
+   ],
+   "ci90_block": [
+    -0.48420834423060705,
+    -0.33524478497517146
+   ],
+   "ci95_block": [
+    -0.4980523695055607,
+    -0.3196422292436362
+   ],
+   "n_blocks": 15,
+   "censored_share": 0.0,
+   "top_coin_share": null,
+   "top3_coin_share": null,
+   "mean_without_top2": -0.43449184377120426,
+   "halves": {
+    "first": -0.38873149082919484,
+    "second": -0.43769046428221986,
+    "consistent": false
+   },
+   "mean_hold_min": 32.97991967871485,
+   "deflated_sharpe": {
+    "sr": -1.3313461505885853,
+    "sr0": 0.38932196085447357,
+    "dsr": 9.992007221626409e-16,
+    "n_trials": 2678,
+    "T": 83,
+    "skew": 1.224127737962819,
+    "kurtosis": 3.755530763204702
+   },
+   "placebo": {
+    "placebo_mean": -0.3552318097178743,
+    "n_placebo": 1625,
+    "n_signals_matched": 83,
+    "mean_diff": -0.05889122918127689,
+    "diff_ci95": [
+     -0.12242678158842112,
+     0.007429518292380529
+    ]
+   },
+   "placebo_unmatched": {
+    "placebo_mean": -0.34926099425213575,
+    "n_placebo": 1660,
+    "n_signals_matched": 83,
+    "mean_diff": -0.06424491687858991,
+    "diff_ci95": [
+     -0.13563668909561638,
+     0.009726126791963396
+    ]
+   },
+   "stress": {
+    "costs_x1.5": -0.4252398728913093,
+    "rent_0.22": -0.4245059111307256,
+    "same_bar_exits": -0.41844794474653924
+   },
+   "portfolio": {
+    "final_equity": 13.191665470924107,
+    "max_dd_pct": 86.80833452907589,
+    "taken": 11,
+    "skipped": 72
+   }
+  },
+  "T5|H178": {
+   "config": "T5|H178",
+   "params_hash": "03ab70f478bb",
+   "hypothesis": "Y2",
+   "n": 83,
+   "n_coins": 83,
+   "by_tercile_n": {
+    "top": 83
+   },
+   "n_placebo": 1625,
+   "horizon_exits": 0,
+   "trial": {
+    "config": "Y2|03ab70f478bb|cfg:a06543feac6c",
+    "new_trial": true,
+    "n_trials_total": 2675
+   },
+   "reasons": {
+    "stop": 59,
+    "time": 24
+   },
+   "mean": -0.35794461316497755,
+   "median": -0.5257323410859922,
+   "win_rate": 0.12048192771084337,
+   "sd": 0.5550914625749999,
+   "ci90": [
+    -0.45182401679929096,
+    -0.25275023322848406
+   ],
+   "ci95": [
+    -0.46761274882265086,
+    -0.22864058097399942
+   ],
+   "ci90_block": [
+    -0.4748245519931507,
+    -0.21519962672912402
+   ],
+   "ci95_block": [
+    -0.4909140578383445,
+    -0.18679790670194926
+   ],
+   "n_blocks": 15,
+   "censored_share": 0.0,
+   "top_coin_share": null,
+   "top3_coin_share": null,
+   "mean_without_top2": -0.416491532991767,
+   "halves": {
+    "first": -0.2817486010711993,
+    "second": -0.4323264344946183,
+    "consistent": false
+   },
+   "mean_hold_min": 58.618473895582326,
+   "deflated_sharpe": {
+    "sr": -0.6448389811374818,
+    "sr0": 0.38932196085447357,
+    "dsr": 2.8180622680951117e-06,
+    "n_trials": 2678,
+    "T": 83,
+    "skew": 3.058770106894883,
+    "kurtosis": 13.343206949764909
+   },
+   "placebo": {
+    "placebo_mean": -0.4000790415247403,
+    "n_placebo": 1625,
+    "n_signals_matched": 83,
+    "mean_diff": 0.04083652719459255,
+    "diff_ci95": [
+     -0.06856367496292345,
+     0.16818810286187041
+    ]
+   },
+   "placebo_unmatched": {
+    "placebo_mean": -0.412282743874819,
+    "n_placebo": 1660,
+    "n_signals_matched": 83,
+    "mean_diff": 0.05433813070984139,
+    "diff_ci95": [
+     -0.058475751514664644,
+     0.18778675392550295
+    ]
+   },
+   "stress": {
+    "costs_x1.5": -0.3707368565830118,
+    "rent_0.22": -0.36894461316497756,
+    "same_bar_exits": -0.362059862963028
+   },
+   "portfolio": {
+    "final_equity": 14.863509842185369,
+    "max_dd_pct": 85.13649015781463,
+    "taken": 13,
+    "skipped": 70
+   }
+  },
+  "PE11|X60": {
+   "config": "PE11|X60",
+   "params_hash": "42ae6d4a712e",
+   "hypothesis": "Y2",
+   "n": 169,
+   "n_coins": 169,
+   "by_tercile_n": {
+    "bottom": 93,
+    "mid": 65,
+    "top": 11
+   },
+   "n_placebo": 3315,
+   "horizon_exits": 0,
+   "trial": {
+    "config": "Y2|42ae6d4a712e|cfg:a06543feac6c",
+    "new_trial": true,
+    "n_trials_total": 2676
+   },
+   "reasons": {
+    "stop": 108,
+    "time": 61
+   },
+   "mean": -0.2904755625648415,
+   "median": -0.5168109330333469,
+   "win_rate": 0.15976331360946747,
+   "sd": 0.8276728257983081,
+   "ci90": [
+    -0.38640944931369364,
+    -0.17725009761758728
+   ],
+   "ci95": [
+    -0.40190608629503705,
+    -0.15503356100129717
+   ],
+   "ci90_block": [
+    -0.4025775986383115,
+    -0.16292563384764647
+   ],
+   "ci95_block": [
+    -0.42113851735034635,
+    -0.13463519315027286
+   ],
+   "n_blocks": 17,
+   "censored_share": 0.0,
+   "top_coin_share": null,
+   "top3_coin_share": null,
+   "mean_without_top2": -0.3576087325956881,
+   "halves": {
+    "first": -0.31612340792067867,
+    "second": -0.26512945656613185,
+    "consistent": false
+   },
+   "mean_hold_min": 31.992110453648912,
+   "deflated_sharpe": {
+    "sr": -0.35095457227881277,
+    "sr0": 0.2719951670908717,
+    "dsr": 3.284805329051288e-05,
+    "n_trials": 2678,
+    "T": 169,
+    "skew": 5.299678479666227,
+    "kurtosis": 41.02351504673253
+   },
+   "placebo": {
+    "placebo_mean": -0.32940619955131706,
+    "n_placebo": 3315,
+    "n_signals_matched": 169,
+    "mean_diff": 0.036918777467145704,
+    "diff_ci95": [
+     -0.07693898616608273,
+     0.17454517688675628
+    ]
+   },
+   "placebo_unmatched": {
+    "placebo_mean": -0.3399604956510139,
+    "n_placebo": 3380,
+    "n_signals_matched": 169,
+    "mean_diff": 0.04948493308617242,
+    "diff_ci95": [
+     -0.06262009525571786,
+     0.18559072915457536
+    ]
+   },
+   "stress": {
+    "costs_x1.5": -0.304096414653489,
+    "rent_0.22": -0.3014755625648415,
+    "same_bar_exits": -0.2890217526718245
+   },
+   "portfolio": {
+    "final_equity": 7.992232006776547,
+    "max_dd_pct": 92.17728704360098,
+    "taken": 19,
+    "skipped": 150
+   }
+  },
+  "PE11|H178": {
+   "config": "PE11|H178",
+   "params_hash": "07df03cfeff0",
+   "hypothesis": "Y2",
+   "n": 169,
+   "n_coins": 169,
+   "by_tercile_n": {
+    "bottom": 93,
+    "mid": 65,
+    "top": 11
+   },
+   "n_placebo": 3315,
+   "horizon_exits": 0,
+   "trial": {
+    "config": "Y2|07df03cfeff0|cfg:a06543feac6c",
+    "new_trial": true,
+    "n_trials_total": 2677
+   },
+   "reasons": {
+    "stop": 123,
+    "time": 46
+   },
+   "mean": -0.37974884109517615,
+   "median": -0.5313380002050433,
+   "win_rate": 0.1301775147928994,
+   "sd": 0.5474045570133659,
+   "ci90": [
+    -0.4471689974407341,
+    -0.30939869752737603
+   ],
+   "ci95": [
+    -0.4572768797628139,
+    -0.29417712822083675
+   ],
+   "ci90_block": [
+    -0.458765884419205,
+    -0.2950788332097732
+   ],
+   "ci95_block": [
+    -0.4725136227592679,
+    -0.27767876274783904
+   ],
+   "n_blocks": 17,
+   "censored_share": 0.0,
+   "top_coin_share": null,
+   "top3_coin_share": null,
+   "mean_without_top2": -0.40967009327735027,
+   "halves": {
+    "first": -0.3946924365438433,
+    "second": -0.3649810526517876,
+    "consistent": false
+   },
+   "mean_hold_min": 58.302761341222876,
+   "deflated_sharpe": {
+    "sr": -0.693726123083597,
+    "sr0": 0.2719951670908717,
+    "dsr": 1.0651191040267349e-10,
+    "n_trials": 2678,
+    "T": 169,
+    "skew": 2.5985111780507326,
+    "kurtosis": 9.984805291701868
+   },
+   "placebo": {
+    "placebo_mean": -0.35436302348738263,
+    "n_placebo": 3315,
+    "n_signals_matched": 169,
+    "mean_diff": -0.028760206479754385,
+    "diff_ci95": [
+     -0.12236828082272422,
+     0.06663771288333148
+    ]
+   },
+   "placebo_unmatched": {
+    "placebo_mean": -0.4014228739377946,
+    "n_placebo": 3380,
+    "n_signals_matched": 169,
+    "mean_diff": 0.021674032842618422,
+    "diff_ci95": [
+     -0.06139167716016881,
+     0.11183862438720503
+    ]
+   },
+   "stress": {
+    "costs_x1.5": -0.3917558274292629,
+    "rent_0.22": -0.3907488410951762,
+    "same_bar_exits": -0.38308922845660104
+   },
+   "portfolio": {
+    "final_equity": 9.318500189617048,
+    "max_dd_pct": 90.68149981038295,
+    "taken": 14,
+    "skipped": 155
+   }
+  },
+  "dose": {
+   "config": "ALL|H178",
+   "params_hash": "82e00b03b5ec",
+   "hypothesis": "Y2",
+   "n": 492,
+   "n_coins": 492,
+   "by_tercile_n": {
+    "mid": 194,
+    "top": 150,
+    "bottom": 148
+   },
+   "n_placebo": 0,
+   "horizon_exits": 0,
+   "trial": {
+    "config": "Y2|82e00b03b5ec|cfg:a06543feac6c",
+    "new_trial": true,
+    "n_trials_total": 2678
+   },
+   "reasons": {
+    "stop": 365,
+    "time": 127
+   },
+   "mean": -0.40375899876196214,
+   "median": -0.5363608415187248,
+   "win_rate": 0.11585365853658537,
+   "sd": 0.5712194136253022,
+   "ci90": [
+    -0.44537499454556967,
+    -0.36018645154179885
+   ],
+   "ci95": [
+    -0.4534646646283211,
+    -0.3504010716273396
+   ],
+   "ci90_block": [
+    -0.45937350825366363,
+    -0.34375910002758236
+   ],
+   "ci95_block": [
+    -0.4683176839059916,
+    -0.3312126766911971
+   ],
+   "n_blocks": 17,
+   "censored_share": 0.0,
+   "top_coin_share": null,
+   "top3_coin_share": null,
+   "mean_without_top2": -0.4214724576012754,
+   "halves": {
+    "first": -0.40877909192706025,
+    "second": -0.398738905596864,
+    "consistent": false
+   },
+   "mean_hold_min": 58.92886178861788,
+   "deflated_sharpe": {
+    "sr": -0.706836968651791,
+    "sr0": 0.15910179601852267,
+    "dsr": 6.439293542825908e-15,
+    "n_trials": 2678,
+    "T": 492,
+    "skew": 3.698991922205572,
+    "kurtosis": 21.68414290390846
+   },
+   "placebo": null,
+   "placebo_unmatched": null,
+   "stress": {},
+   "portfolio": {
+    "final_equity": 9.305998820879925,
+    "max_dd_pct": 90.69400117912008,
+    "taken": 8,
+    "skipped": 484
+   }
+  }
+ },
+ "dose": {
+  "n": 492,
+  "by_tercile_n": {
+   "mid": 194,
+   "top": 150,
+   "bottom": 148
+  },
+  "pe11_n": 169,
+  "rest_n": 323,
+  "by_tercile_mean": {
+   "top": -0.40989996081986385,
+   "bottom": -0.39561208560304784,
+   "mid": -0.40522600308584894
+  },
+  "top_minus_bottom": -0.014287875216816015,
+  "top_minus_bottom_ci95": [
+   -0.15262523251948584,
+   0.11864222858994264
+  ],
+  "pe11_minus_rest": 0.036572747901110425,
+  "pe11_minus_rest_ci95": [
+   -0.0672498498811102,
+   0.146488688821368
+  ],
+  "consistency": {
+   "T": false,
+   "PE11": true
+  }
+ },
+ "n_trials_total": 2678,
+ "decision": {
+  "verdict": "NO_CONFIG",
+  "reason": "a powered config failed the mean / top-2 / matched-control / mechanism bars",
+  "rows": [
+   {
+    "config": "T3|X60",
+    "order": 0,
+    "powered": true,
+    "qualifies": false,
+    "n": 150,
+    "mean": -0.3959712553852258,
+    "mean_without_top2": -0.4137976156138261,
+    "ci90_lo": -0.43993322416376485,
+    "placebo_diff": -0.0641601547599081,
+    "mechanism_consistent": false
+   },
+   {
+    "config": "T3|H178",
+    "order": 1,
+    "powered": true,
+    "qualifies": false,
+    "n": 150,
+    "mean": -0.40989996081986385,
+    "mean_without_top2": -0.442644631098781,
+    "ci90_lo": -0.4673976651148809,
+    "placebo_diff": -0.052015691917784726,
+    "mechanism_consistent": false
+   },
+   {
+    "config": "T5|X60",
+    "order": 2,
+    "powered": true,
+    "qualifies": false,
+    "n": 83,
+    "mean": -0.41350591113072555,
+    "mean_without_top2": -0.43449184377120426,
+    "ci90_lo": -0.46784630050901027,
+    "placebo_diff": -0.05889122918127689,
+    "mechanism_consistent": false
+   },
+   {
+    "config": "T5|H178",
+    "order": 3,
+    "powered": true,
+    "qualifies": false,
+    "n": 83,
+    "mean": -0.35794461316497755,
+    "mean_without_top2": -0.416491532991767,
+    "ci90_lo": -0.45182401679929096,
+    "placebo_diff": 0.04083652719459255,
+    "mechanism_consistent": false
+   },
+   {
+    "config": "PE11|X60",
+    "order": 4,
+    "powered": true,
+    "qualifies": false,
+    "n": 169,
+    "mean": -0.2904755625648415,
+    "mean_without_top2": -0.3576087325956881,
+    "ci90_lo": -0.38640944931369364,
+    "placebo_diff": 0.036918777467145704,
+    "mechanism_consistent": true
+   },
+   {
+    "config": "PE11|H178",
+    "order": 5,
+    "powered": true,
+    "qualifies": false,
+    "n": 169,
+    "mean": -0.37974884109517615,
+    "mean_without_top2": -0.40967009327735027,
+    "ci90_lo": -0.4471689974407341,
+    "placebo_diff": -0.028760206479754385,
+    "mechanism_consistent": true
+   }
+  ],
+  "shortlist": [],
+  "shortlist_keys": [],
+  "shortlist_hashes": [],
+  "shortlist_written": false
+ },
+ "runtime_s": 53.6,
+ "overall": "NO EDGE (nothing qualified on TRAIN)"
+}

@@ -1,0 +1,12 @@
+# Frozen prospective capture — PR65 feed recovery
+
+Declared 2026-10-15 20:55:37 UTC (October 15, Pacific afternoon), before the target starts. This is bounded execution/startup verification, not a profitability backtest.
+
+- PR65 merge/source: `b7b7192e5d463e57417d05acb3b168744941b9fc`; Railway deployment `1c01ffe7-e231-40c6-a026-ac63fec01227`, SUCCESS 1:49:04.606 PM PDT. Normal Polymarket LIVE startup 1:49:01.558 PM.
+- Original non-stale real status 1:54:18.514 PM PDT: live/authenticated/trading_now, no waiting reason, no integrity error/cleanup; cash $30.5696, cumulative settled trading P&L −$19.2018, risk/reserved/orders/positions zero as reported. The startup stale-account row is excluded from readiness. Open-cost display $0.97 remains a historical/unreconciled field, not claimed current exposure. Caps remain $10/window, $20 open, $6/day, $10 total, clip5/rung0. Account read age is unpublished; as_of is panel time.
+- Target verified through public Kalshi market metadata: `KXBTC15M-26OCT151715-15`, initialized, opens **2:00 PM PDT /21:00 UTC**, ends **2:15 PM PDT /21:15 UTC**. Fixed tail ends **2:17 PM PDT /21:17 UTC**. Strike is not set before opening. Rules use the CF Benchmarks BRTI 60-second averages; equality resolves YES.
+- Root verification and declaration occur more than60seconds before target start; the fixed window will not change based on results. Source stays frozen throughout target and tail. New learning-continuation work is offline only during this capture.
+- Collect original real fills/orders/cancels/settlements, real/practice status, feed failure invalidation flags and both observer statuses using exact deployment/time bounds. Saturated queries must be split. Preserve gaps, partials and unscored outcomes. Observe rather than force a late REST failure.
+- Restart integration finding: V2 is **disabled** with source_or_protocol_mismatch after this upstream feed change. Its five scores and one unknown remain under the old identity; Brier baseline0.1872621595/shadow0.1796062817. Do not call this new learning or profit. V1 history/gap exclusions remain. A separately tested versioned continuation is pending, with no reuse/relabeling of prior bins/history and no financial effect.
+
+Before/after control/ledger reconciliation and exact runtime proof remain open. No raised caps, stop/resume reset, Railway variables, strategy/fee changes, manual orders or Polymarket changes. Broader EXEC/profitability remains open even if this bounded window is positive.
