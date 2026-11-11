@@ -1,0 +1,119 @@
+{
+  "verdict": "Accept one later observe-only forecast-to-official-outcome score linkage; separate opportunistic supplement, not repair of failed predeclared capture",
+  "native_rows": 18,
+  "native_sha256": "cca929706e7092a89e71b754d190e2eeb988fe0e35d362c247b439c315741526",
+  "query_bounds_limit_provenance": "Root states 22:00\u201322:21:30 UTC limit100; wrapper retains18 logs and check clock22:21:26 but not query args. Row content authoritative; full query completeness not independently certified.",
+  "deployment_scope": {
+    "deploymentId": "66e6e7e4-30d9-4628-a234-f2a8e97dad19",
+    "serviceId": "f84d3b52-002f-44cb-931e-bc9e3e097e97",
+    "environmentId": "17f7b0e0-104c-4903-9484-0106748b3cdb",
+    "status": "SUCCESS"
+  },
+  "source_identity": {
+    "app_commit_root_provided": "0c30491e0bd101250ee443912e1352f38718af45",
+    "local_immutable_base": "f77e1ad460c74a2eb5167ff1e243cca9cf94b329",
+    "recomputed_fingerprint": "23e2ca80d3c04415256bf3fc237ba017d56733a59219d718e86c554eaa1f1d25",
+    "protocol": "kalshi-probability-calibration-v2-h300-g5-b10-prior20",
+    "source_file_sha256": {
+      "kalshi_probability_learning.py": "43d8f527fd24aee3a7dbb33d848dcaaaf0e39089ab605deddad32dfabc1e35ab",
+      "kalshi_probability_epochs.py": "495450c64b9402e2f9dfaa53756a51dbf44a5c75bf7245b6dc428271cddc708f",
+      "speeddesk_model.py": "50ba3b4f78c6efd031fdcd8bb1cb1a59ea2988973c341b9ad275345d70de7429",
+      "speeddesk_feeds.py": "4a942d649af275cc6ad7b467462236e66c9a629cab0920e1a1adb3c24982dffd",
+      "speeddesk_kalshi.py": "7946b64f9f1441ea8b02b1d17f5b2d400d7c8e7a65897eed8974373dac3ae9b9",
+      "speeddesk_kalshi_ws.py": "1eef6d36a0b5aaf3a00680c0aedec057e163aac8fc8d63e3e213b01124b4337b",
+      "speeddesk_venues.py": "54f0c2eaea909621f24734d8cd73cdd46f2ea711d885269b6892c564bc9dff51",
+      "speeddesk.py": "79a8ad7fc10879035297e2af4d87af1bff758b4f89c2adae3464fe812235477d",
+      "kalshi_arena.py": "52b983cb87ba6ec593124aef525b37b2ad48ce8cabba0325f6b813d52e7a0676"
+    }
+  },
+  "forecasts": [
+    {
+      "window": "KXBTC15M-26OCT151815-15",
+      "producer_payload_time": "2026-10-15T22:05:00.090637+00:00",
+      "original_log_time": "2026-10-15T22:05:08.143316590Z",
+      "publication_minus_payload_s": 8.052679300308228,
+      "elapsed_since_open_s": 300.0906367301941,
+      "bitcoin_age_s": 0.4024507999420166,
+      "batch_age_s": 0.0325160026550293,
+      "p": 0.9084374925959551,
+      "q": 0.9084374925959551,
+      "bin": 9,
+      "prior_bin_n": 0,
+      "prior_bin_wins": 0,
+      "model_recomputed_p": 0.9084374925959551,
+      "independent_algebra_p": 0.9084374925959551,
+      "shadow_recomputed_q": 0.9084374925959551,
+      "source": "23e2ca80d3c04415256bf3fc237ba017d56733a59219d718e86c554eaa1f1d25"
+    },
+    {
+      "window": "KXBTC15M-26OCT151830-30",
+      "producer_payload_time": "2026-10-15T22:20:00.065374+00:00",
+      "original_log_time": "2026-10-15T22:20:00.071404112Z",
+      "publication_minus_payload_s": 0.00603032112121582,
+      "elapsed_since_open_s": 300.0653736591339,
+      "bitcoin_age_s": 1.5979995727539062,
+      "batch_age_s": 0.04353952407836914,
+      "p": 0.2138387913915002,
+      "q": 0.21383879139150022,
+      "bin": 2,
+      "prior_bin_n": 0,
+      "prior_bin_wins": 0,
+      "model_recomputed_p": 0.2138387913915002,
+      "independent_algebra_p": 0.21383879139150014,
+      "shadow_recomputed_q": 0.21383879139150022,
+      "source": "23e2ca80d3c04415256bf3fc237ba017d56733a59219d718e86c554eaa1f1d25"
+    }
+  ],
+  "score": {
+    "original_log_time": "2026-10-15T22:15:29.886318445Z",
+    "payload_time": "2026-10-15T22:15:29.869674+00:00",
+    "payload_scored_at": 1792102529.869674,
+    "frozen_forecast_exact_field_match": true,
+    "outcome": true,
+    "post_gaps": [],
+    "brier_baseline": 0.008383692762115782,
+    "brier_shadow": 0.008383692762115782,
+    "decimal_from_printed_probability": "0.008383692762115777132380881216",
+    "expected_bin_update": {
+      "bin": 9,
+      "before_n": 0,
+      "before_wins": 0,
+      "after_n": 1,
+      "after_wins": 1,
+      "basis": "inferred from exact source update and one score; production bin arrays not exported"
+    },
+    "score_after_close_s": 29.86967396736145,
+    "score_after_official_settlement_s": 23.028215885162354
+  },
+  "latest_original_status_time": "2026-10-15T22:21:16.667667527Z",
+  "latest_status_counts": {
+    "forecasts": 2,
+    "scored": 1,
+    "unknown": 2,
+    "pending": 1,
+    "brier_baseline": 0.008383692762115782,
+    "brier_shadow": 0.008383692762115782
+  },
+  "official_market": {
+    "ticker": "KXBTC15M-26OCT151815-15",
+    "status": "finalized",
+    "result": "yes",
+    "open_time": "2026-10-15T22:00:00Z",
+    "close_time": "2026-10-15T22:15:00Z",
+    "settlement_ts": "2026-10-15T22:15:06.841458Z",
+    "floor_strike": 82319.67,
+    "strike_type": "greater_or_equal",
+    "rules_primary": "If the simple average of the sixty seconds of CF Benchmarks' BRTI before 6:15 PM EDT on Oct 15, 2026 is at least the simple average of the sixty seconds of CF Benchmarks' BRTI before 6:00 PM EDT on October 15, 2026, then the market resolves to Yes.",
+    "rules_secondary": "Not all cryptocurrency price data is the same. While checking a source like Google or Coinbase may help guide your decision, the price used to determine this market is based on CF Benchmarks' corresponding Real Time Index (RTI). At the last minute before expiration, 60 RTI prices are collected. The official and final value is the average of these prices, rounded to the nearest 2 decimal places."
+  },
+  "official_response_sha256": "f93bd58c4766e81d3c8aa16f449cd9be7a7eafe33b909ad3212cc9d7bc1114e6",
+  "limitations": [
+    "Original predeclared21:45\u201322:00 target failed; this later22:00\u201322:15 market is a separate opportunistic observation, not reselection or rerun.",
+    "Only one current-source scored example; no calibration/accuracy improvement/profitability proof.",
+    "Forecast original log publishes about8s after payload time; both precede close/outcome. No claim all internal scheduling stages or source freshness independently observed.",
+    "post_gaps empty means observer recorded none; it does not certify continuous feed coverage.",
+    "Older source five-score archive is separate prior evidence and not included in current counts/Brier. This log subset does not certify archive bytes or raw bin/checkpoint durability.",
+    "Official public result verifies venue label/rules, not an independent reconstruction of sixty BRTI samples.",
+    "No real order/account/risk or candidate deployment effect audited; no production mutation/credential use."
+  ]
+}

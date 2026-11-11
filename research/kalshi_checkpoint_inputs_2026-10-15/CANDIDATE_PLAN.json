@@ -1,0 +1,29 @@
+{
+  "scope": "only speeddesk.py plus new focused differential test file; no release",
+  "baseline_source_sha256": "79a8ad7fc10879035297e2af4d87af1bff758b4f89c2adae3464fe812235477d",
+  "candidate": "lazy per-row Settlement-only local conversion memo; original asdict first/fallback; fresh dict/list; exact types; per-visit native scalar identities; nested checkpoint cache restore",
+  "acceptance": {
+    "full_mirror_bytes": true,
+    "full_KV_bytes": true,
+    "ordered_receipt_fields_hashes": true,
+    "clock_call_sequence_and_error_boundaries": true,
+    "max_repeatable_checkpoint_wall_CPU_regression_percent": 5,
+    "max_RSS_growth_percent": 10,
+    "material_timing_beyond_noise": true
+  },
+  "hard_run_limits": {
+    "wall_seconds": 60,
+    "RSS_MiB": 256,
+    "disk_MiB": 100
+  },
+  "mandatory_controls": [
+    "1/7/31/older fixtures identical to baseline",
+    "firstFULL/warm/correction separate",
+    "standalone clocks fresh",
+    "advancing clock close/midnight/30day/reverse",
+    "mutations/rebindings/duplicates/nesting",
+    "subclass/exotic/missing/error fallback",
+    "every persistence failure stage/cache cleanup/retry"
+  ],
+  "no_claim": "production causality/savings/profit; source fingerprint release requires separate root epoch handling"
+}

@@ -1,0 +1,774 @@
+{
+ "hypothesis": "PS1",
+ "version": "ps1-v1",
+ "stage": "debug",
+ "split": "final_train",
+ "utc": "2026-10-09 04:31:36",
+ "provisional": false,
+ "debug_only": true,
+ "prereg_sha256": "3fd6c46db70f8538c838f927225274976559b07da81c1f6cb11088a0c5c6df73",
+ "rerun_reason": null,
+ "q7_sha256": "0446b1e228dae300ad3b06d2c635cd9cf27c829aececb0dd36c514588e37ca12",
+ "common_sha256": "22c560c51e2e910a0eff61a5af59e1ecdaeca079a4ce3118a0b746dc6859ca1b",
+ "host_pins": {
+  "R0": "27a79bc60126",
+  "R30": "a995b4907d17"
+ },
+ "coverage_notes": [],
+ "n_coins": 450,
+ "span_days": 0.5203240740740741,
+ "configs_run": [
+  "R0|SFX0|ALL",
+  "R0|SFX0|ORGANIC",
+  "R30|SFX0|ALL",
+  "R0|CU|ALL"
+ ],
+ "hosts_run": [
+  "R0",
+  "R30"
+ ],
+ "structure": {
+  "n_coins": 450,
+  "sfx0": 108,
+  "sfx0_share": 0.24,
+  "cu_known": 429,
+  "cu_true": 28,
+  "cu_share_of_known": 0.06526806526806526,
+  "instant": {
+   "True": 277,
+   "False": 173
+  },
+  "classes": {
+   "ORGANIC": 193,
+   "FACTORY": 183,
+   "OPERATOR": 34,
+   "UNRESOLVED": 21,
+   "COMPLETED": 19
+  },
+  "sfx0_by_class": {
+   "OPERATOR": {
+    "n": 34,
+    "sfx0": 0
+   },
+   "FACTORY": {
+    "n": 183,
+    "sfx0": 60
+   },
+   "COMPLETED": {
+    "n": 19,
+    "sfx0": 5
+   },
+   "UNRESOLVED": {
+    "n": 21,
+    "sfx0": 10
+   },
+   "ORGANIC": {
+    "n": 193,
+    "sfx0": 33
+   }
+  },
+  "sfx0_by_instant": {
+   "True": {
+    "n": 277,
+    "sfx0": 63
+   },
+   "False": {
+    "n": 173,
+    "sfx0": 45
+   },
+   "unknown": {
+    "n": 0,
+    "sfx0": 0
+   }
+  },
+  "cu_by_sfx0": {
+   "sfx0": {
+    "cu_true": 12,
+    "cu_false": 86,
+    "cu_unknown": 10
+   },
+   "pump": {
+    "cu_true": 16,
+    "cu_false": 315,
+    "cu_unknown": 11
+   }
+  }
+ },
+ "cu_meaning": {
+  "n_known": 429,
+  "n_cu": 28,
+  "cu_share_of_known": 0.06526806526806526,
+  "rule": "withdraw config 4 if the CU share of known coins is < 2% or > 98%",
+  "withdraw_config4": false,
+  "summary": {
+   "signers_on_1_coin": 26,
+   "signers_on_2plus_coins": 2,
+   "signer_is_another_coins_creator": 0,
+   "sfx0": 12,
+   "instant": 1,
+   "token_programs": {
+    "TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb": 27,
+    "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA": 1
+   }
+  },
+  "coins": [
+   {
+    "mint": "32nBFz2qd2v88RHQmZwZuUMVAPCaQEtnwyNt14rREBL6",
+    "creator": "GzAUZwTCJPvTRhwXAPX2X7bmvKCdk4RTFd1ghsbq4UBE",
+    "create_user": "7jcxX6khHt67FA59X56hbnMAqfbL9G9bLbSAdqEk3uVu",
+    "signer_coins": 1,
+    "creator_coins": 1,
+    "signer_is_another_coins_creator": false,
+    "sfx0": true,
+    "grad_delay_s": 278.0,
+    "instant": false,
+    "token_program": "TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb",
+    "g1_class": "COMPLETED"
+   },
+   {
+    "mint": "5mKtngpQ6ejvuJRAh1vHysuhqHBGx9k7ExVL2MT6pump",
+    "creator": "3aRMejYfDqiqmFpFK7YeMND2h4ATEGFCg1hWBv49nkL3",
+    "create_user": "AkdyLSqHEkRVj5nfZGnmQFvXNTuEMAeximRgdin4vxg9",
+    "signer_coins": 1,
+    "creator_coins": 1,
+    "signer_is_another_coins_creator": false,
+    "sfx0": false,
+    "grad_delay_s": 170.0,
+    "instant": false,
+    "token_program": "TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb",
+    "g1_class": "ORGANIC"
+   },
+   {
+    "mint": "HJnjwrGGjW9eyYp7W75k1mvo7eu9f32kwfyqAX3Ppump",
+    "creator": "EhSoVjyzNkkZFZCndjGcLCdTwwhi9BueK2b7UX1k9KRj",
+    "create_user": "96hq1rUo5qQk26NAP7wK6VtcnZXPKbkHpdVsdGwe3Cda",
+    "signer_coins": 1,
+    "creator_coins": 1,
+    "signer_is_another_coins_creator": false,
+    "sfx0": false,
+    "grad_delay_s": 429.0,
+    "instant": false,
+    "token_program": "TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb",
+    "g1_class": "ORGANIC"
+   },
+   {
+    "mint": "DDNtcencWKq4eTPFkUqMgsj4oSM7Cf8mDxbseDbLpump",
+    "creator": "2zUyfwAUp8UKC8rMjvPw2UUa4AvEAaDhiX8hWK1bY7xD",
+    "create_user": "2mz5MHyUJyJUJkBi3Vy2Yu9dTdFKJRZQJUYR6oDpJDCD",
+    "signer_coins": 1,
+    "creator_coins": 1,
+    "signer_is_another_coins_creator": false,
+    "sfx0": false,
+    "grad_delay_s": 67.0,
+    "instant": false,
+    "token_program": "TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb",
+    "g1_class": "ORGANIC"
+   },
+   {
+    "mint": "C25KSH68HbmifEhdh75MVYmFv39zGhD1gmDHp1Ydpump",
+    "creator": "HG64uL7KgCDUv4TnNokGAd8Gioqv9y125xJ3cmTbJh1M",
+    "create_user": "DuTMkPbyP2Bcg5N8EhkXU9zC8J1wZafGBTSjVd19gDRV",
+    "signer_coins": 1,
+    "creator_coins": 1,
+    "signer_is_another_coins_creator": false,
+    "sfx0": false,
+    "grad_delay_s": 129.0,
+    "instant": false,
+    "token_program": "TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb",
+    "g1_class": "ORGANIC"
+   },
+   {
+    "mint": "2J8AGnaeNefbuHy9vFmZ9q2U7dCwJCKEYYZwcs7spump",
+    "creator": "CZVGLvsDRkMhrsUKmT1K8dT9tSVmsMdcwSXj27tHFeXJ",
+    "create_user": "CVAWfBJf61u4qANM3s4aPZZcyKjrQPpEkR69xzpayJrn",
+    "signer_coins": 1,
+    "creator_coins": 1,
+    "signer_is_another_coins_creator": false,
+    "sfx0": false,
+    "grad_delay_s": 147.0,
+    "instant": false,
+    "token_program": "TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb",
+    "g1_class": "ORGANIC"
+   },
+   {
+    "mint": "HvpfLzixvrA57EVUNLUrFKEU7NBt5mUpxrikzmyzpump",
+    "creator": "EbTcvLv3nMm1A56dyoaLX2A48Dz5oJFfmbeovtm8b5pV",
+    "create_user": "CDx1e6RgZNu8wT4ZuecPc5j3v8n1psGneHdNagiUiSjZ",
+    "signer_coins": 1,
+    "creator_coins": 1,
+    "signer_is_another_coins_creator": false,
+    "sfx0": false,
+    "grad_delay_s": 53.0,
+    "instant": false,
+    "token_program": "TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb",
+    "g1_class": "ORGANIC"
+   },
+   {
+    "mint": "7aNVac2SMHYCqzoxpiX67mtBWRA9rXwA1qtvmKh6eo21",
+    "creator": "DYKJD45Q83LKiHHtNkVDAHcKsc3ce1Foxo8pTcg1Ht2V",
+    "create_user": "FTuqW6J148wdknkPvm2EVSJ1EFt4aDhjAYzv6rdjuCRi",
+    "signer_coins": 1,
+    "creator_coins": 1,
+    "signer_is_another_coins_creator": false,
+    "sfx0": true,
+    "grad_delay_s": 1391.0,
+    "instant": false,
+    "token_program": "TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb",
+    "g1_class": "ORGANIC"
+   },
+   {
+    "mint": "2CycCyG3e4zXwxA5bL4rBeNfwWcPcVKVm6cxe3ampump",
+    "creator": "C8MzjjnVmvQida1FFrryfcT8Er71nzJ1pvCdsrqGpzK9",
+    "create_user": "GnQh5QDiUM5Uhx5XA9o1iosFDYuNVaX7FDNxoyfhTD1q",
+    "signer_coins": 1,
+    "creator_coins": 1,
+    "signer_is_another_coins_creator": false,
+    "sfx0": false,
+    "grad_delay_s": 497.0,
+    "instant": false,
+    "token_program": "TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb",
+    "g1_class": "ORGANIC"
+   },
+   {
+    "mint": "HvrpYb7U7Bwrcv8fF8556PrVN3PgoFFyvs71KKgkpump",
+    "creator": "7XxpNNfuCZxvJErLvs2Vgm7MdeFxm9MFczb4TuzxpykD",
+    "create_user": "3WpMWaktiqvhAhEfwfzb3rqgzkhkHHsSkPQ9Vs2D5x4X",
+    "signer_coins": 1,
+    "creator_coins": 1,
+    "signer_is_another_coins_creator": false,
+    "sfx0": false,
+    "grad_delay_s": 44.0,
+    "instant": false,
+    "token_program": "TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb",
+    "g1_class": "ORGANIC"
+   },
+   {
+    "mint": "7tweTogdr5K4Pp34CRfqPgU9x6MJgnAQcMGmF4ZYpump",
+    "creator": "FnXFoZw1CuCrerjFRJjV7c98xRVhshzLpWc5vR8JT4bH",
+    "create_user": "6hxdDyTPFBxCamcwXf9aE8whFNx7Sumumhtv8u579gza",
+    "signer_coins": 1,
+    "creator_coins": 1,
+    "signer_is_another_coins_creator": false,
+    "sfx0": false,
+    "grad_delay_s": 62.0,
+    "instant": false,
+    "token_program": "TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb",
+    "g1_class": "ORGANIC"
+   },
+   {
+    "mint": "DZaQRdmPHNaqNsMVqRU8P4q5f2mErab4GipPghowFvaz",
+    "creator": "DNj9umJsNSuhQnrQmmcUCoVeVw1MaEr8bMJDJPgjN5W9",
+    "create_user": "8YcbyX92UHTU23HZv3ccP9o13qibErQkKaUjoxqxd7SJ",
+    "signer_coins": 1,
+    "creator_coins": 1,
+    "signer_is_another_coins_creator": false,
+    "sfx0": true,
+    "grad_delay_s": 1832.0,
+    "instant": false,
+    "token_program": "TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb",
+    "g1_class": "ORGANIC"
+   },
+   {
+    "mint": "7q3AVPhVMPyGTEAT78Vo8DxsVph965JixTAQJBgSpump",
+    "creator": "8G2a4P25KBmcczjFJu6ELSYjyeRVkhHPsS7KDzvwKrL",
+    "create_user": "DqY2rtPK9btTa6M1bEnPBspjQd28as5cYBkaaxvuBzDw",
+    "signer_coins": 1,
+    "creator_coins": 1,
+    "signer_is_another_coins_creator": false,
+    "sfx0": false,
+    "grad_delay_s": 58.0,
+    "instant": false,
+    "token_program": "TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb",
+    "g1_class": "ORGANIC"
+   },
+   {
+    "mint": "C111EjX9LddBj3fpxRpDumN3VTEcvGGThLiCdF7DwQnH",
+    "creator": "BHK2dYrCEDzEuUoAyP11zVpK5853azVZ6G8VZvVsnxU5",
+    "create_user": "5MTjkAZMe1ur64ADTgnaYFN1ByTapu2RqcKYUdQNaE2E",
+    "signer_coins": 1,
+    "creator_coins": 1,
+    "signer_is_another_coins_creator": false,
+    "sfx0": true,
+    "grad_delay_s": 312.0,
+    "instant": false,
+    "token_program": "TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb",
+    "g1_class": "ORGANIC"
+   },
+   {
+    "mint": "DE24kViq63zDSLv6UjUkSVe5oRyAaWnc2XznpmTJpump",
+    "creator": "4hLrsakcTJcZZqWaKP8qsKYSCS6fd9tkHXj1KkZvCJeA",
+    "create_user": "GUgrozq83E7T1uMJsPMwAJ7o4WrmiTrAqaFq3DtnHkf4",
+    "signer_coins": 1,
+    "creator_coins": 1,
+    "signer_is_another_coins_creator": false,
+    "sfx0": false,
+    "grad_delay_s": 66.0,
+    "instant": false,
+    "token_program": "TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb",
+    "g1_class": "ORGANIC"
+   },
+   {
+    "mint": "HCvCuULt6aMUyMeY7uZCyEh32s2xD8kJkAgWxGxKAQMW",
+    "creator": "bxVQfb2519aUoLEi4n1e8X9aMGQjTqmB35sR92DXsjM",
+    "create_user": "EstxDiq4g1JLJUi4hoB8ia4fzSasapuu4MqeMd7hfFJt",
+    "signer_coins": 1,
+    "creator_coins": 1,
+    "signer_is_another_coins_creator": false,
+    "sfx0": true,
+    "grad_delay_s": 5.0,
+    "instant": true,
+    "token_program": "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA",
+    "g1_class": "ORGANIC"
+   },
+   {
+    "mint": "3tA5zVRcfTCcW7mgLt8E2RJ2SULEsHsaF5KH9L3xpump",
+    "creator": "7NLjnUUHvVB5jHsDbs4wTZkrr4nDQVu9HYzLcXtoiXPv",
+    "create_user": "4LFHS6jWGjV1TYk8FxMN8meDEX2xDQQYHhdkQiQsWoSS",
+    "signer_coins": 1,
+    "creator_coins": 1,
+    "signer_is_another_coins_creator": false,
+    "sfx0": false,
+    "grad_delay_s": 2374.0,
+    "instant": false,
+    "token_program": "TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb",
+    "g1_class": "ORGANIC"
+   },
+   {
+    "mint": "Fz6mtRZohC4BoGSEEA58s2ew2M99n4WvgWm8SoP4nJDQ",
+    "creator": "3EAoG3XNQRqtawTHFdWE2fFSkFqnjMh3ySLk88NKYe15",
+    "create_user": "9ziY2cJCk7anukSwbM8Fy7s4sxjpQWPceitM6TL2GzE1",
+    "signer_coins": 1,
+    "creator_coins": 1,
+    "signer_is_another_coins_creator": false,
+    "sfx0": true,
+    "grad_delay_s": 2374.0,
+    "instant": false,
+    "token_program": "TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb",
+    "g1_class": "ORGANIC"
+   },
+   {
+    "mint": "7eZcomYJABTJ55ozi22Gd2Fm4CdLZRkbAQXsLtvzauG8",
+    "creator": "37RXNWUpwzfCHPXqTT8KgXq3bGkU4wFA9G9j1Xu3q6MJ",
+    "create_user": "C8BdBLW1GdnCR86nSpcfRMbshvHqwKq9qSTTdSn71AeV",
+    "signer_coins": 2,
+    "creator_coins": 1,
+    "signer_is_another_coins_creator": false,
+    "sfx0": true,
+    "grad_delay_s": 319.0,
+    "instant": false,
+    "token_program": "TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb",
+    "g1_class": "ORGANIC"
+   },
+   {
+    "mint": "9n2RHJYZDrnsFbkdDkxEKK8LeDFHMUKsZLgZLg1upump",
+    "creator": "464Djg7RTEjnSU5uMhSezRf2esxf7pMzA5JrBRC6Lk73",
+    "create_user": "8aGg4x2u3doRPLz6EzMc7qsYaJZMmRAMUg6XAMWujZY",
+    "signer_coins": 1,
+    "creator_coins": 1,
+    "signer_is_another_coins_creator": false,
+    "sfx0": false,
+    "grad_delay_s": 119.0,
+    "instant": false,
+    "token_program": "TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb",
+    "g1_class": "ORGANIC"
+   }
+  ]
+ },
+ "hosts": {
+  "R0": {
+   "hypothesis": "PS1.R0",
+   "params_hash": "27a79bc60126",
+   "trial": {
+    "config": "PS1.R0|27a79bc60126|cfg:a06543feac6c",
+    "new_trial": false,
+    "n_trials_total": 2575
+   },
+   "n": 94,
+   "n_coins": 94,
+   "per_day": 180.65664205000445,
+   "by_class_n": {
+    "ORGANIC": 29,
+    "OPERATOR": 29,
+    "FACTORY": 19,
+    "UNRESOLVED": 10,
+    "COMPLETED": 7
+   },
+   "sfx0_n": 19,
+   "cu_n": {
+    "true": 10,
+    "false": 74,
+    "unknown": 10
+   },
+   "entry_age_min_median": 57.391666666666666,
+   "horizon_exits": 0,
+   "returns": "hidden on the debug split (never choose parameters on FINAL data)"
+  },
+  "R30": {
+   "hypothesis": "PS1.R30",
+   "params_hash": "a995b4907d17",
+   "trial": {
+    "config": "PS1.R30|a995b4907d17|cfg:a06543feac6c",
+    "new_trial": false,
+    "n_trials_total": 2575
+   },
+   "n": 137,
+   "n_coins": 137,
+   "per_day": 263.2974463920277,
+   "by_class_n": {
+    "ORGANIC": 46,
+    "FACTORY": 38,
+    "OPERATOR": 30,
+    "UNRESOLVED": 13,
+    "COMPLETED": 10
+   },
+   "sfx0_n": 25,
+   "cu_n": {
+    "true": 15,
+    "false": 109,
+    "unknown": 13
+   },
+   "entry_age_min_median": 30.45,
+   "horizon_exits": 0,
+   "returns": "hidden on the debug split (never choose parameters on FINAL data)"
+  }
+ },
+ "configs": {
+  "R0|SFX0|ALL": {
+   "config": "R0|SFX0|ALL",
+   "params_hash": "726931629a51",
+   "host": "R0",
+   "flag": "SFX0",
+   "subset": "ALL",
+   "n_host": 94,
+   "n_eval": 94,
+   "n_unknown_flag": 0,
+   "n_flagged": 19,
+   "n_unflagged": 75,
+   "flagged_share": 0.20212765957446807,
+   "flagged_per_day": 36.51570424414983,
+   "by_class": {
+    "OPERATOR": {
+     "n_flagged": 0,
+     "n_unflagged": 29
+    },
+    "FACTORY": {
+     "n_flagged": 1,
+     "n_unflagged": 18
+    },
+    "COMPLETED": {
+     "n_flagged": 3,
+     "n_unflagged": 4
+    },
+    "UNRESOLVED": {
+     "n_flagged": 6,
+     "n_unflagged": 4
+    },
+    "ORGANIC": {
+     "n_flagged": 9,
+     "n_unflagged": 20
+    }
+   },
+   "placebo": {
+    "B": 2000,
+    "seed": 0,
+    "strata": {
+     "COMPLETED": {
+      "n": 7,
+      "n_flagged": 3
+     },
+     "FACTORY": {
+      "n": 19,
+      "n_flagged": 1
+     },
+     "OPERATOR": {
+      "n": 29,
+      "n_flagged": 0
+     },
+     "ORGANIC": {
+      "n": 29,
+      "n_flagged": 9
+     },
+     "UNRESOLVED": {
+      "n": 10,
+      "n_flagged": 6
+     }
+    }
+   },
+   "dose": {
+    "cells": {
+     "sfx0|instant": {
+      "n": 2
+     },
+     "sfx0|slow": {
+      "n": 17
+     },
+     "sfx0|unknown": {
+      "n": 0
+     },
+     "pump|instant": {
+      "n": 52
+     },
+     "pump|slow": {
+      "n": 23
+     },
+     "pump|unknown": {
+      "n": 0
+     }
+    }
+   },
+   "returns": "hidden on the debug split (never choose parameters on FINAL data)",
+   "trial": {
+    "config": "PS1|726931629a51",
+    "new_trial": false,
+    "n_trials_total": 2575,
+    "hypothesis_configs": 0,
+    "over_variant_limit": false,
+    "family_val_looks": 0
+   }
+  },
+  "R0|SFX0|ORGANIC": {
+   "config": "R0|SFX0|ORGANIC",
+   "params_hash": "94e30cfd566b",
+   "host": "R0",
+   "flag": "SFX0",
+   "subset": "ORGANIC",
+   "n_host": 94,
+   "n_eval": 29,
+   "n_unknown_flag": 0,
+   "n_flagged": 9,
+   "n_unflagged": 20,
+   "flagged_share": 0.3103448275862069,
+   "flagged_per_day": 17.296912536702553,
+   "by_class": {
+    "OPERATOR": {
+     "n_flagged": 0,
+     "n_unflagged": 0
+    },
+    "FACTORY": {
+     "n_flagged": 0,
+     "n_unflagged": 0
+    },
+    "COMPLETED": {
+     "n_flagged": 0,
+     "n_unflagged": 0
+    },
+    "UNRESOLVED": {
+     "n_flagged": 0,
+     "n_unflagged": 0
+    },
+    "ORGANIC": {
+     "n_flagged": 9,
+     "n_unflagged": 20
+    }
+   },
+   "placebo": {
+    "B": 2000,
+    "seed": 0,
+    "strata": {
+     "ORGANIC": {
+      "n": 29,
+      "n_flagged": 9
+     }
+    }
+   },
+   "dose": {
+    "cells": {
+     "sfx0|instant": {
+      "n": 1
+     },
+     "sfx0|slow": {
+      "n": 8
+     },
+     "sfx0|unknown": {
+      "n": 0
+     },
+     "pump|instant": {
+      "n": 5
+     },
+     "pump|slow": {
+      "n": 15
+     },
+     "pump|unknown": {
+      "n": 0
+     }
+    }
+   },
+   "returns": "hidden on the debug split (never choose parameters on FINAL data)",
+   "trial": {
+    "config": "PS1|94e30cfd566b",
+    "new_trial": false,
+    "n_trials_total": 2575,
+    "hypothesis_configs": 0,
+    "over_variant_limit": false,
+    "family_val_looks": 0
+   }
+  },
+  "R30|SFX0|ALL": {
+   "config": "R30|SFX0|ALL",
+   "params_hash": "a200f843ee78",
+   "host": "R30",
+   "flag": "SFX0",
+   "subset": "ALL",
+   "n_host": 137,
+   "n_eval": 137,
+   "n_unknown_flag": 0,
+   "n_flagged": 25,
+   "n_unflagged": 112,
+   "flagged_share": 0.18248175182481752,
+   "flagged_per_day": 48.0469792686182,
+   "by_class": {
+    "OPERATOR": {
+     "n_flagged": 0,
+     "n_unflagged": 30
+    },
+    "FACTORY": {
+     "n_flagged": 1,
+     "n_unflagged": 37
+    },
+    "COMPLETED": {
+     "n_flagged": 5,
+     "n_unflagged": 5
+    },
+    "UNRESOLVED": {
+     "n_flagged": 7,
+     "n_unflagged": 6
+    },
+    "ORGANIC": {
+     "n_flagged": 12,
+     "n_unflagged": 34
+    }
+   },
+   "placebo": {
+    "B": 2000,
+    "seed": 0,
+    "strata": {
+     "COMPLETED": {
+      "n": 10,
+      "n_flagged": 5
+     },
+     "FACTORY": {
+      "n": 38,
+      "n_flagged": 1
+     },
+     "OPERATOR": {
+      "n": 30,
+      "n_flagged": 0
+     },
+     "ORGANIC": {
+      "n": 46,
+      "n_flagged": 12
+     },
+     "UNRESOLVED": {
+      "n": 13,
+      "n_flagged": 7
+     }
+    }
+   },
+   "dose": {
+    "cells": {
+     "sfx0|instant": {
+      "n": 2
+     },
+     "sfx0|slow": {
+      "n": 23
+     },
+     "sfx0|unknown": {
+      "n": 0
+     },
+     "pump|instant": {
+      "n": 75
+     },
+     "pump|slow": {
+      "n": 37
+     },
+     "pump|unknown": {
+      "n": 0
+     }
+    }
+   },
+   "returns": "hidden on the debug split (never choose parameters on FINAL data)",
+   "trial": {
+    "config": "PS1|a200f843ee78",
+    "new_trial": false,
+    "n_trials_total": 2575,
+    "hypothesis_configs": 0,
+    "over_variant_limit": false,
+    "family_val_looks": 0
+   }
+  },
+  "R0|CU|ALL": {
+   "config": "R0|CU|ALL",
+   "params_hash": "fb1d37ae106d",
+   "host": "R0",
+   "flag": "CU",
+   "subset": "ALL",
+   "n_host": 94,
+   "n_eval": 84,
+   "n_unknown_flag": 10,
+   "n_flagged": 10,
+   "n_unflagged": 74,
+   "flagged_share": 0.11904761904761904,
+   "flagged_per_day": 19.21879170744728,
+   "by_class": {
+    "OPERATOR": {
+     "n_flagged": 0,
+     "n_unflagged": 29
+    },
+    "FACTORY": {
+     "n_flagged": 0,
+     "n_unflagged": 19
+    },
+    "COMPLETED": {
+     "n_flagged": 1,
+     "n_unflagged": 6
+    },
+    "UNRESOLVED": {
+     "n_flagged": 0,
+     "n_unflagged": 0
+    },
+    "ORGANIC": {
+     "n_flagged": 9,
+     "n_unflagged": 20
+    }
+   },
+   "placebo": {
+    "B": 2000,
+    "seed": 0,
+    "strata": {
+     "COMPLETED": {
+      "n": 7,
+      "n_flagged": 1
+     },
+     "FACTORY": {
+      "n": 19,
+      "n_flagged": 0
+     },
+     "OPERATOR": {
+      "n": 29,
+      "n_flagged": 0
+     },
+     "ORGANIC": {
+      "n": 29,
+      "n_flagged": 9
+     }
+    }
+   },
+   "returns": "hidden on the debug split (never choose parameters on FINAL data)",
+   "trial": {
+    "config": "PS1|fb1d37ae106d",
+    "new_trial": false,
+    "n_trials_total": 2575,
+    "hypothesis_configs": 0,
+    "over_variant_limit": false,
+    "family_val_looks": 0
+   }
+  }
+ },
+ "decision": {
+  "verdict": "DEBUG",
+  "note": "mechanics and counts only; returns hidden"
+ },
+ "runtime_s": 6.3,
+ "n_trials_total": 2575,
+ "overall": "PENDING (no official TRAIN run)"
+}

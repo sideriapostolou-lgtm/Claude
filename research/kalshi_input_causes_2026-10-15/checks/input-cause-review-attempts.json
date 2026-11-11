@@ -1,0 +1,10 @@
+{
+  "attempts": [
+    {"action":"initial standalone restore reproduction", "result":"default python lacked PYTHONPATH; ModuleNotFoundError nightcrawler; repeated successfully with PYTHONPATH=src"},
+    {"action":"initial independent pytest", "result":"default python had no pytest; repeated successfully with shared venv, 48 passed"},
+    {"action":"initial independent base-versus-candidate harness", "source_sha256":"783b15b37e38074b1d5951c4b978cd081ae8cd494e4875a08104cd8c5347b1ae", "result":"comparison passed but all learner forecast/scored/unknown counters were zero; rejected as insufficient behavioral evidence", "cause":"incrementing fake clock began at900 and learner last_at exceeded first step900; both learners disabled", "preservation":"original output remains in tool transcript, not originally written to file", "correction":"clock starts899 and each checkpoint asserts learner.enabled; corrected run reaches1forecast1score1unknown in all3scenarios"}
+  ],
+  "corrected_first_freeze_receipt":"/workspace/input-cause-review-behavior.json",
+  "harness":"/workspace/input-cause-review-behavior-harness.py",
+  "note":"No production/network actions or source writes. This first-freeze receipt is superseded for release by forthcoming final freeze, not erased."
+}

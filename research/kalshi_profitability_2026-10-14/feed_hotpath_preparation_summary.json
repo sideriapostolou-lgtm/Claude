@@ -1,0 +1,15 @@
+{
+  "scope": "Read-only packaging summary of the completed offline feed-hotpath profile.",
+  "synthetic_setup": "Warm BTC tape using actual APIs, with historical zero-position windows of 0, 128, and 512; synthetic active/current-next windows.",
+  "measured_batch": "1,000 messages and 2,000 callbacks per batch, one buffered frame at a time.",
+  "orders": "No orders or intents; no fills, queues, positions, or reconciliation in measured callbacks.",
+  "limits": [
+    "No async _session subscription/yield/status/diagnostic-logger flow, socket/TLS/kernel/provider timing, or network.",
+    "No strategy evaluate/step loop, checkpoint, mirror, or execution path in measured callbacks.",
+    "File-backed SQLite fixture/checkpoint setup occurs before timing; setup I/O is omitted.",
+    "The market freshness clock is fake; benchmark wall, process CPU, and thread CPU clocks are local measurement clocks.",
+    "No production CPU contention, account or WeatherWS thread interactions, native network buffering, or production message mix is reproduced.",
+    "This synthetic benchmark makes no production timing, causal, fix-validation, or profitability claim."
+  ],
+  "source_change_state": "Source correction PR58 remains frozen; this packaging makes no source or artifact changes."
+}

@@ -1,0 +1,28 @@
+{
+  "checked_at_utc": "2026-10-15T17:17:25.500804+00:00",
+  "checked_at_pacific": "2026-10-15T10:17:25.500804-07:00",
+  "branch_head": "3ce8a0b92f53916768a3e1c09cac700281d3c1cd",
+  "connected_github_reads_blobs": {
+    "AGENTS.md": "389266a51ccba3d21072371fd680bc8e4aff2af9",
+    "docs/COORDINATION.md": "39c234576813fcdf6679282651f7d28ac05896f8",
+    "docs/WORKLOG.md": "eb42f774a2eeb94436bed10d8157b1e6016c383b",
+    "research/kalshi_profitability_2026-10-14/PR47_DEPLOYMENT.md": "33c13fb39f85c958e322b8afbcaecfc052d6531b",
+    "research/tjr_validation_2026-10-14/DATA_ACCESS.md": "78c2beb80e24a5f5e2305561ecf7f496abdd3e40"
+  },
+  "pr47_fresh_github_read": {
+    "baseRefName": "claude/nightcrawler-memecoin-bot-Gwnb1S",
+    "mergeCommit": {
+      "oid": "e8db34ee34d95411ac7f695f704ceb82ef8e32d5"
+    },
+    "mergedAt": "2026-10-14T16:21:49Z",
+    "number": 47,
+    "state": "MERGED",
+    "url": "https://github.com/sideriapostolou-lgtm/Claude/pull/47"
+  },
+  "pr47_completion_basis": "Pinned PR47_DEPLOYMENT.md independently records exactmerge/deployment/normalstart/accountrestart/followup results; mergedPR alone not treated as completion.",
+  "active_kalshi": "EXEC/learning evidence stillopen. Current local corrected childdiagnostic5744passed/14existing skips but notpushed/deployed; green preparation is not clearance.",
+  "tjr": "Prior explicit offlinepriority retained, authentic MNQ development contractbars/accountcosts stillmissing. Historicaltrades0/P&Lnull/holdoutunopened/papernotstarted/liveoff. Saved65syntheticchecks historicalreproduced receipt, not rerunhere.",
+  "actions": "Existingqueueupdated, no duplicatePages/data/research/tests; routineunchangednotification suppressed. Automationunchanged. Reminder supplies no merge/deploy/variable/financial/trading authority and does notinterfere with separatelyauthorized activeKalshi work.",
+  "next": "Verified authorized actual MNQZ2025developmentexport withdefinitions/timeconvention/coverage/license and accountcosts; then frozen historicalvalidation, followed byverifiedpaperstart withliveoff.",
+  "done": false
+}

@@ -1,0 +1,16 @@
+{
+  "recorded_at_utc": "2026-10-15T19:30:59.508680+00:00",
+  "declaration_sha256": "7d2fefd9aa603bc3bd00adc0d761084d1a9b46dc92d7415af747772b2fa074a7",
+  "window": "KXBTC15M-26OCT151545-45",
+  "start": 1792092600.0,
+  "end": 1792093500.0,
+  "floor_strike": 82439.21,
+  "status_at_public_read": "active",
+  "result_at_public_read": "",
+  "original_body": "PUBLIC_WINDOW_BOUNDED.body",
+  "request": "PUBLIC_WINDOW_BOUNDED.request.json",
+  "rules_primary": "If the simple average of the sixty seconds of CF Benchmarks' BRTI before 3:45 PM EDT on Oct 15, 2026 is at least the simple average of the sixty seconds of CF Benchmarks' BRTI before 3:30 PM EDT on October 15, 2026, then the market resolves to Yes.",
+  "rules_secondary": "Not all cryptocurrency price data is the same. While checking a source like Google or Coinbase may help guide your decision, the price used to determine this market is based on CF Benchmarks' corresponding Real Time Index (RTI). At the last minute before expiration, 60 RTI prices are collected. The official and final value is the average of these prices, rounded to the nearest 2 decimal places.",
+  "interpretation": "Official sixty-second BRTI average before end compared with same before start; equality resolves YES. Local Coinbase price/model basis remains an explicit limitation. This is public contract verification, not proof of parent receipt time.",
+  "earlier_discovery_limit": "Separate status=open query returned the already-closed prior window only; preserved as its actual response, never substituted for target metadata."
+}

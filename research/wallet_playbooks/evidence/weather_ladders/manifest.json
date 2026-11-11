@@ -1,0 +1,116 @@
+[
+  {
+    "name": "LucasMeow",
+    "retrieved_at": "2026-10-13T18:57:32.352811+00:00",
+    "url": "https://data-api.polymarket.com/trades?user=0x7f3c8979d0afa00007bae4747d5347122af05613&limit=500&offset=0&takerOnly=false",
+    "status": 200,
+    "sha256": "52993c45f3c5472a94589b0ac50fc7e5b662406610324b48b3adcad4f430a187",
+    "n": 500,
+    "takers": {
+      "retrieved_at": "2026-10-13T18:58:07.749319+00:00",
+      "url": "https://data-api.polymarket.com/trades?user=0x7f3c8979d0afa00007bae4747d5347122af05613&limit=500&offset=0&takerOnly=true",
+      "status": 200,
+      "sha256": "eb3a5d8b1f893a12764bc58234fbe21afc77132871d93bba79477158ddb95856",
+      "n": 338
+    }
+  },
+  {
+    "name": "x6916",
+    "retrieved_at": "2026-10-13T18:57:33.539585+00:00",
+    "url": "https://data-api.polymarket.com/trades?user=0x6916cc00aa1c3e75ecf4081df7cae7d2f3592fd4&limit=500&offset=0&takerOnly=false",
+    "status": 200,
+    "sha256": "8435599bf5fa21959ac2ca5bcecc9f5602b665c2ac078671456e4d0ab467c56d",
+    "n": 500,
+    "takers": {
+      "retrieved_at": "2026-10-13T18:58:08.921605+00:00",
+      "url": "https://data-api.polymarket.com/trades?user=0x6916cc00aa1c3e75ecf4081df7cae7d2f3592fd4&limit=500&offset=0&takerOnly=true",
+      "status": 200,
+      "sha256": "2444bbd83873fda27a0a3e41cc40926c96d6fb8c5a6ca64d2e10ea663be1867f",
+      "n": 500
+    }
+  },
+  {
+    "name": "amis",
+    "retrieved_at": "2026-10-13T18:57:34.721971+00:00",
+    "url": "https://data-api.polymarket.com/trades?user=0xc1a58674dbcc1d3208f7e61a0a8b252162caf290&limit=500&offset=0&takerOnly=false",
+    "status": 200,
+    "sha256": "4e49c7e6a6a9038adbf0e0c5880dc5f79e53a401a3d43f973f4489fe850569b7",
+    "n": 500,
+    "takers": {
+      "retrieved_at": "2026-10-13T18:58:10.198322+00:00",
+      "url": "https://data-api.polymarket.com/trades?user=0xc1a58674dbcc1d3208f7e61a0a8b252162caf290&limit=500&offset=0&takerOnly=true",
+      "status": 200,
+      "sha256": "ceeba5774555133c8a6db2718ee48be7b24d4f774663843069694aeecabaff34",
+      "n": 500
+    }
+  },
+  {
+    "name": "HighTempTation",
+    "retrieved_at": "2026-10-13T18:57:35.905446+00:00",
+    "url": "https://data-api.polymarket.com/trades?user=0x6011655c4afb76f36dd1b08a137a1ba73466b31e&limit=500&offset=0&takerOnly=false",
+    "status": 200,
+    "sha256": "a3f163c0cc20f4075d40148658c1cea9bfe382da3703b8c68b43cb8ca2349fff",
+    "n": 500,
+    "takers": {
+      "retrieved_at": "2026-10-13T18:58:11.303775+00:00",
+      "url": "https://data-api.polymarket.com/trades?user=0x6011655c4afb76f36dd1b08a137a1ba73466b31e&limit=500&offset=0&takerOnly=true",
+      "status": 200,
+      "sha256": "9742feefd7b90bd03556d57bb299abcf03e89481d3213ddf32cc08c2e765557c",
+      "n": 500
+    }
+  },
+  {
+    "name": "Weatherstappen",
+    "retrieved_at": "2026-10-13T18:57:37.066733+00:00",
+    "url": "https://data-api.polymarket.com/trades?user=0xb9012e0d9b60d3920286309328b935cdfa609fc4&limit=500&offset=0&takerOnly=false",
+    "status": 200,
+    "sha256": "997713daa261ccafc1e66f57c6ed8a134299e26914db244ba819a862c9b723fb",
+    "n": 500,
+    "takers": {
+      "retrieved_at": "2026-10-13T18:58:12.449778+00:00",
+      "url": "https://data-api.polymarket.com/trades?user=0xb9012e0d9b60d3920286309328b935cdfa609fc4&limit=500&offset=0&takerOnly=true",
+      "status": 200,
+      "sha256": "0da2d67e5541d6e59a40dceb01fc84e1844e75afc19d0812b30cde0cfc6e8c89",
+      "n": 500
+    }
+  },
+  {
+    "name": "LowTempTation",
+    "retrieved_at": "2026-10-13T18:57:38.228732+00:00",
+    "url": "https://data-api.polymarket.com/trades?user=0x8e40e10d9b34b28c77c4962be5026c6fdd1f3797&limit=500&offset=0&takerOnly=false",
+    "status": 200,
+    "sha256": "5b587999ca38a82a5aadf08a7cb3faab7b7e77c82bbc0a66bbd295f13fa48c12",
+    "n": 500,
+    "takers": {
+      "retrieved_at": "2026-10-13T18:58:13.641696+00:00",
+      "url": "https://data-api.polymarket.com/trades?user=0x8e40e10d9b34b28c77c4962be5026c6fdd1f3797&limit=500&offset=0&takerOnly=true",
+      "status": 200,
+      "sha256": "f6951869f8f2627c6cbdd8fda6d6faf586005ec77760f97f8b5e9555293d7588",
+      "n": 500
+    }
+  },
+  {
+    "name": "ce25",
+    "retrieved_at": "2026-10-13T18:57:39.329841+00:00",
+    "url": "https://data-api.polymarket.com/trades?user=0xce25e214d5cfe4f459cf67f08df581885aae7fdc&limit=500&offset=0&takerOnly=false",
+    "status": 200,
+    "sha256": "355d141269edddbd73c2cea441de1a8037726a70c6e8b9f930dd2d2c5fcb0566",
+    "n": 500
+  },
+  {
+    "name": "HighTempTation_activity",
+    "url": "https://data-api.polymarket.com/activity?user=0x6011655c4afb76f36dd1b08a137a1ba73466b31e&limit=500&offset=0&type=TRADE",
+    "retrieved_at": "2026-10-13T19:01:49.687897+00:00",
+    "status": 200,
+    "sha256": "0058fb68f3872b9494c7f394d144031b74834a1a64ed3b8dd5808ce22dc8d850",
+    "n": 500
+  },
+  {
+    "name": "LowTempTation_activity",
+    "url": "https://data-api.polymarket.com/activity?user=0x8e40e10d9b34b28c77c4962be5026c6fdd1f3797&limit=500&offset=0&type=TRADE",
+    "retrieved_at": "2026-10-13T19:01:50.860789+00:00",
+    "status": 200,
+    "sha256": "3d405aeb4d387b0870c26298594c6728b02cf2adea37e93cf9145350911def79",
+    "n": 500
+  }
+]

@@ -1,0 +1,481 @@
+{
+  "scope": "service",
+  "latest_deployment_metadata_not_per_event": "64721006-e3ec-4713-8e03-3c7058ecca28",
+  "query": {
+    "projectId": "75750847-85c0-41a3-a2a7-b7f2201a51e9",
+    "environmentId": "17f7b0e0-104c-4903-9484-0106748b3cdb",
+    "serviceId": "f84d3b52-002f-44cb-931e-bc9e3e097e97",
+    "startDate": "2026-10-16T00:00:00Z",
+    "endDate": "2026-10-16T19:22:00Z",
+    "filter": "\"speeddesk_live_settlement\" - \"speeddesk_live_status\"",
+    "limit": 500
+  },
+  "provider_rows": 117,
+  "retained_standalone_rows": 42,
+  "excluded_embedded_or_other_rows": 75,
+  "limit_hit": false,
+  "rows": [
+    {
+      "timestamp": "2026-10-16T00:15:09.525979259Z",
+      "severity": "info",
+      "message": "2026-10-16T00:15:09Z INFO nightcrawler.speeddesk: speeddesk_live_settlement {\"at\":1792109706.826285,\"venue\":\"kalshi\",\"window\":\"KXBTC15M-26OCT152015-15\",\"settlement_id\":\"kalshi:KXBTC15M-26OCT152015-15\",\"up_wins\":true,\"up_shares\":10.0,\"down_shares\":11.0,\"cost_usd\":9.98,\"fee_usd\":0.0,\"paired_credit_usd\":10.0,\"net_payout_usd\":0.0,\"payout_usd\":10.0,\"locked_usd\":0.5090909090909096,\"direction_usd\":-0.48909090909091,\"pnl_usd\":0.019999999999999574,\"observed_at\":1792109709.3285336,\"time_source\":\"venue settled_time\"}",
+      "attributes": [
+        {
+          "key": "level",
+          "value": "\"info\""
+        }
+      ]
+    },
+    {
+      "timestamp": "2026-10-16T00:30:10.529323422Z",
+      "severity": "info",
+      "message": "2026-10-16T00:30:10Z INFO nightcrawler.speeddesk: speeddesk_live_settlement {\"at\":1792110606.877566,\"venue\":\"kalshi\",\"window\":\"KXBTC15M-26OCT152030-30\",\"settlement_id\":\"kalshi:KXBTC15M-26OCT152030-30\",\"up_wins\":true,\"up_shares\":10.0,\"down_shares\":10.0,\"cost_usd\":9.89,\"fee_usd\":0.0,\"paired_credit_usd\":10.0,\"net_payout_usd\":0.0,\"payout_usd\":10.0,\"locked_usd\":0.1100000000000001,\"direction_usd\":-6.661338147750939e-16,\"pnl_usd\":0.10999999999999943,\"observed_at\":1792110610.326088,\"time_source\":\"venue settled_time\"}",
+      "attributes": [
+        {
+          "key": "level",
+          "value": "\"info\""
+        }
+      ]
+    },
+    {
+      "timestamp": "2026-10-16T00:45:10.529751786Z",
+      "severity": "info",
+      "message": "2026-10-16T00:45:10Z INFO nightcrawler.speeddesk: speeddesk_live_settlement {\"at\":1792111506.840099,\"venue\":\"kalshi\",\"window\":\"KXBTC15M-26OCT152045-45\",\"settlement_id\":\"kalshi:KXBTC15M-26OCT152045-45\",\"up_wins\":true,\"up_shares\":8.0,\"down_shares\":8.0,\"cost_usd\":8.48,\"fee_usd\":0.0525,\"paired_credit_usd\":8.0,\"net_payout_usd\":0.0,\"payout_usd\":8.0,\"locked_usd\":-0.5324999999999998,\"direction_usd\":8.881784197001252e-16,\"pnl_usd\":-0.5324999999999989,\"observed_at\":1792111510.290346,\"time_source\":\"venue settled_time\"}",
+      "attributes": [
+        {
+          "key": "level",
+          "value": "\"info\""
+        }
+      ]
+    },
+    {
+      "timestamp": "2026-10-16T01:00:11.300962382Z",
+      "severity": "info",
+      "message": "2026-10-16T01:00:05Z INFO nightcrawler.speeddesk: speeddesk_live_settlement {\"at\":1792112401.892587,\"venue\":\"kalshi\",\"window\":\"KXBTC15M-26OCT152100-00\",\"settlement_id\":\"kalshi:KXBTC15M-26OCT152100-00\",\"up_wins\":false,\"up_shares\":5.0,\"down_shares\":5.0,\"cost_usd\":3.2449999999999997,\"fee_usd\":0.0132,\"paired_credit_usd\":5.0,\"net_payout_usd\":0.0,\"payout_usd\":5.0,\"locked_usd\":1.7418,\"direction_usd\":0.0,\"pnl_usd\":1.7418,\"observed_at\":1792112405.2033405,\"time_source\":\"venue settled_time\"}",
+      "attributes": [
+        {
+          "key": "level",
+          "value": "\"info\""
+        }
+      ]
+    },
+    {
+      "timestamp": "2026-10-16T01:15:11.113781723Z",
+      "severity": "info",
+      "message": "2026-10-16T01:15:11Z INFO nightcrawler.speeddesk: speeddesk_live_settlement {\"at\":1792113306.836163,\"venue\":\"kalshi\",\"window\":\"KXBTC15M-26OCT152115-15\",\"settlement_id\":\"kalshi:KXBTC15M-26OCT152115-15\",\"up_wins\":true,\"up_shares\":11.0,\"down_shares\":11.0,\"cost_usd\":10.280000000000001,\"fee_usd\":0.0142,\"paired_credit_usd\":11.0,\"net_payout_usd\":0.0,\"payout_usd\":11.0,\"locked_usd\":0.7058000000000006,\"direction_usd\":-6.661338147750939e-16,\"pnl_usd\":0.7058,\"observed_at\":1792113310.7929847,\"time_source\":\"venue settled_time\"}",
+      "attributes": [
+        {
+          "key": "level",
+          "value": "\"info\""
+        }
+      ]
+    },
+    {
+      "timestamp": "2026-10-16T01:30:05.083450050Z",
+      "severity": "info",
+      "message": "2026-10-16T01:30:05Z INFO nightcrawler.speeddesk: speeddesk_live_settlement {\"at\":1792114201.827407,\"venue\":\"kalshi\",\"window\":\"KXBTC15M-26OCT152130-30\",\"settlement_id\":\"kalshi:KXBTC15M-26OCT152130-30\",\"up_wins\":false,\"up_shares\":13.0,\"down_shares\":8.0,\"cost_usd\":9.41,\"fee_usd\":0.0,\"paired_credit_usd\":8.0,\"net_payout_usd\":0.0,\"payout_usd\":8.0,\"locked_usd\":0.8476923076923084,\"direction_usd\":-2.2576923076923086,\"pnl_usd\":-1.4100000000000001,\"observed_at\":1792114204.8352993,\"time_source\":\"venue settled_time\"}",
+      "attributes": [
+        {
+          "key": "level",
+          "value": "\"info\""
+        }
+      ]
+    },
+    {
+      "timestamp": "2026-10-16T01:45:09.719425220Z",
+      "severity": "info",
+      "message": "2026-10-16T01:45:09Z INFO nightcrawler.speeddesk: speeddesk_live_settlement {\"at\":1792115106.826317,\"venue\":\"kalshi\",\"window\":\"KXBTC15M-26OCT152145-45\",\"settlement_id\":\"kalshi:KXBTC15M-26OCT152145-45\",\"up_wins\":false,\"up_shares\":13.0,\"down_shares\":13.0,\"cost_usd\":12.64,\"fee_usd\":0.0816,\"paired_credit_usd\":13.0,\"net_payout_usd\":0.0,\"payout_usd\":13.0,\"locked_usd\":0.27839999999999854,\"direction_usd\":9.992007221626409e-16,\"pnl_usd\":0.27839999999999954,\"observed_at\":1792115109.340048,\"time_source\":\"venue settled_time\"}",
+      "attributes": [
+        {
+          "key": "level",
+          "value": "\"info\""
+        }
+      ]
+    },
+    {
+      "timestamp": "2026-10-16T02:00:05.294128052Z",
+      "severity": "info",
+      "message": "2026-10-16T02:00:05Z INFO nightcrawler.speeddesk: speeddesk_live_settlement {\"at\":1792116001.840745,\"venue\":\"kalshi\",\"window\":\"KXBTC15M-26OCT152200-00\",\"settlement_id\":\"kalshi:KXBTC15M-26OCT152200-00\",\"up_wins\":false,\"up_shares\":12.0,\"down_shares\":12.0,\"cost_usd\":10.34,\"fee_usd\":0.0357,\"paired_credit_usd\":12.0,\"net_payout_usd\":0.0,\"payout_usd\":12.0,\"locked_usd\":1.6243000000000003,\"direction_usd\":1.3322676295501878e-15,\"pnl_usd\":1.6243000000000016,\"observed_at\":1792116004.9949002,\"time_source\":\"venue settled_time\"}",
+      "attributes": [
+        {
+          "key": "level",
+          "value": "\"info\""
+        }
+      ]
+    },
+    {
+      "timestamp": "2026-10-16T02:15:07.195192599Z",
+      "severity": "info",
+      "message": "2026-10-16T02:15:07Z INFO nightcrawler.speeddesk: speeddesk_live_settlement {\"at\":1792116901.832999,\"venue\":\"kalshi\",\"window\":\"KXBTC15M-26OCT152215-15\",\"settlement_id\":\"kalshi:KXBTC15M-26OCT152215-15\",\"up_wins\":true,\"up_shares\":11.0,\"down_shares\":11.0,\"cost_usd\":10.35,\"fee_usd\":0.0162,\"paired_credit_usd\":11.0,\"net_payout_usd\":0.0,\"payout_usd\":11.0,\"locked_usd\":0.6337999999999997,\"direction_usd\":1.1102230246251565e-15,\"pnl_usd\":0.6338000000000008,\"observed_at\":1792116906.9265182,\"time_source\":\"venue settled_time\"}",
+      "attributes": [
+        {
+          "key": "level",
+          "value": "\"info\""
+        }
+      ]
+    },
+    {
+      "timestamp": "2026-10-16T02:30:11.021899199Z",
+      "severity": "info",
+      "message": "2026-10-16T02:30:10Z INFO nightcrawler.speeddesk: speeddesk_live_settlement {\"at\":1792117806.835785,\"venue\":\"kalshi\",\"window\":\"KXBTC15M-26OCT152230-30\",\"settlement_id\":\"kalshi:KXBTC15M-26OCT152230-30\",\"up_wins\":false,\"up_shares\":10.0,\"down_shares\":10.0,\"cost_usd\":10.15,\"fee_usd\":0.031,\"paired_credit_usd\":10.0,\"net_payout_usd\":0.0,\"payout_usd\":10.0,\"locked_usd\":-0.18100000000000005,\"direction_usd\":-8.881784197001252e-16,\"pnl_usd\":-0.18100000000000094,\"observed_at\":1792117810.7121985,\"time_source\":\"venue settled_time\"}",
+      "attributes": [
+        {
+          "key": "level",
+          "value": "\"info\""
+        }
+      ]
+    },
+    {
+      "timestamp": "2026-10-16T02:45:04.436230727Z",
+      "severity": "info",
+      "message": "2026-10-16T02:45:04Z INFO nightcrawler.speeddesk: speeddesk_live_settlement {\"at\":1792118701.815494,\"venue\":\"kalshi\",\"window\":\"KXBTC15M-26OCT152245-45\",\"settlement_id\":\"kalshi:KXBTC15M-26OCT152245-45\",\"up_wins\":true,\"up_shares\":5.0,\"down_shares\":8.0,\"cost_usd\":6.23,\"fee_usd\":0.0,\"paired_credit_usd\":5.0,\"net_payout_usd\":0.0,\"payout_usd\":5.0,\"locked_usd\":0.26249999999999996,\"direction_usd\":-1.4925000000000004,\"pnl_usd\":-1.2300000000000004,\"observed_at\":1792118704.1476908,\"time_source\":\"venue settled_time\"}",
+      "attributes": [
+        {
+          "key": "level",
+          "value": "\"info\""
+        }
+      ]
+    },
+    {
+      "timestamp": "2026-10-16T03:00:06.131262659Z",
+      "severity": "info",
+      "message": "2026-10-16T03:00:06Z INFO nightcrawler.speeddesk: speeddesk_live_settlement {\"at\":1792119601.818212,\"venue\":\"kalshi\",\"window\":\"KXBTC15M-26OCT152300-00\",\"settlement_id\":\"kalshi:KXBTC15M-26OCT152300-00\",\"up_wins\":false,\"up_shares\":5.0,\"down_shares\":0.0,\"cost_usd\":1.2,\"fee_usd\":0.0,\"paired_credit_usd\":0.0,\"net_payout_usd\":0.0,\"payout_usd\":0.0,\"locked_usd\":0.0,\"direction_usd\":-1.2,\"pnl_usd\":-1.2,\"observed_at\":1792119605.8137078,\"time_source\":\"venue settled_time\"}",
+      "attributes": [
+        {
+          "key": "level",
+          "value": "\"info\""
+        }
+      ]
+    },
+    {
+      "timestamp": "2026-10-16T03:15:04.854229232Z",
+      "severity": "info",
+      "message": "2026-10-16T03:15:04Z INFO nightcrawler.speeddesk: speeddesk_live_settlement {\"at\":1792120501.965755,\"venue\":\"kalshi\",\"window\":\"KXBTC15M-26OCT152315-15\",\"settlement_id\":\"kalshi:KXBTC15M-26OCT152315-15\",\"up_wins\":true,\"up_shares\":5.0,\"down_shares\":5.0,\"cost_usd\":7.84,\"fee_usd\":0.0109,\"paired_credit_usd\":5.0,\"net_payout_usd\":0.0,\"payout_usd\":5.0,\"locked_usd\":-2.8509,\"direction_usd\":0.0,\"pnl_usd\":-2.8509,\"observed_at\":1792120504.6248507,\"time_source\":\"venue settled_time\"}",
+      "attributes": [
+        {
+          "key": "level",
+          "value": "\"info\""
+        }
+      ]
+    },
+    {
+      "timestamp": "2026-10-16T03:30:09.465887081Z",
+      "severity": "info",
+      "message": "2026-10-16T03:30:05Z INFO nightcrawler.speeddesk: speeddesk_live_settlement {\"at\":1792121401.871077,\"venue\":\"kalshi\",\"window\":\"KXBTC15M-26OCT152330-30\",\"settlement_id\":\"kalshi:KXBTC15M-26OCT152330-30\",\"up_wins\":false,\"up_shares\":3.0,\"down_shares\":3.0,\"cost_usd\":4.932,\"fee_usd\":0.0073,\"paired_credit_usd\":3.0,\"net_payout_usd\":0.0,\"payout_usd\":3.0,\"locked_usd\":-1.9392999999999998,\"direction_usd\":4.440892098500626e-16,\"pnl_usd\":-1.9392999999999994,\"observed_at\":1792121405.0205798,\"time_source\":\"venue settled_time\"}",
+      "attributes": [
+        {
+          "key": "level",
+          "value": "\"info\""
+        }
+      ]
+    },
+    {
+      "timestamp": "2026-10-16T03:45:05.473436319Z",
+      "severity": "info",
+      "message": "2026-10-16T03:45:05Z INFO nightcrawler.speeddesk: speeddesk_live_settlement {\"at\":1792122302.426025,\"venue\":\"kalshi\",\"window\":\"KXBTC15M-26OCT152345-45\",\"settlement_id\":\"kalshi:KXBTC15M-26OCT152345-45\",\"up_wins\":false,\"up_shares\":1.0,\"down_shares\":1.0,\"cost_usd\":0.788,\"fee_usd\":0.0006,\"paired_credit_usd\":1.0,\"net_payout_usd\":0.0,\"payout_usd\":1.0,\"locked_usd\":0.21139999999999992,\"direction_usd\":0.0,\"pnl_usd\":0.21139999999999992,\"observed_at\":1792122305.200819,\"time_source\":\"venue settled_time\"}",
+      "attributes": [
+        {
+          "key": "level",
+          "value": "\"info\""
+        }
+      ]
+    },
+    {
+      "timestamp": "2026-10-16T04:00:08.479971378Z",
+      "severity": "info",
+      "message": "2026-10-16T04:00:08Z INFO nightcrawler.speeddesk: speeddesk_live_settlement {\"at\":1792123205.626739,\"venue\":\"kalshi\",\"window\":\"KXBTC15M-26OCT160000-00\",\"settlement_id\":\"kalshi:KXBTC15M-26OCT160000-00\",\"up_wins\":true,\"up_shares\":1.0,\"down_shares\":1.0,\"cost_usd\":0.965,\"fee_usd\":0.0004,\"paired_credit_usd\":1.0,\"net_payout_usd\":0.0,\"payout_usd\":1.0,\"locked_usd\":0.034600000000000034,\"direction_usd\":4.163336342344337e-17,\"pnl_usd\":0.034600000000000075,\"observed_at\":1792123208.0724857,\"time_source\":\"venue settled_time\"}",
+      "attributes": [
+        {
+          "key": "level",
+          "value": "\"info\""
+        }
+      ]
+    },
+    {
+      "timestamp": "2026-10-16T04:15:10.704326242Z",
+      "severity": "info",
+      "message": "2026-10-16T04:15:10Z INFO nightcrawler.speeddesk: speeddesk_live_settlement {\"at\":1792124106.821883,\"venue\":\"kalshi\",\"window\":\"KXBTC15M-26OCT160015-15\",\"settlement_id\":\"kalshi:KXBTC15M-26OCT160015-15\",\"up_wins\":false,\"up_shares\":1.0,\"down_shares\":1.0,\"cost_usd\":1.3479999999999999,\"fee_usd\":0.0035,\"paired_credit_usd\":1.0,\"net_payout_usd\":0.0,\"payout_usd\":1.0,\"locked_usd\":-0.3514999999999999,\"direction_usd\":0.0,\"pnl_usd\":-0.3514999999999999,\"observed_at\":1792124110.4418015,\"time_source\":\"venue settled_time\"}",
+      "attributes": [
+        {
+          "key": "level",
+          "value": "\"info\""
+        }
+      ]
+    },
+    {
+      "timestamp": "2026-10-16T04:30:05.347475328Z",
+      "severity": "info",
+      "message": "2026-10-16T04:30:05Z INFO nightcrawler.speeddesk: speeddesk_live_settlement {\"at\":1792125001.819245,\"venue\":\"kalshi\",\"window\":\"KXBTC15M-26OCT160030-30\",\"settlement_id\":\"kalshi:KXBTC15M-26OCT160030-30\",\"up_wins\":true,\"up_shares\":1.0,\"down_shares\":1.0,\"cost_usd\":0.8800000000000001,\"fee_usd\":0.0,\"paired_credit_usd\":1.0,\"net_payout_usd\":0.0,\"payout_usd\":1.0,\"locked_usd\":0.11999999999999988,\"direction_usd\":0.0,\"pnl_usd\":0.11999999999999988,\"observed_at\":1792125004.9147468,\"time_source\":\"venue settled_time\"}",
+      "attributes": [
+        {
+          "key": "level",
+          "value": "\"info\""
+        }
+      ]
+    },
+    {
+      "timestamp": "2026-10-16T04:45:11.545182398Z",
+      "severity": "info",
+      "message": "2026-10-16T04:45:11Z INFO nightcrawler.speeddesk: speeddesk_live_settlement {\"at\":1792125906.82346,\"venue\":\"kalshi\",\"window\":\"KXBTC15M-26OCT160045-45\",\"settlement_id\":\"kalshi:KXBTC15M-26OCT160045-45\",\"up_wins\":false,\"up_shares\":1.0,\"down_shares\":1.0,\"cost_usd\":0.77,\"fee_usd\":0.0,\"paired_credit_usd\":1.0,\"net_payout_usd\":0.0,\"payout_usd\":1.0,\"locked_usd\":0.2300000000000001,\"direction_usd\":-1.1102230246251565e-16,\"pnl_usd\":0.22999999999999998,\"observed_at\":1792125911.2640376,\"time_source\":\"venue settled_time\"}",
+      "attributes": [
+        {
+          "key": "level",
+          "value": "\"info\""
+        }
+      ]
+    },
+    {
+      "timestamp": "2026-10-16T05:00:10.027272057Z",
+      "severity": "info",
+      "message": "2026-10-16T05:00:05Z INFO nightcrawler.speeddesk: speeddesk_live_settlement {\"at\":1792126801.824341,\"venue\":\"kalshi\",\"window\":\"KXBTC15M-26OCT160100-00\",\"settlement_id\":\"kalshi:KXBTC15M-26OCT160100-00\",\"up_wins\":true,\"up_shares\":1.0,\"down_shares\":1.0,\"cost_usd\":0.94,\"fee_usd\":0.0,\"paired_credit_usd\":1.0,\"net_payout_usd\":0.0,\"payout_usd\":1.0,\"locked_usd\":0.06,\"direction_usd\":5.551115123125783e-17,\"pnl_usd\":0.06000000000000005,\"observed_at\":1792126804.782926,\"time_source\":\"venue settled_time\"}",
+      "attributes": [
+        {
+          "key": "level",
+          "value": "\"info\""
+        }
+      ]
+    },
+    {
+      "timestamp": "2026-10-16T05:15:28.449414665Z",
+      "severity": "info",
+      "message": "2026-10-16T05:15:28Z INFO nightcrawler.speeddesk: speeddesk_live_settlement {\"at\":1792127728.0726452,\"venue\":\"kalshi\",\"window\":\"KXBTC15M-26OCT160115-15\",\"settlement_id\":\"kalshi:KXBTC15M-26OCT160115-15\",\"up_wins\":true,\"up_shares\":0.0,\"down_shares\":0.0,\"cost_usd\":0.0,\"fee_usd\":0.0,\"paired_credit_usd\":0.0,\"net_payout_usd\":0.0,\"payout_usd\":0.0,\"locked_usd\":0.0,\"direction_usd\":0.0,\"pnl_usd\":0.0,\"observed_at\":1792127728.0727093,\"time_source\":\"public final outcome observed; paired position has no cash settlement\"}",
+      "attributes": [
+        {
+          "key": "level",
+          "value": "\"info\""
+        }
+      ]
+    },
+    {
+      "timestamp": "2026-10-16T05:30:05.174347370Z",
+      "severity": "info",
+      "message": "2026-10-16T05:30:05Z INFO nightcrawler.speeddesk: speeddesk_live_settlement {\"at\":1792128601.818021,\"venue\":\"kalshi\",\"window\":\"KXBTC15M-26OCT160130-30\",\"settlement_id\":\"kalshi:KXBTC15M-26OCT160130-30\",\"up_wins\":false,\"up_shares\":2.0,\"down_shares\":2.0,\"cost_usd\":2.76,\"fee_usd\":0.0126,\"paired_credit_usd\":2.0,\"net_payout_usd\":0.0,\"payout_usd\":2.0,\"locked_usd\":-0.7726,\"direction_usd\":2.220446049250313e-16,\"pnl_usd\":-0.7725999999999997,\"observed_at\":1792128604.7931197,\"time_source\":\"venue settled_time\"}",
+      "attributes": [
+        {
+          "key": "level",
+          "value": "\"info\""
+        }
+      ]
+    },
+    {
+      "timestamp": "2026-10-16T05:45:11.721079579Z",
+      "severity": "info",
+      "message": "2026-10-16T05:45:11Z INFO nightcrawler.speeddesk: speeddesk_live_settlement {\"at\":1792129506.80984,\"venue\":\"kalshi\",\"window\":\"KXBTC15M-26OCT160145-45\",\"settlement_id\":\"kalshi:KXBTC15M-26OCT160145-45\",\"up_wins\":false,\"up_shares\":1.0,\"down_shares\":1.0,\"cost_usd\":0.99,\"fee_usd\":0.0,\"paired_credit_usd\":1.0,\"net_payout_usd\":0.0,\"payout_usd\":1.0,\"locked_usd\":0.009999999999999953,\"direction_usd\":5.551115123125783e-17,\"pnl_usd\":0.010000000000000009,\"observed_at\":1792129511.267352,\"time_source\":\"venue settled_time\"}",
+      "attributes": [
+        {
+          "key": "level",
+          "value": "\"info\""
+        }
+      ]
+    },
+    {
+      "timestamp": "2026-10-16T06:00:08.547056270Z",
+      "severity": "info",
+      "message": "2026-10-16T06:00:08Z INFO nightcrawler.speeddesk: speeddesk_live_settlement {\"at\":1792130406.811087,\"venue\":\"kalshi\",\"window\":\"KXBTC15M-26OCT160200-00\",\"settlement_id\":\"kalshi:KXBTC15M-26OCT160200-00\",\"up_wins\":true,\"up_shares\":0.0,\"down_shares\":1.0,\"cost_usd\":0.44,\"fee_usd\":0.0,\"paired_credit_usd\":0.0,\"net_payout_usd\":0.0,\"payout_usd\":0.0,\"locked_usd\":0.0,\"direction_usd\":-0.44,\"pnl_usd\":-0.44,\"observed_at\":1792130408.0432024,\"time_source\":\"venue settled_time\"}",
+      "attributes": [
+        {
+          "key": "level",
+          "value": "\"info\""
+        }
+      ]
+    },
+    {
+      "timestamp": "2026-10-16T13:30:22.831155768Z",
+      "severity": "info",
+      "message": "2026-10-16T13:30:22Z INFO nightcrawler.speeddesk: speeddesk_live_settlement {\"at\":1792157422.3210616,\"venue\":\"kalshi\",\"window\":\"KXBTC15M-26OCT160930-30\",\"settlement_id\":\"kalshi:KXBTC15M-26OCT160930-30\",\"up_wins\":false,\"up_shares\":0.0,\"down_shares\":0.0,\"cost_usd\":0.0,\"fee_usd\":0.0,\"paired_credit_usd\":0.0,\"net_payout_usd\":0.0,\"payout_usd\":0.0,\"locked_usd\":0.0,\"direction_usd\":0.0,\"pnl_usd\":0.0,\"observed_at\":1792157422.321186,\"time_source\":\"public final outcome observed; paired position has no cash settlement\"}",
+      "attributes": [
+        {
+          "key": "level",
+          "value": "\"info\""
+        }
+      ]
+    },
+    {
+      "timestamp": "2026-10-16T15:05:51.558380221Z",
+      "severity": "info",
+      "message": "2026-10-16T15:05:51Z INFO nightcrawler.speeddesk: speeddesk_live_settlement {\"at\":1792163151.208339,\"venue\":\"kalshi\",\"window\":\"KXBTC15M-26OCT160945-45\",\"settlement_id\":\"kalshi:KXBTC15M-26OCT160945-45\",\"up_wins\":false,\"up_shares\":0.0,\"down_shares\":0.0,\"cost_usd\":0.0,\"fee_usd\":0.0,\"paired_credit_usd\":0.0,\"net_payout_usd\":0.0,\"payout_usd\":0.0,\"locked_usd\":0.0,\"direction_usd\":0.0,\"pnl_usd\":0.0,\"observed_at\":1792163151.2084677,\"time_source\":\"public final outcome observed; paired position has no cash settlement\"}",
+      "attributes": [
+        {
+          "key": "level",
+          "value": "\"info\""
+        }
+      ]
+    },
+    {
+      "timestamp": "2026-10-16T15:30:05.800875874Z",
+      "severity": "info",
+      "message": "2026-10-16T15:30:05Z INFO nightcrawler.speeddesk: speeddesk_live_settlement {\"at\":1792164601.828874,\"venue\":\"kalshi\",\"window\":\"KXBTC15M-26OCT161130-30\",\"settlement_id\":\"kalshi:KXBTC15M-26OCT161130-30\",\"up_wins\":false,\"up_shares\":4.0,\"down_shares\":4.0,\"cost_usd\":2.96,\"fee_usd\":0.0,\"paired_credit_usd\":4.0,\"net_payout_usd\":0.0,\"payout_usd\":4.0,\"locked_usd\":1.04,\"direction_usd\":0.0,\"pnl_usd\":1.04,\"observed_at\":1792164605.3574295,\"time_source\":\"venue settled_time\"}",
+      "attributes": [
+        {
+          "key": "level",
+          "value": "\"info\""
+        }
+      ]
+    },
+    {
+      "timestamp": "2026-10-16T15:45:10.589793617Z",
+      "severity": "info",
+      "message": "2026-10-16T15:45:10Z INFO nightcrawler.speeddesk: speeddesk_live_settlement {\"at\":1792165506.818948,\"venue\":\"kalshi\",\"window\":\"KXBTC15M-26OCT161145-45\",\"settlement_id\":\"kalshi:KXBTC15M-26OCT161145-45\",\"up_wins\":true,\"up_shares\":5.0,\"down_shares\":5.0,\"cost_usd\":5.2,\"fee_usd\":0.0786,\"paired_credit_usd\":5.0,\"net_payout_usd\":0.0,\"payout_usd\":5.0,\"locked_usd\":-0.2786000000000005,\"direction_usd\":-3.3306690738754696e-16,\"pnl_usd\":-0.27860000000000085,\"observed_at\":1792165509.986632,\"time_source\":\"venue settled_time\"}",
+      "attributes": [
+        {
+          "key": "level",
+          "value": "\"info\""
+        }
+      ]
+    },
+    {
+      "timestamp": "2026-10-16T16:00:06.520141114Z",
+      "severity": "info",
+      "message": "2026-10-16T16:00:05Z INFO nightcrawler.speeddesk: speeddesk_live_settlement {\"at\":1792166401.818288,\"venue\":\"kalshi\",\"window\":\"KXBTC15M-26OCT161200-00\",\"settlement_id\":\"kalshi:KXBTC15M-26OCT161200-00\",\"up_wins\":false,\"up_shares\":5.0,\"down_shares\":5.0,\"cost_usd\":4.6,\"fee_usd\":0.0,\"paired_credit_usd\":5.0,\"net_payout_usd\":0.0,\"payout_usd\":5.0,\"locked_usd\":0.4000000000000001,\"direction_usd\":2.7755575615628914e-16,\"pnl_usd\":0.40000000000000036,\"observed_at\":1792166405.0443542,\"time_source\":\"venue settled_time\"}",
+      "attributes": [
+        {
+          "key": "level",
+          "value": "\"info\""
+        }
+      ]
+    },
+    {
+      "timestamp": "2026-10-16T16:15:04.768186811Z",
+      "severity": "info",
+      "message": "2026-10-16T16:15:04Z INFO nightcrawler.speeddesk: speeddesk_live_settlement {\"at\":1792167301.818764,\"venue\":\"kalshi\",\"window\":\"KXBTC15M-26OCT161215-15\",\"settlement_id\":\"kalshi:KXBTC15M-26OCT161215-15\",\"up_wins\":true,\"up_shares\":5.0,\"down_shares\":5.0,\"cost_usd\":4.9,\"fee_usd\":0.0,\"paired_credit_usd\":5.0,\"net_payout_usd\":0.0,\"payout_usd\":5.0,\"locked_usd\":0.10000000000000009,\"direction_usd\":-4.440892098500626e-16,\"pnl_usd\":0.09999999999999964,\"observed_at\":1792167304.4671757,\"time_source\":\"venue settled_time\"}",
+      "attributes": [
+        {
+          "key": "level",
+          "value": "\"info\""
+        }
+      ]
+    },
+    {
+      "timestamp": "2026-10-16T16:30:08.973801661Z",
+      "severity": "info",
+      "message": "2026-10-16T16:30:06Z INFO nightcrawler.speeddesk: speeddesk_live_settlement {\"at\":1792168201.824307,\"venue\":\"kalshi\",\"window\":\"KXBTC15M-26OCT161230-30\",\"settlement_id\":\"kalshi:KXBTC15M-26OCT161230-30\",\"up_wins\":true,\"up_shares\":5.0,\"down_shares\":5.0,\"cost_usd\":4.95,\"fee_usd\":0.0,\"paired_credit_usd\":5.0,\"net_payout_usd\":0.0,\"payout_usd\":5.0,\"locked_usd\":0.050000000000000044,\"direction_usd\":-2.220446049250313e-16,\"pnl_usd\":0.04999999999999982,\"observed_at\":1792168206.0417364,\"time_source\":\"venue settled_time\"}",
+      "attributes": [
+        {
+          "key": "level",
+          "value": "\"info\""
+        }
+      ]
+    },
+    {
+      "timestamp": "2026-10-16T16:45:11.394892394Z",
+      "severity": "info",
+      "message": "2026-10-16T16:45:11Z INFO nightcrawler.speeddesk: speeddesk_live_settlement {\"at\":1792169106.817653,\"venue\":\"kalshi\",\"window\":\"KXBTC15M-26OCT161245-45\",\"settlement_id\":\"kalshi:KXBTC15M-26OCT161245-45\",\"up_wins\":false,\"up_shares\":5.0,\"down_shares\":5.0,\"cost_usd\":4.6,\"fee_usd\":0.0,\"paired_credit_usd\":5.0,\"net_payout_usd\":0.0,\"payout_usd\":5.0,\"locked_usd\":0.40000000000000063,\"direction_usd\":-2.7755575615628914e-16,\"pnl_usd\":0.40000000000000036,\"observed_at\":1792169110.8526628,\"time_source\":\"venue settled_time\"}",
+      "attributes": [
+        {
+          "key": "level",
+          "value": "\"info\""
+        }
+      ]
+    },
+    {
+      "timestamp": "2026-10-16T17:00:06.602700664Z",
+      "severity": "info",
+      "message": "2026-10-16T17:00:06Z INFO nightcrawler.speeddesk: speeddesk_live_settlement {\"at\":1792170001.825939,\"venue\":\"kalshi\",\"window\":\"KXBTC15M-26OCT161300-00\",\"settlement_id\":\"kalshi:KXBTC15M-26OCT161300-00\",\"up_wins\":false,\"up_shares\":5.0,\"down_shares\":5.0,\"cost_usd\":4.15,\"fee_usd\":0.0,\"paired_credit_usd\":5.0,\"net_payout_usd\":0.0,\"payout_usd\":5.0,\"locked_usd\":0.8499999999999999,\"direction_usd\":-2.220446049250313e-16,\"pnl_usd\":0.8499999999999996,\"observed_at\":1792170006.2468789,\"time_source\":\"venue settled_time\"}",
+      "attributes": [
+        {
+          "key": "level",
+          "value": "\"info\""
+        }
+      ]
+    },
+    {
+      "timestamp": "2026-10-16T17:15:05.634122765Z",
+      "severity": "info",
+      "message": "2026-10-16T17:15:05Z INFO nightcrawler.speeddesk: speeddesk_live_settlement {\"at\":1792170901.816111,\"venue\":\"kalshi\",\"window\":\"KXBTC15M-26OCT161315-15\",\"settlement_id\":\"kalshi:KXBTC15M-26OCT161315-15\",\"up_wins\":false,\"up_shares\":5.0,\"down_shares\":0.0,\"cost_usd\":1.6500000000000001,\"fee_usd\":0.0,\"paired_credit_usd\":0.0,\"net_payout_usd\":0.0,\"payout_usd\":0.0,\"locked_usd\":0.0,\"direction_usd\":-1.6500000000000001,\"pnl_usd\":-1.6500000000000001,\"observed_at\":1792170905.3032146,\"time_source\":\"venue settled_time\"}",
+      "attributes": [
+        {
+          "key": "level",
+          "value": "\"info\""
+        }
+      ]
+    },
+    {
+      "timestamp": "2026-10-16T17:30:06.705106953Z",
+      "severity": "info",
+      "message": "2026-10-16T17:30:06Z INFO nightcrawler.speeddesk: speeddesk_live_settlement {\"at\":1792171802.726574,\"venue\":\"kalshi\",\"window\":\"KXBTC15M-26OCT161330-30\",\"settlement_id\":\"kalshi:KXBTC15M-26OCT161330-30\",\"up_wins\":false,\"up_shares\":5.0,\"down_shares\":5.0,\"cost_usd\":3.57,\"fee_usd\":0.0014,\"paired_credit_usd\":5.0,\"net_payout_usd\":0.0,\"payout_usd\":5.0,\"locked_usd\":1.4286000000000003,\"direction_usd\":0.0,\"pnl_usd\":1.4286000000000003,\"observed_at\":1792171806.3952715,\"time_source\":\"venue settled_time\"}",
+      "attributes": [
+        {
+          "key": "level",
+          "value": "\"info\""
+        }
+      ]
+    },
+    {
+      "timestamp": "2026-10-16T17:45:09.207566260Z",
+      "severity": "info",
+      "message": "2026-10-16T17:45:09Z INFO nightcrawler.speeddesk: speeddesk_live_settlement {\"at\":1792172706.817854,\"venue\":\"kalshi\",\"window\":\"KXBTC15M-26OCT161345-45\",\"settlement_id\":\"kalshi:KXBTC15M-26OCT161345-45\",\"up_wins\":true,\"up_shares\":0.0,\"down_shares\":5.0,\"cost_usd\":1.75,\"fee_usd\":0.0,\"paired_credit_usd\":0.0,\"net_payout_usd\":0.0,\"payout_usd\":0.0,\"locked_usd\":0.0,\"direction_usd\":-1.75,\"pnl_usd\":-1.75,\"observed_at\":1792172708.6210704,\"time_source\":\"venue settled_time\"}",
+      "attributes": [
+        {
+          "key": "level",
+          "value": "\"info\""
+        }
+      ]
+    },
+    {
+      "timestamp": "2026-10-16T18:00:08.643448853Z",
+      "severity": "info",
+      "message": "2026-10-16T18:00:08Z INFO nightcrawler.speeddesk: speeddesk_live_settlement {\"at\":1792173606.812353,\"venue\":\"kalshi\",\"window\":\"KXBTC15M-26OCT161400-00\",\"settlement_id\":\"kalshi:KXBTC15M-26OCT161400-00\",\"up_wins\":false,\"up_shares\":4.0,\"down_shares\":0.0,\"cost_usd\":1.44,\"fee_usd\":0.0,\"paired_credit_usd\":0.0,\"net_payout_usd\":0.0,\"payout_usd\":0.0,\"locked_usd\":0.0,\"direction_usd\":-1.44,\"pnl_usd\":-1.44,\"observed_at\":1792173608.346003,\"time_source\":\"venue settled_time\"}",
+      "attributes": [
+        {
+          "key": "level",
+          "value": "\"info\""
+        }
+      ]
+    },
+    {
+      "timestamp": "2026-10-16T18:15:06.332920522Z",
+      "severity": "info",
+      "message": "2026-10-16T18:15:06Z INFO nightcrawler.speeddesk: speeddesk_live_settlement {\"at\":1792174501.823036,\"venue\":\"kalshi\",\"window\":\"KXBTC15M-26OCT161415-15\",\"settlement_id\":\"kalshi:KXBTC15M-26OCT161415-15\",\"up_wins\":true,\"up_shares\":3.0,\"down_shares\":3.0,\"cost_usd\":3.6900000000000004,\"fee_usd\":0.0384,\"paired_credit_usd\":3.0,\"net_payout_usd\":0.0,\"payout_usd\":3.0,\"locked_usd\":-0.7284000000000004,\"direction_usd\":-2.220446049250313e-16,\"pnl_usd\":-0.7284000000000006,\"observed_at\":1792174505.9135637,\"time_source\":\"venue settled_time\"}",
+      "attributes": [
+        {
+          "key": "level",
+          "value": "\"info\""
+        }
+      ]
+    },
+    {
+      "timestamp": "2026-10-16T18:30:10.773417793Z",
+      "severity": "info",
+      "message": "2026-10-16T18:30:10Z INFO nightcrawler.speeddesk: speeddesk_live_settlement {\"at\":1792175406.824259,\"venue\":\"kalshi\",\"window\":\"KXBTC15M-26OCT161430-30\",\"settlement_id\":\"kalshi:KXBTC15M-26OCT161430-30\",\"up_wins\":true,\"up_shares\":2.0,\"down_shares\":2.0,\"cost_usd\":1.74,\"fee_usd\":0.0,\"paired_credit_usd\":2.0,\"net_payout_usd\":0.0,\"payout_usd\":2.0,\"locked_usd\":0.2600000000000001,\"direction_usd\":-1.1102230246251565e-16,\"pnl_usd\":0.26,\"observed_at\":1792175410.2551615,\"time_source\":\"venue settled_time\"}",
+      "attributes": [
+        {
+          "key": "level",
+          "value": "\"info\""
+        }
+      ]
+    },
+    {
+      "timestamp": "2026-10-16T18:45:05.632156541Z",
+      "severity": "info",
+      "message": "2026-10-16T18:45:05Z INFO nightcrawler.speeddesk: speeddesk_live_settlement {\"at\":1792176301.822069,\"venue\":\"kalshi\",\"window\":\"KXBTC15M-26OCT161445-45\",\"settlement_id\":\"kalshi:KXBTC15M-26OCT161445-45\",\"up_wins\":false,\"up_shares\":3.0,\"down_shares\":3.0,\"cost_usd\":2.79,\"fee_usd\":0.0,\"paired_credit_usd\":3.0,\"net_payout_usd\":0.0,\"payout_usd\":3.0,\"locked_usd\":0.21000000000000002,\"direction_usd\":-5.551115123125783e-17,\"pnl_usd\":0.20999999999999996,\"observed_at\":1792176305.1893888,\"time_source\":\"venue settled_time\"}",
+      "attributes": [
+        {
+          "key": "level",
+          "value": "\"info\""
+        }
+      ]
+    },
+    {
+      "timestamp": "2026-10-16T19:00:08.320175155Z",
+      "severity": "info",
+      "message": "2026-10-16T19:00:08Z INFO nightcrawler.speeddesk: speeddesk_live_settlement {\"at\":1792177206.827431,\"venue\":\"kalshi\",\"window\":\"KXBTC15M-26OCT161500-00\",\"settlement_id\":\"kalshi:KXBTC15M-26OCT161500-00\",\"up_wins\":true,\"up_shares\":2.0,\"down_shares\":2.56,\"cost_usd\":2.2328,\"fee_usd\":0.0,\"paired_credit_usd\":2.0,\"net_payout_usd\":0.0,\"payout_usd\":2.0,\"locked_usd\":0.11999999999999988,\"direction_usd\":-0.3528,\"pnl_usd\":-0.23280000000000012,\"observed_at\":1792177207.9652522,\"time_source\":\"venue settled_time\"}",
+      "attributes": [
+        {
+          "key": "level",
+          "value": "\"info\""
+        }
+      ]
+    },
+    {
+      "timestamp": "2026-10-16T19:15:10.656225897Z",
+      "severity": "info",
+      "message": "2026-10-16T19:15:10Z INFO nightcrawler.speeddesk: speeddesk_live_settlement {\"at\":1792178106.819788,\"venue\":\"kalshi\",\"window\":\"KXBTC15M-26OCT161515-15\",\"settlement_id\":\"kalshi:KXBTC15M-26OCT161515-15\",\"up_wins\":true,\"up_shares\":3.0,\"down_shares\":3.0,\"cost_usd\":2.6100000000000003,\"fee_usd\":0.0,\"paired_credit_usd\":3.0,\"net_payout_usd\":0.0,\"payout_usd\":3.0,\"locked_usd\":0.3900000000000002,\"direction_usd\":-4.996003610813204e-16,\"pnl_usd\":0.3899999999999997,\"observed_at\":1792178110.2692564,\"time_source\":\"venue settled_time\"}",
+      "attributes": [
+        {
+          "key": "level",
+          "value": "\"info\""
+        }
+      ]
+    }
+  ]
+}

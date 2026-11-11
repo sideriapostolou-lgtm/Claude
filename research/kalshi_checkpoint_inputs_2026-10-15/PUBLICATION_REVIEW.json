@@ -1,0 +1,33 @@
+{
+  "archive": {
+    "all_part_hashes_artifact_hash_xz_hash_lengths_verified": true,
+    "every_decompressed_file_matches_manifest_and_local_original": true,
+    "excluded_raw_openapi_schema": true,
+    "exclusion_scope": "Official schema source retained privately; public archive contains retrieval metadata/hash, not raw example content. No credential authenticity claim.",
+    "files": 44,
+    "parts": 3
+  },
+  "claims_review": [
+    "Target7fills/6orders,Up10cost4.09,Down10cost5.80,fees0,locked+.11/directional0 match independent Decimal review. Prior+.02 and currenttotal\u221219.3618/UTCday+.13 remain distinct.",
+    "Prior UTC-day real69windows/71settlements/302fills,fees.8455,locked4.501150769/directional\u22129.545850769/net\u22125.0447 verified directly from last original financial report.",
+    "Prior twin14windows/14fills/net+.50/worst\u22122.30/rate.42245%/latency6552.37 match raw twin; absent raw fee field correctly remains unexposed.",
+    "Prior real ack3505samples/77errors/81.86median/349.65p95,receipt-decision167.62/709.72 verified. Named intent/day cohorts preserved; strict scorecard29complete/88eligible/59gaps/26traded/net\u221210.0028 remains narrower.",
+    "First forecast decision vs platform publication distinction corrected; correct single-scoreBrier, archive boundaries and no learned-edge/profit claim retained.",
+    "Timing populations19unknownmaingaps/26knownstatus/derived4.336s and17truncatedpracticepayloads match independent review. Session checkpoint/reportmaxima are explicitly nested/nonadditive and not a production-speedup estimate.",
+    "Practicezero versus7actual not treated as simulatorbug or counterfactual; hindsight fill-rule changes rejected.",
+    "Mechanism explicitly synthetic/sourcefixture only with unchanged guards and separate fee-stress assumption; no production activation or profitable-fill claim. Fixture independently reproduced by root/other reviewer, not rerun in this publication pass."
+  ],
+  "exact_hashes": {
+    "MECHANISM.md": "a360cf2aad70044e1ba4579f51503585ce987d060d43a846ca2a3ec448428b9c",
+    "NATIVE_MANIFEST.json": "a70d2d7c73bca157b2395df4ba3baf3d4d8af078543fb4347e443383351e0f96",
+    "RELEASE.md": "cf82048105cbd81a01aca5cf2d3a4ec013d13aec57bbf60c3b50bda3c3f97f62"
+  },
+  "limitations": [
+    "No new API/production/source calls or source/test/publication edits in this review.",
+    "Previousanalyzer link existence independently checked by root as supplied; not re-fetched under offline-only scope.",
+    "Successful bounded milestone is not overallEXEC/profitability completion; source identity, financial-history and data-coverage limits retained."
+  ],
+  "prior_requested_wording_fixes": "Resolved: decision versus publication timing, archive count/part wording and native-versus-derived file terminology.",
+  "reviewed_utc": "2026-10-16T00:39:35.812835+00:00",
+  "verdict": "ACCEPT_LATEST_PUBLICATION_CLAIMS_WITH_EXISTING_LIMITS"
+}

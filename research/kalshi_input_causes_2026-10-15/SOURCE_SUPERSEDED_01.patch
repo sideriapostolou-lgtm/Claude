@@ -1,0 +1,870 @@
+diff --git a/src/nightcrawler/kalshi_arena.py b/src/nightcrawler/kalshi_arena.py
+index ebf7915..7c95087 100644
+--- a/src/nightcrawler/kalshi_arena.py
++++ b/src/nightcrawler/kalshi_arena.py
+@@ -73,7 +73,13 @@ from pathlib import Path
+ from typing import TYPE_CHECKING, Any, Protocol
+ 
+ from .deskguard import LOSING, PHRASES, WINNING, judge
+-from .kalshi_online_learning import OnlineLearning
++from .kalshi_online_learning import (
++    GRACE,
++    HORIZON,
++    MAX_LABELS,
++    MAX_PENDING,
++    OnlineLearning,
++)
+ from .speeddesk_model import (
+     BitcoinTape,
+     Book,
+@@ -1003,6 +1009,166 @@ def _write(path: Path, text: str, *, durable: bool = False) -> None:
+         raise
+ 
+ 
++# Fixed child-only observations. No learner state, wire fields, or save work is added.
++_DIAGNOSTIC_FLAGS = ("explicit_slug", "trade_stream_false", "coinbase_false", "sequence_discontinuity",
++                     "drop_counter_increased", "missing_ladder", "late_book", "late_trade", "replayed_drop")
++_DIAGNOSTIC_REASONS = frozenset(("explicit_feed_gap", "feed_dropped", "feed_late", "startup_inside", "late",
++                               "invalid", "pregap", "terms_changed", "missing_label", "outcome_known",
++                               "invalid_label"))
++
++
++def _diagnostic_number(value: Any) -> float | None:
++    return float(value) if type(value) in (int, float) and math.isfinite(value) and abs(value) <= 1e15 else None
++
++
++def _diagnostic_delay(start: Any, end: Any) -> float | None:
++    left, right = _diagnostic_number(start), _diagnostic_number(end)
++    return right - left if left is not None and right is not None and right >= left else None
++
++
++class _LearningDiagnostic:
++    """At most 32 first/last cause pairs, retained only while the learner has a pending key.
++
++    Inbox entries share their frame's immutable tuple; there is no second event queue.
++    Frames are encoded after parent FIFO residence, so frame transit excludes that residence.
++    """
++
++    def __init__(self) -> None:
++        self.identity = {"arena_source_sha256": hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),
++                         "deployment_sha": None, "deployment_id": None,
++                         "deployment_identity": "unavailable_in_child",
++                         "pid": os.getpid(), "instance": os.urandom(12).hex()}
++        self.pending: dict[str, dict[str, Any]] = {}
++
++    def prune(self, learner: OnlineLearning) -> None:
++        self.pending = {slug: row for slug, row in self.pending.items() if slug in learner.pending}
++
++    def cause(self, learner: OnlineLearning, slug: str, now: float, flags: Sequence[str],
++              frame_context: tuple[Any, ...] | None, *, gap: bool = False,
++              data_at: float | None = None, clock_name: str | None = None,
++              applied_at: float | None = None, checked_at: float | None = None) -> None:
++        row = learner.pending.get(slug)
++        # Mirror the actual method: degrade has no end gate; gap does.
++        if (not learner.enabled or row is None or row["forecast"] is not None or not row["start"] <= now
++                or (gap and not now < row["end"])):
++            return
++        if slug not in self.pending and len(self.pending) >= MAX_PENDING:
++            return
++        state = self.pending.setdefault(slug, {"first": None, "last": None, "emitted": False,
++                                               "history": "observed_since_admission"})
++        seq, sent, received = frame_context if frame_context is not None else (None, None, None)
++        applied = now if applied_at is None else applied_at
++        observation = {"flags": {key: key in flags for key in _DIAGNOSTIC_FLAGS},
++                       "effective_at": _diagnostic_number(now), "child_apply_at": _diagnostic_number(applied),
++                       "child_receive_at": _diagnostic_number(received),
++                       "frame_sequence": seq if type(seq) is int and 0 <= seq <= 10**15 else None,
++                       "parent_frame_sent_at": _diagnostic_number(sent),
++                       "producer_event_time": None, "producer_timing": "unavailable_on_gap_wire",
++                       "frame_transit_s": _diagnostic_delay(sent, received),
++                       "child_wait_s": _diagnostic_delay(received, applied),
++                       "data_at": _diagnostic_number(data_at), "data_clock": clock_name,
++                       "data_checked_at": _diagnostic_number(checked_at),
++                       "data_age_s": _diagnostic_delay(data_at, applied if checked_at is None else checked_at),
++                       "timing": "finite_ordered" if (frame_context is not None
++                           and _diagnostic_delay(sent, received) is not None
++                           and _diagnostic_delay(received, applied) is not None) else "unknown_or_reversed"}
++        if state["first"] is None:
++            state["first"] = observation
++        state["last"] = observation
++
++    def before(self, learner: OnlineLearning, method: str, args: tuple[Any, ...]) -> dict[str, Any] | None:
++        if method not in ("advance", "discover", "restore"):
++            return None
++        self.prune(learner)
++        # Copy only fixed metadata, never terms, forecasts, outcomes, or full state.
++        rows = {slug: self.metadata(row, args[5] if method == "advance" else args[1])
++                for slug, row in learner.pending.items()}
++        if method == "restore" and isinstance(args[0], dict):
++            raw = args[0].get("pending", {})
++            if isinstance(raw, dict) and len(raw) <= MAX_PENDING:
++                rows = {slug: self.metadata(row, args[1]) for slug, row in raw.items() if isinstance(row, dict)}
++        counts = {key: learner.counts[key] for key in ("forecasts", "unknown", "scored")}
++        if method == "restore" and isinstance(args[0], dict):
++            saved_counts = args[0].get("counts", {})
++            counts = {key: saved_counts.get(key) for key in counts}
++        return {"rows": rows, "recent": tuple(learner.recent), "counts": counts}
++
++    @staticmethod
++    def metadata(row: Mapping[str, Any], now: float) -> dict[str, Any]:
++        start, end = _diagnostic_number(row.get("start")), _diagnostic_number(row.get("end"))
++        return {"start": start, "end": end, "elapsed_s": _diagnostic_delay(start, now),
++                "forecast_none": row.get("forecast") is None,
++                "stored_pregap": row.get("pregap") if row.get("pregap") in _DIAGNOSTIC_REASONS else
++                    ("other" if row.get("pregap") else None)}
++
++    def after(self, learner: OnlineLearning, method: str, args: tuple[Any, ...], before: dict[str, Any]) -> None:
++        now = args[5] if method == "advance" else args[1]
++        rows = before["rows"]
++        if method == "restore":
++            # Never backfill persisted recent records. Only this restore's actual removals are new evidence.
++            candidates = [r for r in learner.recent if r.get("window") in rows
++                          and r["window"] not in learner.pending and r.get("reason") == "startup_inside"]
++            for restored_slug, restored_row in learner.pending.items():
++                self.pending[restored_slug] = {"first": None, "last": None, "emitted": restored_row["forecast"] is not None,
++                                      "history": "restart_history_unavailable"}
++        else:
++            candidates = [r for r in learner.recent if all(r is not old for old in before["recent"])]
++        for receipt in candidates:
++            slug = receipt.get("window")
++            if not isinstance(slug, str) or len(slug) > 128:
++                continue
++            state = self.pending.get(slug, {})
++            if state.get("emitted"):
++                continue
++            meta = rows.get(slug)
++            if meta is None and method == "discover":
++                match = next((w for w in args[0][:MAX_LABELS] if w.slug == slug), None)
++                if match is not None:
++                    meta = self.metadata({"start": match.start, "end": match.end}, now)
++            self.emit(learner, slug, now, method, meta, state, receipt.get("status"), receipt.get("reason"),
++                      args, before)
++        if method == "advance":
++            for slug, meta in rows.items():
++                row = learner.pending.get(slug)
++                state = self.pending.get(slug, {})
++                if meta["forecast_none"] and row is not None and row["forecast"] is not None and not state.get("emitted"):
++                    self.emit(learner, slug, now, method, meta, state, "forecast", None, args, before)
++                    self.pending.setdefault(slug, {"first": None, "last": None,
++                                                  "history": "observed_since_admission"})["emitted"] = True
++        self.prune(learner)
++
++    def emit(self, learner: OnlineLearning, slug: str, now: float, method: str, meta: Any,
++             state: Mapping[str, Any], disposition: Any, reason: Any, args: tuple[Any, ...],
++             before: Mapping[str, Any]) -> None:
++        due = meta is not None and meta["elapsed_s"] is not None and meta["elapsed_s"] >= HORIZON
++        age = _diagnostic_delay(args[3], now) if method == "advance" else None
++        facts = {"bitcoin_age_s": age, "bitcoin_age_valid": age is not None and age <= LATE_S,
++                 "spot_valid": method == "advance" and type(args[1]) in (int, float) and math.isfinite(args[1]) and args[1] > 0,
++                 "sigma_valid": method == "advance" and type(args[2]) in (int, float) and math.isfinite(args[2]) and args[2] >= 0}
++        payload = {"diagnostic_schema": 1, "mode": "observe_only", "live_application": False,
++                   "profitability_proven": False, **self.identity, "protocol": learner.history_protocol,
++                   "source_fingerprint": learner.history_source, "window": slug,
++                   "at": _diagnostic_number(now), "pending": meta,
++                   "observation": "restart_history_unavailable" if method == "restore" else
++                       ("late_first_pass" if due and meta["elapsed_s"] > HORIZON + GRACE else
++                        ("due" if due else "terminated_before_due")),
++                   "cause_history": state.get("history", "unknown_if_prior_pregap" if meta and meta["stored_pregap"] else
++                                               ("global_feed_false_origin_unavailable" if learner.feed_ok is False
++                                                else "observed_since_admission")),
++                   "first_effective_cause": state.get("first"), "last_effective_cause": state.get("last"),
++                   "feed_ok": learner.feed_ok, "feed_status": list(self.feed_status), "input_facts": facts,
++                   "disposition": disposition if disposition in ("unknown", "scored", "forecast") else "unknown",
++                   "reason": reason if reason in _DIAGNOSTIC_REASONS else ("other" if reason else None),
++                   "counter_delta_scope": "learner_call",
++                   "counter_delta": {key: learner.counts[key] - before["counts"][key]
++                                     if type(before["counts"][key]) is int else None
++                                     for key in ("forecasts", "unknown", "scored")},
++                   "coverage": "child_observations_only; upstream cause and producer occurrence unavailable"}
++        log.info("kalshi_learning_input_diagnostic %s", json.dumps(payload, allow_nan=False, separators=(",", ":")))
++
++    feed_status = (False, False)
++
++
+ # ---------------------------------------------------------------------- the town
+ class KalshiArena:
+     """The town (it runs in its own process: :func:`worker_main`). PRACTICE ONLY: no client, no key, no order path.
+@@ -1069,6 +1235,14 @@ class KalshiArena:
+         self.control_verdict = ""
+         self.control_rule = rule_id(config.control)
+         self.regime = rule_id(config.fixed)
++        self._diagnostic: _LearningDiagnostic | None = None
++        self._diagnostic_frame: tuple[Any, ...] | None = None
++        self._diagnostic_drop_frame: tuple[Any, ...] | None = None
++        self._diagnostic_drop_flags: tuple[str, ...] = ()
++        try:
++            self._diagnostic = _LearningDiagnostic()
++        except Exception:  # noqa: BLE001, S110 - observation must never affect the learner or arena
++            pass
+         self.learning = OnlineLearning(clock())
+         self._load(clock())
+         self._learning_call("status", clock())
+@@ -1077,11 +1251,27 @@ class KalshiArena:
+ 
+     def _learning_call(self, method: str, *args: Any) -> Any:
+         """Optional child diagnostics cannot reset the arena or alter resident decisions."""
++        before = self._diagnostic_call("before", self.learning, method, args)
+         try:
+-            return getattr(self.learning, method)(*args)
++            result = getattr(self.learning, method)(*args)
+         except Exception:  # noqa: BLE001 - learning failures are isolated from practice and live execution
+             self.learning.disable("optional_learning_method_failed")
+             return None
++        if before is not None:
++            self._diagnostic_call("after", self.learning, method, args, before)
++        return result
++
++    def _diagnostic_call(self, method: str, *args: Any, **kwargs: Any) -> Any:
++        try:
++            if self._diagnostic is not None:
++                self._diagnostic.feed_status = self._feed_status
++                return getattr(self._diagnostic, method)(*args, **kwargs)
++        except Exception:  # noqa: BLE001, S110 - includes observation, encoding and logging failures
++            pass
++        return None
++
++    def _diagnostic_cause(self, slug: str, now: float, flags: Sequence[str], **kwargs: Any) -> None:
++        self._diagnostic_call("cause", self.learning, slug, now, flags, self._diagnostic_frame, **kwargs)
+ 
+     def _learning_discover(self, windows: Sequence[Window], now: float) -> None:
+         known = set(self.learning.pending)
+@@ -1089,19 +1279,30 @@ class KalshiArena:
+         # A drop can precede the first window record in its frame. Use its observation
+         # time, never today's untimed, sticky simulator degradation history.
+         for slug in self.learning.pending.keys() - known:
++            current = self._diagnostic_frame
++            self._diagnostic_frame = self._diagnostic_drop_frame
++            self._diagnostic_cause(slug, self._incomplete_before, (*self._diagnostic_drop_flags, "replayed_drop"),
++                                   applied_at=now)
++            self._diagnostic_frame = current
+             self._learning_call("degrade", slug, "feed_dropped", self._incomplete_before)
+ 
+     # ------------------------------------------------------------------ the feed
+     def feed_book(self, book: Book) -> None:
+-        self.inbox.append(("book", book))
++        self.inbox.append(("book", book, self._diagnostic_frame))
+ 
+     def feed_trade(self, trade: Trade) -> None:
+-        self.inbox.append(("trade", trade))
++        self.inbox.append(("trade", trade, self._diagnostic_frame))
+ 
+     def feed_gap(self, gap_windows: tuple[str, ...], trade_stream: bool, coinbase_connected: bool) -> None:
+-        self.inbox.append(("gap", gap_windows, trade_stream, coinbase_connected))
++        self.inbox.append(("gap", gap_windows, trade_stream, coinbase_connected, self._diagnostic_frame))
+ 
+     def receive(self, message: Any, view: WireView) -> None:
++        try:
++            self._receive(message, view)
++        finally:
++            self._diagnostic_frame = None
++
++    def _receive(self, message: Any, view: WireView) -> None:
+         """One frame from :class:`ArenaLink`: market facts update ``view``; books, prints and gaps are queued. A frame
+         the link had to drop leaves every started, unsettled window incomplete (void at its settlement), including
+         windows first named in this frame. A delayed drop receipt must not spare a window merely because it closed."""
+@@ -1110,7 +1311,17 @@ class KalshiArena:
+         _, seq, _sent_at, dropped, flush_us, items = message
+         now = self.clock()
+         self.last_frame_at = now
+-        if (self.link_seq is not None and seq != self.link_seq + 1) or dropped > self.link_dropped:
++        self._diagnostic_frame = (seq, _sent_at, now)
++        sequence_gap = self.link_seq is not None and seq != self.link_seq + 1
++        increased_drop = dropped > self.link_dropped
++        if sequence_gap or increased_drop:
++            drop_flags = tuple(key for key, active in
++                (("sequence_discontinuity", sequence_gap), ("drop_counter_increased", increased_drop)) if active)
++            if now >= self._incomplete_before:
++                self._diagnostic_drop_frame = self._diagnostic_frame
++                self._diagnostic_drop_flags = drop_flags
++            for slug in self.learning.pending:
++                self._diagnostic_cause(slug, now, drop_flags)
+             self._incomplete_before = max(self._incomplete_before, now)
+             self._degrade_started(now, "feed_dropped")
+         self.link_seq, self.link_dropped = int(seq), max(self.link_dropped, int(dropped))
+@@ -1123,7 +1334,7 @@ class KalshiArena:
+                 try:
+                     self.feed_book(book_from_wire(record, self.ladders))
+                 except LookupError:  # a change to a ladder never received (not expected: the link resends whole)
+-                    self._degrade(str(record[1]), "feed_dropped")
++                    self._degrade(str(record[1]), "feed_dropped", flags=("missing_ladder",))
+                     missing_ladders.add(str(record[1]))
+             elif tag == "t":
+                 self.feed_trade(trade_from_wire(record))
+@@ -1147,10 +1358,17 @@ class KalshiArena:
+         # A missing ladder can appear before its first window announcement. Preserve
+         # that same-frame failure for learning without changing simulator behavior.
+         for slug in missing_ladders & self.learning.pending.keys():
++            self._diagnostic_cause(slug, now, ("missing_ladder",))
+             self._learning_call("degrade", slug, "feed_dropped", now)
++        self._diagnostic_frame = None
+ 
+-    def _degrade(self, slug: str, why: str) -> None:
+-        self._learning_call("degrade", slug, why, self.clock())
++    def _degrade(self, slug: str, why: str, *, flags: Sequence[str] = (),
++                 data_at: float | None = None, clock_name: str | None = None,
++                 checked_at: float | None = None) -> None:
++        now = self.clock()
++        if flags:
++            self._diagnostic_cause(slug, now, flags, data_at=data_at, clock_name=clock_name, checked_at=checked_at)
++        self._learning_call("degrade", slug, why, now)
+         if slug in self.windows:
+             self.degraded.setdefault(slug, why)
+ 
+@@ -1224,6 +1442,12 @@ class KalshiArena:
+                 self.windows[slug] = replace(window)
+ 
+     def _drain(self, now: float) -> float:
++        try:
++            return self._drain_items(now)
++        finally:
++            self._diagnostic_frame = None
++
++    def _drain_items(self, now: float) -> float:
+         """Apply queued books, prints and gaps in arrival order, each at the time it is read; returns that time.
+ 
+         A book is skipped only when a later book for the same window and side is already queued and no resident
+@@ -1244,13 +1468,15 @@ class KalshiArena:
+         for index, item in enumerate(items):
+             now = max(now, self.clock())
+             kind = item[0]
++            self._diagnostic_frame = item[-1] if len(item) > (4 if kind == "gap" else 2) else None
+             if kind == "book":
+                 book: Book = item[1]
+                 behind = now - book.at
+                 lag = max(lag, behind)
+                 if behind > LATE_S:
+                     self.late += 1
+-                    self._degrade(book.window, "feed_late")
++                    self._degrade(book.window, "feed_late", flags=("late_book",), data_at=book.at,
++                                  clock_name="book_at_parent_receipt", checked_at=now)
+                 if latest[(book.window, book.side)] != index and book.window not in ordered:
+                     self.coalesced += 1
+                     continue
+@@ -1263,7 +1489,10 @@ class KalshiArena:
+                 lag = max(lag, behind)
+                 if behind > LATE_S:
+                     self.late += 1
+-                    self._degrade(trade.window, "feed_late")
++                    self._degrade(trade.window, "feed_late", flags=("late_trade",),
++                                  data_at=trade.received_at if trade.received_at is not None else trade.at,
++                                  clock_name="trade_received_at" if trade.received_at is not None else "trade_at_fallback",
++                                  checked_at=now)
+                 identity = f"{trade.window}:{trade.side}:{trade.trade_id}"
+                 if identity in self.seen_prints:
+                     continue
+@@ -1275,11 +1504,18 @@ class KalshiArena:
+                     self._fills(res, res.desk.on_trade(trade, now))
+             elif kind == "gap":
+                 self._gap(item[1], bool(item[2]), bool(item[3]), now)
++        self._diagnostic_frame = None
+         self.lag_s = max(0.0, lag)
+         return now
+ 
+     def _gap(self, gap_windows: Sequence[str], trade_stream: bool, coinbase: bool, now: float) -> None:
+         """The speed desk's own feed-gap rule (SpeedRunner.on_status): a lost stream cancels everything."""
++        selected = set(gap_windows[:MAX_LABELS])
++        for slug in self.learning.pending:
++            flags = tuple(key for key, active in (("explicit_slug", slug in selected),
++                          ("trade_stream_false", not trade_stream), ("coinbase_false", not coinbase)) if active)
++            if flags:
++                self._diagnostic_cause(slug, now, flags, gap=True)
+         self._learning_call("gap", gap_windows, trade_stream, coinbase, now)
+         old_stream, old_coinbase = self._feed_status
+         self._feed_status = (trade_stream, coinbase)
+diff --git a/tests/test_kalshi_learning_diagnostic.py b/tests/test_kalshi_learning_diagnostic.py
+new file mode 100644
+index 0000000..e265808
+--- /dev/null
++++ b/tests/test_kalshi_learning_diagnostic.py
+@@ -0,0 +1,491 @@
++"""Bounded, observation-only child input causes: synthetic clocks and frames, no network."""
++from __future__ import annotations
++
++import hashlib
++import json
++import logging
++from dataclasses import replace
++from pathlib import Path
++from typing import Any
++
++import pytest
++
++from nightcrawler import kalshi_arena as module
++from nightcrawler.kalshi_arena import (
++    ArenaConfig,
++    KalshiArena,
++    WireView,
++    book_wire,
++    trade_wire,
++    window_wire,
++)
++from nightcrawler.kalshi_online_learning import MAX_PENDING, MAX_RECENT, fingerprint
++from nightcrawler.speeddesk_model import Book, Trade, Window
++
++
++def setup(path: Path) -> tuple[KalshiArena, WireView, list[float]]:
++    clock = [900.0]
++    view = WireView()
++    view.bitcoin_price, view.sigma = 100, .001
++    arena = KalshiArena(ArenaConfig(path, population=2), lambda: view, clock=lambda: clock[0], cpu=lambda: 0.0)
++    return arena, view, clock
++
++
++def window(start: float = 1000) -> Window:
++    return Window(f"KXBTC15M-{int(start)}", start, start + 900, 100, venue="kalshi")
++
++
++def tick(arena: KalshiArena, view: WireView, clock: list[float], at: float) -> None:
++    clock[0] = view.bitcoin_at = at
++    arena.step(at)
++
++
++def events(caplog: pytest.LogCaptureFixture) -> list[dict[str, Any]]:
++    prefix = "kalshi_learning_input_diagnostic "
++    return [json.loads(r.message[len(prefix):]) for r in caplog.records if r.message.startswith(prefix)]
++
++
++def ready(path: Path) -> tuple[KalshiArena, WireView, list[float], Window]:
++    arena, view, clock = setup(path)
++    w = window()
++    view.windows = (w,)
++    tick(arena, view, clock, 900)
++    return arena, view, clock, w
++
++
++@pytest.mark.parametrize("selected,stream,coinbase", [(True, True, True), (False, False, True),
++                                                      (False, True, False), (True, False, False)])
++def test_effective_gap_flags_recovery_and_single_actual_receipt(
++    tmp_path: Path, caplog: pytest.LogCaptureFixture, selected: bool, stream: bool, coinbase: bool,
++) -> None:
++    caplog.set_level(logging.INFO, logger=module.log.name)
++    arena, view, clock, w = ready(tmp_path)
++    clock[0] = 1100
++    arena.receive(("batch", 1, 1098, 0, 0, [("g", [w.slug] if selected else [], stream, coinbase)]), view)
++    tick(arena, view, clock, 1101)
++    arena.feed_gap((), True, True)
++    tick(arena, view, clock, 1200)
++    tick(arena, view, clock, 1300)
++    tick(arena, view, clock, 1301)
++    row, = events(caplog)
++    assert row["disposition"] == "unknown" and row["reason"] == arena.learning.recent[-1]["reason"] == "pregap"
++    assert row["feed_ok"] is True and row["feed_status"] == [True, True]
++    cause = row["first_effective_cause"]
++    assert cause == row["last_effective_cause"]
++    assert cause["flags"]["explicit_slug"] == selected
++    assert cause["flags"]["trade_stream_false"] == (not stream)
++    assert cause["flags"]["coinbase_false"] == (not coinbase)
++    assert cause["parent_frame_sent_at"] == 1098
++    assert cause["child_receive_at"] == 1100 and cause["child_apply_at"] == 1101
++    assert cause["frame_transit_s"] == 2 and cause["child_wait_s"] == 1
++    assert cause["producer_event_time"] is None
++    assert cause["producer_timing"] == "unavailable_on_gap_wire"
++    assert row["counter_delta"] == {"forecasts": 0, "unknown": 1, "scored": 0}
++    assert row["arena_source_sha256"] == hashlib.sha256(Path(module.__file__).read_bytes()).hexdigest()
++    assert row["source_fingerprint"] == fingerprint()
++    assert row["deployment_id"] is None and row["deployment_sha"] is None
++    assert len(row["instance"]) == 24
++
++
++@pytest.mark.parametrize("recover", [False, True])
++def test_prestart_feed_flag_has_no_effective_row_cause(
++    tmp_path: Path, caplog: pytest.LogCaptureFixture, recover: bool,
++) -> None:
++    caplog.set_level(logging.INFO, logger=module.log.name)
++    arena, view, clock, _ = ready(tmp_path)
++    arena.feed_gap((), False, False)
++    tick(arena, view, clock, 950)
++    if recover:
++        arena.feed_gap((), True, True)
++    tick(arena, view, clock, 1300)
++    row, = events(caplog)
++    assert row["first_effective_cause"] is row["last_effective_cause"] is None
++    assert row["disposition"] == ("forecast" if recover else "unknown")
++    assert row["reason"] == (None if recover else "pregap")
++    assert row["pending"]["stored_pregap"] is None
++
++
++def test_multiple_queued_frames_cross_start_and_first_last_keep_own_context(
++    tmp_path: Path, caplog: pytest.LogCaptureFixture,
++) -> None:
++    caplog.set_level(logging.INFO, logger=module.log.name)
++    arena, view, clock, w = ready(tmp_path)
++    clock[0] = 950
++    arena.receive(("batch", 5, 949, 0, 0, [("g", [w.slug], True, True)]), view)
++    clock[0] = 960
++    arena.receive(("batch", 6, 959, 0, 0, [("g", [], False, False)]), view)
++    tick(arena, view, clock, 1100)
++    tick(arena, view, clock, 1300)
++    row, = events(caplog)
++    first, last = row["first_effective_cause"], row["last_effective_cause"]
++    assert first["frame_sequence"] == 5 and first["child_receive_at"] == 950
++    assert first["child_apply_at"] == 1100 and first["child_wait_s"] == 150
++    assert last["frame_sequence"] == 6 and last["child_receive_at"] == 960
++    assert last["child_apply_at"] == 1100 and last["child_wait_s"] == 140
++    assert first["flags"]["explicit_slug"] and last["flags"]["coinbase_false"]
++
++
++@pytest.mark.parametrize("sent", [float("nan"), float("inf"), 1101, -1e308])
++def test_invalid_reversed_frame_clocks_stay_unknown(
++    tmp_path: Path, caplog: pytest.LogCaptureFixture, sent: float,
++) -> None:
++    caplog.set_level(logging.INFO, logger=module.log.name)
++    arena, view, clock, w = ready(tmp_path)
++    clock[0] = 1100
++    arena.receive(("batch", 1, sent, 0, 0, [("g", [w.slug], True, True)]), view)
++    tick(arena, view, clock, 1100)
++    tick(arena, view, clock, 1300)
++    cause = events(caplog)[0]["first_effective_cause"]
++    assert cause["frame_transit_s"] is None and cause["timing"] == "unknown_or_reversed"
++    assert cause["producer_event_time"] is None
++
++
++@pytest.mark.parametrize("kind", ["book", "trade"])
++def test_late_book_trade_and_postforecast_causes(
++    tmp_path: Path, caplog: pytest.LogCaptureFixture, kind: str,
++) -> None:
++    caplog.set_level(logging.INFO, logger=module.log.name)
++    arena, view, clock, w = ready(tmp_path)
++    clock[0] = 1100
++    record = (book_wire(Book(w.slug, "up", (), (), 1090, "fake")) if kind == "book" else
++              trade_wire(Trade(w.slug, "up", .5, 1, 1080, "fake", received_at=1090)))
++    arena.receive(("batch", 1, 1099, 0, 0, [record]), view)
++    tick(arena, view, clock, 1102)
++    tick(arena, view, clock, 1300)
++    cause = events(caplog)[0]["first_effective_cause"]
++    assert cause["flags"][f"late_{kind}"]
++    assert cause["data_at"] == 1090 and cause["data_age_s"] == 12
++    assert cause["data_clock"] == ("book_at_parent_receipt" if kind == "book" else "trade_received_at")
++    assert cause["frame_sequence"] == 1
++    assert arena.learning.counts["pregap"] == 1
++
++
++@pytest.mark.parametrize("window_first", [False, True])
++def test_missing_ladder_same_frame_announcement(
++    tmp_path: Path, caplog: pytest.LogCaptureFixture, window_first: bool,
++) -> None:
++    caplog.set_level(logging.INFO, logger=module.log.name)
++    arena, view, clock = setup(tmp_path)
++    w = window()
++    clock[0] = 1000
++    missing = ("b", w.slug, "up", None, None, 1000, "fake", None, "fake", None)
++    announce = ("w", [window_wire(w)])
++    arena.receive(("batch", 1, 999, 0, 0, [announce, missing] if window_first else [missing, announce]), view)
++    tick(arena, view, clock, 1300)
++    assert events(caplog)[0]["first_effective_cause"]["flags"]["missing_ladder"]
++
++
++@pytest.mark.parametrize("sequence,drop", [(3, 0), (2, 1), (3, 1)])
++def test_drop_flags_preserve_simultaneous_conditions(
++    tmp_path: Path, caplog: pytest.LogCaptureFixture, sequence: int, drop: int,
++) -> None:
++    caplog.set_level(logging.INFO, logger=module.log.name)
++    arena, view, clock, _ = ready(tmp_path)
++    clock[0] = 1100
++    arena.receive(("batch", 1, 1099, 0, 0, []), view)
++    arena.receive(("batch", sequence, 1099, drop, 0, []), view)
++    tick(arena, view, clock, 1300)
++    flags = events(caplog)[0]["first_effective_cause"]["flags"]
++    assert flags["sequence_discontinuity"] == (sequence != 2)
++    assert flags["drop_counter_increased"] == bool(drop)
++
++
++@pytest.mark.parametrize("drop_at", [950, 1000])
++def test_replayed_original_drop_keeps_original_clock_and_context(
++    tmp_path: Path, caplog: pytest.LogCaptureFixture, drop_at: float,
++) -> None:
++    caplog.set_level(logging.INFO, logger=module.log.name)
++    arena, view, clock = setup(tmp_path)
++    clock[0] = drop_at
++    arena.receive(("batch", 4, drop_at - 1, 1, 0, []), view)
++    view.windows = (window(),)
++    tick(arena, view, clock, 1000)
++    tick(arena, view, clock, 1300)
++    cause = events(caplog)[0]["first_effective_cause"]
++    if drop_at < 1000:
++        assert cause is None
++    else:
++        assert cause["effective_at"] == drop_at and cause["child_receive_at"] == drop_at
++        assert cause["child_apply_at"] == 1000 and cause["frame_sequence"] == 4
++        assert cause["flags"]["replayed_drop"] and cause["flags"]["drop_counter_increased"]
++
++
++@pytest.mark.parametrize("case", ["late", "early_label", "terms", "invalid"])
++def test_disposition_comes_from_actual_receipt_including_early_termination(
++    tmp_path: Path, caplog: pytest.LogCaptureFixture, case: str,
++) -> None:
++    caplog.set_level(logging.INFO, logger=module.log.name)
++    arena, view, clock, w = ready(tmp_path)
++    at = 1306 if case == "late" else 1100 if case in ("early_label", "terms") else 1300
++    if case == "early_label":
++        view.outcomes = {w.slug: False}
++    elif case == "terms":
++        view.windows = (replace(w, start_price=101),)
++    elif case == "invalid":
++        view.sigma = -.001
++    tick(arena, view, clock, at)
++    row, = events(caplog)
++    assert row["reason"] == arena.learning.recent[-1]["reason"]
++    assert row["disposition"] == arena.learning.recent[-1]["status"]
++    assert row["observation"] == ("late_first_pass" if case == "late" else
++                                  "terminated_before_due" if case in ("early_label", "terms") else "due")
++
++
++def test_forecast_then_postforecast_gap_and_out_of_order_labels_emit_once_each(
++    tmp_path: Path, caplog: pytest.LogCaptureFixture,
++) -> None:
++    caplog.set_level(logging.INFO, logger=module.log.name)
++    arena, view, clock, w = ready(tmp_path)
++    second = window(2000)
++    view.windows = (w, second)
++    tick(arena, view, clock, 900)
++    tick(arena, view, clock, 1300)
++    arena.feed_gap((w.slug,), False, False)
++    tick(arena, view, clock, 1400)
++    arena.feed_gap((), True, True)
++    tick(arena, view, clock, 2300)
++    view.outcomes = {second.slug: False}
++    tick(arena, view, clock, 2900)
++    view.outcomes[w.slug] = True
++    tick(arena, view, clock, 2901)
++    assert arena.learning.counts["scored"] == 2
++    rows = events(caplog)
++    assert len(rows) == 2 and all(r["disposition"] == "forecast" for r in rows)
++    assert all(r["first_effective_cause"] is None for r in rows)
++    assert arena._diagnostic is not None and not arena._diagnostic.pending
++
++
++def test_restore_only_new_termination_no_historical_backfill(
++    tmp_path: Path, caplog: pytest.LogCaptureFixture,
++) -> None:
++    caplog.set_level(logging.INFO, logger=module.log.name)
++    arena, view, clock, w = ready(tmp_path)
++    arena.learning.pending[w.slug]["pregap"] = "feed_late"
++    arena._save(1000)
++    caplog.clear()
++    clock[0] = 1100
++    restored = KalshiArena(arena.config, lambda: view, clock=lambda: clock[0], cpu=lambda: 0.0)
++    row, = events(caplog)
++    assert row["observation"] == "restart_history_unavailable"
++    assert row["reason"] == "startup_inside" and row["first_effective_cause"] is None
++    assert row["pending"]["stored_pregap"] == "feed_late"
++    restored._save(1100)
++    caplog.clear()
++    again = KalshiArena(arena.config, lambda: view, clock=lambda: clock[0], cpu=lambda: 0.0)
++    tick(again, view, clock, 1300)
++    assert not events(caplog)
++
++
++def test_full_recent_retention_simultaneous_removals_and_resource_bound(
++    tmp_path: Path, caplog: pytest.LogCaptureFixture,
++) -> None:
++    caplog.set_level(logging.INFO, logger=module.log.name)
++    arena, view, clock = setup(tmp_path)
++    windows = tuple(window(1000 + n) for n in range(MAX_PENDING))
++    view.windows = windows
++    tick(arena, view, clock, 900)
++    arena.learning.recent = [{"window": f"old-{n}", "status": "unknown", "reason": "late"}
++                             for n in range(MAX_RECENT)]
++    for w in windows:
++        arena._degrade(w.slug, "feed_dropped")  # still prestart; no effective cause
++    clock[0] = 1100
++    arena.receive(("batch", 1, 1099, 1, 0, []), view)
++    assert arena._diagnostic is not None and len(arena._diagnostic.pending) == MAX_PENDING
++    tick(arena, view, clock, 1400)
++    rows = events(caplog)
++    assert len(rows) == MAX_PENDING and len({r["window"] for r in rows}) == MAX_PENDING
++    assert all(r["reason"] == "late" for r in rows)
++    assert not arena._diagnostic.pending
++    assert max(len(json.dumps(r, separators=(",", ":"))) for r in rows) < 5000
++
++
++@pytest.mark.parametrize("broken", [False, True])
++def test_enabled_disabled_and_diagnostic_exceptions_preserve_every_behavior(
++    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, broken: bool,
++) -> None:
++    left, lv, lc, w = ready(tmp_path / "on")
++    right, rv, rc, _ = ready(tmp_path / "off")
++    right._diagnostic = None
++    right.town_id = left.town_id
++    saves: list[list[tuple[float, bool]]] = [[], []]
++    original_write = module._write
++
++    def track(path: Path, text: str, *, durable: bool = False) -> None:
++        saves[0 if "on" in path.parts else 1].append((lc[0], durable))
++        original_write(path, text, durable=durable)
++
++    monkeypatch.setattr(module, "_write", track)
++    if broken:
++        def fail(*args: Any, **kwargs: Any) -> None:
++            raise RuntimeError("synthetic observer failure")
++        monkeypatch.setattr(module._LearningDiagnostic, "cause", fail)
++        monkeypatch.setattr(module._LearningDiagnostic, "after", fail)
++    for at in (950, 1000, 1100, 1300, 1400, 1900):
++        for town, view, clock in ((left, lv, lc), (right, rv, rc)):
++            clock[0] = at
++            if at == 1000:
++                town.receive(("batch", 1, 999, 1, 0, [("g", [w.slug], False, False)]), view)
++            if at == 1100:
++                town.feed_book(Book(w.slug, "up", (), (), 1090, "fake"))
++                town.feed_gap((), True, True)
++            if at == 1900:
++                view.outcomes = {w.slug: True}
++            tick(town, view, clock, at)
++    assert left.state(1900) == right.state(1900)
++    assert left.panel(1900) == right.panel(1900)
++    assert left.learning.state() == right.learning.state()
++    assert left.path.read_bytes() == right.path.read_bytes()
++    assert saves[0] == saves[1]
++    assert left.learning.source == right.learning.source == fingerprint()
++    assert left.inbox == right.inbox
++
++
++def test_logging_failure_is_isolated_from_learner(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
++    arena, view, clock, _ = ready(tmp_path)
++    original = module.log.info
++
++    def fail(message: str, *args: Any, **kwargs: Any) -> None:
++        if message.startswith("kalshi_learning_input_diagnostic"):
++            raise RuntimeError("synthetic logging failure")
++        original(message, *args, **kwargs)
++
++    monkeypatch.setattr(module.log, "info", fail)
++    tick(arena, view, clock, 1300)
++    assert arena.learning.enabled and arena.learning.counts["forecasts"] == 1
++
++
++@pytest.mark.parametrize("pregap", [False, True])
++def test_restored_future_window_keeps_prospective_diagnostic_and_unknown_history(
++    tmp_path: Path, caplog: pytest.LogCaptureFixture, pregap: bool,
++) -> None:
++    caplog.set_level(logging.INFO, logger=module.log.name)
++    arena, view, clock, w = ready(tmp_path)
++    arena.learning.counts["unknown"] = arena.learning.counts["late"] = 10
++    arena.learning.pending[w.slug]["pregap"] = "feed_late" if pregap else None
++    arena._save(900)
++    caplog.clear()
++    clock[0] = 950
++    restored = KalshiArena(arena.config, lambda: view, clock=lambda: clock[0], cpu=lambda: 0.0)
++    assert not events(caplog)
++    if pregap:
++        restored.feed_gap((w.slug,), True, True)
++    tick(restored, view, clock, 1100)
++    tick(restored, view, clock, 1300)
++    row, = events(caplog)
++    assert row["observation"] == "due" and row["reason"] == ("pregap" if pregap else None)
++    assert row["disposition"] == ("unknown" if pregap else "forecast")
++    assert row["cause_history"] == "restart_history_unavailable"
++    if pregap:
++        assert row["first_effective_cause"]["flags"]["explicit_slug"]
++    else:
++        assert row["first_effective_cause"] is None
++    assert restored.learning.counts["unknown"] == 10 + int(pregap)
++
++
++def test_restore_delta_excludes_historical_counts_and_frozen_slots(
++    tmp_path: Path, caplog: pytest.LogCaptureFixture,
++) -> None:
++    caplog.set_level(logging.INFO, logger=module.log.name)
++    arena, view, clock, first = ready(tmp_path)
++    second = window(2000)
++    view.windows = (first, second)
++    tick(arena, view, clock, 900)
++    tick(arena, view, clock, 1300)
++    arena.learning.counts["unknown"] = arena.learning.counts["late"] = 20
++    arena._save(1300)
++    caplog.clear()
++    clock[0] = 2100
++    restored = KalshiArena(arena.config, lambda: view, clock=lambda: clock[0], cpu=lambda: 0.0)
++    row, = events(caplog)
++    assert row["window"] == second.slug and row["reason"] == "startup_inside"
++    assert row["counter_delta"] == {"forecasts": 0, "unknown": 1, "scored": 0}
++    view.outcomes = {first.slug: False}
++    tick(restored, view, clock, 2100)
++    assert len(events(caplog)) == 1 and restored.learning.counts["scored"] == 1
++
++
++def test_reversed_drop_does_not_move_original_max_context(
++    tmp_path: Path, caplog: pytest.LogCaptureFixture,
++) -> None:
++    caplog.set_level(logging.INFO, logger=module.log.name)
++    arena, view, clock = setup(tmp_path)
++    clock[0] = 1000
++    arena.receive(("batch", 1, 999, 1, 0, []), view)
++    clock[0] = 950
++    arena.receive(("batch", 3, 949, 2, 0, []), view)
++    view.windows = (window(),)
++    tick(arena, view, clock, 1000)
++    tick(arena, view, clock, 1300)
++    cause = events(caplog)[0]["first_effective_cause"]
++    assert cause["effective_at"] == 1000 and cause["frame_sequence"] == 1
++    assert not cause["flags"]["sequence_discontinuity"] and cause["flags"]["drop_counter_increased"]
++
++
++def test_frame_context_cleared_after_original_receive_and_drain_exceptions(
++    tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
++) -> None:
++    arena, view, clock, _ = ready(tmp_path)
++    with pytest.raises(ValueError, match="unexpected Kalshi arena record"):
++        arena.receive(("batch", 1, 999, 0, 0, [("bad",)]), view)
++    assert arena._diagnostic_frame is None
++    arena.feed_gap((), True, True)
++    assert arena.inbox[-1][-1] is None
++    arena.inbox.clear()
++    clock[0] = 1100
++    arena.receive(("batch", 2, 1099, 0, 0, [("g", [], True, True)]), view)
++
++    def fail(*args: Any, **kwargs: Any) -> None:
++        raise RuntimeError("synthetic original drain failure")
++
++    monkeypatch.setattr(arena, "_gap", fail)
++    with pytest.raises(RuntimeError, match="original drain"):
++        arena._drain(1100)
++    assert arena._diagnostic_frame is None
++
++
++def test_lateness_uses_original_drain_check_and_preserves_second_effective_clock(tmp_path: Path) -> None:
++    arena, _view, _, w = ready(tmp_path)
++    arena.feed_book(Book(w.slug, "up", (), (), 1090, "fake"))
++    readings = iter((1100.0, 1102.0))
++    arena.clock = lambda: next(readings)
++    arena._drain(1100)
++    assert arena._diagnostic is not None
++    cause = arena._diagnostic.pending[w.slug]["first"]
++    assert cause["effective_at"] == 1102 and cause["child_apply_at"] == 1102
++    assert cause["data_checked_at"] == 1100 and cause["data_age_s"] == 10
++
++
++def test_observation_memory_pruned_across_many_new_windows(
++    tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
++) -> None:
++    arena, view, clock = setup(tmp_path)
++    monkeypatch.setattr(arena, "_save", lambda now: None)
++    monkeypatch.setattr(arena, "_status", lambda now: None)
++    assert arena._diagnostic is not None
++    for n in range(150):
++        start = 1000 + n * 900
++        w = window(start)
++        view.windows = (w,)
++        tick(arena, view, clock, start - 50)
++        arena.feed_gap((w.slug,), False, False)
++        tick(arena, view, clock, start + 1)
++        assert len(arena._diagnostic.pending) <= 1
++        tick(arena, view, clock, start + 300)
++        assert not arena._diagnostic.pending
++    assert arena.learning.counts["unknown"] == 150
++    assert len(arena.learning.recent) == MAX_RECENT
++
++
++def test_diagnostic_construction_failure_is_optional(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
++    original = Path.read_bytes
++
++    def fail(path: Path) -> bytes:
++        if path == Path(module.__file__):
++            raise OSError("synthetic source read failure")
++        return original(path)
++
++    monkeypatch.setattr(Path, "read_bytes", fail)
++    arena, view, clock, _ = ready(tmp_path)
++    assert arena._diagnostic is None
++    tick(arena, view, clock, 1300)
++    assert arena.learning.enabled and arena.learning.counts["forecasts"] == 1

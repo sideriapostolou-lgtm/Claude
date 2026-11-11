@@ -1,0 +1,540 @@
+{
+  "checked_at_pacific": "2026-10-14 11:49 AM PDT",
+  "log_timestamp_utc": "2026-10-14T18:48:19.536984004Z",
+  "running_code": "176916071029c13e73cd5ae41fbc8413532dce71",
+  "mode": "live",
+  "configured_mode": "live",
+  "status": "REAL MONEY (Kalshi)",
+  "reason": "pair_cap",
+  "cash_usd": 37.3037,
+  "open_cost_usd": 2.05,
+  "open_risk_usd": 2.05,
+  "reserved_usd": 0,
+  "total_halted": false,
+  "day_stop_latched": false,
+  "caps": {
+    "window_usd": 10,
+    "open_usd": 20,
+    "day_stop_usd": 6,
+    "clip": 5,
+    "total_stop_usd": 10
+  },
+  "today": {
+    "day": "2026-10-14",
+    "windows": 21,
+    "fills": 134,
+    "latency": {
+      "btc_exchange_to_decision": {
+        "unit": "ms",
+        "scope": "real_kalshi",
+        "cohort": "intents_created_on_utc_day",
+        "started_at": 1791843345.3511775,
+        "complete": true,
+        "partial_day": false,
+        "applicable": true,
+        "observations": 967,
+        "samples": 967,
+        "missing": 0,
+        "invalid": 0,
+        "errors": 0,
+        "timeouts": 0,
+        "overflow": false,
+        "median_ms": 221.55188350006938,
+        "p95_ms": 960.1690275594592,
+        "limitation": "Age of accepted Coinbase input; exchange/local clock uncertainty remains"
+      },
+      "btc_receipt_to_decision": {
+        "unit": "ms",
+        "scope": "real_kalshi",
+        "cohort": "intents_created_on_utc_day",
+        "started_at": 1791843345.3511775,
+        "complete": true,
+        "partial_day": false,
+        "applicable": true,
+        "observations": 967,
+        "samples": 967,
+        "missing": 0,
+        "invalid": 0,
+        "errors": 0,
+        "timeouts": 0,
+        "overflow": false,
+        "median_ms": 147.3842621780932,
+        "p95_ms": 737.7587552182376,
+        "limitation": "Age since strategy callback receipt; not pure computation or proven trigger reaction"
+      },
+      "decision_to_ack": {
+        "unit": "ms",
+        "scope": "real_kalshi",
+        "cohort": "intents_created_on_utc_day",
+        "started_at": 1791843345.3511775,
+        "complete": true,
+        "partial_day": false,
+        "applicable": true,
+        "observations": 967,
+        "samples": 957,
+        "missing": 0,
+        "invalid": 0,
+        "errors": 10,
+        "timeouts": 0,
+        "overflow": false,
+        "median_ms": 109.83115900307894,
+        "p95_ms": 917.3577162437141,
+        "limitation": "Decision to observed validated exchange acknowledgement; includes journal, queue and HTTP time",
+        "pending_or_lost_ack": 0
+      }
+    },
+    "scorecard": {
+      "version": 1,
+      "scope": "real",
+      "venue": "kalshi",
+      "day": "2026-10-14",
+      "cohort": "window end UTC day",
+      "population": "fully observed windows with complete fill history",
+      "coverage_basis": "complete window discovery and recorded ledger history; market availability reported separately",
+      "status": "partial",
+      "day_complete": false,
+      "utc_day_ended": false,
+      "reasons": [
+        "UTC day is still open",
+        "Full-day discovery and recording coverage is not certified",
+        "Some window coverage or fill history is missing or invalid"
+      ],
+      "eligible_windows": 76,
+      "complete_windows": 0,
+      "unknown_coverage_windows": 0,
+      "gap_windows": 76,
+      "invalid_windows": 0,
+      "invalid_fill_windows": 0,
+      "invalid_settlement_windows": 0,
+      "traded_windows": 0,
+      "zero_fill_windows": 0,
+      "fills": 0,
+      "fills_per_window": null,
+      "fills_per_traded_window": null,
+      "both_sides_windows": 0,
+      "both_sides_share": null,
+      "both_sides_traded_share": null,
+      "median_imbalance": null,
+      "imbalance_basis": "final quantity imbalance in traded fully observed windows",
+      "taker_fill_share": null,
+      "known_role_taker_share": null,
+      "role_coverage": null,
+      "unknown_role_fills": 0,
+      "matched_pairs": 0,
+      "matched_pair_cost_usd": null,
+      "matched_pair_fees_usd": null,
+      "unmatched_fees_usd": null,
+      "fees_usd": null,
+      "settled_traded_windows": 0,
+      "unsettled_traded_windows": 0,
+      "settled_pnl_usd": null,
+      "locked_usd": null,
+      "directional_usd": null,
+      "pnl_usd": null,
+      "pnl_per_window_usd": null,
+      "worst_window_usd": null,
+      "worst_window_basis": "settled traded fully observed windows",
+      "full_cohort_worst_usd": null,
+      "cap_change_allowed": false,
+      "automatic_promotion": false,
+      "observed_window_seconds": 65576.47890949249,
+      "fresh_market_window_seconds": 62578.31909942627,
+      "fresh_market_fraction": 0.9542799512885675,
+      "availability_basis": "window-seconds; fresh BTC, both books and verified trades; known stale intervals retained",
+      "evidence_started_at": 1791843345.3511834,
+      "evidence_restore_error": false,
+      "clock_reversals": 0
+    },
+    "settled_windows": 31,
+    "fees_usd": 0.47568,
+    "locked_usd": 3.1647589743589704,
+    "directional_usd": -3.6103589743589724,
+    "pnl_usd": -0.44560000000000216,
+    "worst_usd": -2.15,
+    "take_attempts": 0,
+    "take_fills": 0,
+    "maker_orders": 967,
+    "maker_fills": 91,
+    "locks": 17,
+    "lock_fills": 16,
+    "take_fill_rate": null,
+    "maker_fill_rate": 0.09410548086866598,
+    "avg_latency_ms": 2616.425557179494,
+    "latency_definition": "durable real decision to venue fill timestamp; maker includes resting time"
+  },
+  "total": {
+    "day": null,
+    "windows": 91,
+    "fills": 436,
+    "latency": null,
+    "scorecard": null,
+    "settled_windows": 104,
+    "fees_usd": 2.0458,
+    "locked_usd": 2.908198351648345,
+    "directional_usd": -13.29589835164835,
+    "pnl_usd": -10.387700000000006,
+    "worst_usd": -2.9791999999999987,
+    "take_attempts": 39,
+    "take_fills": 17,
+    "maker_orders": 2514,
+    "maker_fills": 295,
+    "locks": 66,
+    "lock_fills": 59,
+    "take_fill_rate": 0.4358974358974359,
+    "maker_fill_rate": 0.1173428798727128,
+    "avg_latency_ms": 4307.767698587465,
+    "latency_definition": "durable real decision to venue fill timestamp; maker includes resting time"
+  },
+  "reconcile": {
+    "ms": {
+      "recent_ms": {
+        "n": 34,
+        "median_ms": 397.9,
+        "p90_ms": 992.8,
+        "max_ms": 2928.2
+      },
+      "list_orders_ms": {
+        "n": 70,
+        "median_ms": 80.2,
+        "p90_ms": 316,
+        "max_ms": 1215.8
+      },
+      "fills_ms": {
+        "n": 35,
+        "median_ms": 67.3,
+        "p90_ms": 377.5,
+        "max_ms": 983.5
+      },
+      "positions_ms": {
+        "n": 35,
+        "median_ms": 49,
+        "p90_ms": 153.4,
+        "max_ms": 1001.2
+      },
+      "balance_ms": {
+        "n": 35,
+        "median_ms": 52,
+        "p90_ms": 230.5,
+        "max_ms": 789.7
+      },
+      "full_ms": {
+        "n": 1,
+        "median_ms": 1570,
+        "p90_ms": 1570,
+        "max_ms": 1570
+      }
+    },
+    "counts": {
+      "pages": 144,
+      "rows": 8794,
+      "bytes": 6732338
+    },
+    "last": {
+      "full": false,
+      "ms": 566.4,
+      "failed": false,
+      "checks": {},
+      "reads": [
+        {
+          "read": "list_orders",
+          "ms": 161.5,
+          "rows": 36,
+          "pages": 1,
+          "bytes": 28554
+        },
+        {
+          "read": "fills",
+          "ms": 121.1,
+          "rows": 8,
+          "pages": 1,
+          "bytes": 4095
+        },
+        {
+          "read": "list_orders",
+          "ms": 118.7,
+          "rows": 36,
+          "pages": 1,
+          "bytes": 28554
+        },
+        {
+          "read": "positions",
+          "ms": 67.7,
+          "rows": 3,
+          "pages": 1,
+          "bytes": 1404
+        },
+        {
+          "read": "balance",
+          "ms": 94.4,
+          "rows": null,
+          "pages": null,
+          "bytes": null
+        }
+      ]
+    }
+  },
+  "requests": {
+    "ms": {
+      "list_orders_lock_wait_ms": {
+        "n": 74,
+        "median_ms": 0,
+        "p90_ms": 0,
+        "max_ms": 0
+      },
+      "list_orders_rate_wait_ms": {
+        "n": 74,
+        "median_ms": 0,
+        "p90_ms": 0,
+        "max_ms": 0
+      },
+      "list_orders_prepare_ms": {
+        "n": 74,
+        "median_ms": 0.2,
+        "p90_ms": 5.2,
+        "max_ms": 10.6
+      },
+      "list_orders_http_ms": {
+        "n": 74,
+        "median_ms": 47.7,
+        "p90_ms": 74.9,
+        "max_ms": 316.5
+      },
+      "list_orders_decode_ms": {
+        "n": 74,
+        "median_ms": 0.3,
+        "p90_ms": 0.4,
+        "max_ms": 8.1
+      },
+      "list_orders_total_ms": {
+        "n": 74,
+        "median_ms": 49.8,
+        "p90_ms": 79.3,
+        "max_ms": 321.9
+      },
+      "fills_lock_wait_ms": {
+        "n": 35,
+        "median_ms": 0,
+        "p90_ms": 0,
+        "max_ms": 0
+      },
+      "fills_rate_wait_ms": {
+        "n": 35,
+        "median_ms": 0,
+        "p90_ms": 0,
+        "max_ms": 0
+      },
+      "fills_prepare_ms": {
+        "n": 35,
+        "median_ms": 0.1,
+        "p90_ms": 7.4,
+        "max_ms": 8.3
+      },
+      "fills_http_ms": {
+        "n": 35,
+        "median_ms": 39.9,
+        "p90_ms": 65.6,
+        "max_ms": 282.1
+      },
+      "fills_decode_ms": {
+        "n": 35,
+        "median_ms": 0.1,
+        "p90_ms": 0.1,
+        "max_ms": 1.6
+      },
+      "fills_total_ms": {
+        "n": 35,
+        "median_ms": 40.4,
+        "p90_ms": 70.6,
+        "max_ms": 282.4
+      },
+      "positions_lock_wait_ms": {
+        "n": 35,
+        "median_ms": 0,
+        "p90_ms": 0,
+        "max_ms": 0
+      },
+      "positions_rate_wait_ms": {
+        "n": 35,
+        "median_ms": 0,
+        "p90_ms": 0,
+        "max_ms": 0
+      },
+      "positions_prepare_ms": {
+        "n": 35,
+        "median_ms": 0.1,
+        "p90_ms": 2.4,
+        "max_ms": 18.1
+      },
+      "positions_http_ms": {
+        "n": 35,
+        "median_ms": 34.8,
+        "p90_ms": 50.4,
+        "max_ms": 56.8
+      },
+      "positions_decode_ms": {
+        "n": 35,
+        "median_ms": 0,
+        "p90_ms": 0.1,
+        "max_ms": 0.2
+      },
+      "positions_total_ms": {
+        "n": 35,
+        "median_ms": 35.4,
+        "p90_ms": 53.6,
+        "max_ms": 68.6
+      },
+      "balance_lock_wait_ms": {
+        "n": 35,
+        "median_ms": 0,
+        "p90_ms": 0,
+        "max_ms": 0
+      },
+      "balance_rate_wait_ms": {
+        "n": 35,
+        "median_ms": 0,
+        "p90_ms": 0,
+        "max_ms": 0
+      },
+      "balance_prepare_ms": {
+        "n": 35,
+        "median_ms": 0.1,
+        "p90_ms": 5.1,
+        "max_ms": 12.3
+      },
+      "balance_http_ms": {
+        "n": 35,
+        "median_ms": 38.1,
+        "p90_ms": 68.2,
+        "max_ms": 313.5
+      },
+      "balance_decode_ms": {
+        "n": 35,
+        "median_ms": 0,
+        "p90_ms": 0,
+        "max_ms": 0.1
+      },
+      "balance_total_ms": {
+        "n": 35,
+        "median_ms": 38.2,
+        "p90_ms": 71,
+        "max_ms": 313.7
+      }
+    },
+    "counts": {
+      "dropped": 0,
+      "list_orders_ok": 74,
+      "fills_ok": 35,
+      "positions_ok": 35,
+      "balance_ok": 35
+    }
+  },
+  "loop": {
+    "ms": {
+      "event_loop_lag": {
+        "n": 1359,
+        "median_ms": 11.5,
+        "p90_ms": 45,
+        "max_ms": 1064.4
+      },
+      "list_orders_worker_queue": {
+        "n": 70,
+        "median_ms": 4.9,
+        "p90_ms": 55.5,
+        "max_ms": 274.3
+      },
+      "list_orders_worker_resume": {
+        "n": 70,
+        "median_ms": 12.1,
+        "p90_ms": 117.3,
+        "max_ms": 938.6
+      },
+      "fills_worker_queue": {
+        "n": 35,
+        "median_ms": 1.4,
+        "p90_ms": 17.4,
+        "max_ms": 70.1
+      },
+      "fills_worker_resume": {
+        "n": 35,
+        "median_ms": 18.6,
+        "p90_ms": 157.3,
+        "max_ms": 934.8
+      },
+      "positions_worker_queue": {
+        "n": 35,
+        "median_ms": 0.7,
+        "p90_ms": 23.2,
+        "max_ms": 283.9
+      },
+      "positions_worker_resume": {
+        "n": 35,
+        "median_ms": 11.3,
+        "p90_ms": 67.8,
+        "max_ms": 503.7
+      },
+      "balance_worker_queue": {
+        "n": 35,
+        "median_ms": 1.4,
+        "p90_ms": 28.7,
+        "max_ms": 41.2
+      },
+      "balance_worker_resume": {
+        "n": 35,
+        "median_ms": 11.5,
+        "p90_ms": 356.4,
+        "max_ms": 736.9
+      }
+    },
+    "counts": {}
+  },
+  "phases": {
+    "heartbeat": {
+      "n": 650,
+      "median_ms": 0,
+      "p90_ms": 0.1,
+      "max_ms": 411.9
+    },
+    "step": {
+      "n": 650,
+      "median_ms": 1.9,
+      "p90_ms": 3.1,
+      "max_ms": 3026.5
+    },
+    "observe": {
+      "n": 650,
+      "median_ms": 0.8,
+      "p90_ms": 1.1,
+      "max_ms": 13.8
+    },
+    "cancel_unsafe": {
+      "n": 1300,
+      "median_ms": 0,
+      "p90_ms": 0,
+      "max_ms": 5.5
+    },
+    "lock": {
+      "n": 650,
+      "median_ms": 0.1,
+      "p90_ms": 0.1,
+      "max_ms": 0.6
+    },
+    "decide": {
+      "n": 650,
+      "median_ms": 0.9,
+      "p90_ms": 1.2,
+      "max_ms": 13.7
+    },
+    "reconcile": {
+      "n": 35,
+      "median_ms": 448.8,
+      "p90_ms": 1401.5,
+      "max_ms": 2928.3
+    }
+  },
+  "limitations": [
+    "An observed account ledger snapshot is not certified complete day/window coverage.",
+    "Cash differs from trading P&L. Historic losses remain included.",
+    "Daily scorecard marks full-window coverage incomplete; real and practice are separate.",
+    "Timing summaries are not causally joined to an individual fill."
+  ]
+}

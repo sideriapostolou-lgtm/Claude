@@ -1,0 +1,102 @@
+{
+  "archive": "live-mirror-preparation-evidence.zip",
+  "archive_bytes": 39110,
+  "archive_sha256": "6cb1bc4b195627c268a4d3db3b34f26885fb1c67b93a762ad7132073d2ac20b8",
+  "crc_verified": true,
+  "member_equality_verified": true,
+  "credential_marker_scan": {
+    "patterns": [
+      "PEM private-key header",
+      "word-boundary sk_ credential marker",
+      "word-boundary jup_ credential marker"
+    ],
+    "hits": []
+  },
+  "members": [
+    {
+      "member": "kv-profile.py",
+      "bytes": 4811,
+      "sha256": "d98d5b64286ad2d5885c13be250fdd4662c6bf7fa095c77fe90ec9aa2d9df5ed"
+    },
+    {
+      "member": "kv-profile-baseline-original.py",
+      "bytes": 4313,
+      "sha256": "c13af48648b626525204b20572ee98b80668ab05916f6c820bf638d4489f0256"
+    },
+    {
+      "member": "kv-profile-candidate.py",
+      "bytes": 5023,
+      "sha256": "46c6317a3ef71a933bc21d9d310b606042ac0b10fd16c2820b565c7573525273"
+    },
+    {
+      "member": "kv-profile-mirror.py",
+      "bytes": 5047,
+      "sha256": "5b255d8ba7875b0ffb5385a66a7fa7af216f6aaf255bad419fa10702eaf95f40"
+    },
+    {
+      "member": "kv-profile-mirror-extra.py",
+      "bytes": 2952,
+      "sha256": "61bb683b98399b64034547d1b07faa1e27392b94309f3eb1aa0983e5ea1c5ecb"
+    },
+    {
+      "member": "kv-profile-artifacts/SUMMARY.json",
+      "bytes": 4260,
+      "sha256": "a35d33ce91f07a25d5ca161834598335bac0fe5c3a386f2973693db26bb8c3ff"
+    },
+    {
+      "member": "kv-profile-artifacts/baseline.json",
+      "bytes": 6030,
+      "sha256": "7f7a61bc8b71a04dbc3bf7d4794a575d4dc842f142ab7d7574166d825ed35ebd"
+    },
+    {
+      "member": "kv-profile-artifacts/candidate-results.json",
+      "bytes": 32796,
+      "sha256": "1302220a4ffc3377fa3ad9d82873e43c21ebfd78966a66d14093006d7fa65663"
+    },
+    {
+      "member": "kv-profile-artifacts/mirror-results.json",
+      "bytes": 8740,
+      "sha256": "0bc3735b7676bb76ebd4a4adae21858b05cb854eda396e716c11a99f34961c96"
+    },
+    {
+      "member": "kv-profile-artifacts/mirror-extra-results.json",
+      "bytes": 4970,
+      "sha256": "184d0258248756835f012a94179347fcab453005984e15059d9272996d4e9083"
+    },
+    {
+      "member": "kv-profile-artifacts/live_full_4096_old_mirror.txt",
+      "bytes": 1819,
+      "sha256": "d7cf436b111842504b5c5a676377bf97555383c875e787a0e634d42191deda34"
+    },
+    {
+      "member": "kv-profile-artifacts/live_full_4096_new_mirror.txt",
+      "bytes": 1394,
+      "sha256": "4d852ab62c93fe3ea8f0356e781bb8e4814753d032325f746591c81a50099a41"
+    },
+    {
+      "member": "kv-profile-artifacts/practice_4096_actual_set_kv.txt",
+      "bytes": 1864,
+      "sha256": "fa4e8ec12ea1f5efaebb423dc0f740052b046befaac5f803a72f7202b2f835d7"
+    },
+    {
+      "member": "kv-profile-artifacts/live_4096_actual_set_kv.txt",
+      "bytes": 1864,
+      "sha256": "3d6bfe25b7d81974be600abe995fd62ab133dd0645117dd93899e010dcd61064"
+    },
+    {
+      "member": "ws-timing-startup-attribution-review.md",
+      "bytes": 14466,
+      "sha256": "69ef9a8d01568271bef8e7a919334dc199454e902bb61716a237a27a7dccae73"
+    },
+    {
+      "member": "ws-timing-main-known-mirror-event.json",
+      "bytes": 17031,
+      "sha256": "f10b48e38bd521e9e67e6e33c6cb806e0077599f39f6b9ff023e7ded71ac0fb3"
+    },
+    {
+      "member": "live-mirror-candidate-review.md",
+      "bytes": 7550,
+      "sha256": "dab3049ba0e3d4d603f3c317d97aba82b45ec7d5bea839f93354ba925854f6e6"
+    }
+  ]
+}

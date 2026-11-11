@@ -1,0 +1,30 @@
+import json, sys, hashlib
+from pathlib import Path
+from types import SimpleNamespace
+ROOT=Path('/workspace/nightcrawler-feed-recovery')
+sys.path.insert(0,str(ROOT/'src'))
+from nightcrawler.speeddesk_kalshi_ws import KalshiMarketWS, MarketState
+from nightcrawler.weatherwatch_markets import WeatherWS
+T='KXBTC15M-26OCT151545-45'
+def fixture(cls=KalshiMarketWS):
+    out=[]
+    ws=cls(SimpleNamespace(),tickers=lambda:frozenset({T}),on_book=lambda _:None,on_trade=lambda _:None,on_status=out.append,clock=lambda:103.)
+    ws.connected=True
+    ws.state=MarketState(frozenset({T}))
+    return ws,out
+ws,out=fixture()
+ws.state.book_at[T]=ws.state.exchange_at[T]=100.
+ws.state.trade_at[T]=103.
+clock=iter([103.,103.01]);ws._clock=lambda:next(clock)
+makers=sorted(ws.fresh_maker_windows())
+print(json.dumps({'case':'book_expires_during_accessor','book_at':100,'clock_reads':[103,103.01],'maker_result':makers,'expected':[]}))
+# Report must retain maker subset of fresh books, including backwards/forward clock steps.
+ws,out=fixture()
+ws.state.book_at[T]=ws.state.exchange_at[T]=103.01
+ws.state.trade_at[T]=103.01
+clock=iter([103.,103.01,103.01]);ws._clock=lambda:next(clock)
+ws._report()
+print(json.dumps({'case':'report_future_book_becomes_current_between_checks','status':out[-1],
+                  'maker_subset_of_books':set(out[-1]['ws_maker_windows']) <= set(out[-1]['ws_books'])}))
+print(json.dumps({'weather_overrides_fresh_books': 'fresh_books' in WeatherWS.__dict__,
+                  'weather_overrides_report': '_report' in WeatherWS.__dict__}))

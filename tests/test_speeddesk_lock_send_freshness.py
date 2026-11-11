@@ -1,0 +1,212 @@
+"""Last transport check for already-journaled balancing locks; fake account only."""
+from __future__ import annotations
+
+import asyncio
+import math
+from dataclasses import replace
+from pathlib import Path
+from typing import Any
+
+import pytest
+from test_speeddesk_live import TICKER, FakeAccount, at_lock_time, fill_order, make_desk
+
+from nightcrawler.clock import FakeClock
+from nightcrawler.speeddesk_live import Intent, KalshiLiveDesk, durable_state
+from nightcrawler.speeddesk_live_model import ActualFill, LiveIntent
+from nightcrawler.speeddesk_model import utc_day
+
+
+def refresh_quotes(desk: KalshiLiveDesk, clock: Any) -> None:
+    at_lock_time(desk, clock, up_ask=.3, down_ask=.7,
+                 before_close=desk.book.windows[TICKER].end - clock.now())
+
+
+def existing_filled_starter(tmp_path: Path) -> tuple[KalshiLiveDesk, FakeAccount, FakeClock]:
+    """Seed an owned execution from before containment; lock guards use the production controller."""
+    desk, account, clock = make_desk(tmp_path)
+    asyncio.run(desk.step())
+    assert not account.creates
+    identity = "nc-speed-existing-lock-starter"
+    desk.intents[identity] = Intent(identity, TICKER, "up", "take", .4, 5, .5, clock.now(),
+                                    order_id="order-1", terminal=True)
+    desk.book.intents[identity] = LiveIntent(identity, TICKER, "up", "take", .4, 5, clock.now(), .42,
+                                           order_id="order-1")
+    desk.book.bootstrap_order[TICKER] = identity
+    account.creates.append({"client_order_id": identity, "ticker": TICKER, "side": "up",
+                            "kind": "take", "price": .4, "size": 5})
+    account.orders.append({"client_order_id": identity, "order_id": "order-1", "ticker": TICKER,
+                           "status": "resting", "initial_count_fp": "5.00", "fill_count_fp": "0.00",
+                           "remaining_count_fp": "5.00", "outcome_side": "yes", "book_side": "bid",
+                           "yes_price_dollars": ".40", "no_price_dollars": ".60"})
+    fill_order(account, clock, 0, side="up", price=.4, size=5)
+    fee = float(account.executions[-1]["fee_cost"])
+    assert desk.book.record_fill(ActualFill("fill-0", "order-1", identity, TICKER, "up", .4, 5, fee,
+                                           clock.now()))
+    account.account_positions = [{"ticker": TICKER, "position_fp": "5.00"}]
+    asyncio.run(desk._reconcile())
+    return desk, account, clock
+
+
+@pytest.mark.parametrize("case", ["account_age_4", "cash_age_6"])
+def test_transport_wait_rechecks_account_and_cash_before_first_byte(tmp_path: Path, case: str) -> None:
+    desk, account, clock = existing_filled_starter(tmp_path)
+    try:
+        at_lock_time(desk, clock, up_ask=.3, down_ask=.7)
+        original_create = account.create_order
+        attempted = []
+
+        def delayed_create(**kwargs: Any) -> dict[str, Any]:
+            attempted.append(kwargs["client_order_id"])
+            # Quotes remain fresh after the simulated worker/rate-limit wait.
+            if case == "account_age_4":
+                clock.advance(4)
+                refresh_quotes(desk, clock)
+            else:
+                desk.book.cash_at = clock.now() - 6
+            return original_create(**kwargs)
+
+        account.create_order = delayed_create  # type: ignore[method-assign]
+        asyncio.run(desk.step())
+        assert len(attempted) == 1 and len(account.creates) == 1  # only the earlier starter reached the fake venue
+        intent = desk.intents[attempted[0]]
+        assert intent.lock and intent.terminal and not intent.uncertain and not intent.order_id
+        assert not desk.book.intents[intent.client_order_id].reservation_active
+        assert desk.account_at is None and desk.errors == 0
+        assert desk.book.reserved_usd == 0
+        assert any(row.get("client_order_id") == intent.client_order_id
+                   and row.get("state") == "not sent; prices moved before send" for row in desk.latest_events)
+        saved = durable_state(desk.ledger)
+        assert saved is not None and saved["intents"][intent.client_order_id]["terminal"]
+        assert not saved["book"]["intents"][intent.client_order_id]["reservation_active"]
+    finally:
+        desk.close()
+
+
+@pytest.mark.parametrize("field,value", [
+    ("account_at", None), ("account_age", 3.000001), ("account_age", -1),
+    ("account_age", math.nan), ("account_age", math.inf), ("account_age", -math.inf),
+    ("cash_at", None), ("cash_usd", None), ("cash_age", 5.000001), ("cash_age", -1),
+    ("cash_age", math.nan), ("cash_age", math.inf), ("cash_age", -math.inf),
+    ("authenticated", False), ("startup_done", False),
+    ("uncertain", True), ("cancel_requested", True),
+])
+def test_transport_guard_refuses_invalidated_admission(
+    tmp_path: Path, field: str, value: Any,
+) -> None:
+    desk, account, clock = existing_filled_starter(tmp_path)
+    try:
+        at_lock_time(desk, clock, up_ask=.3, down_ask=.7)
+        original_create = account.create_order
+        guarded = []
+
+        def changed_create(**kwargs: Any) -> dict[str, Any]:
+            intent = desk.intents[kwargs["client_order_id"]]
+            if field == "account_age":
+                desk.account_at = clock.now() - value
+            elif field == "cash_age":
+                desk.book.cash_at = clock.now() - value
+            elif field in ("cash_at", "cash_usd"):
+                setattr(desk.book, field, value)
+            elif field in ("uncertain", "cancel_requested"):
+                setattr(intent, field, value)
+            else:
+                setattr(desk, field, value)
+            guarded.append(kwargs["before_send"]())
+            return original_create(**kwargs)
+
+        account.create_order = changed_create  # type: ignore[method-assign]
+        asyncio.run(desk.step())
+        assert guarded == [False] and len(account.creates) == 1
+    finally:
+        desk.close()
+
+
+@pytest.mark.parametrize("stop", ["none", "day", "total"])
+@pytest.mark.parametrize("account_age,cash_age", [(0, 0), (3, 5)])
+def test_fresh_lock_inclusive_boundaries_keep_own_reservation_and_loss_stop_exemptions(
+    tmp_path: Path, stop: str, account_age: float, cash_age: float,
+) -> None:
+    desk, account, clock = existing_filled_starter(tmp_path)
+    try:
+        at_lock_time(desk, clock, up_ask=.3, down_ask=.7)
+        original_create = account.create_order
+        facts = []
+
+        def admitted_create(**kwargs: Any) -> dict[str, Any]:
+            intent = desk.intents[kwargs["client_order_id"]]
+            desk.account_at, desk.book.cash_at = clock.now() - account_age, clock.now() - cash_age
+            if stop == "day":
+                desk.book.day_pnl[utc_day(clock.now())] = -6
+                desk.book.day_stop_latched = utc_day(clock.now())
+            elif stop == "total":
+                desk.book.halted, desk.book.halt_reason = True, "total_loss"
+            facts.append((desk.book.can_lock(TICKER, intent.side, intent.price, intent.size, clock.now()),
+                          kwargs["before_send"]()))
+            return original_create(**kwargs)
+
+        account.create_order = admitted_create  # type: ignore[method-assign]
+        asyncio.run(desk.step())
+        assert facts == [("order_pending", True)]
+        assert len(account.creates) == 2
+        lock = desk.intents[account.creates[1]["client_order_id"]]
+        assert lock.lock and not lock.terminal and not lock.uncertain
+    finally:
+        desk.close()
+
+
+def test_cash_clock_uses_window_specific_limit_after_wait(tmp_path: Path) -> None:
+    desk, account, clock = existing_filled_starter(tmp_path)
+    try:
+        at_lock_time(desk, clock, up_ask=.3, down_ask=.7)
+        limits = replace(desk.book.limits, cash_max_age_s=2)
+        desk.book.window_limits = lambda _start: limits
+        original_create = account.create_order
+
+        def delayed_create(**kwargs: Any) -> dict[str, Any]:
+            desk.book.cash_at = clock.now() - 3
+            return original_create(**kwargs)
+
+        account.create_order = delayed_create  # type: ignore[method-assign]
+        asyncio.run(desk.step())
+        assert len(account.creates) == 1
+    finally:
+        desk.close()
+
+
+@pytest.mark.parametrize("restart", [False, True])
+def test_refused_lock_is_not_retried_without_resync_and_new_identity(tmp_path: Path, restart: bool) -> None:
+    desk, account, clock = existing_filled_starter(tmp_path)
+    try:
+        at_lock_time(desk, clock, up_ask=.3, down_ask=.7)
+        original_create = account.create_order
+        attempts = []
+
+        def first_stale(**kwargs: Any) -> dict[str, Any]:
+            attempts.append(kwargs["client_order_id"])
+            if len(attempts) == 1:
+                desk.account_at = clock.now() - 4
+            return original_create(**kwargs)
+
+        account.create_order = first_stale  # type: ignore[method-assign]
+        asyncio.run(desk.step())
+        rejected, = attempts
+        assert len(account.creates) == 1 and desk.account_at is None
+        assert not asyncio.run(desk._lock())
+        assert attempts == [rejected]  # no direct retry while the account read is stale
+        reads = account.reads
+        if restart:
+            settings, snapshot = desk.settings, desk.snapshot
+            desk.close()
+            desk = KalshiLiveDesk(settings, tmp_path / "live", snapshot, clock=clock.now,
+                                  client_factory=lambda: account, direct_member_verified=True)
+            desk.on_windows(list(snapshot().windows))  # fresh public routing, as production supplies after restart
+            assert desk.intents[rejected].terminal and not desk.book.intents[rejected].reservation_active
+            assert len(account.creates) == 1 and not desk.startup_done
+        asyncio.run(desk.step())
+        assert account.reads > reads
+        assert len(account.creates) == 2 and len(attempts) == 2 and attempts[1] != rejected
+        assert desk.intents[rejected].terminal and not desk.intents[rejected].uncertain
+        assert not desk.book.intents[rejected].reservation_active
+        assert desk.intents[attempts[1]].lock
+    finally:
+        desk.close()

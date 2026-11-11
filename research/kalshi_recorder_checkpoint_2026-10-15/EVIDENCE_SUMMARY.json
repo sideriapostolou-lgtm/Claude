@@ -1,0 +1,323 @@
+{
+  "schema": 1,
+  "prepared_at_utc": "2026-10-15 22:51:49 UTC",
+  "checkpoint": "read_only_metadata_incomplete_feasibility",
+  "project_id": "75750847-85c0-41a3-a2a7-b7f2201a51e9",
+  "environment_id": "17f7b0e0-104c-4903-9484-0106748b3cdb",
+  "service_id": "736b1c8a-8311-4ee0-9043-d05f508cd821",
+  "source": {
+    "commit": "a0782b743a31369fe25ddf6d2eea96df8511cd8d",
+    "branch": "claude/kalshi-recorder",
+    "deployment": "8453f919-b891-4aa7-8478-6fcf6b9c24ee"
+  },
+  "health_observation_utc": "2026-10-15 22:45:05 UTC",
+  "health": {
+    "serviceId": "736b1c8a-8311-4ee0-9043-d05f508cd821",
+    "serviceName": "kalshi-recorder",
+    "state": "online",
+    "statusText": "Online",
+    "activeDeployments": [
+      {
+        "id": "8453f919-b891-4aa7-8478-6fcf6b9c24ee",
+        "status": "SUCCESS",
+        "createdAt": "2026-10-14T16:36:40.384Z",
+        "statusUpdatedAt": "2026-10-14T16:38:15.302Z"
+      }
+    ],
+    "replicaStatus": {
+      "running": 1,
+      "crashed": 0,
+      "total": 1
+    },
+    "cronJob": null,
+    "issues": {
+      "warningCount": 0,
+      "criticalCount": 0
+    },
+    "recentFailures": 0,
+    "recentFailedDeployments": [],
+    "hasIssues": false,
+    "isCronJob": false,
+    "hasVolume": true
+  },
+  "metrics_observation_utc": "2026-10-15 22:45:05 UTC",
+  "metrics_request": {
+    "hoursBack": 1,
+    "sampleRateSeconds": 30
+  },
+  "metrics": [
+    {
+      "measurement": "CPU_USAGE",
+      "current": 0,
+      "average": 0.015462122314049592,
+      "min": 0,
+      "max": 0.034559,
+      "sampleCount": 121
+    },
+    {
+      "measurement": "CPU_LIMIT",
+      "current": 8,
+      "average": 8,
+      "min": 8,
+      "max": 8,
+      "sampleCount": 121
+    },
+    {
+      "measurement": "MEMORY_USAGE_GB",
+      "current": 0.879640576,
+      "average": 0.8717481256198346,
+      "min": 0.863358976,
+      "max": 0.879640576,
+      "sampleCount": 121
+    },
+    {
+      "measurement": "MEMORY_LIMIT_GB",
+      "current": 0.99999744,
+      "average": 0.9999974400000011,
+      "min": 0.99999744,
+      "max": 0.99999744,
+      "sampleCount": 121
+    },
+    {
+      "measurement": "DISK_USAGE_GB",
+      "current": 0.799113216,
+      "average": 0.7916959354710744,
+      "min": 0.78311424,
+      "max": 0.799113216,
+      "sampleCount": 121
+    }
+  ],
+  "metadata_query": {
+    "startDate": "2026-10-14T16:35:00Z",
+    "endDate": "2026-10-15T22:01:00Z",
+    "filter": "kalshi_recorder_evidence",
+    "limit": 100,
+    "deploymentId": "8453f919-b891-4aa7-8478-6fcf6b9c24ee"
+  },
+  "private_native_metadata_sha256": "7dec23a3571d7aa605429c0de8031671f38cbbe74a37d97d528b6ee33503e479",
+  "metadata_arithmetic": {
+    "rows": 31,
+    "unique": 31,
+    "contiguous": true,
+    "sampledMinutes": 1822,
+    "periodFrom": 1791990000,
+    "periodTo": 1792101600,
+    "gaps": 31,
+    "causes": {
+      "spot_reconnected": 29,
+      "recorder_not_running": 1,
+      "restart_partial_segment_recovered": 1
+    },
+    "lanes": {
+      "spot": 30,
+      "all": 1
+    },
+    "allError429Null": true,
+    "storageStart": {
+      "cap_bytes": 4831838208,
+      "deleted_segments": 0,
+      "level": 0,
+      "used_bytes": 217975859
+    },
+    "storageEnd": {
+      "cap_bytes": 4831838208,
+      "deleted_segments": 0,
+      "level": 0,
+      "used_bytes": 609484884
+    },
+    "elapsedStorageSeconds": 108000,
+    "deltaBytes": 391509025,
+    "bytesDay": 313207220,
+    "all_expected_metadata_flags_match": true,
+    "actual_metadata_flags_all_31": {
+      "read_only": true,
+      "order_capability": false,
+      "sealed_only": true,
+      "coverage_certified": false,
+      "segment_hashes_reverified": false,
+      "per_venue_spot_ticks_verified": false,
+      "rows_and_test_outcomes_read": false
+    }
+  },
+  "exact_gap_adjusted_duration_s": null,
+  "quote_survival": null,
+  "depth_at_frozen_budget": null,
+  "exact_fee_cost": null,
+  "phase_0_quote_admissions_and_funded_cluster_count": null,
+  "clock_offset": null,
+  "measured_hosting_cost": null,
+  "protocol": {
+    "version": "kalshi-familyA-v1",
+    "sha256": "40ccfe87ed86b3fd62ee16ebba9862f8be8bbc66a229cfdc7f138ee26a305040",
+    "simulated_limits": {
+      "cash_usd": 25,
+      "cluster_usd": 2,
+      "outstanding_usd": 4,
+      "day_usd": 3,
+      "lifetime_usd": 5
+    },
+    "phase_0_complete": false,
+    "test_accessed": false,
+    "decision_rules_changed": false
+  },
+  "service_scope_queries": [
+    {
+      "request": {
+        "projectId": "75750847-85c0-41a3-a2a7-b7f2201a51e9",
+        "environmentId": "17f7b0e0-104c-4903-9484-0106748b3cdb",
+        "serviceId": "736b1c8a-8311-4ee0-9043-d05f508cd821",
+        "startDate": "2026-10-13T22:30:00Z",
+        "endDate": "2026-10-15T22:45:00Z",
+        "types": [
+          "deploy"
+        ],
+        "filter": "kalshi_recorder_started",
+        "limit": 50
+      },
+      "before": {
+        "current_time": "2026-10-15 22:50:52 UTC"
+      },
+      "after": {
+        "current_time": "2026-10-15 22:50:53 UTC"
+      },
+      "count": 5,
+      "error": false
+    },
+    {
+      "request": {
+        "projectId": "75750847-85c0-41a3-a2a7-b7f2201a51e9",
+        "environmentId": "17f7b0e0-104c-4903-9484-0106748b3cdb",
+        "serviceId": "736b1c8a-8311-4ee0-9043-d05f508cd821",
+        "startDate": "2026-10-13T22:30:00Z",
+        "endDate": "2026-10-15T22:45:00Z",
+        "types": [
+          "deploy"
+        ],
+        "filter": "kalshi_recorder_evidence",
+        "limit": 100
+      },
+      "before": {
+        "current_time": "2026-10-15 22:50:52 UTC"
+      },
+      "after": {
+        "current_time": "2026-10-15 22:50:53 UTC"
+      },
+      "count": 31,
+      "error": false
+    }
+  ],
+  "service_scope_log_checks": [
+    {
+      "name": "warnings",
+      "request": {
+        "projectId": "75750847-85c0-41a3-a2a7-b7f2201a51e9",
+        "environmentId": "17f7b0e0-104c-4903-9484-0106748b3cdb",
+        "serviceId": "736b1c8a-8311-4ee0-9043-d05f508cd821",
+        "startDate": "2026-10-13T22:30:00Z",
+        "endDate": "2026-10-15T22:45:00Z",
+        "types": [
+          "deploy"
+        ],
+        "filter": "WARNING nightcrawler.kalshi_recorder",
+        "limit": 500
+      },
+      "before": {
+        "current_time": "2026-10-15 22:51:04 UTC"
+      },
+      "after": {
+        "current_time": "2026-10-15 22:51:04 UTC"
+      },
+      "returned_rows": 65,
+      "saturated": false,
+      "error": false,
+      "app_levels": {
+        "WARNING": 65
+      }
+    },
+    {
+      "name": "errors",
+      "request": {
+        "projectId": "75750847-85c0-41a3-a2a7-b7f2201a51e9",
+        "environmentId": "17f7b0e0-104c-4903-9484-0106748b3cdb",
+        "serviceId": "736b1c8a-8311-4ee0-9043-d05f508cd821",
+        "startDate": "2026-10-13T22:30:00Z",
+        "endDate": "2026-10-15T22:45:00Z",
+        "types": [
+          "deploy"
+        ],
+        "filter": "ERROR nightcrawler.kalshi_recorder",
+        "limit": 100
+      },
+      "before": {
+        "current_time": "2026-10-15 22:51:04 UTC"
+      },
+      "after": {
+        "current_time": "2026-10-15 22:51:06 UTC"
+      },
+      "returned_rows": 61,
+      "saturated": false,
+      "error": false,
+      "app_levels": {
+        "WARNING": 30,
+        "INFO": 31
+      }
+    },
+    {
+      "name": "traceback",
+      "request": {
+        "projectId": "75750847-85c0-41a3-a2a7-b7f2201a51e9",
+        "environmentId": "17f7b0e0-104c-4903-9484-0106748b3cdb",
+        "serviceId": "736b1c8a-8311-4ee0-9043-d05f508cd821",
+        "startDate": "2026-10-13T22:30:00Z",
+        "endDate": "2026-10-15T22:45:00Z",
+        "types": [
+          "deploy"
+        ],
+        "filter": "Traceback",
+        "limit": 100
+      },
+      "before": {
+        "current_time": "2026-10-15 22:51:04 UTC"
+      },
+      "after": {
+        "current_time": "2026-10-15 22:51:06 UTC"
+      },
+      "returned_rows": 0,
+      "saturated": false,
+      "error": false,
+      "app_levels": {}
+    },
+    {
+      "name": "429",
+      "request": {
+        "projectId": "75750847-85c0-41a3-a2a7-b7f2201a51e9",
+        "environmentId": "17f7b0e0-104c-4903-9484-0106748b3cdb",
+        "serviceId": "736b1c8a-8311-4ee0-9043-d05f508cd821",
+        "startDate": "2026-10-13T22:30:00Z",
+        "endDate": "2026-10-15T22:45:00Z",
+        "types": [
+          "deploy"
+        ],
+        "filter": "kalshi_recorder_429 lane=",
+        "limit": 100
+      },
+      "before": {
+        "current_time": "2026-10-15 22:51:04 UTC"
+      },
+      "after": {
+        "current_time": "2026-10-15 22:51:05 UTC"
+      },
+      "returned_rows": 0,
+      "saturated": false,
+      "error": false,
+      "app_levels": {}
+    }
+  ],
+  "storage_scenario": {
+    "additional_bytes_over_28_days_at_observed_rate": 8769802160,
+    "is_forecast": false,
+    "btc_retention_steady_state_verified": false,
+    "scope": "All recorder-owned files at the observed total-growth rate; not Family-A-only retained growth."
+  },
+  "unavailable_reason": "Current connected Railway tools provide logs/metrics/config reads but no service exec or volume-file export. No status/verify output, index, raw gap/book/trade/fee export or dated usage invoice was available. No verification command was claimed or run remotely."
+}

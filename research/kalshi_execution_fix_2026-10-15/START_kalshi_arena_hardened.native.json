@@ -1,0 +1,29 @@
+{
+  "content": [
+    {
+      "type": "text",
+      "text": "**Deployment c1fda55b-72fd-47b3-9801-dffec83b9e8b** [SUCCESS]\nservice: f84d3b52-002f-44cb-931e-bc9e3e097e97, env: 17f7b0e0-104c-4903-9484-0106748b3cdb\n\n### Deploy logs (1)\n2026-10-15T18:20:56.686374569Z info 2026-10-15T18:20:56Z INFO nightcrawler.kalshi_arena: kalshi_arena_hardened nice=19 sched=idle as_limit=1073741824 oom_score_adj=1000 applied=True"
+    }
+  ],
+  "structuredContent": {
+    "scope": "deployment",
+    "deploymentId": "c1fda55b-72fd-47b3-9801-dffec83b9e8b",
+    "serviceId": "f84d3b52-002f-44cb-931e-bc9e3e097e97",
+    "environmentId": "17f7b0e0-104c-4903-9484-0106748b3cdb",
+    "status": "SUCCESS",
+    "deploy": [
+      {
+        "timestamp": "2026-10-15T18:20:56.686374569Z",
+        "severity": "info",
+        "message": "2026-10-15T18:20:56Z INFO nightcrawler.kalshi_arena: kalshi_arena_hardened nice=19 sched=idle as_limit=1073741824 oom_score_adj=1000 applied=True",
+        "attributes": [
+          {
+            "key": "level",
+            "value": "\"info\""
+          }
+        ]
+      }
+    ]
+  },
+  "isError": false
+}

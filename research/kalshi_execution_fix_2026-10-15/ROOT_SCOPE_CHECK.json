@@ -1,0 +1,10 @@
+{
+  "checked_at_utc": "2026-10-15T18:13:13.687994+00:00",
+  "base": "beea7bf09be5405612cd11e4fcd7ee6c5678d469",
+  "only_changed_application_AST_method": "KalshiLiveDesk._lock_guard",
+  "all_other_application_AST_equal": true,
+  "protected_source": "PROTECTED_SOURCE.json",
+  "new_fake_cases": 28,
+  "original_delayed_send_cases_fail": 2,
+  "no_runtime_stale_refusal_or_profit_saving_claim": true
+}

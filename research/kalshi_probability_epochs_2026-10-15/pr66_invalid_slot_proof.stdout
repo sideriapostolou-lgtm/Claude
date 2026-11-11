@@ -1,0 +1,53 @@
+{
+  "receipt": "/workspace/private-handoffs/claude-2026-10-15/kalshi-recovery-review/pr66_invalid_slot_review.json",
+  "sha256": "7869f11c5c62e9c08ee9208a0def57942429c7e3b842b1ca3edc5a78ba1e5863",
+  "join": {
+    "window_equal": true,
+    "payload_at_equal": true,
+    "payload_at": 1792101000.0313098,
+    "bitcoin_age_seconds": 3.6016387939453125,
+    "threshold_seconds": 3,
+    "threshold_excess_seconds": 0.6016387939453125,
+    "inferred_bitcoin_exchange_timestamp": 1792100996.429671,
+    "inferred_timestamp_iso": "2026-10-15T21:49:56.429671+00:00",
+    "source_callsite_arguments": {
+      "V1": [
+        "'advance'",
+        "snap.windows",
+        "snap.bitcoin_price",
+        "snap.sigma",
+        "snap.bitcoin_at",
+        "snap.outcomes",
+        "now",
+        "{}",
+        "True"
+      ],
+      "V2": [
+        "'advance'",
+        "snap.windows",
+        "snap.bitcoin_price",
+        "snap.sigma",
+        "snap.bitcoin_at",
+        "now"
+      ]
+    },
+    "rejection_reason": "Identical shared inputs and time; V2 has already passed pending/pregap/batch/strike checks before generic invalid. Diagnostic confirms finite positive spot and nonnegative finite sigma. BTC age3.6016387939453125 is outside inclusive0\u20133; genericinvalid returns before fair_up.",
+    "V1_reason_distinct": "V1 terminates on stored explicit-feed pregap before its age validation. Do not relabel V1pregap as V2reason."
+  },
+  "synthetic": [
+    {
+      "btc_age": 3.6016387939453125,
+      "forecasts": 0,
+      "invalid": 1,
+      "unknown": 1,
+      "pending": false
+    },
+    {
+      "btc_age": 3.0,
+      "forecasts": 1,
+      "invalid": 0,
+      "unknown": 0,
+      "pending": true
+    }
+  ]
+}

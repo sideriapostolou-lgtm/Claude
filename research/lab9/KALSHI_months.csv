@@ -1,0 +1,7 @@
+month,split,census_markets,coverage_status,not_strategy_pnl,prints,printed_contracts,distinct_markets,distinct_months,NO_winning_markets,NO_losing_markets,market_win_rate,print_win_rate,minimum_print_price,maximum_print_price,size_weighted_print_price,unit_sensitivity_prints_ge1_contract,mean_unit_gross_payoff_at_print,mean_unit_taker_fee_contemporary_direct,mean_unit_payoff_after_contemporary_taker_stress,execution_qualified_pnl
+2025-10,TRAIN,0,no_markets_returned,True,0,0,0,0,0,0,,,,,,0,,,,
+2025-11,TRAIN,0,no_markets_returned,True,0,0,0,0,0,0,,,,,,0,,,,
+2025-12,TRAIN,0,no_markets_returned,True,0,0,0,0,0,0,,,,,,0,,,,
+2026-01,TRAIN,32,observed,True,4443,679298.00,23,1,19,4,0.8260869565217391,0.8370470402880936,0.9600,0.9900,0.9733037635912368356744757087,4443,-0.1345217195588566284042313752,0.001955683097006527121314427189,-0.1364774026558631555255458024,
+2026-02,TRAIN,35,observed,True,6631,1725551.00,28,1,28,0,1.0,1.0,0.9600,0.9900,0.9785352736604133983869500235,6631,0.02505504448801085809078570351,0.001729286683758105866385160609,0.02332575780425275222440054290,
+2026-03,TRAIN,24,observed,True,5601,789686.00,19,1,19,0,1.0,1.0,0.9600,0.9900,0.9771455743168803803030571645,5601,0.02568112836993394036779146581,0.001774201035529369755400821282,0.02390692733440457061239064453,

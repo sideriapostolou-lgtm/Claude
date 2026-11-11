@@ -1,0 +1,61 @@
+{
+  "synthetic_benchmark": {
+    "scope": "Offline synthetic serialization benchmarks; no selected source correction or financial decision.",
+    "run_order": "Each comparison runs old then new; the order is not reversed.",
+    "cpu_basis": "The scripts use time.process_time(), so recorded CPU is process CPU, not thread CPU.",
+    "live_mirror_full_4096": {
+      "payload_bytes": 1771743,
+      "old_json_dump": {
+        "median_wall_ms": 87.95398599613691,
+        "median_process_cpu_ms": 86.94815200000016,
+        "write_calls": 346744
+      },
+      "new_json_dumps_single_write": {
+        "median_wall_ms": 17.465386001276784,
+        "median_process_cpu_ms": 16.849123000000077,
+        "write_calls": 1
+      },
+      "traced_peak_bytes": {
+        "old": 87604,
+        "new": 3549061
+      }
+    },
+    "kv_set_kv_4096": {
+      "practice_payload_bytes": 1656595,
+      "practice_old_median_process_cpu_ms": 29.929979000000053,
+      "practice_candidate_median_process_cpu_ms": 26.279484000000018,
+      "live_payload_bytes": 1637749,
+      "live_old_median_process_cpu_ms": 29.435386999999924,
+      "live_candidate_median_process_cpu_ms": 25.995392000000006,
+      "recorded_scope": "Exact-native finite validation and direct dump only when valid; unchanged original fallback otherwise."
+    },
+    "naive_deep_error_counterexample": {
+      "tested_python": "3.12 as recorded in the saved benchmark summary",
+      "depth": 1100,
+      "old_json_dump": "raises RecursionError",
+      "new_json_dumps": "succeeds",
+      "guarded_prototype": "Routes depth >=64 and non-native/nonfinite values through the original dump; the saved test reports the 14 tested guarded edge results preserved.",
+      "limit": "Does not prove arbitrary call-stack equivalence or behavior on every Python version."
+    }
+  },
+  "caveats": [
+    "Fixtures use generated default-paper controller state and synthetic window/inventory clones; there is no production payload or financial history, and no enlarged-state reload correctness claim.",
+    "Mirror output is measured on buffered local temporary files without fsync; production archive population, CPU contention, and live callback scheduling were not reproduced.",
+    "The one-write path holds the entire encoded string and materially raises traced peak memory on the large fixture.",
+    "The KV guard showed roughly 10\u201312 percent improvement on tested large fixtures; no candidate was selected.",
+    "The 1100-level counterexample shows changed exception behavior for a deep synthetic object; it is not stated as financial recovery risk.",
+    "No financial-risk or validation-status conclusion is made."
+  ],
+  "separate_timing_context": {
+    "startup_producer_correction": "The four early startup timing rows are within-row connection measurements from an unidentified producer. WeatherWS inherits the same logger and instance-local session counter, so those rows cannot be assigned to BTC/speed-desk or grouped as unique producers by session number alone.",
+    "main_known_matching_local_work_event": {
+      "timestamp_utc": "2026-10-15T04:13:07Z",
+      "receipt_status": "known",
+      "protocol_acceptance_to_public_recv_ms": 2731.5297732129693,
+      "matching_local_work_interval_ms": 2731.59303329885,
+      "live_mirror_nested_wall_ms": 280.86906066164374,
+      "live_mirror_nested_thread_cpu_ms": 193.01751700000125,
+      "limitation": "Mirror is a contributor within that interval, not the whole delay; parent/nested work must not be added. This separately identified production event is not a synthetic benchmark result."
+    }
+  }
+}

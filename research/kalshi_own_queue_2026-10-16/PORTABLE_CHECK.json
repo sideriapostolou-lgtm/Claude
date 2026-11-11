@@ -1,0 +1,5 @@
+{
+  "exit_code": 0,
+  "stdout": "{\n  \"restored_files\": 93,\n  \"all_hashes_and_bytes\": \"passed\",\n  \"original_bounded_losses\": [\n    {\n      \"window\": \"KXBTC15M-26OCT160130-30\",\n      \"fills\": 2,\n      \"cost_usd\": 2.76,\n      \"fee_usd\": 0.0126,\n      \"payout_usd\": 2.0,\n      \"pnl_usd\": -0.7726\n    },\n    {\n      \"window\": \"KXBTC15M-26OCT160200-00\",\n      \"fills\": 1,\n      \"cost_usd\": 0.44,\n      \"fee_usd\": 0.0,\n      \"payout_usd\": 0,\n      \"pnl_usd\": -0.44\n    }\n  ],\n  \"independent_native_replays\": [\n    {\n      \"script\": \"astra/restart_idle_audit.py\",\n      \"stdout\": \"{\\\"checks\\\": 207, \\\"passed\\\": true, \\\"native_rows\\\": 20, \\\"unparsed_rows\\\": 2}\"\n    },\n    {\n      \"script\": \"astra/restart_followup_audit.py\",\n      \"stdout\": \"{\\\"checks\\\": 176, \\\"all_passed\\\": true}\"\n    }\n  ],\n  \"scope\": \"bounded receipts/synthetic checks; no continuous coverage, runtime queue or profit certificate\"\n}\n",
+  "stderr": ""
+}

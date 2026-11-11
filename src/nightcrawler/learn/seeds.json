@@ -1,0 +1,15 @@
+{
+  "note": "Variants registered at first boot (docs/LEARNING.md §11 phase 1): the Settings benchmark plus 3 dip-rebound points from the strategy lab's F1 validation shortlist (research/lab/finalists/f1-dip-rebound-plus.json; LAB/f1/validation_shortlist.json), 4 = the week-1 allowance, plus two placebo controls (exempt, no alpha): the R host inside the bot's own window and placebo_wide, the W host of docs/EXPERIENCE §4.1 (PR-S, B11). params override the Settings strategy; safety filters come from Settings unless a seed loosens them, which make_spec turns into research-only (never promotable).",
+  "seeds": [
+    {"family": "dip_rebound", "source": "seed", "note": "the Settings benchmark (what paper trades today)", "params": {}},
+    {"family": "dip_rebound", "source": "seed", "note": "lab F1 S1_vol_dip_fixed: 60% dip, stop 20%, full exit at +40%, 60 min",
+     "params": {"dip_pct": 0.6, "stop_loss_pct": 0.2, "take_profit_pct": 0.4, "partial_tp_fraction": 1.0, "max_hold_min": 60}},
+    {"family": "dip_rebound", "source": "seed", "note": "lab F1 S3_vol_dip_partial_trail: 60% dip, stop 20%, half at +30%, trail 15%, 60 min",
+     "params": {"dip_pct": 0.6, "stop_loss_pct": 0.2, "take_profit_pct": 0.3, "partial_tp_fraction": 0.5, "trail_pct": 0.15, "max_hold_min": 60}},
+    {"family": "dip_rebound", "source": "seed", "note": "lab F1 S4_vol_dip_wideband_10k: 40% dip, stop 20%, full exit at +40%, 60 min",
+     "params": {"dip_pct": 0.4, "stop_loss_pct": 0.2, "take_profit_pct": 0.4, "partial_tp_fraction": 1.0, "max_hold_min": 60}},
+    {"family": "placebo", "source": "seed", "note": "random entry (control): must lose", "params": {}},
+    {"family": "placebo", "source": "seed", "note": "placebo_wide (control, W host): random entry with the age, market-cap and liquidity anchors at their hard limits (no age floor, so no graduation window either; mcap 0 to $1T; no liquidity floor; the tape's 50 h) - gives the coins the Crawler refuses an outcome so its gates can be measured",
+     "params": {"min_age_min": 0, "max_age_h": 50, "min_mcap_usd": 0, "max_mcap_usd": 1000000000000, "min_liquidity_usd": 0}}
+  ]
+}

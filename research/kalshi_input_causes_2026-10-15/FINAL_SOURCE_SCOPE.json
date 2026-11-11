@@ -1,0 +1,19 @@
+{
+  "frozen_files": {
+    "src/nightcrawler/kalshi_arena.py": "091ea297b1fed8973be3c78e74184e6ea71fa8f36e808e67449f433c88d19a0e",
+    "tests/test_kalshi_learning_diagnostic.py": "239793d141ec481a66ec72acd3ab5f7fcff90bfdd00d02fcaeef5207caf355b0"
+  },
+  "protected_byte_objects_verified": 15,
+  "parent_wire_ast_unchanged": [
+    "ArenaLink",
+    "FrameReader",
+    "frame",
+    "book_wire",
+    "trade_wire",
+    "window_wire",
+    "arena_config",
+    "worker_main"
+  ],
+  "pure_learner_model_fingerprint": "b6112b7ef8955b20af734157c1e7f5ec533bf98f70e034558f06670578c391f2",
+  "scope": "Static exactsource check, not production behavior or profitableedge proof."
+}

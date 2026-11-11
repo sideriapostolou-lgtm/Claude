@@ -1,0 +1,37 @@
+{
+  "recorded_at_utc": "2026-10-15T17:22:13.498976+00:00",
+  "selection_rule": "First future full quarter-hour starting >=30s after completed exact-source/startup/health/account root verification, with bounds frozen before start.",
+  "phases": {
+    "slot": {
+      "retrieve_not_before_s_after_start": 330,
+      "requested_interval": "start through start+330, retrieval after endpoint",
+      "events": [
+        "kalshi_learning_input_diagnostic",
+        "kalshi_online_learning_unknown",
+        "kalshi_online_learning_forecast",
+        "kalshi_online_learning_status"
+      ]
+    },
+    "final": {
+      "retrieve_not_before_s_after_start": 1020,
+      "requested_interval": "start through end+120, retrieval after endpoint",
+      "events": [
+        "kalshi_learning_input_diagnostic",
+        "kalshi_online_learning_unknown",
+        "kalshi_online_learning_forecast",
+        "kalshi_online_learning_scored",
+        "kalshi_online_learning_status",
+        "speeddesk_live_status",
+        "speeddesk_live_fill",
+        "speeddesk_live_settlement"
+      ]
+    }
+  },
+  "per_query_limit": 500,
+  "query_scope": "Exact new deployment c64e8199-4ce2-4234-ac53-63905e22231d; save each exact request/result and before/after tool clocks. No other live source release during fixed capture.",
+  "overlap": "Slot/final overlap is intentional; parserdedups original(timestamp,message) retaining each queryfile provenance. Never sums wholelearnercall counterdeltas perwindow.",
+  "primary": "Actual diagnostic disposition and identity-qualified samewindow/sameat/reason original learnerreceipt; sourcehash/fingerprint/protocol/observeonly/mode flags all required.",
+  "secondary": "Existing automatic real fills/settlement/status if available; not a strategy trial or profitability proof. Non-target window observations excluded from per-window totals.",
+  "failures": "Any capped/errored/missing/malformed read remains explicitunknown. Do notextend interval or substituteanotherwindow to rescue result. First unhealthy startup status is not fresh readiness.",
+  "no_mutations": "No financialvariables/caps/lossbudgets/resume/tokens/manualorders/venueconfiguration changes."
+}

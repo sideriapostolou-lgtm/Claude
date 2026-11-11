@@ -1,0 +1,33 @@
+{
+  "combined": {
+    "status": "fulfilled",
+    "value": {
+      "content": [
+        {
+          "type": "text",
+          "text": "Action completed."
+        }
+      ],
+      "structuredContent": {
+        "statuses": []
+      },
+      "isError": false
+    }
+  },
+  "workflow": {
+    "status": "fulfilled",
+    "value": {
+      "content": [
+        {
+          "type": "text",
+          "text": "Action completed."
+        }
+      ],
+      "structuredContent": {
+        "workflow_runs": []
+      },
+      "isError": false
+    }
+  },
+  "note": "No combined statuses or PR-triggered workflow runs returned; actual local checks in recorded receipts are green."
+}

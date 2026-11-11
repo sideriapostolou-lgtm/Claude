@@ -1,0 +1,7479 @@
+{
+ "band": [
+  0.1,
+  0.9
+ ],
+ "cells": [
+  {
+   "bar": {
+    "checks": {
+     "ci_lower": false,
+     "loss_guards": true,
+     "mean": false,
+     "n": true,
+     "placebo": false,
+     "stress": false
+    },
+    "passes": false
+   },
+   "by_sub": {
+    "15m": {
+     "mean_net_us": -0.07835513380466347,
+     "n": 37423,
+     "total_usd": -58645.68344743842,
+     "win_rate": 0.3746626406220773
+    },
+    "1h": {
+     "mean_net_us": -0.06249719629790214,
+     "n": 14677,
+     "total_usd": -18345.427001286196,
+     "win_rate": 0.40055869728146076
+    },
+    "5m": {
+     "mean_net_us": -0.0945190682109624,
+     "n": 76115,
+     "total_usd": -143886.37753754802,
+     "win_rate": 0.34669907376995335
+    }
+   },
+   "by_symbol": {
+    "BTCUSDT": {
+     "mean_net_us": -0.08649463329063903,
+     "n": 126992,
+     "total_usd": -219682.52941689664,
+     "win_rate": 0.3604321532065012
+    },
+    "ETHUSDT": {
+     "mean_net_us": -0.048051843500492554,
+     "n": 1039,
+     "total_usd": -998.5173079402352,
+     "win_rate": 0.4177093358999038
+    },
+    "SOLUSDT": {
+     "mean_net_us": -0.07174198258432003,
+     "n": 141,
+     "total_usd": -202.31239088778244,
+     "win_rate": 0.4326241134751773
+    },
+    "XRPUSDT": {
+     "mean_net_us": 0.0068268947116048445,
+     "n": 43,
+     "total_usd": 5.871129451980179,
+     "win_rate": 0.5116279069767442
+    }
+   },
+   "cell": "m0.03|tp0.03|sl0.05|tend|taker",
+   "checks": {
+    "ci_lower": false,
+    "loss_guards": true,
+    "mean": false,
+    "n": true,
+    "stress": false
+   },
+   "entry": {
+    "gap_at_fill": 0.04284473041655087,
+    "gap_at_signal": 0.0694242086904689,
+    "share_fill_above_fair": 0.22147954607495224,
+    "share_gap_still_m": 0.5493662987949928,
+    "slippage": 0.024221871303662598
+   },
+   "markets_traded": 15842,
+   "passes": false,
+   "placebo": null,
+   "selectable": true,
+   "summary": {
+    "breakeven_win_rate": 0.5727893164630333,
+    "ci95": [
+     -0.08851466034671268,
+     -0.0838220466822825
+    ],
+    "exit_mix": {
+     "fair": 0.11866786257458176,
+     "fair->settle": 7.79939944624264e-06,
+     "sl": 0.4112623328003744,
+     "sl->settle": 0.00019498498615606598,
+     "time": 0.017478454159029756,
+     "time->settle": 0.0006473501540381391,
+     "tp": 0.45171781772803493,
+     "tp->settle": 2.3398198338727917e-05
+    },
+    "hold_min_median": 0.3,
+    "late_stops": 0,
+    "loss_cents": 8.909363208099846,
+    "losses": 81926,
+    "mean_net_com": -0.08665269356281943,
+    "mean_net_stress": -0.08665269356281943,
+    "mean_net_us": -0.08613558787438,
+    "mean_p_entry": 0.46612273275648797,
+    "mean_pnl_usd": -1.7227117574876003,
+    "missed": 2747,
+    "n": 128215,
+    "n_events": 1105,
+    "risk": {
+     "best_day_usd": -56.05539534789002,
+     "capital_usd": 100.0,
+     "daily_stop": {
+      "days_stopped": 47,
+      "limit_usd": 10.0,
+      "mean_net": -0.06492448563910777,
+      "n": 550,
+      "skipped": 127665,
+      "total_usd": -714.1693420301855
+     },
+     "days_with_exits": 47,
+     "longest_losing_streak": 29,
+     "max_drawdown_usd": -220890.1379971575,
+     "max_open": 5,
+     "sharpe_daily": -61.97171321972423,
+     "worst_day_usd": -7292.612353866886,
+     "worst_trip_usd": -21.3761
+    },
+    "small_entry_share": 0.8732753577974496,
+    "total_usd": -220877.48798627267,
+    "trips_per_day": 2787.282608695652,
+    "win_cents": 6.644982782700138,
+    "win_rate": 0.3610264009671255,
+    "worst_case_net": 0.2034864116014041
+   }
+  },
+  {
+   "bar": {
+    "checks": {
+     "ci_lower": false,
+     "loss_guards": true,
+     "mean": false,
+     "n": true,
+     "placebo": false,
+     "stress": false
+    },
+    "passes": false
+   },
+   "by_sub": {
+    "15m": {
+     "mean_net_us": -0.13224351721827693,
+     "n": 35477,
+     "total_usd": -93832.0652070562,
+     "win_rate": 0.45136285480733995
+    },
+    "1h": {
+     "mean_net_us": -0.10357756963383966,
+     "n": 13465,
+     "total_usd": -27893.43950239302,
+     "win_rate": 0.4717415521722986
+    },
+    "5m": {
+     "mean_net_us": -0.13453895289306478,
+     "n": 75724,
+     "total_usd": -203756.55337748874,
+     "win_rate": 0.4574771538745972
+    }
+   },
+   "by_symbol": {
+    "BTCUSDT": {
+     "mean_net_us": -0.13072833137371867,
+     "n": 123539,
+     "total_usd": -323000.94659155665,
+     "win_rate": 0.4571754668566202
+    },
+    "ETHUSDT": {
+     "mean_net_us": -0.1188719989515012,
+     "n": 952,
+     "total_usd": -2263.322860036583,
+     "win_rate": 0.47163865546218486
+    },
+    "SOLUSDT": {
+     "mean_net_us": -0.03984692931587982,
+     "n": 136,
+     "total_usd": -108.3836477391931,
+     "win_rate": 0.45588235294117646
+    },
+    "XRPUSDT": {
+     "mean_net_us": -0.1402628046225228,
+     "n": 39,
+     "total_usd": -109.40498760556775,
+     "win_rate": 0.4358974358974359
+    }
+   },
+   "cell": "m0.03|tp0.03|sl0.05|tend|maker",
+   "checks": {
+    "ci_lower": false,
+    "loss_guards": true,
+    "mean": false,
+    "n": true,
+    "stress": false
+   },
+   "entry": {
+    "gap_at_fill": 0.0420316728448445,
+    "gap_at_signal": 0.06885690383366457,
+    "share_fill_above_fair": 0.22685415430029038,
+    "share_gap_still_m": 0.5427141321611345,
+    "slippage": 0.02503940664133204
+   },
+   "markets_traded": 15842,
+   "passes": false,
+   "placebo": null,
+   "selectable": true,
+   "summary": {
+    "breakeven_win_rate": 0.8289324036514375,
+    "ci95": [
+     -0.13279761965679673,
+     -0.12816756099805865
+    ],
+    "exit_mix": {
+     "fair": 0.08501917122551457,
+     "sl": 0.5308744966550624,
+     "sl->settle": 0.0002486644313605955,
+     "time": 0.02895737410360483,
+     "time->settle": 0.0008181861935090562,
+     "tp": 0.35408210739094864
+    },
+    "hold_min_median": 0.3,
+    "late_stops": 0,
+    "loss_cents": 10.60810345188524,
+    "losses": 67659,
+    "mean_net_com": -0.13093448343207134,
+    "mean_net_stress": -0.14668297871541672,
+    "mean_net_us": -0.13054163047139475,
+    "mean_p_entry": 0.47302404076870275,
+    "mean_pnl_usd": -2.610832609427895,
+    "missed": 2712,
+    "n": 124666,
+    "n_events": 1105,
+    "risk": {
+     "best_day_usd": -97.03237113283708,
+     "capital_usd": 100.0,
+     "daily_stop": {
+      "days_stopped": 47,
+      "limit_usd": 10.0,
+      "mean_net": -0.11125837412545939,
+      "n": 337,
+      "skipped": 124329,
+      "total_usd": -749.8814416055964
+     },
+     "days_with_exits": 47,
+     "longest_losing_streak": 22,
+     "max_drawdown_usd": -325483.7369668842,
+     "max_open": 5,
+     "sharpe_daily": -65.01065032460956,
+     "worst_day_usd": -9669.343084660431,
+     "worst_trip_usd": -21.3761
+    },
+    "small_entry_share": 0.870518024160557,
+    "total_usd": -325482.058086938,
+    "trips_per_day": 2710.1304347826085,
+    "win_cents": 2.1892047546182942,
+    "win_rate": 0.45727784640559577,
+    "worst_case_net": 0.06751344095091004
+   }
+  },
+  {
+   "bar": {
+    "checks": {
+     "ci_lower": false,
+     "loss_guards": true,
+     "mean": false,
+     "n": true,
+     "placebo": false,
+     "stress": false
+    },
+    "passes": false
+   },
+   "by_sub": {
+    "15m": {
+     "mean_net_us": -0.0763390634785362,
+     "n": 32299,
+     "total_usd": -49313.5082258648,
+     "win_rate": 0.42642187064615006
+    },
+    "1h": {
+     "mean_net_us": -0.060145809231949614,
+     "n": 12277,
+     "total_usd": -14768.201998812907,
+     "win_rate": 0.4585810865846705
+    },
+    "5m": {
+     "mean_net_us": -0.09262872405025108,
+     "n": 68035,
+     "total_usd": -126039.90481517662,
+     "win_rate": 0.3839200411552877
+    }
+   },
+   "by_symbol": {
+    "BTCUSDT": {
+     "mean_net_us": -0.08488197553227746,
+     "n": 111497,
+     "total_usd": -189281.7125184468,
+     "win_rate": 0.4036700539027956
+    },
+    "ETHUSDT": {
+     "mean_net_us": -0.044983780641996304,
+     "n": 944,
+     "total_usd": -849.2937785208901,
+     "win_rate": 0.4586864406779661
+    },
+    "SOLUSDT": {
+     "mean_net_us": 0.005365076671308631,
+     "n": 129,
+     "total_usd": 13.84189781197626,
+     "win_rate": 0.4573643410852713
+    },
+    "XRPUSDT": {
+     "mean_net_us": -0.005427610608095782,
+     "n": 41,
+     "total_usd": -4.450640698638557,
+     "win_rate": 0.5609756097560976
+    }
+   },
+   "cell": "m0.03|tp0.03|sl0.1|tend|taker",
+   "checks": {
+    "ci_lower": false,
+    "loss_guards": true,
+    "mean": false,
+    "n": true,
+    "stress": false
+   },
+   "entry": {
+    "gap_at_fill": 0.04094812710741361,
+    "gap_at_signal": 0.06859768561850019,
+    "share_fill_above_fair": 0.23065242294269653,
+    "share_gap_still_m": 0.5360133557112537,
+    "slippage": 0.02562260042807808
+   },
+   "markets_traded": 15842,
+   "passes": false,
+   "placebo": null,
+   "selectable": true,
+   "summary": {
+    "breakeven_win_rate": 0.5978902522691487,
+    "ci95": [
+     -0.08703746717904255,
+     -0.08180830866034675
+    ],
+    "exit_mix": {
+     "fair": 0.14772979549067142,
+     "fair->settle": 8.88012716342098e-06,
+     "sl": 0.27908463649199455,
+     "sl->settle": 0.00020424292475868254,
+     "time": 0.03174645460923001,
+     "time->settle": 0.0033833284492633935,
+     "tp": 0.5378160215254283,
+     "tp->settle": 2.6640381490262942e-05
+    },
+    "hold_min_median": 0.35,
+    "late_stops": 0,
+    "loss_cents": 10.181947292983322,
+    "losses": 67088,
+    "mean_net_com": -0.08492117509727713,
+    "mean_net_stress": -0.08492117509727713,
+    "mean_net_us": -0.08441520590344388,
+    "mean_p_entry": 0.473762684963595,
+    "mean_pnl_usd": -1.6883041180688774,
+    "missed": 2512,
+    "n": 112611,
+    "n_events": 1105,
+    "risk": {
+     "best_day_usd": -75.72756467111758,
+     "capital_usd": 120.0,
+     "daily_stop": {
+      "days_stopped": 47,
+      "limit_usd": 10.0,
+      "mean_net": -0.06889724994372246,
+      "n": 581,
+      "skipped": 112030,
+      "total_usd": -800.5860443460549
+     },
+     "days_with_exits": 47,
+     "longest_losing_streak": 28,
+     "max_drawdown_usd": -190122.22274544634,
+     "max_open": 6,
+     "sharpe_daily": -59.561486190420474,
+     "worst_day_usd": -6225.458177490978,
+     "worst_trip_usd": -21.3622
+    },
+    "small_entry_share": 0.8717354432515474,
+    "total_usd": -190121.61503985434,
+    "trips_per_day": 2448.0652173913045,
+    "win_cents": 6.847845807573492,
+    "win_rate": 0.4042500288604133,
+    "worst_case_net": 0.20533632561853707
+   }
+  },
+  {
+   "bar": {
+    "checks": {
+     "ci_lower": false,
+     "loss_guards": true,
+     "mean": false,
+     "n": true,
+     "placebo": false,
+     "stress": false
+    },
+    "passes": false
+   },
+   "by_sub": {
+    "15m": {
+     "mean_net_us": -0.1397221921729928,
+     "n": 29860,
+     "total_usd": -83442.0931657113,
+     "win_rate": 0.5453114534494307
+    },
+    "1h": {
+     "mean_net_us": -0.10912771812613058,
+     "n": 10857,
+     "total_usd": -23695.992713907995,
+     "win_rate": 0.5676522059500783
+    },
+    "5m": {
+     "mean_net_us": -0.13818189262846123,
+     "n": 67681,
+     "total_usd": -187045.77349973767,
+     "win_rate": 0.5494895169988623
+    }
+   },
+   "by_symbol": {
+    "BTCUSDT": {
+     "mean_net_us": -0.13591063923188973,
+     "n": 107401,
+     "total_usd": -291938.7712828837,
+     "win_rate": 0.5501252316086442
+    },
+    "ETHUSDT": {
+     "mean_net_us": -0.11985397004290084,
+     "n": 843,
+     "total_usd": -2020.7379349233083,
+     "win_rate": 0.5563463819691578
+    },
+    "SOLUSDT": {
+     "mean_net_us": -0.03859697976124948,
+     "n": 117,
+     "total_usd": -90.31693264132377,
+     "win_rate": 0.5555555555555556
+    },
+    "XRPUSDT": {
+     "mean_net_us": -0.18112598501160804,
+     "n": 37,
+     "total_usd": -134.03322890858996,
+     "win_rate": 0.4864864864864865
+    }
+   },
+   "cell": "m0.03|tp0.03|sl0.1|tend|maker",
+   "checks": {
+    "ci_lower": false,
+    "loss_guards": true,
+    "mean": false,
+    "n": true,
+    "stress": false
+   },
+   "entry": {
+    "gap_at_fill": 0.039832480737394496,
+    "gap_at_signal": 0.06799677327879271,
+    "share_fill_above_fair": 0.23869444085684238,
+    "share_gap_still_m": 0.5267809369176553,
+    "slippage": 0.02684716716246056
+   },
+   "markets_traded": 15842,
+   "passes": false,
+   "placebo": null,
+   "selectable": true,
+   "summary": {
+    "breakeven_win_rate": 0.877761285111235,
+    "ci95": [
+     -0.1382486703065281,
+     -0.13309774488825665
+    ],
+    "exit_mix": {
+     "fair": 0.11740991531209063,
+     "sl": 0.37327256960460525,
+     "sl->settle": 0.0003136589235963763,
+     "time": 0.0491429731175852,
+     "time->settle": 0.003920736544954704,
+     "tp": 0.45594014649716785
+    },
+    "hold_min_median": 0.36666666666666664,
+    "late_stops": 0,
+    "loss_cents": 13.431767890379113,
+    "losses": 48762,
+    "mean_net_com": -0.1360424119499081,
+    "mean_net_stress": -0.15650418557634682,
+    "mean_net_us": -0.1356961656946424,
+    "mean_p_entry": 0.48217246249064744,
+    "mean_pnl_usd": -2.713923313892848,
+    "missed": 2466,
+    "n": 108398,
+    "n_events": 1105,
+    "risk": {
+     "best_day_usd": -69.65588100472841,
+     "capital_usd": 120.0,
+     "daily_stop": {
+      "days_stopped": 47,
+      "limit_usd": 10.0,
+      "mean_net": -0.10538168915991751,
+      "n": 373,
+      "skipped": 108025,
+      "total_usd": -786.1474011329846
+     },
+     "days_with_exits": 47,
+     "longest_losing_streak": 14,
+     "max_drawdown_usd": -294187.0705091983,
+     "max_open": 6,
+     "sharpe_daily": -63.84282514927387,
+     "worst_day_usd": -9069.203006474245,
+     "worst_trip_usd": -21.3761
+    },
+    "small_entry_share": 0.8679403679034668,
+    "total_usd": -294183.85937935696,
+    "trips_per_day": 2356.478260869565,
+    "win_cents": 1.8705336786368425,
+    "win_rate": 0.5501577519880441,
+    "worst_case_net": 0.055962849800984614
+   }
+  },
+  {
+   "bar": {
+    "checks": {
+     "ci_lower": false,
+     "loss_guards": true,
+     "mean": false,
+     "n": true,
+     "placebo": false,
+     "stress": false
+    },
+    "passes": false
+   },
+   "by_sub": {
+    "15m": {
+     "mean_net_us": -0.06106204587496695,
+     "n": 18480,
+     "total_usd": -22568.532155387787,
+     "win_rate": 0.5210497835497836
+    },
+    "1h": {
+     "mean_net_us": -0.051820675044441177,
+     "n": 6486,
+     "total_usd": -6722.17796676491,
+     "win_rate": 0.5359235275979032
+    },
+    "5m": {
+     "mean_net_us": -0.08461287545017276,
+     "n": 45840,
+     "total_usd": -77573.0842127184,
+     "win_rate": 0.45787521815008725
+    }
+   },
+   "by_symbol": {
+    "BTCUSDT": {
+     "mean_net_us": -0.0762418741939417,
+     "n": 70064,
+     "total_usd": -106836.2134704866,
+     "win_rate": 0.4808746289107102
+    },
+    "ETHUSDT": {
+     "mean_net_us": -0.01225627125326671,
+     "n": 618,
+     "total_usd": -151.48751269037658,
+     "win_rate": 0.5372168284789643
+    },
+    "SOLUSDT": {
+     "mean_net_us": 0.08670791240685645,
+     "n": 95,
+     "total_usd": 164.74503357302723,
+     "win_rate": 0.5368421052631579
+    },
+    "XRPUSDT": {
+     "mean_net_us": -0.07041100908127253,
+     "n": 29,
+     "total_usd": -40.83838526713808,
+     "win_rate": 0.6551724137931034
+    }
+   },
+   "cell": "m0.03|tp0.03|slnone|tend|taker",
+   "checks": {
+    "ci_lower": false,
+    "loss_guards": true,
+    "mean": false,
+    "n": true,
+    "stress": false
+   },
+   "entry": {
+    "gap_at_fill": 0.03502624441389129,
+    "gap_at_signal": 0.06549068874956336,
+    "share_fill_above_fair": 0.26321215716182245,
+    "share_gap_still_m": 0.49429426884727284,
+    "slippage": 0.029153594631076467
+   },
+   "markets_traded": 15842,
+   "passes": false,
+   "placebo": null,
+   "selectable": true,
+   "summary": {
+    "breakeven_win_rate": 0.6462066509305009,
+    "ci95": [
+     -0.07893033643458287,
+     -0.07213961610756975
+    ],
+    "exit_mix": {
+     "fair": 0.1978787108437138,
+     "time": 0.1254131005846962,
+     "time->settle": 0.02321837132446403,
+     "tp": 0.653489817247126
+    },
+    "hold_min_median": 0.43333333333333335,
+    "late_stops": 0,
+    "loss_cents": 12.979631958684696,
+    "losses": 36712,
+    "mean_net_com": -0.0759273492374206,
+    "mean_net_stress": -0.0759273492374206,
+    "mean_net_us": -0.07546238619246327,
+    "mean_p_entry": 0.5044901429785992,
+    "mean_pnl_usd": -1.5092477238492656,
+    "missed": 1352,
+    "n": 70806,
+    "n_events": 1105,
+    "risk": {
+     "best_day_usd": -33.07422379200786,
+     "capital_usd": 120.0,
+     "daily_stop": {
+      "days_stopped": 47,
+      "limit_usd": 10.0,
+      "mean_net": -0.04562081120657208,
+      "n": 1296,
+      "skipped": 69510,
+      "total_usd": -1182.4914264743481
+     },
+     "days_with_exits": 47,
+     "longest_losing_streak": 21,
+     "max_drawdown_usd": -106870.2963151195,
+     "max_open": 6,
+     "sharpe_daily": -56.31381759005604,
+     "worst_day_usd": -3750.0789705211496,
+     "worst_trip_usd": -21.3761
+    },
+    "small_entry_share": 0.8640651922153489,
+    "total_usd": -106863.7943348711,
+    "trips_per_day": 1539.2608695652175,
+    "win_cents": 7.106252239496741,
+    "win_rate": 0.48151286614128747,
+    "worst_case_net": 0.18133032880167801
+   }
+  },
+  {
+   "bar": {
+    "checks": {
+     "ci_lower": false,
+     "loss_guards": true,
+     "mean": false,
+     "n": true,
+     "placebo": false,
+     "stress": false
+    },
+    "passes": false
+   },
+   "by_sub": {
+    "15m": {
+     "mean_net_us": -0.11446750266296377,
+     "n": 15270,
+     "total_usd": -34958.375313269134,
+     "win_rate": 0.7470857891290111
+    },
+    "1h": {
+     "mean_net_us": -0.09446500108837266,
+     "n": 5080,
+     "total_usd": -9597.644110578662,
+     "win_rate": 0.75
+    },
+    "5m": {
+     "mean_net_us": -0.12352429860992332,
+     "n": 42123,
+     "total_usd": -104064.280606916,
+     "win_rate": 0.7328300453433991
+    }
+   },
+   "by_symbol": {
+    "BTCUSDT": {
+     "mean_net_us": -0.11945595127282896,
+     "n": 61842,
+     "total_usd": -147747.89877228576,
+     "win_rate": 0.7371850845703567
+    },
+    "ETHUSDT": {
+     "mean_net_us": -0.07153014175513468,
+     "n": 527,
+     "total_usd": -753.9276940991194,
+     "win_rate": 0.7950664136622391
+    },
+    "SOLUSDT": {
+     "mean_net_us": -0.0069905798650973265,
+     "n": 78,
+     "total_usd": -10.905304589551845,
+     "win_rate": 0.7948717948717948
+    },
+    "XRPUSDT": {
+     "mean_net_us": -0.20686203805647121,
+     "n": 26,
+     "total_usd": -107.56825978936502,
+     "win_rate": 0.6538461538461539
+    }
+   },
+   "cell": "m0.03|tp0.03|slnone|tend|maker",
+   "checks": {
+    "ci_lower": false,
+    "loss_guards": true,
+    "mean": false,
+    "n": true,
+    "stress": false
+   },
+   "entry": {
+    "gap_at_fill": 0.03246490881421471,
+    "gap_at_signal": 0.06429626570844287,
+    "share_fill_above_fair": 0.28135354473132396,
+    "share_gap_still_m": 0.4761737070414419,
+    "slippage": 0.03164692887811214
+   },
+   "markets_traded": 15842,
+   "passes": false,
+   "placebo": null,
+   "selectable": true,
+   "summary": {
+    "breakeven_win_rate": 0.9352383781027951,
+    "ci95": [
+     -0.12231618908437303,
+     -0.11567759020299245
+    ],
+    "exit_mix": {
+     "fair": 0.16250220095081075,
+     "time": 0.17381908984681382,
+     "time->settle": 0.029148592191826868,
+     "tp": 0.6345301170105485
+    },
+    "hold_min_median": 0.4666666666666667,
+    "late_stops": 0,
+    "loss_cents": 23.979189098911288,
+    "losses": 16386,
+    "mean_net_com": -0.11920761697779848,
+    "mean_net_stress": -0.14546527769225864,
+    "mean_net_us": -0.11894762539878331,
+    "mean_p_entry": 0.5189169784502825,
+    "mean_pnl_usd": -2.378952507975666,
+    "missed": 1173,
+    "n": 62473,
+    "n_events": 1105,
+    "risk": {
+     "best_day_usd": -34.381763398659224,
+     "capital_usd": 120.0,
+     "daily_stop": {
+      "days_stopped": 47,
+      "limit_usd": 10.0,
+      "mean_net": -0.08901581693381945,
+      "n": 737,
+      "skipped": 61736,
+      "total_usd": -1312.0931416044987
+     },
+     "days_with_exits": 47,
+     "longest_losing_streak": 7,
+     "max_drawdown_usd": -148625.39063041017,
+     "max_open": 6,
+     "sharpe_daily": -67.1790903895063,
+     "worst_day_usd": -4606.512470906868,
+     "worst_trip_usd": -21.3761
+    },
+    "small_entry_share": 0.8572823459734605,
+    "total_usd": -148620.30003076378,
+    "trips_per_day": 1358.108695652174,
+    "win_cents": 1.6604656247913117,
+    "win_rate": 0.73771069101852,
+    "worst_case_net": 0.03852445651760308
+   }
+  },
+  {
+   "bar": {
+    "checks": {
+     "ci_lower": false,
+     "loss_guards": true,
+     "mean": false,
+     "n": true,
+     "placebo": false,
+     "stress": false
+    },
+    "passes": false
+   },
+   "by_sub": {
+    "15m": {
+     "mean_net_us": -0.07504307877146875,
+     "n": 35182,
+     "total_usd": -52803.31194675627,
+     "win_rate": 0.38442953783184586
+    },
+    "1h": {
+     "mean_net_us": -0.06340843095181865,
+     "n": 13251,
+     "total_usd": -16804.50237085098,
+     "win_rate": 0.4212512263225417
+    },
+    "5m": {
+     "mean_net_us": -0.09386580316091316,
+     "n": 72499,
+     "total_usd": -136103.53726726086,
+     "win_rate": 0.35818425081725264
+    }
+   },
+   "by_symbol": {
+    "BTCUSDT": {
+     "mean_net_us": -0.08544228130790453,
+     "n": 119760,
+     "total_usd": -204651.35218869292,
+     "win_rate": 0.37232798931195726
+    },
+    "ETHUSDT": {
+     "mean_net_us": -0.04702864261124,
+     "n": 993,
+     "total_usd": -933.9888422592262,
+     "win_rate": 0.40986908358509566
+    },
+    "SOLUSDT": {
+     "mean_net_us": -0.04278192000804496,
+     "n": 136,
+     "total_usd": -116.36682242188229,
+     "win_rate": 0.4117647058823529
+    },
+    "XRPUSDT": {
+     "mean_net_us": -0.011213641272147723,
+     "n": 43,
+     "total_usd": -9.643731494047039,
+     "win_rate": 0.5116279069767442
+    }
+   },
+   "cell": "m0.03|tp0.05|sl0.05|tend|taker",
+   "checks": {
+    "ci_lower": false,
+    "loss_guards": true,
+    "mean": false,
+    "n": true,
+    "stress": false
+   },
+   "entry": {
+    "gap_at_fill": 0.0419011819925205,
+    "gap_at_signal": 0.06910793865912464,
+    "share_fill_above_fair": 0.22718552575000828,
+    "share_gap_still_m": 0.5410478616081765,
+    "slippage": 0.0248447220527379
+   },
+   "markets_traded": 15842,
+   "passes": false,
+   "placebo": null,
+   "selectable": true,
+   "summary": {
+    "breakeven_win_rate": 0.5677122436144572,
+    "ci95": [
+     -0.08749258489509842,
+     -0.08260005205328594
+    ],
+    "exit_mix": {
+     "fair": 0.19229815102702344,
+     "fair->settle": 8.269109913008963e-06,
+     "sl": 0.45891079284225844,
+     "sl->settle": 0.00019018952799920616,
+     "time": 0.02235140409486323,
+     "time->settle": 0.0008269109913008963,
+     "tp": 0.3253977441868157,
+     "tp->settle": 1.6538219826017927e-05
+    },
+    "hold_min_median": 0.3333333333333333,
+    "late_stops": 0,
+    "loss_cents": 9.482973499807423,
+    "losses": 75857,
+    "mean_net_com": -0.08556855834395743,
+    "mean_net_stress": -0.08556855834395743,
+    "mean_net_us": -0.08505248883044525,
+    "mean_p_entry": 0.465618382770361,
+    "mean_pnl_usd": -1.701049776608905,
+    "missed": 2640,
+    "n": 120932,
+    "n_events": 1105,
+    "risk": {
+     "best_day_usd": -57.09395527078513,
+     "capital_usd": 100.0,
+     "daily_stop": {
+      "days_stopped": 47,
+      "limit_usd": 10.0,
+      "mean_net": -0.06825321755684206,
+      "n": 543,
+      "skipped": 120389,
+      "total_usd": -741.2299426673048
+     },
+     "days_with_exits": 47,
+     "longest_losing_streak": 28,
+     "max_drawdown_usd": -205728.01371262633,
+     "max_open": 5,
+     "sharpe_daily": -59.75967742572389,
+     "worst_day_usd": -7016.9308633691735,
+     "worst_trip_usd": -21.3761
+    },
+    "small_entry_share": 0.8721347534151423,
+    "total_usd": -205711.3515848681,
+    "trips_per_day": 2628.9565217391305,
+    "win_cents": 7.220864767678435,
+    "win_rate": 0.37273012932887906,
+    "worst_case_net": 0.21985103327367003
+   }
+  },
+  {
+   "bar": {
+    "checks": {
+     "ci_lower": false,
+     "loss_guards": true,
+     "mean": false,
+     "n": true,
+     "placebo": false,
+     "stress": false
+    },
+    "passes": false
+   },
+   "by_sub": {
+    "15m": {
+     "mean_net_us": -0.1250362613949049,
+     "n": 33793,
+     "total_usd": -84507.00762636044,
+     "win_rate": 0.4234012961264167
+    },
+    "1h": {
+     "mean_net_us": -0.0997422668608343,
+     "n": 12530,
+     "total_usd": -24995.412075325075,
+     "win_rate": 0.4375897845171588
+    },
+    "5m": {
+     "mean_net_us": -0.12758212551298292,
+     "n": 72992,
+     "total_usd": -186249.490108873,
+     "win_rate": 0.4326227531784305
+    }
+   },
+   "by_symbol": {
+    "BTCUSDT": {
+     "mean_net_us": -0.12416842283315722,
+     "n": 118211,
+     "total_usd": -293561.468630607,
+     "win_rate": 0.43036604038541254
+    },
+    "ETHUSDT": {
+     "mean_net_us": -0.1085191958901571,
+     "n": 932,
+     "total_usd": -2022.7978113925283,
+     "win_rate": 0.44742489270386265
+    },
+    "SOLUSDT": {
+     "mean_net_us": -0.02388135153001771,
+     "n": 133,
+     "total_usd": -63.52439506984713,
+     "win_rate": 0.45864661654135336
+    },
+    "XRPUSDT": {
+     "mean_net_us": -0.13348586344766578,
+     "n": 39,
+     "total_usd": -104.11897348917931,
+     "win_rate": 0.4358974358974359
+    }
+   },
+   "cell": "m0.03|tp0.05|sl0.05|tend|maker",
+   "checks": {
+    "ci_lower": false,
+    "loss_guards": true,
+    "mean": false,
+    "n": true,
+    "stress": false
+   },
+   "entry": {
+    "gap_at_fill": 0.04133063519453692,
+    "gap_at_signal": 0.06881890010820371,
+    "share_fill_above_fair": 0.23172275070192347,
+    "share_gap_still_m": 0.5359929598122617,
+    "slippage": 0.025569337266084735
+   },
+   "markets_traded": 15842,
+   "passes": false,
+   "placebo": null,
+   "selectable": true,
+   "summary": {
+    "breakeven_win_rate": 0.7469419291504906,
+    "ci95": [
+     -0.1263240507432699,
+     -0.12161380977799956
+    ],
+    "exit_mix": {
+     "fair": 0.14862339186187823,
+     "sl": 0.5580773582533629,
+     "sl->settle": 0.00026819762812722625,
+     "time": 0.03206637891296149,
+     "time->settle": 0.0009051669949293886,
+     "tp": 0.26005950634874075
+    },
+    "hold_min_median": 0.3333333333333333,
+    "late_stops": 0,
+    "loss_cents": 10.654095199783649,
+    "losses": 67946,
+    "mean_net_com": -0.1243375478515889,
+    "mean_net_stress": -0.13921231895986128,
+    "mean_net_us": -0.12393743863326426,
+    "mean_p_entry": 0.4718806463772527,
+    "mean_pnl_usd": -2.4787487726652855,
+    "missed": 2669,
+    "n": 119315,
+    "n_events": 1105,
+    "risk": {
+     "best_day_usd": -78.7854848012647,
+     "capital_usd": 100.0,
+     "daily_stop": {
+      "days_stopped": 47,
+      "limit_usd": 10.0,
+      "mean_net": -0.10329017360915965,
+      "n": 363,
+      "skipped": 118952,
+      "total_usd": -749.8866604024993
+     },
+     "days_with_exits": 47,
+     "longest_losing_streak": 22,
+     "max_drawdown_usd": -295753.8262625488,
+     "max_open": 5,
+     "sharpe_daily": -64.43776637854457,
+     "worst_day_usd": -8940.69094475683,
+     "worst_trip_usd": -21.3761
+    },
+    "small_entry_share": 0.8700833926999958,
+    "total_usd": -295751.90981055854,
+    "trips_per_day": 2593.804347826087,
+    "win_cents": 3.6095239438099194,
+    "win_rate": 0.43053262372710893,
+    "worst_case_net": 0.10652079397357928
+   }
+  },
+  {
+   "bar": {
+    "checks": {
+     "ci_lower": false,
+     "loss_guards": true,
+     "mean": false,
+     "n": true,
+     "placebo": false,
+     "stress": false
+    },
+    "passes": false
+   },
+   "by_sub": {
+    "15m": {
+     "mean_net_us": -0.07493707653825336,
+     "n": 29910,
+     "total_usd": -44827.35918518316,
+     "win_rate": 0.4428284854563691
+    },
+    "1h": {
+     "mean_net_us": -0.06087241361467523,
+     "n": 10854,
+     "total_usd": -13214.1835474737,
+     "win_rate": 0.4932743688962594
+    },
+    "5m": {
+     "mean_net_us": -0.0916896294168885,
+     "n": 63849,
+     "total_usd": -117085.82297277827,
+     "win_rate": 0.4009773058309449
+    }
+   },
+   "by_symbol": {
+    "BTCUSDT": {
+     "mean_net_us": -0.08429964680244442,
+     "n": 103566,
+     "total_usd": -174611.54441483918,
+     "win_rate": 0.42200142904041865
+    },
+    "ETHUSDT": {
+     "mean_net_us": -0.028275594074299845,
+     "n": 884,
+     "total_usd": -499.91250323362135,
+     "win_rate": 0.4751131221719457
+    },
+    "SOLUSDT": {
+     "mean_net_us": -0.002737414322355044,
+     "n": 122,
+     "total_usd": -6.679290946546288,
+     "win_rate": 0.4344262295081967
+    },
+    "XRPUSDT": {
+     "mean_net_us": -0.011255483433886769,
+     "n": 41,
+     "total_usd": -9.229496415787159,
+     "win_rate": 0.5609756097560976
+    }
+   },
+   "cell": "m0.03|tp0.05|sl0.1|tend|taker",
+   "checks": {
+    "ci_lower": false,
+    "loss_guards": true,
+    "mean": false,
+    "n": true,
+    "stress": false
+   },
+   "entry": {
+    "gap_at_fill": 0.0396078759341761,
+    "gap_at_signal": 0.06815960435793875,
+    "share_fill_above_fair": 0.23854587861929205,
+    "share_gap_still_m": 0.5244759255541854,
+    "slippage": 0.026367970255911793
+   },
+   "markets_traded": 15842,
+   "passes": false,
+   "placebo": null,
+   "selectable": true,
+   "summary": {
+    "breakeven_win_rate": 0.5996418060200092,
+    "ci95": [
+     -0.08655309959242326,
+     -0.08085747572510697
+    ],
+    "exit_mix": {
+     "fair": 0.2408400485599304,
+     "fair->settle": 2.867712425797941e-05,
+     "sl": 0.31987420301492164,
+     "sl->settle": 0.0001911808283865294,
+     "time": 0.03995679313278464,
+     "time->settle": 0.0038618527334078937,
+     "tp": 0.3952376855648915,
+     "tp->settle": 9.55904141932647e-06
+    },
+    "hold_min_median": 0.4,
+    "late_stops": 0,
+    "loss_cents": 11.165111817481002,
+    "losses": 60412,
+    "mean_net_com": -0.08420652448601221,
+    "mean_net_stress": -0.08420652448601221,
+    "mean_net_us": -0.08370248712178943,
+    "mean_p_entry": 0.473442432863863,
+    "mean_pnl_usd": -1.6740497424357885,
+    "missed": 2296,
+    "n": 104613,
+    "n_events": 1105,
+    "risk": {
+     "best_day_usd": -60.36961425683213,
+     "capital_usd": 120.0,
+     "daily_stop": {
+      "days_stopped": 47,
+      "limit_usd": 10.0,
+      "mean_net": -0.07831116581915297,
+      "n": 496,
+      "skipped": 104117,
+      "total_usd": -776.8467649259974
+     },
+     "days_with_exits": 47,
+     "longest_losing_streak": 22,
+     "max_drawdown_usd": -175128.47935113503,
+     "max_open": 6,
+     "sharpe_daily": -57.83016624652216,
+     "worst_day_usd": -6053.395397084449,
+     "worst_trip_usd": -21.3761
+    },
+    "small_entry_share": 0.8702264536912239,
+    "total_usd": -175127.36570543514,
+    "trips_per_day": 2274.195652173913,
+    "win_cents": 7.4545236138558835,
+    "win_rate": 0.4225191897756493,
+    "worst_case_net": 0.22289540734167035
+   }
+  },
+  {
+   "bar": {
+    "checks": {
+     "ci_lower": false,
+     "loss_guards": true,
+     "mean": false,
+     "n": true,
+     "placebo": false,
+     "stress": false
+    },
+    "passes": false
+   },
+   "by_sub": {
+    "15m": {
+     "mean_net_us": -0.13168582542357166,
+     "n": 28009,
+     "total_usd": -73767.76568577638,
+     "win_rate": 0.5170123888750044
+    },
+    "1h": {
+     "mean_net_us": -0.10591068497962182,
+     "n": 9929,
+     "total_usd": -21031.743823253306,
+     "win_rate": 0.5324806123476684
+    },
+    "5m": {
+     "mean_net_us": -0.13077210195414535,
+     "n": 64107,
+     "total_usd": -167668.14279948792,
+     "win_rate": 0.5190384825370085
+    }
+   },
+   "by_symbol": {
+    "BTCUSDT": {
+     "mean_net_us": -0.12894665442219178,
+     "n": 101097,
+     "total_usd": -260722.3984424064,
+     "win_rate": 0.5196296626012641
+    },
+    "ETHUSDT": {
+     "mean_net_us": -0.09955275378610566,
+     "n": 800,
+     "total_usd": -1592.8440605776902,
+     "win_rate": 0.5375
+    },
+    "SOLUSDT": {
+     "mean_net_us": -0.013031038309457637,
+     "n": 111,
+     "total_usd": -28.928905046995986,
+     "win_rate": 0.5495495495495496
+    },
+    "XRPUSDT": {
+     "mean_net_us": -0.16686608173850043,
+     "n": 37,
+     "total_usd": -123.48090048649031,
+     "win_rate": 0.4864864864864865
+    }
+   },
+   "cell": "m0.03|tp0.05|sl0.1|tend|maker",
+   "checks": {
+    "ci_lower": false,
+    "loss_guards": true,
+    "mean": false,
+    "n": true,
+    "stress": false
+   },
+   "entry": {
+    "gap_at_fill": 0.03898478600040571,
+    "gap_at_signal": 0.06792201835505673,
+    "share_fill_above_fair": 0.24391199960801607,
+    "share_gap_still_m": 0.5196040962320545,
+    "slippage": 0.027641765452620905
+   },
+   "markets_traded": 15842,
+   "passes": false,
+   "placebo": null,
+   "selectable": true,
+   "summary": {
+    "breakeven_win_rate": 0.8005252008945188,
+    "ci95": [
+     -0.13132682912194057,
+     -0.12582210738214142
+    ],
+    "exit_mix": {
+     "fair": 0.1989808417854868,
+     "sl": 0.40144054093782156,
+     "sl->settle": 0.00026458915184477435,
+     "time": 0.05451516487823999,
+     "time->settle": 0.004253025625949336,
+     "tp": 0.34054583762065754
+    },
+    "hold_min_median": 0.4,
+    "late_stops": 0,
+    "loss_cents": 13.550499074364675,
+    "losses": 49003,
+    "mean_net_com": -0.12895716681646024,
+    "mean_net_stress": -0.14847562385570812,
+    "mean_net_us": -0.12860387687222188,
+    "mean_p_entry": 0.4811540644335999,
+    "mean_pnl_usd": -2.572077537444437,
+    "missed": 2373,
+    "n": 102045,
+    "n_events": 1105,
+    "risk": {
+     "best_day_usd": -62.39700617366142,
+     "capital_usd": 120.0,
+     "daily_stop": {
+      "days_stopped": 47,
+      "limit_usd": 10.0,
+      "mean_net": -0.09667576019185195,
+      "n": 417,
+      "skipped": 101628,
+      "total_usd": -806.2758400000453
+     },
+     "days_with_exits": 47,
+     "longest_losing_streak": 16,
+     "max_drawdown_usd": -262470.03662710177,
+     "max_open": 6,
+     "sharpe_daily": -64.1678762253098,
+     "worst_day_usd": -8040.611847880515,
+     "worst_trip_usd": -21.3622
+    },
+    "small_entry_share": 0.8678916164437258,
+    "total_usd": -262467.6523085176,
+    "trips_per_day": 2218.3695652173915,
+    "win_cents": 3.3765121667844427,
+    "win_rate": 0.5197902885981674,
+    "worst_case_net": 0.09624297867704792
+   }
+  },
+  {
+   "bar": {
+    "checks": {
+     "ci_lower": false,
+     "loss_guards": true,
+     "mean": false,
+     "n": true,
+     "placebo": false,
+     "stress": false
+    },
+    "passes": false
+   },
+   "by_sub": {
+    "15m": {
+     "mean_net_us": -0.05826876295124235,
+     "n": 16489,
+     "total_usd": -19215.8726460607,
+     "win_rate": 0.5592819455394505
+    },
+    "1h": {
+     "mean_net_us": -0.05124721778494423,
+     "n": 5458,
+     "total_usd": -5594.146293404512,
+     "win_rate": 0.6073653352876511
+    },
+    "5m": {
+     "mean_net_us": -0.08275003574299472,
+     "n": 40865,
+     "total_usd": -67631.60421274959,
+     "win_rate": 0.49820139483665726
+    }
+   },
+   "by_symbol": {
+    "BTCUSDT": {
+     "mean_net_us": -0.07437296509631242,
+     "n": 62154,
+     "total_usd": -92451.54545192403,
+     "win_rate": 0.5232004376226792
+    },
+    "ETHUSDT": {
+     "mean_net_us": -0.00593234207492707,
+     "n": 543,
+     "total_usd": -64.42523493370798,
+     "win_rate": 0.58195211786372
+    },
+    "SOLUSDT": {
+     "mean_net_us": 0.062316422789283475,
+     "n": 86,
+     "total_usd": 107.18424719756754,
+     "win_rate": 0.4883720930232558
+    },
+    "XRPUSDT": {
+     "mean_net_us": -0.05661502164593066,
+     "n": 29,
+     "total_usd": -32.83671255463979,
+     "win_rate": 0.6551724137931034
+    }
+   },
+   "cell": "m0.03|tp0.05|slnone|tend|taker",
+   "checks": {
+    "ci_lower": false,
+    "loss_guards": true,
+    "mean": false,
+    "n": true,
+    "stress": false
+   },
+   "entry": {
+    "gap_at_fill": 0.03265459029151603,
+    "gap_at_signal": 0.06420463398963061,
+    "share_fill_above_fair": 0.2741514360313316,
+    "share_gap_still_m": 0.47701076227472455,
+    "slippage": 0.030515890585031524
+   },
+   "markets_traded": 15842,
+   "passes": false,
+   "placebo": null,
+   "selectable": true,
+   "summary": {
+    "breakeven_win_rate": 0.6652920120546784,
+    "ci95": [
+     -0.07730660670671673,
+     -0.070080479492846
+    ],
+    "exit_mix": {
+     "fair": 0.33207030503725404,
+     "time": 0.15028975355027702,
+     "time->settle": 0.026762402088772844,
+     "tp": 0.4908775393236961
+    },
+    "hold_min_median": 0.5333333333333333,
+    "late_stops": 0,
+    "loss_cents": 15.212821554702339,
+    "losses": 29916,
+    "mean_net_com": -0.07404494421298757,
+    "mean_net_stress": -0.07404494421298757,
+    "mean_net_us": -0.07358595742231963,
+    "mean_p_entry": 0.5057987146857956,
+    "mean_pnl_usd": -1.4717191484463925,
+    "missed": 1123,
+    "n": 62812,
+    "n_events": 1105,
+    "risk": {
+     "best_day_usd": -29.31406208976865,
+     "capital_usd": 120.0,
+     "daily_stop": {
+      "days_stopped": 47,
+      "limit_usd": 10.0,
+      "mean_net": -0.04894516444092541,
+      "n": 1342,
+      "skipped": 61470,
+      "total_usd": -1313.688213594438
+     },
+     "days_with_exits": 47,
+     "longest_losing_streak": 21,
+     "max_drawdown_usd": -92450.72017321343,
+     "max_open": 6,
+     "sharpe_daily": -54.870375966205245,
+     "worst_day_usd": -3328.121972632387,
+     "worst_trip_usd": -21.3622
+    },
+    "small_entry_share": 0.8629561230338152,
+    "total_usd": -92441.6231522148,
+    "trips_per_day": 1365.4782608695652,
+    "win_cents": 7.653560844387764,
+    "win_rate": 0.5237215818633382,
+    "worst_case_net": 0.19024016294503932
+   }
+  },
+  {
+   "bar": {
+    "checks": {
+     "ci_lower": false,
+     "loss_guards": true,
+     "mean": false,
+     "n": true,
+     "placebo": false,
+     "stress": false
+    },
+    "passes": false
+   },
+   "by_sub": {
+    "15m": {
+     "mean_net_us": -0.10479690101992202,
+     "n": 13833,
+     "total_usd": -28993.11063617163,
+     "win_rate": 0.7291982939347936
+    },
+    "1h": {
+     "mean_net_us": -0.09178160179942123,
+     "n": 4458,
+     "total_usd": -8183.247616436397,
+     "win_rate": 0.724764468371467
+    },
+    "5m": {
+     "mean_net_us": -0.11604268831388324,
+     "n": 38296,
+     "total_usd": -88879.41583336946,
+     "win_rate": 0.707776269062043
+    }
+   },
+   "by_symbol": {
+    "BTCUSDT": {
+     "mean_net_us": -0.11195005981560363,
+     "n": 56017,
+     "total_usd": -125422.13001381335,
+     "win_rate": 0.7139261295678098
+    },
+    "ETHUSDT": {
+     "mean_net_us": -0.05798187491130027,
+     "n": 467,
+     "total_usd": -541.5507116715444,
+     "win_rate": 0.7601713062098501
+    },
+    "SOLUSDT": {
+     "mean_net_us": 0.002861707504311444,
+     "n": 77,
+     "total_usd": 4.407029556639603,
+     "win_rate": 0.7662337662337663
+    },
+    "XRPUSDT": {
+     "mean_net_us": -0.1855776731715621,
+     "n": 26,
+     "total_usd": -96.50039004921231,
+     "win_rate": 0.6538461538461539
+    }
+   },
+   "cell": "m0.03|tp0.05|slnone|tend|maker",
+   "checks": {
+    "ci_lower": false,
+    "loss_guards": true,
+    "mean": false,
+    "n": true,
+    "stress": false
+   },
+   "entry": {
+    "gap_at_fill": 0.0313769567811089,
+    "gap_at_signal": 0.06440301367150085,
+    "share_fill_above_fair": 0.2861964762224539,
+    "share_gap_still_m": 0.4686942230547652,
+    "slippage": 0.032667458189228976
+   },
+   "markets_traded": 15842,
+   "passes": false,
+   "placebo": null,
+   "selectable": true,
+   "summary": {
+    "breakeven_win_rate": 0.8844789154659235,
+    "ci95": [
+     -0.11499023923657681,
+     -0.1077116247881963
+    ],
+    "exit_mix": {
+     "fair": 0.2689486984643116,
+     "time": 0.1968296605227349,
+     "time->settle": 0.03230423948963543,
+     "tp": 0.5019174015233181
+    },
+    "hold_min_median": 0.6,
+    "late_stops": 0,
+    "loss_cents": 24.778285944411987,
+    "losses": 16164,
+    "mean_net_com": -0.11164518489143094,
+    "mean_net_stress": -0.13716034275950617,
+    "mean_net_us": -0.11138227338962792,
+    "mean_p_entry": 0.5178768826317105,
+    "mean_pnl_usd": -2.2276454677925583,
+    "missed": 1028,
+    "n": 56587,
+    "n_events": 1105,
+    "risk": {
+     "best_day_usd": -33.43780318015982,
+     "capital_usd": 120.0,
+     "daily_stop": {
+      "days_stopped": 47,
+      "limit_usd": 10.0,
+      "mean_net": -0.08667903176833555,
+      "n": 780,
+      "skipped": 55807,
+      "total_usd": -1352.1928955860349
+     },
+     "days_with_exits": 47,
+     "longest_losing_streak": 8,
+     "max_drawdown_usd": -126060.09567164474,
+     "max_open": 6,
+     "sharpe_daily": -66.1584900947241,
+     "worst_day_usd": -3839.6765391823456,
+     "worst_trip_usd": -21.3344
+    },
+    "small_entry_share": 0.8568222383232899,
+    "total_usd": -126055.7740859775,
+    "trips_per_day": 1230.1521739130435,
+    "win_cents": 3.23627213169472,
+    "win_rate": 0.7143513527842084,
+    "worst_case_net": 0.07331645354754791
+   }
+  },
+  {
+   "bar": {
+    "checks": {
+     "ci_lower": false,
+     "loss_guards": true,
+     "mean": false,
+     "n": true,
+     "placebo": false,
+     "stress": false
+    },
+    "passes": false
+   },
+   "by_sub": {
+    "15m": {
+     "mean_net_us": -0.0762505557515965,
+     "n": 33179,
+     "total_usd": -50598.34378564441,
+     "win_rate": 0.3712287892944332
+    },
+    "1h": {
+     "mean_net_us": -0.05937844516325369,
+     "n": 11865,
+     "total_usd": -14090.505037240098,
+     "win_rate": 0.39452170248630425
+    },
+    "5m": {
+     "mean_net_us": -0.09406251169317614,
+     "n": 69410,
+     "total_usd": -130577.57873246711,
+     "win_rate": 0.355265811842674
+    }
+   },
+   "by_symbol": {
+    "BTCUSDT": {
+     "mean_net_us": -0.08580721735933561,
+     "n": 113345,
+     "total_usd": -194516.38103187789,
+     "win_rate": 0.36348317085005954
+    },
+    "ETHUSDT": {
+     "mean_net_us": -0.033686317640939545,
+     "n": 934,
+     "total_usd": -629.2604135327507,
+     "win_rate": 0.4100642398286938
+    },
+    "SOLUSDT": {
+     "mean_net_us": -0.03941985912325621,
+     "n": 133,
+     "total_usd": -104.85682526786152,
+     "win_rate": 0.40601503759398494
+    },
+    "XRPUSDT": {
+     "mean_net_us": -0.018963434134664545,
+     "n": 42,
+     "total_usd": -15.929284673118214,
+     "win_rate": 0.5
+    }
+   },
+   "cell": "m0.03|tp0.08|sl0.05|tend|taker",
+   "checks": {
+    "ci_lower": false,
+    "loss_guards": true,
+    "mean": false,
+    "n": true,
+    "stress": false
+   },
+   "entry": {
+    "gap_at_fill": 0.040732713578198056,
+    "gap_at_signal": 0.06870769886376327,
+    "share_fill_above_fair": 0.23405909797822705,
+    "share_gap_still_m": 0.5305450224544358,
+    "slippage": 0.0256683120238882
+   },
+   "markets_traded": 15842,
+   "passes": false,
+   "placebo": null,
+   "selectable": true,
+   "summary": {
+    "breakeven_win_rate": 0.5463022414134049,
+    "ci95": [
+     -0.08797480586458292,
+     -0.08263737776768744
+    ],
+    "exit_mix": {
+     "fair": 0.2735596833662432,
+     "sl": 0.49283554965313575,
+     "sl->settle": 0.0002359026333723592,
+     "time": 0.028168521851573557,
+     "time->settle": 0.0010047704754748634,
+     "tp": 0.2041868348856309,
+     "tp->settle": 8.737134569346637e-06
+    },
+    "hold_min_median": 0.35,
+    "late_stops": 0,
+    "loss_cents": 9.788889801328292,
+    "losses": 72797,
+    "mean_net_com": -0.08581836416614227,
+    "mean_net_stress": -0.08581836416614227,
+    "mean_net_us": -0.08530345272133417,
+    "mean_p_entry": 0.4649949944291785,
+    "mean_pnl_usd": -1.7060690544266834,
+    "missed": 2528,
+    "n": 114454,
+    "n_events": 1105,
+    "risk": {
+     "best_day_usd": -66.03943078141732,
+     "capital_usd": 100.0,
+     "daily_stop": {
+      "days_stopped": 47,
+      "limit_usd": 10.0,
+      "mean_net": -0.06648216319349262,
+      "n": 555,
+      "skipped": 113899,
+      "total_usd": -737.952011447768
+     },
+     "days_with_exits": 47,
+     "longest_losing_streak": 26,
+     "max_drawdown_usd": -195268.16176353017,
+     "max_open": 5,
+     "sharpe_daily": -59.00876443755923,
+     "worst_day_usd": -6507.613004923149,
+     "worst_trip_usd": -21.3761
+    },
+    "small_entry_share": 0.8721757212504587,
+    "total_usd": -195266.42755535163,
+    "trips_per_day": 2488.1304347826085,
+    "win_cents": 8.129560937592835,
+    "win_rate": 0.36396281475527287,
+    "worst_case_net": 0.24623295016988084
+   }
+  },
+  {
+   "bar": {
+    "checks": {
+     "ci_lower": false,
+     "loss_guards": true,
+     "mean": false,
+     "n": true,
+     "placebo": false,
+     "stress": false
+    },
+    "passes": false
+   },
+   "by_sub": {
+    "15m": {
+     "mean_net_us": -0.11685963476775171,
+     "n": 32181,
+     "total_usd": -75213.19812922036,
+     "win_rate": 0.4010751685777322
+    },
+    "1h": {
+     "mean_net_us": -0.09683540770160574,
+     "n": 11811,
+     "total_usd": -22874.460007273312,
+     "win_rate": 0.413004826009652
+    },
+    "5m": {
+     "mean_net_us": -0.11977989600673028,
+     "n": 70024,
+     "total_usd": -167749.3487595056,
+     "win_rate": 0.40973094938878096
+    }
+   },
+   "by_symbol": {
+    "BTCUSDT": {
+     "mean_net_us": -0.11683721637111054,
+     "n": 112960,
+     "total_usd": -263958.639225613,
+     "win_rate": 0.40748937677053826
+    },
+    "ETHUSDT": {
+     "mean_net_us": -0.10080743573145873,
+     "n": 891,
+     "total_usd": -1796.3885047345943,
+     "win_rate": 0.4175084175084175
+    },
+    "SOLUSDT": {
+     "mean_net_us": 0.003105100833543745,
+     "n": 127,
+     "total_usd": 7.886956117201093,
+     "win_rate": 0.4566929133858268
+    },
+    "XRPUSDT": {
+     "mean_net_us": -0.118244897064406,
+     "n": 38,
+     "total_usd": -89.86612176894856,
+     "win_rate": 0.42105263157894735
+    }
+   },
+   "cell": "m0.03|tp0.08|sl0.05|tend|maker",
+   "checks": {
+    "ci_lower": false,
+    "loss_guards": true,
+    "mean": false,
+    "n": true,
+    "stress": false
+   },
+   "entry": {
+    "gap_at_fill": 0.040592072261922914,
+    "gap_at_signal": 0.06862232022066224,
+    "share_fill_above_fair": 0.2365282065674993,
+    "share_gap_still_m": 0.5293642997474038,
+    "slippage": 0.026134361501629594
+   },
+   "markets_traded": 15842,
+   "passes": false,
+   "placebo": null,
+   "selectable": true,
+   "summary": {
+    "breakeven_win_rate": 0.6777233871254752,
+    "ci95": [
+     -0.11907937340346875,
+     -0.11404124167617788
+    ],
+    "exit_mix": {
+     "fair": 0.2184079427448779,
+     "sl": 0.5809272382823464,
+     "sl->settle": 0.000280662363177098,
+     "time": 0.036687833286556275,
+     "time->settle": 0.0009735475722705585,
+     "tp": 0.16272277575077182
+    },
+    "hold_min_median": 0.35,
+    "late_stops": 0,
+    "loss_cents": 10.666306427511536,
+    "losses": 67540,
+    "mean_net_com": -0.11698579584000529,
+    "mean_net_stress": -0.1310443991534477,
+    "mean_net_us": -0.11657881652399632,
+    "mean_p_entry": 0.4705535596586514,
+    "mean_pnl_usd": -2.331576330479926,
+    "missed": 2528,
+    "n": 114016,
+    "n_events": 1105,
+    "risk": {
+     "best_day_usd": -62.00512272485626,
+     "capital_usd": 100.0,
+     "daily_stop": {
+      "days_stopped": 47,
+      "limit_usd": 10.0,
+      "mean_net": -0.0904898312017198,
+      "n": 393,
+      "skipped": 113623,
+      "total_usd": -711.2500732455176
+     },
+     "days_with_exits": 47,
+     "longest_losing_streak": 22,
+     "max_drawdown_usd": -265838.9233479724,
+     "max_open": 5,
+     "sharpe_daily": -64.89601281642902,
+     "worst_day_usd": -8093.937166372284,
+     "worst_trip_usd": -21.3761
+    },
+    "small_entry_share": 0.8709742492281785,
+    "total_usd": -265837.00689599925,
+    "trips_per_day": 2478.608695652174,
+    "win_cents": 5.0721299760956375,
+    "win_rate": 0.40762699971933763,
+    "worst_case_net": 0.14725667647228566
+   }
+  },
+  {
+   "bar": {
+    "checks": {
+     "ci_lower": false,
+     "loss_guards": true,
+     "mean": false,
+     "n": true,
+     "placebo": false,
+     "stress": false
+    },
+    "passes": false
+   },
+   "by_sub": {
+    "15m": {
+     "mean_net_us": -0.07247319665601247,
+     "n": 27888,
+     "total_usd": -40422.65016685751,
+     "win_rate": 0.4330895008605852
+    },
+    "1h": {
+     "mean_net_us": -0.058192745976296825,
+     "n": 9627,
+     "total_usd": -11204.431310276192,
+     "win_rate": 0.470655448218552
+    },
+    "5m": {
+     "mean_net_us": -0.0902646235832874,
+     "n": 60230,
+     "total_usd": -108732.76556842799,
+     "win_rate": 0.4042669765897393
+    }
+   },
+   "by_symbol": {
+    "BTCUSDT": {
+     "mean_net_us": -0.082588010769417,
+     "n": 96780,
+     "total_usd": -159857.35364528355,
+     "win_rate": 0.41848522421988016
+    },
+    "ETHUSDT": {
+     "mean_net_us": -0.023782897124020437,
+     "n": 814,
+     "total_usd": -387.1855651790528,
+     "win_rate": 0.4742014742014742
+    },
+    "SOLUSDT": {
+     "mean_net_us": -0.04495170518208563,
+     "n": 111,
+     "total_usd": -99.79278550423007,
+     "win_rate": 0.44144144144144143
+    },
+    "XRPUSDT": {
+     "mean_net_us": -0.019393811993572874,
+     "n": 40,
+     "total_usd": -15.515049594858326,
+     "win_rate": 0.55
+    }
+   },
+   "cell": "m0.03|tp0.08|sl0.1|tend|taker",
+   "checks": {
+    "ci_lower": false,
+    "loss_guards": true,
+    "mean": false,
+    "n": true,
+    "stress": false
+   },
+   "entry": {
+    "gap_at_fill": 0.03798171287471062,
+    "gap_at_signal": 0.06745527444343283,
+    "share_fill_above_fair": 0.2473886132282981,
+    "share_gap_still_m": 0.5104506624379763,
+    "slippage": 0.02730041576656913
+   },
+   "markets_traded": 15842,
+   "passes": false,
+   "placebo": null,
+   "selectable": true,
+   "summary": {
+    "breakeven_win_rate": 0.5806525547436037,
+    "ci95": [
+     -0.08522360638930238,
+     -0.0788965004618605
+    ],
+    "exit_mix": {
+     "fair": 0.34653434958309887,
+     "fair->settle": 3.0692107013146456e-05,
+     "sl": 0.34797687861271676,
+     "sl->settle": 0.00024553685610517165,
+     "time": 0.04858560540181083,
+     "time->settle": 0.004429894112230805,
+     "tp": 0.2521868126246867,
+     "tp->settle": 1.0230702337715484e-05
+    },
+    "hold_min_median": 0.43333333333333335,
+    "late_stops": 0,
+    "loss_cents": 11.662644675711453,
+    "losses": 56787,
+    "mean_net_com": -0.08253206183807368,
+    "mean_net_stress": -0.08253206183807368,
+    "mean_net_us": -0.08202969310223628,
+    "mean_p_entry": 0.4729824174698072,
+    "mean_pnl_usd": -1.6405938620447256,
+    "missed": 2175,
+    "n": 97745,
+    "n_events": 1105,
+    "risk": {
+     "best_day_usd": -61.276968776733895,
+     "capital_usd": 120.0,
+     "daily_stop": {
+      "days_stopped": 47,
+      "limit_usd": 10.0,
+      "mean_net": -0.06500787762196981,
+      "n": 602,
+      "skipped": 97143,
+      "total_usd": -782.6948465685166
+     },
+     "days_with_exits": 47,
+     "longest_losing_streak": 22,
+     "max_drawdown_usd": -160361.58125373736,
+     "max_open": 6,
+     "sharpe_daily": -54.885762892627966,
+     "worst_day_usd": -5894.8141168535285,
+     "worst_trip_usd": -21.3761
+    },
+    "small_entry_share": 0.8705406926185483,
+    "total_usd": -160359.8470455617,
+    "trips_per_day": 2124.891304347826,
+    "win_cents": 8.42276540374868,
+    "win_rate": 0.4190291063481508,
+    "worst_case_net": 0.25085552163016106
+   }
+  },
+  {
+   "bar": {
+    "checks": {
+     "ci_lower": false,
+     "loss_guards": true,
+     "mean": false,
+     "n": true,
+     "placebo": false,
+     "stress": false
+    },
+    "passes": false
+   },
+   "by_sub": {
+    "15m": {
+     "mean_net_us": -0.12383470954964627,
+     "n": 26248,
+     "total_usd": -65008.269125182305,
+     "win_rate": 0.49043736665650717
+    },
+    "1h": {
+     "mean_net_us": -0.10253195336508185,
+     "n": 9298,
+     "total_usd": -19066.842047770624,
+     "win_rate": 0.50752850075285
+    },
+    "5m": {
+     "mean_net_us": -0.1211644964698116,
+     "n": 60545,
+     "total_usd": -146718.08877529486,
+     "win_rate": 0.4919151044677513
+    }
+   },
+   "by_symbol": {
+    "BTCUSDT": {
+     "mean_net_us": -0.12055761308336559,
+     "n": 95197,
+     "total_usd": -229534.461853943,
+     "win_rate": 0.4927676292320136
+    },
+    "ETHUSDT": {
+     "mean_net_us": -0.07904233483447962,
+     "n": 751,
+     "total_usd": -1187.2158692138842,
+     "win_rate": 0.5193075898801598
+    },
+    "SOLUSDT": {
+     "mean_net_us": 0.012933817217803359,
+     "n": 108,
+     "total_usd": 27.937045190455247,
+     "win_rate": 0.5370370370370371
+    },
+    "XRPUSDT": {
+     "mean_net_us": -0.14208467183047138,
+     "n": 35,
+     "total_usd": -99.45927028132995,
+     "win_rate": 0.4857142857142857
+    }
+   },
+   "cell": "m0.03|tp0.08|sl0.1|tend|maker",
+   "checks": {
+    "ci_lower": false,
+    "loss_guards": true,
+    "mean": false,
+    "n": true,
+    "stress": false
+   },
+   "entry": {
+    "gap_at_fill": 0.03818078227456538,
+    "gap_at_signal": 0.06768901448487001,
+    "share_fill_above_fair": 0.2480461229459575,
+    "share_gap_still_m": 0.5140335723428833,
+    "slippage": 0.028113919011112383
+   },
+   "markets_traded": 15842,
+   "passes": false,
+   "placebo": null,
+   "selectable": true,
+   "summary": {
+    "breakeven_win_rate": 0.7320799690408009,
+    "ci95": [
+     -0.12308962918046845,
+     -0.1170672569626376
+    ],
+    "exit_mix": {
+     "fair": 0.2873318000645222,
+     "sl": 0.42566941753129844,
+     "sl->settle": 0.00030179725468566256,
+     "time": 0.06141053792758947,
+     "time->settle": 0.004651840442913488,
+     "tp": 0.22063460677899074
+    },
+    "hold_min_median": 0.45,
+    "late_stops": 0,
+    "loss_cents": 13.626276246501273,
+    "losses": 48716,
+    "mean_net_com": -0.12045130686770704,
+    "mean_net_stress": -0.13908431343782804,
+    "mean_net_us": -0.12009095542155238,
+    "mean_p_entry": 0.47962347944219536,
+    "mean_pnl_usd": -2.401819108431048,
+    "missed": 2256,
+    "n": 96091,
+    "n_events": 1105,
+    "risk": {
+     "best_day_usd": -52.00847960512998,
+     "capital_usd": 100.0,
+     "daily_stop": {
+      "days_stopped": 47,
+      "limit_usd": 10.0,
+      "mean_net": -0.07894060906059028,
+      "n": 541,
+      "skipped": 95550,
+      "total_usd": -854.1373900355867
+     },
+     "days_with_exits": 47,
+     "longest_losing_streak": 21,
+     "max_drawdown_usd": -230795.58426682037,
+     "max_open": 5,
+     "sharpe_daily": -63.48297002979768,
+     "worst_day_usd": -7282.572366318391,
+     "worst_trip_usd": -21.3761
+    },
+    "small_entry_share": 0.8693321955229938,
+    "total_usd": -230793.1999482478,
+    "trips_per_day": 2088.9347826086955,
+    "win_cents": 4.986821806645764,
+    "win_rate": 0.4930222393356298,
+    "worst_case_net": 0.139807474290897
+   }
+  },
+  {
+   "bar": {
+    "checks": {
+     "ci_lower": false,
+     "loss_guards": true,
+     "mean": false,
+     "n": true,
+     "placebo": false,
+     "stress": false
+    },
+    "passes": false
+   },
+   "by_sub": {
+    "15m": {
+     "mean_net_us": -0.05732707295857745,
+     "n": 15220,
+     "total_usd": -17450.361008590975,
+     "win_rate": 0.5602496714848884
+    },
+    "1h": {
+     "mean_net_us": -0.04549242324797721,
+     "n": 4921,
+     "total_usd": -4477.364296065918,
+     "win_rate": 0.5911400121926438
+    },
+    "5m": {
+     "mean_net_us": -0.08108118522494326,
+     "n": 37311,
+     "total_usd": -60504.40203855716,
+     "win_rate": 0.5148079654793493
+    }
+   },
+   "by_symbol": {
+    "BTCUSDT": {
+     "mean_net_us": -0.07266645248551963,
+     "n": 56857,
+     "total_usd": -82631.92977938379,
+     "win_rate": 0.5327752079779094
+    },
+    "ETHUSDT": {
+     "mean_net_us": 0.017022375353775782,
+     "n": 487,
+     "total_usd": 165.79793594577603,
+     "win_rate": 0.5995893223819302
+    },
+    "SOLUSDT": {
+     "mean_net_us": 0.041227341390330775,
+     "n": 79,
+     "total_usd": 65.1391993967226,
+     "win_rate": 0.5189873417721519
+    },
+    "XRPUSDT": {
+     "mean_net_us": -0.05368051581508813,
+     "n": 29,
+     "total_usd": -31.134699172751112,
+     "win_rate": 0.6551724137931034
+    }
+   },
+   "cell": "m0.03|tp0.08|slnone|tend|taker",
+   "checks": {
+    "ci_lower": false,
+    "loss_guards": true,
+    "mean": false,
+    "n": true,
+    "stress": false
+   },
+   "entry": {
+    "gap_at_fill": 0.030193891389755523,
+    "gap_at_signal": 0.06290844856666955,
+    "share_fill_above_fair": 0.28526422056673395,
+    "share_gap_still_m": 0.459287753254891,
+    "slippage": 0.03187250835891005
+   },
+   "markets_traded": 15842,
+   "passes": false,
+   "placebo": null,
+   "selectable": true,
+   "summary": {
+    "breakeven_win_rate": 0.6598670769696908,
+    "ci95": [
+     -0.07590076680900555,
+     -0.06772169131021875
+    ],
+    "exit_mix": {
+     "fair": 0.4824201072199401,
+     "time": 0.17381466267492865,
+     "time->settle": 0.03005987607045882,
+     "tp": 0.3137053540346724
+    },
+    "hold_min_median": 0.65,
+    "late_stops": 0,
+    "loss_cents": 16.60544648347227,
+    "losses": 26808,
+    "mean_net_com": -0.0721967846633578,
+    "mean_net_stress": -0.0721967846633578,
+    "mean_net_us": -0.07173999803593788,
+    "mean_p_entry": 0.5040008228586924,
+    "mean_pnl_usd": -1.4347999607187576,
+    "missed": 960,
+    "n": 57452,
+    "n_events": 1105,
+    "risk": {
+     "best_day_usd": -27.4405893938374,
+     "capital_usd": 120.0,
+     "daily_stop": {
+      "days_stopped": 47,
+      "limit_usd": 10.0,
+      "mean_net": -0.047725703613977884,
+      "n": 1350,
+      "skipped": 56102,
+      "total_usd": -1288.593997577403
+     },
+     "days_with_exits": 47,
+     "longest_losing_streak": 13,
+     "max_drawdown_usd": -82440.32231442347,
+     "max_open": 6,
+     "sharpe_daily": -52.0808332850303,
+     "worst_day_usd": -3083.933444166248,
+     "worst_trip_usd": -21.3622
+    },
+    "small_entry_share": 0.8643563322425677,
+    "total_usd": -82432.12734321406,
+    "trips_per_day": 1248.9565217391305,
+    "win_cents": 8.55938907663705,
+    "win_rate": 0.533384390447678,
+    "worst_case_net": 0.21172681648172423
+   }
+  },
+  {
+   "bar": {
+    "checks": {
+     "ci_lower": false,
+     "loss_guards": true,
+     "mean": false,
+     "n": true,
+     "placebo": false,
+     "stress": false
+    },
+    "passes": false
+   },
+   "by_sub": {
+    "15m": {
+     "mean_net_us": -0.098845571780801,
+     "n": 12323,
+     "total_usd": -24361.479621096216,
+     "win_rate": 0.7063215126186805
+    },
+    "1h": {
+     "mean_net_us": -0.08916385358227141,
+     "n": 4059,
+     "total_usd": -7238.321633808793,
+     "win_rate": 0.7041143138704115
+    },
+    "5m": {
+     "mean_net_us": -0.10846105303345484,
+     "n": 34621,
+     "total_usd": -75100.60234142482,
+     "win_rate": 0.6801074492360129
+    }
+   },
+   "by_symbol": {
+    "BTCUSDT": {
+     "mean_net_us": -0.1053100835131673,
+     "n": 50472,
+     "total_usd": -106304.21070153159,
+     "win_rate": 0.6878665398636868
+    },
+    "ETHUSDT": {
+     "mean_net_us": -0.04701982200916818,
+     "n": 435,
+     "total_usd": -409.0724514797631,
+     "win_rate": 0.7333333333333333
+    },
+    "SOLUSDT": {
+     "mean_net_us": 0.07443769713603614,
+     "n": 73,
+     "total_usd": 108.67903781861274,
+     "win_rate": 0.7945205479452054
+    },
+    "XRPUSDT": {
+     "mean_net_us": -0.20825974160233507,
+     "n": 23,
+     "total_usd": -95.79948113707411,
+     "win_rate": 0.5652173913043478
+    }
+   },
+   "cell": "m0.03|tp0.08|slnone|tend|maker",
+   "checks": {
+    "ci_lower": false,
+    "loss_guards": true,
+    "mean": false,
+    "n": true,
+    "stress": false
+   },
+   "entry": {
+    "gap_at_fill": 0.0300867732521482,
+    "gap_at_signal": 0.06393793098741973,
+    "share_fill_above_fair": 0.29239456502558675,
+    "share_gap_still_m": 0.4609140638785954,
+    "slippage": 0.03376037451819109
+   },
+   "markets_traded": 15842,
+   "passes": false,
+   "placebo": null,
+   "selectable": true,
+   "summary": {
+    "breakeven_win_rate": 0.834461905678741,
+    "ci95": [
+     -0.10859641018484797,
+     -0.1006369349869016
+    ],
+    "exit_mix": {
+     "fair": 0.379311020920338,
+     "time": 0.2237319373370194,
+     "time->settle": 0.03609591592651413,
+     "tp": 0.36086112581612845
+    },
+    "hold_min_median": 0.75,
+    "late_stops": 0,
+    "loss_cents": 25.438490661969517,
+    "losses": 15895,
+    "mean_net_com": -0.10486903882267218,
+    "mean_net_stress": -0.1294494074037887,
+    "mean_net_us": -0.10460208575606318,
+    "mean_p_entry": 0.5156578422813404,
+    "mean_pnl_usd": -2.092041715121264,
+    "missed": 875,
+    "n": 51003,
+    "n_events": 1105,
+    "risk": {
+     "best_day_usd": -32.98008308040175,
+     "capital_usd": 120.0,
+     "daily_stop": {
+      "days_stopped": 47,
+      "limit_usd": 10.0,
+      "mean_net": -0.07095250013642496,
+      "n": 951,
+      "skipped": 50052,
+      "total_usd": -1349.5165525948028
+     },
+     "days_with_exits": 47,
+     "longest_losing_streak": 8,
+     "max_drawdown_usd": -106704.2706200117,
+     "max_open": 6,
+     "sharpe_daily": -63.79976214534981,
+     "worst_day_usd": -3480.810999545864,
+     "worst_trip_usd": -21.3344
+    },
+    "small_entry_share": 0.8571260514087407,
+    "total_usd": -106700.40359632982,
+    "trips_per_day": 1108.7608695652175,
+    "win_cents": 5.046412829554354,
+    "win_rate": 0.6883516655882987,
+    "worst_case_net": 0.11271048173196803
+   }
+  },
+  {
+   "bar": {
+    "checks": {
+     "ci_lower": false,
+     "loss_guards": true,
+     "mean": false,
+     "n": true,
+     "placebo": false,
+     "stress": false
+    },
+    "passes": false
+   },
+   "by_sub": {
+    "15m": {
+     "mean_net_us": -0.07630419268308428,
+     "n": 28732,
+     "total_usd": -43847.441283407556,
+     "win_rate": 0.3768272309619936
+    },
+    "1h": {
+     "mean_net_us": -0.06136035501154501,
+     "n": 9342,
+     "total_usd": -11464.56873035707,
+     "win_rate": 0.40387497323913507
+    },
+    "5m": {
+     "mean_net_us": -0.0921667938986885,
+     "n": 66598,
+     "total_usd": -122762.48280129713,
+     "win_rate": 0.3491245983362864
+    }
+   },
+   "by_symbol": {
+    "BTCUSDT": {
+     "mean_net_us": -0.08566315813474433,
+     "n": 103645,
+     "total_usd": -177571.16049751153,
+     "win_rate": 0.3610400887645328
+    },
+    "ETHUSDT": {
+     "mean_net_us": -0.03212039474100252,
+     "n": 870,
+     "total_usd": -558.8948684934437,
+     "win_rate": 0.41724137931034483
+    },
+    "SOLUSDT": {
+     "mean_net_us": 0.025577586922499923,
+     "n": 123,
+     "total_usd": 62.92086382934978,
+     "win_rate": 0.42276422764227645
+    },
+    "XRPUSDT": {
+     "mean_net_us": -0.010821048361939435,
+     "n": 34,
+     "total_usd": -7.3583128861188145,
+     "win_rate": 0.47058823529411764
+    }
+   },
+   "cell": "m0.05|tp0.03|sl0.05|tend|taker",
+   "checks": {
+    "ci_lower": false,
+    "loss_guards": true,
+    "mean": false,
+    "n": true,
+    "stress": false
+   },
+   "entry": {
+    "gap_at_fill": 0.05009681304370878,
+    "gap_at_signal": 0.08689199452179101,
+    "share_fill_above_fair": 0.20491630999694282,
+    "share_gap_still_m": 0.4541997859981657,
+    "slippage": 0.034875828715575326
+   },
+   "markets_traded": 15822,
+   "passes": false,
+   "placebo": null,
+   "selectable": true,
+   "summary": {
+    "breakeven_win_rate": 0.5682263081960063,
+    "ci95": [
+     -0.0876784791834235,
+     -0.0825211102370107
+    ],
+    "exit_mix": {
+     "fair": 0.09914781412412106,
+     "fair->settle": 1.9107306634056862e-05,
+     "sl": 0.41459989299908284,
+     "sl->settle": 0.00014330479975542648,
+     "time": 0.019174182207276062,
+     "time->settle": 0.0006496484255579334,
+     "tp": 0.46623738917762153,
+     "tp->settle": 2.8660959951085293e-05
+    },
+    "hold_min_median": 0.3,
+    "late_stops": 0,
+    "loss_cents": 9.055436803439898,
+    "losses": 66821,
+    "mean_net_com": -0.08557978779518047,
+    "mean_net_stress": -0.08557978779518047,
+    "mean_net_us": -0.08506309844803851,
+    "mean_p_entry": 0.4662939211722323,
+    "mean_pnl_usd": -1.7012619689607704,
+    "missed": 2598,
+    "n": 104672,
+    "n_events": 1105,
+    "risk": {
+     "best_day_usd": -64.52191765518897,
+     "capital_usd": 100.0,
+     "daily_stop": {
+      "days_stopped": 47,
+      "limit_usd": 10.0,
+      "mean_net": -0.06494337541627951,
+      "n": 525,
+      "skipped": 104147,
+      "total_usd": -681.9054418709347
+     },
+     "days_with_exits": 47,
+     "longest_losing_streak": 32,
+     "max_drawdown_usd": -178112.51804363233,
+     "max_open": 5,
+     "sharpe_daily": -66.80675583550067,
+     "worst_day_usd": -5907.888232187055,
+     "worst_trip_usd": -21.3761
+    },
+    "small_entry_share": 0.8717899724854784,
+    "total_usd": -178074.49281506176,
+    "trips_per_day": 2275.478260869565,
+    "win_cents": 6.8808841180410525,
+    "win_rate": 0.36161533170284316,
+    "worst_case_net": 0.21249921127288754
+   }
+  },
+  {
+   "bar": {
+    "checks": {
+     "ci_lower": false,
+     "loss_guards": true,
+     "mean": false,
+     "n": true,
+     "placebo": false,
+     "stress": false
+    },
+    "passes": false
+   },
+   "by_sub": {
+    "15m": {
+     "mean_net_us": -0.13404163828227283,
+     "n": 27417,
+     "total_usd": -73500.39193570148,
+     "win_rate": 0.45449903344640186
+    },
+    "1h": {
+     "mean_net_us": -0.10361484226894287,
+     "n": 8723,
+     "total_usd": -18076.645382239774,
+     "win_rate": 0.48951048951048953
+    },
+    "5m": {
+     "mean_net_us": -0.1340479079884262,
+     "n": 66116,
+     "total_usd": -177254.2296912557,
+     "win_rate": 0.4601911791396939
+    }
+   },
+   "by_symbol": {
+    "BTCUSDT": {
+     "mean_net_us": -0.13180448507069223,
+     "n": 101283,
+     "total_usd": -266991.0732282984,
+     "win_rate": 0.4610151753008896
+    },
+    "ETHUSDT": {
+     "mean_net_us": -0.11484007709963923,
+     "n": 822,
+     "total_usd": -1887.970867518069,
+     "win_rate": 0.4732360097323601
+    },
+    "SOLUSDT": {
+     "mean_net_us": 0.061335242365874544,
+     "n": 118,
+     "total_usd": 144.75117198346393,
+     "win_rate": 0.5084745762711864
+    },
+    "XRPUSDT": {
+     "mean_net_us": -0.14693043236964254,
+     "n": 33,
+     "total_usd": -96.97408536396408,
+     "win_rate": 0.45454545454545453
+    }
+   },
+   "cell": "m0.05|tp0.03|sl0.05|tend|maker",
+   "checks": {
+    "ci_lower": false,
+    "loss_guards": true,
+    "mean": false,
+    "n": true,
+    "stress": false
+   },
+   "entry": {
+    "gap_at_fill": 0.04902845322891678,
+    "gap_at_signal": 0.08633760705415605,
+    "share_fill_above_fair": 0.21012947895478015,
+    "share_gap_still_m": 0.446946878422782,
+    "slippage": 0.0362708428255897
+   },
+   "markets_traded": 15822,
+   "passes": false,
+   "placebo": null,
+   "selectable": true,
+   "summary": {
+    "breakeven_win_rate": 0.8257777742215925,
+    "ci95": [
+     -0.13421767600290715,
+     -0.12864234639980268
+    ],
+    "exit_mix": {
+     "fair": 0.0650328587075575,
+     "sl": 0.5379537631043655,
+     "sl->settle": 0.0001760287904866218,
+     "time": 0.03168518228759193,
+     "time->settle": 0.0007823501799405414,
+     "tp": 0.3643698169300579
+    },
+    "hold_min_median": 0.3,
+    "late_stops": 0,
+    "loss_cents": 10.834335407192164,
+    "losses": 55099,
+    "mean_net_com": -0.1318447593910124,
+    "mean_net_stress": -0.1472485429415065,
+    "mean_net_us": -0.13145011882393062,
+    "mean_p_entry": 0.47312785640107574,
+    "mean_pnl_usd": -2.629002376478612,
+    "missed": 2567,
+    "n": 102256,
+    "n_events": 1105,
+    "risk": {
+     "best_day_usd": -66.81336366127249,
+     "capital_usd": 100.0,
+     "daily_stop": {
+      "days_stopped": 47,
+      "limit_usd": 10.0,
+      "mean_net": -0.09260933650632147,
+      "n": 353,
+      "skipped": 101903,
+      "total_usd": -653.8219157346296
+     },
+     "days_with_exits": 47,
+     "longest_losing_streak": 23,
+     "max_drawdown_usd": -268832.40599338664,
+     "max_open": 5,
+     "sharpe_daily": -68.64963937665478,
+     "worst_day_usd": -7630.17366915024,
+     "worst_trip_usd": -21.3622
+    },
+    "small_entry_share": 0.8699538413393835,
+    "total_usd": -268831.267009197,
+    "trips_per_day": 2222.9565217391305,
+    "win_cents": 2.2858232425184006,
+    "win_rate": 0.4611660929432014,
+    "worst_case_net": 0.070191994886752
+   }
+  },
+  {
+   "bar": {
+    "checks": {
+     "ci_lower": false,
+     "loss_guards": true,
+     "mean": false,
+     "n": true,
+     "placebo": false,
+     "stress": false
+    },
+    "passes": false
+   },
+   "by_sub": {
+    "15m": {
+     "mean_net_us": -0.0750860341883004,
+     "n": 25338,
+     "total_usd": -38050.5986852631,
+     "win_rate": 0.4272633988475807
+    },
+    "1h": {
+     "mean_net_us": -0.061041217426953974,
+     "n": 8040,
+     "total_usd": -9815.4277622542,
+     "win_rate": 0.46318407960199004
+    },
+    "5m": {
+     "mean_net_us": -0.0897185607910465,
+     "n": 60195,
+     "total_usd": -108012.17533634088,
+     "win_rate": 0.38651050751723565
+    }
+   },
+   "by_symbol": {
+    "BTCUSDT": {
+     "mean_net_us": -0.08416075874532097,
+     "n": 92623,
+     "total_usd": -155904.4391453573,
+     "win_rate": 0.40345270613130646
+    },
+    "ETHUSDT": {
+     "mean_net_us": -0.012453224446961368,
+     "n": 799,
+     "total_usd": -199.00252666244265,
+     "win_rate": 0.47309136420525655
+    },
+    "SOLUSDT": {
+     "mean_net_us": 0.106451688706431,
+     "n": 118,
+     "total_usd": 251.22598534717721,
+     "win_rate": 0.4406779661016949
+    },
+    "XRPUSDT": {
+     "mean_net_us": -0.039372874523662484,
+     "n": 33,
+     "total_usd": -25.98609718561724,
+     "win_rate": 0.5151515151515151
+    }
+   },
+   "cell": "m0.05|tp0.03|sl0.1|tend|taker",
+   "checks": {
+    "ci_lower": false,
+    "loss_guards": true,
+    "mean": false,
+    "n": true,
+    "stress": false
+   },
+   "entry": {
+    "gap_at_fill": 0.0477834992603272,
+    "gap_at_signal": 0.08591398406786419,
+    "share_fill_above_fair": 0.21414296859136717,
+    "share_gap_still_m": 0.43828882263045965,
+    "slippage": 0.03656488035212722
+   },
+   "markets_traded": 15822,
+   "passes": false,
+   "placebo": null,
+   "selectable": true,
+   "summary": {
+    "breakeven_win_rate": 0.5928124585169646,
+    "ci95": [
+     -0.08628202618746177,
+     -0.0802668155370667
+    ],
+    "exit_mix": {
+     "fair": 0.1254635418336486,
+     "fair->settle": 2.13736868541139e-05,
+     "sl": 0.28154489008581535,
+     "sl->settle": 0.00016030265140585425,
+     "time": 0.03397347525461405,
+     "time->settle": 0.0031526188109818,
+     "tp": 0.555630363459545,
+     "tp->settle": 5.343421713528475e-05
+    },
+    "hold_min_median": 0.35,
+    "late_stops": 0,
+    "loss_cents": 10.339149117299334,
+    "losses": 55757,
+    "mean_net_com": -0.08379807564154147,
+    "mean_net_stress": -0.08379807564154147,
+    "mean_net_us": -0.0832922968077641,
+    "mean_p_entry": 0.4736960613911278,
+    "mean_pnl_usd": -1.6658459361552818,
+    "missed": 2334,
+    "n": 93573,
+    "n_events": 1105,
+    "risk": {
+     "best_day_usd": -54.594850557639646,
+     "capital_usd": 100.0,
+     "daily_stop": {
+      "days_stopped": 47,
+      "limit_usd": 10.0,
+      "mean_net": -0.059112464143199775,
+      "n": 664,
+      "skipped": 92909,
+      "total_usd": -785.0135238216928
+     },
+     "days_with_exits": 47,
+     "longest_losing_streak": 24,
+     "max_drawdown_usd": -155884.7286429122,
+     "max_open": 5,
+     "sharpe_daily": -60.001680522117724,
+     "worst_day_usd": -5053.937952513546,
+     "worst_trip_usd": -21.3761
+    },
+    "small_entry_share": 0.8707533155931733,
+    "total_usd": -155878.20178385818,
+    "trips_per_day": 2034.195652173913,
+    "win_cents": 7.101694051153505,
+    "win_rate": 0.40413367103758563,
+    "worst_case_net": 0.21447849993189
+   }
+  },
+  {
+   "bar": {
+    "checks": {
+     "ci_lower": false,
+     "loss_guards": true,
+     "mean": false,
+     "n": true,
+     "placebo": false,
+     "stress": false
+    },
+    "passes": false
+   },
+   "by_sub": {
+    "15m": {
+     "mean_net_us": -0.1400903056535752,
+     "n": 23664,
+     "total_usd": -66301.93985972407,
+     "win_rate": 0.5495689655172413
+    },
+    "1h": {
+     "mean_net_us": -0.11052176646494712,
+     "n": 7335,
+     "total_usd": -16213.54314040774,
+     "win_rate": 0.5859577368779822
+    },
+    "5m": {
+     "mean_net_us": -0.13688686767399771,
+     "n": 59725,
+     "total_usd": -163511.36343659024,
+     "win_rate": 0.5525994139807451
+    }
+   },
+   "by_symbol": {
+    "BTCUSDT": {
+     "mean_net_us": -0.1358874120895614,
+     "n": 89858,
+     "total_usd": -244211.42151087616,
+     "win_rate": 0.5542967793629949
+    },
+    "ETHUSDT": {
+     "mean_net_us": -0.10533864367223071,
+     "n": 729,
+     "total_usd": -1535.8374247411236,
+     "win_rate": 0.5802469135802469
+    },
+    "SOLUSDT": {
+     "mean_net_us": -0.07966659433576137,
+     "n": 106,
+     "total_usd": -168.89317999181412,
+     "win_rate": 0.5849056603773585
+    },
+    "XRPUSDT": {
+     "mean_net_us": -0.17853922760160817,
+     "n": 31,
+     "total_usd": -110.69432111299707,
+     "win_rate": 0.45161290322580644
+    }
+   },
+   "cell": "m0.05|tp0.03|sl0.1|tend|maker",
+   "checks": {
+    "ci_lower": false,
+    "loss_guards": true,
+    "mean": false,
+    "n": true,
+    "stress": false
+   },
+   "entry": {
+    "gap_at_fill": 0.04624901477819547,
+    "gap_at_signal": 0.08523010911067576,
+    "share_fill_above_fair": 0.2216282350866364,
+    "share_gap_still_m": 0.42795732110577134,
+    "slippage": 0.03832200404687955
+   },
+   "markets_traded": 15822,
+   "passes": false,
+   "placebo": null,
+   "selectable": true,
+   "summary": {
+    "breakeven_win_rate": 0.875235152620935,
+    "ci95": [
+     -0.1386354229490286,
+     -0.13258927108714805
+    ],
+    "exit_mix": {
+     "fair": 0.09628102817336097,
+     "sl": 0.3778933909439619,
+     "sl->settle": 0.0003086283673559367,
+     "time": 0.053734403245006834,
+     "time->settle": 0.003505136457828138,
+     "tp": 0.46827741281248625
+    },
+    "hold_min_median": 0.35,
+    "late_stops": 0,
+    "loss_cents": 13.726137022102163,
+    "losses": 40417,
+    "mean_net_com": -0.13593862549802527,
+    "mean_net_stress": -0.15609533350431748,
+    "mean_net_us": -0.13559082846695586,
+    "mean_p_entry": 0.48263103474054275,
+    "mean_pnl_usd": -2.7118165693391174,
+    "missed": 2277,
+    "n": 90724,
+    "n_events": 1105,
+    "risk": {
+     "best_day_usd": -60.79347400072844,
+     "capital_usd": 100.0,
+     "daily_stop": {
+      "days_stopped": 47,
+      "limit_usd": 10.0,
+      "mean_net": -0.09357546757623805,
+      "n": 414,
+      "skipped": 90310,
+      "total_usd": -774.8048715312511
+     },
+     "days_with_exits": 47,
+     "longest_losing_streak": 13,
+     "max_drawdown_usd": -246031.25159728513,
+     "max_open": 5,
+     "sharpe_daily": -66.45276501060711,
+     "worst_day_usd": -7008.098963359973,
+     "worst_trip_usd": -21.3622
+    },
+    "small_entry_share": 0.8675984304043032,
+    "total_usd": -246026.8464367221,
+    "trips_per_day": 1972.2608695652175,
+    "win_cents": 1.956662030242302,
+    "win_rate": 0.5545059741633966,
+    "worst_case_net": 0.058569900858913435
+   }
+  },
+  {
+   "bar": {
+    "checks": {
+     "ci_lower": false,
+     "loss_guards": true,
+     "mean": false,
+     "n": true,
+     "placebo": false,
+     "stress": false
+    },
+    "passes": false
+   },
+   "by_sub": {
+    "15m": {
+     "mean_net_us": -0.05940600933028242,
+     "n": 15755,
+     "total_usd": -18718.83353997199,
+     "win_rate": 0.5227546810536338
+    },
+    "1h": {
+     "mean_net_us": -0.05481319692534888,
+     "n": 4764,
+     "total_usd": -5222.601403047242,
+     "win_rate": 0.5577246011754828
+    },
+    "5m": {
+     "mean_net_us": -0.08288439217978519,
+     "n": 42299,
+     "total_usd": -70118.53809625466,
+     "win_rate": 0.4594671268824322
+    }
+   },
+   "by_symbol": {
+    "BTCUSDT": {
+     "mean_net_us": -0.07580010266000108,
+     "n": 62159,
+     "total_usd": -94233.17162486014,
+     "win_rate": 0.4820219115494136
+    },
+    "ETHUSDT": {
+     "mean_net_us": 0.010264327166544133,
+     "n": 548,
+     "total_usd": 112.4970257453237,
+     "win_rate": 0.5547445255474452
+    },
+    "SOLUSDT": {
+     "mean_net_us": 0.06032649725165969,
+     "n": 83,
+     "total_usd": 100.14198543775504,
+     "win_rate": 0.5301204819277109
+    },
+    "XRPUSDT": {
+     "mean_net_us": -0.07042933142293316,
+     "n": 28,
+     "total_usd": -39.44042559684256,
+     "win_rate": 0.6428571428571429
+    }
+   },
+   "cell": "m0.05|tp0.03|slnone|tend|taker",
+   "checks": {
+    "ci_lower": false,
+    "loss_guards": true,
+    "mean": false,
+    "n": true,
+    "stress": false
+   },
+   "entry": {
+    "gap_at_fill": 0.04137458560780767,
+    "gap_at_signal": 0.08260920196920961,
+    "share_fill_above_fair": 0.24133210226368237,
+    "share_gap_still_m": 0.3970199624311503,
+    "slippage": 0.0407554424307985
+   },
+   "markets_traded": 15822,
+   "passes": false,
+   "placebo": null,
+   "selectable": true,
+   "summary": {
+    "breakeven_win_rate": 0.6429256657337036,
+    "ci95": [
+     -0.07857313867934458,
+     -0.07112193476992063
+    ],
+    "exit_mix": {
+     "fair": 0.17100194211850106,
+     "fair->settle": 1.591900410710306e-05,
+     "time": 0.13032888662485276,
+     "time->settle": 0.02316215097583495,
+     "tp": 0.6754592632684899,
+     "tp->settle": 3.183800821420612e-05
+    },
+    "hold_min_median": 0.4166666666666667,
+    "late_stops": 0,
+    "loss_cents": 13.06301477490456,
+    "losses": 32490,
+    "mean_net_com": -0.07533358595248922,
+    "mean_net_stress": -0.07533358595248922,
+    "mean_net_us": -0.07486705485631022,
+    "mean_p_entry": 0.5026553923287609,
+    "mean_pnl_usd": -1.497341097126204,
+    "missed": 1302,
+    "n": 62818,
+    "n_events": 1105,
+    "risk": {
+     "best_day_usd": -24.977899006861428,
+     "capital_usd": 120.0,
+     "daily_stop": {
+      "days_stopped": 47,
+      "limit_usd": 10.0,
+      "mean_net": -0.04609796058038515,
+      "n": 1221,
+      "skipped": 61597,
+      "total_usd": -1125.7121973730054
+     },
+     "days_with_exits": 47,
+     "longest_losing_streak": 19,
+     "max_drawdown_usd": -94089.14151908067,
+     "max_open": 6,
+     "sharpe_daily": -58.19536265669436,
+     "worst_day_usd": -3324.8172644263987,
+     "worst_trip_usd": -21.3622
+    },
+    "small_entry_share": 0.8642586519787322,
+    "total_usd": -94059.97303927389,
+    "trips_per_day": 1365.608695652174,
+    "win_cents": 7.255064703221599,
+    "win_rate": 0.4827915565602216,
+    "worst_case_net": 0.1890704907765682
+   }
+  },
+  {
+   "bar": {
+    "checks": {
+     "ci_lower": false,
+     "loss_guards": true,
+     "mean": false,
+     "n": true,
+     "placebo": false,
+     "stress": false
+    },
+    "passes": false
+   },
+   "by_sub": {
+    "15m": {
+     "mean_net_us": -0.12059658144089277,
+     "n": 13320,
+     "total_usd": -32126.92929585383,
+     "win_rate": 0.7506006006006006
+    },
+    "1h": {
+     "mean_net_us": -0.09770859442202064,
+     "n": 4004,
+     "total_usd": -7824.504241315413,
+     "win_rate": 0.7744755244755245
+    },
+    "5m": {
+     "mean_net_us": -0.12398631111150665,
+     "n": 38932,
+     "total_usd": -96540.70128386354,
+     "win_rate": 0.7357186889961985
+    }
+   },
+   "by_symbol": {
+    "BTCUSDT": {
+     "mean_net_us": -0.12186564915492665,
+     "n": 55687,
+     "total_usd": -135726.64808980798,
+     "win_rate": 0.7414118196347442
+    },
+    "ETHUSDT": {
+     "mean_net_us": -0.06999730525397309,
+     "n": 471,
+     "total_usd": -659.3746154924265,
+     "win_rate": 0.8067940552016986
+    },
+    "SOLUSDT": {
+     "mean_net_us": 0.004741210600275797,
+     "n": 75,
+     "total_usd": 7.111815900413703,
+     "win_rate": 0.8133333333333334
+    },
+    "XRPUSDT": {
+     "mean_net_us": -0.24613898181040533,
+     "n": 23,
+     "total_usd": -113.22393163278649,
+     "win_rate": 0.6086956521739131
+    }
+   },
+   "cell": "m0.05|tp0.03|slnone|tend|maker",
+   "checks": {
+    "ci_lower": false,
+    "loss_guards": true,
+    "mean": false,
+    "n": true,
+    "stress": false
+   },
+   "entry": {
+    "gap_at_fill": 0.03792438982953628,
+    "gap_at_signal": 0.08116065664150879,
+    "share_fill_above_fair": 0.2580524744027304,
+    "share_gap_still_m": 0.3790706769055745,
+    "slippage": 0.04389770020132074
+   },
+   "markets_traded": 15822,
+   "passes": false,
+   "placebo": null,
+   "selectable": true,
+   "summary": {
+    "breakeven_win_rate": 0.935482183745775,
+    "ci95": [
+     -0.1247989663174359,
+     -0.11786510428036387
+    ],
+    "exit_mix": {
+     "fair": 0.1395051194539249,
+     "time": 0.18236277019340158,
+     "time->settle": 0.02924132536973834,
+     "tp": 0.6488907849829352
+    },
+    "hold_min_median": 0.45,
+    "late_stops": 0,
+    "loss_cents": 24.729628372572996,
+    "losses": 14514,
+    "mean_net_com": -0.12157525211666231,
+    "mean_net_stress": -0.14758173786677883,
+    "mean_net_us": -0.12131340196693045,
+    "mean_p_entry": 0.518124752708319,
+    "mean_pnl_usd": -2.4262680393386096,
+    "missed": 1163,
+    "n": 56256,
+    "n_events": 1105,
+    "risk": {
+     "best_day_usd": -31.386911393630186,
+     "capital_usd": 120.0,
+     "daily_stop": {
+      "days_stopped": 47,
+      "limit_usd": 10.0,
+      "mean_net": -0.09086735079182849,
+      "n": 738,
+      "skipped": 55518,
+      "total_usd": -1341.2020976873885
+     },
+     "days_with_exits": 47,
+     "longest_losing_streak": 7,
+     "max_drawdown_usd": -136496.2091759917,
+     "max_open": 6,
+     "sharpe_daily": -66.37549061880013,
+     "worst_day_usd": -3953.158755609912,
+     "worst_trip_usd": -21.3344
+    },
+    "small_entry_share": 0.860103811149033,
+    "total_usd": -136492.1348210328,
+    "trips_per_day": 1222.9565217391305,
+    "win_cents": 1.7055392898968624,
+    "win_rate": 0.7420008532423208,
+    "worst_case_net": 0.04046372596208769
+   }
+  },
+  {
+   "bar": {
+    "checks": {
+     "ci_lower": false,
+     "loss_guards": true,
+     "mean": false,
+     "n": true,
+     "placebo": false,
+     "stress": false
+    },
+    "passes": false
+   },
+   "by_sub": {
+    "15m": {
+     "mean_net_us": -0.07509179023836485,
+     "n": 27068,
+     "total_usd": -40651.69156344119,
+     "win_rate": 0.38739470962021577
+    },
+    "1h": {
+     "mean_net_us": -0.06132993666208985,
+     "n": 8503,
+     "total_usd": -10429.769028755,
+     "win_rate": 0.4306715276961073
+    },
+    "5m": {
+     "mean_net_us": -0.09108632335143159,
+     "n": 63490,
+     "total_usd": -115661.41339164785,
+     "win_rate": 0.3615214994487321
+    }
+   },
+   "by_symbol": {
+    "BTCUSDT": {
+     "mean_net_us": -0.08475760501895097,
+     "n": 98077,
+     "total_usd": -166255.43254887307,
+     "win_rate": 0.3741346085218757
+    },
+    "ETHUSDT": {
+     "mean_net_us": -0.0316173451666615,
+     "n": 834,
+     "total_usd": -527.377317379914,
+     "win_rate": 0.4136690647482014
+    },
+    "SOLUSDT": {
+     "mean_net_us": 0.02834776891109075,
+     "n": 117,
+     "total_usd": 66.33377925195231,
+     "win_rate": 0.39316239316239315
+    },
+    "XRPUSDT": {
+     "mean_net_us": -0.03999681339847392,
+     "n": 33,
+     "total_usd": -26.397896842992786,
+     "win_rate": 0.48484848484848486
+    }
+   },
+   "cell": "m0.05|tp0.05|sl0.05|tend|taker",
+   "checks": {
+    "ci_lower": false,
+    "loss_guards": true,
+    "mean": false,
+    "n": true,
+    "stress": false
+   },
+   "entry": {
+    "gap_at_fill": 0.049029945524283025,
+    "gap_at_signal": 0.08668829070584898,
+    "share_fill_above_fair": 0.21029466692240134,
+    "share_gap_still_m": 0.44557393928993244,
+    "slippage": 0.03596469896772998
+   },
+   "markets_traded": 15822,
+   "passes": false,
+   "placebo": null,
+   "selectable": true,
+   "summary": {
+    "breakeven_win_rate": 0.5639606403417288,
+    "ci95": [
+     -0.08692326125326737,
+     -0.08135563915347083
+    ],
+    "exit_mix": {
+     "fair": 0.16429270853312605,
+     "fair->settle": 2.018958015768062e-05,
+     "sl": 0.46607645794005714,
+     "sl->settle": 0.00016151664126144496,
+     "time": 0.024489960731266594,
+     "time->settle": 0.0008378675765437457,
+     "tp": 0.3440910146273508,
+     "tp->settle": 3.0284370236520932e-05
+    },
+    "hold_min_median": 0.31666666666666665,
+    "late_stops": 0,
+    "loss_cents": 9.683814042714001,
+    "losses": 61960,
+    "mean_net_com": -0.08467679840751803,
+    "mean_net_stress": -0.08467679840751803,
+    "mean_net_us": -0.08416171550047144,
+    "mean_p_entry": 0.46600696581960305,
+    "mean_pnl_usd": -1.6832343100094287,
+    "missed": 2527,
+    "n": 99061,
+    "n_events": 1105,
+    "risk": {
+     "best_day_usd": -52.905236760780916,
+     "capital_usd": 100.0,
+     "daily_stop": {
+      "days_stopped": 47,
+      "limit_usd": 10.0,
+      "mean_net": -0.07423978729790948,
+      "n": 467,
+      "skipped": 98594,
+      "total_usd": -693.3996133624747
+     },
+     "days_with_exits": 47,
+     "longest_losing_streak": 27,
+     "max_drawdown_usd": -166784.40538875715,
+     "max_open": 5,
+     "sharpe_daily": -65.68360537144085,
+     "worst_day_usd": -5291.464434238219,
+     "worst_trip_usd": -21.3761
+    },
+    "small_entry_share": 0.8717860712086493,
+    "total_usd": -166742.873983844,
+    "trips_per_day": 2153.5,
+    "win_cents": 7.48726732361353,
+    "win_rate": 0.37452680671505434,
+    "worst_case_net": 0.228814156955722
+   }
+  },
+  {
+   "bar": {
+    "checks": {
+     "ci_lower": false,
+     "loss_guards": true,
+     "mean": false,
+     "n": true,
+     "placebo": false,
+     "stress": false
+    },
+    "passes": false
+   },
+   "by_sub": {
+    "15m": {
+     "mean_net_us": -0.12619557893892536,
+     "n": 26279,
+     "total_usd": -66325.8723787204,
+     "win_rate": 0.4248259066174512
+    },
+    "1h": {
+     "mean_net_us": -0.1004111449418721,
+     "n": 8076,
+     "total_usd": -16218.40813101118,
+     "win_rate": 0.44353640416047546
+    },
+    "5m": {
+     "mean_net_us": -0.12647952437726187,
+     "n": 63863,
+     "total_usd": -161547.23730610148,
+     "win_rate": 0.4352441946040743
+    }
+   },
+   "by_symbol": {
+    "BTCUSDT": {
+     "mean_net_us": -0.12464641043804163,
+     "n": 97265,
+     "total_usd": -242474.6622251224,
+     "win_rate": 0.43288952860741275
+    },
+    "ETHUSDT": {
+     "mean_net_us": -0.10621176112225116,
+     "n": 804,
+     "total_usd": -1707.8851188457984,
+     "win_rate": 0.45149253731343286
+    },
+    "SOLUSDT": {
+     "mean_net_us": 0.07903423236479667,
+     "n": 116,
+     "total_usd": 183.35941908632824,
+     "win_rate": 0.5086206896551724
+    },
+    "XRPUSDT": {
+     "mean_net_us": -0.13989377416851273,
+     "n": 33,
+     "total_usd": -92.32989095121839,
+     "win_rate": 0.45454545454545453
+    }
+   },
+   "cell": "m0.05|tp0.05|sl0.05|tend|maker",
+   "checks": {
+    "ci_lower": false,
+    "loss_guards": true,
+    "mean": false,
+    "n": true,
+    "stress": false
+   },
+   "entry": {
+    "gap_at_fill": 0.04827844278064828,
+    "gap_at_signal": 0.08625393167340883,
+    "share_fill_above_fair": 0.21387118450793133,
+    "share_gap_still_m": 0.4399295444826814,
+    "slippage": 0.036830059675982
+   },
+   "markets_traded": 15822,
+   "passes": false,
+   "placebo": null,
+   "selectable": true,
+   "summary": {
+    "breakeven_win_rate": 0.7421895642000668,
+    "ci95": [
+     -0.12710504447090423,
+     -0.12149471434334981
+    ],
+    "exit_mix": {
+     "fair": 0.12156631167403123,
+     "sl": 0.5663727626300679,
+     "sl->settle": 0.000193447229632043,
+     "time": 0.034952859964568615,
+     "time->settle": 0.0007839703516667006,
+     "tp": 0.2761306481500336
+    },
+    "hold_min_median": 0.31666666666666665,
+    "late_stops": 0,
+    "loss_cents": 10.85627773853781,
+    "losses": 55676,
+    "mean_net_com": -0.12466209042751035,
+    "mean_net_stress": -0.13917426136957176,
+    "mean_net_us": -0.12426007341619309,
+    "mean_p_entry": 0.4720431346384685,
+    "mean_pnl_usd": -2.4852014683238615,
+    "missed": 2496,
+    "n": 98218,
+    "n_events": 1105,
+    "risk": {
+     "best_day_usd": -72.44321015322545,
+     "capital_usd": 100.0,
+     "daily_stop": {
+      "days_stopped": 47,
+      "limit_usd": 10.0,
+      "mean_net": -0.07744966315324343,
+      "n": 436,
+      "skipped": 97782,
+      "total_usd": -675.3610626962827
+     },
+     "days_with_exits": 47,
+     "longest_losing_streak": 23,
+     "max_drawdown_usd": -244093.43426782687,
+     "max_open": 5,
+     "sharpe_daily": -68.49464302833641,
+     "worst_day_usd": -7179.9533516730435,
+     "worst_trip_usd": -21.3622
+    },
+    "small_entry_share": 0.8702376346494533,
+    "total_usd": -244091.51781583304,
+    "trips_per_day": 2135.1739130434785,
+    "win_cents": 3.7710873743612465,
+    "win_rate": 0.4331385285792828,
+    "worst_case_net": 0.11092439600454972
+   }
+  },
+  {
+   "bar": {
+    "checks": {
+     "ci_lower": false,
+     "loss_guards": true,
+     "mean": false,
+     "n": true,
+     "placebo": false,
+     "stress": false
+    },
+    "passes": false
+   },
+   "by_sub": {
+    "15m": {
+     "mean_net_us": -0.07327699718437085,
+     "n": 23489,
+     "total_usd": -34424.067737273734,
+     "win_rate": 0.4450168163821363
+    },
+    "1h": {
+     "mean_net_us": -0.06007779729760508,
+     "n": 7152,
+     "total_usd": -8593.528125449431,
+     "win_rate": 0.5040548098434005
+    },
+    "5m": {
+     "mean_net_us": -0.08917677889689234,
+     "n": 56472,
+     "total_usd": -100719.82115730608,
+     "win_rate": 0.4051034140813146
+    }
+   },
+   "by_symbol": {
+    "BTCUSDT": {
+     "mean_net_us": -0.083480037477226,
+     "n": 86215,
+     "total_usd": -143944.6286219808,
+     "win_rate": 0.4234181986893232
+    },
+    "ETHUSDT": {
+     "mean_net_us": -0.011684657097841111,
+     "n": 756,
+     "total_usd": -176.67201531935746,
+     "win_rate": 0.48544973544973546
+    },
+    "SOLUSDT": {
+     "mean_net_us": 0.18680133491665174,
+     "n": 110,
+     "total_usd": 410.9629368166339,
+     "win_rate": 0.41818181818181815
+    },
+    "XRPUSDT": {
+     "mean_net_us": -0.04231143679018203,
+     "n": 32,
+     "total_usd": -27.07931954571651,
+     "win_rate": 0.53125
+    }
+   },
+   "cell": "m0.05|tp0.05|sl0.1|tend|taker",
+   "checks": {
+    "ci_lower": false,
+    "loss_guards": true,
+    "mean": false,
+    "n": true,
+    "stress": false
+   },
+   "entry": {
+    "gap_at_fill": 0.04620532624924604,
+    "gap_at_signal": 0.08565966772147948,
+    "share_fill_above_fair": 0.22127581417239678,
+    "share_gap_still_m": 0.42613616796574566,
+    "slippage": 0.038073776612261086
+   },
+   "markets_traded": 15822,
+   "passes": false,
+   "placebo": null,
+   "selectable": true,
+   "summary": {
+    "breakeven_win_rate": 0.5959978930722096,
+    "ci95": [
+     -0.08575693830629688,
+     -0.0791984336792349
+    ],
+    "exit_mix": {
+     "fair": 0.21023268628103728,
+     "fair->settle": 2.2958685844822242e-05,
+     "sl": 0.32605925636816546,
+     "sl->settle": 0.00014923145799134458,
+     "time": 0.04333451953210198,
+     "time->settle": 0.003593034334714681,
+     "tp": 0.4165853546542996,
+     "tp->settle": 2.2958685844822242e-05
+    },
+    "hold_min_median": 0.38333333333333336,
+    "late_stops": 0,
+    "loss_cents": 11.391443713805083,
+    "losses": 50178,
+    "mean_net_com": -0.08300366953238845,
+    "mean_net_stress": -0.08300366953238845,
+    "mean_net_us": -0.08250055503772642,
+    "mean_p_entry": 0.47390346945532,
+    "mean_pnl_usd": -1.6500111007545288,
+    "missed": 2225,
+    "n": 87113,
+    "n_events": 1105,
+    "risk": {
+     "best_day_usd": -48.125578685258134,
+     "capital_usd": 100.0,
+     "daily_stop": {
+      "days_stopped": 47,
+      "limit_usd": 10.0,
+      "mean_net": -0.05951601514796596,
+      "n": 656,
+      "skipped": 86457,
+      "total_usd": -780.8501187413134
+     },
+     "days_with_exits": 47,
+     "longest_losing_streak": 21,
+     "max_drawdown_usd": -143747.22928445833,
+     "max_open": 5,
+     "sharpe_daily": -58.51653529433603,
+     "worst_day_usd": -4739.24726807544,
+     "worst_trip_usd": -21.3761
+    },
+    "small_entry_share": 0.8696979784877114,
+    "total_usd": -143737.41702002927,
+    "trips_per_day": 1893.7608695652175,
+    "win_cents": 7.721784447263136,
+    "win_rate": 0.4239895308392548,
+    "worst_case_net": 0.23160829028936375
+   }
+  },
+  {
+   "bar": {
+    "checks": {
+     "ci_lower": false,
+     "loss_guards": true,
+     "mean": false,
+     "n": true,
+     "placebo": false,
+     "stress": false
+    },
+    "passes": false
+   },
+   "by_sub": {
+    "15m": {
+     "mean_net_us": -0.1323968028686673,
+     "n": 22412,
+     "total_usd": -59345.54291785143,
+     "win_rate": 0.5182937711940032
+    },
+    "1h": {
+     "mean_net_us": -0.10717483053314783,
+     "n": 6728,
+     "total_usd": -14421.445196540371,
+     "win_rate": 0.5444411414982164
+    },
+    "5m": {
+     "mean_net_us": -0.12966874943735185,
+     "n": 56782,
+     "total_usd": -147257.01861103423,
+     "win_rate": 0.5214152372230636
+    }
+   },
+   "by_symbol": {
+    "BTCUSDT": {
+     "mean_net_us": -0.1289739638692539,
+     "n": 85095,
+     "total_usd": -219500.78910908318,
+     "win_rate": 0.522122333862154
+    },
+    "ETHUSDT": {
+     "mean_net_us": -0.09222818068531305,
+     "n": 693,
+     "total_usd": -1278.282584298439,
+     "win_rate": 0.5526695526695526
+    },
+    "SOLUSDT": {
+     "mean_net_us": -0.06918655326444692,
+     "n": 103,
+     "total_usd": -142.52429972476062,
+     "win_rate": 0.5728155339805825
+    },
+    "XRPUSDT": {
+     "mean_net_us": -0.165178600515565,
+     "n": 31,
+     "total_usd": -102.41073231965028,
+     "win_rate": 0.45161290322580644
+    }
+   },
+   "cell": "m0.05|tp0.05|sl0.1|tend|maker",
+   "checks": {
+    "ci_lower": false,
+    "loss_guards": true,
+    "mean": false,
+    "n": true,
+    "stress": false
+   },
+   "entry": {
+    "gap_at_fill": 0.04527947512915954,
+    "gap_at_signal": 0.08514747688997557,
+    "share_fill_above_fair": 0.2268336398128535,
+    "share_gap_still_m": 0.4202532529503503,
+    "slippage": 0.03934885004557622
+   },
+   "markets_traded": 15822,
+   "passes": false,
+   "placebo": null,
+   "selectable": true,
+   "summary": {
+    "breakeven_win_rate": 0.7975027829257585,
+    "ci95": [
+     -0.13179241829836497,
+     -0.1254703755912668
+    ],
+    "exit_mix": {
+     "fair": 0.17167896464235005,
+     "sl": 0.406496589930402,
+     "sl->settle": 0.0002327692558366891,
+     "time": 0.06010102185703312,
+     "time->settle": 0.0037592234817625286,
+     "tp": 0.3577314308326156
+    },
+    "hold_min_median": 0.38333333333333336,
+    "late_stops": 0,
+    "loss_cents": 13.830365316731212,
+    "losses": 41036,
+    "mean_net_com": -0.12897393948585612,
+    "mean_net_stress": -0.14815258628871275,
+    "mean_net_us": -0.12861898391880197,
+    "mean_p_entry": 0.4816539257954586,
+    "mean_pnl_usd": -2.572379678376039,
+    "missed": 2177,
+    "n": 85922,
+    "n_events": 1105,
+    "risk": {
+     "best_day_usd": -63.45074070320811,
+     "capital_usd": 100.0,
+     "daily_stop": {
+      "days_stopped": 47,
+      "limit_usd": 10.0,
+      "mean_net": -0.08417096400369514,
+      "n": 450,
+      "skipped": 85472,
+      "total_usd": -757.5386760332564
+     },
+     "days_with_exits": 47,
+     "longest_losing_streak": 13,
+     "max_drawdown_usd": -221026.39104401233,
+     "max_open": 5,
+     "sharpe_daily": -65.83174478038886,
+     "worst_day_usd": -6476.798560868435,
+     "worst_trip_usd": -21.3622
+    },
+    "small_entry_share": 0.8675310165033402,
+    "total_usd": -221024.00672542604,
+    "trips_per_day": 1867.8695652173913,
+    "win_cents": 3.511725034342479,
+    "win_rate": 0.5224040408742813,
+    "worst_case_net": 0.09982038294340054
+   }
+  },
+  {
+   "bar": {
+    "checks": {
+     "ci_lower": false,
+     "loss_guards": true,
+     "mean": false,
+     "n": true,
+     "placebo": false,
+     "stress": false
+    },
+    "passes": false
+   },
+   "by_sub": {
+    "15m": {
+     "mean_net_us": -0.05482046661889676,
+     "n": 14059,
+     "total_usd": -15414.41880390139,
+     "win_rate": 0.567821324418522
+    },
+    "1h": {
+     "mean_net_us": -0.05142979574833289,
+     "n": 4107,
+     "total_usd": -4224.443422768063,
+     "win_rate": 0.6323350377404432
+    },
+    "5m": {
+     "mean_net_us": -0.08097075596153036,
+     "n": 37698,
+     "total_usd": -61048.71116475543,
+     "win_rate": 0.5012732770969283
+    }
+   },
+   "by_symbol": {
+    "BTCUSDT": {
+     "mean_net_us": -0.0732482708327748,
+     "n": 55253,
+     "total_usd": -80943.7341664661,
+     "win_rate": 0.527048305069408
+    },
+    "ETHUSDT": {
+     "mean_net_us": 0.021214993309260414,
+     "n": 509,
+     "total_usd": 215.96863188827098,
+     "win_rate": 0.593320235756385
+    },
+    "SOLUSDT": {
+     "mean_net_us": 0.04823610259148602,
+     "n": 75,
+     "total_usd": 72.354153887229,
+     "win_rate": 0.48
+    },
+    "XRPUSDT": {
+     "mean_net_us": -0.05955927913753767,
+     "n": 27,
+     "total_usd": -32.16201073427034,
+     "win_rate": 0.6666666666666666
+    }
+   },
+   "cell": "m0.05|tp0.05|slnone|tend|taker",
+   "checks": {
+    "ci_lower": false,
+    "loss_guards": true,
+    "mean": false,
+    "n": true,
+    "stress": false
+   },
+   "entry": {
+    "gap_at_fill": 0.038697517622382424,
+    "gap_at_signal": 0.08174122645548726,
+    "share_fill_above_fair": 0.2526134899040527,
+    "share_gap_still_m": 0.3787770299298296,
+    "slippage": 0.04262943565358191
+   },
+   "markets_traded": 15822,
+   "passes": false,
+   "placebo": null,
+   "selectable": true,
+   "summary": {
+    "breakeven_win_rate": 0.6638513262297684,
+    "ci95": [
+     -0.07623229299960091,
+     -0.06816988807812108
+    ],
+    "exit_mix": {
+     "fair": 0.2939102105112416,
+     "time": 0.1579192324215953,
+     "time->settle": 0.02685092367177431,
+     "tp": 0.5213017327796077,
+     "tp->settle": 1.790061578118287e-05
+    },
+    "hold_min_median": 0.5333333333333333,
+    "late_stops": 0,
+    "loss_cents": 15.391224229442013,
+    "losses": 26387,
+    "mean_net_com": -0.0726778319247682,
+    "mean_net_stress": -0.0726778319247682,
+    "mean_net_us": -0.07221786247979457,
+    "mean_p_entry": 0.5044350292366586,
+    "mean_pnl_usd": -1.4443572495958912,
+    "missed": 1148,
+    "n": 55864,
+    "n_events": 1105,
+    "risk": {
+     "best_day_usd": -19.574137092432498,
+     "capital_usd": 120.0,
+     "daily_stop": {
+      "days_stopped": 46,
+      "limit_usd": 10.0,
+      "mean_net": -0.03678724309223808,
+      "n": 1540,
+      "skipped": 54324,
+      "total_usd": -1133.0470872409328
+     },
+     "days_with_exits": 47,
+     "longest_losing_streak": 15,
+     "max_drawdown_usd": -80726.95069971078,
+     "max_open": 6,
+     "sharpe_daily": -55.910691599468294,
+     "worst_day_usd": -2892.753724873447,
+     "worst_trip_usd": -21.3622
+    },
+    "small_entry_share": 0.8630602892739511,
+    "total_usd": -80687.57339142487,
+    "trips_per_day": 1214.4347826086957,
+    "win_cents": 7.793521543160226,
+    "win_rate": 0.5276564513819275,
+    "worst_case_net": 0.19812446213998774
+   }
+  },
+  {
+   "bar": {
+    "checks": {
+     "ci_lower": false,
+     "loss_guards": true,
+     "mean": false,
+     "n": true,
+     "placebo": false,
+     "stress": false
+    },
+    "passes": false
+   },
+   "by_sub": {
+    "15m": {
+     "mean_net_us": -0.11079497840006171,
+     "n": 12107,
+     "total_usd": -26827.89606979094,
+     "win_rate": 0.7319732386222846
+    },
+    "1h": {
+     "mean_net_us": -0.08963627734239323,
+     "n": 3605,
+     "total_usd": -6462.775596386551,
+     "win_rate": 0.7553398058252427
+    },
+    "5m": {
+     "mean_net_us": -0.11725410867665996,
+     "n": 35548,
+     "total_usd": -83362.98110475816,
+     "win_rate": 0.7077191403173174
+    }
+   },
+   "by_symbol": {
+    "BTCUSDT": {
+     "mean_net_us": -0.11439924206862952,
+     "n": 50740,
+     "total_usd": -116092.35085124524,
+     "win_rate": 0.7162790697674418
+    },
+    "ETHUSDT": {
+     "mean_net_us": -0.06114312867476042,
+     "n": 423,
+     "total_usd": -517.2708685884731,
+     "win_rate": 0.7683215130023641
+    },
+    "SOLUSDT": {
+     "mean_net_us": 0.03799970572608052,
+     "n": 74,
+     "total_usd": 56.23956447459916,
+     "win_rate": 0.8108108108108109
+    },
+    "XRPUSDT": {
+     "mean_net_us": -0.21797959907944192,
+     "n": 23,
+     "total_usd": -100.27061557654326,
+     "win_rate": 0.6086956521739131
+    }
+   },
+   "cell": "m0.05|tp0.05|slnone|tend|maker",
+   "checks": {
+    "ci_lower": false,
+    "loss_guards": true,
+    "mean": false,
+    "n": true,
+    "stress": false
+   },
+   "entry": {
+    "gap_at_fill": 0.036532798117315295,
+    "gap_at_signal": 0.0811032920029398,
+    "share_fill_above_fair": 0.2644557159578619,
+    "share_gap_still_m": 0.3683573936792821,
+    "slippage": 0.04522104172573937
+   },
+   "markets_traded": 15822,
+   "passes": false,
+   "placebo": null,
+   "selectable": true,
+   "summary": {
+    "breakeven_win_rate": 0.884023044508722,
+    "ci95": [
+     -0.11782920302075307,
+     -0.1098506963753094
+    ],
+    "exit_mix": {
+     "fair": 0.24379633242294185,
+     "time": 0.20733515411627,
+     "time->settle": 0.03236441669918065,
+     "tp": 0.5165040967616075
+    },
+    "hold_min_median": 0.5833333333333334,
+    "late_stops": 0,
+    "loss_cents": 25.32758969282248,
+    "losses": 14517,
+    "mean_net_com": -0.11405099295352636,
+    "mean_net_stress": -0.13922670491580894,
+    "mean_net_us": -0.11378623953466217,
+    "mean_p_entry": 0.5174573872205697,
+    "mean_pnl_usd": -2.275724790693243,
+    "missed": 999,
+    "n": 51260,
+    "n_events": 1105,
+    "risk": {
+     "best_day_usd": -27.398574477898357,
+     "capital_usd": 120.0,
+     "daily_stop": {
+      "days_stopped": 46,
+      "limit_usd": 10.0,
+      "mean_net": -0.07486906791247033,
+      "n": 854,
+      "skipped": 50406,
+      "total_usd": -1278.7636799449933
+     },
+     "days_with_exits": 47,
+     "longest_losing_streak": 11,
+     "max_drawdown_usd": -116659.9984234446,
+     "max_open": 6,
+     "sharpe_daily": -64.49025770146176,
+     "worst_day_usd": -3418.5362973629926,
+     "worst_trip_usd": -21.3344
+    },
+    "small_entry_share": 0.8588373000390168,
+    "total_usd": -116653.65277093565,
+    "trips_per_day": 1114.3478260869565,
+    "win_cents": 3.322782998420857,
+    "win_rate": 0.716796722590714,
+    "worst_case_net": 0.07616739404332479
+   }
+  },
+  {
+   "bar": {
+    "checks": {
+     "ci_lower": false,
+     "loss_guards": true,
+     "mean": false,
+     "n": true,
+     "placebo": false,
+     "stress": false
+    },
+    "passes": false
+   },
+   "by_sub": {
+    "15m": {
+     "mean_net_us": -0.074197766397198,
+     "n": 25532,
+     "total_usd": -37888.34743306518,
+     "win_rate": 0.37321792260692466
+    },
+    "1h": {
+     "mean_net_us": -0.059334422139723376,
+     "n": 7617,
+     "total_usd": -9039.00586876546,
+     "win_rate": 0.40094525403702247
+    },
+    "5m": {
+     "mean_net_us": -0.09194591029858973,
+     "n": 60724,
+     "total_usd": -111666.46913943125,
+     "win_rate": 0.35852381266056255
+    }
+   },
+   "by_symbol": {
+    "BTCUSDT": {
+     "mean_net_us": -0.0852375412452423,
+     "n": 92934,
+     "total_usd": -158429.31316170693,
+     "win_rate": 0.3655389846557772
+    },
+    "ETHUSDT": {
+     "mean_net_us": -0.02291587017116076,
+     "n": 792,
+     "total_usd": -362.9873835111865,
+     "win_rate": 0.4065656565656566
+    },
+    "SOLUSDT": {
+     "mean_net_us": 0.09879847018478946,
+     "n": 115,
+     "total_usd": 227.23648142501574,
+     "win_rate": 0.4
+    },
+    "XRPUSDT": {
+     "mean_net_us": -0.044934964794979,
+     "n": 32,
+     "total_usd": -28.758377468786566,
+     "win_rate": 0.46875
+    }
+   },
+   "cell": "m0.05|tp0.08|sl0.05|tend|taker",
+   "checks": {
+    "ci_lower": false,
+    "loss_guards": true,
+    "mean": false,
+    "n": true,
+    "stress": false
+   },
+   "entry": {
+    "gap_at_fill": 0.0476138435556419,
+    "gap_at_signal": 0.08643672880856815,
+    "share_fill_above_fair": 0.21795404429388643,
+    "share_gap_still_m": 0.43478955610239367,
+    "slippage": 0.03721505636875247
+   },
+   "markets_traded": 15822,
+   "passes": false,
+   "placebo": null,
+   "selectable": true,
+   "summary": {
+    "breakeven_win_rate": 0.5429507810412508,
+    "ci95": [
+     -0.08745046517618422,
+     -0.08159083655801916
+    ],
+    "exit_mix": {
+     "fair": 0.2428600343016629,
+     "fair->settle": 2.130538067388919e-05,
+     "sl": 0.5042344444089355,
+     "sl->settle": 0.0002024011164019473,
+     "time": 0.031286951519606275,
+     "time->settle": 0.0010120055820097365,
+     "tp": 0.22037220500037286,
+     "tp->settle": 1.0652690336944595e-05
+    },
+    "hold_min_median": 0.35,
+    "late_stops": 0,
+    "loss_cents": 10.032564143186615,
+    "losses": 59519,
+    "mean_net_com": -0.08498640954413815,
+    "mean_net_stress": -0.08498640954413815,
+    "mean_net_us": -0.08447254399095688,
+    "mean_p_entry": 0.4652477790879316,
+    "mean_pnl_usd": -1.6894508798191379,
+    "missed": 2404,
+    "n": 93873,
+    "n_events": 1105,
+    "risk": {
+     "best_day_usd": -54.021344900241424,
+     "capital_usd": 100.0,
+     "daily_stop": {
+      "days_stopped": 47,
+      "limit_usd": 10.0,
+      "mean_net": -0.07729154386725534,
+      "n": 462,
+      "skipped": 93411,
+      "total_usd": -714.1738653334394
+     },
+     "days_with_exits": 47,
+     "longest_losing_streak": 27,
+     "max_drawdown_usd": -158618.89291438693,
+     "max_open": 5,
+     "sharpe_daily": -63.41272907197868,
+     "worst_day_usd": -5284.95827712673,
+     "worst_trip_usd": -21.3761
+    },
+    "small_entry_share": 0.8716563868204915,
+    "total_usd": -158593.82244126193,
+    "trips_per_day": 2040.7173913043478,
+    "win_cents": 8.4452877975483,
+    "win_rate": 0.3659625238353946,
+    "worst_case_net": 0.25709909130803277
+   }
+  },
+  {
+   "bar": {
+    "checks": {
+     "ci_lower": false,
+     "loss_guards": true,
+     "mean": false,
+     "n": true,
+     "placebo": false,
+     "stress": false
+    },
+    "passes": false
+   },
+   "by_sub": {
+    "15m": {
+     "mean_net_us": -0.11751782673246707,
+     "n": 25125,
+     "total_usd": -59052.70793306471,
+     "win_rate": 0.401273631840796
+    },
+    "1h": {
+     "mean_net_us": -0.0971869918420252,
+     "n": 7614,
+     "total_usd": -14799.635117703598,
+     "win_rate": 0.41358024691358025
+    },
+    "5m": {
+     "mean_net_us": -0.11958503324774704,
+     "n": 61347,
+     "total_usd": -146723.66069299073,
+     "win_rate": 0.4098651930819763
+    }
+   },
+   "by_symbol": {
+    "BTCUSDT": {
+     "mean_net_us": -0.11769435782866333,
+     "n": 93164,
+     "total_usd": -219297.5430549918,
+     "win_rate": 0.4075608604181873
+    },
+    "ETHUSDT": {
+     "mean_net_us": -0.09099551752182297,
+     "n": 776,
+     "total_usd": -1412.2504319386926,
+     "win_rate": 0.42912371134020616
+    },
+    "SOLUSDT": {
+     "mean_net_us": 0.09514741794203514,
+     "n": 114,
+     "total_usd": 216.93611290784006,
+     "win_rate": 0.5087719298245614
+    },
+    "XRPUSDT": {
+     "mean_net_us": -0.12991620271313148,
+     "n": 32,
+     "total_usd": -83.14636973640415,
+     "win_rate": 0.4375
+    }
+   },
+   "cell": "m0.05|tp0.08|sl0.05|tend|maker",
+   "checks": {
+    "ci_lower": false,
+    "loss_guards": true,
+    "mean": false,
+    "n": true,
+    "stress": false
+   },
+   "entry": {
+    "gap_at_fill": 0.04729086622794835,
+    "gap_at_signal": 0.08619592439299556,
+    "share_fill_above_fair": 0.21881045001381716,
+    "share_gap_still_m": 0.4328911846608422,
+    "slippage": 0.037598503213621584
+   },
+   "markets_traded": 15822,
+   "passes": false,
+   "placebo": null,
+   "selectable": true,
+   "summary": {
+    "breakeven_win_rate": 0.670950046879742,
+    "ci95": [
+     -0.12019708903077546,
+     -0.11430645132750043
+    ],
+    "exit_mix": {
+     "fair": 0.19527878749229427,
+     "sl": 0.59184150670663,
+     "sl->settle": 0.0002232000510171545,
+     "time": 0.03951703760389431,
+     "time->settle": 0.0008290287609208596,
+     "tp": 0.1723104393852433
+    },
+    "hold_min_median": 0.3333333333333333,
+    "late_stops": 0,
+    "loss_cents": 10.884694689186988,
+    "losses": 55711,
+    "mean_net_com": -0.11762966735667685,
+    "mean_net_stress": -0.131231988550371,
+    "mean_net_us": -0.11722041735420735,
+    "mean_p_entry": 0.47083529918997724,
+    "mean_pnl_usd": -2.3444083470841472,
+    "missed": 2409,
+    "n": 94086,
+    "n_events": 1105,
+    "risk": {
+     "best_day_usd": -69.50393350295242,
+     "capital_usd": 100.0,
+     "daily_stop": {
+      "days_stopped": 47,
+      "limit_usd": 10.0,
+      "mean_net": -0.07693420131358178,
+      "n": 450,
+      "skipped": 93636,
+      "total_usd": -692.407811822236
+     },
+     "days_with_exits": 47,
+     "longest_losing_streak": 24,
+     "max_drawdown_usd": -220577.920195743,
+     "max_open": 5,
+     "sharpe_daily": -68.4422716409942,
+     "worst_day_usd": -6472.788275163414,
+     "worst_trip_usd": -21.3622
+    },
+    "small_entry_share": 0.8711179133983802,
+    "total_usd": -220576.00374375907,
+    "trips_per_day": 2045.3478260869565,
+    "win_cents": 5.3381146537832365,
+    "win_rate": 0.407871521799205,
+    "worst_case_net": 0.15435426951940676
+   }
+  },
+  {
+   "bar": {
+    "checks": {
+     "ci_lower": false,
+     "loss_guards": true,
+     "mean": false,
+     "n": true,
+     "placebo": false,
+     "stress": false
+    },
+    "passes": false
+   },
+   "by_sub": {
+    "15m": {
+     "mean_net_us": -0.07135019422377985,
+     "n": 21864,
+     "total_usd": -31200.012930174456,
+     "win_rate": 0.4343669959751189
+    },
+    "1h": {
+     "mean_net_us": -0.05668257175983988,
+     "n": 6357,
+     "total_usd": -7206.622173546041,
+     "win_rate": 0.4823029731005191
+    },
+    "5m": {
+     "mean_net_us": -0.08806479594461435,
+     "n": 53232,
+     "total_usd": -93757.30435447422,
+     "win_rate": 0.4066726780883679
+    }
+   },
+   "by_symbol": {
+    "BTCUSDT": {
+     "mean_net_us": -0.08203720157787545,
+     "n": 80620,
+     "total_usd": -132276.78382416637,
+     "win_rate": 0.4194368643016621
+    },
+    "ETHUSDT": {
+     "mean_net_us": -0.007673131719723087,
+     "n": 700,
+     "total_usd": -107.42384407612325,
+     "win_rate": 0.48
+    },
+    "SOLUSDT": {
+     "mean_net_us": 0.12240588736238918,
+     "n": 102,
+     "total_usd": 249.70801021927397,
+     "win_rate": 0.43137254901960786
+    },
+    "XRPUSDT": {
+     "mean_net_us": -0.047483548663726255,
+     "n": 31,
+     "total_usd": -29.439800171510285,
+     "win_rate": 0.5161290322580645
+    }
+   },
+   "cell": "m0.05|tp0.08|sl0.1|tend|taker",
+   "checks": {
+    "ci_lower": false,
+    "loss_guards": true,
+    "mean": false,
+    "n": true,
+    "stress": false
+   },
+   "entry": {
+    "gap_at_fill": 0.04422450271452693,
+    "gap_at_signal": 0.08518585406925198,
+    "share_fill_above_fair": 0.23163051084674596,
+    "share_gap_still_m": 0.4120535769093833,
+    "slippage": 0.03953314144248708
+   },
+   "markets_traded": 15822,
+   "passes": false,
+   "placebo": null,
+   "selectable": true,
+   "summary": {
+    "breakeven_win_rate": 0.5775423010506661,
+    "ci95": [
+     -0.08471600615961233,
+     -0.07759009202847116
+    ],
+    "exit_mix": {
+     "fair": 0.31208181405227553,
+     "fair->settle": 4.910807459516531e-05,
+     "sl": 0.3580101408174039,
+     "sl->settle": 0.00022098633567824388,
+     "time": 0.05261930192871963,
+     "time->settle": 0.004063693172749929,
+     "tp": 0.27294267859992877,
+     "tp->settle": 1.2277018648791327e-05
+    },
+    "hold_min_median": 0.43333333333333335,
+    "late_stops": 0,
+    "loss_cents": 11.97610662271434,
+    "losses": 47242,
+    "mean_net_com": -0.08163008696075058,
+    "mean_net_stress": -0.08163008696075058,
+    "mean_net_us": -0.08112895747129924,
+    "mean_p_entry": 0.4734994282248167,
+    "mean_pnl_usd": -1.622579149425985,
+    "missed": 2122,
+    "n": 81453,
+    "n_events": 1105,
+    "risk": {
+     "best_day_usd": -33.993483191960806,
+     "capital_usd": 100.0,
+     "daily_stop": {
+      "days_stopped": 47,
+      "limit_usd": 10.0,
+      "mean_net": -0.06180270141358606,
+      "n": 654,
+      "skipped": 80799,
+      "total_usd": -808.3793344897057
+     },
+     "days_with_exits": 47,
+     "longest_losing_streak": 19,
+     "max_drawdown_usd": -132171.0503764153,
+     "max_open": 5,
+     "sharpe_daily": -57.02401087696972,
+     "worst_day_usd": -4350.960601272306,
+     "worst_trip_usd": -21.3761
+    },
+    "small_entry_share": 0.8706125004603882,
+    "total_usd": -132163.93945819474,
+    "trips_per_day": 1770.7173913043478,
+    "win_cents": 8.760221436593842,
+    "win_rate": 0.42000908499380013,
+    "worst_case_net": 0.26188489371945833
+   }
+  },
+  {
+   "bar": {
+    "checks": {
+     "ci_lower": false,
+     "loss_guards": true,
+     "mean": false,
+     "n": true,
+     "placebo": false,
+     "stress": false
+    },
+    "passes": false
+   },
+   "by_sub": {
+    "15m": {
+     "mean_net_us": -0.12417017800829655,
+     "n": 21137,
+     "total_usd": -52491.7010512273,
+     "win_rate": 0.48895302076926717
+    },
+    "1h": {
+     "mean_net_us": -0.10258254869863016,
+     "n": 6288,
+     "total_usd": -12900.781324339729,
+     "win_rate": 0.517970737913486
+    },
+    "5m": {
+     "mean_net_us": -0.12154532566651992,
+     "n": 53742,
+     "total_usd": -130641.77783940228,
+     "win_rate": 0.4906590748390458
+    }
+   },
+   "by_symbol": {
+    "BTCUSDT": {
+     "mean_net_us": -0.1211453248092558,
+     "n": 80384,
+     "total_usd": -194762.91578934435,
+     "win_rate": 0.4920506568471338
+    },
+    "ETHUSDT": {
+     "mean_net_us": -0.08115838864933711,
+     "n": 653,
+     "total_usd": -1059.9285557603425,
+     "win_rate": 0.5237366003062787
+    },
+    "SOLUSDT": {
+     "mean_net_us": -0.06166072712586464,
+     "n": 100,
+     "total_usd": -123.32145425172926,
+     "win_rate": 0.53
+    },
+    "XRPUSDT": {
+     "mean_net_us": -0.14682402602145433,
+     "n": 30,
+     "total_usd": -88.09441561287261,
+     "win_rate": 0.43333333333333335
+    }
+   },
+   "cell": "m0.05|tp0.08|sl0.1|tend|maker",
+   "checks": {
+    "ci_lower": false,
+    "loss_guards": true,
+    "mean": false,
+    "n": true,
+    "stress": false
+   },
+   "entry": {
+    "gap_at_fill": 0.04401904405915562,
+    "gap_at_signal": 0.08500340581392192,
+    "share_fill_above_fair": 0.23256988677664567,
+    "share_gap_still_m": 0.4116328064361132,
+    "slippage": 0.04009645228724728
+   },
+   "markets_traded": 15822,
+   "passes": false,
+   "placebo": null,
+   "selectable": true,
+   "summary": {
+    "breakeven_win_rate": 0.7273298910110936,
+    "ci95": [
+     -0.12421458961961539,
+     -0.11721051892868287
+    ],
+    "exit_mix": {
+     "fair": 0.2654403883351608,
+     "sl": 0.434018751463033,
+     "sl->settle": 0.000246405558909409,
+     "time": 0.06734263924994148,
+     "time->settle": 0.004090332277896189,
+     "tp": 0.22886148311505908
+    },
+    "hold_min_median": 0.4166666666666667,
+    "late_stops": 0,
+    "loss_cents": 13.886742150431026,
+    "losses": 41206,
+    "mean_net_com": -0.12112265249231804,
+    "mean_net_stress": -0.13925354936392692,
+    "mean_net_us": -0.12075982863415509,
+    "mean_p_entry": 0.48020803333046314,
+    "mean_pnl_usd": -2.4151965726831013,
+    "missed": 2103,
+    "n": 81167,
+    "n_events": 1105,
+    "risk": {
+     "best_day_usd": -67.31271678020781,
+     "capital_usd": 100.0,
+     "daily_stop": {
+      "days_stopped": 47,
+      "limit_usd": 10.0,
+      "mean_net": -0.08366326947403813,
+      "n": 487,
+      "skipped": 80680,
+      "total_usd": -814.8802446771313
+     },
+     "days_with_exits": 47,
+     "longest_losing_streak": 20,
+     "max_drawdown_usd": -196036.6445335475,
+     "max_open": 5,
+     "sharpe_daily": -65.45598466526415,
+     "worst_day_usd": -5908.945705881585,
+     "worst_trip_usd": -21.3622
+    },
+    "small_entry_share": 0.8681360651496298,
+    "total_usd": -196034.26021496928,
+    "trips_per_day": 1764.5,
+    "win_cents": 5.206027612030477,
+    "win_rate": 0.49233062697894464,
+    "worst_case_net": 0.14556976917834105
+   }
+  },
+  {
+   "bar": {
+    "checks": {
+     "ci_lower": false,
+     "loss_guards": true,
+     "mean": false,
+     "n": true,
+     "placebo": false,
+     "stress": false
+    },
+    "passes": false
+   },
+   "by_sub": {
+    "15m": {
+     "mean_net_us": -0.05475855339022628,
+     "n": 12905,
+     "total_usd": -14133.182630017402,
+     "win_rate": 0.5659046881053855
+    },
+    "1h": {
+     "mean_net_us": -0.0489046976124033,
+     "n": 3577,
+     "total_usd": -3498.6420671913324,
+     "win_rate": 0.6203522504892368
+    },
+    "5m": {
+     "mean_net_us": -0.0791342254074248,
+     "n": 34452,
+     "total_usd": -54526.64667473198,
+     "win_rate": 0.5181992337164751
+    }
+   },
+   "by_symbol": {
+    "BTCUSDT": {
+     "mean_net_us": -0.07203304323198842,
+     "n": 50379,
+     "total_usd": -72579.0536996869,
+     "win_rate": 0.5367117251235634
+    },
+    "ETHUSDT": {
+     "mean_net_us": 0.038818553943280515,
+     "n": 460,
+     "total_usd": 357.13069627818066,
+     "win_rate": 0.6130434782608696
+    },
+    "SOLUSDT": {
+     "mean_net_us": 0.06282313885925055,
+     "n": 70,
+     "total_usd": 87.95239440295077,
+     "win_rate": 0.5285714285714286
+    },
+    "XRPUSDT": {
+     "mean_net_us": -0.04900152586989751,
+     "n": 25,
+     "total_usd": -24.500762934948753,
+     "win_rate": 0.68
+    }
+   },
+   "cell": "m0.05|tp0.08|slnone|tend|taker",
+   "checks": {
+    "ci_lower": false,
+    "loss_guards": true,
+    "mean": false,
+    "n": true,
+    "stress": false
+   },
+   "entry": {
+    "gap_at_fill": 0.03601449928289268,
+    "gap_at_signal": 0.08059148242107209,
+    "share_fill_above_fair": 0.2639297914948757,
+    "share_gap_still_m": 0.35899399222523265,
+    "slippage": 0.04470118979687636
+   },
+   "markets_traded": 15822,
+   "passes": false,
+   "placebo": {
+    "draws": 200,
+    "drop_share": 4.564730828127139e-05,
+    "mean": -0.0725097116591072,
+    "p95": -0.0685869116912806,
+    "real_percentile": 75.5
+   },
+   "placebo_why": "reading",
+   "selectable": true,
+   "summary": {
+    "breakeven_win_rate": 0.6592024454378036,
+    "ci95": [
+     -0.0752042302047411,
+     -0.06615220088195765
+    ],
+    "exit_mix": {
+     "fair": 0.4443004672713708,
+     "fair->settle": 3.9266501747359325e-05,
+     "time": 0.1852593552440413,
+     "time->settle": 0.029979974084108848,
+     "tp": 0.3404209368987317
+    },
+    "hold_min_median": 0.6333333333333333,
+    "late_stops": 0,
+    "loss_cents": 16.97697384825921,
+    "losses": 23559,
+    "mean_net_com": -0.07129125977315717,
+    "mean_net_stress": -0.07129125977315717,
+    "mean_net_us": -0.07083526855532721,
+    "mean_p_entry": 0.503950942479067,
+    "mean_pnl_usd": -1.416705371106544,
+    "missed": 993,
+    "n": 50934,
+    "n_events": 1105,
+    "risk": {
+     "best_day_usd": -20.702777170926126,
+     "capital_usd": 140.0,
+     "daily_stop": {
+      "days_stopped": 46,
+      "limit_usd": 10.0,
+      "mean_net": -0.040949408085321104,
+      "n": 1485,
+      "skipped": 49449,
+      "total_usd": -1216.1974201340367
+     },
+     "days_with_exits": 47,
+     "longest_losing_streak": 13,
+     "max_drawdown_usd": -72193.57579605759,
+     "max_open": 7,
+     "sharpe_daily": -53.56402822150905,
+     "worst_day_usd": -2645.0105539040087,
+     "worst_trip_usd": -21.3622
+    },
+    "small_entry_share": 0.8647465347312208,
+    "total_usd": -72158.47137194072,
+    "trips_per_day": 1107.2608695652175,
+    "win_cents": 8.776835115516855,
+    "win_rate": 0.5374602426669808,
+    "worst_case_net": 0.22068481887259572
+   }
+  },
+  {
+   "bar": {
+    "checks": {
+     "ci_lower": false,
+     "loss_guards": true,
+     "mean": false,
+     "n": true,
+     "placebo": false,
+     "stress": false
+    },
+    "passes": false
+   },
+   "by_sub": {
+    "15m": {
+     "mean_net_us": -0.10281143491483882,
+     "n": 10879,
+     "total_usd": -22369.71200877063,
+     "win_rate": 0.7089806048350032
+    },
+    "1h": {
+     "mean_net_us": -0.08760789776659571,
+     "n": 3295,
+     "total_usd": -5773.360462818657,
+     "win_rate": 0.7347496206373293
+    },
+    "5m": {
+     "mean_net_us": -0.10968266703523716,
+     "n": 32209,
+     "total_usd": -70655.38045075908,
+     "win_rate": 0.6798099909963053
+    }
+   },
+   "by_symbol": {
+    "BTCUSDT": {
+     "mean_net_us": -0.10727692292458639,
+     "n": 45907,
+     "total_usd": -98495.23401397977,
+     "win_rate": 0.6899601367983096
+    },
+    "ETHUSDT": {
+     "mean_net_us": -0.039429916067651526,
+     "n": 384,
+     "total_usd": -302.8217553995637,
+     "win_rate": 0.75
+    },
+    "SOLUSDT": {
+     "mean_net_us": 0.07173443244269695,
+     "n": 70,
+     "total_usd": 100.42820541977571,
+     "win_rate": 0.8142857142857143
+    },
+    "XRPUSDT": {
+     "mean_net_us": -0.22914854179273905,
+     "n": 22,
+     "total_usd": -100.82535838880516,
+     "win_rate": 0.5
+    }
+   },
+   "cell": "m0.05|tp0.08|slnone|tend|maker",
+   "checks": {
+    "ci_lower": false,
+    "loss_guards": true,
+    "mean": false,
+    "n": true,
+    "stress": false
+   },
+   "entry": {
+    "gap_at_fill": 0.034960710151743325,
+    "gap_at_signal": 0.08083428899962708,
+    "share_fill_above_fair": 0.2707026281180605,
+    "share_gap_still_m": 0.3578466248409978,
+    "slippage": 0.04636604500104133
+   },
+   "markets_traded": 15822,
+   "passes": false,
+   "placebo": null,
+   "selectable": true,
+   "summary": {
+    "breakeven_win_rate": 0.8345085331669869,
+    "ci95": [
+     -0.11091325718904793,
+     -0.1022891629600912
+    ],
+    "exit_mix": {
+     "fair": 0.3667938684431796,
+     "time": 0.23549576353405344,
+     "time->settle": 0.03598301101696742,
+     "tp": 0.36172735700579955
+    },
+    "hold_min_median": 0.75,
+    "late_stops": 0,
+    "loss_cents": 26.01246492370538,
+    "losses": 14353,
+    "mean_net_com": -0.10677161865979233,
+    "mean_net_stress": -0.1309309941811741,
+    "mean_net_us": -0.1065028705801138,
+    "mean_p_entry": 0.5159631975518854,
+    "mean_pnl_usd": -2.130057411602276,
+    "missed": 896,
+    "n": 46383,
+    "n_events": 1105,
+    "risk": {
+     "best_day_usd": -27.273865681705843,
+     "capital_usd": 120.0,
+     "daily_stop": {
+      "days_stopped": 46,
+      "limit_usd": 10.0,
+      "mean_net": -0.07172789137039856,
+      "n": 897,
+      "skipped": 45486,
+      "total_usd": -1286.79837118495
+     },
+     "days_with_exits": 47,
+     "longest_losing_streak": 11,
+     "max_drawdown_usd": -98802.3905176308,
+     "max_open": 6,
+     "sharpe_daily": -62.08856967675822,
+     "worst_day_usd": -3041.154318993728,
+     "worst_trip_usd": -21.3761
+    },
+    "small_entry_share": 0.8588275876937671,
+    "total_usd": -98798.45292234837,
+    "trips_per_day": 1008.3260869565217,
+    "win_cents": 5.158534400875798,
+    "win_rate": 0.6905547291033353,
+    "worst_case_net": 0.11680704112263525
+   }
+  },
+  {
+   "bar": {
+    "checks": {
+     "ci_lower": false,
+     "loss_guards": true,
+     "mean": false,
+     "n": true,
+     "placebo": false,
+     "stress": false
+    },
+    "passes": false
+   },
+   "by_sub": {
+    "15m": {
+     "mean_net_us": -0.08082454386602553,
+     "n": 16713,
+     "total_usd": -27016.412032657696,
+     "win_rate": 0.37144737629390295
+    },
+    "1h": {
+     "mean_net_us": -0.06144873455208508,
+     "n": 4085,
+     "total_usd": -5020.361612905352,
+     "win_rate": 0.40734394124847
+    },
+    "5m": {
+     "mean_net_us": -0.09215964814217237,
+     "n": 49151,
+     "total_usd": -90594.77731671827,
+     "win_rate": 0.34908750584932147
+    }
+   },
+   "by_symbol": {
+    "BTCUSDT": {
+     "mean_net_us": -0.08861694279876572,
+     "n": 69219,
+     "total_usd": -122679.5232717553,
+     "win_rate": 0.3571129314205637
+    },
+    "ETHUSDT": {
+     "mean_net_us": -0.013142801726073747,
+     "n": 616,
+     "total_usd": -161.91931726522856,
+     "win_rate": 0.41883116883116883
+    },
+    "SOLUSDT": {
+     "mean_net_us": 0.11480584353081255,
+     "n": 89,
+     "total_usd": 204.35440148484636,
+     "win_rate": 0.4606741573033708
+    },
+    "XRPUSDT": {
+     "mean_net_us": 0.011074450508705515,
+     "n": 25,
+     "total_usd": 5.537225254352771,
+     "win_rate": 0.48
+    }
+   },
+   "cell": "m0.08|tp0.03|sl0.05|tend|taker",
+   "checks": {
+    "ci_lower": false,
+    "loss_guards": true,
+    "mean": false,
+    "n": true,
+    "stress": false
+   },
+   "entry": {
+    "gap_at_fill": 0.06365777732733881,
+    "gap_at_signal": 0.11694216501940873,
+    "share_fill_above_fair": 0.18783685256401092,
+    "share_gap_still_m": 0.36696736193512414,
+    "slippage": 0.051908673082553
+   },
+   "markets_traded": 15421,
+   "passes": false,
+   "placebo": null,
+   "selectable": true,
+   "summary": {
+    "breakeven_win_rate": 0.5643311026496932,
+    "ci95": [
+     -0.09073657006336074,
+     -0.08451839005744408
+    ],
+    "exit_mix": {
+     "fair": 0.07638422279089051,
+     "fair->settle": 2.8592260075197645e-05,
+     "sl": 0.4219788703198044,
+     "sl->settle": 0.0002001458205263835,
+     "time": 0.023974610073053224,
+     "time->settle": 0.0006290297216543482,
+     "tp": 0.4767616406238831,
+     "tp->settle": 4.2888390112796464e-05
+    },
+    "hold_min_median": 0.2833333333333333,
+    "late_stops": 0,
+    "loss_cents": 9.317026459637914,
+    "losses": 44919,
+    "mean_net_com": -0.08816974876812886,
+    "mean_net_stress": -0.08816974876812886,
+    "mean_net_us": -0.08765782996346004,
+    "mean_p_entry": 0.46969735935821677,
+    "mean_pnl_usd": -1.7531565992692009,
+    "missed": 2268,
+    "n": 69949,
+    "n_events": 1102,
+    "risk": {
+     "best_day_usd": -6.823474458297968,
+     "capital_usd": 100.0,
+     "daily_stop": {
+      "days_stopped": 47,
+      "limit_usd": 10.0,
+      "mean_net": -0.07325867004171842,
+      "n": 456,
+      "skipped": 69493,
+      "total_usd": -668.1190707804719
+     },
+     "days_with_exits": 47,
+     "longest_losing_streak": 29,
+     "max_drawdown_usd": -122702.03716204721,
+     "max_open": 5,
+     "sharpe_daily": -66.41951282853812,
+     "worst_day_usd": -3911.256999776446,
+     "worst_trip_usd": -21.3622
+    },
+    "small_entry_share": 0.8733648801269497,
+    "total_usd": -122631.55096228133,
+    "trips_per_day": 1520.6304347826087,
+    "win_cents": 7.192831699680002,
+    "win_rate": 0.3578321348410985,
+    "worst_case_net": 0.22116102563011064
+   }
+  },
+  {
+   "bar": {
+    "checks": {
+     "ci_lower": false,
+     "loss_guards": true,
+     "mean": false,
+     "n": true,
+     "placebo": false,
+     "stress": false
+    },
+    "passes": false
+   },
+   "by_sub": {
+    "15m": {
+     "mean_net_us": -0.14339995054483048,
+     "n": 16105,
+     "total_usd": -46189.124070489896,
+     "win_rate": 0.4484942564420987
+    },
+    "1h": {
+     "mean_net_us": -0.10309069822931102,
+     "n": 3873,
+     "total_usd": -7985.405484842432,
+     "win_rate": 0.49548153885876584
+    },
+    "5m": {
+     "mean_net_us": -0.13318134289172678,
+     "n": 48662,
+     "total_usd": -129617.4101559442,
+     "win_rate": 0.4620237557026016
+    }
+   },
+   "by_symbol": {
+    "BTCUSDT": {
+     "mean_net_us": -0.13457649450253933,
+     "n": 67943,
+     "total_usd": -182870.6153197206,
+     "win_rate": 0.4605330939169598
+    },
+    "ETHUSDT": {
+     "mean_net_us": -0.09953978075406134,
+     "n": 594,
+     "total_usd": -1182.5325953582485,
+     "win_rate": 0.4730639730639731
+    },
+    "SOLUSDT": {
+     "mean_net_us": 0.1848432442062876,
+     "n": 81,
+     "total_usd": 299.44605561418587,
+     "win_rate": 0.5308641975308642
+    },
+    "XRPUSDT": {
+     "mean_net_us": -0.08690420866328336,
+     "n": 22,
+     "total_usd": -38.23785181184467,
+     "win_rate": 0.5
+    }
+   },
+   "cell": "m0.08|tp0.03|sl0.05|tend|maker",
+   "checks": {
+    "ci_lower": false,
+    "loss_guards": true,
+    "mean": false,
+    "n": true,
+    "stress": false
+   },
+   "entry": {
+    "gap_at_fill": 0.06243857030772375,
+    "gap_at_signal": 0.11637833327545534,
+    "share_fill_above_fair": 0.19096736596736597,
+    "share_gap_still_m": 0.3587558275058275,
+    "slippage": 0.053405321112820515
+   },
+   "markets_traded": 15421,
+   "passes": false,
+   "placebo": null,
+   "selectable": true,
+   "summary": {
+    "breakeven_win_rate": 0.8190244075843176,
+    "ci95": [
+     -0.13692317425916525,
+     -0.13089701409804344
+    ],
+    "exit_mix": {
+     "fair": 0.04571678321678321,
+     "sl": 0.547027972027972,
+     "sl->settle": 0.00027680652680652683,
+     "time": 0.038446969696969695,
+     "time->settle": 0.0007867132867132868,
+     "tp": 0.36774475524475525
+    },
+    "hold_min_median": 0.2833333333333333,
+    "late_stops": 0,
+    "loss_cents": 11.157021669265438,
+    "losses": 37015,
+    "mean_net_com": -0.13427695987291846,
+    "mean_net_stress": -0.1489679002121748,
+    "mean_net_us": -0.13388107496450793,
+    "mean_p_entry": 0.47592702826615235,
+    "mean_pnl_usd": -2.677621499290159,
+    "missed": 2202,
+    "n": 68640,
+    "n_events": 1102,
+    "risk": {
+     "best_day_usd": -26.505023267679928,
+     "capital_usd": 100.0,
+     "daily_stop": {
+      "days_stopped": 47,
+      "limit_usd": 10.0,
+      "mean_net": -0.09626688361029935,
+      "n": 334,
+      "skipped": 68306,
+      "total_usd": -643.0627825167996
+     },
+     "days_with_exits": 47,
+     "longest_losing_streak": 17,
+     "max_drawdown_usd": -183809.951162836,
+     "max_open": 5,
+     "sharpe_daily": -70.9802754955085,
+     "worst_day_usd": -5341.001813407944,
+     "worst_trip_usd": -21.3622
+    },
+    "small_entry_share": 0.8723193473193473,
+    "total_usd": -183791.9397112765,
+    "trips_per_day": 1492.1739130434783,
+    "win_cents": 2.465309443152399,
+    "win_rate": 0.46073717948717946,
+    "worst_case_net": 0.07471768393787959
+   }
+  },
+  {
+   "bar": {
+    "checks": {
+     "ci_lower": false,
+     "loss_guards": true,
+     "mean": false,
+     "n": true,
+     "placebo": false,
+     "stress": false
+    },
+    "passes": false
+   },
+   "by_sub": {
+    "15m": {
+     "mean_net_us": -0.07932493159007814,
+     "n": 15102,
+     "total_usd": -23959.302337467205,
+     "win_rate": 0.4186200503244603
+    },
+    "1h": {
+     "mean_net_us": -0.05987827065690584,
+     "n": 3577,
+     "total_usd": -4283.691482795044,
+     "win_rate": 0.47134470226446745
+    },
+    "5m": {
+     "mean_net_us": -0.0872081006874911,
+     "n": 45055,
+     "total_usd": -78583.21952949822,
+     "win_rate": 0.3880368438575075
+    }
+   },
+   "by_symbol": {
+    "BTCUSDT": {
+     "mean_net_us": -0.08492418060320976,
+     "n": 63050,
+     "total_usd": -107089.3917406475,
+     "win_rate": 0.39898493259318
+    },
+    "ETHUSDT": {
+     "mean_net_us": 0.0016135450343995842,
+     "n": 579,
+     "total_usd": 18.684851498347115,
+     "win_rate": 0.49222797927461137
+    },
+    "SOLUSDT": {
+     "mean_net_us": 0.14860507716508134,
+     "n": 81,
+     "total_usd": 240.74022500743177,
+     "win_rate": 0.4691358024691358
+    },
+    "XRPUSDT": {
+     "mean_net_us": 0.00781940496093044,
+     "n": 24,
+     "total_usd": 3.7533143812466143,
+     "win_rate": 0.5
+    }
+   },
+   "cell": "m0.08|tp0.03|sl0.1|tend|taker",
+   "checks": {
+    "ci_lower": false,
+    "loss_guards": true,
+    "mean": false,
+    "n": true,
+    "stress": false
+   },
+   "entry": {
+    "gap_at_fill": 0.060668097296229594,
+    "gap_at_signal": 0.11593534122705718,
+    "share_fill_above_fair": 0.19664543257915712,
+    "share_gap_still_m": 0.34871497160071546,
+    "slippage": 0.054391831262541185
+   },
+   "markets_traded": 15421,
+   "passes": false,
+   "placebo": null,
+   "selectable": true,
+   "summary": {
+    "breakeven_win_rate": 0.5857875413461477,
+    "ci95": [
+     -0.08727579673837411,
+     -0.08030997270020387
+    ],
+    "exit_mix": {
+     "fair": 0.09905231116829322,
+     "fair->settle": 3.138042489095302e-05,
+     "sl": 0.28700536605265636,
+     "sl->settle": 0.00021966297423667115,
+     "time": 0.04124956851915775,
+     "time->settle": 0.002369222079266953,
+     "tp": 0.5700097279317162,
+     "tp->settle": 6.276084978190605e-05
+    },
+    "hold_min_median": 0.31666666666666665,
+    "late_stops": 0,
+    "loss_cents": 10.576676329952665,
+    "losses": 38243,
+    "mean_net_com": -0.08430765794881083,
+    "mean_net_stress": -0.08430765794881083,
+    "mean_net_us": -0.08380629911017705,
+    "mean_p_entry": 0.47690769060119403,
+    "mean_pnl_usd": -1.676125982203541,
+    "missed": 2056,
+    "n": 63734,
+    "n_events": 1102,
+    "risk": {
+     "best_day_usd": 4.046219979995395,
+     "capital_usd": 100.0,
+     "daily_stop": {
+      "days_stopped": 46,
+      "limit_usd": 10.0,
+      "mean_net": -0.08177983689822343,
+      "n": 452,
+      "skipped": 63282,
+      "total_usd": -739.2897255599398
+     },
+     "days_with_exits": 47,
+     "longest_losing_streak": 26,
+     "max_drawdown_usd": -106857.51083772005,
+     "max_open": 5,
+     "sharpe_daily": -62.451211879923115,
+     "worst_day_usd": -3637.317569587344,
+     "worst_trip_usd": -21.3622
+    },
+    "small_entry_share": 0.8729720400414221,
+    "total_usd": -106826.21334976048,
+    "trips_per_day": 1385.5217391304348,
+    "win_cents": 7.478805535788825,
+    "win_rate": 0.39995920544764174,
+    "worst_case_net": 0.22650980192370948
+   }
+  },
+  {
+   "bar": {
+    "checks": {
+     "ci_lower": false,
+     "loss_guards": true,
+     "mean": false,
+     "n": true,
+     "placebo": false,
+     "stress": false
+    },
+    "passes": false
+   },
+   "by_sub": {
+    "15m": {
+     "mean_net_us": -0.15042031513426454,
+     "n": 14337,
+     "total_usd": -43131.52116159901,
+     "win_rate": 0.5439073725326079
+    },
+    "1h": {
+     "mean_net_us": -0.10882931707415013,
+     "n": 3352,
+     "total_usd": -7295.917416651024,
+     "win_rate": 0.5996420047732697
+    },
+    "5m": {
+     "mean_net_us": -0.13617277856090326,
+     "n": 44650,
+     "total_usd": -121602.29125488663,
+     "win_rate": 0.5570884658454647
+    }
+   },
+   "by_symbol": {
+    "BTCUSDT": {
+     "mean_net_us": -0.1386802734610529,
+     "n": 61689,
+     "total_usd": -171100.94779077783,
+     "win_rate": 0.5560959004036377
+    },
+    "ETHUSDT": {
+     "mean_net_us": -0.09055851078391351,
+     "n": 554,
+     "total_usd": -1003.3882994857618,
+     "win_rate": 0.5794223826714802
+    },
+    "SOLUSDT": {
+     "mean_net_us": 0.08684991216664915,
+     "n": 75,
+     "total_usd": 130.27486824997374,
+     "win_rate": 0.6
+    },
+    "XRPUSDT": {
+     "mean_net_us": -0.1325443121975995,
+     "n": 21,
+     "total_usd": -55.668611122991784,
+     "win_rate": 0.5238095238095238
+    }
+   },
+   "cell": "m0.08|tp0.03|sl0.1|tend|maker",
+   "checks": {
+    "ci_lower": false,
+    "loss_guards": true,
+    "mean": false,
+    "n": true,
+    "stress": false
+   },
+   "entry": {
+    "gap_at_fill": 0.058814705608391867,
+    "gap_at_signal": 0.11516249012313676,
+    "share_fill_above_fair": 0.20207253886010362,
+    "share_gap_still_m": 0.33805482924012253,
+    "slippage": 0.05616119338617238
+   },
+   "markets_traded": 15421,
+   "passes": false,
+   "placebo": null,
+   "selectable": true,
+   "summary": {
+    "breakeven_win_rate": 0.8716011989578057,
+    "ci95": [
+     -0.14136128276480672,
+     -0.13477160854777254
+    ],
+    "exit_mix": {
+     "fair": 0.07189720720576204,
+     "sl": 0.3834838544089575,
+     "sl->settle": 0.000288743804039205,
+     "time": 0.06355571953351834,
+     "time->settle": 0.0029997272975184073,
+     "tp": 0.4777747477502045
+    },
+    "hold_min_median": 0.3333333333333333,
+    "late_stops": 0,
+    "loss_cents": 14.137110792800868,
+    "losses": 27657,
+    "mean_net_com": -0.13832827673300407,
+    "mean_net_stress": -0.1577937857415775,
+    "mean_net_us": -0.13797921833293497,
+    "mean_p_entry": 0.485085732924309,
+    "mean_pnl_usd": -2.759584366658699,
+    "missed": 1979,
+    "n": 62339,
+    "n_events": 1102,
+    "risk": {
+     "best_day_usd": -19.949778710093582,
+     "capital_usd": 100.0,
+     "daily_stop": {
+      "days_stopped": 47,
+      "limit_usd": 10.0,
+      "mean_net": -0.10965173586278619,
+      "n": 354,
+      "skipped": 61985,
+      "total_usd": -776.3342899085262
+     },
+     "days_with_exits": 47,
+     "longest_losing_streak": 13,
+     "max_drawdown_usd": -172068.03717740253,
+     "max_open": 5,
+     "sharpe_daily": -67.94297386563566,
+     "worst_day_usd": -5254.453760664494,
+     "worst_trip_usd": -21.3622
+    },
+    "small_entry_share": 0.8711240154638349,
+    "total_usd": -172029.72983313666,
+    "trips_per_day": 1355.195652173913,
+    "win_cents": 2.0825901549547647,
+    "win_rate": 0.5563451450937615,
+    "worst_case_net": 0.06208004667050147
+   }
+  },
+  {
+   "bar": {
+    "checks": {
+     "ci_lower": false,
+     "loss_guards": true,
+     "mean": false,
+     "n": true,
+     "placebo": false,
+     "stress": false
+    },
+    "passes": false
+   },
+   "by_sub": {
+    "15m": {
+     "mean_net_us": -0.06706914106988733,
+     "n": 10512,
+     "total_usd": -14100.616218533112,
+     "win_rate": 0.5203576864535768
+    },
+    "1h": {
+     "mean_net_us": -0.05062432482194147,
+     "n": 2533,
+     "total_usd": -2564.628295479555,
+     "win_rate": 0.5740228977497039
+    },
+    "5m": {
+     "mean_net_us": -0.08286910007850368,
+     "n": 33952,
+     "total_usd": -56271.43371730714,
+     "win_rate": 0.4601790763430726
+    }
+   },
+   "by_symbol": {
+    "BTCUSDT": {
+     "mean_net_us": -0.07855430756345463,
+     "n": 46489,
+     "total_usd": -73038.22408634884,
+     "win_rate": 0.4787153950396868
+    },
+    "ETHUSDT": {
+     "mean_net_us": 0.0030900322804605913,
+     "n": 414,
+     "total_usd": 25.585467282213664,
+     "win_rate": 0.5845410628019324
+    },
+    "SOLUSDT": {
+     "mean_net_us": 0.0500330413314226,
+     "n": 72,
+     "total_usd": 72.04757951724855,
+     "win_rate": 0.5416666666666666
+    },
+    "XRPUSDT": {
+     "mean_net_us": 0.008892745976315498,
+     "n": 22,
+     "total_usd": 3.912808229578836,
+     "win_rate": 0.5454545454545454
+    }
+   },
+   "cell": "m0.08|tp0.03|slnone|tend|taker",
+   "checks": {
+    "ci_lower": false,
+    "loss_guards": true,
+    "mean": false,
+    "n": true,
+    "stress": false
+   },
+   "entry": {
+    "gap_at_fill": 0.05351023249989511,
+    "gap_at_signal": 0.11247699122805066,
+    "share_fill_above_fair": 0.21822669532097794,
+    "share_gap_still_m": 0.3106368491605847,
+    "slippage": 0.058697558977951786
+   },
+   "markets_traded": 15421,
+   "passes": false,
+   "placebo": null,
+   "selectable": true,
+   "summary": {
+    "breakeven_win_rate": 0.6364707098390803,
+    "ci95": [
+     -0.08203148217748372,
+     -0.07328609740679003
+    ],
+    "exit_mix": {
+     "fair": 0.1381151988424793,
+     "time": 0.14613698746728515,
+     "time->settle": 0.0227035768240526,
+     "tp": 0.693001680958359,
+     "tp->settle": 4.255590782390365e-05
+    },
+    "hold_min_median": 0.4,
+    "late_stops": 0,
+    "loss_cents": 13.322015161632192,
+    "losses": 24449,
+    "mean_net_com": -0.07806574071813063,
+    "mean_net_stress": -0.07806574071813063,
+    "mean_net_us": -0.07759716389484415,
+    "mean_p_entry": 0.4988848290369173,
+    "mean_pnl_usd": -1.5519432778968831,
+    "missed": 1266,
+    "n": 46997,
+    "n_events": 1102,
+    "risk": {
+     "best_day_usd": 12.106429879454765,
+     "capital_usd": 120.0,
+     "daily_stop": {
+      "days_stopped": 46,
+      "limit_usd": 10.0,
+      "mean_net": -0.0510160533331929,
+      "n": 1006,
+      "skipped": 45991,
+      "total_usd": -1026.4429930638412
+     },
+     "days_with_exits": 47,
+     "longest_losing_streak": 17,
+     "max_drawdown_usd": -72978.94871879925,
+     "max_open": 6,
+     "sharpe_daily": -58.142141268079385,
+     "worst_day_usd": -2695.800213191856,
+     "worst_trip_usd": -21.3622
+    },
+    "small_entry_share": 0.8685873566397855,
+    "total_usd": -72936.67823131982,
+    "trips_per_day": 1021.6739130434783,
+    "win_cents": 7.60905826514092,
+    "win_rate": 0.4797753048066898,
+    "worst_case_net": 0.202206841743479
+   }
+  },
+  {
+   "bar": {
+    "checks": {
+     "ci_lower": false,
+     "loss_guards": true,
+     "mean": false,
+     "n": true,
+     "placebo": false,
+     "stress": false
+    },
+    "passes": false
+   },
+   "by_sub": {
+    "15m": {
+     "mean_net_us": -0.13668244611653335,
+     "n": 9291,
+     "total_usd": -25398.33213737423,
+     "win_rate": 0.7431923366698956
+    },
+    "1h": {
+     "mean_net_us": -0.09852039521783938,
+     "n": 2251,
+     "total_usd": -4435.38819270713,
+     "win_rate": 0.7867614393602843
+    },
+    "5m": {
+     "mean_net_us": -0.1264712360343071,
+     "n": 31804,
+     "total_usd": -80445.82381670206,
+     "win_rate": 0.7342472644950321
+    }
+   },
+   "by_symbol": {
+    "BTCUSDT": {
+     "mean_net_us": -0.12784948899962303,
+     "n": 42893,
+     "total_usd": -109676.96263321661,
+     "win_rate": 0.7384654838784883
+    },
+    "ETHUSDT": {
+     "mean_net_us": -0.0713136781192086,
+     "n": 380,
+     "total_usd": -541.9839537059854,
+     "win_rate": 0.781578947368421
+    },
+    "SOLUSDT": {
+     "mean_net_us": 0.009983149638124869,
+     "n": 57,
+     "total_usd": 11.380790587462364,
+     "win_rate": 0.7894736842105263
+    },
+    "XRPUSDT": {
+     "mean_net_us": -0.22493234515089314,
+     "n": 16,
+     "total_usd": -71.9783504482858,
+     "win_rate": 0.6875
+    }
+   },
+   "cell": "m0.08|tp0.03|slnone|tend|maker",
+   "checks": {
+    "ci_lower": false,
+    "loss_guards": true,
+    "mean": false,
+    "n": true,
+    "stress": false
+   },
+   "entry": {
+    "gap_at_fill": 0.04962930062077907,
+    "gap_at_signal": 0.11101415916880678,
+    "share_fill_above_fair": 0.23120933880865593,
+    "share_gap_still_m": 0.29056891062612467,
+    "slippage": 0.06252340630855903
+   },
+   "markets_traded": 15421,
+   "passes": false,
+   "placebo": null,
+   "selectable": true,
+   "summary": {
+    "breakeven_win_rate": 0.9319933706695434,
+    "ci95": [
+     -0.13127489300809697,
+     -0.12316019111396755
+    ],
+    "exit_mix": {
+     "fair": 0.1115212476353066,
+     "time": 0.20479398329719006,
+     "time->settle": 0.029160706870299452,
+     "tp": 0.6545240621972039
+    },
+    "hold_min_median": 0.43333333333333335,
+    "late_stops": 0,
+    "loss_cents": 24.943255728476874,
+    "losses": 11318,
+    "mean_net_com": -0.12747639502119187,
+    "mean_net_stress": -0.15282587409202428,
+    "mean_net_us": -0.12720844385500785,
+    "mean_p_entry": 0.514331171545882,
+    "mean_pnl_usd": -2.5441688771001574,
+    "missed": 1086,
+    "n": 43346,
+    "n_events": 1102,
+    "risk": {
+     "best_day_usd": -25.772668358515602,
+     "capital_usd": 120.0,
+     "daily_stop": {
+      "days_stopped": 46,
+      "limit_usd": 10.0,
+      "mean_net": -0.08428260151342767,
+      "n": 680,
+      "skipped": 42666,
+      "total_usd": -1146.2433805826163
+     },
+     "days_with_exits": 47,
+     "longest_losing_streak": 10,
+     "max_drawdown_usd": -110284.29276705769,
+     "max_open": 6,
+     "sharpe_daily": -66.37819185528858,
+     "worst_day_usd": -3328.7205305555926,
+     "worst_trip_usd": -21.348300000000002
+    },
+    "small_entry_share": 0.8648087482120611,
+    "total_usd": -110279.54414678342,
+    "trips_per_day": 942.304347826087,
+    "win_cents": 1.8200845628362057,
+    "win_rate": 0.7388917085774928,
+    "worst_case_net": 0.04500709543285613
+   }
+  },
+  {
+   "bar": {
+    "checks": {
+     "ci_lower": false,
+     "loss_guards": true,
+     "mean": false,
+     "n": true,
+     "placebo": false,
+     "stress": false
+    },
+    "passes": false
+   },
+   "by_sub": {
+    "15m": {
+     "mean_net_us": -0.07657056043525695,
+     "n": 15917,
+     "total_usd": -24375.472208959698,
+     "win_rate": 0.38330087328014073
+    },
+    "1h": {
+     "mean_net_us": -0.062110349629760635,
+     "n": 3755,
+     "total_usd": -4664.4872571950245,
+     "win_rate": 0.4268974700399467
+    },
+    "5m": {
+     "mean_net_us": -0.09141581471290207,
+     "n": 47114,
+     "total_usd": -86139.29388767335,
+     "win_rate": 0.3612089824680562
+    }
+   },
+   "by_symbol": {
+    "BTCUSDT": {
+     "mean_net_us": -0.08726734817342471,
+     "n": 66079,
+     "total_usd": -115330.78199903462,
+     "win_rate": 0.369421450082477
+    },
+    "ETHUSDT": {
+     "mean_net_us": -0.0043430861806708285,
+     "n": 597,
+     "total_usd": -51.85644899720971,
+     "win_rate": 0.440536013400335
+    },
+    "SOLUSDT": {
+     "mean_net_us": 0.11771940532228821,
+     "n": 85,
+     "total_usd": 200.12298904788994,
+     "win_rate": 0.4235294117647059
+    },
+    "XRPUSDT": {
+     "mean_net_us": 0.006524210311701335,
+     "n": 25,
+     "total_usd": 3.2621051558506853,
+     "win_rate": 0.48
+    }
+   },
+   "cell": "m0.08|tp0.05|sl0.05|tend|taker",
+   "checks": {
+    "ci_lower": false,
+    "loss_guards": true,
+    "mean": false,
+    "n": true,
+    "stress": false
+   },
+   "entry": {
+    "gap_at_fill": 0.06223031478117497,
+    "gap_at_signal": 0.11672490727871535,
+    "share_fill_above_fair": 0.19213607642320246,
+    "share_gap_still_m": 0.35702093253076994,
+    "slippage": 0.05331740402977869
+   },
+   "markets_traded": 15421,
+   "passes": false,
+   "placebo": null,
+   "selectable": true,
+   "summary": {
+    "breakeven_win_rate": 0.5614809485511679,
+    "ci95": [
+     -0.08951636289649859,
+     -0.08289086259138465
+    ],
+    "exit_mix": {
+     "fair": 0.12900907375797324,
+     "fair->settle": 4.49195939268709e-05,
+     "sl": 0.4793968795855419,
+     "sl->settle": 0.00019465157368310723,
+     "time": 0.030680082652052826,
+     "time->settle": 0.0007935794927080526,
+     "tp": 0.35985086694816276,
+     "tp->settle": 2.9946395951247268e-05
+    },
+    "hold_min_median": 0.3,
+    "late_stops": 0,
+    "loss_cents": 9.992705387382887,
+    "losses": 42064,
+    "mean_net_com": -0.08674029597930309,
+    "mean_net_stress": -0.08674029597930309,
+    "mean_net_us": -0.08623008815756902,
+    "mean_p_entry": 0.46993106142162133,
+    "mean_pnl_usd": -1.7246017631513804,
+    "missed": 2164,
+    "n": 66786,
+    "n_events": 1102,
+    "risk": {
+     "best_day_usd": -3.3804812424308524,
+     "capital_usd": 100.0,
+     "daily_stop": {
+      "days_stopped": 47,
+      "limit_usd": 10.0,
+      "mean_net": -0.07154236736920752,
+      "n": 480,
+      "skipped": 66306,
+      "total_usd": -686.8067267443922
+     },
+     "days_with_exits": 47,
+     "longest_losing_streak": 29,
+     "max_drawdown_usd": -115229.34050718215,
+     "max_open": 5,
+     "sharpe_daily": -64.36242362564758,
+     "worst_day_usd": -3828.3915022979595,
+     "worst_trip_usd": -21.3622
+    },
+    "small_entry_share": 0.8733417183241997,
+    "total_usd": -115179.25335382808,
+    "trips_per_day": 1451.8695652173913,
+    "win_cents": 7.804346165600033,
+    "win_rate": 0.3701674003533675,
+    "worst_case_net": 0.23959398489283926
+   }
+  },
+  {
+   "bar": {
+    "checks": {
+     "ci_lower": false,
+     "loss_guards": true,
+     "mean": false,
+     "n": true,
+     "placebo": false,
+     "stress": false
+    },
+    "passes": false
+   },
+   "by_sub": {
+    "15m": {
+     "mean_net_us": -0.13556596698412254,
+     "n": 15537,
+     "total_usd": -42125.76858064624,
+     "win_rate": 0.41816309454849715
+    },
+    "1h": {
+     "mean_net_us": -0.09698608378300018,
+     "n": 3610,
+     "total_usd": -7002.395249132614,
+     "win_rate": 0.4490304709141274
+    },
+    "5m": {
+     "mean_net_us": -0.1266484628601183,
+     "n": 47219,
+     "total_usd": -119604.2753558385,
+     "win_rate": 0.43457082953895676
+    }
+   },
+   "by_symbol": {
+    "BTCUSDT": {
+     "mean_net_us": -0.12790432692530068,
+     "n": 65681,
+     "total_usd": -168017.68193561348,
+     "win_rate": 0.4311596961069411
+    },
+    "ETHUSDT": {
+     "mean_net_us": -0.08553510295986748,
+     "n": 582,
+     "total_usd": -995.6285984528574,
+     "win_rate": 0.45532646048109965
+    },
+    "SOLUSDT": {
+     "mean_net_us": 0.19502587670078314,
+     "n": 81,
+     "total_usd": 315.9419202552687,
+     "win_rate": 0.5308641975308642
+    },
+    "XRPUSDT": {
+     "mean_net_us": -0.0797058450143037,
+     "n": 22,
+     "total_usd": -35.07057180629362,
+     "win_rate": 0.5
+    }
+   },
+   "cell": "m0.08|tp0.05|sl0.05|tend|maker",
+   "checks": {
+    "ci_lower": false,
+    "loss_guards": true,
+    "mean": false,
+    "n": true,
+    "stress": false
+   },
+   "entry": {
+    "gap_at_fill": 0.06126497980886396,
+    "gap_at_signal": 0.1163476306969246,
+    "share_fill_above_fair": 0.19506976463851972,
+    "share_gap_still_m": 0.3516258325045957,
+    "slippage": 0.0544848617264744
+   },
+   "markets_traded": 15421,
+   "passes": false,
+   "placebo": null,
+   "selectable": true,
+   "summary": {
+    "breakeven_win_rate": 0.7360690065913507,
+    "ci95": [
+     -0.13015066994718305,
+     -0.12413215062813326
+    ],
+    "exit_mix": {
+     "fair": 0.08540517734984782,
+     "sl": 0.5768013741976313,
+     "sl->settle": 0.0002862911731910918,
+     "time": 0.0426272488925052,
+     "time->settle": 0.0007986016936383088,
+     "tp": 0.2940813066931863
+    },
+    "hold_min_median": 0.3,
+    "late_stops": 0,
+    "loss_cents": 11.186176862012175,
+    "losses": 37728,
+    "mean_net_com": -0.12752602989964143,
+    "mean_net_stress": -0.14121808811413092,
+    "mean_net_us": -0.12712265255222355,
+    "mean_p_entry": 0.47540032612300875,
+    "mean_pnl_usd": -2.5424530510444714,
+    "missed": 2151,
+    "n": 66366,
+    "n_events": 1102,
+    "risk": {
+     "best_day_usd": -24.178054620067556,
+     "capital_usd": 100.0,
+     "daily_stop": {
+      "days_stopped": 47,
+      "limit_usd": 10.0,
+      "mean_net": -0.09068787032043338,
+      "n": 359,
+      "skipped": 66007,
+      "total_usd": -651.1389089007116
+     },
+     "days_with_exits": 47,
+     "longest_losing_streak": 17,
+     "max_drawdown_usd": -168751.87878317205,
+     "max_open": 5,
+     "sharpe_daily": -70.19572080474113,
+     "worst_day_usd": -5032.700997385046,
+     "worst_trip_usd": -21.3622
+    },
+    "small_entry_share": 0.8726154958864479,
+    "total_usd": -168732.43918561738,
+    "trips_per_day": 1442.7391304347825,
+    "win_cents": 4.011008132658433,
+    "win_rate": 0.4315161377813941,
+    "worst_case_net": 0.11598530905530281
+   }
+  },
+  {
+   "bar": {
+    "checks": {
+     "ci_lower": false,
+     "loss_guards": true,
+     "mean": false,
+     "n": true,
+     "placebo": false,
+     "stress": false
+    },
+    "passes": false
+   },
+   "by_sub": {
+    "15m": {
+     "mean_net_us": -0.07536906198552272,
+     "n": 14182,
+     "total_usd": -21377.680741573662,
+     "win_rate": 0.44210971654209563
+    },
+    "1h": {
+     "mean_net_us": -0.05694171371121292,
+     "n": 3247,
+     "total_usd": -3697.794888406167,
+     "win_rate": 0.5081613797351401
+    },
+    "5m": {
+     "mean_net_us": -0.0877801051160614,
+     "n": 42527,
+     "total_usd": -74660.49060541485,
+     "win_rate": 0.40717661720789144
+    }
+   },
+   "by_symbol": {
+    "BTCUSDT": {
+     "mean_net_us": -0.08432748926985299,
+     "n": 59299,
+     "total_usd": -100010.71572426026,
+     "win_rate": 0.41997335536855596
+    },
+    "ETHUSDT": {
+     "mean_net_us": 0.004157679576684882,
+     "n": 558,
+     "total_usd": 46.399704075803285,
+     "win_rate": 0.514336917562724
+    },
+    "SOLUSDT": {
+     "mean_net_us": 0.15124772700467706,
+     "n": 75,
+     "total_usd": 226.8715905070156,
+     "win_rate": 0.44
+    },
+    "XRPUSDT": {
+     "mean_net_us": 0.003079571422384427,
+     "n": 24,
+     "total_usd": 1.4781942827445285,
+     "win_rate": 0.5
+    }
+   },
+   "cell": "m0.08|tp0.05|sl0.1|tend|taker",
+   "checks": {
+    "ci_lower": false,
+    "loss_guards": true,
+    "mean": false,
+    "n": true,
+    "stress": false
+   },
+   "entry": {
+    "gap_at_fill": 0.058809542180833764,
+    "gap_at_signal": 0.11557875184350301,
+    "share_fill_above_fair": 0.20254853559276803,
+    "share_gap_still_m": 0.33704716792314365,
+    "slippage": 0.05622807584313997
+   },
+   "markets_traded": 15421,
+   "passes": false,
+   "placebo": null,
+   "selectable": true,
+   "summary": {
+    "breakeven_win_rate": 0.5913031435598611,
+    "ci95": [
+     -0.08691656125172795,
+     -0.07939057167915693
+    ],
+    "exit_mix": {
+     "fair": 0.16920741877376744,
+     "fair->settle": 5.0036693575288544e-05,
+     "sl": 0.3348789112015478,
+     "sl->settle": 0.00018346787644272467,
+     "time": 0.05213823470545066,
+     "time->settle": 0.0028354126359330174,
+     "tp": 0.4406564814197078,
+     "tp->settle": 5.0036693575288544e-05
+    },
+    "hold_min_median": 0.36666666666666664,
+    "late_stops": 0,
+    "loss_cents": 11.708139893523732,
+    "losses": 34720,
+    "mean_net_com": -0.08367208078475581,
+    "mean_net_stress": -0.08367208078475581,
+    "mean_net_us": -0.08317429968259613,
+    "mean_p_entry": 0.4780814288129579,
+    "mean_pnl_usd": -1.6634859936519226,
+    "missed": 1906,
+    "n": 59956,
+    "n_events": 1102,
+    "risk": {
+     "best_day_usd": 2.9059538299415735,
+     "capital_usd": 100.0,
+     "daily_stop": {
+      "days_stopped": 46,
+      "limit_usd": 10.0,
+      "mean_net": -0.06947512987539702,
+      "n": 522,
+      "skipped": 59434,
+      "total_usd": -725.3203558991448
+     },
+     "days_with_exits": 47,
+     "longest_losing_streak": 26,
+     "max_drawdown_usd": -99753.02594494435,
+     "max_open": 5,
+     "sharpe_daily": -60.48659544283904,
+     "worst_day_usd": -3461.6437761494185,
+     "worst_trip_usd": -21.3622
+    },
+    "small_entry_share": 0.8721729268129962,
+    "total_usd": -99735.96623539468,
+    "trips_per_day": 1303.391304347826,
+    "win_cents": 8.09243113513079,
+    "win_rate": 0.42090866635532725,
+    "worst_case_net": 0.24292596120941773
+   }
+  },
+  {
+   "bar": {
+    "checks": {
+     "ci_lower": false,
+     "loss_guards": true,
+     "mean": false,
+     "n": true,
+     "placebo": false,
+     "stress": false
+    },
+    "passes": false
+   },
+   "by_sub": {
+    "15m": {
+     "mean_net_us": -0.14098057836277234,
+     "n": 13696,
+     "total_usd": -38617.4000251306,
+     "win_rate": 0.5120473130841121
+    },
+    "1h": {
+     "mean_net_us": -0.10284820426916373,
+     "n": 3103,
+     "total_usd": -6382.759556944301,
+     "win_rate": 0.5565581695133741
+    },
+    "5m": {
+     "mean_net_us": -0.12938299776531711,
+     "n": 42716,
+     "total_usd": -110534.48265086571,
+     "win_rate": 0.5231763273714767
+    }
+   },
+   "by_symbol": {
+    "BTCUSDT": {
+     "mean_net_us": -0.13144654846339496,
+     "n": 58899,
+     "total_usd": -154841.40515891,
+     "win_rate": 0.5220631929234791
+    },
+    "ETHUSDT": {
+     "mean_net_us": -0.07445593568326966,
+     "n": 523,
+     "total_usd": -778.8090872470007,
+     "win_rate": 0.5506692160611855
+    },
+    "SOLUSDT": {
+     "mean_net_us": 0.09329685323847961,
+     "n": 72,
+     "total_usd": 134.3474686634106,
+     "win_rate": 0.5555555555555556
+    },
+    "XRPUSDT": {
+     "mean_net_us": -0.11613203677866649,
+     "n": 21,
+     "total_usd": -48.77545544703993,
+     "win_rate": 0.5238095238095238
+    }
+   },
+   "cell": "m0.08|tp0.05|sl0.1|tend|maker",
+   "checks": {
+    "ci_lower": false,
+    "loss_guards": true,
+    "mean": false,
+    "n": true,
+    "stress": false
+   },
+   "entry": {
+    "gap_at_fill": 0.05729234854765662,
+    "gap_at_signal": 0.11509648203293099,
+    "share_fill_above_fair": 0.20730908174409812,
+    "share_gap_still_m": 0.32961438292867346,
+    "slippage": 0.057702472198701164
+   },
+   "markets_traded": 15421,
+   "passes": false,
+   "placebo": null,
+   "selectable": true,
+   "summary": {
+    "breakeven_win_rate": 0.7920468278195736,
+    "ci95": [
+     -0.1340884483212427,
+     -0.12720846701020866
+    ],
+    "exit_mix": {
+     "fair": 0.12921112324624046,
+     "sl": 0.4136604217424179,
+     "sl->settle": 0.00030244476182475006,
+     "time": 0.07115853146265648,
+     "time->settle": 0.0032932874065361674,
+     "tp": 0.3823741913803243
+    },
+    "hold_min_median": 0.35,
+    "late_stops": 0,
+    "loss_cents": 14.214705698319076,
+    "losses": 28427,
+    "mean_net_com": -0.13102499211380475,
+    "mean_net_stress": -0.14936800376199308,
+    "mean_net_us": -0.13066843840455397,
+    "mean_p_entry": 0.4847024727086936,
+    "mean_pnl_usd": -2.6133687680910804,
+    "missed": 1911,
+    "n": 59515,
+    "n_events": 1102,
+    "risk": {
+     "best_day_usd": -17.05012351664935,
+     "capital_usd": 100.0,
+     "daily_stop": {
+      "days_stopped": 47,
+      "limit_usd": 10.0,
+      "mean_net": -0.10412467412082252,
+      "n": 376,
+      "skipped": 59139,
+      "total_usd": -783.0175493885854
+     },
+     "days_with_exits": 47,
+     "longest_losing_streak": 14,
+     "max_drawdown_usd": -155540.74415815427,
+     "max_open": 5,
+     "sharpe_daily": -68.0323339484761,
+     "worst_day_usd": -4668.748200040482,
+     "worst_trip_usd": -21.3622
+    },
+    "small_entry_share": 0.8703688145845585,
+    "total_usd": -155534.64223294065,
+    "trips_per_day": 1293.804347826087,
+    "win_cents": 3.7320939087833853,
+    "win_rate": 0.5223557086448795,
+    "worst_case_net": 0.1054936981197187
+   }
+  },
+  {
+   "bar": {
+    "checks": {
+     "ci_lower": false,
+     "loss_guards": true,
+     "mean": false,
+     "n": true,
+     "placebo": false,
+     "stress": false
+    },
+    "passes": false
+   },
+   "by_sub": {
+    "15m": {
+     "mean_net_us": -0.06311016204327875,
+     "n": 9510,
+     "total_usd": -12003.55282063162,
+     "win_rate": 0.5645636172450053
+    },
+    "1h": {
+     "mean_net_us": -0.04622385618003207,
+     "n": 2250,
+     "total_usd": -2080.073528101444,
+     "win_rate": 0.6417777777777778
+    },
+    "5m": {
+     "mean_net_us": -0.08217366788433932,
+     "n": 30663,
+     "total_usd": -50393.823566749925,
+     "win_rate": 0.4999836937025079
+    }
+   },
+   "by_symbol": {
+    "BTCUSDT": {
+     "mean_net_us": -0.07696545547004685,
+     "n": 41945,
+     "total_usd": -64566.320593822296,
+     "win_rate": 0.5211586601501967
+    },
+    "ETHUSDT": {
+     "mean_net_us": 0.0034935137720940885,
+     "n": 392,
+     "total_usd": 27.389147973217618,
+     "win_rate": 0.6096938775510204
+    },
+    "SOLUSDT": {
+     "mean_net_us": 0.04447311856906081,
+     "n": 65,
+     "total_usd": 57.81505413977905,
+     "win_rate": 0.5076923076923077
+    },
+    "XRPUSDT": {
+     "mean_net_us": 0.0087297053007496,
+     "n": 21,
+     "total_usd": 3.6664762263148454,
+     "win_rate": 0.5714285714285714
+    }
+   },
+   "cell": "m0.08|tp0.05|slnone|tend|taker",
+   "checks": {
+    "ci_lower": false,
+    "loss_guards": true,
+    "mean": false,
+    "n": true,
+    "stress": false
+   },
+   "entry": {
+    "gap_at_fill": 0.0501773822035505,
+    "gap_at_signal": 0.1115466604030941,
+    "share_fill_above_fair": 0.22846097635716475,
+    "share_gap_still_m": 0.29125710110081793,
+    "slippage": 0.06145434239292365
+   },
+   "markets_traded": 15421,
+   "passes": false,
+   "placebo": null,
+   "selectable": true,
+   "summary": {
+    "breakeven_win_rate": 0.6576938039345385,
+    "ci95": [
+     -0.08081644319685084,
+     -0.07116336669822042
+    ],
+    "exit_mix": {
+     "fair": 0.2429578294792919,
+     "time": 0.17893595455295477,
+     "time->settle": 0.02644791740329538,
+     "tp": 0.5516111543266624,
+     "tp->settle": 4.714423779553544e-05
+    },
+    "hold_min_median": 0.5,
+    "late_stops": 0,
+    "loss_cents": 15.733794966489402,
+    "losses": 20279,
+    "mean_net_com": -0.07645373433027151,
+    "mean_net_stress": -0.07645373433027151,
+    "mean_net_us": -0.0759935057816314,
+    "mean_p_entry": 0.5020015817453621,
+    "mean_pnl_usd": -1.5198701156326282,
+    "missed": 1085,
+    "n": 42423,
+    "n_events": 1102,
+    "risk": {
+     "best_day_usd": 10.105826384342715,
+     "capital_usd": 120.0,
+     "daily_stop": {
+      "days_stopped": 46,
+      "limit_usd": 10.0,
+      "mean_net": -0.051584450534926864,
+      "n": 955,
+      "skipped": 41468,
+      "total_usd": -985.263005217103
+     },
+     "days_with_exits": 47,
+     "longest_losing_streak": 15,
+     "max_drawdown_usd": -64512.831091099055,
+     "max_open": 6,
+     "sharpe_daily": -56.02732738708786,
+     "worst_day_usd": -2332.9997807979516,
+     "worst_trip_usd": -21.3622
+    },
+    "small_entry_share": 0.8671946821299766,
+    "total_usd": -64477.44991548298,
+    "trips_per_day": 922.2391304347826,
+    "win_cents": 8.188879798522395,
+    "win_rate": 0.5219810008721684,
+    "worst_case_net": 0.21297937746769782
+   }
+  },
+  {
+   "bar": {
+    "checks": {
+     "ci_lower": false,
+     "loss_guards": true,
+     "mean": false,
+     "n": true,
+     "placebo": false,
+     "stress": false
+    },
+    "passes": false
+   },
+   "by_sub": {
+    "15m": {
+     "mean_net_us": -0.12613541557092486,
+     "n": 8528,
+     "total_usd": -21513.656479776946,
+     "win_rate": 0.7226782363977486
+    },
+    "1h": {
+     "mean_net_us": -0.09487615003120013,
+     "n": 2030,
+     "total_usd": -3851.9716912667254,
+     "win_rate": 0.758128078817734
+    },
+    "5m": {
+     "mean_net_us": -0.11960786349540632,
+     "n": 29457,
+     "total_usd": -70465.77669968369,
+     "win_rate": 0.7069966391689582
+    }
+   },
+   "by_symbol": {
+    "BTCUSDT": {
+     "mean_net_us": -0.12046149677009418,
+     "n": 39599,
+     "total_usd": -95403.0962119792,
+     "win_rate": 0.7124422333897321
+    },
+    "ETHUSDT": {
+     "mean_net_us": -0.05891190468171436,
+     "n": 345,
+     "total_usd": -406.492142303829,
+     "win_rate": 0.7594202898550725
+    },
+    "SOLUSDT": {
+     "mean_net_us": 0.03541388188953161,
+     "n": 55,
+     "total_usd": 38.95527007848478,
+     "win_rate": 0.7818181818181819
+    },
+    "XRPUSDT": {
+     "mean_net_us": -0.18991183288380664,
+     "n": 16,
+     "total_usd": -60.77178652281813,
+     "win_rate": 0.6875
+    }
+   },
+   "cell": "m0.08|tp0.05|slnone|tend|maker",
+   "checks": {
+    "ci_lower": false,
+    "loss_guards": true,
+    "mean": false,
+    "n": true,
+    "stress": false
+   },
+   "entry": {
+    "gap_at_fill": 0.04720729127044694,
+    "gap_at_signal": 0.11069210033467512,
+    "share_fill_above_fair": 0.23868549294014743,
+    "share_gap_still_m": 0.2788954142196676,
+    "slippage": 0.0647531135586855
+   },
+   "markets_traded": 15421,
+   "passes": false,
+   "placebo": null,
+   "selectable": true,
+   "summary": {
+    "breakeven_win_rate": 0.880255499383236,
+    "ci95": [
+     -0.12416053618920436,
+     -0.11540382082657244
+    ],
+    "exit_mix": {
+     "fair": 0.19627639635136823,
+     "time": 0.23191303261277021,
+     "time->settle": 0.03196301386979883,
+     "tp": 0.5398475571660627
+    },
+    "hold_min_median": 0.55,
+    "late_stops": 0,
+    "loss_cents": 25.588248807356266,
+    "losses": 11487,
+    "mean_net_com": -0.120014810157489,
+    "mean_net_stress": -0.14442591859826737,
+    "mean_net_us": -0.11974435195642552,
+    "mean_p_entry": 0.514865534425263,
+    "mean_pnl_usd": -2.3948870391285104,
+    "missed": 985,
+    "n": 40015,
+    "n_events": 1102,
+    "risk": {
+     "best_day_usd": -24.14745409686814,
+     "capital_usd": 120.0,
+     "daily_stop": {
+      "days_stopped": 46,
+      "limit_usd": 10.0,
+      "mean_net": -0.08058515729950265,
+      "n": 729,
+      "skipped": 39286,
+      "total_usd": -1174.9315934267486
+     },
+     "days_with_exits": 47,
+     "longest_losing_streak": 10,
+     "max_drawdown_usd": -95844.08227015407,
+     "max_open": 6,
+     "sharpe_daily": -63.229118657009565,
+     "worst_day_usd": -3121.2643143654245,
+     "worst_trip_usd": -21.3344
+    },
+    "small_entry_share": 0.8633262526552543,
+    "total_usd": -95831.40487072735,
+    "trips_per_day": 869.8913043478261,
+    "win_cents": 3.4808667224927965,
+    "win_rate": 0.7129326502561539,
+    "worst_case_net": 0.08222631253150794
+   }
+  },
+  {
+   "bar": {
+    "checks": {
+     "ci_lower": false,
+     "loss_guards": true,
+     "mean": false,
+     "n": true,
+     "placebo": false,
+     "stress": false
+    },
+    "passes": false
+   },
+   "by_sub": {
+    "15m": {
+     "mean_net_us": -0.07834414316098184,
+     "n": 15093,
+     "total_usd": -23648.96305457398,
+     "win_rate": 0.36772013516199564
+    },
+    "1h": {
+     "mean_net_us": -0.058846306954157455,
+     "n": 3393,
+     "total_usd": -3993.310389909125,
+     "win_rate": 0.40141467727674623
+    },
+    "5m": {
+     "mean_net_us": -0.09140809674311044,
+     "n": 45089,
+     "total_usd": -82429.99348100211,
+     "win_rate": 0.36062010689968726
+    }
+   },
+   "by_symbol": {
+    "BTCUSDT": {
+     "mean_net_us": -0.08782633293151396,
+     "n": 62894,
+     "total_usd": -110474.98766789278,
+     "win_rate": 0.3636117912678475
+    },
+    "ETHUSDT": {
+     "mean_net_us": 0.0033027789681399277,
+     "n": 574,
+     "total_usd": 37.91590255424639,
+     "win_rate": 0.4425087108013937
+    },
+    "SOLUSDT": {
+     "mean_net_us": 0.2289548745178239,
+     "n": 82,
+     "total_usd": 375.4859942092312,
+     "win_rate": 0.45121951219512196
+    },
+    "XRPUSDT": {
+     "mean_net_us": -0.02136230871183364,
+     "n": 25,
+     "total_usd": -10.681154355916801,
+     "win_rate": 0.48
+    }
+   },
+   "cell": "m0.08|tp0.08|sl0.05|tend|taker",
+   "checks": {
+    "ci_lower": false,
+    "loss_guards": true,
+    "mean": false,
+    "n": true,
+    "stress": false
+   },
+   "entry": {
+    "gap_at_fill": 0.06061164493799295,
+    "gap_at_signal": 0.11644408614259362,
+    "share_fill_above_fair": 0.19790798269760126,
+    "share_gap_still_m": 0.3473692489186001,
+    "slippage": 0.0546811335019536
+   },
+   "markets_traded": 15421,
+   "passes": false,
+   "placebo": null,
+   "selectable": true,
+   "summary": {
+    "breakeven_win_rate": 0.5416200848029622,
+    "ci95": [
+     -0.09002555610572609,
+     -0.08305036534066713
+    ],
+    "exit_mix": {
+     "fair": 0.19775068816358632,
+     "fair->settle": 4.7188360204482896e-05,
+     "sl": 0.5243885174990169,
+     "sl->settle": 0.00023594180102241448,
+     "time": 0.038222571765631146,
+     "time->settle": 0.0009123082972866693,
+     "tp": 0.23844278411325207
+    },
+    "hold_min_median": 0.31666666666666665,
+    "late_stops": 0,
+    "loss_cents": 10.407018008557758,
+    "losses": 40403,
+    "mean_net_com": -0.08707719506239725,
+    "mean_net_stress": -0.08707719506239725,
+    "mean_net_us": -0.0865688296700631,
+    "mean_p_entry": 0.46945752341002434,
+    "mean_pnl_usd": -1.731376593401262,
+    "missed": 2082,
+    "n": 63575,
+    "n_events": 1102,
+    "risk": {
+     "best_day_usd": -1.8986289834075967,
+     "capital_usd": 100.0,
+     "daily_stop": {
+      "days_stopped": 47,
+      "limit_usd": 10.0,
+      "mean_net": -0.07142164443725865,
+      "n": 481,
+      "skipped": 63094,
+      "total_usd": -687.0762194864283
+     },
+     "days_with_exits": 47,
+     "longest_losing_streak": 29,
+     "max_drawdown_usd": -110131.28868492995,
+     "max_open": 5,
+     "sharpe_daily": -62.609490290876494,
+     "worst_day_usd": -3889.809231738889,
+     "worst_trip_usd": -21.3622
+    },
+    "small_entry_share": 0.8738497837200158,
+    "total_usd": -110072.26692548522,
+    "trips_per_day": 1382.0652173913043,
+    "win_cents": 8.807590719151746,
+    "win_rate": 0.36448289421942587,
+    "worst_case_net": 0.26767125303440353
+   }
+  },
+  {
+   "bar": {
+    "checks": {
+     "ci_lower": false,
+     "loss_guards": true,
+     "mean": false,
+     "n": true,
+     "placebo": false,
+     "stress": false
+    },
+    "passes": false
+   },
+   "by_sub": {
+    "15m": {
+     "mean_net_us": -0.12592942753816241,
+     "n": 14901,
+     "total_usd": -37529.48799492317,
+     "win_rate": 0.39098047110932155
+    },
+    "1h": {
+     "mean_net_us": -0.09588377754585968,
+     "n": 3345,
+     "total_usd": -6414.624717818013,
+     "win_rate": 0.39940209267563526
+    },
+    "5m": {
+     "mean_net_us": -0.11961111483413613,
+     "n": 45458,
+     "total_usd": -108745.64116260322,
+     "win_rate": 0.4078490034757358
+    }
+   },
+   "by_symbol": {
+    "BTCUSDT": {
+     "mean_net_us": -0.12067365299200702,
+     "n": 63035,
+     "total_usd": -152133.27432702327,
+     "win_rate": 0.40312524787816295
+    },
+    "ETHUSDT": {
+     "mean_net_us": -0.07543541120805558,
+     "n": 568,
+     "total_usd": -856.9462713235115,
+     "win_rate": 0.4225352112676056
+    },
+    "SOLUSDT": {
+     "mean_net_us": 0.20520826163389363,
+     "n": 80,
+     "total_usd": 328.33321861422985,
+     "win_rate": 0.5125
+    },
+    "XRPUSDT": {
+     "mean_net_us": -0.06634879907580443,
+     "n": 21,
+     "total_usd": -27.866495611837877,
+     "win_rate": 0.47619047619047616
+    }
+   },
+   "cell": "m0.08|tp0.08|sl0.05|tend|maker",
+   "checks": {
+    "ci_lower": false,
+    "loss_guards": true,
+    "mean": false,
+    "n": true,
+    "stress": false
+   },
+   "entry": {
+    "gap_at_fill": 0.060233831482320616,
+    "gap_at_signal": 0.11632445276824324,
+    "share_fill_above_fair": 0.19928104985558207,
+    "share_gap_still_m": 0.34487630290091675,
+    "slippage": 0.055512458456415614
+   },
+   "markets_traded": 15421,
+   "passes": false,
+   "placebo": null,
+   "selectable": true,
+   "summary": {
+    "breakeven_win_rate": 0.6604288779649335,
+    "ci95": [
+     -0.12301289817674638,
+     -0.11669442633077996
+    ],
+    "exit_mix": {
+     "fair": 0.14980221022227805,
+     "sl": 0.6059588094939093,
+     "sl->settle": 0.0002825568253170916,
+     "time": 0.04834861233203566,
+     "time->settle": 0.0007848800703252543,
+     "tp": 0.19482293105613463
+    },
+    "hold_min_median": 0.31666666666666665,
+    "late_stops": 0,
+    "loss_cents": 11.220760002126909,
+    "losses": 38002,
+    "mean_net_com": -0.12025506208837516,
+    "mean_net_stress": -0.13287761737698325,
+    "mean_net_us": -0.11984314475962608,
+    "mean_p_entry": 0.4739250164953111,
+    "mean_pnl_usd": -2.3968628951925215,
+    "missed": 2065,
+    "n": 63704,
+    "n_events": 1102,
+    "risk": {
+     "best_day_usd": -22.215119560012514,
+     "capital_usd": 100.0,
+     "daily_stop": {
+      "days_stopped": 47,
+      "limit_usd": 10.0,
+      "mean_net": -0.08077922654900781,
+      "n": 412,
+      "skipped": 63292,
+      "total_usd": -665.6208267638243
+     },
+     "days_with_exits": 47,
+     "longest_losing_streak": 19,
+     "max_drawdown_usd": -152714.65959735718,
+     "max_open": 5,
+     "sharpe_daily": -68.087942322926,
+     "worst_day_usd": -4701.521019432116,
+     "worst_trip_usd": -21.3622
+    },
+    "small_entry_share": 0.8730691950269999,
+    "total_usd": -152689.75387534438,
+    "trips_per_day": 1384.8695652173913,
+    "win_cents": 5.769351085539206,
+    "win_rate": 0.40345975134999373,
+    "worst_case_net": 0.16442926788508594
+   }
+  },
+  {
+   "bar": {
+    "checks": {
+     "ci_lower": false,
+     "loss_guards": true,
+     "mean": false,
+     "n": true,
+     "placebo": false,
+     "stress": false
+    },
+    "passes": false
+   },
+   "by_sub": {
+    "15m": {
+     "mean_net_us": -0.07450619652900392,
+     "n": 13271,
+     "total_usd": -19775.43468272822,
+     "win_rate": 0.43297415417074825
+    },
+    "1h": {
+     "mean_net_us": -0.052730583209728475,
+     "n": 2914,
+     "total_usd": -3073.1383894629753,
+     "win_rate": 0.4938229238160604
+    },
+    "5m": {
+     "mean_net_us": -0.08800791519726987,
+     "n": 40190,
+     "total_usd": -70740.76223556552,
+     "win_rate": 0.41099776063697435
+    }
+   },
+   "by_symbol": {
+    "BTCUSDT": {
+     "mean_net_us": -0.0842192868075038,
+     "n": 55750,
+     "total_usd": -93904.50479036671,
+     "win_rate": 0.419390134529148
+    },
+    "ETHUSDT": {
+     "mean_net_us": 0.010081214745649898,
+     "n": 528,
+     "total_usd": 106.45762771406295,
+     "win_rate": 0.5208333333333334
+    },
+    "SOLUSDT": {
+     "mean_net_us": 0.1514910411814818,
+     "n": 73,
+     "total_usd": 221.17692012496343,
+     "win_rate": 0.4794520547945205
+    },
+    "XRPUSDT": {
+     "mean_net_us": -0.02596888589379785,
+     "n": 24,
+     "total_usd": -12.465065229022962,
+     "win_rate": 0.5
+    }
+   },
+   "cell": "m0.08|tp0.08|sl0.1|tend|taker",
+   "checks": {
+    "ci_lower": false,
+    "loss_guards": true,
+    "mean": false,
+    "n": true,
+    "stress": false
+   },
+   "entry": {
+    "gap_at_fill": 0.05665046349590146,
+    "gap_at_signal": 0.11518289590523237,
+    "share_fill_above_fair": 0.2098270509977827,
+    "share_gap_still_m": 0.32404434589800446,
+    "slippage": 0.057862052251169846
+   },
+   "markets_traded": 15421,
+   "passes": false,
+   "placebo": null,
+   "selectable": true,
+   "summary": {
+    "breakeven_win_rate": 0.5760465415364637,
+    "ci95": [
+     -0.08715449404676423,
+     -0.07899177103660193
+    ],
+    "exit_mix": {
+     "fair": 0.26156984478935696,
+     "fair->settle": 5.3215077605321506e-05,
+     "sl": 0.3723458980044346,
+     "sl->settle": 0.00026607538802660754,
+     "time": 0.06332594235033259,
+     "time->settle": 0.003458980044345898,
+     "tp": 0.2989623059866962,
+     "tp->settle": 1.7738359201773837e-05
+    },
+    "hold_min_median": 0.4,
+    "late_stops": 0,
+    "loss_cents": 12.462052016423177,
+    "losses": 32672,
+    "mean_net_com": -0.08350118379873513,
+    "mean_net_stress": -0.08350118379873513,
+    "mean_net_us": -0.08300606235721217,
+    "mean_p_entry": 0.4777736184096373,
+    "mean_pnl_usd": -1.6601212471442435,
+    "missed": 1806,
+    "n": 56375,
+    "n_events": 1102,
+    "risk": {
+     "best_day_usd": 3.456505921089274,
+     "capital_usd": 100.0,
+     "daily_stop": {
+      "days_stopped": 46,
+      "limit_usd": 10.0,
+      "mean_net": -0.06813925222311575,
+      "n": 531,
+      "skipped": 55844,
+      "total_usd": -723.6388586094894
+     },
+     "days_with_exits": 47,
+     "longest_losing_streak": 26,
+     "max_drawdown_usd": -93624.50549399112,
+     "max_open": 5,
+     "sharpe_daily": -57.55369623117221,
+     "worst_day_usd": -3218.534618419684,
+     "worst_trip_usd": -21.3622
+    },
+    "small_entry_share": 0.8730110864745011,
+    "total_usd": -93589.33530775673,
+    "trips_per_day": 1225.5434782608695,
+    "win_cents": 9.171706921151019,
+    "win_rate": 0.42045232815964523,
+    "worst_case_net": 0.2720523853667851
+   }
+  },
+  {
+   "bar": {
+    "checks": {
+     "ci_lower": false,
+     "loss_guards": true,
+     "mean": false,
+     "n": true,
+     "placebo": false,
+     "stress": false
+    },
+    "passes": false
+   },
+   "by_sub": {
+    "15m": {
+     "mean_net_us": -0.13111896772742584,
+     "n": 13025,
+     "total_usd": -34156.49109299442,
+     "win_rate": 0.48115163147792706
+    },
+    "1h": {
+     "mean_net_us": -0.1006419472797834,
+     "n": 2859,
+     "total_usd": -5754.706545458015,
+     "win_rate": 0.5117173837005946
+    },
+    "5m": {
+     "mean_net_us": -0.12097545405346037,
+     "n": 40604,
+     "total_usd": -98241.7467277341,
+     "win_rate": 0.4905674317801202
+    }
+   },
+   "by_symbol": {
+    "BTCUSDT": {
+     "mean_net_us": -0.12304652194497222,
+     "n": 55902,
+     "total_usd": -137570.93339535673,
+     "win_rate": 0.4890701584916461
+    },
+    "ETHUSDT": {
+     "mean_net_us": -0.07084256966851916,
+     "n": 497,
+     "total_usd": -704.1751425050803,
+     "win_rate": 0.5271629778672032
+    },
+    "SOLUSDT": {
+     "mean_net_us": 0.11530504326749137,
+     "n": 69,
+     "total_usd": 159.1209597091381,
+     "win_rate": 0.5362318840579711
+    },
+    "XRPUSDT": {
+     "mean_net_us": -0.09239197008471955,
+     "n": 20,
+     "total_usd": -36.95678803388783,
+     "win_rate": 0.5
+    }
+   },
+   "cell": "m0.08|tp0.08|sl0.1|tend|maker",
+   "checks": {
+    "ci_lower": false,
+    "loss_guards": true,
+    "mean": false,
+    "n": true,
+    "stress": false
+   },
+   "entry": {
+    "gap_at_fill": 0.055922345842509366,
+    "gap_at_signal": 0.11489945958286851,
+    "share_fill_above_fair": 0.2119919274890242,
+    "share_gap_still_m": 0.32127177453618466,
+    "slippage": 0.05870127937875301
+   },
+   "markets_traded": 15421,
+   "passes": false,
+   "placebo": null,
+   "selectable": true,
+   "summary": {
+    "breakeven_win_rate": 0.7180895933911743,
+    "ci95": [
+     -0.12602689618557816,
+     -0.11881467794954026
+    ],
+    "exit_mix": {
+     "fair": 0.2163468347259595,
+     "sl": 0.44363404616909785,
+     "sl->settle": 0.00031865174904404476,
+     "time": 0.0796275315111174,
+     "time->settle": 0.00334584336496247,
+     "tp": 0.25672709247981873
+    },
+    "hold_min_median": 0.4,
+    "late_stops": 0,
+    "loss_cents": 14.273907898707973,
+    "losses": 28839,
+    "mean_net_com": -0.12265017755420866,
+    "mean_net_stress": -0.13986085663748563,
+    "mean_net_us": -0.1222852148829721,
+    "mean_p_entry": 0.4833393683999009,
+    "mean_pnl_usd": -2.445704297659442,
+    "missed": 1811,
+    "n": 56488,
+    "n_events": 1102,
+    "risk": {
+     "best_day_usd": -16.139820035541675,
+     "capital_usd": 100.0,
+     "daily_stop": {
+      "days_stopped": 47,
+      "limit_usd": 10.0,
+      "mean_net": -0.08009402666773954,
+      "n": 445,
+      "skipped": 56043,
+      "total_usd": -712.8368373428818
+     },
+     "days_with_exits": 47,
+     "longest_losing_streak": 14,
+     "max_drawdown_usd": -138168.7072251896,
+     "max_open": 5,
+     "sharpe_daily": -66.02223966889083,
+     "worst_day_usd": -4237.471949443618,
+     "worst_trip_usd": -21.3622
+    },
+    "small_entry_share": 0.8708221215125337,
+    "total_usd": -138152.94436618657,
+    "trips_per_day": 1228.0,
+    "win_cents": 5.603706301630899,
+    "win_rate": 0.48946678940659966,
+    "worst_case_net": 0.15542481677993394
+   }
+  },
+  {
+   "bar": {
+    "checks": {
+     "ci_lower": false,
+     "loss_guards": true,
+     "mean": false,
+     "n": true,
+     "placebo": false,
+     "stress": false
+    },
+    "passes": false
+   },
+   "by_sub": {
+    "15m": {
+     "mean_net_us": -0.05915365941381658,
+     "n": 8758,
+     "total_usd": -10361.354982924113,
+     "win_rate": 0.5698789678008678
+    },
+    "1h": {
+     "mean_net_us": -0.04229222820430948,
+     "n": 1957,
+     "total_usd": -1655.3178119166735,
+     "win_rate": 0.6392437404190087
+    },
+    "5m": {
+     "mean_net_us": -0.07996745084297788,
+     "n": 28032,
+     "total_usd": -44832.95164060712,
+     "win_rate": 0.521154394977169
+    }
+   },
+   "by_symbol": {
+    "BTCUSDT": {
+     "mean_net_us": -0.07436837406615532,
+     "n": 38315,
+     "total_usd": -56988.48504689482,
+     "win_rate": 0.5371525512201488
+    },
+    "ETHUSDT": {
+     "mean_net_us": 0.011930848190742705,
+     "n": 357,
+     "total_usd": 85.18625608190295,
+     "win_rate": 0.6358543417366946
+    },
+    "SOLUSDT": {
+     "mean_net_us": 0.050574021461128604,
+     "n": 55,
+     "total_usd": 55.63142360724147,
+     "win_rate": 0.5636363636363636
+    },
+    "XRPUSDT": {
+     "mean_net_us": -0.004892670605564919,
+     "n": 20,
+     "total_usd": -1.957068242225958,
+     "win_rate": 0.6
+    }
+   },
+   "cell": "m0.08|tp0.08|slnone|tend|taker",
+   "checks": {
+    "ci_lower": false,
+    "loss_guards": true,
+    "mean": false,
+    "n": true,
+    "stress": false
+   },
+   "entry": {
+    "gap_at_fill": 0.04678049677009546,
+    "gap_at_signal": 0.11053254261890007,
+    "share_fill_above_fair": 0.23888301029757142,
+    "share_gap_still_m": 0.27310501458177405,
+    "slippage": 0.06427697307059127
+   },
+   "markets_traded": 15421,
+   "passes": false,
+   "placebo": null,
+   "selectable": true,
+   "summary": {
+    "breakeven_win_rate": 0.6567646367004311,
+    "ci95": [
+     -0.07855414561425299,
+     -0.06809517997813981
+    ],
+    "exit_mix": {
+     "fair": 0.3807520582238625,
+     "fair->settle": 2.5808449686427338e-05,
+     "time": 0.21199060572431414,
+     "time->settle": 0.029963610085942137,
+     "tp": 0.3772679175161948
+    },
+    "hold_min_median": 0.6333333333333333,
+    "late_stops": 0,
+    "loss_cents": 17.689533107465074,
+    "losses": 17896,
+    "mean_net_com": -0.07381385823969398,
+    "mean_net_stress": -0.07381385823969398,
+    "mean_net_us": -0.07336003359672737,
+    "mean_p_entry": 0.503485828916951,
+    "mean_pnl_usd": -1.4672006719345474,
+    "missed": 951,
+    "n": 38747,
+    "n_events": 1102,
+    "risk": {
+     "best_day_usd": 9.547408276159958,
+     "capital_usd": 120.0,
+     "daily_stop": {
+      "days_stopped": 46,
+      "limit_usd": 10.0,
+      "mean_net": -0.04611535358034789,
+      "n": 1065,
+      "skipped": 37682,
+      "total_usd": -982.25703126141
+     },
+     "days_with_exits": 47,
+     "longest_losing_streak": 18,
+     "max_drawdown_usd": -56903.914815498305,
+     "max_open": 6,
+     "sharpe_daily": -51.38386441172355,
+     "worst_day_usd": -2131.760160802076,
+     "worst_trip_usd": -21.3622
+    },
+    "small_entry_share": 0.8687382248948305,
+    "total_usd": -56849.624435447906,
+    "trips_per_day": 842.3260869565217,
+    "win_cents": 9.24482376707196,
+    "win_rate": 0.5381319844116964,
+    "worst_case_net": 0.23719495053356915
+   }
+  },
+  {
+   "bar": {
+    "checks": {
+     "ci_lower": false,
+     "loss_guards": true,
+     "mean": false,
+     "n": true,
+     "placebo": false,
+     "stress": false
+    },
+    "passes": false
+   },
+   "by_sub": {
+    "15m": {
+     "mean_net_us": -0.11669763292393329,
+     "n": 7843,
+     "total_usd": -18305.190700448176,
+     "win_rate": 0.6992222363891368
+    },
+    "1h": {
+     "mean_net_us": -0.09107611207237445,
+     "n": 1846,
+     "total_usd": -3362.5300577120643,
+     "win_rate": 0.7302275189599133
+    },
+    "5m": {
+     "mean_net_us": -0.11219417972930025,
+     "n": 26887,
+     "total_usd": -60331.298207633925,
+     "win_rate": 0.6756425038122513
+    }
+   },
+   "by_symbol": {
+    "BTCUSDT": {
+     "mean_net_us": -0.11294442569458166,
+     "n": 36186,
+     "total_usd": -81740.13976368262,
+     "win_rate": 0.6827778698944343
+    },
+    "ETHUSDT": {
+     "mean_net_us": -0.04243378703521296,
+     "n": 323,
+     "total_usd": -274.12226424747575,
+     "win_rate": 0.7430340557275542
+    },
+    "SOLUSDT": {
+     "mean_net_us": 0.06632075830950776,
+     "n": 52,
+     "total_usd": 68.97358864188806,
+     "win_rate": 0.7884615384615384
+    },
+    "XRPUSDT": {
+     "mean_net_us": -0.179101755019825,
+     "n": 15,
+     "total_usd": -53.730526505947516,
+     "win_rate": 0.6666666666666666
+    }
+   },
+   "cell": "m0.08|tp0.08|slnone|tend|maker",
+   "checks": {
+    "ci_lower": false,
+    "loss_guards": true,
+    "mean": false,
+    "n": true,
+    "stress": false
+   },
+   "entry": {
+    "gap_at_fill": 0.0452591723953664,
+    "gap_at_signal": 0.11028264971248654,
+    "share_fill_above_fair": 0.24496937882764655,
+    "share_gap_still_m": 0.2675251531058618,
+    "slippage": 0.06645184956855316
+   },
+   "markets_traded": 15421,
+   "passes": false,
+   "placebo": null,
+   "selectable": true,
+   "summary": {
+    "breakeven_win_rate": 0.8281571789899028,
+    "ci95": [
+     -0.11710443249593111,
+     -0.10725877905293545
+    ],
+    "exit_mix": {
+     "fair": 0.3168471128608924,
+     "time": 0.26295931758530183,
+     "time->settle": 0.03565179352580927,
+     "tp": 0.3845417760279965
+    },
+    "hold_min_median": 0.7166666666666667,
+    "late_stops": 0,
+    "loss_cents": 26.212890058714816,
+    "losses": 11578,
+    "mean_net_com": -0.11236861221215537,
+    "mean_net_stress": -0.13565748126669241,
+    "mean_net_us": -0.11209402198954801,
+    "mean_p_entry": 0.5140337555883886,
+    "mean_pnl_usd": -2.24188043979096,
+    "missed": 883,
+    "n": 36576,
+    "n_events": 1102,
+    "risk": {
+     "best_day_usd": -23.237150615760466,
+     "capital_usd": 120.0,
+     "daily_stop": {
+      "days_stopped": 46,
+      "limit_usd": 10.0,
+      "mean_net": -0.07893491619053809,
+      "n": 689,
+      "skipped": 35887,
+      "total_usd": -1087.723145105615
+     },
+     "days_with_exits": 47,
+     "longest_losing_streak": 10,
+     "max_drawdown_usd": -82020.13587979467,
+     "max_open": 6,
+     "sharpe_daily": -59.28529248056313,
+     "worst_day_usd": -2771.7124182725906,
+     "worst_trip_usd": -21.3344
+    },
+    "small_entry_share": 0.8637357830271216,
+    "total_usd": -81999.01896579415,
+    "trips_per_day": 795.1304347826087,
+    "win_cents": 5.439181219211538,
+    "win_rate": 0.6834536307961505,
+    "worst_case_net": 0.12645979778532032
+   }
+  },
+  {
+   "bar": {
+    "checks": {
+     "ci_lower": false,
+     "loss_guards": true,
+     "mean": false,
+     "n": true,
+     "placebo": false,
+     "stress": false
+    },
+    "passes": false
+   },
+   "by_sub": {
+    "15m": {
+     "mean_net_us": -0.020614001126921522,
+     "n": 3016,
+     "total_usd": -1243.4365479759056,
+     "win_rate": 0.5169098143236074
+    },
+    "1h": {
+     "mean_net_us": -0.02871354612145437,
+     "n": 925,
+     "total_usd": -531.2006032469055,
+     "win_rate": 0.4864864864864865
+    },
+    "5m": {
+     "mean_net_us": -0.06122633088798183,
+     "n": 11901,
+     "total_usd": -14573.091277957432,
+     "win_rate": 0.5039072346861608
+    }
+   },
+   "by_symbol": {
+    "BTCUSDT": {
+     "mean_net_us": -0.05223287200053051,
+     "n": 15662,
+     "total_usd": -16361.424825446175,
+     "win_rate": 0.5052994509002682
+    },
+    "ETHUSDT": {
+     "mean_net_us": -0.01959746700643441,
+     "n": 138,
+     "total_usd": -54.08900893775896,
+     "win_rate": 0.5072463768115942
+    },
+    "SOLUSDT": {
+     "mean_net_us": 0.2747277939868889,
+     "n": 29,
+     "total_usd": 159.34212051239555,
+     "win_rate": 0.5862068965517241
+    },
+    "XRPUSDT": {
+     "mean_net_us": -0.3521412127257896,
+     "n": 13,
+     "total_usd": -91.5567153087053,
+     "win_rate": 0.38461538461538464
+    }
+   },
+   "cell": "hold|m0.03",
+   "checks": {
+    "ci_lower": false,
+    "loss_guards": true,
+    "mean": false,
+    "n": true,
+    "stress": false
+   },
+   "entry": {
+    "gap_at_fill": 0.018362452524846636,
+    "gap_at_signal": 0.060662431699261166,
+    "share_fill_above_fair": 0.356268147961116,
+    "share_gap_still_m": 0.3813281151369777,
+    "slippage": 0.04661011343370786
+   },
+   "markets_traded": 15842,
+   "passes": false,
+   "placebo": {
+    "draws": 200,
+    "drop_share": 0.00010068173210453502,
+    "mean": -0.0698423947589602,
+    "p95": -0.05495013696344579,
+    "real_percentile": 98.0
+   },
+   "placebo_why": "reading",
+   "selectable": false,
+   "summary": {
+    "breakeven_win_rate": 0.5331465723320713,
+    "ci95": [
+     -0.06766156582784298,
+     -0.03396760056856702
+    ],
+    "exit_mix": {
+     "settle": 1.0
+    },
+    "hold_min_median": 5.6,
+    "late_stops": 0,
+    "loss_cents": 50.927903981172896,
+    "losses": 7836,
+    "mean_net_com": -0.051838473416395574,
+    "mean_net_stress": -0.051838473416395574,
+    "mean_net_us": -0.05159616345530945,
+    "mean_p_entry": 0.5153800778277616,
+    "mean_pnl_usd": -1.0319232691061888,
+    "missed": 1,
+    "n": 15842,
+    "n_events": 1105,
+    "risk": {
+     "best_day_usd": 647.003269711822,
+     "capital_usd": 200.0,
+     "daily_stop": {
+      "days_stopped": 44,
+      "limit_usd": 10.0,
+      "mean_net": -0.006708581321192698,
+      "n": 2494,
+      "skipped": 13348,
+      "total_usd": -334.6240363010919
+     },
+     "days_with_exits": 46,
+     "longest_losing_streak": 14,
+     "max_drawdown_usd": -16486.89679558971,
+     "max_open": 10,
+     "sharpe_daily": -13.63531766780381,
+     "worst_day_usd": -1400.5766414892948,
+     "worst_trip_usd": -21.325939130465
+    },
+    "small_entry_share": 0.8579093548794344,
+    "total_usd": -16347.728429180244,
+    "trips_per_day": 344.39130434782606,
+    "win_cents": 44.5953660239325,
+    "win_rate": 0.5053654841560409,
+    "worst_case_net": 0.9108171156214535
+   }
+  },
+  {
+   "bar": {
+    "checks": {
+     "ci_lower": false,
+     "loss_guards": true,
+     "mean": false,
+     "n": true,
+     "placebo": false,
+     "stress": false
+    },
+    "passes": false
+   },
+   "by_sub": {
+    "15m": {
+     "mean_net_us": -0.029573812895675896,
+     "n": 3012,
+     "total_usd": -1781.5264888355155,
+     "win_rate": 0.5053120849933599
+    },
+    "1h": {
+     "mean_net_us": -0.011146652985877348,
+     "n": 914,
+     "total_usd": -203.7608165818378,
+     "win_rate": 0.5076586433260394
+    },
+    "5m": {
+     "mean_net_us": -0.05011417939314312,
+     "n": 11896,
+     "total_usd": -11923.16556121661,
+     "win_rate": 0.507985877605918
+    }
+   },
+   "by_symbol": {
+    "BTCUSDT": {
+     "mean_net_us": -0.04465400576476938,
+     "n": 15642,
+     "total_usd": -13969.559163450453,
+     "win_rate": 0.5072880705792098
+    },
+    "ETHUSDT": {
+     "mean_net_us": 0.01593475602087891,
+     "n": 138,
+     "total_usd": 43.97992661762582,
+     "win_rate": 0.5217391304347826
+    },
+    "SOLUSDT": {
+     "mean_net_us": 0.24049268267650106,
+     "n": 29,
+     "total_usd": 139.48575595237054,
+     "win_rate": 0.6206896551724138
+    },
+    "XRPUSDT": {
+     "mean_net_us": -0.47061302212887873,
+     "n": 13,
+     "total_usd": -122.35938575350849,
+     "win_rate": 0.3076923076923077
+    }
+   },
+   "cell": "hold|m0.05",
+   "checks": {
+    "ci_lower": false,
+    "loss_guards": true,
+    "mean": false,
+    "n": true,
+    "stress": false
+   },
+   "entry": {
+    "gap_at_fill": 0.023742926346977958,
+    "gap_at_signal": 0.07828254286167381,
+    "share_fill_above_fair": 0.3293515358361775,
+    "share_gap_still_m": 0.2868158260649728,
+    "slippage": 0.05821809877790419
+   },
+   "markets_traded": 15822,
+   "passes": false,
+   "placebo": {
+    "draws": 200,
+    "drop_share": 9.006446719761474e-05,
+    "mean": -0.06996300716465491,
+    "p95": -0.05207945485441002,
+    "real_percentile": 97.5
+   },
+   "placebo_why": "reading",
+   "selectable": false,
+   "summary": {
+    "breakeven_win_rate": 0.5319718947332401,
+    "ci95": [
+     -0.06106930348785487,
+     -0.02631421291950907
+    ],
+    "exit_mix": {
+     "settle": 1.0
+    },
+    "hold_min_median": 5.466666666666667,
+    "late_stops": 0,
+    "loss_cents": 49.866932527789295,
+    "losses": 7793,
+    "mean_net_com": -0.044195776186989756,
+    "mean_net_stress": -0.044195776186989756,
+    "mean_net_us": -0.04395289112196298,
+    "mean_p_entry": 0.5142298699464417,
+    "mean_pnl_usd": -0.8790578224392596,
+    "missed": 2,
+    "n": 15822,
+    "n_events": 1105,
+    "risk": {
+     "best_day_usd": 548.1815334296539,
+     "capital_usd": 200.0,
+     "daily_stop": {
+      "days_stopped": 43,
+      "limit_usd": 10.0,
+      "mean_net": -0.011218623223028521,
+      "n": 2373,
+      "skipped": 13449,
+      "total_usd": -532.435858164934
+     },
+     "days_with_exits": 46,
+     "longest_losing_streak": 13,
+     "max_drawdown_usd": -13908.452866634007,
+     "max_open": 10,
+     "sharpe_daily": -12.223454270623352,
+     "worst_day_usd": -1585.1566964308781,
+     "worst_trip_usd": -21.325939130465
+    },
+    "small_entry_share": 0.8576665402603969,
+    "total_usd": -13908.452866633965,
+    "trips_per_day": 343.95652173913044,
+    "win_cents": 43.87285527208179,
+    "win_rate": 0.5074579699153078,
+    "worst_case_net": 0.9185463505203767
+   }
+  },
+  {
+   "bar": {
+    "checks": {
+     "ci_lower": false,
+     "loss_guards": true,
+     "mean": false,
+     "n": true,
+     "placebo": false,
+     "stress": false
+    },
+    "passes": false
+   },
+   "by_sub": {
+    "15m": {
+     "mean_net_us": -0.007140497293375744,
+     "n": 2884,
+     "total_usd": -411.86388388191256,
+     "win_rate": 0.49167822468793343
+    },
+    "1h": {
+     "mean_net_us": -0.027458472720745385,
+     "n": 787,
+     "total_usd": -432.19636062453253,
+     "win_rate": 0.5019059720457433
+    },
+    "5m": {
+     "mean_net_us": -0.05328765205104477,
+     "n": 11750,
+     "total_usd": -12522.598231995522,
+     "win_rate": 0.5010212765957447
+    }
+   },
+   "by_symbol": {
+    "BTCUSDT": {
+     "mean_net_us": -0.044816219968751285,
+     "n": 15252,
+     "total_usd": -13670.739739267894,
+     "win_rate": 0.498688696564385
+    },
+    "ETHUSDT": {
+     "mean_net_us": 0.03772619399833203,
+     "n": 131,
+     "total_usd": 98.84262827562993,
+     "win_rate": 0.549618320610687
+    },
+    "SOLUSDT": {
+     "mean_net_us": 0.5118983656913545,
+     "n": 26,
+     "total_usd": 266.18715015950437,
+     "win_rate": 0.6538461538461539
+    },
+    "XRPUSDT": {
+     "mean_net_us": -0.253952148621706,
+     "n": 12,
+     "total_usd": -60.948515669209435,
+     "win_rate": 0.4166666666666667
+    }
+   },
+   "cell": "hold|m0.08",
+   "checks": {
+    "ci_lower": false,
+    "loss_guards": true,
+    "mean": false,
+    "n": true,
+    "stress": false
+   },
+   "entry": {
+    "gap_at_fill": 0.03398524137915313,
+    "gap_at_signal": 0.10770095324818134,
+    "share_fill_above_fair": 0.2854548991634784,
+    "share_gap_still_m": 0.20420206212307893,
+    "slippage": 0.0773967353549251
+   },
+   "markets_traded": 15421,
+   "passes": false,
+   "placebo": {
+    "draws": 200,
+    "drop_share": 8.49490953893639e-05,
+    "mean": -0.06426538023791611,
+    "p95": -0.04597628874978959,
+    "real_percentile": 97.5
+   },
+   "placebo_why": "reading",
+   "selectable": false,
+   "summary": {
+    "breakeven_win_rate": 0.5251797392652702,
+    "ci95": [
+     -0.06169844412033195,
+     -0.024712620779656733
+    ],
+    "exit_mix": {
+     "settle": 1.0
+    },
+    "hold_min_median": 5.15,
+    "late_stops": 0,
+    "loss_cents": 47.12100211533882,
+    "losses": 7721,
+    "mean_net_com": -0.043585622361108654,
+    "mean_net_stress": -0.043585622361108654,
+    "mean_net_us": -0.043339142975494356,
+    "mean_p_entry": 0.5070412287713961,
+    "mean_pnl_usd": -0.8667828595098871,
+    "missed": 12,
+    "n": 15421,
+    "n_events": 1102,
+    "risk": {
+     "best_day_usd": 597.0594887189056,
+     "capital_usd": 200.0,
+     "daily_stop": {
+      "days_stopped": 44,
+      "limit_usd": 10.0,
+      "mean_net": -0.014045137504018321,
+      "n": 2137,
+      "skipped": 13284,
+      "total_usd": -600.2891769217431
+     },
+     "days_with_exits": 46,
+     "longest_losing_streak": 16,
+     "max_drawdown_usd": -13377.130237896705,
+     "max_open": 10,
+     "sharpe_daily": -13.102543028496642,
+     "worst_day_usd": -1509.372452458785,
+     "worst_trip_usd": -21.35525
+    },
+    "small_entry_share": 0.8650541469424811,
+    "total_usd": -13366.658476501969,
+    "trips_per_day": 335.2391304347826,
+    "win_cents": 42.602569820740435,
+    "win_rate": 0.49931911030413073,
+    "worst_case_net": 0.9534864215976221
+   }
+  }
+ ],
+ "coverage": {
+  "by_sub": {
+   "15m": 3016,
+   "1h": 925,
+   "5m": 11901
+  },
+  "by_symbol": {
+   "BTCUSDT": 15662,
+   "ETHUSDT": 138,
+   "SOLUSDT": 29,
+   "XRPUSDT": 13
+  },
+  "closed_before_time_stop": 0,
+  "evaluated": 15842,
+  "fee_rates_in_catalogue": {
+   "0.07": 15843
+  },
+  "markets": 15843,
+  "placebo_seconds": 940.1,
+  "prints_median": 1773.5,
+  "seconds": 1784.8,
+  "skipped_few_fills": 1
+ },
+ "hyp": "W2",
+ "n_trials_total": 3165,
+ "placebo_readings": [
+  "m0.05|tp0.08|slnone|tend|taker",
+  "hold|m0.03",
+  "hold|m0.05",
+  "hold|m0.08"
+ ],
+ "placebo_required": [],
+ "plan_sha256": "c6f62ddf29a07278e504de8e1cde90969fa9d80bfc19a9f166d5973dc597021f",
+ "plan_version": "lab7-v1",
+ "prereg_sha256": "8184818b11e47affe356ad7808a95d500de8e5417416edbb190d0c70cd58b269",
+ "selected": null,
+ "sigma_b": 7.54297561130444e-05,
+ "split": "train",
+ "stage": "train",
+ "title": "crypto up / down windows: convergence to Binance spot",
+ "utc": "2026-10-10T21:26:12+00:00",
+ "verdict": "NO_EDGE_TRAIN",
+ "vol_window_s": 3600
+}

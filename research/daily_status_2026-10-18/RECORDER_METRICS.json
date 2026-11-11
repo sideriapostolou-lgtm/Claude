@@ -1,0 +1,50 @@
+{
+  "request": {
+    "projectId": "75750847-85c0-41a3-a2a7-b7f2201a51e9",
+    "environmentId": "17f7b0e0-104c-4903-9484-0106748b3cdb",
+    "serviceId": "736b1c8a-8311-4ee0-9043-d05f508cd821",
+    "hoursBack": 1,
+    "measurements": [
+      "DISK_USAGE_GB",
+      "MEMORY_USAGE_GB",
+      "MEMORY_LIMIT_GB"
+    ],
+    "sampleRateSeconds": 60
+  },
+  "result": {
+    "service": {
+      "id": "736b1c8a-8311-4ee0-9043-d05f508cd821",
+      "name": "kalshi-recorder"
+    },
+    "environment": {
+      "id": "17f7b0e0-104c-4903-9484-0106748b3cdb",
+      "name": "production"
+    },
+    "metrics": [
+      {
+        "measurement": "DISK_USAGE_GB",
+        "current": 1.589796864,
+        "average": 1.5846557125245904,
+        "min": 1.578786816,
+        "max": 1.589796864,
+        "sampleCount": 61
+      },
+      {
+        "measurement": "MEMORY_USAGE_GB",
+        "current": 0.999829504,
+        "average": 0.999723075147541,
+        "min": 0.99919872,
+        "max": 0.99997696,
+        "sampleCount": 61
+      },
+      {
+        "measurement": "MEMORY_LIMIT_GB",
+        "current": 0.99999744,
+        "average": 0.9999974400000009,
+        "min": 0.99999744,
+        "max": 0.99999744,
+        "sampleCount": 61
+      }
+    ]
+  }
+}

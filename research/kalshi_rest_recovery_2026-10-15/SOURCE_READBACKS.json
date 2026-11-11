@@ -1,0 +1,38 @@
+{
+  "candidate": [
+    {
+      "path": "src/nightcrawler/speeddesk_kalshi.py",
+      "exact": true,
+      "blob": "3f0bd334aee97d04cb30fe29a01ca5948ef7c9bf"
+    },
+    {
+      "path": "src/nightcrawler/speeddesk_kalshi_ws.py",
+      "exact": true,
+      "blob": "5ab7642ce26c61db8f41929ce010d68e719f9544"
+    },
+    {
+      "path": "tests/test_speeddesk_kalshi_rest_recovery.py",
+      "exact": true,
+      "blob": "5c3e4517a1f0d5949e061e29e6ab5d942e844eb4"
+    }
+  ],
+  "merged": [
+    {
+      "path": "src/nightcrawler/speeddesk_kalshi.py",
+      "exact": true,
+      "blob": "3f0bd334aee97d04cb30fe29a01ca5948ef7c9bf"
+    },
+    {
+      "path": "src/nightcrawler/speeddesk_kalshi_ws.py",
+      "exact": true,
+      "blob": "5ab7642ce26c61db8f41929ce010d68e719f9544"
+    },
+    {
+      "path": "tests/test_speeddesk_kalshi_rest_recovery.py",
+      "exact": true,
+      "blob": "5c3e4517a1f0d5949e061e29e6ab5d942e844eb4"
+    }
+  ],
+  "source_commit": "b7b7192e5d463e57417d05acb3b168744941b9fc",
+  "source_deployment": "1c01ffe7-e231-40c6-a026-ac63fec01227"
+}

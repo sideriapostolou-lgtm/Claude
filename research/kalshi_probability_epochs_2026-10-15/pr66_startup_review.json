@@ -1,0 +1,355 @@
+{
+  "decision": "ACCEPT exact PR66 startup/control/history and prospective declaration evidence; future forecast/official score still pending",
+  "reviewed_at_utc": "2026-10-15T21:38:32.576522+00:00",
+  "deployment": {
+    "id": "66e6e7e4-30d9-4628-a234-f2a8e97dad19",
+    "status": "SUCCESS",
+    "createdAt": "2026-10-15T21:32:19.644Z",
+    "updatedAt": "2026-10-15T21:33:37.737Z",
+    "serviceId": "f84d3b52-002f-44cb-931e-bc9e3e097e97",
+    "environmentId": "17f7b0e0-104c-4903-9484-0106748b3cdb",
+    "url": null,
+    "snapshotId": "33af0285-a621-4f02-b190-bc0d2ba6bc28",
+    "canRollback": true,
+    "canRedeploy": true,
+    "regions": [
+      "us-east4-eqdc4a"
+    ],
+    "meta": {
+      "reason": "deploy",
+      "commitMessage": "fix: preserve probability epochs and existing financial stops (#66)\n\nObserve-only lineage repair; exact v4 5992 tests pass with 14 existing skips, mypy130/Ruff7 and independent source/history/resource review. Existing daily stop, caps, loss history and real/practice separation must remain. No variables or budget reset. Verify exact deployment and prospective observer evidence.",
+      "commitHash": "0c30491e0bd101250ee443912e1352f38718af45",
+      "branch": "claude/nightcrawler-memecoin-bot-Gwnb1S"
+    }
+  },
+  "merge_clock": {
+    "before": {
+      "current_time": "2026-10-15 21:32:16 UTC"
+    },
+    "after": {
+      "current_time": "2026-10-15 21:32:18 UTC"
+    }
+  },
+  "readback_source_verified": {
+    "candidate": [
+      {
+        "path": "src/nightcrawler/kalshi_probability_epochs.py",
+        "equal": true,
+        "blob": "2900774856f3a251fd740ac01425d4b76aa4c3e4"
+      },
+      {
+        "path": "src/nightcrawler/kalshi_probability_learning.py",
+        "equal": true,
+        "blob": "3cf8ea01bd189b9fbde3d57b7f4060f285b83bac"
+      },
+      {
+        "path": "src/nightcrawler/kalshi_arena.py",
+        "equal": true,
+        "blob": "7085a8aea4b1202ace29e25114782808ae31d987"
+      },
+      {
+        "path": "src/nightcrawler/pagestate.py",
+        "equal": true,
+        "blob": "d538995e10010689df380caeac2278ffdac35cb2"
+      }
+    ],
+    "merged": [
+      {
+        "status": "fulfilled",
+        "value": {
+          "path": "src/nightcrawler/kalshi_probability_epochs.py",
+          "equal": true,
+          "blob": "2900774856f3a251fd740ac01425d4b76aa4c3e4"
+        }
+      },
+      {
+        "status": "fulfilled",
+        "value": {
+          "path": "src/nightcrawler/kalshi_probability_learning.py",
+          "equal": true,
+          "blob": "3cf8ea01bd189b9fbde3d57b7f4060f285b83bac"
+        }
+      },
+      {
+        "status": "fulfilled",
+        "value": {
+          "path": "src/nightcrawler/kalshi_arena.py",
+          "equal": true,
+          "blob": "7085a8aea4b1202ace29e25114782808ae31d987"
+        }
+      },
+      {
+        "status": "fulfilled",
+        "value": {
+          "path": "src/nightcrawler/pagestate.py",
+          "equal": true,
+          "blob": "d538995e10010689df380caeac2278ffdac35cb2"
+        }
+      }
+    ],
+    "candidate_commit": "1cca7075afc90dda1e335043b2e3d683a4b1d744",
+    "merge_commit": "0c30491e0bd101250ee443912e1352f38718af45",
+    "local_tree": "f41a5d677cafc331e953bb4170be329704c5c569"
+  },
+  "full_suite": "5992 passed /14 existing skips, captured exit0, unchanged exact source/test hashes",
+  "selected_restart": {
+    "before": "2026-10-15T21:31:28.400196622Z",
+    "after": "2026-10-15T21:34:45.548192704Z",
+    "count": 68,
+    "exact": 67,
+    "changed": {
+      "ladder.start_pnl_usd": {
+        "before": -3.7461,
+        "after": -3.7460999999999984
+      }
+    },
+    "mode": "paper",
+    "configured_mode": "live",
+    "day_stop_latched": true,
+    "trading_now": false,
+    "cash_usd": 30.2496,
+    "cumulative_pnl_usd": -19.49180000000001,
+    "day_pnl_usd": -5.044700000000009,
+    "caps": {
+      "window_usd": 10.0,
+      "open_usd": 20.0,
+      "day_stop_usd": 6.0,
+      "clip": 5.0,
+      "total_stop_usd": 10.0
+    },
+    "reported_risk_reserved_orders_positions": {
+      "open_risk_usd": 0,
+      "reserved_usd": 0,
+      "open_orders": 0,
+      "positions": 0
+    }
+  },
+  "controls": [
+    {
+      "original": {
+        "timestamp": "2026-10-15T21:34:39.558862848Z",
+        "severity": "info",
+        "message": "2026-10-15T21:34:39Z INFO nightcrawler.speeddesk: speeddesk_live_resume {\"at\":1792100079.3207111,\"venue\":\"kalshi\",\"state\":\"ignored; this value was already used\",\"total_pnl_usd\":-19.49180000000001,\"counted_from_usd\":null,\"total_halted\":false}",
+        "attributes": [
+          {
+            "key": "level",
+            "value": "\"info\""
+          }
+        ]
+      },
+      "event": "speeddesk_live_resume",
+      "payload": {
+        "at": 1792100079.3207111,
+        "venue": "kalshi",
+        "state": "ignored; this value was already used",
+        "total_pnl_usd": -19.49180000000001,
+        "counted_from_usd": null,
+        "total_halted": false
+      }
+    },
+    {
+      "original": {
+        "timestamp": "2026-10-15T21:34:39.558866768Z",
+        "severity": "info",
+        "message": "2026-10-15T21:34:39Z INFO nightcrawler.speeddesk: speeddesk_live_integrity_reset {\"at\":1792100079.3207197,\"venue\":\"kalshi\",\"code\":null,\"state\":\"ignored; this value was already used\"}",
+        "attributes": [
+          {
+            "key": "level",
+            "value": "\"info\""
+          }
+        ]
+      },
+      "event": "speeddesk_live_integrity_reset",
+      "payload": {
+        "at": 1792100079.3207197,
+        "venue": "kalshi",
+        "code": null,
+        "state": "ignored; this value was already used"
+      }
+    },
+    {
+      "original": {
+        "timestamp": "2026-10-15T21:34:39.558871748Z",
+        "severity": "info",
+        "message": "2026-10-15T21:34:39Z INFO nightcrawler.speeddesk: speeddesk_live_day_reset {\"at\":1792100079.3207247,\"venue\":\"kalshi\",\"state\":\"ignored; this value was already used\"}",
+        "attributes": [
+          {
+            "key": "level",
+            "value": "\"info\""
+          }
+        ]
+      },
+      "event": "speeddesk_live_day_reset",
+      "payload": {
+        "at": 1792100079.3207247,
+        "venue": "kalshi",
+        "state": "ignored; this value was already used"
+      }
+    }
+  ],
+  "lineage_original": {
+    "timestamp": "2026-10-15T21:34:41.020422766Z",
+    "severity": "info",
+    "message": "2026-10-15T21:34:40Z INFO nightcrawler.kalshi_probability_epochs: kalshi_probability_epoch_status {\"at\":1792100080.7403116,\"schema\":1,\"mode\":\"observe_only\",\"live_application\":false,\"profitability_proven\":false,\"error\":null,\"current_source_fingerprint\":\"23e2ca80d3c04415256bf3fc237ba017d56733a59219d718e86c554eaa1f1d25\",\"active_ordinal\":1,\"current_available\":true,\"archived\":[{\"ordinal\":0,\"protocol\":\"kalshi-probability-calibration-v2-h300-g5-b10-prior20\",\"source_fingerprint\":\"e79897062a3ebbd61fe5dc70617f02c44bb7d29c9dbf51e23940459686653c7c\",\"opened_at\":null,\"closed_at\":1792100080.7403116,\"forecasts\":5,\"scored\":5,\"unknown\":1,\"pending\":0,\"brier_baseline\":0.18726215950008984,\"brier_shadow\":0.1796062816651917,\"pending_frozen_unresolved\":true}],\"retained_active\":null,\"enabled\":true,\"current\":{\"mode\":\"observe_only\",\"enabled\":true,\"live_application\":false,\"profitability_proven\":false,\"protocol\":\"kalshi-probability-calibration-v2-h300-g5-b10-prior20\",\"source_fingerprint\":\"23e2ca80d3c04415256bf3fc237ba017d56733a59219d718e86c554eaa1f1d25\",\"history_protocol\":\"kalshi-probability-calibration-v2-h300-g5-b10-prior20\",\"history_source_fingerprint\":\"23e2ca80d3c04415256bf3fc237ba017d56733a59219d718e86c554eaa1f1d25\",\"forecast_horizon_s\":300,\"grace_s\":5,\"bins\":10,\"pending\":0,\"forecasts\":0,\"scored\":0,\"unknown\":0,\"brier_baseline\":null,\"brier_shadow\":null,\"error\":null,\"coverage\":\"conditional fresh-input probabilities; continuous coverage and profitability not certified\",\"exclusions\":{\"startup_inside\":0,\"late\":0,\"invalid\":0,\"pregap\":0,\"terms_changed\":0,\"missing_label\":0,\"outcome_known\":0,\"invalid_label\":0,\"capacity\":0,\"invalid_batch\":0,\"invalid_strike\":0}},\"legacy_sha256\":\"2c881bf39f84b3c6c131be00f2e7b1fc554a48ff111316dacb54eca09db910bf\"}",
+    "attributes": [
+      {
+        "key": "level",
+        "value": "\"info\""
+      }
+    ]
+  },
+  "lineage": {
+    "at": 1792100080.7403116,
+    "schema": 1,
+    "mode": "observe_only",
+    "live_application": false,
+    "profitability_proven": false,
+    "error": null,
+    "current_source_fingerprint": "23e2ca80d3c04415256bf3fc237ba017d56733a59219d718e86c554eaa1f1d25",
+    "active_ordinal": 1,
+    "current_available": true,
+    "archived": [
+      {
+        "ordinal": 0,
+        "protocol": "kalshi-probability-calibration-v2-h300-g5-b10-prior20",
+        "source_fingerprint": "e79897062a3ebbd61fe5dc70617f02c44bb7d29c9dbf51e23940459686653c7c",
+        "opened_at": null,
+        "closed_at": 1792100080.7403116,
+        "forecasts": 5,
+        "scored": 5,
+        "unknown": 1,
+        "pending": 0,
+        "brier_baseline": 0.18726215950008984,
+        "brier_shadow": 0.1796062816651917,
+        "pending_frozen_unresolved": true
+      }
+    ],
+    "retained_active": null,
+    "enabled": true,
+    "current": {
+      "mode": "observe_only",
+      "enabled": true,
+      "live_application": false,
+      "profitability_proven": false,
+      "protocol": "kalshi-probability-calibration-v2-h300-g5-b10-prior20",
+      "source_fingerprint": "23e2ca80d3c04415256bf3fc237ba017d56733a59219d718e86c554eaa1f1d25",
+      "history_protocol": "kalshi-probability-calibration-v2-h300-g5-b10-prior20",
+      "history_source_fingerprint": "23e2ca80d3c04415256bf3fc237ba017d56733a59219d718e86c554eaa1f1d25",
+      "forecast_horizon_s": 300,
+      "grace_s": 5,
+      "bins": 10,
+      "pending": 0,
+      "forecasts": 0,
+      "scored": 0,
+      "unknown": 0,
+      "brier_baseline": null,
+      "brier_shadow": null,
+      "error": null,
+      "coverage": "conditional fresh-input probabilities; continuous coverage and profitability not certified",
+      "exclusions": {
+        "startup_inside": 0,
+        "late": 0,
+        "invalid": 0,
+        "pregap": 0,
+        "terms_changed": 0,
+        "missing_label": 0,
+        "outcome_known": 0,
+        "invalid_label": 0,
+        "capacity": 0,
+        "invalid_batch": 0,
+        "invalid_strike": 0
+      }
+    },
+    "legacy_sha256": "2c881bf39f84b3c6c131be00f2e7b1fc554a48ff111316dacb54eca09db910bf"
+  },
+  "v1": {
+    "mode": "observe_only",
+    "enabled": true,
+    "live_application": false,
+    "profitability_proven": false,
+    "protocol": "kalshi-online-calibration-v1-h300-g5-b10-prior20",
+    "source_fingerprint": "b6112b7ef8955b20af734157c1e7f5ec533bf98f70e034558f06670578c391f2",
+    "history_protocol": "kalshi-online-calibration-v1-h300-g5-b10-prior20",
+    "history_source_fingerprint": "b6112b7ef8955b20af734157c1e7f5ec533bf98f70e034558f06670578c391f2",
+    "forecast_horizon_s": 300,
+    "grace_s": 5,
+    "bins": 10,
+    "pending": 0,
+    "forecasts": 0,
+    "scored": 0,
+    "unknown": 32,
+    "brier_baseline": null,
+    "brier_shadow": null,
+    "error": null,
+    "coverage": "quiet observations; full data coverage not certified",
+    "exclusions": {
+      "startup_inside": 4,
+      "late": 0,
+      "invalid": 0,
+      "pregap": 28,
+      "terms_changed": 0,
+      "missing_label": 0,
+      "outcome_known": 0,
+      "invalid_label": 0,
+      "capacity": 0
+    }
+  },
+  "poly_startup_original": {
+    "timestamp": "2026-10-15T21:33:33.430119484Z",
+    "severity": "info",
+    "message": "2026-10-15T21:33:32Z INFO nightcrawler.polydesk: polydesk_started theta=0.97 hours=1 ticket_usd=20 poll_s=90 (LIVE: 10 contract(s) per order)",
+    "attributes": [
+      {
+        "key": "level",
+        "value": "\"info\""
+      }
+    ]
+  },
+  "traceback_matches": 0,
+  "future_declaration": {
+    "source": "0c30491e0bd101250ee443912e1352f38718af45",
+    "deployment": "66e6e7e4-30d9-4628-a234-f2a8e97dad19",
+    "docsCommit": "ed47d21f24408675ca8da0747fca9985e76aebaa",
+    "docsTree": "df95466b3aa4a656c2a267a578bf6272d264f09f",
+    "publishedAt": {
+      "current_time": "2026-10-15 21:36:26 UTC"
+    },
+    "verifiedAt": {
+      "current_time": "2026-10-15 21:35:22 UTC"
+    },
+    "target": "KXBTC15M-26OCT151800-00",
+    "start": "2026-10-15T21:45:00Z",
+    "end": "2026-10-15T22:00:00Z",
+    "tail": "2026-10-15T22:02:00Z",
+    "ready_margin_seconds": 578.0,
+    "publication_margin_seconds": 514.0,
+    "earliest_full_future_window": true,
+    "official_rules": "If the simple average of the sixty seconds of CF Benchmarks' BRTI before 6:00 PM EDT on Oct 15, 2026 is at least the simple average of the sixty seconds of CF Benchmarks' BRTI before 5:45 PM EDT on October 15, 2026, then the market resolves to Yes."
+  },
+  "limits": [
+    "Selected68fields are not native full cash/volume/control ledger export; as_of is panel time and actual account-read age unpublished.",
+    "Old archive summary/digest reported, but no complete native checkpoint/raw bins export to independently recompute legacy digest or certify archived raw bytes.",
+    "Observed source-matched enabled zero observer is startup plumbing only; future forecast, input qualification, official outcome and score pending.",
+    "Daily stop remains latched; no resume/budget reset or permission to trade follows from this review.",
+    "Bounded zero traceback query is not continuous-error proof.",
+    "Preexisting generic learn.recorder disk warning is distinct from this enabled probability observer; no cleanup/free-space certification.",
+    "Prior16cwin and following48closs must both remain; two-window net\u221232c. Final before/after totals preserve loss, but no new original settlement query conducted here."
+  ],
+  "input_sha256": {
+    "/workspace/nightcrawler-probability-epochs/research/kalshi_probability_epochs_2026-10-15/BEFORE_STATUS.native.json": "1cfd7558cb02da85c8dbc3e9c6cc041a0f2447094fb7fecf6a4bf5981ddbaf90",
+    "/workspace/nightcrawler-probability-epochs/research/kalshi_probability_epochs_2026-10-15/AFTER_STATUS.native.json": "8f4614e244f66e0dd931e6c1937fc240afcd8e3f6038c03a7246f16652c03cb2",
+    "/workspace/nightcrawler-probability-epochs/research/kalshi_probability_epochs_2026-10-15/RESTART_SELECTED_COMPARISON.json": "47731ad5b492a31d38b63e728aa71e91775716b6b528e360bcefdc118dccf2d5",
+    "/workspace/nightcrawler-probability-epochs/research/kalshi_probability_epochs_2026-10-15/STARTUP_CONTROLS.native.json": "bb4de4b1d84e5476c107ce5781fe2a4cc84b375f70b567065131b7dcee7dbb65",
+    "/workspace/nightcrawler-probability-epochs/research/kalshi_probability_epochs_2026-10-15/STARTUP_LINEAGE.native.json": "d248ae449d829a6cf8427e33f3e7bcd0fe19845e7d1359bae6d5066494135ce5",
+    "/workspace/nightcrawler-probability-epochs/research/kalshi_probability_epochs_2026-10-15/STARTUP_LEARNING.native.json": "aec242cd11279fd9314d5a6bffb704205fc67c4cf471a70edf89223f092f2a21",
+    "/workspace/nightcrawler-probability-epochs/research/kalshi_probability_epochs_2026-10-15/POLY_STARTUP.native.json": "99b17d5b7ede27c547e519c39faa346741da32fc313adf7553e71c7711ebf9cf",
+    "/workspace/nightcrawler-probability-epochs/research/kalshi_probability_epochs_2026-10-15/TRACEBACK_STARTUP.native.json": "268a77c07e7848f7c9c3d823af3cb273b877cb9e5820d61c4c4b31867a8ff375",
+    "/workspace/nightcrawler-probability-epochs/research/kalshi_probability_epochs_2026-10-15/DEPLOYMENT_RECEIPT.json": "12a534f8746df3c975e13c96d99ca5032633229377a780801d029bb3c59f8c10",
+    "/workspace/nightcrawler-probability-epochs/research/kalshi_probability_epochs_2026-10-15/MERGE.native.json": "4e2b19035af79cee468b1d0f256903136c042d2365623ac2c3ddca670a03b0cd",
+    "/workspace/nightcrawler-probability-epochs/research/kalshi_probability_epochs_2026-10-15/SOURCE_READBACKS.json": "f4f99979178713c5bd47e0d8e0e93062c8e47ba52cc69b1d3407a731cdf9edbc",
+    "/workspace/nightcrawler-probability-epochs/research/kalshi_probability_epochs_2026-10-15/epochs-v4.json": "75b3d3a0f61ea9ede0c6c5a19ab5c83476eef6d094e21d1a15f1fc86b25d4d72",
+    "/workspace/nightcrawler-probability-epochs/research/kalshi_probability_epochs_2026-10-15/FULL_PYTEST_RECEIPT.json": "c27a60786730b3f19efc426e8788ca20885204d6712d0e9370c140d443e66a59",
+    "/workspace/nightcrawler-probability-epochs/research/kalshi_probability_epochs_2026-10-15/DECLARATION_PUBLICATION_RECEIPT.json": "47f8743916fb06cb104e5fd756e81d28bbc4c80d49687b8c560625d9567e5dca",
+    "/workspace/nightcrawler-probability-epochs/research/kalshi_probability_epochs_2026-10-15/PROSPECTIVE_WINDOW_METADATA.json": "d00013f57ba6b378cb153b219d1ce0dc719bce6ea5a22b65cf5a71abeba091e5"
+  }
+}

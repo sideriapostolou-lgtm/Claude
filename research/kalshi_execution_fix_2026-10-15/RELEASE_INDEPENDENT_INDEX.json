@@ -1,0 +1,73 @@
+{
+  "archive": {
+    "path": "research/kalshi_execution_fix_2026-10-15/RELEASE.zip",
+    "bytes": 807115,
+    "expected_bytes": 807115,
+    "sha256": "22610e42c6aadef1f9fb7cddb2d5b2f5f464f972c17f2521ea3d385d469a077a",
+    "expected_sha256": "22610e42c6aadef1f9fb7cddb2d5b2f5f464f972c17f2521ea3d385d469a077a",
+    "zip_members": 65,
+    "expected_members": 65,
+    "manifest_members": 65,
+    "crc_members_read": 65,
+    "manifest_size_hash_matches": 65,
+    "local_members_byte_equal": 65,
+    "zip_testzip_bad_member": null,
+    "missing_members": 0,
+    "extra_members": 0
+  },
+  "json_validation": {
+    "json_member_count": 63,
+    "json_parsed_successfully": 63,
+    "json_parse_failures": []
+  },
+  "bounded_sensitive_scan": {
+    "patterns_checked": [
+      "pem_private_key",
+      "sk_style_key",
+      "bearer_credential",
+      "credential_assignment"
+    ],
+    "hit_count": 0,
+    "hits_redacted": [],
+    "values_printed_or_recorded": false
+  },
+  "preparation_archive": {
+    "path": "research/kalshi_execution_fix_2026-10-15/PREPARATION.zip",
+    "bytes": 838703,
+    "sha256": "5e3b7611d89b9163074b60dd13c7a66f613d675139d8e1155f28321b283b81cf",
+    "expected_sha256": "5e3b7611d89b9163074b60dd13c7a66f613d675139d8e1155f28321b283b81cf",
+    "matches_expected": true
+  },
+  "queue_gate": {
+    "recorded_at_utc": "2026-10-15T18:30:31.770144+00:00",
+    "gate": "BLOCKED; broader EXEC/input-gap/zero-scored learner evidence remains open. Prior explicit offline priority persists but supplies no authentic historical bars/account costs. PR47 completion is supported by separate exact deployment/startup/restart/followup records, not only merge metadata.",
+    "tjr_historical_trades": 0,
+    "tjr_historical_pnl": null,
+    "tjr_paper_started": false,
+    "tjr_live_enabled": false,
+    "tjr_holdout_opened": false,
+    "required_tjr_input": "Authorized actual MNQ December2025 Sep19\u2013Oct31 minute bars, contract mapping/license/timezone/bar convention and verified account costs.",
+    "action": "Existing queue left blocked/unfinished; saved sources/tests preserved. No new Page reads, reconstruction, duplicate probes/research/tests, production authority or routine unchanged notification; automation unchanged."
+  },
+  "independent_restart_review": {
+    "decision": "ACCEPT bounded release/restart verification with stated evidence limits",
+    "limits": [
+      "First two stale heartbeats are retained, not treated as ready; latest readiness is point evidence only.",
+      "Exact account timestamp/age is unpublished. as_of measures panel clock, not account age; correction remains in force.",
+      "Old missing acknowledgement retained; durable intents are not all confirmed venue orders.",
+      "No full native ledger/cash reconciliation, uninterrupted health, profit/edge, historical loss recovery or EXEC closure claim.",
+      "Learner startup original is0forecasts/0scored/19unknown with expected protocol/source; no independent immediate prerelease learner original in this bounded input set, so unchanged numerical-history assertion relies on root baseline evidence.",
+      "Live source and readiness established, but no production stale-lock rejection or saved dollars measured; postrelease fills are maker fills, not lock-path validation.",
+      "No new production query or source/public repository write performed by reviewer."
+    ],
+    "timestamp_correction": "Account timestamp/age is unpublished; as_of is panel clock, not account age."
+  },
+  "claims_boundary": {
+    "historical_profit_claim": false,
+    "source_runtime_claim": false,
+    "source_or_runtime_independently_verified_by_this_receipt": false,
+    "context_only": "Root supplied merged PR63 commit 59ba6a8e and deployment c1fda55b SUCCESS; this artifact check does not independently establish deployed runtime."
+  },
+  "error_count": 0,
+  "errors": []
+}

@@ -1,0 +1,45 @@
+{
+  "scope": "Two completed windows after owner-approved restart, BEFORE cancellation/arena source changes. Venue settlement receipts; not a controlled trial.",
+  "deployment": "02907385-c0a3-4595-aa12-72234dc61e7c",
+  "settlements": [
+    {
+      "logged_at": "2026-10-14T14:15:08.893744557Z",
+      "at": 1791987304.182428,
+      "venue": "kalshi",
+      "window": "KXBTC15M-26OCT141015-15",
+      "up_wins": false,
+      "up_shares": 5,
+      "down_shares": 5,
+      "cost_usd": 6,
+      "fee_usd": 0.0167,
+      "paired_credit_usd": 5,
+      "net_payout_usd": 0,
+      "payout_usd": 5,
+      "locked_usd": -1.0167000000000004,
+      "direction_usd": 2.220446049250313e-16,
+      "pnl_usd": -1.0167000000000002,
+      "observed_at": 1791987308.457781,
+      "time_source": "venue settled_time"
+    },
+    {
+      "logged_at": "2026-10-14T14:30:10.252884694Z",
+      "at": 1791988204.131684,
+      "venue": "kalshi",
+      "window": "KXBTC15M-26OCT141030-30",
+      "up_wins": false,
+      "up_shares": 14,
+      "down_shares": 14,
+      "cost_usd": 12.440000000000001,
+      "fee_usd": 0.0667,
+      "paired_credit_usd": 14,
+      "net_payout_usd": 0,
+      "payout_usd": 14,
+      "locked_usd": 1.4932999999999992,
+      "direction_usd": 4.440892098500626e-16,
+      "pnl_usd": 1.4932999999999996,
+      "observed_at": 1791988209.871177,
+      "time_source": "venue settled_time"
+    }
+  ],
+  "pnl_usd": 0.47659999999999947
+}

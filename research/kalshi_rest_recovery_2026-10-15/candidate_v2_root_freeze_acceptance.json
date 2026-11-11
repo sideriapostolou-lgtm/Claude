@@ -1,0 +1,20 @@
+{
+  "at_utc": "2026-10-15T20:36:33.189752+00:00",
+  "decision": "ACCEPT exact v2 source after root freeze confirmation",
+  "patch_sha256": "d956bf9e5b98fec667a47beb24332af9448131e1c54e94ac9337690bd0775b0a",
+  "files_sha256": {
+    "src/nightcrawler/speeddesk_kalshi.py": "7946b64f9f1441ea8b02b1d17f5b2d400d7c8e7a65897eed8974373dac3ae9b9",
+    "src/nightcrawler/speeddesk_kalshi_ws.py": "1eef6d36a0b5aaf3a00680c0aedec057e163aac8fc8d63e3e213b01124b4337b",
+    "tests/test_speeddesk_kalshi_rest_recovery.py": "dab6f4f862388488e19a2d61b3848359849790dc3b07191614e2e140cd299fad"
+  },
+  "parent_review": "candidate_v2_review.json",
+  "parent_review_sha256": "9da0543a317c43c0e06c483a178db471b4af33f3cc93b65d0c73342b0a098afd",
+  "blocking_findings": [],
+  "remaining_limits": [
+    "Root required full suite/type/lint/release verification remains separate.",
+    "Historic gap/loss causation and profit improvement unproved.",
+    "Untimed producer gap crossing window start and other upstream delays remain open."
+  ],
+  "cpu_testing": "Stopped; no processes running from this reviewer.",
+  "root_scope_receipt": "Latest public scope reported by root51c565; no independent connector read."
+}

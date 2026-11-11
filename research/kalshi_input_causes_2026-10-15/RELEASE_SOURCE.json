@@ -1,0 +1,29 @@
+{
+  "pr": {
+    "headRefOid": "61b9198fb1412b8c921be9f0424942c537e102c6",
+    "mergeCommit": {
+      "oid": "ff05beb654095ce91fefe24adfb2a94eea22be39"
+    },
+    "mergedAt": "2026-10-15T17:19:44Z",
+    "state": "MERGED",
+    "url": "https://github.com/sideriapostolou-lgtm/Claude/pull/62"
+  },
+  "candidate": "61b9198fb1412b8c921be9f0424942c537e102c6",
+  "merge": "ff05beb654095ce91fefe24adfb2a94eea22be39",
+  "app_test_build_git_objects_equal": {
+    "src": "64ab7a80c10981db52d7ddb3935080dba6fb7903",
+    "tests": "da42f4ad2935baf564a8cbb1129a608bdaa74d33",
+    "Dockerfile": "a76dc75e2a3f985c1385b226d1fa314082cfa969",
+    "pyproject.toml": "ad94cd44427c5a1568d656952f7e9ec67ef8c639",
+    "railway.json": "44934d9e77c22063020f2d956237949145491616"
+  },
+  "frozen_source": {
+    "base": "3ce8a0b92f53916768a3e1c09cac700281d3c1cd",
+    "patch_sha256": "e5ae15d0a3bfa279d7b867bd76f98138dbc826b9f64b3ad9bd4d77a931096f8c",
+    "files": {
+      "src/nightcrawler/kalshi_arena.py": "091ea297b1fed8973be3c78e74184e6ea71fa8f36e808e67449f433c88d19a0e",
+      "tests/test_kalshi_learning_diagnostic.py": "239793d141ec481a66ec72acd3ab5f7fcff90bfdd00d02fcaeef5207caf355b0"
+    }
+  },
+  "deployment": "pending; source merge alone not proof"
+}

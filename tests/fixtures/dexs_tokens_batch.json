@@ -1,0 +1,215 @@
+[
+ {
+  "chainId": "solana",
+  "dexId": "pumpswap",
+  "url": "https://dexscreener.com/solana/bfrszakeqnzvtm3efhroo4erhagmmwn8brntiqkfh6ru",
+  "pairAddress": "BFrSZakeqNzVtM3EFhroo4eRhagmmWN8BRntiQKFH6Ru",
+  "baseToken": {
+   "address": "DoVAVzViX8Bjy3r15nwikSaSbzE6dV4ovd28aWpJpump",
+   "name": "Higgspad",
+   "symbol": "HIGGS"
+  },
+  "quoteToken": {
+   "address": "So11111111111111111111111111111111111111112",
+   "name": "Wrapped SOL",
+   "symbol": "SOL"
+  },
+  "priceNative": "0.000008058",
+  "priceUsd": "0.0008832",
+  "txns": {
+   "m5": {
+    "buys": 3,
+    "sells": 4
+   },
+   "h1": {
+    "buys": 76,
+    "sells": 57
+   },
+   "h6": {
+    "buys": 521,
+    "sells": 389
+   },
+   "h24": {
+    "buys": 2579,
+    "sells": 2034
+   }
+  },
+  "volume": {
+   "h24": 414996.55,
+   "h6": 72188.01,
+   "h1": 11146.98,
+   "m5": 1343.43
+  },
+  "priceChange": {
+   "m5": -4.83,
+   "h1": -2.1,
+   "h6": -16.95,
+   "h24": -48.65
+  },
+  "liquidity": {
+   "usd": 119336.33,
+   "base": 68302069,
+   "quote": 538.3472
+  },
+  "fdv": 855167,
+  "marketCap": 855186,
+  "pairCreatedAt": 1791117376000,
+  "info": {
+   "imageUrl": "https://cdn.dexscreener.com/cms/images/oqd8EuXuIb-sWnPu?width=800&height=800&quality=95&format=auto",
+   "openGraph": "https://cdn.dexscreener.com/token-images/og/solana/DoVAVzViX8Bjy3r15nwikSaSbzE6dV4ovd28aWpJpump?timestamp=1791473400000",
+   "websites": [
+    {
+     "url": "https://higgspad.com/",
+     "label": "Website"
+    }
+   ],
+   "socials": [
+    {
+     "url": "https://x.com/higgspad",
+     "type": "twitter"
+    }
+   ]
+  }
+ },
+ {
+  "chainId": "solana",
+  "dexId": "pumpfun",
+  "url": "https://dexscreener.com/solana/cgkugqwmbzeqkdsrmh9z6qn6jihzxux758tzyrcn14kq",
+  "pairAddress": "CGKuGqwMBzeqKDsrMh9Z6QN6JiHZxux758TzyrCN14Kq",
+  "baseToken": {
+   "address": "B9CiaENLsnu48MJTdeQBzT6Nuaw51uavLL5DgQ9ij7f5",
+   "name": ".taylorswift",
+   "symbol": ".TAYLORSWIFT"
+  },
+  "quoteToken": {
+   "address": "So11111111111111111111111111111111111111112",
+   "name": "Wrapped SOL",
+   "symbol": "SOL"
+  },
+  "priceNative": "0.00000007808",
+  "priceUsd": "0.000008526",
+  "txns": {
+   "m5": {
+    "buys": 262,
+    "sells": 196
+   },
+   "h1": {
+    "buys": 262,
+    "sells": 196
+   },
+   "h6": {
+    "buys": 262,
+    "sells": 196
+   },
+   "h24": {
+    "buys": 262,
+    "sells": 196
+   }
+  },
+  "volume": {
+   "h24": 23979.25,
+   "h6": 23979.25,
+   "h1": 23979.25,
+   "m5": 23979.25
+  },
+  "priceChange": {
+   "m5": 42.96,
+   "h1": 42.96,
+   "h6": 42.96,
+   "h24": 42.96
+  },
+  "fdv": 8526.48,
+  "marketCap": 8526.48,
+  "pairCreatedAt": 1791473198000,
+  "info": {
+   "imageUrl": "https://cdn.dexscreener.com/cms/images/FltXQsrfuwR67yJy?width=800&height=800&quality=95&format=auto",
+   "header": "https://cdn.dexscreener.com/cms/images/vX0CsehQx8Oi4R7L?width=1500&height=500&quality=95&format=auto",
+   "openGraph": "https://cdn.dexscreener.com/token-images/og/solana/B9CiaENLsnu48MJTdeQBzT6Nuaw51uavLL5DgQ9ij7f5?timestamp=1791473400000",
+   "websites": [
+    {
+     "url": "https://axiom.trade/pulse?chains=sol&pulseChains=sol,robinhood&trackerChains=sol&discoverChains=sol,robinhood,bnb",
+     "label": "Website"
+    }
+   ],
+   "socials": [
+    {
+     "url": "https://x.com/Polymarket/status/2108217383206760828",
+     "type": "twitter"
+    }
+   ]
+  }
+ },
+ {
+  "chainId": "solana",
+  "dexId": "pumpswap",
+  "url": "https://dexscreener.com/solana/abmm7clakn3ruz8dxt1hpfrpgkqjvxdm6e7imkwgk7a3",
+  "pairAddress": "AbmM7CLAKn3rUz8DXT1HPfRpgkqJVXDm6E7iMkWGK7A3",
+  "baseToken": {
+   "address": "7qCo5pmqU4UmxN2EBzDE1FFLhot9NNi91wSvnjYFiFTH",
+   "name": "FIFTH",
+   "symbol": "FIFTH"
+  },
+  "quoteToken": {
+   "address": "So11111111111111111111111111111111111111112",
+   "name": "Wrapped SOL",
+   "symbol": "SOL"
+  },
+  "priceNative": "0.00000004829",
+  "priceUsd": "0.000005273",
+  "txns": {
+   "m5": {
+    "buys": 277,
+    "sells": 522
+   },
+   "h1": {
+    "buys": 277,
+    "sells": 522
+   },
+   "h6": {
+    "buys": 277,
+    "sells": 522
+   },
+   "h24": {
+    "buys": 277,
+    "sells": 522
+   }
+  },
+  "volume": {
+   "h24": 36471.6,
+   "h6": 36471.6,
+   "h1": 36471.6,
+   "m5": 36471.6
+  },
+  "priceChange": {
+   "m5": -88.42,
+   "h1": -88.42,
+   "h6": -88.42,
+   "h24": -88.42
+  },
+  "liquidity": {
+   "usd": 4468,
+   "base": 605299970,
+   "quote": 11.6874
+  },
+  "fdv": 5273,
+  "marketCap": 5273,
+  "pairCreatedAt": 1791473321000,
+  "info": {
+   "imageUrl": "https://cdn.dexscreener.com/cms/images/9IA-rh4jjFoYPCeR?width=800&height=800&quality=95&format=auto",
+   "header": "https://cdn.dexscreener.com/cms/images/lLNJe3iFhaAmwqMi?width=1500&height=500&quality=95&format=auto",
+   "openGraph": "https://cdn.dexscreener.com/token-images/og/solana/7qCo5pmqU4UmxN2EBzDE1FFLhot9NNi91wSvnjYFiFTH?timestamp=1791473400000",
+   "websites": [
+    {
+     "url": "https://www.fifthrouter.online",
+     "label": "Website"
+    }
+   ],
+   "socials": [
+    {
+     "url": "https://x.com/onefifthcost",
+     "type": "twitter"
+    }
+   ]
+  }
+ }
+]

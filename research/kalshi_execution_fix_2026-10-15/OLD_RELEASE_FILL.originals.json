@@ -1,0 +1,18 @@
+[
+  {
+    "timestamp": "2026-10-15T18:18:59.561198305Z",
+    "payload": {
+      "at": 1792088337.791504,
+      "venue": "kalshi",
+      "fill_id": "072443ee-43c9-bd76-940d-5d92663b2e0b",
+      "order_id": "01a140c9-ea68-70b4-8a9f-90e8d4236c0f",
+      "client_order_id": "nc-speed-d2e19b8643184b63806eb631aad59665",
+      "window": "KXBTC15M-26OCT151430-30",
+      "side": "down",
+      "price": 0.41,
+      "size": 1.0,
+      "fee_usd": 0.0,
+      "is_taker": false
+    }
+  }
+]

@@ -1,0 +1,870 @@
+{
+  "source_base": "d1ee16f728612275fedb0d08846e127b0ad9b88d",
+  "source_sha256": "56ff19197d38d6f5f5d8296ef7dab68e4c06abc1eddb661fcd794d824cf63acb",
+  "source_modified": false,
+  "kind": "deterministic_synthetic_fake_account_only",
+  "network": "all real client constructors/requests/socket connection methods denied",
+  "fixture": "existing test_speeddesk_live.make_desk + test_speeddesk_live_history.add_history; explicit persisted historical final outcomes extension",
+  "measurements": [
+    [
+      {
+        "days": 0,
+        "historical_orders": 0,
+        "historical_windows": 0,
+        "variant": "accepted_source_baseline",
+        "samples": [
+          {
+            "wall_ms": 1.255788,
+            "thread_cpu_ms": 1.107305,
+            "calls": {
+              "active": 8,
+              "open_intent_ids": 18,
+              "list_orders": 2,
+              "fills": 1,
+              "positions": 1,
+              "settlements": 0,
+              "balance": 1
+            }
+          },
+          {
+            "wall_ms": 1.120865,
+            "thread_cpu_ms": 0.996077,
+            "calls": {
+              "active": 8,
+              "open_intent_ids": 18,
+              "list_orders": 2,
+              "fills": 1,
+              "positions": 1,
+              "settlements": 0,
+              "balance": 1
+            }
+          },
+          {
+            "wall_ms": 1.095809,
+            "thread_cpu_ms": 0.9764,
+            "calls": {
+              "active": 8,
+              "open_intent_ids": 18,
+              "list_orders": 2,
+              "fills": 1,
+              "positions": 1,
+              "settlements": 0,
+              "balance": 1
+            }
+          },
+          {
+            "wall_ms": 1.126306,
+            "thread_cpu_ms": 1.004212,
+            "calls": {
+              "active": 8,
+              "open_intent_ids": 18,
+              "list_orders": 2,
+              "fills": 1,
+              "positions": 1,
+              "settlements": 0,
+              "balance": 1
+            }
+          },
+          {
+            "wall_ms": 1.068939,
+            "thread_cpu_ms": 0.946888,
+            "calls": {
+              "active": 8,
+              "open_intent_ids": 18,
+              "list_orders": 2,
+              "fills": 1,
+              "positions": 1,
+              "settlements": 0,
+              "balance": 1
+            }
+          },
+          {
+            "wall_ms": 1.212026,
+            "thread_cpu_ms": 0.978514,
+            "calls": {
+              "active": 8,
+              "open_intent_ids": 18,
+              "list_orders": 2,
+              "fills": 1,
+              "positions": 1,
+              "settlements": 0,
+              "balance": 1
+            }
+          },
+          {
+            "wall_ms": 1.052137,
+            "thread_cpu_ms": 0.938713,
+            "calls": {
+              "active": 8,
+              "open_intent_ids": 18,
+              "list_orders": 2,
+              "fills": 1,
+              "positions": 1,
+              "settlements": 0,
+              "balance": 1
+            }
+          }
+        ],
+        "median_wall_ms": 1.120865,
+        "median_thread_cpu_ms": 0.978514,
+        "min_wall_ms": 1.052137,
+        "max_wall_ms": 1.255788,
+        "stable_financial_and_record_hash": "31d273f52a08eb194db7fe2d552f667e54c672aed5461b3c0d157e64284019f7",
+        "checks": {},
+        "full": true
+      },
+      {
+        "days": 0,
+        "historical_orders": 0,
+        "historical_windows": 0,
+        "variant": "private_candidate",
+        "samples": [
+          {
+            "wall_ms": 1.14468,
+            "thread_cpu_ms": 1.025644,
+            "calls": {
+              "active": 9,
+              "open_intent_ids": 19,
+              "list_orders": 2,
+              "fills": 1,
+              "positions": 1,
+              "settlements": 0,
+              "balance": 1
+            }
+          },
+          {
+            "wall_ms": 1.11776,
+            "thread_cpu_ms": 0.982171,
+            "calls": {
+              "active": 9,
+              "open_intent_ids": 19,
+              "list_orders": 2,
+              "fills": 1,
+              "positions": 1,
+              "settlements": 0,
+              "balance": 1
+            }
+          },
+          {
+            "wall_ms": 1.637642,
+            "thread_cpu_ms": 1.255804,
+            "calls": {
+              "active": 9,
+              "open_intent_ids": 19,
+              "list_orders": 2,
+              "fills": 1,
+              "positions": 1,
+              "settlements": 0,
+              "balance": 1
+            }
+          },
+          {
+            "wall_ms": 1.132738,
+            "thread_cpu_ms": 0.943933,
+            "calls": {
+              "active": 9,
+              "open_intent_ids": 19,
+              "list_orders": 2,
+              "fills": 1,
+              "positions": 1,
+              "settlements": 0,
+              "balance": 1
+            }
+          },
+          {
+            "wall_ms": 1.150972,
+            "thread_cpu_ms": 0.956275,
+            "calls": {
+              "active": 9,
+              "open_intent_ids": 19,
+              "list_orders": 2,
+              "fills": 1,
+              "positions": 1,
+              "settlements": 0,
+              "balance": 1
+            }
+          },
+          {
+            "wall_ms": 1.392473,
+            "thread_cpu_ms": 1.241667,
+            "calls": {
+              "active": 9,
+              "open_intent_ids": 19,
+              "list_orders": 2,
+              "fills": 1,
+              "positions": 1,
+              "settlements": 0,
+              "balance": 1
+            }
+          },
+          {
+            "wall_ms": 1.142285,
+            "thread_cpu_ms": 0.926005,
+            "calls": {
+              "active": 9,
+              "open_intent_ids": 19,
+              "list_orders": 2,
+              "fills": 1,
+              "positions": 1,
+              "settlements": 0,
+              "balance": 1
+            }
+          }
+        ],
+        "median_wall_ms": 1.14468,
+        "median_thread_cpu_ms": 0.982171,
+        "min_wall_ms": 1.11776,
+        "max_wall_ms": 1.637642,
+        "stable_financial_and_record_hash": "0b6642a9cace916f5fb9917331118b870a38b75b8dc49d9e3876bd5ba762ed86",
+        "checks": {},
+        "full": true,
+        "equal_financial_and_record_hash": false
+      }
+    ],
+    [
+      {
+        "days": 2,
+        "historical_orders": 1920,
+        "historical_windows": 192,
+        "variant": "accepted_source_baseline",
+        "samples": [
+          {
+            "wall_ms": 18.294055,
+            "thread_cpu_ms": 17.070459,
+            "calls": {
+              "active": 200,
+              "open_intent_ids": 210,
+              "list_orders": 2,
+              "fills": 1,
+              "positions": 1,
+              "settlements": 0,
+              "balance": 1
+            }
+          },
+          {
+            "wall_ms": 17.535617,
+            "thread_cpu_ms": 16.725078,
+            "calls": {
+              "active": 200,
+              "open_intent_ids": 210,
+              "list_orders": 2,
+              "fills": 1,
+              "positions": 1,
+              "settlements": 0,
+              "balance": 1
+            }
+          },
+          {
+            "wall_ms": 33.906115,
+            "thread_cpu_ms": 17.09097,
+            "calls": {
+              "active": 200,
+              "open_intent_ids": 210,
+              "list_orders": 2,
+              "fills": 1,
+              "positions": 1,
+              "settlements": 0,
+              "balance": 1
+            }
+          },
+          {
+            "wall_ms": 17.894438,
+            "thread_cpu_ms": 16.984292,
+            "calls": {
+              "active": 200,
+              "open_intent_ids": 210,
+              "list_orders": 2,
+              "fills": 1,
+              "positions": 1,
+              "settlements": 0,
+              "balance": 1
+            }
+          },
+          {
+            "wall_ms": 17.935364,
+            "thread_cpu_ms": 17.070582,
+            "calls": {
+              "active": 200,
+              "open_intent_ids": 210,
+              "list_orders": 2,
+              "fills": 1,
+              "positions": 1,
+              "settlements": 0,
+              "balance": 1
+            }
+          },
+          {
+            "wall_ms": 18.037645,
+            "thread_cpu_ms": 17.222187,
+            "calls": {
+              "active": 200,
+              "open_intent_ids": 210,
+              "list_orders": 2,
+              "fills": 1,
+              "positions": 1,
+              "settlements": 0,
+              "balance": 1
+            }
+          },
+          {
+            "wall_ms": 18.024801,
+            "thread_cpu_ms": 17.194232,
+            "calls": {
+              "active": 200,
+              "open_intent_ids": 210,
+              "list_orders": 2,
+              "fills": 1,
+              "positions": 1,
+              "settlements": 0,
+              "balance": 1
+            }
+          }
+        ],
+        "median_wall_ms": 18.024801,
+        "median_thread_cpu_ms": 17.070582,
+        "min_wall_ms": 17.535617,
+        "max_wall_ms": 33.906115,
+        "stable_financial_and_record_hash": "b36b27a3a53577cb027f4316001d881e3ad495f76e9cd46a552e3283013a9317",
+        "checks": {},
+        "full": true
+      },
+      {
+        "days": 2,
+        "historical_orders": 1920,
+        "historical_windows": 192,
+        "variant": "private_candidate",
+        "samples": [
+          {
+            "wall_ms": 17.487296,
+            "thread_cpu_ms": 16.668452,
+            "calls": {
+              "active": 9,
+              "open_intent_ids": 19,
+              "list_orders": 2,
+              "fills": 1,
+              "positions": 1,
+              "settlements": 0,
+              "balance": 1
+            }
+          },
+          {
+            "wall_ms": 17.304795,
+            "thread_cpu_ms": 16.415167,
+            "calls": {
+              "active": 9,
+              "open_intent_ids": 19,
+              "list_orders": 2,
+              "fills": 1,
+              "positions": 1,
+              "settlements": 0,
+              "balance": 1
+            }
+          },
+          {
+            "wall_ms": 17.240374,
+            "thread_cpu_ms": 16.327215,
+            "calls": {
+              "active": 9,
+              "open_intent_ids": 19,
+              "list_orders": 2,
+              "fills": 1,
+              "positions": 1,
+              "settlements": 0,
+              "balance": 1
+            }
+          },
+          {
+            "wall_ms": 16.925456,
+            "thread_cpu_ms": 16.100932,
+            "calls": {
+              "active": 9,
+              "open_intent_ids": 19,
+              "list_orders": 2,
+              "fills": 1,
+              "positions": 1,
+              "settlements": 0,
+              "balance": 1
+            }
+          },
+          {
+            "wall_ms": 17.213474,
+            "thread_cpu_ms": 16.371418,
+            "calls": {
+              "active": 9,
+              "open_intent_ids": 19,
+              "list_orders": 2,
+              "fills": 1,
+              "positions": 1,
+              "settlements": 0,
+              "balance": 1
+            }
+          },
+          {
+            "wall_ms": 16.94358,
+            "thread_cpu_ms": 16.150645,
+            "calls": {
+              "active": 9,
+              "open_intent_ids": 19,
+              "list_orders": 2,
+              "fills": 1,
+              "positions": 1,
+              "settlements": 0,
+              "balance": 1
+            }
+          },
+          {
+            "wall_ms": 17.755619,
+            "thread_cpu_ms": 16.778087,
+            "calls": {
+              "active": 9,
+              "open_intent_ids": 19,
+              "list_orders": 2,
+              "fills": 1,
+              "positions": 1,
+              "settlements": 0,
+              "balance": 1
+            }
+          }
+        ],
+        "median_wall_ms": 17.240374,
+        "median_thread_cpu_ms": 16.371418,
+        "min_wall_ms": 16.925456,
+        "max_wall_ms": 17.755619,
+        "stable_financial_and_record_hash": "934501541ea043246f5482b0e6d31ce182dcd98cf225c33cb41abe8023fce25f",
+        "checks": {},
+        "full": true,
+        "equal_financial_and_record_hash": false
+      }
+    ],
+    [
+      {
+        "days": 7,
+        "historical_orders": 6720,
+        "historical_windows": 672,
+        "variant": "accepted_source_baseline",
+        "samples": [
+          {
+            "wall_ms": 60.80593,
+            "thread_cpu_ms": 58.459384,
+            "calls": {
+              "active": 680,
+              "open_intent_ids": 690,
+              "list_orders": 2,
+              "fills": 1,
+              "positions": 1,
+              "settlements": 0,
+              "balance": 1
+            }
+          },
+          {
+            "wall_ms": 60.893731,
+            "thread_cpu_ms": 58.607502,
+            "calls": {
+              "active": 680,
+              "open_intent_ids": 690,
+              "list_orders": 2,
+              "fills": 1,
+              "positions": 1,
+              "settlements": 0,
+              "balance": 1
+            }
+          },
+          {
+            "wall_ms": 60.564819,
+            "thread_cpu_ms": 58.471952,
+            "calls": {
+              "active": 680,
+              "open_intent_ids": 690,
+              "list_orders": 2,
+              "fills": 1,
+              "positions": 1,
+              "settlements": 0,
+              "balance": 1
+            }
+          },
+          {
+            "wall_ms": 60.873564,
+            "thread_cpu_ms": 58.602782,
+            "calls": {
+              "active": 680,
+              "open_intent_ids": 690,
+              "list_orders": 2,
+              "fills": 1,
+              "positions": 1,
+              "settlements": 0,
+              "balance": 1
+            }
+          },
+          {
+            "wall_ms": 61.059671,
+            "thread_cpu_ms": 58.498377,
+            "calls": {
+              "active": 680,
+              "open_intent_ids": 690,
+              "list_orders": 2,
+              "fills": 1,
+              "positions": 1,
+              "settlements": 0,
+              "balance": 1
+            }
+          },
+          {
+            "wall_ms": 61.458404,
+            "thread_cpu_ms": 59.049804,
+            "calls": {
+              "active": 680,
+              "open_intent_ids": 690,
+              "list_orders": 2,
+              "fills": 1,
+              "positions": 1,
+              "settlements": 0,
+              "balance": 1
+            }
+          },
+          {
+            "wall_ms": 60.590697,
+            "thread_cpu_ms": 58.251287,
+            "calls": {
+              "active": 680,
+              "open_intent_ids": 690,
+              "list_orders": 2,
+              "fills": 1,
+              "positions": 1,
+              "settlements": 0,
+              "balance": 1
+            }
+          }
+        ],
+        "median_wall_ms": 60.873564,
+        "median_thread_cpu_ms": 58.498377,
+        "min_wall_ms": 60.564819,
+        "max_wall_ms": 61.458404,
+        "stable_financial_and_record_hash": "3a032b67cd9befd9717283733c991aed77cc4e87891617e772a39bad60c8b894",
+        "checks": {},
+        "full": true
+      },
+      {
+        "days": 7,
+        "historical_orders": 6720,
+        "historical_windows": 672,
+        "variant": "private_candidate",
+        "samples": [
+          {
+            "wall_ms": 61.691338,
+            "thread_cpu_ms": 58.956438,
+            "calls": {
+              "active": 9,
+              "open_intent_ids": 19,
+              "list_orders": 2,
+              "fills": 1,
+              "positions": 1,
+              "settlements": 0,
+              "balance": 1
+            }
+          },
+          {
+            "wall_ms": 61.765585,
+            "thread_cpu_ms": 58.882502,
+            "calls": {
+              "active": 9,
+              "open_intent_ids": 19,
+              "list_orders": 2,
+              "fills": 1,
+              "positions": 1,
+              "settlements": 0,
+              "balance": 1
+            }
+          },
+          {
+            "wall_ms": 63.657101,
+            "thread_cpu_ms": 61.094062,
+            "calls": {
+              "active": 9,
+              "open_intent_ids": 19,
+              "list_orders": 2,
+              "fills": 1,
+              "positions": 1,
+              "settlements": 0,
+              "balance": 1
+            }
+          },
+          {
+            "wall_ms": 63.534,
+            "thread_cpu_ms": 61.037766,
+            "calls": {
+              "active": 9,
+              "open_intent_ids": 19,
+              "list_orders": 2,
+              "fills": 1,
+              "positions": 1,
+              "settlements": 0,
+              "balance": 1
+            }
+          },
+          {
+            "wall_ms": 63.937753,
+            "thread_cpu_ms": 61.252374,
+            "calls": {
+              "active": 9,
+              "open_intent_ids": 19,
+              "list_orders": 2,
+              "fills": 1,
+              "positions": 1,
+              "settlements": 0,
+              "balance": 1
+            }
+          },
+          {
+            "wall_ms": 63.559357,
+            "thread_cpu_ms": 60.530789,
+            "calls": {
+              "active": 9,
+              "open_intent_ids": 19,
+              "list_orders": 2,
+              "fills": 1,
+              "positions": 1,
+              "settlements": 0,
+              "balance": 1
+            }
+          },
+          {
+            "wall_ms": 62.79915,
+            "thread_cpu_ms": 60.240107,
+            "calls": {
+              "active": 9,
+              "open_intent_ids": 19,
+              "list_orders": 2,
+              "fills": 1,
+              "positions": 1,
+              "settlements": 0,
+              "balance": 1
+            }
+          }
+        ],
+        "median_wall_ms": 63.534,
+        "median_thread_cpu_ms": 60.530789,
+        "min_wall_ms": 61.691338,
+        "max_wall_ms": 63.937753,
+        "stable_financial_and_record_hash": "0869dfff94349c75d0463ea798aaaba683827fe4ef37de43a95e1e0618c5ae63",
+        "checks": {},
+        "full": true,
+        "equal_financial_and_record_hash": false
+      }
+    ],
+    [
+      {
+        "days": 21,
+        "historical_orders": 20160,
+        "historical_windows": 2016,
+        "variant": "accepted_source_baseline",
+        "samples": [
+          {
+            "wall_ms": 226.622779,
+            "thread_cpu_ms": 200.812267,
+            "calls": {
+              "active": 2024,
+              "open_intent_ids": 2034,
+              "list_orders": 2,
+              "fills": 1,
+              "positions": 1,
+              "settlements": 0,
+              "balance": 1
+            }
+          },
+          {
+            "wall_ms": 214.204196,
+            "thread_cpu_ms": 198.714644,
+            "calls": {
+              "active": 2024,
+              "open_intent_ids": 2034,
+              "list_orders": 2,
+              "fills": 1,
+              "positions": 1,
+              "settlements": 0,
+              "balance": 1
+            }
+          },
+          {
+            "wall_ms": 200.229964,
+            "thread_cpu_ms": 185.949262,
+            "calls": {
+              "active": 2024,
+              "open_intent_ids": 2034,
+              "list_orders": 2,
+              "fills": 1,
+              "positions": 1,
+              "settlements": 0,
+              "balance": 1
+            }
+          },
+          {
+            "wall_ms": 214.628296,
+            "thread_cpu_ms": 195.378371,
+            "calls": {
+              "active": 2024,
+              "open_intent_ids": 2034,
+              "list_orders": 2,
+              "fills": 1,
+              "positions": 1,
+              "settlements": 0,
+              "balance": 1
+            }
+          },
+          {
+            "wall_ms": 210.814672,
+            "thread_cpu_ms": 199.809267,
+            "calls": {
+              "active": 2024,
+              "open_intent_ids": 2034,
+              "list_orders": 2,
+              "fills": 1,
+              "positions": 1,
+              "settlements": 0,
+              "balance": 1
+            }
+          },
+          {
+            "wall_ms": 212.235258,
+            "thread_cpu_ms": 200.701583,
+            "calls": {
+              "active": 2024,
+              "open_intent_ids": 2034,
+              "list_orders": 2,
+              "fills": 1,
+              "positions": 1,
+              "settlements": 0,
+              "balance": 1
+            }
+          },
+          {
+            "wall_ms": 202.86821,
+            "thread_cpu_ms": 191.53309,
+            "calls": {
+              "active": 2024,
+              "open_intent_ids": 2034,
+              "list_orders": 2,
+              "fills": 1,
+              "positions": 1,
+              "settlements": 0,
+              "balance": 1
+            }
+          }
+        ],
+        "median_wall_ms": 212.235258,
+        "median_thread_cpu_ms": 198.714644,
+        "min_wall_ms": 200.229964,
+        "max_wall_ms": 226.622779,
+        "stable_financial_and_record_hash": "3329a808fc67ce54e10e0f30107070bd833dea19cdaed6e4f0d551d9c79cfed5",
+        "checks": {},
+        "full": true
+      },
+      {
+        "days": 21,
+        "historical_orders": 20160,
+        "historical_windows": 2016,
+        "variant": "private_candidate",
+        "samples": [
+          {
+            "wall_ms": 224.210847,
+            "thread_cpu_ms": 186.542289,
+            "calls": {
+              "active": 9,
+              "open_intent_ids": 19,
+              "list_orders": 2,
+              "fills": 1,
+              "positions": 1,
+              "settlements": 0,
+              "balance": 1
+            }
+          },
+          {
+            "wall_ms": 194.812373,
+            "thread_cpu_ms": 184.544421,
+            "calls": {
+              "active": 9,
+              "open_intent_ids": 19,
+              "list_orders": 2,
+              "fills": 1,
+              "positions": 1,
+              "settlements": 0,
+              "balance": 1
+            }
+          },
+          {
+            "wall_ms": 190.751158,
+            "thread_cpu_ms": 180.750303,
+            "calls": {
+              "active": 9,
+              "open_intent_ids": 19,
+              "list_orders": 2,
+              "fills": 1,
+              "positions": 1,
+              "settlements": 0,
+              "balance": 1
+            }
+          },
+          {
+            "wall_ms": 200.70106,
+            "thread_cpu_ms": 190.805161,
+            "calls": {
+              "active": 9,
+              "open_intent_ids": 19,
+              "list_orders": 2,
+              "fills": 1,
+              "positions": 1,
+              "settlements": 0,
+              "balance": 1
+            }
+          },
+          {
+            "wall_ms": 194.741161,
+            "thread_cpu_ms": 185.092686,
+            "calls": {
+              "active": 9,
+              "open_intent_ids": 19,
+              "list_orders": 2,
+              "fills": 1,
+              "positions": 1,
+              "settlements": 0,
+              "balance": 1
+            }
+          },
+          {
+            "wall_ms": 198.832081,
+            "thread_cpu_ms": 186.594911,
+            "calls": {
+              "active": 9,
+              "open_intent_ids": 19,
+              "list_orders": 2,
+              "fills": 1,
+              "positions": 1,
+              "settlements": 0,
+              "balance": 1
+            }
+          },
+          {
+            "wall_ms": 192.939053,
+            "thread_cpu_ms": 183.174133,
+            "calls": {
+              "active": 9,
+              "open_intent_ids": 19,
+              "list_orders": 2,
+              "fills": 1,
+              "positions": 1,
+              "settlements": 0,
+              "balance": 1
+            }
+          }
+        ],
+        "median_wall_ms": 194.812373,
+        "median_thread_cpu_ms": 185.092686,
+        "min_wall_ms": 190.751158,
+        "max_wall_ms": 224.210847,
+        "stable_financial_and_record_hash": "34d33aecee30b40f590a8cbef84fd995c2a662e2eaf9c26485e0f1dc533b45b9",
+        "checks": {},
+        "full": true,
+        "equal_financial_and_record_hash": false
+      }
+    ]
+  ]
+}

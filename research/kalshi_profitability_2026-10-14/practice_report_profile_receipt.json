@@ -1,0 +1,49 @@
+{
+  "result": "DID_NOT_REPRODUCE_PRODUCTION_COLD_PANEL_MAXIMUM",
+  "source_commit": "4b0ea4004060e5b66d09b509ee0b6e79b5e63c72",
+  "docs_head": "2b0868df2a1d226ba2102cb4400fcc314bb6cf8e",
+  "fixtures": [
+    "aae550837d0c475fcff09e1ad97c1bd6f377170865c4ae30b566fcd803cd4370",
+    "4520f23ec30d3d6e386f5954363fb8c8366f0684c6b2bd25f6dcae8559d2ee65",
+    "a85bd695ed0a6971ebdac31157a4c58ef7e7bd9539daecbc31e8b5634f3975b6"
+  ],
+  "unprofiled_median_cpu_ms": {
+    "empty_evidence": {
+      "panel_including_live": 32.332,
+      "summary": 2.581,
+      "daily_reports": 0.021
+    },
+    "400_evidence_fills_128_samples_per_bucket": {
+      "panel_including_live": 32.766,
+      "summary": 3.512,
+      "daily_reports": 8.927
+    },
+    "400_evidence_fills_4096_samples_per_bucket": {
+      "panel_including_live": 34.254,
+      "summary": 4.274,
+      "daily_reports": 10.929
+    }
+  },
+  "script_and_result_manifest": {
+    "practice-report-density-profile.py": {
+      "bytes": 11778,
+      "sha256": "dcfa3aa76945f6818ccc55b708bb8f86383148d8a43f7abf6c6d090d1f0be6a0"
+    },
+    "practice-report-density-profile.json": {
+      "bytes": 18793253,
+      "sha256": "424660fc3234fa48c7d06acc95fe11aae845ee6eafab8deb8d720238c6aed1d7"
+    },
+    "panel-checkpoint-profile.py": {
+      "bytes": 8369,
+      "sha256": "dd54539b4e253891cc5809ebe1c85ca137853b3d932935600f221b3bb224337f"
+    }
+  },
+  "archive_sha256": "410bf0c1c89a59116a371b502a487aaab27a4d2ab76361008227eee94bab2c38",
+  "limitations": [
+    "Invented zero-fee outcomes and fabricated coverage; not production replay or a profitability result.",
+    "Historical first-write costs warmed out; sequential enriched fixtures, four repetitions, separate cProfile.",
+    "Synthetic200-position live fixture exaggerates separate position report cost versus unknown production density.",
+    "No active books/orders, network, real clients, keys or threads; local temporary persistence only.",
+    "No implementation recommendation or production cold-maximum explanation follows from this probe."
+  ]
+}

@@ -1,0 +1,152 @@
+{
+  "recorded_at_utc": "2026-10-15T19:36:44.849555+00:00",
+  "source_commit": "8c8681a032a6181c49915ba88ba38d0818dc69d3",
+  "deployment_id": "2e88601d-c9c7-474f-add8-72c0a13c1a4b",
+  "declaration_sha256": "7d2fefd9aa603bc3bd00adc0d761084d1a9b46dc92d7415af747772b2fa074a7",
+  "original_forecast": {
+    "timestamp": "2026-10-15T19:35:00.011166115Z",
+    "payload": {
+      "at": 1792092900.0042238,
+      "mode": "observe_only",
+      "live_application": false,
+      "profitability_proven": false,
+      "protocol": "kalshi-probability-calibration-v2-h300-g5-b10-prior20",
+      "source_fingerprint": "e79897062a3ebbd61fe5dc70617f02c44bb7d29c9dbf51e23940459686653c7c",
+      "window": "KXBTC15M-26OCT151545-45",
+      "p": 0.07826700568018541,
+      "q": 0.07826700568018541,
+      "bin": 0,
+      "n": 0,
+      "wins": 0,
+      "spot": 82315.0,
+      "sigma": 4.49518576540474e-05,
+      "bitcoin_at": 1792092899.119448,
+      "opening": 82439.21,
+      "venue_start_price": 82439.21,
+      "batch_at": 1792092899.6431456,
+      "terms": [
+        1792092600.0,
+        1792093500.0,
+        82439.21,
+        82439.21,
+        0.07,
+        0.0,
+        0.01,
+        0.01,
+        "kalshi",
+        "kalshi"
+      ]
+    },
+    "query_files": [
+      "CAPTURE_SLOT_KALSHI_PROBABILITY_LEARNING_FORECAST.native.json"
+    ]
+  },
+  "bitcoin_local_age_at_forecast_s": 0.8847758769989014,
+  "batch_local_age_at_forecast_s": 0.36107826232910156,
+  "v1_original_disposition": {
+    "timestamp": "2026-10-15T19:35:00.006545601Z",
+    "payload": {
+      "at": 1792092900.0042238,
+      "mode": "observe_only",
+      "live_application": false,
+      "profitability_proven": false,
+      "protocol": "kalshi-online-calibration-v1-h300-g5-b10-prior20",
+      "source_fingerprint": "b6112b7ef8955b20af734157c1e7f5ec533bf98f70e034558f06670578c391f2",
+      "window": "KXBTC15M-26OCT151545-45",
+      "reason": "pregap"
+    },
+    "query_files": [
+      "CAPTURE_SLOT_KALSHI_ONLINE_LEARNING_UNKNOWN.native.json"
+    ]
+  },
+  "score_or_outcome_claimed": false,
+  "correctness_and_profitability": "Pending official result. q=p is expected for empty prior bin; no learned accuracy improvement shown.",
+  "captured_phase": "slot",
+  "slot_requests": [
+    {
+      "file": "CAPTURE_SLOT_KALSHI_LEARNING_INPUT_DIAGNOSTIC.native.json",
+      "sha256": "3e07efa2bb1f3e4bc13c18c8826c1622f90cc311bcd77e0b78f273aa0456d520",
+      "raw_rows": 1,
+      "anchored_originals": 1,
+      "failures": []
+    },
+    {
+      "file": "CAPTURE_SLOT_KALSHI_ONLINE_LEARNING_FORECAST.native.json",
+      "sha256": "1d6ebf818e842324777ec60a06dae016d323810e47d7532f7d0fa4e5df60cf1e",
+      "raw_rows": 0,
+      "anchored_originals": 0,
+      "failures": []
+    },
+    {
+      "file": "CAPTURE_SLOT_KALSHI_ONLINE_LEARNING_SCORED.native.json",
+      "sha256": "db19bf93a47e367208aab9c902f9acc7b4a67d5a1ccc8a2a0baf1f028446db16",
+      "raw_rows": 0,
+      "anchored_originals": 0,
+      "failures": []
+    },
+    {
+      "file": "CAPTURE_SLOT_KALSHI_ONLINE_LEARNING_STATUS.native.json",
+      "sha256": "547e463afef0dc85ab2a9ee70a595fc85c570b8e007c2a51fd4b595a7f4a2838",
+      "raw_rows": 4,
+      "anchored_originals": 4,
+      "failures": []
+    },
+    {
+      "file": "CAPTURE_SLOT_KALSHI_ONLINE_LEARNING_UNKNOWN.native.json",
+      "sha256": "8fa2a37cd3837e0aa15d2f3858c7499992802a3a8f4a50c0fc1022e6f7a592b0",
+      "raw_rows": 1,
+      "anchored_originals": 1,
+      "failures": []
+    },
+    {
+      "file": "CAPTURE_SLOT_KALSHI_PROBABILITY_LEARNING_FORECAST.native.json",
+      "sha256": "1354fb3268e4acb4b3d1d0874fee2c64f444e535cdf1b4bc3e8b9a995e7ce3e1",
+      "raw_rows": 1,
+      "anchored_originals": 1,
+      "failures": []
+    },
+    {
+      "file": "CAPTURE_SLOT_KALSHI_PROBABILITY_LEARNING_SCORED.native.json",
+      "sha256": "ab372caccca1612f9fdec3f947b45fd432bc1e4377047f1f21a17825cab9651b",
+      "raw_rows": 0,
+      "anchored_originals": 0,
+      "failures": []
+    },
+    {
+      "file": "CAPTURE_SLOT_KALSHI_PROBABILITY_LEARNING_STATUS.native.json",
+      "sha256": "90d9e5bfd8e23f3502185152879d00af46e93a97e2e0027f891fd35d11453066",
+      "raw_rows": 4,
+      "anchored_originals": 4,
+      "failures": []
+    },
+    {
+      "file": "CAPTURE_SLOT_KALSHI_PROBABILITY_LEARNING_UNKNOWN.native.json",
+      "sha256": "27e587ed368874f301d3d0836ea9b395968c25d4fd44470b6a9429ecb3830c65",
+      "raw_rows": 0,
+      "anchored_originals": 0,
+      "failures": []
+    },
+    {
+      "file": "CAPTURE_SLOT_SPEEDDESK_LIVE_FILL.native.json",
+      "sha256": "9de3ce38bf3db7f9c1c165c5a8ef696eb0ee2e27eef4991b9c9599defd437bfe",
+      "raw_rows": 7,
+      "anchored_originals": 4,
+      "failures": []
+    },
+    {
+      "file": "CAPTURE_SLOT_SPEEDDESK_LIVE_SETTLEMENT.native.json",
+      "sha256": "18e6dd2a3414c30c8fc91bdd714c40498e6e7e0a26c251456c1d59ddfe3fcd5f",
+      "raw_rows": 1,
+      "anchored_originals": 1,
+      "failures": []
+    },
+    {
+      "file": "CAPTURE_SLOT_SPEEDDESK_LIVE_STATUS.native.json",
+      "sha256": "363aee22b0c8612c56d8874386709c06e70d0ac2cf806a70fa65bb51751d1a8d",
+      "raw_rows": 6,
+      "anchored_originals": 6,
+      "failures": []
+    }
+  ],
+  "unfrozen_future_outcome": "Not known at originalforecast or this checkpoint; final read remains19:47UTC."
+}

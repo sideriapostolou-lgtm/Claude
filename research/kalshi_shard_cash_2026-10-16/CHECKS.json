@@ -1,0 +1,60 @@
+{
+  "at": "2026-10-16T14:18:16.157335+00:00",
+  "source_patch_sha256": "c8c2289cee038a32613ede4b9f28c30e38a2a5199ab277ed62078cdcc6579be2",
+  "full_pytest": {
+    "passed": 6225,
+    "skipped": 14,
+    "seconds": 293.51,
+    "network_tests_enabled": false,
+    "skip_details": [
+      "SKIPPED [1] tests/test_broker_live.py:405: live network test; set NIGHTCRAWLER_LIVE_TESTS=1 to run",
+      "SKIPPED [1] tests/test_broker_paper.py:550: live network test; set NIGHTCRAWLER_LIVE_TESTS=1 to run",
+      "SKIPPED [1] tests/test_cocoon.py:575: live network test; set NIGHTCRAWLER_LIVE_TESTS=1 to run",
+      "SKIPPED [1] tests/test_crawler.py:916: live network test; set NIGHTCRAWLER_LIVE_TESTS=1 to run",
+      "SKIPPED [1] tests/test_kalshi_arena_feed.py:794: wall-clock timing; set NIGHTCRAWLER_PERF_TESTS=1 to run",
+      "SKIPPED [1] tests/test_radar.py:222: live network test; set NIGHTCRAWLER_LIVE_TESTS=1 to run",
+      "SKIPPED [1] tests/test_sources_dexscreener.py:242: live network test; set NIGHTCRAWLER_LIVE_TESTS=1 to run",
+      "SKIPPED [1] tests/test_sources_geckoterminal.py:451: live network test; set NIGHTCRAWLER_LIVE_TESTS=1 to run",
+      "SKIPPED [1] tests/test_sources_jupiter.py:415: live network test; set NIGHTCRAWLER_LIVE_TESTS=1 to run",
+      "SKIPPED [1] tests/test_sources_pumpfun.py:268: live network test; set NIGHTCRAWLER_LIVE_TESTS=1 to run",
+      "SKIPPED [1] tests/test_sources_pumpfun_trades.py:669: live network test; set NIGHTCRAWLER_LIVE_TESTS=1 to run",
+      "SKIPPED [1] tests/test_sources_rugcheck.py:296: live network test; set NIGHTCRAWLER_LIVE_TESTS=1 to run",
+      "SKIPPED [1] tests/test_sources_solana_rpc.py:306: live network test; set NIGHTCRAWLER_LIVE_TESTS=1 to run",
+      "SKIPPED [1] tests/test_trenddesk.py:339: lab 3's cache is not here (/tmp/claude-0/-home-user-Claude/05bcdce0-3f75-5784-bd4b-6b2d4ca643ba/scratchpad/lab3)"
+    ]
+  },
+  "initial_full_pytest": {
+    "passed": 6223,
+    "failed": 2,
+    "skipped": 14,
+    "seconds": 310.71,
+    "failures": [
+      "test_refused_lock_is_not_retried_without_resync_and_new_identity[True]",
+      "test_real_fill_trace_is_once_and_records_checkpoint_without_extra_reads"
+    ],
+    "resolution": "Test-only restart callback/read-sequence corrections; source unchanged."
+  },
+  "mypy": {
+    "passed": true,
+    "source_files": 133
+  },
+  "ruff": {
+    "passed": true,
+    "changed_python_files": 13,
+    "additional_evidence_script": "verify_restart.py"
+  },
+  "log_hashes": {
+    "shard-full-pytest.log": {
+      "bytes": 126295,
+      "sha256": "820a7672c2e2df2a9a809637b45ed2607dc7131277f3f6dedcc0362b0c335345"
+    },
+    "shard-full-pytest-final.log": {
+      "bytes": 8568,
+      "sha256": "26b1bc13f88d1b3bd70ded7d68ee58c5278f676dff7fb7f2373a9ad1611f3fd0"
+    },
+    "shard-mypy-final.log": {
+      "bytes": 45,
+      "sha256": "f22722ad615746b653b99513b65b320be88ca4dea31fb80dd9c9945aaae1b984"
+    }
+  }
+}

@@ -1,0 +1,175 @@
+{
+  "reviewed_at_utc": "2026-10-15T17:37:01.420472+00:00",
+  "decision": "Identity-qualified actual due pregap receipt independently joined to diagnostic for declared target; slot evidence only.",
+  "queries": [
+    {
+      "file": "capture_slot_kalshi_learning_input_diagnostic.native.json",
+      "raw_rows": 1,
+      "anchored_originals": 1,
+      "at_cap": false,
+      "errors": [],
+      "before": "2026-10-15T17:35:30+00:00",
+      "after": "2026-10-15T17:35:32+00:00",
+      "requested_end": "2026-10-15T17:35:30+00:00",
+      "retrieval_not_before_endpoint": true
+    },
+    {
+      "file": "capture_slot_kalshi_online_learning_unknown.native.json",
+      "raw_rows": 1,
+      "anchored_originals": 1,
+      "at_cap": false,
+      "errors": [],
+      "before": "2026-10-15T17:35:30+00:00",
+      "after": "2026-10-15T17:35:32+00:00",
+      "requested_end": "2026-10-15T17:35:30+00:00",
+      "retrieval_not_before_endpoint": true
+    },
+    {
+      "file": "capture_slot_kalshi_online_learning_forecast.native.json",
+      "raw_rows": 0,
+      "anchored_originals": 0,
+      "at_cap": false,
+      "errors": [],
+      "before": "2026-10-15T17:35:30+00:00",
+      "after": "2026-10-15T17:35:30+00:00",
+      "requested_end": "2026-10-15T17:35:30+00:00",
+      "retrieval_not_before_endpoint": true
+    },
+    {
+      "file": "capture_slot_kalshi_online_learning_status.native.json",
+      "raw_rows": 2,
+      "anchored_originals": 2,
+      "at_cap": false,
+      "errors": [],
+      "before": "2026-10-15T17:35:30+00:00",
+      "after": "2026-10-15T17:35:32+00:00",
+      "requested_end": "2026-10-15T17:35:30+00:00",
+      "retrieval_not_before_endpoint": true
+    }
+  ],
+  "window": "KXBTC15M-26OCT151345-45",
+  "payload_at_utc": "2026-10-15T17:35:00.117887+00:00",
+  "diagnostic_original_timestamp": "2026-10-15T17:35:00.129676813Z",
+  "unknown_original_timestamp": "2026-10-15T17:35:00.129670693Z",
+  "source_sha256": "091ea297b1fed8973be3c78e74184e6ea71fa8f36e808e67449f433c88d19a0e",
+  "learner_fingerprint": "b6112b7ef8955b20af734157c1e7f5ec533bf98f70e034558f06670578c391f2",
+  "learner_protocol": "kalshi-online-calibration-v1-h300-g5-b10-prior20",
+  "mode": "observe_only",
+  "disposition": "unknown",
+  "reason": "pregap",
+  "stored_pregap": "explicit_feed_gap",
+  "elapsed_s": 300.1178870201111,
+  "feed_ok": true,
+  "feed_status": [
+    true,
+    true
+  ],
+  "input_facts": {
+    "bitcoin_age_s": 0.24464702606201172,
+    "bitcoin_age_valid": true,
+    "spot_valid": true,
+    "sigma_valid": true
+  },
+  "causes": [
+    {
+      "observation": "first_effective_cause",
+      "effective_utc": "2026-10-15T17:30:00.700413+00:00",
+      "frame": 3530,
+      "flags": {
+        "explicit_slug": true,
+        "trade_stream_false": false,
+        "coinbase_false": false,
+        "sequence_discontinuity": false,
+        "drop_counter_increased": false,
+        "missing_ladder": false,
+        "late_book": false,
+        "late_trade": false,
+        "replayed_drop": false
+      },
+      "frame_transit_ms": 65.91629981994629,
+      "child_wait_ms": 1.3070106506347656
+    },
+    {
+      "observation": "last_effective_cause",
+      "effective_utc": "2026-10-15T17:34:56.826439+00:00",
+      "frame": 6086,
+      "flags": {
+        "explicit_slug": true,
+        "trade_stream_false": false,
+        "coinbase_false": false,
+        "sequence_discontinuity": false,
+        "drop_counter_increased": false,
+        "missing_ladder": false,
+        "late_book": false,
+        "late_trade": false,
+        "replayed_drop": false
+      },
+      "frame_transit_ms": 4.780054092407227,
+      "child_wait_ms": 0.408172607421875
+    }
+  ],
+  "cause_history": "restart_history_unavailable",
+  "cause_history_interpretation": "Source marks every restored surviving pending row restart_history_unavailable. This prospective row survived restart before its start. First/last are observed effective causes in this child instance; unavailable prior in-memory diagnostic history is not reconstructed. Marker does not itself establish an older gap or negate these timed original observations. No native persisted row was exported to independently inspect its prior pregap.",
+  "statuses": [
+    {
+      "timestamp": "2026-10-15T17:30:09.171920436Z",
+      "enabled": true,
+      "forecasts": 0,
+      "scored": 0,
+      "unknown": 15,
+      "exclusions": {
+        "startup_inside": 1,
+        "late": 0,
+        "invalid": 0,
+        "pregap": 14,
+        "terms_changed": 0,
+        "missing_label": 0,
+        "outcome_known": 0,
+        "invalid_label": 0,
+        "capacity": 0
+      },
+      "error": null
+    },
+    {
+      "timestamp": "2026-10-15T17:34:54.429009372Z",
+      "enabled": true,
+      "forecasts": 0,
+      "scored": 0,
+      "unknown": 15,
+      "exclusions": {
+        "startup_inside": 1,
+        "late": 0,
+        "invalid": 0,
+        "pregap": 14,
+        "terms_changed": 0,
+        "missing_label": 0,
+        "outcome_known": 0,
+        "invalid_label": 0,
+        "capacity": 0
+      },
+      "error": null
+    }
+  ],
+  "counter_delta": {
+    "forecasts": 0,
+    "unknown": 1,
+    "scored": 0
+  },
+  "counter_scope": "one whole learner call, not additive perwindow totals",
+  "limits": [
+    "Four filtered queries uncapped/error-free; this does not certify whole-stream coverage.",
+    "Both retained status originals precede the due unknown receipt; no postreceipt aggregate snapshot appears in slot query.",
+    "First and last retained causes show explicit slug membership with stream/Coinbase true; intermediate causes are not enumerated and upstream maker-quiet reason cannot be uniquely identified.",
+    "Frame transit excludes parent FIFO residence beforeencoding; producer occurrence unavailable. These endpoints do not establish global execution latency or resolve EXEC.",
+    "Final batch through17:47 remains pending; no wholewindow financial/profit/learner-success conclusion."
+  ],
+  "original_hashes": {
+    "CAPTURE_DECLARATION.json": "d8fb192eaba52325c76ef1560229f97b6013ae6d68052eabcd03ffac4fa02261",
+    "CAPTURE_QUERY_PLAN.json": "2c3bebe0482810161df4ea9cb3a4b8dd799530c0227c73b8258b0072db3ae440",
+    "CAPTURE_REQUESTS.json": "ba452617eb33902d6938449d6d7eb5cb1783be32c614fe98111333b538c370ec",
+    "capture_slot_kalshi_learning_input_diagnostic.native.json": "3a7b3a7c80ae0c536b2b67ee487c4e7e26300a94e3d399185bb94b9d5cc1af54",
+    "capture_slot_kalshi_online_learning_unknown.native.json": "39b8163e082b94c1413a25a37cfc49c31a74eb665f921efdcf6e90c354c3f5f0",
+    "capture_slot_kalshi_online_learning_forecast.native.json": "db6c1e8fb3de77f84a86c33a493b5392629c9d0a5f3c8a488acec917208a8bc5",
+    "capture_slot_kalshi_online_learning_status.native.json": "681c4b0212a6b1f9cae468915370903b1eaa3323d26ebb226cd248ccd23de014"
+  }
+}

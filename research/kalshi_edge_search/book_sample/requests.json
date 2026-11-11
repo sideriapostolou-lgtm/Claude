@@ -1,0 +1,98 @@
+[
+  {
+    "request_start": "2026-10-13T17:47:59.267182+00:00",
+    "response_end": "2026-10-13T17:48:00.231243+00:00",
+    "url": "https://api.elections.kalshi.com/trade-api/v2/markets?series_ticker=KXBTC15M&status=open&limit=200",
+    "status": 200
+  },
+  {
+    "request_start": "2026-10-13T17:48:00.231653+00:00",
+    "response_end": "2026-10-13T17:48:00.768692+00:00",
+    "url": "https://api.elections.kalshi.com/trade-api/v2/markets?series_ticker=KXETH15M&status=open&limit=200",
+    "status": 200
+  },
+  {
+    "request_start": "2026-10-13T17:48:00.781756+00:00",
+    "response_end": "2026-10-13T17:48:01.895462+00:00",
+    "url": "https://api.elections.kalshi.com/trade-api/v2/markets?series_ticker=KXSOL15M&status=open&limit=200",
+    "status": 200
+  },
+  {
+    "request_start": "2026-10-13T17:48:01.895832+00:00",
+    "response_end": "2026-10-13T17:48:03.338187+00:00",
+    "url": "https://api.elections.kalshi.com/trade-api/v2/markets?series_ticker=KXXRP15M&status=open&limit=200",
+    "status": 200
+  },
+  {
+    "request_start": "2026-10-13T17:48:03.338595+00:00",
+    "response_end": "2026-10-13T17:48:04.615698+00:00",
+    "url": "https://api.elections.kalshi.com/trade-api/v2/markets/KXBTC15M-26OCT131400-00/orderbook",
+    "status": 200
+  },
+  {
+    "request_start": "2026-10-13T17:48:04.616805+00:00",
+    "response_end": "2026-10-13T17:48:05.135359+00:00",
+    "url": "https://api.elections.kalshi.com/trade-api/v2/markets/KXETH15M-26OCT131400-00/orderbook",
+    "status": 200
+  },
+  {
+    "request_start": "2026-10-13T17:48:05.166920+00:00",
+    "response_end": "2026-10-13T17:48:05.663168+00:00",
+    "url": "https://api.elections.kalshi.com/trade-api/v2/markets/KXSOL15M-26OCT131400-00/orderbook",
+    "status": 200
+  },
+  {
+    "request_start": "2026-10-13T17:48:05.717055+00:00",
+    "response_end": "2026-10-13T17:48:06.183444+00:00",
+    "url": "https://api.elections.kalshi.com/trade-api/v2/markets/KXXRP15M-26OCT131400-00/orderbook",
+    "status": 200
+  },
+  {
+    "request_start": "2026-10-13T17:48:08.184406+00:00",
+    "response_end": "2026-10-13T17:48:08.953742+00:00",
+    "url": "https://api.elections.kalshi.com/trade-api/v2/markets/KXBTC15M-26OCT131400-00/orderbook",
+    "status": 200
+  },
+  {
+    "request_start": "2026-10-13T17:48:08.954821+00:00",
+    "response_end": "2026-10-13T17:48:09.447210+00:00",
+    "url": "https://api.elections.kalshi.com/trade-api/v2/markets/KXETH15M-26OCT131400-00/orderbook",
+    "status": 200
+  },
+  {
+    "request_start": "2026-10-13T17:48:09.504946+00:00",
+    "response_end": "2026-10-13T17:48:10.139785+00:00",
+    "url": "https://api.elections.kalshi.com/trade-api/v2/markets/KXSOL15M-26OCT131400-00/orderbook",
+    "status": 200
+  },
+  {
+    "request_start": "2026-10-13T17:48:10.140673+00:00",
+    "response_end": "2026-10-13T17:48:10.641219+00:00",
+    "url": "https://api.elections.kalshi.com/trade-api/v2/markets/KXXRP15M-26OCT131400-00/orderbook",
+    "status": 200
+  },
+  {
+    "request_start": "2026-10-13T17:48:12.642285+00:00",
+    "response_end": "2026-10-13T17:48:13.142299+00:00",
+    "url": "https://api.elections.kalshi.com/trade-api/v2/markets/KXBTC15M-26OCT131400-00/orderbook",
+    "status": 200
+  },
+  {
+    "request_start": "2026-10-13T17:48:13.192412+00:00",
+    "response_end": "2026-10-13T17:48:13.769979+00:00",
+    "url": "https://api.elections.kalshi.com/trade-api/v2/markets/KXETH15M-26OCT131400-00/orderbook",
+    "status": 200
+  },
+  {
+    "request_start": "2026-10-13T17:48:13.771006+00:00",
+    "response_end": "2026-10-13T17:48:14.193662+00:00",
+    "url": "https://api.elections.kalshi.com/trade-api/v2/markets/KXSOL15M-26OCT131400-00/orderbook",
+    "status": 200
+  },
+  {
+    "request_start": "2026-10-13T17:48:14.321163+00:00",
+    "response_end": "2026-10-13T17:48:14.829344+00:00",
+    "url": "https://api.elections.kalshi.com/trade-api/v2/markets/KXXRP15M-26OCT131400-00/orderbook",
+    "status": 200
+  }
+]

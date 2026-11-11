@@ -1,0 +1,237 @@
+{
+  "recorded_at_pacific": "2026-10-15T07:04:01.113575-07:00",
+  "archive": "RELEASE.zip",
+  "bytes": 459672,
+  "sha256": "248ed41acfefe8b701cb418c2876293f0774a2a0014f76927e348651dd77e40e",
+  "member_count": 37,
+  "crc_all_passed": true,
+  "member_bytes_match_originals": true,
+  "private_pattern_scan": {
+    "patterns": [
+      "private_pem",
+      "openai_style",
+      "jupiter_style",
+      "github_style",
+      "github_pat",
+      "jwt",
+      "bearer_value"
+    ],
+    "matches": 0,
+    "scope": "Recognized credential formats in complete uncompressed archive members; not a universal secret-detection guarantee"
+  },
+  "preparation_sha256_unchanged": "c14cdba6627c0d416659e4059aba0e30b1ffc652858a121afa26d59f4219dba9",
+  "tjr_source_byte_checks": [
+    {
+      "path": "AGENTS.md",
+      "blob": "389266a51ccba3d21072371fd680bc8e4aff2af9",
+      "entire_returned_content_matches_git": true
+    },
+    {
+      "path": "docs/COORDINATION.md",
+      "blob": "3e1c5f56c9f442c2aa754d94609b48428d820386",
+      "entire_returned_content_matches_git": true
+    },
+    {
+      "path": "docs/WORKLOG.md",
+      "blob": "dd8f0c52cfe75102a0e3b00daf1b1ac35b391c22",
+      "entire_returned_content_matches_git": true
+    },
+    {
+      "path": "research/kalshi_profitability_2026-10-14/PR47_DEPLOYMENT.md",
+      "blob": "33c13fb39f85c958e322b8afbcaecfc052d6531b",
+      "entire_returned_content_matches_git": true
+    },
+    {
+      "path": "research/tjr_validation_2026-10-14/HISTORICAL_STATUS.json",
+      "blob": "e079d3c762ced81b2262a5261ab164f291e3d5ac",
+      "entire_returned_content_matches_git": true
+    }
+  ],
+  "members": [
+    {
+      "name": "RELEASE.md",
+      "bytes": 7955,
+      "sha256": "f274f5b9c94d0b51c82af98f01397aec18cf94b61f550345e679924b254b752e"
+    },
+    {
+      "name": "audit_release.py",
+      "bytes": 8038,
+      "sha256": "abe22104aec934d215e6c5fd5def3bb2b4339cb40021fc398bfd670f5125f1e9"
+    },
+    {
+      "name": "before-health.json",
+      "bytes": 3332,
+      "sha256": "a93dbf681e0751d6b53d76c5fe1441f0e6e3d29b7cf26174f15e87d1cb8229ff"
+    },
+    {
+      "name": "before-status.json",
+      "bytes": 206292,
+      "sha256": "32a3321207377bd4bc28a60f270544202c9e86a9a192258813717858f8a258f2"
+    },
+    {
+      "name": "build-progress.json",
+      "bytes": 118464,
+      "sha256": "ee661e6e6a09b2f86e5262baf3cc7215087a7640935996f87aed957859cadebd"
+    },
+    {
+      "name": "deployment-first.json",
+      "bytes": 7324,
+      "sha256": "897a52f4d9db4183c598296b69852234267191243231f4fcd45ba74b04bd4611"
+    },
+    {
+      "name": "deployment-second.json",
+      "bytes": 7324,
+      "sha256": "4f24e94febf473d7fbc48a2bcb126c65f0bbcca5945f57d1bf8abc1402430099"
+    },
+    {
+      "name": "deployment-terminal.json",
+      "bytes": 7214,
+      "sha256": "bc45aacd91a178dc0a6be40b4e8711ed430b59fb6f1514048d523cac24b1b257"
+    },
+    {
+      "name": "health-final.json",
+      "bytes": 3041,
+      "sha256": "f01838ae33c98e57267647c1610f23be025010fd54a3431df5fb9a799863e823"
+    },
+    {
+      "name": "independent-release-review.json",
+      "bytes": 4686,
+      "sha256": "df32193e66046d97784d36f8f7c4c4b216199fc16ab3210e8f1aa6e0dc9a6feb"
+    },
+    {
+      "name": "integration.json",
+      "bytes": 250,
+      "sha256": "a1754eceb1f9fdfa36ff6bf621950776cfd4150beaead81d8638bcbfd661850c"
+    },
+    {
+      "name": "kalshi-fresh.json",
+      "bytes": 293240,
+      "sha256": "08703713f579b2c291ddb3e0c4ce425362a74fe085e65064b84c2597be2a68f2"
+    },
+    {
+      "name": "kalshi-initial.json",
+      "bytes": 1141,
+      "sha256": "94921a54e19b7f50152478e00baaa7692f65c240ed89c4e5e1687842e78cf23e"
+    },
+    {
+      "name": "kalshi-startup.json",
+      "bytes": 98058,
+      "sha256": "99116062b2254ac2a027575969559e58cce0ed93b7385171d183c67c918fa6e4"
+    },
+    {
+      "name": "latest-tjr-gate-0.raw.json",
+      "bytes": 325629,
+      "sha256": "131a97f5e67472e5d6c711db240e963c73d2986c15093c52b408c97918c21bf5"
+    },
+    {
+      "name": "latest-tjr-gate-1.raw.json",
+      "bytes": 7837,
+      "sha256": "4c4c652a700acb684a40785501afc0085c620a9f3330d2228ef2772c3a699aa4"
+    },
+    {
+      "name": "latest-tjr-gate-2.raw.json",
+      "bytes": 118506,
+      "sha256": "cd9eafd8bd94affbdd3af9e3d839c7c49cd5307034a2968d184f12eaf016e7f6"
+    },
+    {
+      "name": "latest-tjr-gate-3.raw.json",
+      "bytes": 419147,
+      "sha256": "b8b0a20da4f743c4bfdbf57f3ef0b22e7a389b237fdc6b8099af6ecf5aecc56d"
+    },
+    {
+      "name": "latest-tjr-gate-4.raw.json",
+      "bytes": 7848,
+      "sha256": "ce2d2f3f8c7aa44f9be2fd4e936da6a0ea639f0a7dc935360de784876c417360"
+    },
+    {
+      "name": "latest-tjr-gate-5.raw.json",
+      "bytes": 1721,
+      "sha256": "f01a7cb83c406841ab7423eeee436279b1426b8a786e61592c064c60d7f8a862"
+    },
+    {
+      "name": "latest-tjr-gate.json",
+      "bytes": 3847,
+      "sha256": "5887963547b4bff6a21470fdebc91705c05647096bfa56fae6c65f24c5114a86"
+    },
+    {
+      "name": "learner-after-first-pass.json",
+      "bytes": 3768,
+      "sha256": "3fd33489e5ab7efaf44ba908279ffa31156fb8a023ed488f3efc3562de3d152c"
+    },
+    {
+      "name": "learner-initial.json",
+      "bytes": 1126,
+      "sha256": "bd492f62575b9d03fc11fda26df950cbd3a28562f374a8ce0bc0646e21880738"
+    },
+    {
+      "name": "learner-periodic.json",
+      "bytes": 736,
+      "sha256": "8c75311e2c7b837256cb28ea68cebb02d9a8d4f2f86cd27f437240dad697eea4"
+    },
+    {
+      "name": "learner-startup.json",
+      "bytes": 3874,
+      "sha256": "dcc3d76486135ee21e3428561a9a79ac6a4b47cfd930551eb7c3373e4007cfff"
+    },
+    {
+      "name": "merge.json",
+      "bytes": 343,
+      "sha256": "c9908e37c652d277e9be34d326f418ee077e2a12ae5916fc292aa2c3bc08addd"
+    },
+    {
+      "name": "package_release.py",
+      "bytes": 3688,
+      "sha256": "1a8b75de51deefe28a89f146e44b30e69e7196ea3264da11256ed7f91d645814"
+    },
+    {
+      "name": "polydesk-startup.json",
+      "bytes": 1698,
+      "sha256": "efbe55a4e224cc53584e1405f085caeec1b5ca546393f17c8eb92156ccca4764"
+    },
+    {
+      "name": "query-scope-amendment.json",
+      "bytes": 1070,
+      "sha256": "91b8996e050ad8bc7039272b49536ee5b162d74e9582d6bec2b4f63f032832e6"
+    },
+    {
+      "name": "root-audit-attempts.json",
+      "bytes": 361,
+      "sha256": "95273a139ddd9c203e4625b28193994626bddff66430e89ffe416b2ed730ec9b"
+    },
+    {
+      "name": "root-release-audit.json",
+      "bytes": 18717,
+      "sha256": "a9b9d2215d52ab4350f848b869b8c8761817f398ab31f095724e40393fe4c4c7"
+    },
+    {
+      "name": "root-tjr-source-byte-verification.json",
+      "bytes": 808,
+      "sha256": "70b7762b2294db3d21ff98d9b00bd2d780079034d667deb46210fbe50e3d1eec"
+    },
+    {
+      "name": "second-current-pin-followup.json",
+      "bytes": 3121,
+      "sha256": "8fcf5208b36ba63e8a2a4e5172e1ac457e4579cd3813fa6130ca4019c9417ac0"
+    },
+    {
+      "name": "tjr-repeat-followup.json",
+      "bytes": 2648,
+      "sha256": "5dbd455b9ed0fddacf3afd9eb2d1565f80cb8e06649dbc3631f8693f43313ae0"
+    },
+    {
+      "name": "tracebacks-final.json",
+      "bytes": 736,
+      "sha256": "95648369ab3c0ecaa6c58f5ccc11ea9373febdcf7b9e56b62834a8d752babf76"
+    },
+    {
+      "name": "tracebacks-initial.json",
+      "bytes": 1107,
+      "sha256": "f62bf29289950bf9d6d16374dd0d4b7bc9528cd4ebca3bb271bef8621e9327a7"
+    },
+    {
+      "name": "used-controls.json",
+      "bytes": 256821,
+      "sha256": "9bdf97f931880a09c030dd9ecfa872abb6d6fd16044dabc9bf8cb49cae03b2fe"
+    }
+  ]
+}

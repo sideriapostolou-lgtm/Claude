@@ -1,0 +1,185 @@
+{
+  "scope": "32 interleaved enabled/disabled offline fake-account local-disk runs per scenario; no network; timings include identical existing work and fsync; cannot infer production latency or dollars saved",
+  "samples": {
+    "quiet": {
+      "False": {
+        "wall_ms": {
+          "n": 32,
+          "median": 7.7406015,
+          "p95": 11.062848,
+          "max": 19.754959
+        },
+        "cpu_ms": {
+          "n": 32,
+          "median": 7.706946,
+          "p95": 10.959717,
+          "max": 19.640991
+        }
+      },
+      "True": {
+        "wall_ms": {
+          "n": 32,
+          "median": 8.023023,
+          "p95": 8.945423,
+          "max": 10.112728
+        },
+        "cpu_ms": {
+          "n": 32,
+          "median": 7.975099,
+          "p95": 8.751563,
+          "max": 9.878169
+        }
+      }
+    },
+    "cancel": {
+      "False": {
+        "wall_ms": {
+          "n": 32,
+          "median": 6.559034499999999,
+          "p95": 7.494548,
+          "max": 8.127278
+        },
+        "cpu_ms": {
+          "n": 32,
+          "median": 6.443562,
+          "p95": 7.180898,
+          "max": 8.093276
+        }
+      },
+      "True": {
+        "wall_ms": {
+          "n": 32,
+          "median": 6.7197890000000005,
+          "p95": 7.442871,
+          "max": 7.442902
+        },
+        "cpu_ms": {
+          "n": 32,
+          "median": 6.620018,
+          "p95": 7.259153,
+          "max": 7.309603
+        }
+      }
+    },
+    "partial_fill": {
+      "False": {
+        "wall_ms": {
+          "n": 32,
+          "median": 8.6011205,
+          "p95": 9.277581,
+          "max": 9.294783
+        },
+        "cpu_ms": {
+          "n": 32,
+          "median": 8.5409475,
+          "p95": 9.186691,
+          "max": 9.218731
+        }
+      },
+      "True": {
+        "wall_ms": {
+          "n": 32,
+          "median": 8.97899,
+          "p95": 9.3417,
+          "max": 9.446555
+        },
+        "cpu_ms": {
+          "n": 32,
+          "median": 8.842192,
+          "p95": 9.193338,
+          "max": 9.382367
+        }
+      }
+    }
+  },
+  "storage": {
+    "quiet": {
+      "False": {
+        "rows": [
+          0
+        ],
+        "payload_bytes": {
+          "n": 32,
+          "median": 0.0,
+          "p95": 0,
+          "max": 0
+        }
+      },
+      "True": {
+        "rows": [
+          1
+        ],
+        "payload_bytes": {
+          "n": 32,
+          "median": 582.0,
+          "p95": 582,
+          "max": 582
+        }
+      }
+    },
+    "cancel": {
+      "False": {
+        "rows": [
+          0
+        ],
+        "payload_bytes": {
+          "n": 32,
+          "median": 0.0,
+          "p95": 0,
+          "max": 0
+        }
+      },
+      "True": {
+        "rows": [
+          2
+        ],
+        "payload_bytes": {
+          "n": 32,
+          "median": 1205.0,
+          "p95": 1205,
+          "max": 1205
+        }
+      }
+    },
+    "partial_fill": {
+      "False": {
+        "rows": [
+          0
+        ],
+        "payload_bytes": {
+          "n": 32,
+          "median": 0.0,
+          "p95": 0,
+          "max": 0
+        }
+      },
+      "True": {
+        "rows": [
+          2
+        ],
+        "payload_bytes": {
+          "n": 32,
+          "median": 1250.0,
+          "p95": 1250,
+          "max": 1250
+        }
+      }
+    }
+  },
+  "pressure_10000_cancel_events_with_tracemalloc": {
+    "wall_ms": 409.036903,
+    "cpu_ms": 408.8026,
+    "current_bytes": 240000,
+    "peak_bytes": 259560,
+    "pending_rows_before_drain": 128,
+    "terminal_cached": 256,
+    "pending_dropped": 9872,
+    "terminal_evicted": 9744,
+    "serialized_payload_bytes": 68225
+  },
+  "source_sha256": {
+    "src/nightcrawler/speeddesk_live.py": "08e4084687847f8fb7511998b5908bc62b95c81e50cb1dba0bfa118dea16b609",
+    "src/nightcrawler/speeddesk_twin_trace.py": "5ac1e2289909769aa318ea96cd865394211e1226bd271a77aec0b3d2b91e2904",
+    "tests/test_speeddesk_twin_trace.py": "faa3cc68ccbb9a903b3f526ddf072ac617fe4b0e699d331c93f6cbd3aea78f6d"
+  }
+}

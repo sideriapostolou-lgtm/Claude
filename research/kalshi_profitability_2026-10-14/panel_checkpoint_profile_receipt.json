@@ -1,0 +1,52 @@
+{
+  "base": "1ef0f9270c079ca29b6074360918838fe26f8cff",
+  "fixture_sha256": "64832b756dae0575cdfe444ada8985b6acce1ad31587a72d25be00dc7b8468ad",
+  "fixture_counts": {
+    "historical_windows": 200,
+    "fill_count": 400,
+    "intent_count": 3350
+  },
+  "medians": {
+    "panel": {
+      "wall_ms": 68.5710875,
+      "cpu_ms": 68.5555115
+    },
+    "checkpoint": {
+      "wall_ms": 79.1431145,
+      "cpu_ms": 79.1247725
+    }
+  },
+  "analysis": {
+    "candidate": "Per-call grouping of intents by native window slug, retaining insertion order and original lazy any(predicate); no persistent cache.",
+    "scorecard_source": "src/nightcrawler/speeddesk_live.py:2642",
+    "scorecard_generator_source": "src/nightcrawler/speeddesk_live.py:2650",
+    "dense_generator_yields": 670200,
+    "small_generator_yields": 80200,
+    "positions_source": "src/nightcrawler/speeddesk_live.py:2596",
+    "positions_candidate": "Compute native intent-window set once per panel, if strict compatibility guard; currently rebuilt for every position key, even zero positions.",
+    "compatibility": "Retain integrity_error short circuit, per-window iteration order, lazy predicate and reservation lookup; no eager missing-book lookups. Exotic/subclass mappings/fields require original-path fallback. No implementation/benefit estimate provided."
+  },
+  "output_hashes_stable": {
+    "panel": true,
+    "checkpoint": true
+  },
+  "limitations": [
+    "Invented historical fixture, not production replay; zero fees, paired one-contract fills .4UP/.5DOWN.",
+    "Actual record_fill/settle/_fill APIs; intents/orders seeded like history tests, not controller send logic.",
+    "Paper mode, no keys/client/threads/network. Cold Bitcoin tape, no live orders, markout waiters or real latency history.",
+    "Started_at current T0: historical daily report creation excluded; scorecards still scan full retained history.",
+    "Six alternating panel/checkpoint unprofiled repetitions, separate one-call cProfile phases.",
+    "Temporary SQLite/mirror writes are real local writes; no persistence method is stubbed.",
+    "200 zero-valued position entries retained intentionally; positions field inefficiency depends on actual position-key density, not inferred for production."
+  ],
+  "script_sha256": "dd54539b4e253891cc5809ebe1c85ca137853b3d932935600f221b3bb224337f",
+  "source_sha256": {
+    "src/nightcrawler/speeddesk.py": "79a8ad7fc10879035297e2af4d87af1bff758b4f89c2adae3464fe812235477d",
+    "src/nightcrawler/speeddesk_live.py": "ca3fd125a6300ec7d9ee22455871c8cc81664b7a14d8ba9c5d5458092c00a30c",
+    "src/nightcrawler/speeddesk_live_model.py": "689207e3a681b591f64a43f03a359d2dc0dbe424cbc2f74809669866ffab36de",
+    "src/nightcrawler/speeddesk_model.py": "50ba3b4f78c6efd031fdcd8bb1cb1a59ea2988973c341b9ad275345d70de7429"
+  },
+  "archive": "panel_checkpoint_profile_evidence.zip",
+  "archive_sha256": "a8154eabbc6ed5f1966a271b4975636288babc2f5f4c002781467bbc12f493f9",
+  "result": "Offline justification for per-call reporting computation reduction only; no production speedup or profit claim."
+}

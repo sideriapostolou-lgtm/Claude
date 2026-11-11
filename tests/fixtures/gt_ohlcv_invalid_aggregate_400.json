@@ -1,0 +1,11 @@
+{
+ "errors": [
+  {
+   "status": "400",
+   "title": "Invalid aggregate. Allowed values: 1, 5, 15"
+  }
+ ],
+ "meta": {
+  "ref_id": "3dcc0913-b9e8-43fa-8b03-9952e621d8fc"
+ }
+}

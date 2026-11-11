@@ -1,0 +1,22 @@
+{
+  "retrieved": "2026-10-13T17:44:29.045802+00:00",
+  "url": "https://api.elections.kalshi.com/trade-api/v2/incentive_programs?status=active&limit=10000",
+  "source_response_sha256": "399804947d8dbc859453ae028d2a29b477a9d03ae76f34b40722dcd6d8814ddd",
+  "program_count": 5462,
+  "cursor": null,
+  "counts_by_type": {
+    "liquidity": 5462
+  },
+  "counts_by_ticker_prefix": {
+    "KXBTC15M": 0,
+    "KXETH15M": 0,
+    "KXSOL15M": 0,
+    "KXXRP15M": 0,
+    "KXHIGH": 0,
+    "KXBTCMAXMON": 0,
+    "KXMLBGAME": 0,
+    "KXNFLGAME": 0
+  },
+  "target_size_1000_count": 5369,
+  "scope": "One public API snapshot. Prefix counts do not establish future programs or all account-specific entitlements. Target size concerns qualifying aggregate book depth, not a personal minimum stake. Full response retained only as a temporary research capture; hash identifies it."
+}

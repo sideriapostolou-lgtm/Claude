@@ -1,0 +1,229 @@
+{
+  "scope": {
+    "deployment_id": "7582010e-5681-41bb-964b-951e8b3c6767",
+    "source": "2f0bba487b4c88fa39299924b7a112e8413cb933",
+    "start": "2026-10-16T20:34:00Z",
+    "end": "2026-10-16T23:25:00Z",
+    "limit": 300,
+    "returned": 29
+  },
+  "verification_checks": 74,
+  "new_policy_settlements": [
+    {
+      "window": "KXBTC15M-26OCT161700-00",
+      "settled_event_at": 1792184407.281463,
+      "log_at": "2026-10-16T21:00:11.175482533Z",
+      "fills": 2,
+      "up_wins": true,
+      "cost_usd": "0.9900",
+      "fee_usd": "0.0000",
+      "payout_usd": "1.0000",
+      "pnl_usd": "0.0100"
+    },
+    {
+      "window": "KXBTC15M-26OCT161715-15",
+      "settled_event_at": 1792185306.825277,
+      "log_at": "2026-10-16T21:15:10.184093367Z",
+      "fills": 2,
+      "up_wins": false,
+      "cost_usd": "0.9900",
+      "fee_usd": "0.0000",
+      "payout_usd": "1.0000",
+      "pnl_usd": "0.0100"
+    },
+    {
+      "window": "KXBTC15M-26OCT161730-30",
+      "settled_event_at": 1792186201.83483,
+      "log_at": "2026-10-16T21:30:06.443699470Z",
+      "fills": 2,
+      "up_wins": true,
+      "cost_usd": "0.9800",
+      "fee_usd": "0.0000",
+      "payout_usd": "1.0000",
+      "pnl_usd": "0.0200"
+    },
+    {
+      "window": "KXBTC15M-26OCT161745-45",
+      "settled_event_at": 1792187106.833211,
+      "log_at": "2026-10-16T21:45:09.807444619Z",
+      "fills": 2,
+      "up_wins": false,
+      "cost_usd": "0.9500",
+      "fee_usd": "0.0175",
+      "payout_usd": "1.0000",
+      "pnl_usd": "0.0325"
+    },
+    {
+      "window": "KXBTC15M-26OCT161800-00",
+      "settled_event_at": 1792188006.832616,
+      "log_at": "2026-10-16T22:00:10.265535199Z",
+      "fills": 2,
+      "up_wins": false,
+      "cost_usd": "0.9700",
+      "fee_usd": "0.0175",
+      "payout_usd": "1.0000",
+      "pnl_usd": "0.0125"
+    },
+    {
+      "window": "KXBTC15M-26OCT161815-15",
+      "settled_event_at": 1792188906.825188,
+      "log_at": "2026-10-16T22:15:09.402974220Z",
+      "fills": 2,
+      "up_wins": true,
+      "cost_usd": "1.4170",
+      "fee_usd": "0.0048",
+      "payout_usd": "1.0000",
+      "pnl_usd": "-0.4218"
+    },
+    {
+      "window": "KXBTC15M-26OCT161830-30",
+      "settled_event_at": 1792189814.5035298,
+      "log_at": "2026-10-16T22:30:14.824775426Z",
+      "fills": 0,
+      "up_wins": true,
+      "cost_usd": "0.0000",
+      "fee_usd": "0.0000",
+      "payout_usd": "0.0000",
+      "pnl_usd": "0.0000"
+    },
+    {
+      "window": "KXBTC15M-26OCT161845-45",
+      "settled_event_at": 1792190706.840471,
+      "log_at": "2026-10-16T22:45:10.143066184Z",
+      "fills": 2,
+      "up_wins": true,
+      "cost_usd": "0.9900",
+      "fee_usd": "0.0000",
+      "payout_usd": "1.0000",
+      "pnl_usd": "0.0100"
+    },
+    {
+      "window": "KXBTC15M-26OCT161900-00",
+      "settled_event_at": 1792191606.8328,
+      "log_at": "2026-10-16T23:00:11.414687809Z",
+      "fills": 2,
+      "up_wins": true,
+      "cost_usd": "0.9700",
+      "fee_usd": "0.0158",
+      "payout_usd": "1.0000",
+      "pnl_usd": "0.0142"
+    },
+    {
+      "window": "KXBTC15M-26OCT161915-15",
+      "settled_event_at": 1792192522.9126372,
+      "log_at": "2026-10-16T23:15:23.439521296Z",
+      "fills": 0,
+      "up_wins": false,
+      "cost_usd": "0.0000",
+      "fee_usd": "0.0000",
+      "payout_usd": "0.0000",
+      "pnl_usd": "0.0000"
+    }
+  ],
+  "new_policy_traded_windows": 8,
+  "zero_fill_windows": 2,
+  "new_policy_wins": 7,
+  "new_policy_wins_usd": "0.1092",
+  "new_policy_pnl_usd": "-0.3126",
+  "inherited_pnl_usd": "0.0600",
+  "deployment_period_settled_change_usd": "-0.2526",
+  "all_new_fill_fees_usd": "0.0731",
+  "cash_change_usd": "-0.2901",
+  "cash_arithmetic_scope": "matches settled change plus recorded gross-cost change; not a full cash-flow audit",
+  "unsettled_fills_excluded": [
+    {
+      "log_at": "2026-10-16T23:15:53.163367584Z",
+      "event": "speeddesk_live_fill",
+      "at": 1792192552.618165,
+      "venue": "kalshi",
+      "fill_id": "07245b00-6189-9eb2-7cef-ee31344126ec",
+      "order_id": "01a14700-1088-781c-a0a3-d8b140950258",
+      "client_order_id": "nc-speed-eb59335f5a804f3b919fec6c59714007",
+      "window": "KXBTC15M-26OCT161930-30",
+      "side": "down",
+      "price": 0.48,
+      "size": 1.0,
+      "fee_usd": 0.0,
+      "is_taker": false
+    },
+    {
+      "log_at": "2026-10-16T23:15:58.254632066Z",
+      "event": "speeddesk_live_fill",
+      "at": 1792192557.274291,
+      "venue": "kalshi",
+      "fill_id": "07245b00-9b31-a693-17f9-6d7d0a92617a",
+      "order_id": "01a14700-2fc8-7503-afb2-ddd25609f637",
+      "client_order_id": "nc-speed-234594a19e204267811a61b505ac1104",
+      "window": "KXBTC15M-26OCT161930-30",
+      "side": "up",
+      "price": 0.48,
+      "size": 1.0,
+      "fee_usd": 0.0175,
+      "is_taker": true
+    }
+  ],
+  "target": {
+    "window": "KXBTC15M-26OCT161815-15",
+    "events": 118,
+    "intents": 42,
+    "ordinary_hedge_intents": 39,
+    "cancel_reasons": {
+      "reprice": 21,
+      "Kalshi book stale": 11
+    },
+    "first_fill": {
+      "log_at": "2026-10-16T22:00:20.970128134Z",
+      "event": "speeddesk_live_fill",
+      "at": 1792188018.717831,
+      "venue": "kalshi",
+      "fill_id": "07245c51-5c29-b660-fad1-06f6072738d9",
+      "order_id": "01a146ba-e968-7f1a-89b4-ce8f169f2eed",
+      "client_order_id": "nc-speed-69322701b9244c75a543f8ad0042ec94",
+      "window": "KXBTC15M-26OCT161815-15",
+      "side": "down",
+      "price": 0.49,
+      "size": 1.0,
+      "fee_usd": 0.0,
+      "is_taker": false
+    },
+    "late_hedge": {
+      "log_at": "2026-10-16T22:11:01.737364565Z",
+      "event": "speeddesk_live_fill",
+      "at": 1792188660.359377,
+      "venue": "kalshi",
+      "fill_id": "07245dd6-5da1-8e19-c170-ac14a4749756",
+      "order_id": "01a146c4-b920-7fc3-9f24-98335442a6c1",
+      "client_order_id": "nc-speed-e0e73b77674c418f858307d74b56e092",
+      "window": "KXBTC15M-26OCT161815-15",
+      "side": "up",
+      "price": 0.927,
+      "size": 1.0,
+      "fee_usd": 0.0048,
+      "is_taker": true
+    },
+    "without_only_actual_hedge_same_official_outcome_usd": "-0.4900",
+    "first_fill_markout_gaps": [
+      {
+        "horizon_s": 1,
+        "reason": "book_stale",
+        "detection_delay_s": 1.4395945072174072
+      },
+      {
+        "horizon_s": 5,
+        "reason": "observation_late",
+        "detection_delay_s": 1.4395945072174072
+      },
+      {
+        "horizon_s": 30,
+        "reason": "book_stale",
+        "detection_delay_s": 1.4395945072174072
+      }
+    ]
+  },
+  "limits": [
+    "Bounded native logs, not raw-volume/account-ledger certification.",
+    "Snapshot counter reconciliation supports this cohort, not whole-day coverage.",
+    "No executable earlier replacement hedge or queue retention gain proved.",
+    "No practice comparison, causal profitability claim, threshold fit or TEST consumption."
+  ]
+}

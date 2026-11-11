@@ -1,0 +1,947 @@
+{
+  "refreshed_utc": "2026-10-16T01:35:00Z",
+  "time_precision": "Rounded session minute",
+  "scope": "Metadata discovery only, not source/license/profitability verification for all entries. Eighteen selected projects audited separately.",
+  "query_rows": 134,
+  "unique_repo_names": 123,
+  "results": [
+    {
+      "repo": "mlysophia/kxbtc15m-overbet-study",
+      "branch": "main",
+      "size_kib": 1586,
+      "archived": false,
+      "query": "KXBTC15M"
+    },
+    {
+      "repo": "raymondmay95/kalshi-bet",
+      "branch": "main",
+      "size_kib": 232,
+      "archived": false,
+      "query": "KXBTC15M"
+    },
+    {
+      "repo": "artyomderkach-bit/btc-15m-vol-backtest",
+      "branch": "main",
+      "size_kib": 43023,
+      "archived": false,
+      "query": "KXBTC15M"
+    },
+    {
+      "repo": "daffieeee-arch/Kalshi-Bot",
+      "branch": "main",
+      "size_kib": 169,
+      "archived": false,
+      "query": "KXBTC15M"
+    },
+    {
+      "repo": "d589f/kalshi-trading-bot",
+      "branch": "main",
+      "size_kib": 7148,
+      "archived": false,
+      "query": "KXBTC15M"
+    },
+    {
+      "repo": "Astanwa/kalshi-pair-tape",
+      "branch": "main",
+      "size_kib": 2230,
+      "archived": false,
+      "query": "KXBTC15M"
+    },
+    {
+      "repo": "rodiiipooo/kalshi-crypto-regime-edge",
+      "branch": "master",
+      "size_kib": 681,
+      "archived": false,
+      "query": "KXBTC15M"
+    },
+    {
+      "repo": "momotsanya/KalshiBot",
+      "branch": "main",
+      "size_kib": 308,
+      "archived": false,
+      "query": "KXBTC15M"
+    },
+    {
+      "repo": "istaawoo/kalshi-trading-research123",
+      "branch": "main",
+      "size_kib": 0,
+      "archived": false,
+      "query": "KXBTC15M"
+    },
+    {
+      "repo": "DerinTW/kxbtc15-ev-model",
+      "branch": "master",
+      "size_kib": 74,
+      "archived": false,
+      "query": "KXBTC15M"
+    },
+    {
+      "repo": "BryanJAvery/kalshi-python-trading",
+      "branch": "main",
+      "size_kib": 618,
+      "archived": false,
+      "query": "KXBTC15M"
+    },
+    {
+      "repo": "theruviparambil/kalshi-btc-15m",
+      "branch": "main",
+      "size_kib": 840,
+      "archived": false,
+      "query": "KXBTC15M"
+    },
+    {
+      "repo": "SiddhaBasu/kalshi-bot",
+      "branch": "main",
+      "size_kib": 1165,
+      "archived": false,
+      "query": "KXBTC15M"
+    },
+    {
+      "repo": "ronniegreen2-lab/kalshi-bot",
+      "branch": "main",
+      "size_kib": 1165,
+      "archived": false,
+      "query": "KXBTC15M"
+    },
+    {
+      "repo": "AsArchitects/Kalshi-trade-bot",
+      "branch": "main",
+      "size_kib": 8,
+      "archived": false,
+      "query": "kalshi 15-minute bot"
+    },
+    {
+      "repo": "llllllilllll/Kalshi-Trade-Bot",
+      "branch": "main",
+      "size_kib": 17,
+      "archived": false,
+      "query": "kalshi 15-minute bot"
+    },
+    {
+      "repo": "reedjacobp/kalshi-trading-bot",
+      "branch": "main",
+      "size_kib": 908,
+      "archived": false,
+      "query": "kalshi 15-minute bot"
+    },
+    {
+      "repo": "Razzleberryss/AstroTick",
+      "branch": "main",
+      "size_kib": 599,
+      "archived": false,
+      "query": "kalshi 15-minute bot"
+    },
+    {
+      "repo": "defi-ape/polymarket-kalshi-arbitrage-bot",
+      "branch": "main",
+      "size_kib": 32634,
+      "archived": false,
+      "query": "kalshi 15-minute bot"
+    },
+    {
+      "repo": "Kyler-d06/15-Minute-BTC-Kalshi-Bot",
+      "branch": "main",
+      "size_kib": 51,
+      "archived": false,
+      "query": "kalshi 15-minute bot"
+    },
+    {
+      "repo": "ryanathompson/kalshi-btc-bot",
+      "branch": "main",
+      "size_kib": 10522,
+      "archived": false,
+      "query": "kalshi 15-minute bot"
+    },
+    {
+      "repo": "edge-smart/Polymarket-predictdotfun-trading-bot",
+      "branch": "master",
+      "size_kib": 70,
+      "archived": false,
+      "query": "kalshi 15-minute bot"
+    },
+    {
+      "repo": "W1nt34isC0m1ng/kalshi-bot",
+      "branch": "main",
+      "size_kib": 139171,
+      "archived": false,
+      "query": "kalshi 15-minute bot"
+    },
+    {
+      "repo": "alfredclaw3140-collab/kalshi-crypto-trader",
+      "branch": "master",
+      "size_kib": 35942,
+      "archived": false,
+      "query": "kalshi 15-minute bot"
+    },
+    {
+      "repo": "SahilAggarwal2007/kalshi-arb-bot",
+      "branch": "main",
+      "size_kib": 16,
+      "archived": false,
+      "query": "kalshi 15-minute bot"
+    },
+    {
+      "repo": "daffieeee-arch/Kalshi-Bot",
+      "branch": "main",
+      "size_kib": 169,
+      "archived": false,
+      "query": "kalshi 15-minute bot"
+    },
+    {
+      "repo": "jffrz78/kalshi-bitcoin-bot",
+      "branch": "main",
+      "size_kib": 1,
+      "archived": false,
+      "query": "kalshi 15-minute bot"
+    },
+    {
+      "repo": "bulprex02/JP-Kalshi-AI",
+      "branch": "main",
+      "size_kib": 3,
+      "archived": false,
+      "query": "kalshi 15-minute bot"
+    },
+    {
+      "repo": "sarthak-p/Kalshi-BTC-Dashboard",
+      "branch": "main",
+      "size_kib": 328,
+      "archived": false,
+      "query": "kalshi 15-minute bot"
+    },
+    {
+      "repo": "Ahkylez/kalshi-15min",
+      "branch": "main",
+      "size_kib": 1206,
+      "archived": false,
+      "query": "kalshi 15-minute bot"
+    },
+    {
+      "repo": "srinath1510/kalshi-natgas-bot",
+      "branch": "main",
+      "size_kib": 64,
+      "archived": false,
+      "query": "kalshi 15-minute bot"
+    },
+    {
+      "repo": "kmjjjj/polymarket-arbitrage-bot-btc-sol-15m",
+      "branch": "main",
+      "size_kib": 1906,
+      "archived": false,
+      "query": "kalshi 15-minute bot"
+    },
+    {
+      "repo": "Acetheplace01/Kalshi-Bitcoin-15-minute-prediction-bot-seeking-Python-coding-help",
+      "branch": "main",
+      "size_kib": 3,
+      "archived": false,
+      "query": "kalshi 15-minute bot"
+    },
+    {
+      "repo": "omarbathenay-sys/Kalshi-CryptoBot",
+      "branch": "main",
+      "size_kib": 71,
+      "archived": false,
+      "query": "kalshi 15-minute bot"
+    },
+    {
+      "repo": "LILRINO71/kalshi-claude-bot",
+      "branch": "main",
+      "size_kib": 283,
+      "archived": false,
+      "query": "kalshi 15-minute bot"
+    },
+    {
+      "repo": "seanrobenalt/kalshi-bot",
+      "branch": "master",
+      "size_kib": 46,
+      "archived": false,
+      "query": "kalshi 15-minute bot"
+    },
+    {
+      "repo": "raniisometric491/polymarket-kalshi-arbitrage-bot",
+      "branch": "main",
+      "size_kib": 1622,
+      "archived": false,
+      "query": "kalshi 15-minute bot"
+    },
+    {
+      "repo": "jpanasuk-netizen/jaspers-trade-bot",
+      "branch": "main",
+      "size_kib": 482,
+      "archived": false,
+      "query": "kalshi 15-minute bot"
+    },
+    {
+      "repo": "sunny21k/kalshi-btc-bot",
+      "branch": "main",
+      "size_kib": 6741,
+      "archived": false,
+      "query": "kalshi 15-minute bot"
+    },
+    {
+      "repo": "jefulmer/kalshi-trading-bot",
+      "branch": "main",
+      "size_kib": 308,
+      "archived": false,
+      "query": "kalshi 15-minute bot"
+    },
+    {
+      "repo": "elisilver333-coder/kalshi-bot",
+      "branch": "master",
+      "size_kib": 49,
+      "archived": false,
+      "query": "kalshi 15-minute bot"
+    },
+    {
+      "repo": "hudsonjoshuaclark/kalshi-bot",
+      "branch": "master",
+      "size_kib": 415,
+      "archived": false,
+      "query": "kalshi 15-minute bot"
+    },
+    {
+      "repo": "noahnaugle2-lab/kalshibot",
+      "branch": "main",
+      "size_kib": 1017,
+      "archived": false,
+      "query": "kalshi 15-minute bot"
+    },
+    {
+      "repo": "nepalanurag/kalshi-btc15m-bot",
+      "branch": "main",
+      "size_kib": 217,
+      "archived": false,
+      "query": "kalshi 15-minute bot"
+    },
+    {
+      "repo": "CarlosIbCu/polymarket-kalshi-btc-arbitrage-bot",
+      "branch": "main",
+      "size_kib": 532,
+      "archived": false,
+      "query": "kalshi bitcoin bot"
+    },
+    {
+      "repo": "Razzleberryss/AstroTick",
+      "branch": "main",
+      "size_kib": 599,
+      "archived": false,
+      "query": "kalshi bitcoin bot"
+    },
+    {
+      "repo": "samuel483/poly-kalshi-arb",
+      "branch": "main",
+      "size_kib": 1950,
+      "archived": false,
+      "query": "kalshi bitcoin bot"
+    },
+    {
+      "repo": "danielsilvaperez/kalshi-trading-bot",
+      "branch": "main",
+      "size_kib": 171,
+      "archived": false,
+      "query": "kalshi bitcoin bot"
+    },
+    {
+      "repo": "haoo99/Polymarket-Kalshi-Arbitrage-Bot",
+      "branch": "main",
+      "size_kib": 502,
+      "archived": false,
+      "query": "kalshi bitcoin bot"
+    },
+    {
+      "repo": "gauravvermma/Kalshi-tbot",
+      "branch": "main",
+      "size_kib": 56,
+      "archived": false,
+      "query": "kalshi bitcoin bot"
+    },
+    {
+      "repo": "jffrz78/kalshi-bitcoin-bot",
+      "branch": "main",
+      "size_kib": 1,
+      "archived": false,
+      "query": "kalshi bitcoin bot"
+    },
+    {
+      "repo": "daffieeee-arch/Kalshi-Bot",
+      "branch": "main",
+      "size_kib": 169,
+      "archived": false,
+      "query": "kalshi bitcoin bot"
+    },
+    {
+      "repo": "SahilAggarwal2007/kalshi-arb-bot",
+      "branch": "main",
+      "size_kib": 16,
+      "archived": false,
+      "query": "kalshi bitcoin bot"
+    },
+    {
+      "repo": "lucaszhang123/Crypto-Bot",
+      "branch": "main",
+      "size_kib": 351,
+      "archived": false,
+      "query": "kalshi bitcoin bot"
+    },
+    {
+      "repo": "Ahkylez/kalshi-15min",
+      "branch": "main",
+      "size_kib": 1206,
+      "archived": false,
+      "query": "kalshi bitcoin bot"
+    },
+    {
+      "repo": "omarbathenay-sys/Kalshi-CryptoBot",
+      "branch": "main",
+      "size_kib": 71,
+      "archived": false,
+      "query": "kalshi bitcoin bot"
+    },
+    {
+      "repo": "esc-ouni/polymarket-kalshi-btc-arbitrage-bot",
+      "branch": "main",
+      "size_kib": 542,
+      "archived": false,
+      "query": "kalshi bitcoin bot"
+    },
+    {
+      "repo": "sunny21k/kalshi-btc-bot",
+      "branch": "main",
+      "size_kib": 6741,
+      "archived": false,
+      "query": "kalshi bitcoin bot"
+    },
+    {
+      "repo": "SiddhaBasu/kalshi-bot",
+      "branch": "main",
+      "size_kib": 1165,
+      "archived": false,
+      "query": "kalshi bitcoin bot"
+    },
+    {
+      "repo": "raniisometric491/polymarket-kalshi-arbitrage-bot",
+      "branch": "main",
+      "size_kib": 1622,
+      "archived": false,
+      "query": "kalshi bitcoin bot"
+    },
+    {
+      "repo": "alexd2107/btc-kalshi-dashboard",
+      "branch": "main",
+      "size_kib": 9,
+      "archived": false,
+      "query": "kalshi bitcoin bot"
+    },
+    {
+      "repo": "kamcs-dev/Kalshi-Btc-Bot",
+      "branch": "main",
+      "size_kib": 6314,
+      "archived": false,
+      "query": "kalshi bitcoin bot"
+    },
+    {
+      "repo": "Acetheplace01/Kalshi-Bitcoin-15-minute-prediction-bot-seeking-Python-coding-help",
+      "branch": "main",
+      "size_kib": 3,
+      "archived": false,
+      "query": "kalshi bitcoin bot"
+    },
+    {
+      "repo": "yougotsam/KalshiBot",
+      "branch": "main",
+      "size_kib": 191,
+      "archived": false,
+      "query": "kalshi bitcoin bot"
+    },
+    {
+      "repo": "ndehawasum/kalshi-mcp-bot",
+      "branch": "main",
+      "size_kib": 1860,
+      "archived": false,
+      "query": "kalshi bitcoin bot"
+    },
+    {
+      "repo": "WSOL12/Polymarket-Kalshi-Arbitrage-Trading-Bot-BTC",
+      "branch": "main",
+      "size_kib": 534,
+      "archived": false,
+      "query": "kalshi bitcoin bot"
+    },
+    {
+      "repo": "ShubhAgarwal0204/Kalshi-Bot",
+      "branch": "main",
+      "size_kib": 117,
+      "archived": false,
+      "query": "kalshi bitcoin bot"
+    },
+    {
+      "repo": "WSOL12/Polymarket-Kalshi-Arbitrage-Trading-Bot-Cross",
+      "branch": "main",
+      "size_kib": 100,
+      "archived": false,
+      "query": "kalshi bitcoin bot"
+    },
+    {
+      "repo": "WSOL12/Polymarket-Kalshi-Arbitrage-Trading-Bot",
+      "branch": "main",
+      "size_kib": 97,
+      "archived": false,
+      "query": "kalshi bitcoin bot"
+    },
+    {
+      "repo": "cloudlinkXV/engine-lab",
+      "branch": "main",
+      "size_kib": 46,
+      "archived": false,
+      "query": "kalshi bitcoin bot"
+    },
+    {
+      "repo": "cloudbaseXLO/bridge-runtime",
+      "branch": "main",
+      "size_kib": 46,
+      "archived": false,
+      "query": "kalshi bitcoin bot"
+    },
+    {
+      "repo": "codemeshXSX/kit-hub",
+      "branch": "main",
+      "size_kib": 46,
+      "archived": false,
+      "query": "kalshi bitcoin bot"
+    },
+    {
+      "repo": "codebaseXQ/dev-services",
+      "branch": "main",
+      "size_kib": 46,
+      "archived": false,
+      "query": "kalshi bitcoin bot"
+    },
+    {
+      "repo": "bytebaseXD/edge-bridge-core",
+      "branch": "main",
+      "size_kib": 46,
+      "archived": false,
+      "query": "kalshi bitcoin bot"
+    },
+    {
+      "repo": "bytebaseXV/flux-core-906",
+      "branch": "main",
+      "size_kib": 46,
+      "archived": false,
+      "query": "kalshi bitcoin bot"
+    },
+    {
+      "repo": "cloudbaseXLO/edge-services",
+      "branch": "main",
+      "size_kib": 46,
+      "archived": false,
+      "query": "kalshi bitcoin bot"
+    },
+    {
+      "repo": "codebaseXD/meta-relay-core",
+      "branch": "main",
+      "size_kib": 46,
+      "archived": false,
+      "query": "kalshi bitcoin bot"
+    },
+    {
+      "repo": "codebaseXD/infra-system",
+      "branch": "main",
+      "size_kib": 46,
+      "archived": false,
+      "query": "kalshi bitcoin bot"
+    },
+    {
+      "repo": "cloudbaseXLO/meta-stack",
+      "branch": "main",
+      "size_kib": 46,
+      "archived": false,
+      "query": "kalshi bitcoin bot"
+    },
+    {
+      "repo": "codebaseXI/core-service-hub-7608",
+      "branch": "main",
+      "size_kib": 46,
+      "archived": false,
+      "query": "kalshi bitcoin bot"
+    },
+    {
+      "repo": "bytebaseXD/chain-batch-kit",
+      "branch": "main",
+      "size_kib": 46,
+      "archived": false,
+      "query": "kalshi bitcoin bot"
+    },
+    {
+      "repo": "codebaseXD/chain-services",
+      "branch": "main",
+      "size_kib": 46,
+      "archived": false,
+      "query": "kalshi bitcoin bot"
+    },
+    {
+      "repo": "cloudlinkX/meta-gateway-kit",
+      "branch": "main",
+      "size_kib": 46,
+      "archived": false,
+      "query": "kalshi bitcoin bot"
+    },
+    {
+      "repo": "codebaseXI/index-runtime",
+      "branch": "main",
+      "size_kib": 46,
+      "archived": false,
+      "query": "kalshi bitcoin bot"
+    },
+    {
+      "repo": "codebaseXI/prime-relay-system-6786",
+      "branch": "main",
+      "size_kib": 46,
+      "archived": false,
+      "query": "kalshi bitcoin bot"
+    },
+    {
+      "repo": "cloudlinkX/edge-hub",
+      "branch": "main",
+      "size_kib": 46,
+      "archived": false,
+      "query": "kalshi bitcoin bot"
+    },
+    {
+      "repo": "codebaseXD/worker-core-9938",
+      "branch": "main",
+      "size_kib": 46,
+      "archived": false,
+      "query": "kalshi bitcoin bot"
+    },
+    {
+      "repo": "bytebaseXD/core-hub-4096",
+      "branch": "main",
+      "size_kib": 46,
+      "archived": false,
+      "query": "kalshi bitcoin bot"
+    },
+    {
+      "repo": "codemeshXSX/sync-stack",
+      "branch": "main",
+      "size_kib": 46,
+      "archived": false,
+      "query": "kalshi bitcoin bot"
+    },
+    {
+      "repo": "cloudlinkX/gateway-runtime-1756",
+      "branch": "main",
+      "size_kib": 46,
+      "archived": false,
+      "query": "kalshi bitcoin bot"
+    },
+    {
+      "repo": "bytebaseXV/edge-service-stack",
+      "branch": "main",
+      "size_kib": 46,
+      "archived": false,
+      "query": "kalshi bitcoin bot"
+    },
+    {
+      "repo": "codebaseXI/flux-index-core",
+      "branch": "main",
+      "size_kib": 46,
+      "archived": false,
+      "query": "kalshi bitcoin bot"
+    },
+    {
+      "repo": "codemeshXSX/swift-suite-799",
+      "branch": "main",
+      "size_kib": 46,
+      "archived": false,
+      "query": "kalshi bitcoin bot"
+    },
+    {
+      "repo": "codebaseXI/pipeline-platform-3175",
+      "branch": "main",
+      "size_kib": 46,
+      "archived": false,
+      "query": "kalshi bitcoin bot"
+    },
+    {
+      "repo": "rodlaf/KalshiMarketMaker",
+      "branch": "main",
+      "size_kib": 83,
+      "archived": false,
+      "query": "kalshi market maker"
+    },
+    {
+      "repo": "mbordash/DRADIS",
+      "branch": "main",
+      "size_kib": 6144,
+      "archived": false,
+      "query": "kalshi market maker"
+    },
+    {
+      "repo": "zachdaube/kalshi-market-maker",
+      "branch": "main",
+      "size_kib": 369,
+      "archived": false,
+      "query": "kalshi market maker"
+    },
+    {
+      "repo": "orangejuicetin/kalshi_market_maker",
+      "branch": "main",
+      "size_kib": 781,
+      "archived": false,
+      "query": "kalshi market maker"
+    },
+    {
+      "repo": "milesChild/kalshi-sophisticated-market-maker",
+      "branch": "main",
+      "size_kib": 49,
+      "archived": false,
+      "query": "kalshi market maker"
+    },
+    {
+      "repo": "tfrmma/prediction-market-maker",
+      "branch": "main",
+      "size_kib": 657,
+      "archived": false,
+      "query": "kalshi market maker"
+    },
+    {
+      "repo": "jsteng19/kalshi-combos-research",
+      "branch": "main",
+      "size_kib": 628,
+      "archived": false,
+      "query": "kalshi market maker"
+    },
+    {
+      "repo": "milesChild/kalshi-naive-market-maker",
+      "branch": "main",
+      "size_kib": 138,
+      "archived": false,
+      "query": "kalshi market maker"
+    },
+    {
+      "repo": "brianarowland/KalshiMarketMaker-forked",
+      "branch": "main",
+      "size_kib": 41,
+      "archived": false,
+      "query": "kalshi market maker"
+    },
+    {
+      "repo": "Intellligent15/Kalshi_MarketMaker",
+      "branch": "main",
+      "size_kib": 1893,
+      "archived": false,
+      "query": "kalshi market maker"
+    },
+    {
+      "repo": "artyomderkach-bit/kalshi-15m-market-maker",
+      "branch": "main",
+      "size_kib": 79,
+      "archived": false,
+      "query": "kalshi market maker"
+    },
+    {
+      "repo": "satchelscode/Kalshi-Market-Maker",
+      "branch": "main",
+      "size_kib": 83,
+      "archived": false,
+      "query": "kalshi market maker"
+    },
+    {
+      "repo": "jfreun123/kalshi-market-maker",
+      "branch": "main",
+      "size_kib": 1448,
+      "archived": false,
+      "query": "kalshi market maker"
+    },
+    {
+      "repo": "alvin-pl/kalshi_market_maker",
+      "branch": "devin/standalone-kalshi-market-maker",
+      "size_kib": 16,
+      "archived": false,
+      "query": "kalshi market maker"
+    },
+    {
+      "repo": "nikhilniranjanwork-art/kalshi-market-maker",
+      "branch": "main",
+      "size_kib": 13,
+      "archived": false,
+      "query": "kalshi market maker"
+    },
+    {
+      "repo": "Archan-Sen/Kalshi-Market-Maker",
+      "branch": "main",
+      "size_kib": 31391,
+      "archived": false,
+      "query": "kalshi market maker"
+    },
+    {
+      "repo": "mablic/Kalshi_Market_Maker",
+      "branch": "main",
+      "size_kib": 29,
+      "archived": false,
+      "query": "kalshi market maker"
+    },
+    {
+      "repo": "arnavgupta2004/kalshi-arbitrage-market-maker",
+      "branch": "main",
+      "size_kib": 2181,
+      "archived": false,
+      "query": "kalshi market maker"
+    },
+    {
+      "repo": "jackvansickle1/kalshi-market-maker-simulator",
+      "branch": "main",
+      "size_kib": 3,
+      "archived": false,
+      "query": "kalshi market maker"
+    },
+    {
+      "repo": "coffee-crusher/Kalshi-Market-Maker-agent",
+      "branch": "main",
+      "size_kib": 21,
+      "archived": false,
+      "query": "kalshi market maker"
+    },
+    {
+      "repo": "williammolina489/kalshi-market-maker-research",
+      "branch": "main",
+      "size_kib": 214,
+      "archived": false,
+      "query": "kalshi market maker"
+    },
+    {
+      "repo": "Vihaan-Narvekar/Prediction-Market-Maker",
+      "branch": "main",
+      "size_kib": 429,
+      "archived": false,
+      "query": "kalshi market maker"
+    },
+    {
+      "repo": "shawn14/kalshi-mm-v4",
+      "branch": "main",
+      "size_kib": 509,
+      "archived": false,
+      "query": "kalshi market maker"
+    },
+    {
+      "repo": "pranay123-stack/kalshi-rfq-market-maker-volume-optimizer",
+      "branch": "main",
+      "size_kib": 1738,
+      "archived": false,
+      "query": "kalshi market maker"
+    },
+    {
+      "repo": "kel-reid/Kalshi-Trading-Bot",
+      "branch": "main",
+      "size_kib": 12310,
+      "archived": false,
+      "query": "kalshi market maker"
+    },
+    {
+      "repo": "jcsjosh/KalshiMarketMaker",
+      "branch": "main",
+      "size_kib": 83,
+      "archived": false,
+      "query": "kalshi market maker"
+    },
+    {
+      "repo": "awu08/KalshiMarketMaker",
+      "branch": "main",
+      "size_kib": 83,
+      "archived": false,
+      "query": "kalshi market maker"
+    },
+    {
+      "repo": "gentialiaj411/coherence-market-maker",
+      "branch": "main",
+      "size_kib": 833,
+      "archived": false,
+      "query": "kalshi market maker"
+    },
+    {
+      "repo": "Jbenja/KalshiMarketMaker",
+      "branch": "main",
+      "size_kib": 39,
+      "archived": false,
+      "query": "kalshi market maker"
+    },
+    {
+      "repo": "ptlittle/KalshiMarketMaker",
+      "branch": "main",
+      "size_kib": 41,
+      "archived": false,
+      "query": "kalshi market maker"
+    },
+    {
+      "repo": "praveenpuvvadi/KalshiMarketMaker",
+      "branch": "main",
+      "size_kib": 83,
+      "archived": false,
+      "query": "kalshi market maker"
+    },
+    {
+      "repo": "manpriyakaur/KalshiMarketMaker",
+      "branch": "main",
+      "size_kib": 41,
+      "archived": false,
+      "query": "kalshi market maker"
+    },
+    {
+      "repo": "Dismixed/KalshiMarketMaker",
+      "branch": "main",
+      "size_kib": 54,
+      "archived": false,
+      "query": "kalshi market maker"
+    },
+    {
+      "repo": "gerza-lab/KalshiMarketMaker",
+      "branch": "main",
+      "size_kib": 33,
+      "archived": false,
+      "query": "kalshi market maker"
+    },
+    {
+      "repo": "JeetiSK/KalshiMarketMaker",
+      "branch": "main",
+      "size_kib": 41,
+      "archived": false,
+      "query": "kalshi market maker"
+    },
+    {
+      "repo": "greggwee/KalshiMarketMaker",
+      "branch": "main",
+      "size_kib": 41,
+      "archived": false,
+      "query": "kalshi market maker"
+    },
+    {
+      "repo": "Onelittledragon/KalshiMarketMaker",
+      "branch": "main",
+      "size_kib": 83,
+      "archived": false,
+      "query": "kalshi market maker"
+    },
+    {
+      "repo": "robertm94-blip/KalshiMarketMaker",
+      "branch": "main",
+      "size_kib": 83,
+      "archived": false,
+      "query": "kalshi market maker"
+    },
+    {
+      "repo": "Zabrane/KalshiMarketMaker",
+      "branch": "main",
+      "size_kib": 83,
+      "archived": false,
+      "query": "kalshi market maker"
+    },
+    {
+      "repo": "kijifiji/KalshiMarketMaker",
+      "branch": "main",
+      "size_kib": 41,
+      "archived": false,
+      "query": "kalshi market maker"
+    }
+  ]
+}

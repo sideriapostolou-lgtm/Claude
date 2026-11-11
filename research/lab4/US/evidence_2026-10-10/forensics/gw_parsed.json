@@ -1,0 +1,4070 @@
+{
+ "aec-wta-mirand-nikbar-2026-10-10": {
+  "found": true,
+  "question": "Who will win in the upcoming wta event Mirra Andreeva vs Nikola Bartunkova scheduled for October 10, 2026 at 6:00 AM UTC?",
+  "marketType": "moneyline",
+  "smt": "tennis_match_winner",
+  "smt2": "SPORTS_MARKET_TYPE_MONEYLINE",
+  "gameStart": 1791615600.0,
+  "endDate": 1791621049.0,
+  "status": "MARKET_STATUS_RESOLVED",
+  "fee": 0.0695,
+  "long": [
+   "Mirra Andreeva"
+  ],
+  "short": [
+   "Nikola Bartunkova"
+  ],
+  "league": [
+   "wta",
+   "wta"
+  ],
+  "description": "This market will settle to the winner of the Mirra Andreeva vs Nikola Bartunkova WTA match scheduled for October 10 at 2:00AM. If the match does not begin due to a walkover, forfeit, injury, or any other cancellation prior to the first point being played, the market will settle to fair market price. If a player retires during the match, the opponent will be recorded as the winner. Outcome sourced from WTA.",
+  "outcomePrices": "[\"1\",\"0\"]",
+  "openPx": 0.62,
+  "highPx": 0.99,
+  "lowPx": 0.41,
+  "lastPx": 0.99,
+  "shares": 291888.91,
+  "notional": 241245.3917,
+  "openSet": 1791473087.573593,
+  "highSet": 1791619986.860632,
+  "lowSet": 1791499567.920109,
+  "settleSet": 1791621055.635684,
+  "settlePx": 1.0,
+  "settlement": 1,
+  "state": "MARKET_STATE_EXPIRED"
+ },
+ "atc-idnsl-yog-pej-2026-10-10-pej": {
+  "found": true,
+  "question": "Will Persija Jakarta win against Psim Yogyakarta in the Indonesia Super League match scheduled for Oct 10, 2026?",
+  "marketType": "drawable_outcome",
+  "smt": "soccer_team_full_time_winner",
+  "smt2": "SPORTS_MARKET_TYPE_DRAWABLE_OUTCOME",
+  "gameStart": 1791621000.0,
+  "endDate": 1791628187.0,
+  "status": "MARKET_STATUS_RESOLVED",
+  "fee": 0.0695,
+  "long": [
+   "Persija Jakarta"
+  ],
+  "short": [
+   "Persija Jakarta"
+  ],
+  "league": [
+   "idnsl",
+   "idnsl"
+  ],
+  "description": "This market will settle to the winner at the end of 90 minutes plus stoppage time in the Psim Yogyakarta vs Persija Jakarta Indonesia Super League match scheduled for 2026-10-10 4:30AM ET. If the match is tied following 90 minutes plus stoppage time, the market will settle to Tie. If the match is delayed, postponed, or suspended and not rescheduled to a date within two weeks of the originally scheduled date, the market will settle to the last fair market price. Outcome sourced from Football Association of Indonesia.",
+  "outcomePrices": "[\"1\",\"0\"]",
+  "openPx": 0.58,
+  "highPx": 0.99,
+  "lowPx": 0.31,
+  "lastPx": 0.99,
+  "shares": 15895.88,
+  "notional": 11285.9756,
+  "openSet": 1791601144.60169,
+  "highSet": 1791626872.799562,
+  "lowSet": 1791626519.705076,
+  "settleSet": 1791628189.881762,
+  "settlePx": 1.0,
+  "settlement": 1,
+  "state": "MARKET_STATE_EXPIRED"
+ },
+ "atc-j1-tok-urd-2026-10-10-urd": {
+  "found": true,
+  "question": "Will Urawa Red Diamonds win against FC Tokyo in the J1 League match scheduled for Oct 10, 2026?",
+  "marketType": "drawable_outcome",
+  "smt": "soccer_team_full_time_winner",
+  "smt2": "SPORTS_MARKET_TYPE_DRAWABLE_OUTCOME",
+  "gameStart": 1791612000.0,
+  "endDate": 1791619656.0,
+  "status": "MARKET_STATUS_RESOLVED",
+  "fee": 0.0695,
+  "long": [
+   "Urawa Red Diamonds"
+  ],
+  "short": [
+   "Urawa Red Diamonds"
+  ],
+  "league": [
+   "j1",
+   "j1"
+  ],
+  "description": "This market will settle to the winner at the end of 90 minutes plus stoppage time in the FC Tokyo vs Urawa Red Diamonds J1 League match scheduled for 2026-10-10 2:00AM ET. If the match is tied following 90 minutes plus stoppage time, the market will settle to Tie. If the match is delayed, postponed, or suspended and not rescheduled to a date within two weeks of the originally scheduled date, the market will settle to the last fair market price. Outcome sourced from J.League.",
+  "outcomePrices": "[\"0\",\"1\"]",
+  "openPx": 0.2,
+  "highPx": 0.33,
+  "lowPx": 0.01,
+  "lastPx": 0.01,
+  "shares": 2554.74,
+  "notional": 481.4443,
+  "openSet": 1791576241.507966,
+  "highSet": 1791614125.291705,
+  "lowSet": 1791617537.485522,
+  "settleSet": 1791619659.913491,
+  "settlePx": 0.0,
+  "settlement": 0,
+  "state": "MARKET_STATE_EXPIRED"
+ },
+ "cpc-btc-above-hr-2026-10-09-1800z-82400": {
+  "found": true,
+  "question": "BTC Price at 2:00PM ET on Fri, Oct 9",
+  "marketType": "",
+  "smt": "",
+  "smt2": "SPORTS_MARKET_TYPE_UNSPECIFIED",
+  "gameStart": 1791565200.0,
+  "endDate": 1791568828.0,
+  "status": "MARKET_STATUS_RESOLVED",
+  "fee": 0.0695,
+  "long": [
+   "Yes"
+  ],
+  "short": [
+   "No"
+  ],
+  "league": [
+   null,
+   null
+  ],
+  "description": "This market will settle to Yes if the price of Bitcoin is at or above $82,400 at 2:00PM ET on Oct 9, 2026. Otherwise, this market will settle to No. Outcome sourced from CF Benchmarks' Bitcoin Real-Time Index (BRTI), available at https://www.cfbenchmarks.com/data/indices/BRTI. The settlement value is determined as follows: in the last minute before 2:00PM ET on Oct 9, 2026, 60 BRTI prices are collected. The official and final value is the simple average of these prices, rounded to the nearest 2 decimal places. The market settles to Yes if the settlement value is greater than or equal to $82,40",
+  "outcomePrices": "[\"1\",\"0\"]",
+  "openPx": 0.89,
+  "highPx": 0.99,
+  "lowPx": 0.6,
+  "lastPx": 0.97,
+  "shares": 791.71,
+  "notional": 669.2368,
+  "openSet": 1791565240.287461,
+  "highSet": 1791567686.15138,
+  "lowSet": 1791566575.726089,
+  "settleSet": 1791568830.38176,
+  "settlePx": 1.0,
+  "settlement": 1,
+  "state": "MARKET_STATE_EXPIRED"
+ },
+ "aec-atp-tompau-adoval-2026-10-10": {
+  "found": true,
+  "question": "Who will win in the upcoming atp event Tommy Paul vs Adolfo Daniel Vallejo scheduled for October 10, 2026 at 4:00 AM UTC?",
+  "marketType": "moneyline",
+  "smt": "tennis_match_winner",
+  "smt2": "SPORTS_MARKET_TYPE_MONEYLINE",
+  "gameStart": 1791631200.0,
+  "endDate": 1791636701.0,
+  "status": "MARKET_STATUS_RESOLVED",
+  "fee": 0.0695,
+  "long": [
+   "Tommy Paul"
+  ],
+  "short": [
+   "Adolfo Vallejo"
+  ],
+  "league": [
+   "atp",
+   "atp"
+  ],
+  "description": "This market will settle to the winner of the Tommy Paul vs Adolfo Daniel Vallejo ATP match scheduled for October 10 at 12:00AM. If the match does not begin due to a walkover, forfeit, injury, or any other cancellation prior to the first point being played, the market will settle to fair market price. If a player retires during the match, the opponent will be recorded as the winner. Outcome sourced from ATP.",
+  "outcomePrices": "[\"1\",\"0\"]",
+  "openPx": 0.68,
+  "highPx": 0.99,
+  "lowPx": 0.65,
+  "lastPx": 0.99,
+  "shares": 148517.72,
+  "notional": 129853.3588,
+  "openSet": 1791460438.280645,
+  "highSet": 1791634778.501513,
+  "lowSet": 1791532597.151741,
+  "settleSet": 1791636704.891534,
+  "settlePx": 1.0,
+  "settlement": 1,
+  "state": "MARKET_STATE_EXPIRED"
+ },
+ "aec-setkameua-ponser-shyiho-2026-10-10": {
+  "found": true,
+  "question": "Who will win in the upcoming table-tennis event Ponomarenko Serhii vs Shyndel Ihor scheduled for October 10, 2026 at 8:30 AM UTC?",
+  "marketType": "moneyline",
+  "smt": "table_tennis_match_winner",
+  "smt2": "SPORTS_MARKET_TYPE_MONEYLINE",
+  "gameStart": 1791621000.0,
+  "endDate": 1791621767.0,
+  "status": "MARKET_STATUS_RESOLVED",
+  "fee": 0.1,
+  "long": [
+   "Ponomarenko Serhii"
+  ],
+  "short": [
+   "Shyndel Ihor"
+  ],
+  "league": [
+   "setkameua",
+   "setkameua"
+  ],
+  "description": "This market will settle to the winner of the Ponomarenko Serhii vs Shyndel Ihor Setka Cup Ukraine Men match scheduled for Oct 10, 2026. If the match does not begin due to a walkover, withdrawal, or cancellation, the market will settle to $0.50. If the match is delayed, postponed, or suspended and not rescheduled to a date within two days of the originally scheduled date, the market will settle to $0.50. Outcome sourced from Setka Cup Ukraine Men.",
+  "outcomePrices": "[\"1\",\"0\"]",
+  "openPx": 0.84,
+  "highPx": 0.99,
+  "lowPx": 0.83,
+  "lastPx": 0.99,
+  "shares": 16343.46,
+  "notional": 15309.9717,
+  "openSet": 1791579877.262579,
+  "highSet": 1791621733.409703,
+  "lowSet": 1791580394.531278,
+  "settleSet": 1791621769.899965,
+  "settlePx": 1.0,
+  "settlement": 1,
+  "state": "MARKET_STATE_EXPIRED"
+ },
+ "aec-del-nit-man-2026-10-09": {
+  "found": true,
+  "question": "Who will win in the upcoming hockey event Nurnberg Ice Tigers vs Adler Mannheim scheduled for October 9, 2026 at 5:30 PM UTC?",
+  "marketType": "moneyline",
+  "smt": "hockey_team_full_game_winner",
+  "smt2": "SPORTS_MARKET_TYPE_MONEYLINE",
+  "gameStart": 1791567000.0,
+  "endDate": 1791576041.0,
+  "status": "MARKET_STATUS_RESOLVED",
+  "fee": 0.0695,
+  "long": [
+   "Nurnberg Ice Tigers"
+  ],
+  "short": [
+   "Adler Mannheim"
+  ],
+  "league": [
+   "del",
+   "del"
+  ],
+  "description": "This market will settle to the winner of the Nurnberg Ice Tigers vs Adler Mannheim DEL game scheduled for Oct 9, 2026 at 1:30PM ET. Overtime and any shootout are included if played. If the game is delayed, postponed, suspended, or otherwise rescheduled and is not rescheduled to start within two calendar days of the originally scheduled date and time, the market will settle to the last fair market price. Outcome sourced from DEL.",
+  "outcomePrices": "[\"0\",\"1\"]",
+  "openPx": 0.39,
+  "highPx": 0.95,
+  "lowPx": 0.01,
+  "lastPx": 0.01,
+  "shares": 305.37,
+  "notional": 9.3728,
+  "openSet": 1791508078.518167,
+  "highSet": 1791567774.098657,
+  "lowSet": 1791573854.332071,
+  "settleSet": 1791576044.969286,
+  "settlePx": 0.0,
+  "settlement": 0,
+  "state": "MARKET_STATE_EXPIRED"
+ },
+ "aec-setkameua-seriho-klyvit-2026-10-10": {
+  "found": true,
+  "question": "Who will win in the upcoming table-tennis event Serdiuk Ihor vs Klymenko Vitalii scheduled for October 10, 2026 at 5:30 AM UTC?",
+  "marketType": "moneyline",
+  "smt": "table_tennis_match_winner",
+  "smt2": "SPORTS_MARKET_TYPE_MONEYLINE",
+  "gameStart": 1791610200.0,
+  "endDate": 1791611765.0,
+  "status": "MARKET_STATUS_RESOLVED",
+  "fee": 0.1,
+  "long": [
+   "Serdiuk Ihor"
+  ],
+  "short": [
+   "Klymenko Vitalii"
+  ],
+  "league": [
+   "setkameua",
+   "setkameua"
+  ],
+  "description": "This market will settle to the winner of the Serdiuk Ihor vs Klymenko Vitalii Setka Cup Ukraine Men match scheduled for Oct 10, 2026. If the match does not begin due to a walkover, withdrawal, or cancellation, the market will settle to $0.50. If the match is delayed, postponed, or suspended and not rescheduled to a date within two days of the originally scheduled date, the market will settle to $0.50. Outcome sourced from Setka Cup Ukraine Men.",
+  "outcomePrices": "[\"0\",\"1\"]",
+  "openPx": 0.71,
+  "highPx": 0.99,
+  "lowPx": 0.01,
+  "lastPx": 0.01,
+  "shares": 88409.0,
+  "notional": 65396.9236,
+  "openSet": 1791577992.742317,
+  "highSet": 1791610830.216492,
+  "lowSet": 1791611765.579469,
+  "settleSet": 1791611767.405692,
+  "settlePx": 0.0,
+  "settlement": 0,
+  "state": "MARKET_STATE_EXPIRED"
+ },
+ "aec-setkameua-kuzole-zozart-2026-10-10": {
+  "found": true,
+  "question": "Who will win in the upcoming table-tennis event Kuzyshyn Oleh vs Zozulia Artem scheduled for October 10, 2026 at 8:50 AM UTC?",
+  "marketType": "moneyline",
+  "smt": "table_tennis_match_winner",
+  "smt2": "SPORTS_MARKET_TYPE_MONEYLINE",
+  "gameStart": 1791622200.0,
+  "endDate": 1791623151.0,
+  "status": "MARKET_STATUS_RESOLVED",
+  "fee": 0.1,
+  "long": [
+   "Kuzyshyn Oleh"
+  ],
+  "short": [
+   "Zozulia Artem"
+  ],
+  "league": [
+   "setkameua",
+   "setkameua"
+  ],
+  "description": "This market will settle to the winner of the Kuzyshyn Oleh vs Zozulia Artem Setka Cup Ukraine Men match scheduled for Oct 10, 2026. If the match does not begin due to a walkover, withdrawal, or cancellation, the market will settle to $0.50. If the match is delayed, postponed, or suspended and not rescheduled to a date within two days of the originally scheduled date, the market will settle to $0.50. Outcome sourced from Setka Cup Ukraine Men.",
+  "outcomePrices": "[\"1\",\"0\"]",
+  "openPx": 0.65,
+  "highPx": 0.99,
+  "lowPx": 0.64,
+  "lastPx": 0.99,
+  "shares": 13019.21,
+  "notional": 11348.3826,
+  "openSet": 1791616897.710699,
+  "highSet": 1791623119.501557,
+  "lowSet": 1791620007.268523,
+  "settleSet": 1791623154.90255,
+  "settlePx": 1.0,
+  "settlement": 1,
+  "state": "MARKET_STATE_EXPIRED"
+ },
+ "atc-ykk-val-35h-2026-10-09-35h": {
+  "found": true,
+  "question": "Will PK-35 Helsinki win against FC Haka Valkeakoski in the Ykkosliiga match scheduled for Oct 9, 2026?",
+  "marketType": "drawable_outcome",
+  "smt": "soccer_team_full_time_winner",
+  "smt2": "SPORTS_MARKET_TYPE_DRAWABLE_OUTCOME",
+  "gameStart": 1791561600.0,
+  "endDate": 1791572429.0,
+  "status": "MARKET_STATUS_RESOLVED",
+  "fee": 0.0695,
+  "long": [
+   "PK-35 Helsinki"
+  ],
+  "short": [
+   "PK-35 Helsinki"
+  ],
+  "league": [
+   "ykk",
+   "ykk"
+  ],
+  "description": "This market will settle to the winner at the end of 90 minutes plus stoppage time in the FC Haka Valkeakoski vs PK-35 Helsinki Ykk\u00f6sliiga match scheduled for 2026-10-09 12:00PM ET. If the match is tied following 90 minutes plus stoppage time, the market will settle to Tie. If the match is delayed, postponed, or suspended and not rescheduled to a date within two weeks of the originally scheduled date, the market will settle to the last fair market price. Outcome sourced from SPL.",
+  "outcomePrices": "[\"0\",\"1\"]",
+  "openPx": 0.29,
+  "highPx": 0.59,
+  "lowPx": 0.01,
+  "lastPx": 0.01,
+  "shares": 6867.24,
+  "notional": 916.9872,
+  "openSet": 1791520559.560111,
+  "highSet": 1791562649.14991,
+  "lowSet": 1791567718.039689,
+  "settleSet": 1791572431.561621,
+  "settlePx": 0.0,
+  "settlement": 0,
+  "state": "MARKET_STATE_EXPIRED"
+ },
+ "aec-setkameua-seriho-aldden-2026-10-10": {
+  "found": true,
+  "question": "Who will win in the upcoming table-tennis event Serdiuk Ihor vs Aldayev Denis scheduled for October 10, 2026 at 8:00 AM UTC?",
+  "marketType": "moneyline",
+  "smt": "table_tennis_match_winner",
+  "smt2": "SPORTS_MARKET_TYPE_MONEYLINE",
+  "gameStart": 1791619200.0,
+  "endDate": 1791620085.0,
+  "status": "MARKET_STATUS_RESOLVED",
+  "fee": 0.1,
+  "long": [
+   "Serdiuk Ihor"
+  ],
+  "short": [
+   "Aldayev Denis"
+  ],
+  "league": [
+   "setkameua",
+   "setkameua"
+  ],
+  "description": "This market will settle to the winner of the Serdiuk Ihor vs Aldayev Denis Setka Cup Ukraine Men match scheduled for Oct 10, 2026. If the match does not begin due to a walkover, withdrawal, or cancellation, the market will settle to $0.50. If the match is delayed, postponed, or suspended and not rescheduled to a date within two days of the originally scheduled date, the market will settle to $0.50. Outcome sourced from Setka Cup Ukraine Men.",
+  "outcomePrices": "[\"1\",\"0\"]",
+  "openPx": 0.83,
+  "highPx": 0.99,
+  "lowPx": 0.63,
+  "lastPx": 0.99,
+  "shares": 20102.69,
+  "notional": 17905.8418,
+  "openSet": 1791604801.538184,
+  "highSet": 1791620085.360796,
+  "lowSet": 1791619438.95358,
+  "settleSet": 1791620089.898888,
+  "settlePx": 1.0,
+  "settlement": 1,
+  "state": "MARKET_STATE_EXPIRED"
+ },
+ "aec-wta-kyooka-elvkal-2026-10-09": {
+  "found": true,
+  "question": "Who will win in the upcoming wta event Kyoka Okamura vs Elvina Kalieva scheduled for October 10, 2026 at 2:00 AM UTC?",
+  "marketType": "moneyline",
+  "smt": "tennis_match_winner",
+  "smt2": "SPORTS_MARKET_TYPE_MONEYLINE",
+  "gameStart": 1791605400.0,
+  "endDate": 1791611745.0,
+  "status": "MARKET_STATUS_RESOLVED",
+  "fee": 0.0695,
+  "long": [
+   "Kyoka Okamura"
+  ],
+  "short": [
+   "Elvina Kalieva"
+  ],
+  "league": [
+   "wta",
+   "wta"
+  ],
+  "description": "This market will settle to the winner of the Kyoka Okamura vs Elvina Kalieva WTA match scheduled for October 9 at 10:00PM. If the match does not begin due to a walkover, forfeit, injury, or any other cancellation prior to the first point being played, the market will settle to fair market price. If a player retires during the match, the opponent will be recorded as the winner. Outcome sourced from WTA.",
+  "outcomePrices": "[\"1\",\"0\"]",
+  "openPx": 0.33,
+  "highPx": 0.99,
+  "lowPx": 0.32,
+  "lastPx": 0.99,
+  "shares": 814505.3,
+  "notional": 705178.8261,
+  "openSet": 1791532765.638426,
+  "highSet": 1791611499.24829,
+  "lowSet": 1791596121.455272,
+  "settleSet": 1791611749.915647,
+  "settlePx": 1.0,
+  "settlement": 1,
+  "state": "MARKET_STATE_EXPIRED"
+ },
+ "aec-setkameua-ponser-krydmy-2026-10-10": {
+  "found": true,
+  "question": "Who will win in the upcoming table-tennis event Ponomarenko Serhii vs Kryshtal Dmytro scheduled for October 10, 2026 at 6:00 AM UTC?",
+  "marketType": "moneyline",
+  "smt": "table_tennis_match_winner",
+  "smt2": "SPORTS_MARKET_TYPE_MONEYLINE",
+  "gameStart": 1791612000.0,
+  "endDate": 1791612981.0,
+  "status": "MARKET_STATUS_RESOLVED",
+  "fee": 0.1,
+  "long": [
+   "Ponomarenko Serhii"
+  ],
+  "short": [
+   "Kryshtal Dmytro"
+  ],
+  "league": [
+   "setkameua",
+   "setkameua"
+  ],
+  "description": "This market will settle to the winner of the Ponomarenko Serhii vs Kryshtal Dmytro Setka Cup Ukraine Men match scheduled for Oct 10, 2026. If the match does not begin due to a walkover, withdrawal, or cancellation, the market will settle to $0.50. If the match is delayed, postponed, or suspended and not rescheduled to a date within two days of the originally scheduled date, the market will settle to $0.50. Outcome sourced from Setka Cup Ukraine Men.",
+  "outcomePrices": "[\"1\",\"0\"]",
+  "openPx": 0.82,
+  "highPx": 0.99,
+  "lowPx": 0.81,
+  "lastPx": 0.99,
+  "shares": 31636.63,
+  "notional": 29776.3633,
+  "openSet": 1791590723.280667,
+  "highSet": 1791612948.396055,
+  "lowSet": 1791609607.483697,
+  "settleSet": 1791612985.965493,
+  "settlePx": 1.0,
+  "settlement": 1,
+  "state": "MARKET_STATE_EXPIRED"
+ },
+ "aec-itfme-finmurmarwal-benpiematsca-2026-10-10": {
+  "found": true,
+  "question": "Who will win in the upcoming tennis event Murgett - Walters vs Pietri - Scaglia scheduled for October 10, 2026 at 10:00 AM UTC?",
+  "marketType": "moneyline",
+  "smt": "tennis_match_winner",
+  "smt2": "SPORTS_MARKET_TYPE_MONEYLINE",
+  "gameStart": 1791628056.0,
+  "endDate": 1791636121.0,
+  "status": "MARKET_STATUS_RESOLVED",
+  "fee": 0.0695,
+  "long": [
+   "Murgett - Walters"
+  ],
+  "short": [
+   "Pietri - Scaglia"
+  ],
+  "league": [
+   "itfme",
+   "itfme"
+  ],
+  "description": "This market will settle to the winner of the Murgett - Walters vs Pietri - Scaglia ITF match scheduled for Oct 10, 2026. If the match does not begin due to a walkover, withdrawal, or cancellation, the market will settle to $0.50. If the match is delayed, postponed, or suspended and not rescheduled to a date within two weeks of the originally scheduled date, the market will settle to $0.50. Outcome sourced from ITF.",
+  "outcomePrices": "[\"1\",\"0\"]",
+  "openPx": 0.67,
+  "highPx": 0.99,
+  "lowPx": 0.59,
+  "lastPx": 0.99,
+  "shares": 2098.53,
+  "notional": 1757.0698,
+  "openSet": 1791628171.197824,
+  "highSet": 1791631383.824022,
+  "lowSet": 1791628637.415916,
+  "settleSet": 1791632519.207582,
+  "settlePx": 0.99,
+  "settlement": 1,
+  "state": "MARKET_STATE_CLOSED"
+ },
+ "aec-itfwo-felryb-aurcor-2026-10-10": {
+  "found": true,
+  "question": "Who will win in the upcoming tennis event Felitsata Dorofeeva-Rybas vs Aurora Corvi scheduled for October 10, 2026 at 8:00 AM UTC?",
+  "marketType": "moneyline",
+  "smt": "tennis_match_winner",
+  "smt2": "SPORTS_MARKET_TYPE_MONEYLINE",
+  "gameStart": 1791619659.0,
+  "endDate": 1791626660.0,
+  "status": "MARKET_STATUS_RESOLVED",
+  "fee": 0.0695,
+  "long": [
+   "Felitsata Dorofeeva-Rybas"
+  ],
+  "short": [
+   "Aurora Corvi"
+  ],
+  "league": [
+   "itfwo",
+   "itfwo"
+  ],
+  "description": "This market will settle to the winner of the Felitsata Dorofeeva-Rybas vs Aurora Corvi ITF match scheduled for Oct 10, 2026. If the match does not begin due to a walkover, withdrawal, or cancellation, the market will settle to $0.50. If the match is delayed, postponed, or suspended and not rescheduled to a date within two weeks of the originally scheduled date, the market will settle to $0.50. Outcome sourced from ITF.",
+  "outcomePrices": "[\"1\",\"0\"]",
+  "openPx": 0.91,
+  "highPx": 0.99,
+  "lowPx": 0.87,
+  "lastPx": 0.99,
+  "shares": 20381.75,
+  "notional": 19559.2113,
+  "openSet": 1791601982.764884,
+  "highSet": 1791622135.020032,
+  "lowSet": 1791620301.735577,
+  "settleSet": 1791623031.744267,
+  "settlePx": 0.99,
+  "settlement": 1,
+  "state": "MARKET_STATE_CLOSED"
+ },
+ "atc-ekst-wie-plo-2026-10-09-draw": {
+  "found": true,
+  "question": "Will the Ekstraklasa match Wieczysta Krakow vs Wisla Plock scheduled for Oct 9, 2026 end in a draw?",
+  "marketType": "drawable_outcome",
+  "smt": "soccer_team_full_time_winner",
+  "smt2": "SPORTS_MARKET_TYPE_DRAWABLE_OUTCOME",
+  "gameStart": 1791561600.0,
+  "endDate": 1791572418.0,
+  "status": "MARKET_STATUS_RESOLVED",
+  "fee": 0.0695,
+  "long": [
+   "Yes"
+  ],
+  "short": [
+   "No"
+  ],
+  "league": [
+   null,
+   null
+  ],
+  "description": "This market will settle to the winner at the end of 90 minutes plus stoppage time in the Wieczysta Krakow vs Wisla Plock Ekstraklasa match scheduled for 2026-10-09 12:00PM ET. If the match is tied following 90 minutes plus stoppage time, the market will settle to Tie. If the match is delayed, postponed, or suspended and not rescheduled to a date within two weeks of the originally scheduled date, the market will settle to the last fair market price. Outcome sourced from Ekstraklasa SA.",
+  "outcomePrices": "[\"0\",\"1\"]",
+  "openPx": 0.26,
+  "highPx": 0.31,
+  "lowPx": 0.01,
+  "lastPx": 0.01,
+  "shares": 1452.58,
+  "notional": 218.448,
+  "openSet": 1791559724.011072,
+  "highSet": 1791563334.140182,
+  "lowSet": 1791567892.206901,
+  "settleSet": 1791572420.298577,
+  "settlePx": 0.0,
+  "settlement": 0,
+  "state": "MARKET_STATE_EXPIRED"
+ },
+ "cpc-btc-above-hr-2026-10-10-0900z-82600": {
+  "found": true,
+  "question": "BTC Price at 5:00AM ET on Sat, Oct 10",
+  "marketType": "",
+  "smt": "",
+  "smt2": "SPORTS_MARKET_TYPE_UNSPECIFIED",
+  "gameStart": 1791619200.0,
+  "endDate": 1791622830.0,
+  "status": "MARKET_STATUS_RESOLVED",
+  "fee": 0.0695,
+  "long": [
+   "Yes"
+  ],
+  "short": [
+   "No"
+  ],
+  "league": [
+   null,
+   null
+  ],
+  "description": "This market will settle to Yes if the price of Bitcoin is at or above $82,600 at 5:00AM ET on Oct 10, 2026. Otherwise, this market will settle to No. Outcome sourced from CF Benchmarks' Bitcoin Real-Time Index (BRTI), available at https://www.cfbenchmarks.com/data/indices/BRTI. The settlement value is determined as follows: in the last minute before 5:00AM ET on Oct 10, 2026, 60 BRTI prices are collected. The official and final value is the simple average of these prices, rounded to the nearest 2 decimal places. The market settles to Yes if the settlement value is greater than or equal to $82,",
+  "outcomePrices": "[\"1\",\"0\"]",
+  "openPx": 0.97,
+  "highPx": 0.97,
+  "lowPx": 0.97,
+  "lastPx": 0.97,
+  "shares": 1.0,
+  "notional": 0.97,
+  "openSet": 1791621094.011585,
+  "highSet": 1791621094.011585,
+  "lowSet": 1791621094.011585,
+  "settleSet": 1791622834.913481,
+  "settlePx": 1.0,
+  "settlement": 1,
+  "state": "MARKET_STATE_EXPIRED"
+ },
+ "aec-itfme-danmic-ivaiva-2026-10-10": {
+  "found": true,
+  "question": "Who will win in the upcoming tennis event Daniel Michalski vs Ivan Ivanov scheduled for October 10, 2026 at 8:00 AM UTC?",
+  "marketType": "moneyline",
+  "smt": "tennis_match_winner",
+  "smt2": "SPORTS_MARKET_TYPE_MONEYLINE",
+  "gameStart": 1791623902.0,
+  "endDate": 1791635606.0,
+  "status": "MARKET_STATUS_RESOLVED",
+  "fee": 0.0695,
+  "long": [
+   "Daniel Michalski"
+  ],
+  "short": [
+   "Ivan Ivanov"
+  ],
+  "league": [
+   "itfme",
+   "itfme"
+  ],
+  "description": "This market will settle to the winner of the Daniel Michalski vs Ivan Ivanov ITF match scheduled for Oct 10, 2026. If the match does not begin due to a walkover, withdrawal, or cancellation, the market will settle to $0.50. If the match is delayed, postponed, or suspended and not rescheduled to a date within two weeks of the originally scheduled date, the market will settle to $0.50. Outcome sourced from ITF.",
+  "outcomePrices": "[\"1\",\"0\"]",
+  "openPx": 0.65,
+  "highPx": 0.99,
+  "lowPx": 0.41,
+  "lastPx": 0.99,
+  "shares": 70968.47,
+  "notional": 54760.7446,
+  "openSet": 1791572451.26135,
+  "highSet": 1791631761.321834,
+  "lowSet": 1791630005.496051,
+  "settleSet": 1791632005.217095,
+  "settlePx": 0.99,
+  "settlement": 1,
+  "state": "MARKET_STATE_CLOSED"
+ },
+ "atc-idnsl-bau-pje-2026-10-10-pje": {
+  "found": true,
+  "question": "Will Persijap Jepara win against Bali United in the Indonesia Super League match scheduled for Oct 10, 2026?",
+  "marketType": "drawable_outcome",
+  "smt": "soccer_team_full_time_winner",
+  "smt2": "SPORTS_MARKET_TYPE_DRAWABLE_OUTCOME",
+  "gameStart": 1791633600.0,
+  "endDate": 1791643411.0,
+  "status": "MARKET_STATUS_RESOLVED",
+  "fee": 0.0695,
+  "long": [
+   "Persijap Jepara"
+  ],
+  "short": [
+   "Persijap Jepara"
+  ],
+  "league": [
+   "idnsl",
+   "idnsl"
+  ],
+  "description": "This market will settle to the winner at the end of 90 minutes plus stoppage time in the Bali United vs Persijap Jepara Indonesia Super League match scheduled for 2026-10-10 8:00AM ET. If the match is tied following 90 minutes plus stoppage time, the market will settle to Tie. If the match is delayed, postponed, or suspended and not rescheduled to a date within two weeks of the originally scheduled date, the market will settle to the last fair market price. Outcome sourced from Football Association of Indonesia.",
+  "outcomePrices": "[\"0\",\"1\"]",
+  "openPx": 0.1,
+  "highPx": 0.11,
+  "lowPx": 0.01,
+  "lastPx": 0.01,
+  "shares": 594.63,
+  "notional": 11.7893,
+  "openSet": 1791634279.885822,
+  "highSet": 1791634498.776381,
+  "lowSet": 1791636188.894178,
+  "settleSet": 1791643414.873626,
+  "settlePx": 0.0,
+  "settlement": 0,
+  "state": "MARKET_STATE_EXPIRED"
+ },
+ "atc-idnsl-bau-pje-2026-10-10-draw": {
+  "found": true,
+  "question": "Will the Indonesia Super League match Bali United vs Persijap Jepara scheduled for Oct 10, 2026 end in a draw?",
+  "marketType": "drawable_outcome",
+  "smt": "soccer_team_full_time_winner",
+  "smt2": "SPORTS_MARKET_TYPE_DRAWABLE_OUTCOME",
+  "gameStart": 1791633600.0,
+  "endDate": 1791643411.0,
+  "status": "MARKET_STATUS_RESOLVED",
+  "fee": 0.0695,
+  "long": [
+   "Yes"
+  ],
+  "short": [
+   "No"
+  ],
+  "league": [
+   null,
+   null
+  ],
+  "description": "This market will settle to the winner at the end of 90 minutes plus stoppage time in the Bali United vs Persijap Jepara Indonesia Super League match scheduled for 2026-10-10 8:00AM ET. If the match is tied following 90 minutes plus stoppage time, the market will settle to Tie. If the match is delayed, postponed, or suspended and not rescheduled to a date within two weeks of the originally scheduled date, the market will settle to the last fair market price. Outcome sourced from Football Association of Indonesia.",
+  "outcomePrices": "[\"0\",\"1\"]",
+  "openPx": 0.19,
+  "highPx": 0.24,
+  "lowPx": 0.01,
+  "lastPx": 0.01,
+  "shares": 901.47,
+  "notional": 23.2539,
+  "openSet": 1791634104.33644,
+  "highSet": 1791635297.097516,
+  "lowSet": 1791636099.015041,
+  "settleSet": 1791643414.887571,
+  "settlePx": 0.0,
+  "settlement": 0,
+  "state": "MARKET_STATE_EXPIRED"
+ },
+ "atc-j2-ard-vh-2026-10-10-vh": {
+  "found": true,
+  "question": "Will Vanraure Hachinohe FC win against RB Omiya Ardija in the J2 League match scheduled for Oct 10, 2026?",
+  "marketType": "drawable_outcome",
+  "smt": "soccer_team_full_time_winner",
+  "smt2": "SPORTS_MARKET_TYPE_DRAWABLE_OUTCOME",
+  "gameStart": 1791608400.0,
+  "endDate": 1791616299.0,
+  "status": "MARKET_STATUS_RESOLVED",
+  "fee": 0.0695,
+  "long": [
+   "Vanraure Hachinohe FC"
+  ],
+  "short": [
+   "Vanraure Hachinohe FC"
+  ],
+  "league": [
+   "j2",
+   "j2"
+  ],
+  "description": "This market will settle to the winner at the end of 90 minutes plus stoppage time in the RB Omiya Ardija vs Vanraure Hachinohe FC J2 League match scheduled for 2026-10-10 1:00AM ET. If the match is tied following 90 minutes plus stoppage time, the market will settle to Tie. If the match is delayed, postponed, or suspended and not rescheduled to a date within two weeks of the originally scheduled date, the market will settle to the last fair market price. Outcome sourced from J.League.",
+  "outcomePrices": "[\"0\",\"1\"]",
+  "openPx": 0.18,
+  "highPx": 0.24,
+  "lowPx": 0.01,
+  "lastPx": 0.01,
+  "shares": 3393.32,
+  "notional": 237.7358,
+  "openSet": 1791583442.836697,
+  "highSet": 1791609586.9264,
+  "lowSet": 1791613124.660805,
+  "settleSet": 1791616304.953248,
+  "settlePx": 0.0,
+  "settlement": 0,
+  "state": "MARKET_STATE_EXPIRED"
+ },
+ "aec-setkameua-pavole-krayar-2026-10-10": {
+  "found": true,
+  "question": "Who will win in the upcoming table-tennis event Pavliuk Oleh vs Kravets Yaroslav scheduled for October 10, 2026 at 10:35 AM UTC?",
+  "marketType": "moneyline",
+  "smt": "table_tennis_match_winner",
+  "smt2": "SPORTS_MARKET_TYPE_MONEYLINE",
+  "gameStart": 1791628500.0,
+  "endDate": 1791629081.0,
+  "status": "MARKET_STATUS_RESOLVED",
+  "fee": 0.1,
+  "long": [
+   "Pavliuk Oleh"
+  ],
+  "short": [
+   "Kravets Yaroslav"
+  ],
+  "league": [
+   "setkameua",
+   "setkameua"
+  ],
+  "description": "This market will settle to the winner of the Pavliuk Oleh vs Kravets Yaroslav Setka Cup Ukraine Men match scheduled for Oct 10, 2026. If the match does not begin due to a walkover, withdrawal, or cancellation, the market will settle to $0.50. If the match is delayed, postponed, or suspended and not rescheduled to a date within two days of the originally scheduled date, the market will settle to $0.50. Outcome sourced from Setka Cup Ukraine Men.",
+  "outcomePrices": "[\"1\",\"0\"]",
+  "openPx": 0.62,
+  "highPx": 0.99,
+  "lowPx": 0.56,
+  "lastPx": 0.99,
+  "shares": 5459.87,
+  "notional": 4582.0436,
+  "openSet": 1791625879.314581,
+  "highSet": 1791628958.771965,
+  "lowSet": 1791625885.278029,
+  "settleSet": 1791629084.915067,
+  "settlePx": 1.0,
+  "settlement": 1,
+  "state": "MARKET_STATE_EXPIRED"
+ },
+ "cpc-btc-updown-1h-2026-10-10-0700z": {
+  "found": true,
+  "question": "BTC Up or Down Hourly",
+  "marketType": "",
+  "smt": "",
+  "smt2": "SPORTS_MARKET_TYPE_UNSPECIFIED",
+  "gameStart": 1791615600.0,
+  "endDate": 1791619212.0,
+  "status": "MARKET_STATUS_RESOLVED",
+  "fee": 0.0695,
+  "long": [
+   "Yes"
+  ],
+  "short": [
+   "No"
+  ],
+  "league": [
+   null,
+   null
+  ],
+  "description": "This market will settle to Up if the Bitcoin price at 4:00AM ET on Oct 10, 2026 is greater than or equal to the price at 3:00AM ET on Oct 10, 2026. Otherwise, this market will settle to Down. Outcome sourced from CF Benchmarks' Bitcoin Real-Time Index (BRTI), available at https://www.cfbenchmarks.com/data/indices/BRTI. The price at the beginning and at the end of the time range is determined the same way: in the last minute before each of those two times, 60 BRTI prices are collected. The official value for that time is the simple average of these prices, rounded to the nearest 2 decimal place",
+  "outcomePrices": "[\"1\",\"0\"]",
+  "openPx": 0.56,
+  "highPx": 0.99,
+  "lowPx": 0.08,
+  "lastPx": 0.99,
+  "shares": 105551.54,
+  "notional": 52035.4069,
+  "openSet": 1791615606.549304,
+  "highSet": 1791618988.113225,
+  "lowSet": 1791617700.520174,
+  "settleSet": 1791619215.768718,
+  "settlePx": 1.0,
+  "settlement": 1,
+  "state": "MARKET_STATE_EXPIRED"
+ },
+ "aec-utr-milemi-stizar-2026-10-10": {
+  "found": true,
+  "question": "Who will win in the upcoming tennis event Emilija Miljkovic vs Zara Stipcevic scheduled for October 10, 2026 at 7:00 AM UTC?",
+  "marketType": "moneyline",
+  "smt": "tennis_match_winner",
+  "smt2": "SPORTS_MARKET_TYPE_MONEYLINE",
+  "gameStart": 1791615600.0,
+  "endDate": 1791621880.0,
+  "status": "MARKET_STATUS_RESOLVED",
+  "fee": 0.0695,
+  "long": [
+   "Miljkovic, Emilija"
+  ],
+  "short": [
+   "Stipcevic, Zara"
+  ],
+  "league": [
+   "utr",
+   "utr"
+  ],
+  "description": "This market will settle to the winner of the Emilija Miljkovic vs Zara Stipcevic UTR match scheduled for Oct 10, 2026. If the match is postponed, delayed, or rescheduled, the settlement date will be amended to the rescheduled date. If the rescheduled date is not within two weeks of the originally scheduled date, the market will settle to 0.50. If the match does not begin due to a walkover, forfeit, injury, or any other cancellation prior to the first point being played, the market will settle to 0.50. If a player retires during the match, the opponent will be recorded as the winner. Outcome so",
+  "outcomePrices": "[\"1\",\"0\"]",
+  "openPx": 0.38,
+  "highPx": 0.99,
+  "lowPx": 0.38,
+  "lastPx": 0.99,
+  "shares": 2631.68,
+  "notional": 2310.4501,
+  "openSet": 1791616789.169711,
+  "highSet": 1791621057.794475,
+  "lowSet": 1791616789.169711,
+  "settleSet": 1791621881.571203,
+  "settlePx": 1.0,
+  "settlement": 1,
+  "state": "MARKET_STATE_EXPIRED"
+ },
+ "aec-setkameua-lobars-kovyar-2026-10-10": {
+  "found": true,
+  "question": "Who will win in the upcoming table-tennis event Lobanov Arsenii vs Kovshun Yaroslav scheduled for October 10, 2026 at 5:05 AM UTC?",
+  "marketType": "moneyline",
+  "smt": "table_tennis_match_winner",
+  "smt2": "SPORTS_MARKET_TYPE_MONEYLINE",
+  "gameStart": 1791608700.0,
+  "endDate": 1791609544.0,
+  "status": "MARKET_STATUS_RESOLVED",
+  "fee": 0.1,
+  "long": [
+   "Lobanov Arsenii"
+  ],
+  "short": [
+   "Kovshun Yaroslav"
+  ],
+  "league": [
+   "setkameua",
+   "setkameua"
+  ],
+  "description": "This market will settle to the winner of the Lobanov Arsenii vs Kovshun Yaroslav Setka Cup Ukraine Men match scheduled for Oct 10, 2026. If the match does not begin due to a walkover, withdrawal, or cancellation, the market will settle to $0.50. If the match is delayed, postponed, or suspended and not rescheduled to a date within two days of the originally scheduled date, the market will settle to $0.50. Outcome sourced from Setka Cup Ukraine Men.",
+  "outcomePrices": "[\"1\",\"0\"]",
+  "openPx": 0.48,
+  "highPx": 0.99,
+  "lowPx": 0.41,
+  "lastPx": 0.91,
+  "shares": 27787.63,
+  "notional": 23633.1769,
+  "openSet": 1791594978.089596,
+  "highSet": 1791609480.848278,
+  "lowSet": 1791608837.556101,
+  "settleSet": 1791609549.889278,
+  "settlePx": 1.0,
+  "settlement": 1,
+  "state": "MARKET_STATE_EXPIRED"
+ },
+ "aec-itfwo-yulper-andrpop-2026-10-10": {
+  "found": true,
+  "question": "Who will win in the upcoming tennis event Yuliya Perapekhina vs Andrea Lola Popovic scheduled for October 10, 2026 at 7:00 AM UTC?",
+  "marketType": "moneyline",
+  "smt": "tennis_match_winner",
+  "smt2": "SPORTS_MARKET_TYPE_MONEYLINE",
+  "gameStart": 1791616207.0,
+  "endDate": 1791627207.0,
+  "status": "MARKET_STATUS_RESOLVED",
+  "fee": 0.0695,
+  "long": [
+   "Yuliya Perapekhina"
+  ],
+  "short": [
+   "Andrea Lola Popovic"
+  ],
+  "league": [
+   "itfwo",
+   "itfwo"
+  ],
+  "description": "This market will settle to the winner of the Yuliya Perapekhina vs Andrea Lola Popovic ITF match scheduled for Oct 10, 2026. If the match does not begin due to a walkover, withdrawal, or cancellation, the market will settle to $0.50. If the match is delayed, postponed, or suspended and not rescheduled to a date within two weeks of the originally scheduled date, the market will settle to $0.50. Outcome sourced from ITF.",
+  "outcomePrices": "[\"1\",\"0\"]",
+  "openPx": 0.87,
+  "highPx": 0.99,
+  "lowPx": 0.68,
+  "lastPx": 0.99,
+  "shares": 62335.04,
+  "notional": 55190.5682,
+  "openSet": 1791567672.431185,
+  "highSet": 1791620161.942071,
+  "lowSet": 1791618551.895515,
+  "settleSet": 1791623578.923418,
+  "settlePx": 0.99,
+  "settlement": 1,
+  "state": "MARKET_STATE_CLOSED"
+ },
+ "aec-jpbl-nag-gun-2026-10-10": {
+  "found": true,
+  "question": "Who will win in the upcoming basketball event Nagasaki Velca vs Gunma Crane Thunders scheduled for October 10, 2026 at 6:05 AM UTC?",
+  "marketType": "moneyline",
+  "smt": "basketball_team_full_game_winner",
+  "smt2": "SPORTS_MARKET_TYPE_MONEYLINE",
+  "gameStart": 1791612300.0,
+  "endDate": 1791619847.0,
+  "status": "MARKET_STATUS_RESOLVED",
+  "fee": 0.0695,
+  "long": [
+   "Nagasaki Velca"
+  ],
+  "short": [
+   "Gunma Crane Thunders"
+  ],
+  "league": [
+   "jpbl",
+   "jpbl"
+  ],
+  "description": "This market will settle to the winner of the Nagasaki Velca vs Gunma Crane Thunders JPBL game scheduled for Oct 10, 2026. Overtime is included if played. If the game is delayed, postponed, or suspended and not rescheduled to a date within two weeks of the originally scheduled date, the market will settle to the last fair market price. Outcome sourced from JPBL.",
+  "outcomePrices": "[\"1\",\"0\"]",
+  "openPx": 0.3,
+  "highPx": 0.99,
+  "lowPx": 0.19,
+  "lastPx": 0.99,
+  "shares": 35715.74,
+  "notional": 22848.2066,
+  "openSet": 1791605133.633635,
+  "highSet": 1791619424.976389,
+  "lowSet": 1791614274.928703,
+  "settleSet": 1791619849.900971,
+  "settlePx": 1.0,
+  "settlement": 1,
+  "state": "MARKET_STATE_EXPIRED"
+ },
+ "cpc-btc-above-hr-2026-10-10-1100z-82600": {
+  "found": true,
+  "question": "BTC Price at 7:00AM ET on Sat, Oct 10",
+  "marketType": "",
+  "smt": "",
+  "smt2": "SPORTS_MARKET_TYPE_UNSPECIFIED",
+  "gameStart": 1791626400.0,
+  "endDate": 1791630030.0,
+  "status": "MARKET_STATUS_RESOLVED",
+  "fee": 0.0695,
+  "long": [
+   "Yes"
+  ],
+  "short": [
+   "No"
+  ],
+  "league": [
+   null,
+   null
+  ],
+  "description": "This market will settle to Yes if the price of Bitcoin is at or above $82,600 at 7:00AM ET on Oct 10, 2026. Otherwise, this market will settle to No. Outcome sourced from CF Benchmarks' Bitcoin Real-Time Index (BRTI), available at https://www.cfbenchmarks.com/data/indices/BRTI. The settlement value is determined as follows: in the last minute before 7:00AM ET on Oct 10, 2026, 60 BRTI prices are collected. The official and final value is the simple average of these prices, rounded to the nearest 2 decimal places. The market settles to Yes if the settlement value is greater than or equal to $82,",
+  "outcomePrices": "[\"1\",\"0\"]",
+  "openPx": 0.94,
+  "highPx": 0.97,
+  "lowPx": 0.94,
+  "lastPx": 0.97,
+  "shares": 259.0,
+  "notional": 244.51,
+  "openSet": 1791626998.494308,
+  "highSet": 1791628310.262047,
+  "lowSet": 1791626998.494308,
+  "settleSet": 1791630030.290193,
+  "settlePx": 1.0,
+  "settlement": 1,
+  "state": "MARKET_STATE_EXPIRED"
+ },
+ "cpc-btc-above-hr-2026-10-10-0600z-82500": {
+  "found": true,
+  "question": "BTC Price at 2:00AM ET on Sat, Oct 10",
+  "marketType": "",
+  "smt": "",
+  "smt2": "SPORTS_MARKET_TYPE_UNSPECIFIED",
+  "gameStart": 1791608400.0,
+  "endDate": 1791612029.0,
+  "status": "MARKET_STATUS_RESOLVED",
+  "fee": 0.0695,
+  "long": [
+   "Yes"
+  ],
+  "short": [
+   "No"
+  ],
+  "league": [
+   null,
+   null
+  ],
+  "description": "This market will settle to Yes if the price of Bitcoin is at or above $82,500 at 2:00AM ET on Oct 10, 2026. Otherwise, this market will settle to No. Outcome sourced from CF Benchmarks' Bitcoin Real-Time Index (BRTI), available at https://www.cfbenchmarks.com/data/indices/BRTI. The settlement value is determined as follows: in the last minute before 2:00AM ET on Oct 10, 2026, 60 BRTI prices are collected. The official and final value is the simple average of these prices, rounded to the nearest 2 decimal places. The market settles to Yes if the settlement value is greater than or equal to $82,",
+  "outcomePrices": "[\"1\",\"0\"]",
+  "openPx": 0.91,
+  "highPx": 0.98,
+  "lowPx": 0.91,
+  "lastPx": 0.98,
+  "shares": 376.0,
+  "notional": 351.87,
+  "openSet": 1791608554.863105,
+  "highSet": 1791610291.562639,
+  "lowSet": 1791608554.863105,
+  "settleSet": 1791612030.205725,
+  "settlePx": 1.0,
+  "settlement": 1,
+  "state": "MARKET_STATE_EXPIRED"
+ },
+ "aec-setkamecz-cizmar-henlad-2026-10-10": {
+  "found": true,
+  "question": "Who will win in the upcoming table-tennis event Cizek Marek vs Hendrych Ladislav scheduled for October 10, 2026 at 7:00 AM UTC?",
+  "marketType": "moneyline",
+  "smt": "table_tennis_match_winner",
+  "smt2": "SPORTS_MARKET_TYPE_MONEYLINE",
+  "gameStart": 1791615600.0,
+  "endDate": 1791616621.0,
+  "status": "MARKET_STATUS_RESOLVED",
+  "fee": 0.1,
+  "long": [
+   "Cizek Marek"
+  ],
+  "short": [
+   "Hendrych Ladislav"
+  ],
+  "league": [
+   "setkamecz",
+   "setkamecz"
+  ],
+  "description": "This market will settle to the winner of the Cizek Marek vs Hendrych Ladislav Setka Cup Czechia Men match scheduled for Oct 10, 2026. If the match does not begin due to a walkover, withdrawal, or cancellation, the market will settle to $0.50. If the match is delayed, postponed, or suspended and not rescheduled to a date within two days of the originally scheduled date, the market will settle to $0.50. Outcome sourced from Setka Cup Czechia Men.",
+  "outcomePrices": "[\"1\",\"0\"]",
+  "openPx": 0.63,
+  "highPx": 0.99,
+  "lowPx": 0.37,
+  "lastPx": 0.99,
+  "shares": 4419.51,
+  "notional": 2914.325,
+  "openSet": 1791613779.863755,
+  "highSet": 1791616621.094912,
+  "lowSet": 1791615759.861781,
+  "settleSet": 1791616624.921037,
+  "settlePx": 1.0,
+  "settlement": 1,
+  "state": "MARKET_STATE_EXPIRED"
+ },
+ "aec-setkameua-krayar-kovnaz-2026-10-10": {
+  "found": true,
+  "question": "Who will win in the upcoming table-tennis event Kravets Yaroslav vs Kovalchuk Nazarii scheduled for October 10, 2026 at 8:35 AM UTC?",
+  "marketType": "moneyline",
+  "smt": "table_tennis_match_winner",
+  "smt2": "SPORTS_MARKET_TYPE_MONEYLINE",
+  "gameStart": 1791621300.0,
+  "endDate": 1791622304.0,
+  "status": "MARKET_STATUS_RESOLVED",
+  "fee": 0.1,
+  "long": [
+   "Kravets Yaroslav"
+  ],
+  "short": [
+   "Kovalchuk Nazarii"
+  ],
+  "league": [
+   "setkameua",
+   "setkameua"
+  ],
+  "description": "This market will settle to the winner of the Kravets Yaroslav vs Kovalchuk Nazarii Setka Cup Ukraine Men match scheduled for Oct 10, 2026. If the match does not begin due to a walkover, withdrawal, or cancellation, the market will settle to $0.50. If the match is delayed, postponed, or suspended and not rescheduled to a date within two days of the originally scheduled date, the market will settle to $0.50. Outcome sourced from Setka Cup Ukraine Men.",
+  "outcomePrices": "[\"1\",\"0\"]",
+  "openPx": 0.35,
+  "highPx": 0.99,
+  "lowPx": 0.3,
+  "lastPx": 0.98,
+  "shares": 20310.18,
+  "notional": 15900.1917,
+  "openSet": 1791616863.915627,
+  "highSet": 1791622184.426307,
+  "lowSet": 1791621622.501111,
+  "settleSet": 1791622304.962702,
+  "settlePx": 1.0,
+  "settlement": 1,
+  "state": "MARKET_STATE_EXPIRED"
+ },
+ "atc-ekst-wie-plo-2026-10-09-plo": {
+  "found": true,
+  "question": "Will Wisla Plock win against Wieczysta Krakow in the Ekstraklasa match scheduled for Oct 9, 2026?",
+  "marketType": "drawable_outcome",
+  "smt": "soccer_team_full_time_winner",
+  "smt2": "SPORTS_MARKET_TYPE_DRAWABLE_OUTCOME",
+  "gameStart": 1791561600.0,
+  "endDate": 1791572418.0,
+  "status": "MARKET_STATUS_RESOLVED",
+  "fee": 0.0695,
+  "long": [
+   "Wisla Plock"
+  ],
+  "short": [
+   "Wisla Plock"
+  ],
+  "league": [
+   "ekst",
+   "ekst"
+  ],
+  "description": "This market will settle to the winner at the end of 90 minutes plus stoppage time in the Wieczysta Krakow vs Wisla Plock Ekstraklasa match scheduled for 2026-10-09 12:00PM ET. If the match is tied following 90 minutes plus stoppage time, the market will settle to Tie. If the match is delayed, postponed, or suspended and not rescheduled to a date within two weeks of the originally scheduled date, the market will settle to the last fair market price. Outcome sourced from Ekstraklasa SA.",
+  "outcomePrices": "[\"0\",\"1\"]",
+  "openPx": 0.31,
+  "highPx": 0.31,
+  "lowPx": 0.01,
+  "lastPx": 0.02,
+  "shares": 6991.31,
+  "notional": 1541.2958,
+  "openSet": 1791520542.650073,
+  "highSet": 1791520542.650073,
+  "lowSet": 1791566803.424887,
+  "settleSet": 1791572420.337306,
+  "settlePx": 0.0,
+  "settlement": 0,
+  "state": "MARKET_STATE_EXPIRED"
+ },
+ "atc-j2-ard-vh-2026-10-10-ard": {
+  "found": true,
+  "question": "Will RB Omiya Ardija win against Vanraure Hachinohe FC in the J2 League match scheduled for Oct 10, 2026?",
+  "marketType": "drawable_outcome",
+  "smt": "soccer_team_full_time_winner",
+  "smt2": "SPORTS_MARKET_TYPE_DRAWABLE_OUTCOME",
+  "gameStart": 1791608400.0,
+  "endDate": 1791616299.0,
+  "status": "MARKET_STATUS_RESOLVED",
+  "fee": 0.0695,
+  "long": [
+   "RB Omiya Ardija"
+  ],
+  "short": [
+   "RB Omiya Ardija"
+  ],
+  "league": [
+   "j2",
+   "j2"
+  ],
+  "description": "This market will settle to the winner at the end of 90 minutes plus stoppage time in the RB Omiya Ardija vs Vanraure Hachinohe FC J2 League match scheduled for 2026-10-10 1:00AM ET. If the match is tied following 90 minutes plus stoppage time, the market will settle to Tie. If the match is delayed, postponed, or suspended and not rescheduled to a date within two weeks of the originally scheduled date, the market will settle to the last fair market price. Outcome sourced from J.League.",
+  "outcomePrices": "[\"1\",\"0\"]",
+  "openPx": 0.61,
+  "highPx": 0.99,
+  "lowPx": 0.51,
+  "lastPx": 0.99,
+  "shares": 28120.65,
+  "notional": 22853.4732,
+  "openSet": 1791586653.727791,
+  "highSet": 1791614376.625932,
+  "lowSet": 1791611128.891556,
+  "settleSet": 1791616304.977226,
+  "settlePx": 1.0,
+  "settlement": 1,
+  "state": "MARKET_STATE_EXPIRED"
+ },
+ "aec-setkameua-krayar-lazrus-2026-10-10": {
+  "found": true,
+  "question": "Who will win in the upcoming table-tennis event Kravets Yaroslav vs Lazebnyi Ruslan scheduled for October 10, 2026 at 9:35 AM UTC?",
+  "marketType": "moneyline",
+  "smt": "table_tennis_match_winner",
+  "smt2": "SPORTS_MARKET_TYPE_MONEYLINE",
+  "gameStart": 1791624900.0,
+  "endDate": 1791625653.0,
+  "status": "MARKET_STATUS_RESOLVED",
+  "fee": 0.1,
+  "long": [
+   "Kravets Yaroslav"
+  ],
+  "short": [
+   "Lazebnyi Ruslan"
+  ],
+  "league": [
+   "setkameua",
+   "setkameua"
+  ],
+  "description": "This market will settle to the winner of the Kravets Yaroslav vs Lazebnyi Ruslan Setka Cup Ukraine Men match scheduled for Oct 10, 2026. If the match does not begin due to a walkover, withdrawal, or cancellation, the market will settle to $0.50. If the match is delayed, postponed, or suspended and not rescheduled to a date within two days of the originally scheduled date, the market will settle to $0.50. Outcome sourced from Setka Cup Ukraine Men.",
+  "outcomePrices": "[\"1\",\"0\"]",
+  "openPx": 0.5,
+  "highPx": 0.99,
+  "lowPx": 0.45,
+  "lastPx": 0.99,
+  "shares": 10293.8,
+  "notional": 6847.2455,
+  "openSet": 1791614556.693769,
+  "highSet": 1791625591.629869,
+  "lowSet": 1791620223.416031,
+  "settleSet": 1791625654.8849,
+  "settlePx": 1.0,
+  "settlement": 1,
+  "state": "MARKET_STATE_EXPIRED"
+ },
+ "atc-ebfsa-sas-roma-2026-10-10-dh4-draw": {
+  "found": true,
+  "question": "Will the Sassuolo vs Roma eBattles: Serie A match scheduled for Oct 10, 2026 end in a draw?",
+  "marketType": "drawable_outcome",
+  "smt": "efootball_team_full_time_winner",
+  "smt2": "SPORTS_MARKET_TYPE_DRAWABLE_OUTCOME",
+  "gameStart": 1791637800.0,
+  "endDate": 1791638489.0,
+  "status": "MARKET_STATUS_RESOLVED",
+  "fee": 0.0695,
+  "long": [
+   "Yes"
+  ],
+  "short": [
+   "No"
+  ],
+  "league": [
+   null,
+   null
+  ],
+  "description": "This market will settle to the result after main playing time of the Sassuolo vs Roma eBattles: Serie A match scheduled for Oct 10, 2026. A tied final score settles the Draw outcome to Yes; extra time and penalties are not included. If the match is canceled, all outcomes will settle to $0.33. If the match is delayed, postponed, or suspended and not rescheduled to a date within two days of the originally scheduled date, all outcomes will settle to $0.33. Outcome sourced from ESportsBattle.",
+  "outcomePrices": "[\"0\",\"1\"]",
+  "openPx": 0.98,
+  "highPx": 0.98,
+  "lowPx": 0.01,
+  "lastPx": 0.01,
+  "shares": 15.18,
+  "notional": 1.292,
+  "openSet": 1791637956.269019,
+  "highSet": 1791637956.269019,
+  "lowSet": 1791638489.69738,
+  "settleSet": 1791638489.87633,
+  "settlePx": 0.0,
+  "settlement": 0,
+  "state": "MARKET_STATE_EXPIRED"
+ },
+ "atc-j2-ard-vh-2026-10-10-draw": {
+  "found": true,
+  "question": "Will the J2 League match RB Omiya Ardija vs Vanraure Hachinohe FC scheduled for Oct 10, 2026 end in a draw?",
+  "marketType": "drawable_outcome",
+  "smt": "soccer_team_full_time_winner",
+  "smt2": "SPORTS_MARKET_TYPE_DRAWABLE_OUTCOME",
+  "gameStart": 1791608400.0,
+  "endDate": 1791616299.0,
+  "status": "MARKET_STATUS_RESOLVED",
+  "fee": 0.0695,
+  "long": [
+   "Yes"
+  ],
+  "short": [
+   "No"
+  ],
+  "league": [
+   null,
+   null
+  ],
+  "description": "This market will settle to the winner at the end of 90 minutes plus stoppage time in the RB Omiya Ardija vs Vanraure Hachinohe FC J2 League match scheduled for 2026-10-10 1:00AM ET. If the match is tied following 90 minutes plus stoppage time, the market will settle to Tie. If the match is delayed, postponed, or suspended and not rescheduled to a date within two weeks of the originally scheduled date, the market will settle to the last fair market price. Outcome sourced from J.League.",
+  "outcomePrices": "[\"0\",\"1\"]",
+  "openPx": 0.23,
+  "highPx": 0.3,
+  "lowPx": 0.01,
+  "lastPx": 0.01,
+  "shares": 1686.3,
+  "notional": 300.1609,
+  "openSet": 1791601959.36712,
+  "highSet": 1791610893.746303,
+  "lowSet": 1791613849.621956,
+  "settleSet": 1791616304.933047,
+  "settlePx": 0.0,
+  "settlement": 0,
+  "state": "MARKET_STATE_EXPIRED"
+ },
+ "aec-itfme-robstr-amrels-2026-10-10": {
+  "found": true,
+  "question": "Who will win in the upcoming tennis event Robert Strombachs vs Amr Elsayed scheduled for October 10, 2026 at 7:00 AM UTC?",
+  "marketType": "moneyline",
+  "smt": "tennis_match_winner",
+  "smt2": "SPORTS_MARKET_TYPE_MONEYLINE",
+  "gameStart": 1791616025.0,
+  "endDate": 1791624879.0,
+  "status": "MARKET_STATUS_RESOLVED",
+  "fee": 0.0695,
+  "long": [
+   "Robert Strombachs"
+  ],
+  "short": [
+   "Amr Elsayed"
+  ],
+  "league": [
+   "itfme",
+   "itfme"
+  ],
+  "description": "This market will settle to the winner of the Robert Strombachs vs Amr Elsayed ITF match scheduled for Oct 10, 2026. If the match does not begin due to a walkover, withdrawal, or cancellation, the market will settle to $0.50. If the match is delayed, postponed, or suspended and not rescheduled to a date within two weeks of the originally scheduled date, the market will settle to $0.50. Outcome sourced from ITF.",
+  "outcomePrices": "[\"1\",\"0\"]",
+  "openPx": 0.67,
+  "highPx": 0.99,
+  "lowPx": 0.59,
+  "lastPx": 0.99,
+  "shares": 39881.06,
+  "notional": 31642.4561,
+  "openSet": 1791603357.447533,
+  "highSet": 1791621111.927714,
+  "lowSet": 1791617374.60193,
+  "settleSet": 1791621250.007837,
+  "settlePx": 0.99,
+  "settlement": 1,
+  "state": "MARKET_STATE_CLOSED"
+ },
+ "atc-bun2-fcm-h96-2026-10-10-h96": {
+  "found": true,
+  "question": "Will Hannover 96 win against 1. FC Magdeburg in the 2. Bundesliga match scheduled for Oct 10, 2026?",
+  "marketType": "drawable_outcome",
+  "smt": "soccer_team_full_time_winner",
+  "smt2": "SPORTS_MARKET_TYPE_DRAWABLE_OUTCOME",
+  "gameStart": 1791630000.0,
+  "endDate": 1791637199.0,
+  "status": "MARKET_STATUS_RESOLVED",
+  "fee": 0.0695,
+  "long": [
+   "Hannover 96"
+  ],
+  "short": [
+   "Hannover 96"
+  ],
+  "league": [
+   "bun2",
+   "bun2"
+  ],
+  "description": "This market will settle to the winner at the end of 90 minutes plus stoppage time in the 1. FC Magdeburg vs Hannover 96 2. Bundesliga match scheduled for 2026-10-10 7:00AM ET. If the match is tied following 90 minutes plus stoppage time, the market will settle to Tie. If the match is delayed, postponed, or suspended and not rescheduled to a date within two weeks of the originally scheduled date, the market will settle to the last fair market price. Outcome sourced from DFL.",
+  "outcomePrices": "[\"0\",\"1\"]",
+  "openPx": 0.37,
+  "highPx": 0.37,
+  "lowPx": 0.01,
+  "lastPx": 0.01,
+  "shares": 5790.47,
+  "notional": 1047.9083,
+  "openSet": 1791630071.51123,
+  "highSet": 1791630071.51123,
+  "lowSet": 1791635109.898788,
+  "settleSet": 1791637199.980712,
+  "settlePx": 0.0,
+  "settlement": 0,
+  "state": "MARKET_STATE_EXPIRED"
+ },
+ "aec-itfme-elicou-azioua-2026-10-10": {
+  "found": true,
+  "question": "Who will win in the upcoming tennis event Eliakim Coulibaly vs Aziz Ouakaa scheduled for October 10, 2026 at 8:30 AM UTC?",
+  "marketType": "moneyline",
+  "smt": "tennis_match_winner",
+  "smt2": "SPORTS_MARKET_TYPE_MONEYLINE",
+  "gameStart": 1791621999.0,
+  "endDate": 1791625530.0,
+  "status": "MARKET_STATUS_RESOLVED",
+  "fee": 0.0695,
+  "long": [
+   "Eliakim Coulibaly"
+  ],
+  "short": [
+   "Aziz Ouakaa"
+  ],
+  "league": [
+   "itfme",
+   "itfme"
+  ],
+  "description": "This market will settle to the winner of the Eliakim Coulibaly vs Aziz Ouakaa ITF match scheduled for Oct 10, 2026. If the match does not begin due to a walkover, withdrawal, or cancellation, the market will settle to $0.50. If the match is delayed, postponed, or suspended and not rescheduled to a date within two weeks of the originally scheduled date, the market will settle to $0.50. Outcome sourced from ITF.",
+  "outcomePrices": "[\"1\",\"0\"]",
+  "openPx": 0.78,
+  "highPx": 0.99,
+  "lowPx": 0.76,
+  "lastPx": 0.99,
+  "shares": 4955.65,
+  "notional": 4596.4418,
+  "openSet": 1791573561.893849,
+  "highSet": 1791625446.996771,
+  "lowSet": 1791622094.329885,
+  "settleSet": 1791625534.883747,
+  "settlePx": 1.0,
+  "settlement": 1,
+  "state": "MARKET_STATE_EXPIRED"
+ },
+ "aec-wta-zeyson-anazak-2026-10-10": {
+  "found": true,
+  "question": "Who will win in the upcoming wta event Zeynep Sonmez vs Anastasia Zakharova scheduled for October 10, 2026 at 5:20 AM UTC?",
+  "marketType": "moneyline",
+  "smt": "tennis_match_winner",
+  "smt2": "SPORTS_MARKET_TYPE_MONEYLINE",
+  "gameStart": 1791615000.0,
+  "endDate": 1791619814.0,
+  "status": "MARKET_STATUS_RESOLVED",
+  "fee": 0.0695,
+  "long": [
+   "Zeynep Sonmez"
+  ],
+  "short": [
+   "Anastasia Zakharova"
+  ],
+  "league": [
+   "wta",
+   "wta"
+  ],
+  "description": "This market will settle to the winner of the Zeynep Sonmez vs Anastasia Zakharova WTA match scheduled for October 10 at 1:20AM. If the match does not begin due to a walkover, forfeit, injury, or any other cancellation prior to the first point being played, the market will settle to fair market price. If a player retires during the match, the opponent will be recorded as the winner. Outcome sourced from WTA.",
+  "outcomePrices": "[\"1\",\"0\"]",
+  "openPx": 0.51,
+  "highPx": 0.99,
+  "lowPx": 0.51,
+  "lastPx": 0.99,
+  "shares": 113540.81,
+  "notional": 90069.395,
+  "openSet": 1791558798.446853,
+  "highSet": 1791618779.291969,
+  "lowSet": 1791558798.446853,
+  "settleSet": 1791619815.711537,
+  "settlePx": 1.0,
+  "settlement": 1,
+  "state": "MARKET_STATE_EXPIRED"
+ },
+ "aec-itfwo-giopedliszaa-ninradnatsen-2026-10-10": {
+  "found": true,
+  "question": "Who will win in the upcoming tennis event Pedone - Zaar vs Radovanovic - Senic scheduled for October 10, 2026 at 12:00 AM UTC?",
+  "marketType": "moneyline",
+  "smt": "tennis_match_winner",
+  "smt2": "SPORTS_MARKET_TYPE_MONEYLINE",
+  "gameStart": 1791630562.0,
+  "endDate": 1791641522.0,
+  "status": "MARKET_STATUS_RESOLVED",
+  "fee": 0.0695,
+  "long": [
+   "Pedone - Zaar"
+  ],
+  "short": [
+   "Radovanovic - Senic"
+  ],
+  "league": [
+   "itfwo",
+   "itfwo"
+  ],
+  "description": "This market will settle to the winner of the Pedone - Zaar vs Radovanovic - Senic ITF match scheduled for Oct 10, 2026. If the match does not begin due to a walkover, withdrawal, or cancellation, the market will settle to $0.50. If the match is delayed, postponed, or suspended and not rescheduled to a date within two weeks of the originally scheduled date, the market will settle to $0.50. Outcome sourced from ITF.",
+  "outcomePrices": "[\"1\",\"0\"]",
+  "openPx": 0.59,
+  "highPx": 0.99,
+  "lowPx": 0.45,
+  "lastPx": 0.99,
+  "shares": 5676.95,
+  "notional": 4536.0557,
+  "openSet": 1791569385.806632,
+  "highSet": 1791637715.746962,
+  "lowSet": 1791633511.506384,
+  "settleSet": 1791637907.895491,
+  "settlePx": 0.99,
+  "settlement": 1,
+  "state": "MARKET_STATE_CLOSED"
+ },
+ "atc-ykk-val-35h-2026-10-09-val": {
+  "found": true,
+  "question": "Will FC Haka Valkeakoski win against PK-35 Helsinki in the Ykkosliiga match scheduled for Oct 9, 2026?",
+  "marketType": "drawable_outcome",
+  "smt": "soccer_team_full_time_winner",
+  "smt2": "SPORTS_MARKET_TYPE_DRAWABLE_OUTCOME",
+  "gameStart": 1791561600.0,
+  "endDate": 1791572429.0,
+  "status": "MARKET_STATUS_RESOLVED",
+  "fee": 0.0695,
+  "long": [
+   "FC Haka Valkeakoski"
+  ],
+  "short": [
+   "FC Haka Valkeakoski"
+  ],
+  "league": [
+   "ykk",
+   "ykk"
+  ],
+  "description": "This market will settle to the winner at the end of 90 minutes plus stoppage time in the FC Haka Valkeakoski vs PK-35 Helsinki Ykk\u00f6sliiga match scheduled for 2026-10-09 12:00PM ET. If the match is tied following 90 minutes plus stoppage time, the market will settle to Tie. If the match is delayed, postponed, or suspended and not rescheduled to a date within two weeks of the originally scheduled date, the market will settle to the last fair market price. Outcome sourced from SPL.",
+  "outcomePrices": "[\"1\",\"0\"]",
+  "openPx": 0.47,
+  "highPx": 0.99,
+  "lowPx": 0.34,
+  "lastPx": 0.99,
+  "shares": 13470.92,
+  "notional": 8634.9471,
+  "openSet": 1791520553.706782,
+  "highSet": 1791567833.047317,
+  "lowSet": 1791567312.070294,
+  "settleSet": 1791572431.286897,
+  "settlePx": 1.0,
+  "settlement": 1,
+  "state": "MARKET_STATE_EXPIRED"
+ },
+ "aec-jpbl-hir-shg-2026-10-10": {
+  "found": true,
+  "question": "Who will win in the upcoming basketball event Hiroshima Dragonflies vs Shiga Lakestars scheduled for October 10, 2026 at 5:05 AM UTC?",
+  "marketType": "moneyline",
+  "smt": "basketball_team_full_game_winner",
+  "smt2": "SPORTS_MARKET_TYPE_MONEYLINE",
+  "gameStart": 1791608700.0,
+  "endDate": 1791619699.0,
+  "status": "MARKET_STATUS_RESOLVED",
+  "fee": 0.0695,
+  "long": [
+   "Hiroshima Dragonflies"
+  ],
+  "short": [
+   "Shiga Lakestars"
+  ],
+  "league": [
+   "jpbl",
+   "jpbl"
+  ],
+  "description": "This market will settle to the winner of the Hiroshima Dragonflies vs Shiga Lakestars JPBL game scheduled for Oct 10, 2026. Overtime is included if played. If the game is delayed, postponed, or suspended and not rescheduled to a date within two weeks of the originally scheduled date, the market will settle to the last fair market price. Outcome sourced from JPBL.",
+  "outcomePrices": "[\"1\",\"0\"]",
+  "openPx": 0.83,
+  "highPx": 0.99,
+  "lowPx": 0.06,
+  "lastPx": 0.99,
+  "shares": 43627.2,
+  "notional": 25374.7447,
+  "openSet": 1791569742.615213,
+  "highSet": 1791619200.243945,
+  "lowSet": 1791616398.575067,
+  "settleSet": 1791619704.886912,
+  "settlePx": 1.0,
+  "settlement": 1,
+  "state": "MARKET_STATE_EXPIRED"
+ },
+ "cpc-btc-above-hr-2026-10-10-0700z-82600": {
+  "found": true,
+  "question": "BTC Price at 3:00AM ET on Sat, Oct 10",
+  "marketType": "",
+  "smt": "",
+  "smt2": "SPORTS_MARKET_TYPE_UNSPECIFIED",
+  "gameStart": 1791612000.0,
+  "endDate": 1791615630.0,
+  "status": "MARKET_STATUS_RESOLVED",
+  "fee": 0.0695,
+  "long": [
+   "Yes"
+  ],
+  "short": [
+   "No"
+  ],
+  "league": [
+   null,
+   null
+  ],
+  "description": "This market will settle to Yes if the price of Bitcoin is at or above $82,600 at 3:00AM ET on Oct 10, 2026. Otherwise, this market will settle to No. Outcome sourced from CF Benchmarks' Bitcoin Real-Time Index (BRTI), available at https://www.cfbenchmarks.com/data/indices/BRTI. The settlement value is determined as follows: in the last minute before 3:00AM ET on Oct 10, 2026, 60 BRTI prices are collected. The official and final value is the simple average of these prices, rounded to the nearest 2 decimal places. The market settles to Yes if the settlement value is greater than or equal to $82,",
+  "outcomePrices": "[\"1\",\"0\"]",
+  "openPx": 0.93,
+  "highPx": 0.97,
+  "lowPx": 0.89,
+  "lastPx": 0.97,
+  "shares": 198.27,
+  "notional": 181.903,
+  "openSet": 1791612118.843121,
+  "highSet": 1791614272.081957,
+  "lowSet": 1791612746.353683,
+  "settleSet": 1791615634.937043,
+  "settlePx": 1.0,
+  "settlement": 1,
+  "state": "MARKET_STATE_EXPIRED"
+ },
+ "atc-uwwcq-blr-ita-2026-10-09-draw": {
+  "found": true,
+  "question": "Will the UEFA Women's World Cup Qualifying match Belarus vs Italy scheduled for Oct 9, 2026 end in a draw?",
+  "marketType": "drawable_outcome",
+  "smt": "soccer_team_full_time_winner",
+  "smt2": "SPORTS_MARKET_TYPE_DRAWABLE_OUTCOME",
+  "gameStart": 1791562500.0,
+  "endDate": 1791569802.0,
+  "status": "MARKET_STATUS_RESOLVED",
+  "fee": 0.0695,
+  "long": [
+   "Yes"
+  ],
+  "short": [
+   "No"
+  ],
+  "league": [
+   null,
+   null
+  ],
+  "description": "This market will settle to the winner at the end of 90 minutes plus stoppage time in the Belarus vs Italy UEFA Women's World Cup Qualifying match scheduled for 2026-10-09 12:15PM ET. If the match is tied following 90 minutes plus stoppage time, the market will settle to Tie. If the match is delayed, postponed, or suspended and not rescheduled to a date within two weeks of the originally scheduled date, the market will settle to the last fair market price. Outcome sourced from UEFA.",
+  "outcomePrices": "[\"0\",\"1\"]",
+  "openPx": 0.07,
+  "highPx": 0.29,
+  "lowPx": 0.01,
+  "lastPx": 0.01,
+  "shares": 10093.51,
+  "notional": 1247.7883,
+  "openSet": 1791562974.46253,
+  "highSet": 1791567369.763602,
+  "lowSet": 1791568934.869471,
+  "settleSet": 1791569804.876607,
+  "settlePx": 0.0,
+  "settlement": 0,
+  "state": "MARKET_STATE_EXPIRED"
+ },
+ "aec-setkameua-efiiva-bilvol-2026-10-10": {
+  "found": true,
+  "question": "Who will win in the upcoming table-tennis event Efimenko Ivan vs Bilobrov Volodymyr scheduled for October 10, 2026 at 5:35 AM UTC?",
+  "marketType": "moneyline",
+  "smt": "table_tennis_match_winner",
+  "smt2": "SPORTS_MARKET_TYPE_MONEYLINE",
+  "gameStart": 1791610500.0,
+  "endDate": 1791611650.0,
+  "status": "MARKET_STATUS_RESOLVED",
+  "fee": 0.1,
+  "long": [
+   "Efimenko Ivan"
+  ],
+  "short": [
+   "Bilobrov Volodymyr"
+  ],
+  "league": [
+   "setkameua",
+   "setkameua"
+  ],
+  "description": "This market will settle to the winner of the Efimenko Ivan vs Bilobrov Volodymyr Setka Cup Ukraine Men match scheduled for Oct 10, 2026. If the match does not begin due to a walkover, withdrawal, or cancellation, the market will settle to $0.50. If the match is delayed, postponed, or suspended and not rescheduled to a date within two days of the originally scheduled date, the market will settle to $0.50. Outcome sourced from Setka Cup Ukraine Men.",
+  "outcomePrices": "[\"1\",\"0\"]",
+  "openPx": 0.7,
+  "highPx": 0.99,
+  "lowPx": 0.68,
+  "lastPx": 0.99,
+  "shares": 7140.79,
+  "notional": 6320.6915,
+  "openSet": 1791596101.381048,
+  "highSet": 1791611569.038826,
+  "lowSet": 1791610963.188228,
+  "settleSet": 1791611654.930479,
+  "settlePx": 1.0,
+  "settlement": 1,
+  "state": "MARKET_STATE_EXPIRED"
+ },
+ "aec-denbl-bak-ran-2026-10-10": {
+  "found": true,
+  "question": "Who will win in the upcoming basketball event Bakken Bears vs Randers Cimbria scheduled for October 10, 2026 at 12:00 PM UTC?",
+  "marketType": "moneyline",
+  "smt": "basketball_team_full_game_winner",
+  "smt2": "SPORTS_MARKET_TYPE_MONEYLINE",
+  "gameStart": 1791633600.0,
+  "endDate": 1791640826.0,
+  "status": "MARKET_STATUS_RESOLVED",
+  "fee": 0.0695,
+  "long": [
+   "Bakken Bears"
+  ],
+  "short": [
+   "Randers Cimbria"
+  ],
+  "league": [
+   "denbl",
+   "denbl"
+  ],
+  "description": "This market will settle to the winner of the Bakken Bears vs Randers Cimbria DENBL game scheduled for Oct 10, 2026. Overtime is included if played. If the game is delayed, postponed, or suspended and not rescheduled to a date within two weeks of the originally scheduled date, the market will settle to the last fair market price. Outcome sourced from DENBL.",
+  "outcomePrices": "[\"1\",\"0\"]",
+  "openPx": 0.87,
+  "highPx": 0.99,
+  "lowPx": 0.71,
+  "lastPx": 0.99,
+  "shares": 10154.25,
+  "notional": 9066.2989,
+  "openSet": 1791617453.690565,
+  "highSet": 1791638115.783557,
+  "lowSet": 1791635038.26549,
+  "settleSet": 1791640830.033489,
+  "settlePx": 1.0,
+  "settlement": 1,
+  "state": "MARKET_STATE_EXPIRED"
+ },
+ "atc-ebfsa-sas-roma-2026-10-10-dh4-sas": {
+  "found": true,
+  "question": "Will Sassuolo defeat Roma in the eBattles: Serie A match scheduled for Oct 10, 2026?",
+  "marketType": "drawable_outcome",
+  "smt": "efootball_team_full_time_winner",
+  "smt2": "SPORTS_MARKET_TYPE_DRAWABLE_OUTCOME",
+  "gameStart": 1791637800.0,
+  "endDate": 1791638489.0,
+  "status": "MARKET_STATUS_RESOLVED",
+  "fee": 0.0695,
+  "long": [
+   "Sassuolo"
+  ],
+  "short": [
+   "Sassuolo"
+  ],
+  "league": [
+   "ebattlesefsa",
+   "ebattlesefsa"
+  ],
+  "description": "This market will settle to the result after main playing time of the Sassuolo vs Roma eBattles: Serie A match scheduled for Oct 10, 2026. A tied final score settles the Draw outcome to Yes; extra time and penalties are not included. If the match is canceled, all outcomes will settle to $0.33. If the match is delayed, postponed, or suspended and not rescheduled to a date within two days of the originally scheduled date, all outcomes will settle to $0.33. Outcome sourced from ESportsBattle.",
+  "outcomePrices": "[\"1\",\"0\"]",
+  "openPx": 0.98,
+  "highPx": 0.99,
+  "lowPx": 0.98,
+  "lastPx": 0.99,
+  "shares": 14.0,
+  "notional": 13.85,
+  "openSet": 1791637955.947343,
+  "highSet": 1791638489.699898,
+  "lowSet": 1791637955.947343,
+  "settleSet": 1791638489.893307,
+  "settlePx": 1.0,
+  "settlement": 1,
+  "state": "MARKET_STATE_EXPIRED"
+ },
+ "atc-bun2-fcm-h96-2026-10-10-draw": {
+  "found": true,
+  "question": "Will the 2. Bundesliga match 1. FC Magdeburg vs Hannover 96 scheduled for Oct 10, 2026 end in a draw?",
+  "marketType": "drawable_outcome",
+  "smt": "soccer_team_full_time_winner",
+  "smt2": "SPORTS_MARKET_TYPE_DRAWABLE_OUTCOME",
+  "gameStart": 1791630000.0,
+  "endDate": 1791637199.0,
+  "status": "MARKET_STATUS_RESOLVED",
+  "fee": 0.0695,
+  "long": [
+   "Yes"
+  ],
+  "short": [
+   "No"
+  ],
+  "league": [
+   null,
+   null
+  ],
+  "description": "This market will settle to the winner at the end of 90 minutes plus stoppage time in the 1. FC Magdeburg vs Hannover 96 2. Bundesliga match scheduled for 2026-10-10 7:00AM ET. If the match is tied following 90 minutes plus stoppage time, the market will settle to Tie. If the match is delayed, postponed, or suspended and not rescheduled to a date within two weeks of the originally scheduled date, the market will settle to the last fair market price. Outcome sourced from DFL.",
+  "outcomePrices": "[\"0\",\"1\"]",
+  "openPx": 0.24,
+  "highPx": 0.27,
+  "lowPx": 0.01,
+  "lastPx": 0.01,
+  "shares": 3121.46,
+  "notional": 559.0515,
+  "openSet": 1791630050.497385,
+  "highSet": 1791630327.287949,
+  "lowSet": 1791636306.271822,
+  "settleSet": 1791637199.878811,
+  "settlePx": 0.0,
+  "settlement": 0,
+  "state": "MARKET_STATE_EXPIRED"
+ },
+ "atc-j1-tok-urd-2026-10-10-tok": {
+  "found": true,
+  "question": "Will FC Tokyo win against Urawa Red Diamonds in the J1 League match scheduled for Oct 10, 2026?",
+  "marketType": "drawable_outcome",
+  "smt": "soccer_team_full_time_winner",
+  "smt2": "SPORTS_MARKET_TYPE_DRAWABLE_OUTCOME",
+  "gameStart": 1791612000.0,
+  "endDate": 1791619656.0,
+  "status": "MARKET_STATUS_RESOLVED",
+  "fee": 0.0695,
+  "long": [
+   "FC Tokyo"
+  ],
+  "short": [
+   "FC Tokyo"
+  ],
+  "league": [
+   "j1",
+   "j1"
+  ],
+  "description": "This market will settle to the winner at the end of 90 minutes plus stoppage time in the FC Tokyo vs Urawa Red Diamonds J1 League match scheduled for 2026-10-10 2:00AM ET. If the match is tied following 90 minutes plus stoppage time, the market will settle to Tie. If the match is delayed, postponed, or suspended and not rescheduled to a date within two weeks of the originally scheduled date, the market will settle to the last fair market price. Outcome sourced from J.League.",
+  "outcomePrices": "[\"1\",\"0\"]",
+  "openPx": 0.59,
+  "highPx": 0.99,
+  "lowPx": 0.34,
+  "lastPx": 0.99,
+  "shares": 55428.38,
+  "notional": 40193.8784,
+  "openSet": 1791381382.245093,
+  "highSet": 1791618334.008067,
+  "lowSet": 1791617026.071677,
+  "settleSet": 1791619659.883943,
+  "settlePx": 1.0,
+  "settlement": 1,
+  "state": "MARKET_STATE_EXPIRED"
+ },
+ "aec-itfwo-aliokt-nurbra-2026-10-10": {
+  "found": true,
+  "question": "Who will win in the upcoming tennis event Alisa Oktiabreva vs Nuria Brancaccio scheduled for October 10, 2026 at 8:00 AM UTC?",
+  "marketType": "moneyline",
+  "smt": "tennis_match_winner",
+  "smt2": "SPORTS_MARKET_TYPE_MONEYLINE",
+  "gameStart": 1791619629.0,
+  "endDate": 1791629880.0,
+  "status": "MARKET_STATUS_RESOLVED",
+  "fee": 0.0695,
+  "long": [
+   "Alisa Oktiabreva"
+  ],
+  "short": [
+   "Nuria Brancaccio"
+  ],
+  "league": [
+   "itfwo",
+   "itfwo"
+  ],
+  "description": "This market will settle to the winner of the Alisa Oktiabreva vs Nuria Brancaccio ITF match scheduled for Oct 10, 2026. If the match does not begin due to a walkover, withdrawal, or cancellation, the market will settle to $0.50. If the match is delayed, postponed, or suspended and not rescheduled to a date within two weeks of the originally scheduled date, the market will settle to $0.50. Outcome sourced from ITF.",
+  "outcomePrices": "[\"1\",\"0\"]",
+  "openPx": 0.76,
+  "highPx": 0.99,
+  "lowPx": 0.66,
+  "lastPx": 0.99,
+  "shares": 50287.49,
+  "notional": 39592.7557,
+  "openSet": 1791575903.497106,
+  "highSet": 1791626216.315891,
+  "lowSet": 1791624206.521463,
+  "settleSet": 1791626250.055674,
+  "settlePx": 0.99,
+  "settlement": 1,
+  "state": "MARKET_STATE_CLOSED"
+ },
+ "cpc-btc-above-hr-2026-10-10-1000z-82700": {
+  "found": true,
+  "question": "BTC Price at 6:00AM ET on Sat, Oct 10",
+  "marketType": "",
+  "smt": "",
+  "smt2": "SPORTS_MARKET_TYPE_UNSPECIFIED",
+  "gameStart": 1791622800.0,
+  "endDate": 1791626430.0,
+  "status": "MARKET_STATUS_RESOLVED",
+  "fee": 0.0695,
+  "long": [
+   "Yes"
+  ],
+  "short": [
+   "No"
+  ],
+  "league": [
+   null,
+   null
+  ],
+  "description": "This market will settle to Yes if the price of Bitcoin is at or above $82,700 at 6:00AM ET on Oct 10, 2026. Otherwise, this market will settle to No. Outcome sourced from CF Benchmarks' Bitcoin Real-Time Index (BRTI), available at https://www.cfbenchmarks.com/data/indices/BRTI. The settlement value is determined as follows: in the last minute before 6:00AM ET on Oct 10, 2026, 60 BRTI prices are collected. The official and final value is the simple average of these prices, rounded to the nearest 2 decimal places. The market settles to Yes if the settlement value is greater than or equal to $82,",
+  "outcomePrices": "[\"1\",\"0\"]",
+  "openPx": 0.84,
+  "highPx": 0.98,
+  "lowPx": 0.84,
+  "lastPx": 0.96,
+  "shares": 406.0,
+  "notional": 375.98,
+  "openSet": 1791623227.722295,
+  "highSet": 1791624710.536687,
+  "lowSet": 1791623227.722295,
+  "settleSet": 1791626434.877289,
+  "settlePx": 1.0,
+  "settlement": 1,
+  "state": "MARKET_STATE_EXPIRED"
+ },
+ "aec-itfme-alewei-andche-2026-10-10": {
+  "found": true,
+  "question": "Who will win in the upcoming tennis event Alexander Weis vs Andrey Chepelev scheduled for October 10, 2026 at 8:00 AM UTC?",
+  "marketType": "moneyline",
+  "smt": "tennis_match_winner",
+  "smt2": "SPORTS_MARKET_TYPE_MONEYLINE",
+  "gameStart": 1791624198.0,
+  "endDate": 1791639421.0,
+  "status": "MARKET_STATUS_RESOLVED",
+  "fee": 0.0695,
+  "long": [
+   "Alexander Weis"
+  ],
+  "short": [
+   "Andrey Chepelev"
+  ],
+  "league": [
+   "itfme",
+   "itfme"
+  ],
+  "description": "This market will settle to the winner of the Alexander Weis vs Andrey Chepelev ITF match scheduled for Oct 10, 2026. If the match does not begin due to a walkover, withdrawal, or cancellation, the market will settle to $0.50. If the match is delayed, postponed, or suspended and not rescheduled to a date within two weeks of the originally scheduled date, the market will settle to $0.50. Outcome sourced from ITF.",
+  "outcomePrices": "[\"1\",\"0\"]",
+  "openPx": 0.62,
+  "highPx": 0.99,
+  "lowPx": 0.41,
+  "lastPx": 0.99,
+  "shares": 64972.35,
+  "notional": 46482.2483,
+  "openSet": 1791624227.224211,
+  "highSet": 1791635487.324967,
+  "lowSet": 1791628869.673782,
+  "settleSet": 1791635811.827753,
+  "settlePx": 0.99,
+  "settlement": 1,
+  "state": "MARKET_STATE_CLOSED"
+ },
+ "aec-setkameua-ponser-kusser-2026-10-10": {
+  "found": true,
+  "question": "Who will win in the upcoming table-tennis event Ponomarenko Serhii vs Kushnirenko Serhii scheduled for October 10, 2026 at 7:00 AM UTC?",
+  "marketType": "moneyline",
+  "smt": "table_tennis_match_winner",
+  "smt2": "SPORTS_MARKET_TYPE_MONEYLINE",
+  "gameStart": 1791615600.0,
+  "endDate": 1791616176.0,
+  "status": "MARKET_STATUS_RESOLVED",
+  "fee": 0.1,
+  "long": [
+   "Ponomarenko Serhii"
+  ],
+  "short": [
+   "Kushnirenko Serhii"
+  ],
+  "league": [
+   "setkameua",
+   "setkameua"
+  ],
+  "description": "This market will settle to the winner of the Ponomarenko Serhii vs Kushnirenko Serhii Setka Cup Ukraine Men match scheduled for Oct 10, 2026. If the match does not begin due to a walkover, withdrawal, or cancellation, the market will settle to $0.50. If the match is delayed, postponed, or suspended and not rescheduled to a date within two days of the originally scheduled date, the market will settle to $0.50. Outcome sourced from Setka Cup Ukraine Men.",
+  "outcomePrices": "[\"1\",\"0\"]",
+  "openPx": 0.84,
+  "highPx": 0.99,
+  "lowPx": 0.82,
+  "lastPx": 0.99,
+  "shares": 21506.32,
+  "notional": 20301.07,
+  "openSet": 1791577472.278864,
+  "highSet": 1791616107.747206,
+  "lowSet": 1791578094.102442,
+  "settleSet": 1791616179.92475,
+  "settlePx": 1.0,
+  "settlement": 1,
+  "state": "MARKET_STATE_EXPIRED"
+ },
+ "atc-ebfwcb-net-bel-2026-10-10-dh3-net": {
+  "found": true,
+  "question": "Will Netherlands defeat Belgium in the eBattles: World Cup B match scheduled for Oct 10, 2026?",
+  "marketType": "drawable_outcome",
+  "smt": "efootball_team_full_time_winner",
+  "smt2": "SPORTS_MARKET_TYPE_DRAWABLE_OUTCOME",
+  "gameStart": 1791627300.0,
+  "endDate": 1791627864.0,
+  "status": "MARKET_STATUS_RESOLVED",
+  "fee": 0.0695,
+  "long": [
+   "Netherlands"
+  ],
+  "short": [
+   "Netherlands"
+  ],
+  "league": [
+   "ebattlesefwcb",
+   "ebattlesefwcb"
+  ],
+  "description": "This market will settle to the result after main playing time of the Netherlands vs Belgium eBattles: World Cup B match scheduled for Oct 10, 2026. A tied final score settles the Draw outcome to Yes; extra time and penalties are not included. If the match is canceled, all outcomes will settle to $0.33. If the match is delayed, postponed, or suspended and not rescheduled to a date within two days of the originally scheduled date, all outcomes will settle to $0.33. Outcome sourced from ESportsBattle.",
+  "outcomePrices": "[\"0\",\"1\"]",
+  "openPx": 0.97,
+  "highPx": 0.97,
+  "lowPx": 0.01,
+  "lastPx": 0.01,
+  "shares": 10.22,
+  "notional": 0.1712,
+  "openSet": 1791623991.972909,
+  "highSet": 1791623991.972909,
+  "lowSet": 1791623991.972909,
+  "settleSet": 1791627864.890924,
+  "settlePx": 0.0,
+  "settlement": 0,
+  "state": "MARKET_STATE_EXPIRED"
+ },
+ "cpc-btc-above-hr-2026-10-10-0800z-82600": {
+  "found": true,
+  "question": "BTC Price at 4:00AM ET on Sat, Oct 10",
+  "marketType": "",
+  "smt": "",
+  "smt2": "SPORTS_MARKET_TYPE_UNSPECIFIED",
+  "gameStart": 1791615600.0,
+  "endDate": 1791619230.0,
+  "status": "MARKET_STATUS_RESOLVED",
+  "fee": 0.0695,
+  "long": [
+   "Yes"
+  ],
+  "short": [
+   "No"
+  ],
+  "league": [
+   null,
+   null
+  ],
+  "description": "This market will settle to Yes if the price of Bitcoin is at or above $82,600 at 4:00AM ET on Oct 10, 2026. Otherwise, this market will settle to No. Outcome sourced from CF Benchmarks' Bitcoin Real-Time Index (BRTI), available at https://www.cfbenchmarks.com/data/indices/BRTI. The settlement value is determined as follows: in the last minute before 4:00AM ET on Oct 10, 2026, 60 BRTI prices are collected. The official and final value is the simple average of these prices, rounded to the nearest 2 decimal places. The market settles to Yes if the settlement value is greater than or equal to $82,",
+  "outcomePrices": "[\"1\",\"0\"]",
+  "openPx": 0.72,
+  "highPx": 0.98,
+  "lowPx": 0.35,
+  "lastPx": 0.98,
+  "shares": 6185.0,
+  "notional": 3918.9445,
+  "openSet": 1791615604.460715,
+  "highSet": 1791618725.798224,
+  "lowSet": 1791616898.629851,
+  "settleSet": 1791619234.901791,
+  "settlePx": 1.0,
+  "settlement": 1,
+  "state": "MARKET_STATE_EXPIRED"
+ },
+ "aec-utr-hrdden-heiiza-2026-10-10": {
+  "found": true,
+  "question": "Who will win in the upcoming tennis event Denise Hrdinkova vs Izabela Heinzova scheduled for October 10, 2026 at 8:10 AM UTC?",
+  "marketType": "moneyline",
+  "smt": "tennis_match_winner",
+  "smt2": "SPORTS_MARKET_TYPE_MONEYLINE",
+  "gameStart": 1791620400.0,
+  "endDate": 1791626670.0,
+  "status": "MARKET_STATUS_RESOLVED",
+  "fee": 0.0695,
+  "long": [
+   "Hrdinkova, Denise"
+  ],
+  "short": [
+   "Heinzova, Izabela"
+  ],
+  "league": [
+   "utr",
+   "utr"
+  ],
+  "description": "This market will settle to the winner of the Denise Hrdinkova vs Izabela Heinzova UTR match scheduled for Oct 10, 2026. If the match is postponed, delayed, or rescheduled, the settlement date will be amended to the rescheduled date. If the rescheduled date is not within two weeks of the originally scheduled date, the market will settle to 0.50. If the match does not begin due to a walkover, forfeit, injury, or any other cancellation prior to the first point being played, the market will settle to 0.50. If a player retires during the match, the opponent will be recorded as the winner. Outcome s",
+  "outcomePrices": "[\"1\",\"0\"]",
+  "openPx": 0.83,
+  "highPx": 0.99,
+  "lowPx": 0.82,
+  "lastPx": 0.99,
+  "shares": 5709.74,
+  "notional": 5340.0382,
+  "openSet": 1791566132.612977,
+  "highSet": 1791625790.808799,
+  "lowSet": 1791616606.587974,
+  "settleSet": 1791626674.893761,
+  "settlePx": 1.0,
+  "settlement": 1,
+  "state": "MARKET_STATE_EXPIRED"
+ },
+ "aec-wta-peyste-hanshi-2026-10-10": {
+  "found": true,
+  "question": "Who will win in the upcoming wta event Peyton Stearns vs Han Shi scheduled for October 10, 2026 at 4:10 AM UTC?",
+  "marketType": "moneyline",
+  "smt": "tennis_match_winner",
+  "smt2": "SPORTS_MARKET_TYPE_MONEYLINE",
+  "gameStart": 1791608100.0,
+  "endDate": 1791616708.0,
+  "status": "MARKET_STATUS_RESOLVED",
+  "fee": 0.0695,
+  "long": [
+   "Peyton Stearns"
+  ],
+  "short": [
+   "Han Shi"
+  ],
+  "league": [
+   "wta",
+   "wta"
+  ],
+  "description": "This market will settle to the winner of the Peyton Stearns vs Han Shi WTA match scheduled for October 10 at 12:10AM. If the match does not begin due to a walkover, forfeit, injury, or any other cancellation prior to the first point being played, the market will settle to fair market price. If a player retires during the match, the opponent will be recorded as the winner. Outcome sourced from WTA.",
+  "outcomePrices": "[\"0\",\"1\"]",
+  "openPx": 0.74,
+  "highPx": 0.99,
+  "lowPx": 0.01,
+  "lastPx": 0.01,
+  "shares": 339784.02,
+  "notional": 152937.1652,
+  "openSet": 1791561512.214152,
+  "highSet": 1791612806.03023,
+  "lowSet": 1791616421.674487,
+  "settleSet": 1791616714.887618,
+  "settlePx": 0.0,
+  "settlement": 0,
+  "state": "MARKET_STATE_EXPIRED"
+ },
+ "aec-itfme-jorhas-giuper-2026-10-10": {
+  "found": true,
+  "question": "Who will win in the upcoming tennis event Jordan Hasson vs Giulio Perego scheduled for October 10, 2026 at 8:00 AM UTC?",
+  "marketType": "moneyline",
+  "smt": "tennis_match_winner",
+  "smt2": "SPORTS_MARKET_TYPE_MONEYLINE",
+  "gameStart": 1791619786.0,
+  "endDate": 1791629914.0,
+  "status": "MARKET_STATUS_RESOLVED",
+  "fee": 0.0695,
+  "long": [
+   "Jordan Hasson"
+  ],
+  "short": [
+   "Giulio Perego"
+  ],
+  "league": [
+   "itfme",
+   "itfme"
+  ],
+  "description": "This market will settle to the winner of the Jordan Hasson vs Giulio Perego ITF match scheduled for Oct 10, 2026. If the match does not begin due to a walkover, withdrawal, or cancellation, the market will settle to $0.50. If the match is delayed, postponed, or suspended and not rescheduled to a date within two weeks of the originally scheduled date, the market will settle to $0.50. Outcome sourced from ITF.",
+  "outcomePrices": "[\"1\",\"0\"]",
+  "openPx": 0.41,
+  "highPx": 0.99,
+  "lowPx": 0.28,
+  "lastPx": 0.99,
+  "shares": 11205.11,
+  "notional": 9280.5477,
+  "openSet": 1791608010.053084,
+  "highSet": 1791626237.423408,
+  "lowSet": 1791620984.370004,
+  "settleSet": 1791626283.70939,
+  "settlePx": 0.99,
+  "settlement": 1,
+  "state": "MARKET_STATE_CLOSED"
+ },
+ "aec-atp-botzan-alemic-2026-10-08": {
+  "found": true,
+  "question": "Who will win in the upcoming atp event Botic Van de Zandschulp vs Alex Michelsen scheduled for October 9, 2026 at 2:00 AM UTC?",
+  "marketType": "moneyline",
+  "smt": "tennis_match_winner",
+  "smt2": "SPORTS_MARKET_TYPE_MONEYLINE",
+  "gameStart": 1791632100.0,
+  "endDate": 1791638580.0,
+  "status": "MARKET_STATUS_RESOLVED",
+  "fee": 0.0695,
+  "long": [
+   "Botic van de Zandschulp"
+  ],
+  "short": [
+   "Alex Michelsen"
+  ],
+  "league": [
+   "atp",
+   "atp"
+  ],
+  "description": "This market will settle to the winner of the Botic Van de Zandschulp vs Alex Michelsen ATP match scheduled for October 8 at 10:00PM. If the match does not begin due to a walkover, forfeit, injury, or any other cancellation prior to the first point being played, the market will settle to fair market price. If a player retires during the match, the opponent will be recorded as the winner. Outcome sourced from ATP.",
+  "outcomePrices": "[\"1\",\"0\"]",
+  "openPx": 0.37,
+  "highPx": 0.99,
+  "lowPx": 0.26,
+  "lastPx": 0.99,
+  "shares": 372686.05,
+  "notional": 260745.0644,
+  "openSet": 1791469519.524609,
+  "highSet": 1791638482.615975,
+  "lowSet": 1791633212.753159,
+  "settleSet": 1791638584.922709,
+  "settlePx": 1.0,
+  "settlement": 1,
+  "state": "MARKET_STATE_EXPIRED"
+ },
+ "aec-itfme-maxhou-calhem-2026-10-10": {
+  "found": true,
+  "question": "Who will win in the upcoming tennis event Max Houkes vs Calvin Hemery scheduled for October 10, 2026 at 9:00 AM UTC?",
+  "marketType": "moneyline",
+  "smt": "tennis_match_winner",
+  "smt2": "SPORTS_MARKET_TYPE_MONEYLINE",
+  "gameStart": 1791623843.0,
+  "endDate": 1791636910.0,
+  "status": "MARKET_STATUS_RESOLVED",
+  "fee": 0.0695,
+  "long": [
+   "Max Houkes"
+  ],
+  "short": [
+   "Calvin Hemery"
+  ],
+  "league": [
+   "itfme",
+   "itfme"
+  ],
+  "description": "This market will settle to the winner of the Max Houkes vs Calvin Hemery ITF match scheduled for Oct 10, 2026. If the match does not begin due to a walkover, withdrawal, or cancellation, the market will settle to $0.50. If the match is delayed, postponed, or suspended and not rescheduled to a date within two weeks of the originally scheduled date, the market will settle to $0.50. Outcome sourced from ITF.",
+  "outcomePrices": "[\"1\",\"0\"]",
+  "openPx": 0.54,
+  "highPx": 0.99,
+  "lowPx": 0.3,
+  "lastPx": 0.99,
+  "shares": 38571.48,
+  "notional": 31387.4142,
+  "openSet": 1791609108.904089,
+  "highSet": 1791633255.358217,
+  "lowSet": 1791625655.828653,
+  "settleSet": 1791633307.458656,
+  "settlePx": 0.99,
+  "settlement": 1,
+  "state": "MARKET_STATE_CLOSED"
+ },
+ "atc-ebfwcb-net-bel-2026-10-10-dh3-bel": {
+  "found": true,
+  "question": "Will Belgium defeat Netherlands in the eBattles: World Cup B match scheduled for Oct 10, 2026?",
+  "marketType": "drawable_outcome",
+  "smt": "efootball_team_full_time_winner",
+  "smt2": "SPORTS_MARKET_TYPE_DRAWABLE_OUTCOME",
+  "gameStart": 1791627300.0,
+  "endDate": 1791627864.0,
+  "status": "MARKET_STATUS_RESOLVED",
+  "fee": 0.0695,
+  "long": [
+   "Belgium"
+  ],
+  "short": [
+   "Belgium"
+  ],
+  "league": [
+   "ebattlesefwcb",
+   "ebattlesefwcb"
+  ],
+  "description": "This market will settle to the result after main playing time of the Netherlands vs Belgium eBattles: World Cup B match scheduled for Oct 10, 2026. A tied final score settles the Draw outcome to Yes; extra time and penalties are not included. If the match is canceled, all outcomes will settle to $0.33. If the match is delayed, postponed, or suspended and not rescheduled to a date within two days of the originally scheduled date, all outcomes will settle to $0.33. Outcome sourced from ESportsBattle.",
+  "outcomePrices": "[\"1\",\"0\"]",
+  "openPx": 0.97,
+  "highPx": 0.99,
+  "lowPx": 0.41,
+  "lastPx": 0.99,
+  "shares": 11.22,
+  "notional": 11.0531,
+  "openSet": 1791623991.626813,
+  "highSet": 1791627859.22786,
+  "lowSet": 1791627524.442479,
+  "settleSet": 1791627864.907468,
+  "settlePx": 1.0,
+  "settlement": 1,
+  "state": "MARKET_STATE_EXPIRED"
+ },
+ "aec-setkameua-lazrus-kovnaz-2026-10-10": {
+  "found": true,
+  "question": "Who will win in the upcoming table-tennis event Lazebnyi Ruslan vs Kovalchuk Nazarii scheduled for October 10, 2026 at 6:35 AM UTC?",
+  "marketType": "moneyline",
+  "smt": "table_tennis_match_winner",
+  "smt2": "SPORTS_MARKET_TYPE_MONEYLINE",
+  "gameStart": 1791614100.0,
+  "endDate": 1791615818.0,
+  "status": "MARKET_STATUS_RESOLVED",
+  "fee": 0.1,
+  "long": [
+   "Lazebnyi Ruslan"
+  ],
+  "short": [
+   "Kovalchuk Nazarii"
+  ],
+  "league": [
+   "setkameua",
+   "setkameua"
+  ],
+  "description": "This market will settle to the winner of the Lazebnyi Ruslan vs Kovalchuk Nazarii Setka Cup Ukraine Men match scheduled for Oct 10, 2026. If the match does not begin due to a walkover, withdrawal, or cancellation, the market will settle to $0.50. If the match is delayed, postponed, or suspended and not rescheduled to a date within two days of the originally scheduled date, the market will settle to $0.50. Outcome sourced from Setka Cup Ukraine Men.",
+  "outcomePrices": "[\"1\",\"0\"]",
+  "openPx": 0.39,
+  "highPx": 0.99,
+  "lowPx": 0.37,
+  "lastPx": 0.89,
+  "shares": 65077.57,
+  "notional": 53770.3405,
+  "openSet": 1791594313.128923,
+  "highSet": 1791615639.797137,
+  "lowSet": 1791594363.217798,
+  "settleSet": 1791615819.927757,
+  "settlePx": 1.0,
+  "settlement": 1,
+  "state": "MARKET_STATE_EXPIRED"
+ },
+ "cpc-btc-updown-15m-2026-10-10-0730z": {
+  "found": true,
+  "question": "BTC Up or Down 15m",
+  "marketType": "",
+  "smt": "",
+  "smt2": "SPORTS_MARKET_TYPE_UNSPECIFIED",
+  "gameStart": 1791617400.0,
+  "endDate": 1791618310.0,
+  "status": "MARKET_STATUS_RESOLVED",
+  "fee": 0.0695,
+  "long": [
+   "Yes"
+  ],
+  "short": [
+   "No"
+  ],
+  "league": [
+   null,
+   null
+  ],
+  "description": "This market will settle to Up if the Bitcoin price at 3:45AM ET on Oct 10, 2026 is greater than or equal to the price at 3:30AM ET on Oct 10, 2026. Otherwise, this market will settle to Down. Outcome sourced from CF Benchmarks' Bitcoin Real-Time Index (BRTI), available at https://www.cfbenchmarks.com/data/indices/BRTI. The price at the beginning and at the end of the time range is determined the same way: in the last minute before each of those two times, 60 BRTI prices are collected. The official value for that time is the simple average of these prices, rounded to the nearest 2 decimal place",
+  "outcomePrices": "[\"1\",\"0\"]",
+  "openPx": 0.52,
+  "highPx": 0.99,
+  "lowPx": 0.51,
+  "lastPx": 0.99,
+  "shares": 164568.04,
+  "notional": 132508.5727,
+  "openSet": 1791617400.373664,
+  "highSet": 1791618028.301366,
+  "lowSet": 1791617400.467185,
+  "settleSet": 1791618314.929175,
+  "settlePx": 1.0,
+  "settlement": 1,
+  "state": "MARKET_STATE_EXPIRED"
+ },
+ "aec-cznbl-sla-par-2026-10-10": {
+  "found": true,
+  "question": "Who will win in the upcoming basketball event SK Slavia Prague vs BK Pardubice scheduled for October 10, 2026 at 10:00 AM UTC?",
+  "marketType": "moneyline",
+  "smt": "basketball_team_full_game_winner",
+  "smt2": "SPORTS_MARKET_TYPE_MONEYLINE",
+  "gameStart": 1791626400.0,
+  "endDate": 1791633693.0,
+  "status": "MARKET_STATUS_RESOLVED",
+  "fee": 0.0695,
+  "long": [
+   "SK Slavia Prague"
+  ],
+  "short": [
+   "BK Pardubice"
+  ],
+  "league": [
+   "cznbl",
+   "cznbl"
+  ],
+  "description": "This market will settle to the winner of the SK Slavia Prague vs BK Pardubice Czech NBL game scheduled for Oct 10, 2026. Overtime is included if played. If the game is delayed, postponed, or suspended and not rescheduled to a date within two weeks of the originally scheduled date, the market will settle to the last fair market price. Outcome sourced from Czech NBL.",
+  "outcomePrices": "[\"1\",\"0\"]",
+  "openPx": 0.78,
+  "highPx": 0.99,
+  "lowPx": 0.51,
+  "lastPx": 0.99,
+  "shares": 3958.25,
+  "notional": 3308.4129,
+  "openSet": 1791591367.822663,
+  "highSet": 1791630303.795575,
+  "lowSet": 1791627845.325413,
+  "settleSet": 1791633694.880501,
+  "settlePx": 1.0,
+  "settlement": 1,
+  "state": "MARKET_STATE_EXPIRED"
+ },
+ "atc-csl-sgr-yun-2026-10-10-sgr": {
+  "found": true,
+  "question": "Will Shanghai Shenhua FC win against Yunnan Yukun FC in the CSL match scheduled for Oct 10, 2026?",
+  "marketType": "drawable_outcome",
+  "smt": "soccer_team_full_time_winner",
+  "smt2": "SPORTS_MARKET_TYPE_DRAWABLE_OUTCOME",
+  "gameStart": 1791632100.0,
+  "endDate": 1791638976.0,
+  "status": "MARKET_STATUS_RESOLVED",
+  "fee": 0.0695,
+  "long": [
+   "Shanghai Shenhua FC"
+  ],
+  "short": [
+   "Shanghai Shenhua FC"
+  ],
+  "league": [
+   "csl",
+   "csl"
+  ],
+  "description": "This market will settle to the winner at the end of 90 minutes plus stoppage time in the Shanghai Shenhua FC vs Yunnan Yukun FC CSL match scheduled for 2026-10-10 7:35AM ET. If the match is tied following 90 minutes plus stoppage time, the market will settle to Tie. If the match is delayed, postponed, or suspended and not rescheduled to a date within two weeks of the originally scheduled date, the market will settle to the last fair market price. Outcome sourced from CFA.",
+  "outcomePrices": "[\"1\",\"0\"]",
+  "openPx": 0.63,
+  "highPx": 0.99,
+  "lowPx": 0.61,
+  "lastPx": 0.99,
+  "shares": 8433.22,
+  "notional": 7358.2608,
+  "openSet": 1791381071.047021,
+  "highSet": 1791636664.898643,
+  "lowSet": 1791602224.334605,
+  "settleSet": 1791638979.879228,
+  "settlePx": 1.0,
+  "settlement": 1,
+  "state": "MARKET_STATE_EXPIRED"
+ },
+ "aec-atp-artfil-pavkot-2026-10-09": {
+  "found": true,
+  "question": "Who will win in the upcoming atp event Arthur Fils vs Pavel Kotov scheduled for October 9, 2026 at 4:00 AM UTC?",
+  "marketType": "moneyline",
+  "smt": "tennis_match_winner",
+  "smt2": "SPORTS_MARKET_TYPE_MONEYLINE",
+  "gameStart": 1791621300.0,
+  "endDate": 1791627294.0,
+  "status": "MARKET_STATUS_RESOLVED",
+  "fee": 0.0695,
+  "long": [
+   "Arthur Fils"
+  ],
+  "short": [
+   "Pavel Kotov"
+  ],
+  "league": [
+   "atp",
+   "atp"
+  ],
+  "description": "This market will settle to the winner of the Arthur Fils vs Pavel Kotov ATP match scheduled for October 9 at 12:00AM. If the match does not begin due to a walkover, forfeit, injury, or any other cancellation prior to the first point being played, the market will settle to fair market price. If a player retires during the match, the opponent will be recorded as the winner. Outcome sourced from ATP.",
+  "outcomePrices": "[\"1\",\"0\"]",
+  "openPx": 0.9,
+  "highPx": 0.99,
+  "lowPx": 0.88,
+  "lastPx": 0.98,
+  "shares": 92764.26,
+  "notional": 87271.5785,
+  "openSet": 1791449865.207294,
+  "highSet": 1791624720.971397,
+  "lowSet": 1791588103.57547,
+  "settleSet": 1791627299.886331,
+  "settlePx": 1.0,
+  "settlement": 1,
+  "state": "MARKET_STATE_EXPIRED"
+ },
+ "aec-setkameua-ariser-kuzdmy-2026-10-10": {
+  "found": true,
+  "question": "Who will win in the upcoming table-tennis event Aristarkhov Serhii vs Kuzmenko Dmytro scheduled for October 10, 2026 at 12:00 PM UTC?",
+  "marketType": "moneyline",
+  "smt": "table_tennis_match_winner",
+  "smt2": "SPORTS_MARKET_TYPE_MONEYLINE",
+  "gameStart": 1791633600.0,
+  "endDate": 1791634263.0,
+  "status": "MARKET_STATUS_RESOLVED",
+  "fee": 0.1,
+  "long": [
+   "Aristarkhov Serhii"
+  ],
+  "short": [
+   "Kuzmenko Dmytro"
+  ],
+  "league": [
+   "setkameua",
+   "setkameua"
+  ],
+  "description": "This market will settle to the winner of the Aristarkhov Serhii vs Kuzmenko Dmytro Setka Cup Ukraine Men match scheduled for Oct 10, 2026. If the match does not begin due to a walkover, withdrawal, or cancellation, the market will settle to $0.50. If the match is delayed, postponed, or suspended and not rescheduled to a date within two days of the originally scheduled date, the market will settle to $0.50. Outcome sourced from Setka Cup Ukraine Men.",
+  "outcomePrices": "[\"1\",\"0\"]",
+  "openPx": 0.69,
+  "highPx": 0.99,
+  "lowPx": 0.68,
+  "lastPx": 0.99,
+  "shares": 14505.9,
+  "notional": 12828.1085,
+  "openSet": 1791626412.669214,
+  "highSet": 1791634239.977765,
+  "lowSet": 1791633688.80516,
+  "settleSet": 1791634264.895913,
+  "settlePx": 1.0,
+  "settlement": 1,
+  "state": "MARKET_STATE_EXPIRED"
+ },
+ "aec-setkameua-fasand-koloole-2026-10-10": {
+  "found": true,
+  "question": "Who will win in the upcoming table-tennis event Fastov Andrii vs Kolos Oleksandr scheduled for October 10, 2026 at 8:30 AM UTC?",
+  "marketType": "moneyline",
+  "smt": "table_tennis_match_winner",
+  "smt2": "SPORTS_MARKET_TYPE_MONEYLINE",
+  "gameStart": 1791621000.0,
+  "endDate": 1791622274.0,
+  "status": "MARKET_STATUS_RESOLVED",
+  "fee": 0.1,
+  "long": [
+   "Fastov Andrii"
+  ],
+  "short": [
+   "Kolos Oleksandr"
+  ],
+  "league": [
+   "setkameua",
+   "setkameua"
+  ],
+  "description": "This market will settle to the winner of the Fastov Andrii vs Kolos Oleksandr Setka Cup Ukraine Men match scheduled for Oct 10, 2026. If the match does not begin due to a walkover, withdrawal, or cancellation, the market will settle to $0.50. If the match is delayed, postponed, or suspended and not rescheduled to a date within two days of the originally scheduled date, the market will settle to $0.50. Outcome sourced from Setka Cup Ukraine Men.",
+  "outcomePrices": "[\"1\",\"0\"]",
+  "openPx": 0.54,
+  "highPx": 0.99,
+  "lowPx": 0.29,
+  "lastPx": 0.99,
+  "shares": 15350.62,
+  "notional": 10507.991,
+  "openSet": 1791620182.241854,
+  "highSet": 1791622273.98899,
+  "lowSet": 1791621434.51746,
+  "settleSet": 1791622274.905925,
+  "settlePx": 1.0,
+  "settlement": 1,
+  "state": "MARKET_STATE_EXPIRED"
+ },
+ "aec-dota2-ty-ts-2026-10-10": {
+  "found": true,
+  "question": "Who will win in the upcoming esports event Team Yandex vs Team Spirit scheduled for October 10, 2026 at 10:30 AM UTC?",
+  "marketType": "moneyline",
+  "smt": "esports_match_winner",
+  "smt2": "SPORTS_MARKET_TYPE_MONEYLINE",
+  "gameStart": 1791628200.0,
+  "endDate": 1791636577.0,
+  "status": "MARKET_STATUS_RESOLVED",
+  "fee": 0.0695,
+  "long": [
+   "Team Yandex"
+  ],
+  "short": [
+   "Team Spirit"
+  ],
+  "league": [
+   "dota2",
+   "dota2"
+  ],
+  "description": "This market will settle to Yes if Team Yandex wins the Team Yandex vs Team Spirit Dota 2 match scheduled for October 10, 2026 at 10:30 AM UTC. If the match ends in a tie, the market will settle to $0.50. If the match does not begin due to a forfeit or disqualification, the market will settle to the last fair market price. If the match is delayed, postponed, or suspended and not rescheduled to a date within two weeks of the originally scheduled date, the market will settle to the last fair market price. Outcome sourced from Valve.",
+  "outcomePrices": "[\"1\",\"0\"]",
+  "openPx": 0.9,
+  "highPx": 0.99,
+  "lowPx": 0.58,
+  "lastPx": 0.99,
+  "shares": 37766.74,
+  "notional": 23040.0005,
+  "openSet": 1791561192.814528,
+  "highSet": 1791635821.76944,
+  "lowSet": 1791579193.06141,
+  "settleSet": 1791636579.888267,
+  "settlePx": 1.0,
+  "settlement": 1,
+  "state": "MARKET_STATE_EXPIRED"
+ },
+ "cpc-btc-above-hr-2026-10-10-1100z-82700": {
+  "found": true,
+  "question": "BTC Price at 7:00AM ET on Sat, Oct 10",
+  "marketType": "",
+  "smt": "",
+  "smt2": "SPORTS_MARKET_TYPE_UNSPECIFIED",
+  "gameStart": 1791626400.0,
+  "endDate": 1791630030.0,
+  "status": "MARKET_STATUS_RESOLVED",
+  "fee": 0.0695,
+  "long": [
+   "Yes"
+  ],
+  "short": [
+   "No"
+  ],
+  "league": [
+   null,
+   null
+  ],
+  "description": "This market will settle to Yes if the price of Bitcoin is at or above $82,700 at 7:00AM ET on Oct 10, 2026. Otherwise, this market will settle to No. Outcome sourced from CF Benchmarks' Bitcoin Real-Time Index (BRTI), available at https://www.cfbenchmarks.com/data/indices/BRTI. The settlement value is determined as follows: in the last minute before 7:00AM ET on Oct 10, 2026, 60 BRTI prices are collected. The official and final value is the simple average of these prices, rounded to the nearest 2 decimal places. The market settles to Yes if the settlement value is greater than or equal to $82,",
+  "outcomePrices": "[\"1\",\"0\"]",
+  "openPx": 0.81,
+  "highPx": 0.98,
+  "lowPx": 0.68,
+  "lastPx": 0.98,
+  "shares": 820.66,
+  "notional": 657.7764,
+  "openSet": 1791626428.189929,
+  "highSet": 1791629481.57406,
+  "lowSet": 1791627944.465865,
+  "settleSet": 1791630034.885551,
+  "settlePx": 1.0,
+  "settlement": 1,
+  "state": "MARKET_STATE_EXPIRED"
+ },
+ "aec-setkameua-fasand-klyvit-2026-10-10": {
+  "found": true,
+  "question": "Who will win in the upcoming table-tennis event Fastov Andrii vs Klymenko Vitalii scheduled for October 10, 2026 at 9:30 AM UTC?",
+  "marketType": "moneyline",
+  "smt": "table_tennis_match_winner",
+  "smt2": "SPORTS_MARKET_TYPE_MONEYLINE",
+  "gameStart": 1791624600.0,
+  "endDate": 1791625633.0,
+  "status": "MARKET_STATUS_RESOLVED",
+  "fee": 0.1,
+  "long": [
+   "Fastov Andrii"
+  ],
+  "short": [
+   "Klymenko Vitalii"
+  ],
+  "league": [
+   "setkameua",
+   "setkameua"
+  ],
+  "description": "This market will settle to the winner of the Fastov Andrii vs Klymenko Vitalii Setka Cup Ukraine Men match scheduled for Oct 10, 2026. If the match does not begin due to a walkover, withdrawal, or cancellation, the market will settle to $0.50. If the match is delayed, postponed, or suspended and not rescheduled to a date within two days of the originally scheduled date, the market will settle to $0.50. Outcome sourced from Setka Cup Ukraine Men.",
+  "outcomePrices": "[\"1\",\"0\"]",
+  "openPx": 0.78,
+  "highPx": 0.99,
+  "lowPx": 0.68,
+  "lastPx": 0.99,
+  "shares": 4495.98,
+  "notional": 4233.465,
+  "openSet": 1791618542.700385,
+  "highSet": 1791625633.898702,
+  "lowSet": 1791625200.126269,
+  "settleSet": 1791625634.963065,
+  "settlePx": 1.0,
+  "settlement": 1,
+  "state": "MARKET_STATE_EXPIRED"
+ },
+ "aec-atp-leatie-zacsva-2026-10-10": {
+  "found": true,
+  "question": "Who will win in the upcoming atp event Learner Tien vs Zachary Svajda scheduled for October 10, 2026 at 4:00 AM UTC?",
+  "marketType": "moneyline",
+  "smt": "tennis_match_winner",
+  "smt2": "SPORTS_MARKET_TYPE_MONEYLINE",
+  "gameStart": 1791624600.0,
+  "endDate": 1791631067.0,
+  "status": "MARKET_STATUS_RESOLVED",
+  "fee": 0.0695,
+  "long": [
+   "Learner Tien"
+  ],
+  "short": [
+   "Zachary Svajda"
+  ],
+  "league": [
+   "atp",
+   "atp"
+  ],
+  "description": "This market will settle to the winner of the Learner Tien vs Zachary Svajda ATP match scheduled for October 10 at 12:00AM. If the match does not begin due to a walkover, forfeit, injury, or any other cancellation prior to the first point being played, the market will settle to fair market price. If a player retires during the match, the opponent will be recorded as the winner. Outcome sourced from ATP.",
+  "outcomePrices": "[\"1\",\"0\"]",
+  "openPx": 0.73,
+  "highPx": 0.99,
+  "lowPx": 0.61,
+  "lastPx": 0.99,
+  "shares": 184108.32,
+  "notional": 149540.7282,
+  "openSet": 1791460420.640531,
+  "highSet": 1791630427.552583,
+  "lowSet": 1791626869.151249,
+  "settleSet": 1791631069.902915,
+  "settlePx": 1.0,
+  "settlement": 1,
+  "state": "MARKET_STATE_EXPIRED"
+ },
+ "cpc-btc-above-hr-2026-10-10-1300z-82700": {
+  "found": true,
+  "question": "BTC Price at 9:00AM ET on Sat, Oct 10",
+  "marketType": "",
+  "smt": "",
+  "smt2": "SPORTS_MARKET_TYPE_UNSPECIFIED",
+  "gameStart": 1791633600.0,
+  "endDate": 1791637230.0,
+  "status": "MARKET_STATUS_RESOLVED",
+  "fee": 0.0695,
+  "long": [
+   "Yes"
+  ],
+  "short": [
+   "No"
+  ],
+  "league": [
+   null,
+   null
+  ],
+  "description": "This market will settle to Yes if the price of Bitcoin is at or above $82,700 at 9:00AM ET on Oct 10, 2026. Otherwise, this market will settle to No. Outcome sourced from CF Benchmarks' Bitcoin Real-Time Index (BRTI), available at https://www.cfbenchmarks.com/data/indices/BRTI. The settlement value is determined as follows: in the last minute before 9:00AM ET on Oct 10, 2026, 60 BRTI prices are collected. The official and final value is the simple average of these prices, rounded to the nearest 2 decimal places. The market settles to Yes if the settlement value is greater than or equal to $82,",
+  "outcomePrices": "[\"1\",\"0\"]",
+  "openPx": 0.86,
+  "highPx": 0.99,
+  "lowPx": 0.82,
+  "lastPx": 0.99,
+  "shares": 1013.96,
+  "notional": 930.0762,
+  "openSet": 1791633656.837108,
+  "highSet": 1791637026.738642,
+  "lowSet": 1791634111.639474,
+  "settleSet": 1791637234.874476,
+  "settlePx": 1.0,
+  "settlement": 1,
+  "state": "MARKET_STATE_EXPIRED"
+ },
+ "aec-itfme-johech-kriwyk-2026-10-10": {
+  "found": true,
+  "question": "Who will win in the upcoming tennis event John Echeverria vs Kris van Wyk scheduled for October 10, 2026 at 9:30 AM UTC?",
+  "marketType": "moneyline",
+  "smt": "tennis_match_winner",
+  "smt2": "SPORTS_MARKET_TYPE_MONEYLINE",
+  "gameStart": 1791625322.0,
+  "endDate": 1791634577.0,
+  "status": "MARKET_STATUS_RESOLVED",
+  "fee": 0.0695,
+  "long": [
+   "John Echeverria"
+  ],
+  "short": [
+   "Kris van Wyk"
+  ],
+  "league": [
+   "itfme",
+   "itfme"
+  ],
+  "description": "This market will settle to the winner of the John Echeverria vs Kris van Wyk ITF match scheduled for Oct 10, 2026. If the match does not begin due to a walkover, withdrawal, or cancellation, the market will settle to $0.50. If the match is delayed, postponed, or suspended and not rescheduled to a date within two weeks of the originally scheduled date, the market will settle to $0.50. Outcome sourced from ITF.",
+  "outcomePrices": "[\"1\",\"0\"]",
+  "openPx": 0.82,
+  "highPx": 0.99,
+  "lowPx": 0.78,
+  "lastPx": 0.99,
+  "shares": 3324.55,
+  "notional": 3123.9004,
+  "openSet": 1791613483.651824,
+  "highSet": 1791628932.662344,
+  "lowSet": 1791625623.334295,
+  "settleSet": 1791630976.513378,
+  "settlePx": 0.99,
+  "settlement": 1,
+  "state": "MARKET_STATE_CLOSED"
+ },
+ "aec-itfwo-antsus-aylsam-2026-10-10": {
+  "found": true,
+  "question": "Who will win in the upcoming tennis event Antonina Sushkova vs Ayline Esina Samardzic scheduled for October 10, 2026 at 7:00 AM UTC?",
+  "marketType": "moneyline",
+  "smt": "tennis_match_winner",
+  "smt2": "SPORTS_MARKET_TYPE_MONEYLINE",
+  "gameStart": 1791616277.0,
+  "endDate": 1791625735.0,
+  "status": "MARKET_STATUS_RESOLVED",
+  "fee": 0.0695,
+  "long": [
+   "Antonina Sushkova"
+  ],
+  "short": [
+   "Ayline Esina Samardzic"
+  ],
+  "league": [
+   "itfwo",
+   "itfwo"
+  ],
+  "description": "This market will settle to the winner of the Antonina Sushkova vs Ayline Esina Samardzic ITF match scheduled for Oct 10, 2026. If the match does not begin due to a walkover, withdrawal, or cancellation, the market will settle to $0.50. If the match is delayed, postponed, or suspended and not rescheduled to a date within two weeks of the originally scheduled date, the market will settle to $0.50. Outcome sourced from ITF.",
+  "outcomePrices": "[\"1\",\"0\"]",
+  "openPx": 0.92,
+  "highPx": 0.99,
+  "lowPx": 0.83,
+  "lastPx": 0.99,
+  "shares": 97611.35,
+  "notional": 89402.534,
+  "openSet": 1791572379.219324,
+  "highSet": 1791621826.339508,
+  "lowSet": 1791620945.729079,
+  "settleSet": 1791622107.060573,
+  "settlePx": 0.99,
+  "settlement": 1,
+  "state": "MARKET_STATE_CLOSED"
+ },
+ "atc-idnsl-yog-pej-2026-10-10-draw": {
+  "found": true,
+  "question": "Will the Indonesia Super League match Psim Yogyakarta vs Persija Jakarta scheduled for Oct 10, 2026 end in a draw?",
+  "marketType": "drawable_outcome",
+  "smt": "soccer_team_full_time_winner",
+  "smt2": "SPORTS_MARKET_TYPE_DRAWABLE_OUTCOME",
+  "gameStart": 1791621000.0,
+  "endDate": 1791628187.0,
+  "status": "MARKET_STATUS_RESOLVED",
+  "fee": 0.0695,
+  "long": [
+   "Yes"
+  ],
+  "short": [
+   "No"
+  ],
+  "league": [
+   null,
+   null
+  ],
+  "description": "This market will settle to the winner at the end of 90 minutes plus stoppage time in the Psim Yogyakarta vs Persija Jakarta Indonesia Super League match scheduled for 2026-10-10 4:30AM ET. If the match is tied following 90 minutes plus stoppage time, the market will settle to Tie. If the match is delayed, postponed, or suspended and not rescheduled to a date within two weeks of the originally scheduled date, the market will settle to the last fair market price. Outcome sourced from Football Association of Indonesia.",
+  "outcomePrices": "[\"0\",\"1\"]",
+  "openPx": 0.27,
+  "highPx": 0.57,
+  "lowPx": 0.01,
+  "lastPx": 0.01,
+  "shares": 950.57,
+  "notional": 272.7886,
+  "openSet": 1791616725.982596,
+  "highSet": 1791626302.712525,
+  "lowSet": 1791626875.172999,
+  "settleSet": 1791628189.897453,
+  "settlePx": 0.0,
+  "settlement": 0,
+  "state": "MARKET_STATE_EXPIRED"
+ },
+ "cpc-btc-above-hr-2026-10-10-0600z-82600": {
+  "found": true,
+  "question": "BTC Price at 2:00AM ET on Sat, Oct 10",
+  "marketType": "",
+  "smt": "",
+  "smt2": "SPORTS_MARKET_TYPE_UNSPECIFIED",
+  "gameStart": 1791608400.0,
+  "endDate": 1791612029.0,
+  "status": "MARKET_STATUS_RESOLVED",
+  "fee": 0.0695,
+  "long": [
+   "Yes"
+  ],
+  "short": [
+   "No"
+  ],
+  "league": [
+   null,
+   null
+  ],
+  "description": "This market will settle to Yes if the price of Bitcoin is at or above $82,600 at 2:00AM ET on Oct 10, 2026. Otherwise, this market will settle to No. Outcome sourced from CF Benchmarks' Bitcoin Real-Time Index (BRTI), available at https://www.cfbenchmarks.com/data/indices/BRTI. The settlement value is determined as follows: in the last minute before 2:00AM ET on Oct 10, 2026, 60 BRTI prices are collected. The official and final value is the simple average of these prices, rounded to the nearest 2 decimal places. The market settles to Yes if the settlement value is greater than or equal to $82,",
+  "outcomePrices": "[\"1\",\"0\"]",
+  "openPx": 0.56,
+  "highPx": 0.98,
+  "lowPx": 0.53,
+  "lastPx": 0.96,
+  "shares": 737.27,
+  "notional": 515.1112,
+  "openSet": 1791608586.216547,
+  "highSet": 1791611017.287574,
+  "lowSet": 1791609899.248532,
+  "settleSet": 1791612034.885704,
+  "settlePx": 1.0,
+  "settlement": 1,
+  "state": "MARKET_STATE_EXPIRED"
+ },
+ "cpc-btc-above-hr-2026-10-10-0900z-82700": {
+  "found": true,
+  "question": "BTC Price at 5:00AM ET on Sat, Oct 10",
+  "marketType": "",
+  "smt": "",
+  "smt2": "SPORTS_MARKET_TYPE_UNSPECIFIED",
+  "gameStart": 1791619200.0,
+  "endDate": 1791622830.0,
+  "status": "MARKET_STATUS_RESOLVED",
+  "fee": 0.0695,
+  "long": [
+   "Yes"
+  ],
+  "short": [
+   "No"
+  ],
+  "league": [
+   null,
+   null
+  ],
+  "description": "This market will settle to Yes if the price of Bitcoin is at or above $82,700 at 5:00AM ET on Oct 10, 2026. Otherwise, this market will settle to No. Outcome sourced from CF Benchmarks' Bitcoin Real-Time Index (BRTI), available at https://www.cfbenchmarks.com/data/indices/BRTI. The settlement value is determined as follows: in the last minute before 5:00AM ET on Oct 10, 2026, 60 BRTI prices are collected. The official and final value is the simple average of these prices, rounded to the nearest 2 decimal places. The market settles to Yes if the settlement value is greater than or equal to $82,",
+  "outcomePrices": "[\"1\",\"0\"]",
+  "openPx": 0.59,
+  "highPx": 0.98,
+  "lowPx": 0.52,
+  "lastPx": 0.98,
+  "shares": 2265.54,
+  "notional": 1666.1,
+  "openSet": 1791619229.327033,
+  "highSet": 1791622442.291347,
+  "lowSet": 1791621957.572034,
+  "settleSet": 1791622834.95735,
+  "settlePx": 1.0,
+  "settlement": 1,
+  "state": "MARKET_STATE_EXPIRED"
+ },
+ "cpc-btc-above-hr-2026-10-09-1800z-82300": {
+  "found": true,
+  "question": "BTC Price at 2:00PM ET on Fri, Oct 9",
+  "marketType": "",
+  "smt": "",
+  "smt2": "SPORTS_MARKET_TYPE_UNSPECIFIED",
+  "gameStart": 1791565200.0,
+  "endDate": 1791568828.0,
+  "status": "MARKET_STATUS_RESOLVED",
+  "fee": 0.0695,
+  "long": [
+   "Yes"
+  ],
+  "short": [
+   "No"
+  ],
+  "league": [
+   null,
+   null
+  ],
+  "description": "This market will settle to Yes if the price of Bitcoin is at or above $82,300 at 2:00PM ET on Oct 9, 2026. Otherwise, this market will settle to No. Outcome sourced from CF Benchmarks' Bitcoin Real-Time Index (BRTI), available at https://www.cfbenchmarks.com/data/indices/BRTI. The settlement value is determined as follows: in the last minute before 2:00PM ET on Oct 9, 2026, 60 BRTI prices are collected. The official and final value is the simple average of these prices, rounded to the nearest 2 decimal places. The market settles to Yes if the settlement value is greater than or equal to $82,30",
+  "outcomePrices": "[\"1\",\"0\"]",
+  "openPx": 0.93,
+  "highPx": 0.97,
+  "lowPx": 0.82,
+  "lastPx": 0.94,
+  "shares": 204.0,
+  "notional": 184.49,
+  "openSet": 1791565957.973355,
+  "highSet": 1791567052.623325,
+  "lowSet": 1791566684.403553,
+  "settleSet": 1791568830.366667,
+  "settlePx": 1.0,
+  "settlement": 1,
+  "state": "MARKET_STATE_EXPIRED"
+ },
+ "aec-setkameua-mukvit-konvas-2026-10-10": {
+  "found": true,
+  "question": "Who will win in the upcoming table-tennis event Mukhin Vitalii vs Kondratenko Vasyl scheduled for October 10, 2026 at 7:30 AM UTC?",
+  "marketType": "moneyline",
+  "smt": "table_tennis_match_winner",
+  "smt2": "SPORTS_MARKET_TYPE_MONEYLINE",
+  "gameStart": 1791617400.0,
+  "endDate": 1791618488.0,
+  "status": "MARKET_STATUS_RESOLVED",
+  "fee": 0.1,
+  "long": [
+   "Mukhin Vitalii"
+  ],
+  "short": [
+   "Kondratenko Vasyl"
+  ],
+  "league": [
+   "setkameua",
+   "setkameua"
+  ],
+  "description": "This market will settle to the winner of the Mukhin Vitalii vs Kondratenko Vasyl Setka Cup Ukraine Men match scheduled for Oct 10, 2026. If the match does not begin due to a walkover, withdrawal, or cancellation, the market will settle to $0.50. If the match is delayed, postponed, or suspended and not rescheduled to a date within two days of the originally scheduled date, the market will settle to $0.50. Outcome sourced from Setka Cup Ukraine Men.",
+  "outcomePrices": "[\"1\",\"0\"]",
+  "openPx": 0.46,
+  "highPx": 0.99,
+  "lowPx": 0.4,
+  "lastPx": 0.98,
+  "shares": 14346.74,
+  "notional": 10632.2275,
+  "openSet": 1791610951.713362,
+  "highSet": 1791618488.528146,
+  "lowSet": 1791617999.513281,
+  "settleSet": 1791618489.918328,
+  "settlePx": 1.0,
+  "settlement": 1,
+  "state": "MARKET_STATE_EXPIRED"
+ },
+ "atc-j1-tok-urd-2026-10-10-draw": {
+  "found": true,
+  "question": "Will the J1 League match FC Tokyo vs Urawa Red Diamonds scheduled for Oct 10, 2026 end in a draw?",
+  "marketType": "drawable_outcome",
+  "smt": "soccer_team_full_time_winner",
+  "smt2": "SPORTS_MARKET_TYPE_DRAWABLE_OUTCOME",
+  "gameStart": 1791612000.0,
+  "endDate": 1791619656.0,
+  "status": "MARKET_STATUS_RESOLVED",
+  "fee": 0.0695,
+  "long": [
+   "Yes"
+  ],
+  "short": [
+   "No"
+  ],
+  "league": [
+   null,
+   null
+  ],
+  "description": "This market will settle to the winner at the end of 90 minutes plus stoppage time in the FC Tokyo vs Urawa Red Diamonds J1 League match scheduled for 2026-10-10 2:00AM ET. If the match is tied following 90 minutes plus stoppage time, the market will settle to Tie. If the match is delayed, postponed, or suspended and not rescheduled to a date within two weeks of the originally scheduled date, the market will settle to the last fair market price. Outcome sourced from J.League.",
+  "outcomePrices": "[\"0\",\"1\"]",
+  "openPx": 0.24,
+  "highPx": 0.45,
+  "lowPx": 0.01,
+  "lastPx": 0.01,
+  "shares": 1215.65,
+  "notional": 288.3523,
+  "openSet": 1791602142.990995,
+  "highSet": 1791617053.869838,
+  "lowSet": 1791618304.531183,
+  "settleSet": 1791619659.927942,
+  "settlePx": 0.0,
+  "settlement": 0,
+  "state": "MARKET_STATE_EXPIRED"
+ },
+ "aec-bsl-bah-ksk-2026-10-10": {
+  "found": true,
+  "question": "Who will win in the upcoming basketball event Bahcesehir Koleji vs Karsiyaka scheduled for October 10, 2026 at 10:00 AM UTC?",
+  "marketType": "moneyline",
+  "smt": "basketball_team_full_game_winner",
+  "smt2": "SPORTS_MARKET_TYPE_MONEYLINE",
+  "gameStart": 1791626400.0,
+  "endDate": 1791633515.0,
+  "status": "MARKET_STATUS_RESOLVED",
+  "fee": 0.0695,
+  "long": [
+   "Bahcesehir Koleji"
+  ],
+  "short": [
+   "Karsiyaka"
+  ],
+  "league": [
+   "bsl",
+   "bsl"
+  ],
+  "description": "This market will settle to the winner of the Bahcesehir Koleji vs Karsiyaka BSL game scheduled for Oct 10, 2026. Overtime is included if played. If the game is delayed, postponed, or suspended and not rescheduled to a date within two weeks of the originally scheduled date, the market will settle to the last fair market price. Outcome sourced from BSL.",
+  "outcomePrices": "[\"1\",\"0\"]",
+  "openPx": 0.86,
+  "highPx": 0.99,
+  "lowPx": 0.83,
+  "lastPx": 0.99,
+  "shares": 11058.86,
+  "notional": 10165.6029,
+  "openSet": 1791586186.501506,
+  "highSet": 1791633134.539049,
+  "lowSet": 1791632304.421444,
+  "settleSet": 1791633519.897782,
+  "settlePx": 1.0,
+  "settlement": 1,
+  "state": "MARKET_STATE_EXPIRED"
+ },
+ "aec-atp-jacjon-dangli-2026-10-10": {
+  "found": true,
+  "question": "Who will win in the upcoming atp event Jack Pinnington Jones vs Daniil Glinka scheduled for October 10, 2026 at 10:00 AM UTC?",
+  "marketType": "moneyline",
+  "smt": "tennis_match_winner",
+  "smt2": "SPORTS_MARKET_TYPE_MONEYLINE",
+  "gameStart": 1791626400.0,
+  "endDate": 1791636706.0,
+  "status": "MARKET_STATUS_RESOLVED",
+  "fee": 0.0695,
+  "long": [
+   "Jack Pinnington Jones"
+  ],
+  "short": [
+   "Daniil Glinka"
+  ],
+  "league": [
+   "atp",
+   "atp"
+  ],
+  "description": "This market will settle to the winner of the Jack Pinnington Jones vs Daniil Glinka ATP match scheduled for October 10 at 6:00AM. If the match does not begin due to a walkover, forfeit, injury, or any other cancellation prior to the first point being played, the market will settle to fair market price. If a player retires during the match, the opponent will be recorded as the winner. Outcome sourced from ATP.",
+  "outcomePrices": "[\"0\",\"1\"]",
+  "openPx": 0.65,
+  "highPx": 0.97,
+  "lowPx": 0.01,
+  "lastPx": 0.01,
+  "shares": 237581.89,
+  "notional": 97408.7514,
+  "openSet": 1791563137.347069,
+  "highSet": 1791631854.028636,
+  "lowSet": 1791635482.52315,
+  "settleSet": 1791636712.009036,
+  "settlePx": 0.0,
+  "settlement": 0,
+  "state": "MARKET_STATE_EXPIRED"
+ },
+ "aec-itfwo-emmlen-martha-2026-10-10": {
+  "found": true,
+  "question": "Who will win in the upcoming tennis event Emma Lene vs Mariella Thamm scheduled for October 10, 2026 at 9:30 AM UTC?",
+  "marketType": "moneyline",
+  "smt": "tennis_match_winner",
+  "smt2": "SPORTS_MARKET_TYPE_MONEYLINE",
+  "gameStart": 1791625062.0,
+  "endDate": 1791634269.0,
+  "status": "MARKET_STATUS_RESOLVED",
+  "fee": 0.0695,
+  "long": [
+   "Emma Lene"
+  ],
+  "short": [
+   "Mariella Thamm"
+  ],
+  "league": [
+   "itfwo",
+   "itfwo"
+  ],
+  "description": "This market will settle to the winner of the Emma Lene vs Mariella Thamm ITF match scheduled for Oct 10, 2026. If the match does not begin due to a walkover, withdrawal, or cancellation, the market will settle to $0.50. If the match is delayed, postponed, or suspended and not rescheduled to a date within two weeks of the originally scheduled date, the market will settle to $0.50. Outcome sourced from ITF.",
+  "outcomePrices": "[\"1\",\"0\"]",
+  "openPx": 0.31,
+  "highPx": 0.99,
+  "lowPx": 0.2,
+  "lastPx": 0.99,
+  "shares": 7909.91,
+  "notional": 5871.4522,
+  "openSet": 1791610770.419612,
+  "highSet": 1791630639.084702,
+  "lowSet": 1791626158.170873,
+  "settleSet": 1791630669.127724,
+  "settlePx": 0.99,
+  "settlement": 1,
+  "state": "MARKET_STATE_CLOSED"
+ },
+ "atc-ebfwcb-net-bel-2026-10-10-dh3-draw": {
+  "found": true,
+  "question": "Will the Netherlands vs Belgium eBattles: World Cup B match scheduled for Oct 10, 2026 end in a draw?",
+  "marketType": "drawable_outcome",
+  "smt": "efootball_team_full_time_winner",
+  "smt2": "SPORTS_MARKET_TYPE_DRAWABLE_OUTCOME",
+  "gameStart": 1791627300.0,
+  "endDate": 1791627864.0,
+  "status": "MARKET_STATUS_RESOLVED",
+  "fee": 0.0695,
+  "long": [
+   "Yes"
+  ],
+  "short": [
+   "No"
+  ],
+  "league": [
+   null,
+   null
+  ],
+  "description": "This market will settle to the result after main playing time of the Netherlands vs Belgium eBattles: World Cup B match scheduled for Oct 10, 2026. A tied final score settles the Draw outcome to Yes; extra time and penalties are not included. If the match is canceled, all outcomes will settle to $0.33. If the match is delayed, postponed, or suspended and not rescheduled to a date within two days of the originally scheduled date, all outcomes will settle to $0.33. Outcome sourced from ESportsBattle.",
+  "outcomePrices": "[\"0\",\"1\"]",
+  "openPx": 0.97,
+  "highPx": 0.97,
+  "lowPx": 0.01,
+  "lastPx": 0.01,
+  "shares": 11.7,
+  "notional": 0.323,
+  "openSet": 1791623991.182201,
+  "highSet": 1791623991.182201,
+  "lowSet": 1791627800.169185,
+  "settleSet": 1791627864.878017,
+  "settlePx": 0.0,
+  "settlement": 0,
+  "state": "MARKET_STATE_EXPIRED"
+ },
+ "atc-den1-hil-fre-2026-10-10-draw": {
+  "found": true,
+  "question": "Will the Danish 1. Division match Hillerod Fodbold vs FC Fredericia scheduled for Oct 10, 2026 end in a draw?",
+  "marketType": "drawable_outcome",
+  "smt": "soccer_team_full_time_winner",
+  "smt2": "SPORTS_MARKET_TYPE_DRAWABLE_OUTCOME",
+  "gameStart": 1791630000.0,
+  "endDate": 1791639622.0,
+  "status": "MARKET_STATUS_RESOLVED",
+  "fee": 0.0695,
+  "long": [
+   "Yes"
+  ],
+  "short": [
+   "No"
+  ],
+  "league": [
+   null,
+   null
+  ],
+  "description": "This market will settle to the winner at the end of 90 minutes plus stoppage time in the Hillerod Fodbold vs FC Fredericia Danish 1. Division match scheduled for 2026-10-10 7:00AM ET. If the match is tied following 90 minutes plus stoppage time, the market will settle to Tie. If the match is delayed, postponed, or suspended and not rescheduled to a date within two weeks of the originally scheduled date, the market will settle to the last fair market price. Outcome sourced from DBU.",
+  "outcomePrices": "[\"0\",\"1\"]",
+  "openPx": 0.49,
+  "highPx": 0.49,
+  "lowPx": 0.01,
+  "lastPx": 0.01,
+  "shares": 471.49,
+  "notional": 17.7367,
+  "openSet": 1791219933.237933,
+  "highSet": 1791219933.237933,
+  "lowSet": 1791636070.008923,
+  "settleSet": 1791639624.897897,
+  "settlePx": 0.0,
+  "settlement": 0,
+  "state": "MARKET_STATE_EXPIRED"
+ },
+ "aec-del-kec-sww-2026-10-09": {
+  "found": true,
+  "question": "Who will win in the upcoming hockey event Koelner Haie vs Schwenninger Wild Wings scheduled for October 9, 2026 at 5:30 PM UTC?",
+  "marketType": "moneyline",
+  "smt": "hockey_team_full_game_winner",
+  "smt2": "SPORTS_MARKET_TYPE_MONEYLINE",
+  "gameStart": 1791567000.0,
+  "endDate": 1791574929.0,
+  "status": "MARKET_STATUS_RESOLVED",
+  "fee": 0.0695,
+  "long": [
+   "Koelner Haie"
+  ],
+  "short": [
+   "Schwenninger Wild Wings"
+  ],
+  "league": [
+   "del",
+   "del"
+  ],
+  "description": "This market will settle to the winner of the Koelner Haie vs Schwenninger Wild Wings DEL game scheduled for Oct 9, 2026 at 1:30PM ET. Overtime and any shootout are included if played. If the game is delayed, postponed, suspended, or otherwise rescheduled and is not rescheduled to start within two calendar days of the originally scheduled date and time, the market will settle to the last fair market price. Outcome sourced from DEL.",
+  "outcomePrices": "[\"0\",\"1\"]",
+  "openPx": 0.8,
+  "highPx": 0.97,
+  "lowPx": 0.01,
+  "lastPx": 0.01,
+  "shares": 480.41,
+  "notional": 10.2026,
+  "openSet": 1791508038.726898,
+  "highSet": 1791567140.075517,
+  "lowSet": 1791574595.809771,
+  "settleSet": 1791574934.875364,
+  "settlePx": 0.0,
+  "settlement": 0,
+  "state": "MARKET_STATE_EXPIRED"
+ },
+ "aec-atp-alikac-omajas-2026-10-10": {
+  "found": true,
+  "question": "Who will win in the upcoming atp event Alibek Kachmazov vs Omar Jasika scheduled for October 10, 2026 at 4:10 AM UTC?",
+  "marketType": "moneyline",
+  "smt": "tennis_match_winner",
+  "smt2": "SPORTS_MARKET_TYPE_MONEYLINE",
+  "gameStart": 1791605100.0,
+  "endDate": 1791612358.0,
+  "status": "MARKET_STATUS_RESOLVED",
+  "fee": 0.0695,
+  "long": [
+   "Alibek Kachmazov"
+  ],
+  "short": [
+   "Omar Jasika"
+  ],
+  "league": [
+   "atp",
+   "atp"
+  ],
+  "description": "This market will settle to the winner of the Alibek Kachmazov vs Omar Jasika ATP match scheduled for October 10 at 12:10AM. If the match does not begin due to a walkover, forfeit, injury, or any other cancellation prior to the first point being played, the market will settle to fair market price. If a player retires during the match, the opponent will be recorded as the winner. Outcome sourced from ATP.",
+  "outcomePrices": "[\"1\",\"0\"]",
+  "openPx": 0.62,
+  "highPx": 0.99,
+  "lowPx": 0.35,
+  "lastPx": 0.99,
+  "shares": 93420.68,
+  "notional": 68079.3247,
+  "openSet": 1791541746.629089,
+  "highSet": 1791611934.261975,
+  "lowSet": 1791607726.591132,
+  "settleSet": 1791612359.980318,
+  "settlePx": 1.0,
+  "settlement": 1,
+  "state": "MARKET_STATE_EXPIRED"
+ },
+ "atc-ykk-val-35h-2026-10-09-draw": {
+  "found": true,
+  "question": "Will the Ykkosliiga match FC Haka Valkeakoski vs PK-35 Helsinki scheduled for Oct 9, 2026 end in a draw?",
+  "marketType": "drawable_outcome",
+  "smt": "soccer_team_full_time_winner",
+  "smt2": "SPORTS_MARKET_TYPE_DRAWABLE_OUTCOME",
+  "gameStart": 1791561600.0,
+  "endDate": 1791572429.0,
+  "status": "MARKET_STATUS_RESOLVED",
+  "fee": 0.0695,
+  "long": [
+   "Yes"
+  ],
+  "short": [
+   "No"
+  ],
+  "league": [
+   null,
+   null
+  ],
+  "description": "This market will settle to the winner at the end of 90 minutes plus stoppage time in the FC Haka Valkeakoski vs PK-35 Helsinki Ykk\u00f6sliiga match scheduled for 2026-10-09 12:00PM ET. If the match is tied following 90 minutes plus stoppage time, the market will settle to Tie. If the match is delayed, postponed, or suspended and not rescheduled to a date within two weeks of the originally scheduled date, the market will settle to the last fair market price. Outcome sourced from SPL.",
+  "outcomePrices": "[\"0\",\"1\"]",
+  "openPx": 0.27,
+  "highPx": 0.55,
+  "lowPx": 0.01,
+  "lastPx": 0.03,
+  "shares": 3966.18,
+  "notional": 744.4125,
+  "openSet": 1791561958.986366,
+  "highSet": 1791567382.831482,
+  "lowSet": 1791567833.047377,
+  "settleSet": 1791572431.426933,
+  "settlePx": 0.0,
+  "settlement": 0,
+  "state": "MARKET_STATE_EXPIRED"
+ },
+ "cpc-btc-above-hr-2026-10-10-1200z-82600": {
+  "found": true,
+  "question": "BTC Price at 8:00AM ET on Sat, Oct 10",
+  "marketType": "",
+  "smt": "",
+  "smt2": "SPORTS_MARKET_TYPE_UNSPECIFIED",
+  "gameStart": 1791630000.0,
+  "endDate": 1791633630.0,
+  "status": "MARKET_STATUS_RESOLVED",
+  "fee": 0.0695,
+  "long": [
+   "Yes"
+  ],
+  "short": [
+   "No"
+  ],
+  "league": [
+   null,
+   null
+  ],
+  "description": "This market will settle to Yes if the price of Bitcoin is at or above $82,600 at 8:00AM ET on Oct 10, 2026. Otherwise, this market will settle to No. Outcome sourced from CF Benchmarks' Bitcoin Real-Time Index (BRTI), available at https://www.cfbenchmarks.com/data/indices/BRTI. The settlement value is determined as follows: in the last minute before 8:00AM ET on Oct 10, 2026, 60 BRTI prices are collected. The official and final value is the simple average of these prices, rounded to the nearest 2 decimal places. The market settles to Yes if the settlement value is greater than or equal to $82,",
+  "outcomePrices": "[\"1\",\"0\"]",
+  "openPx": 0.97,
+  "highPx": 0.99,
+  "lowPx": 0.97,
+  "lastPx": 0.99,
+  "shares": 44.0,
+  "notional": 42.7,
+  "openSet": 1791630748.520791,
+  "highSet": 1791631924.660205,
+  "lowSet": 1791630748.520791,
+  "settleSet": 1791633630.198677,
+  "settlePx": 1.0,
+  "settlement": 1,
+  "state": "MARKET_STATE_EXPIRED"
+ },
+ "atc-idnsl-yog-pej-2026-10-10-yog": {
+  "found": true,
+  "question": "Will Psim Yogyakarta win against Persija Jakarta in the Indonesia Super League match scheduled for Oct 10, 2026?",
+  "marketType": "drawable_outcome",
+  "smt": "soccer_team_full_time_winner",
+  "smt2": "SPORTS_MARKET_TYPE_DRAWABLE_OUTCOME",
+  "gameStart": 1791621000.0,
+  "endDate": 1791628187.0,
+  "status": "MARKET_STATUS_RESOLVED",
+  "fee": 0.0695,
+  "long": [
+   "Psim Yogyakarta"
+  ],
+  "short": [
+   "Psim Yogyakarta"
+  ],
+  "league": [
+   "idnsl",
+   "idnsl"
+  ],
+  "description": "This market will settle to the winner at the end of 90 minutes plus stoppage time in the Psim Yogyakarta vs Persija Jakarta Indonesia Super League match scheduled for 2026-10-10 4:30AM ET. If the match is tied following 90 minutes plus stoppage time, the market will settle to Tie. If the match is delayed, postponed, or suspended and not rescheduled to a date within two weeks of the originally scheduled date, the market will settle to the last fair market price. Outcome sourced from Football Association of Indonesia.",
+  "outcomePrices": "[\"0\",\"1\"]",
+  "openPx": 0.18,
+  "highPx": 0.19,
+  "lowPx": 0.01,
+  "lastPx": 0.01,
+  "shares": 3586.78,
+  "notional": 407.6808,
+  "openSet": 1791539997.419891,
+  "highSet": 1791583462.978782,
+  "lowSet": 1791626700.212199,
+  "settleSet": 1791628189.916239,
+  "settlePx": 0.0,
+  "settlement": 0,
+  "state": "MARKET_STATE_EXPIRED"
+ },
+ "atc-csl-sgr-yun-2026-10-10-draw": {
+  "found": true,
+  "question": "Will the CSL match Shanghai Shenhua FC vs Yunnan Yukun FC scheduled for Oct 10, 2026 end in a draw?",
+  "marketType": "drawable_outcome",
+  "smt": "soccer_team_full_time_winner",
+  "smt2": "SPORTS_MARKET_TYPE_DRAWABLE_OUTCOME",
+  "gameStart": 1791632100.0,
+  "endDate": 1791638976.0,
+  "status": "MARKET_STATUS_RESOLVED",
+  "fee": 0.0695,
+  "long": [
+   "Yes"
+  ],
+  "short": [
+   "No"
+  ],
+  "league": [
+   null,
+   null
+  ],
+  "description": "This market will settle to the winner at the end of 90 minutes plus stoppage time in the Shanghai Shenhua FC vs Yunnan Yukun FC CSL match scheduled for 2026-10-10 7:35AM ET. If the match is tied following 90 minutes plus stoppage time, the market will settle to Tie. If the match is delayed, postponed, or suspended and not rescheduled to a date within two weeks of the originally scheduled date, the market will settle to the last fair market price. Outcome sourced from CFA.",
+  "outcomePrices": "[\"0\",\"1\"]",
+  "openPx": 0.16,
+  "highPx": 0.21,
+  "lowPx": 0.01,
+  "lastPx": 0.01,
+  "shares": 6021.78,
+  "notional": 1049.928,
+  "openSet": 1791632448.555265,
+  "highSet": 1791634586.023306,
+  "lowSet": 1791636797.713136,
+  "settleSet": 1791638979.896932,
+  "settlePx": 0.0,
+  "settlement": 0,
+  "state": "MARKET_STATE_EXPIRED"
+ },
+ "aec-kbo-kti-sls-2026-10-10": {
+  "found": true,
+  "question": "Who will win in the upcoming baseball event Kia Tigers vs SSG Landers scheduled for October 10, 2026 at 8:00 AM UTC?",
+  "marketType": "moneyline",
+  "smt": "baseball_team_full_game_winner",
+  "smt2": "SPORTS_MARKET_TYPE_MONEYLINE",
+  "gameStart": 1791619200.0,
+  "endDate": 1791632189.0,
+  "status": "MARKET_STATUS_RESOLVED",
+  "fee": 0.0695,
+  "long": [
+   "Kia Tigers"
+  ],
+  "short": [
+   "SSG Landers"
+  ],
+  "league": [
+   "kbo",
+   "kbo"
+  ],
+  "description": "This market will settle to the winner of the Kia Tigers vs SSG Landers KBO game scheduled for Oct 10, 2026 at 4:00AM ET (as of the listing of the event's first instrument). Extra innings are included if played. If the game ends in a tie, the market will settle to $0.50. If the game is delayed, postponed, suspended or otherwise rescheduled to a date and time not within two days of the originally scheduled date and time, the market will settle to the last fair market price. Outcome sourced from KBO.",
+  "outcomePrices": "[\"1\",\"0\"]",
+  "openPx": 0.4,
+  "highPx": 0.99,
+  "lowPx": 0.38,
+  "lastPx": 0.99,
+  "shares": 79769.76,
+  "notional": 63179.2765,
+  "openSet": 1791532033.8041,
+  "highSet": 1791627891.501942,
+  "lowSet": 1791532033.8041,
+  "settleSet": 1791632194.903311,
+  "settlePx": 1.0,
+  "settlement": 1,
+  "state": "MARKET_STATE_EXPIRED"
+ },
+ "atc-csl-sgr-yun-2026-10-10-yun": {
+  "found": true,
+  "question": "Will Yunnan Yukun FC win against Shanghai Shenhua FC in the CSL match scheduled for Oct 10, 2026?",
+  "marketType": "drawable_outcome",
+  "smt": "soccer_team_full_time_winner",
+  "smt2": "SPORTS_MARKET_TYPE_DRAWABLE_OUTCOME",
+  "gameStart": 1791632100.0,
+  "endDate": 1791638976.0,
+  "status": "MARKET_STATUS_RESOLVED",
+  "fee": 0.0695,
+  "long": [
+   "Yunnan Yukun FC"
+  ],
+  "short": [
+   "Yunnan Yukun FC"
+  ],
+  "league": [
+   "csl",
+   "csl"
+  ],
+  "description": "This market will settle to the winner at the end of 90 minutes plus stoppage time in the Shanghai Shenhua FC vs Yunnan Yukun FC CSL match scheduled for 2026-10-10 7:35AM ET. If the match is tied following 90 minutes plus stoppage time, the market will settle to Tie. If the match is delayed, postponed, or suspended and not rescheduled to a date within two weeks of the originally scheduled date, the market will settle to the last fair market price. Outcome sourced from CFA.",
+  "outcomePrices": "[\"0\",\"1\"]",
+  "openPx": 0.2,
+  "highPx": 0.21,
+  "lowPx": 0.01,
+  "lastPx": 0.01,
+  "shares": 2789.8,
+  "notional": 371.4767,
+  "openSet": 1791438874.916933,
+  "highSet": 1791611269.379645,
+  "lowSet": 1791636501.549836,
+  "settleSet": 1791638979.909953,
+  "settlePx": 0.0,
+  "settlement": 0,
+  "state": "MARKET_STATE_EXPIRED"
+ },
+ "atc-uwwcq-blr-ita-2026-10-09-blr": {
+  "found": true,
+  "question": "Will Belarus win against Italy in the UEFA Women's World Cup Qualifying match scheduled for Oct 9, 2026?",
+  "marketType": "drawable_outcome",
+  "smt": "soccer_team_full_time_winner",
+  "smt2": "SPORTS_MARKET_TYPE_DRAWABLE_OUTCOME",
+  "gameStart": 1791562500.0,
+  "endDate": 1791569802.0,
+  "status": "MARKET_STATUS_RESOLVED",
+  "fee": 0.0695,
+  "long": [
+   "Belarus"
+  ],
+  "short": [
+   "Belarus"
+  ],
+  "league": [
+   "uwwcq",
+   "uwwcq"
+  ],
+  "description": "This market will settle to the winner at the end of 90 minutes plus stoppage time in the Belarus vs Italy UEFA Women's World Cup Qualifying match scheduled for 2026-10-09 12:15PM ET. If the match is tied following 90 minutes plus stoppage time, the market will settle to Tie. If the match is delayed, postponed, or suspended and not rescheduled to a date within two weeks of the originally scheduled date, the market will settle to the last fair market price. Outcome sourced from UEFA.",
+  "outcomePrices": "[\"0\",\"1\"]",
+  "openPx": 0.04,
+  "highPx": 0.09,
+  "lowPx": 0.01,
+  "lastPx": 0.02,
+  "shares": 21296.58,
+  "notional": 582.464,
+  "openSet": 1791474996.281121,
+  "highSet": 1791562811.61911,
+  "lowSet": 1791558453.369193,
+  "settleSet": 1791569804.892767,
+  "settlePx": 0.0,
+  "settlement": 0,
+  "state": "MARKET_STATE_EXPIRED"
+ },
+ "cpc-btc-above-hr-2026-10-10-0800z-82500": {
+  "found": true,
+  "question": "BTC Price at 4:00AM ET on Sat, Oct 10",
+  "marketType": "",
+  "smt": "",
+  "smt2": "SPORTS_MARKET_TYPE_UNSPECIFIED",
+  "gameStart": 1791615600.0,
+  "endDate": 1791619229.0,
+  "status": "MARKET_STATUS_RESOLVED",
+  "fee": 0.0695,
+  "long": [
+   "Yes"
+  ],
+  "short": [
+   "No"
+  ],
+  "league": [
+   null,
+   null
+  ],
+  "description": "This market will settle to Yes if the price of Bitcoin is at or above $82,500 at 4:00AM ET on Oct 10, 2026. Otherwise, this market will settle to No. Outcome sourced from CF Benchmarks' Bitcoin Real-Time Index (BRTI), available at https://www.cfbenchmarks.com/data/indices/BRTI. The settlement value is determined as follows: in the last minute before 4:00AM ET on Oct 10, 2026, 60 BRTI prices are collected. The official and final value is the simple average of these prices, rounded to the nearest 2 decimal places. The market settles to Yes if the settlement value is greater than or equal to $82,",
+  "outcomePrices": "[\"1\",\"0\"]",
+  "openPx": 0.95,
+  "highPx": 0.98,
+  "lowPx": 0.75,
+  "lastPx": 0.98,
+  "shares": 1492.0,
+  "notional": 1323.28,
+  "openSet": 1791615658.320958,
+  "highSet": 1791617852.758512,
+  "lowSet": 1791616321.619224,
+  "settleSet": 1791619230.271095,
+  "settlePx": 1.0,
+  "settlement": 1,
+  "state": "MARKET_STATE_EXPIRED"
+ },
+ "aec-itfme-skamanazioua-samgartannir-2026-10-10": {
+  "found": true,
+  "question": "Who will win in the upcoming tennis event Mansouri - Ouakaa vs Garcia - Nirundorn scheduled for October 10, 2026 at 9:30 AM UTC?",
+  "marketType": "moneyline",
+  "smt": "tennis_match_winner",
+  "smt2": "SPORTS_MARKET_TYPE_MONEYLINE",
+  "gameStart": 1791628244.0,
+  "endDate": 1791636979.0,
+  "status": "MARKET_STATUS_RESOLVED",
+  "fee": 0.0695,
+  "long": [
+   "Mansouri - Ouakaa"
+  ],
+  "short": [
+   "Garcia - Nirundorn"
+  ],
+  "league": [
+   "itfme",
+   "itfme"
+  ],
+  "description": "This market will settle to the winner of the Mansouri - Ouakaa vs Garcia - Nirundorn ITF match scheduled for Oct 10, 2026. If the match does not begin due to a walkover, withdrawal, or cancellation, the market will settle to $0.50. If the match is delayed, postponed, or suspended and not rescheduled to a date within two weeks of the originally scheduled date, the market will settle to $0.50. Outcome sourced from ITF.",
+  "outcomePrices": "[\"1\",\"0\"]",
+  "openPx": 0.58,
+  "highPx": 0.99,
+  "lowPx": 0.58,
+  "lastPx": 0.99,
+  "shares": 3522.02,
+  "notional": 3052.6626,
+  "openSet": 1791603097.700477,
+  "highSet": 1791630844.639793,
+  "lowSet": 1791603097.700477,
+  "settleSet": 1791633341.626488,
+  "settlePx": 0.99,
+  "settlement": 1,
+  "state": "MARKET_STATE_CLOSED"
+ },
+ "cpc-btc-updown-1h-2026-10-10-0500z": {
+  "found": true,
+  "question": "BTC Up or Down Hourly",
+  "marketType": "",
+  "smt": "",
+  "smt2": "SPORTS_MARKET_TYPE_UNSPECIFIED",
+  "gameStart": 1791608400.0,
+  "endDate": 1791612013.0,
+  "status": "MARKET_STATUS_RESOLVED",
+  "fee": 0.0695,
+  "long": [
+   "Yes"
+  ],
+  "short": [
+   "No"
+  ],
+  "league": [
+   null,
+   null
+  ],
+  "description": "This market will settle to Up if the Bitcoin price at 2:00AM ET on Oct 10, 2026 is greater than or equal to the price at 1:00AM ET on Oct 10, 2026. Otherwise, this market will settle to Down. Outcome sourced from CF Benchmarks' Bitcoin Real-Time Index (BRTI), available at https://www.cfbenchmarks.com/data/indices/BRTI. The price at the beginning and at the end of the time range is determined the same way: in the last minute before each of those two times, 60 BRTI prices are collected. The official value for that time is the simple average of these prices, rounded to the nearest 2 decimal place",
+  "outcomePrices": "[\"1\",\"0\"]",
+  "openPx": 0.5,
+  "highPx": 0.99,
+  "lowPx": 0.38,
+  "lastPx": 0.99,
+  "shares": 87504.25,
+  "notional": 66218.3112,
+  "openSet": 1791608407.101382,
+  "highSet": 1791611669.683896,
+  "lowSet": 1791610053.935048,
+  "settleSet": 1791612015.288457,
+  "settlePx": 1.0,
+  "settlement": 1,
+  "state": "MARKET_STATE_EXPIRED"
+ },
+ "aec-jpbl-ryu-shm-2026-10-10": {
+  "found": true,
+  "question": "Who will win in the upcoming basketball event Ryukyu Golden Kings vs Shimane Susanoo Magic scheduled for October 10, 2026 at 9:05 AM UTC?",
+  "marketType": "moneyline",
+  "smt": "basketball_team_full_game_winner",
+  "smt2": "SPORTS_MARKET_TYPE_MONEYLINE",
+  "gameStart": 1791623100.0,
+  "endDate": 1791630377.0,
+  "status": "MARKET_STATUS_RESOLVED",
+  "fee": 0.0695,
+  "long": [
+   "Ryukyu Golden Kings"
+  ],
+  "short": [
+   "Shimane Susanoo Magic"
+  ],
+  "league": [
+   "jpbl",
+   "jpbl"
+  ],
+  "description": "This market will settle to the winner of the Ryukyu Golden Kings vs Shimane Susanoo Magic JPBL game scheduled for Oct 10, 2026. Overtime is included if played. If the game is delayed, postponed, or suspended and not rescheduled to a date within two weeks of the originally scheduled date, the market will settle to the last fair market price. Outcome sourced from JPBL.",
+  "outcomePrices": "[\"1\",\"0\"]",
+  "openPx": 0.69,
+  "highPx": 0.99,
+  "lowPx": 0.65,
+  "lastPx": 0.99,
+  "shares": 5480.22,
+  "notional": 4690.6679,
+  "openSet": 1791591347.089061,
+  "highSet": 1791627557.052671,
+  "lowSet": 1791623753.948755,
+  "settleSet": 1791630379.880739,
+  "settlePx": 1.0,
+  "settlement": 1,
+  "state": "MARKET_STATE_EXPIRED"
+ },
+ "atc-den1-hil-fre-2026-10-10-fre": {
+  "found": true,
+  "question": "Will FC Fredericia win against Hillerod Fodbold in the Danish 1. Division match scheduled for Oct 10, 2026?",
+  "marketType": "drawable_outcome",
+  "smt": "soccer_team_full_time_winner",
+  "smt2": "SPORTS_MARKET_TYPE_DRAWABLE_OUTCOME",
+  "gameStart": 1791630000.0,
+  "endDate": 1791639622.0,
+  "status": "MARKET_STATUS_RESOLVED",
+  "fee": 0.0695,
+  "long": [
+   "FC Fredericia"
+  ],
+  "short": [
+   "FC Fredericia"
+  ],
+  "league": [
+   "den1",
+   "den1"
+  ],
+  "description": "This market will settle to the winner at the end of 90 minutes plus stoppage time in the Hillerod Fodbold vs FC Fredericia Danish 1. Division match scheduled for 2026-10-10 7:00AM ET. If the match is tied following 90 minutes plus stoppage time, the market will settle to Tie. If the match is delayed, postponed, or suspended and not rescheduled to a date within two weeks of the originally scheduled date, the market will settle to the last fair market price. Outcome sourced from DBU.",
+  "outcomePrices": "[\"1\",\"0\"]",
+  "openPx": 0.63,
+  "highPx": 0.99,
+  "lowPx": 0.63,
+  "lastPx": 0.99,
+  "shares": 5282.13,
+  "notional": 4971.669,
+  "openSet": 1791608760.246733,
+  "highSet": 1791635731.757434,
+  "lowSet": 1791608760.246733,
+  "settleSet": 1791639624.882267,
+  "settlePx": 1.0,
+  "settlement": 1,
+  "state": "MARKET_STATE_EXPIRED"
+ },
+ "atc-idnsl-bau-pje-2026-10-10-bau": {
+  "found": true,
+  "question": "Will Bali United win against Persijap Jepara in the Indonesia Super League match scheduled for Oct 10, 2026?",
+  "marketType": "drawable_outcome",
+  "smt": "soccer_team_full_time_winner",
+  "smt2": "SPORTS_MARKET_TYPE_DRAWABLE_OUTCOME",
+  "gameStart": 1791633600.0,
+  "endDate": 1791643411.0,
+  "status": "MARKET_STATUS_RESOLVED",
+  "fee": 0.0695,
+  "long": [
+   "Bali United"
+  ],
+  "short": [
+   "Bali United"
+  ],
+  "league": [
+   "idnsl",
+   "idnsl"
+  ],
+  "description": "This market will settle to the winner at the end of 90 minutes plus stoppage time in the Bali United vs Persijap Jepara Indonesia Super League match scheduled for 2026-10-10 8:00AM ET. If the match is tied following 90 minutes plus stoppage time, the market will settle to Tie. If the match is delayed, postponed, or suspended and not rescheduled to a date within two weeks of the originally scheduled date, the market will settle to the last fair market price. Outcome sourced from Football Association of Indonesia.",
+  "outcomePrices": "[\"1\",\"0\"]",
+  "openPx": 0.69,
+  "highPx": 0.99,
+  "lowPx": 0.64,
+  "lastPx": 0.99,
+  "shares": 6826.97,
+  "notional": 6546.7889,
+  "openSet": 1791603957.239874,
+  "highSet": 1791638315.098792,
+  "lowSet": 1791635508.534488,
+  "settleSet": 1791643414.907268,
+  "settlePx": 1.0,
+  "settlement": 1,
+  "state": "MARKET_STATE_EXPIRED"
+ },
+ "atc-uwwcq-blr-ita-2026-10-09-ita": {
+  "found": true,
+  "question": "Will Italy win against Belarus in the UEFA Women's World Cup Qualifying match scheduled for Oct 9, 2026?",
+  "marketType": "drawable_outcome",
+  "smt": "soccer_team_full_time_winner",
+  "smt2": "SPORTS_MARKET_TYPE_DRAWABLE_OUTCOME",
+  "gameStart": 1791562500.0,
+  "endDate": 1791569802.0,
+  "status": "MARKET_STATUS_RESOLVED",
+  "fee": 0.0695,
+  "long": [
+   "Italy"
+  ],
+  "short": [
+   "Italy"
+  ],
+  "league": [
+   "uwwcq",
+   "uwwcq"
+  ],
+  "description": "This market will settle to the winner at the end of 90 minutes plus stoppage time in the Belarus vs Italy UEFA Women's World Cup Qualifying match scheduled for 2026-10-09 12:15PM ET. If the match is tied following 90 minutes plus stoppage time, the market will settle to Tie. If the match is delayed, postponed, or suspended and not rescheduled to a date within two weeks of the originally scheduled date, the market will settle to the last fair market price. Outcome sourced from UEFA.",
+  "outcomePrices": "[\"1\",\"0\"]",
+  "openPx": 0.9,
+  "highPx": 0.99,
+  "lowPx": 0.69,
+  "lastPx": 0.99,
+  "shares": 12589.15,
+  "notional": 11697.6684,
+  "openSet": 1791473111.082781,
+  "highSet": 1791568298.735078,
+  "lowSet": 1791567278.28107,
+  "settleSet": 1791569804.914984,
+  "settlePx": 1.0,
+  "settlement": 1,
+  "state": "MARKET_STATE_EXPIRED"
+ },
+ "aec-cs2-fly-madl-2026-10-10": {
+  "found": true,
+  "question": "Who will win in the upcoming esports event FlyQuest vs madlikewizards scheduled for October 10, 2026 at 3:30 AM UTC?",
+  "marketType": "moneyline",
+  "smt": "esports_match_winner",
+  "smt2": "SPORTS_MARKET_TYPE_MONEYLINE",
+  "gameStart": 1791610200.0,
+  "endDate": 1791612921.0,
+  "status": "MARKET_STATUS_RESOLVED",
+  "fee": 0.0695,
+  "long": [
+   "FlyQuest"
+  ],
+  "short": [
+   "madlikewizards"
+  ],
+  "league": [
+   "cs2",
+   "cs2"
+  ],
+  "description": "This market will settle to Yes if FlyQuest wins the FlyQuest vs madlikewizards CS2 match scheduled for October 10, 2026 at 3:30 AM UTC. If the match ends in a tie, the market will settle to $0.50. If the match does not begin due to a forfeit or disqualification, the market will settle to the last fair market price. If the match is delayed, postponed, or suspended and not rescheduled to a date within two weeks of the originally scheduled date, the market will settle to the last fair market price. Outcome sourced from Valve.",
+  "outcomePrices": "[\"1\",\"0\"]",
+  "openPx": 0.91,
+  "highPx": 0.99,
+  "lowPx": 0.55,
+  "lastPx": 0.99,
+  "shares": 13713.19,
+  "notional": 12670.0755,
+  "openSet": 1791402320.680633,
+  "highSet": 1791606878.307268,
+  "lowSet": 1791611944.921705,
+  "settleSet": 1791612924.888366,
+  "settlePx": 1.0,
+  "settlement": 1,
+  "state": "MARKET_STATE_EXPIRED"
+ },
+ "cpc-btc-updown-1h-2026-10-10-0800z": {
+  "found": true,
+  "question": "BTC Up or Down Hourly",
+  "marketType": "",
+  "smt": "",
+  "smt2": "SPORTS_MARKET_TYPE_UNSPECIFIED",
+  "gameStart": 1791619200.0,
+  "endDate": 1791622812.0,
+  "status": "MARKET_STATUS_RESOLVED",
+  "fee": 0.0695,
+  "long": [
+   "Yes"
+  ],
+  "short": [
+   "No"
+  ],
+  "league": [
+   null,
+   null
+  ],
+  "description": "This market will settle to Up if the Bitcoin price at 5:00AM ET on Oct 10, 2026 is greater than or equal to the price at 4:00AM ET on Oct 10, 2026. Otherwise, this market will settle to Down. Outcome sourced from CF Benchmarks' Bitcoin Real-Time Index (BRTI), available at https://www.cfbenchmarks.com/data/indices/BRTI. The price at the beginning and at the end of the time range is determined the same way: in the last minute before each of those two times, 60 BRTI prices are collected. The official value for that time is the simple average of these prices, rounded to the nearest 2 decimal place",
+  "outcomePrices": "[\"1\",\"0\"]",
+  "openPx": 0.54,
+  "highPx": 0.99,
+  "lowPx": 0.28,
+  "lastPx": 0.99,
+  "shares": 79078.91,
+  "notional": 51339.3562,
+  "openSet": 1791619207.045345,
+  "highSet": 1791622693.371517,
+  "lowSet": 1791621957.483353,
+  "settleSet": 1791622815.174813,
+  "settlePx": 1.0,
+  "settlement": 1,
+  "state": "MARKET_STATE_EXPIRED"
+ },
+ "atc-ebfsa-sas-roma-2026-10-10-dh4-roma": {
+  "found": true,
+  "question": "Will Roma defeat Sassuolo in the eBattles: Serie A match scheduled for Oct 10, 2026?",
+  "marketType": "drawable_outcome",
+  "smt": "efootball_team_full_time_winner",
+  "smt2": "SPORTS_MARKET_TYPE_DRAWABLE_OUTCOME",
+  "gameStart": 1791637800.0,
+  "endDate": 1791638489.0,
+  "status": "MARKET_STATUS_RESOLVED",
+  "fee": 0.0695,
+  "long": [
+   "Roma"
+  ],
+  "short": [
+   "Roma"
+  ],
+  "league": [
+   "ebattlesefsa",
+   "ebattlesefsa"
+  ],
+  "description": "This market will settle to the result after main playing time of the Sassuolo vs Roma eBattles: Serie A match scheduled for Oct 10, 2026. A tied final score settles the Draw outcome to Yes; extra time and penalties are not included. If the match is canceled, all outcomes will settle to $0.33. If the match is delayed, postponed, or suspended and not rescheduled to a date within two days of the originally scheduled date, all outcomes will settle to $0.33. Outcome sourced from ESportsBattle.",
+  "outcomePrices": "[\"0\",\"1\"]",
+  "openPx": 0.98,
+  "highPx": 0.98,
+  "lowPx": 0.01,
+  "lastPx": 0.01,
+  "shares": 15.17,
+  "notional": 1.2822,
+  "openSet": 1791637956.625968,
+  "highSet": 1791637956.625968,
+  "lowSet": 1791638489.696881,
+  "settleSet": 1791638489.906452,
+  "settlePx": 0.0,
+  "settlement": 0,
+  "state": "MARKET_STATE_EXPIRED"
+ },
+ "atc-ekst-wie-plo-2026-10-09-wie": {
+  "found": true,
+  "question": "Will Wieczysta Krakow win against Wisla Plock in the Ekstraklasa match scheduled for Oct 9, 2026?",
+  "marketType": "drawable_outcome",
+  "smt": "soccer_team_full_time_winner",
+  "smt2": "SPORTS_MARKET_TYPE_DRAWABLE_OUTCOME",
+  "gameStart": 1791561600.0,
+  "endDate": 1791572418.0,
+  "status": "MARKET_STATUS_RESOLVED",
+  "fee": 0.0695,
+  "long": [
+   "Wieczysta Krakow"
+  ],
+  "short": [
+   "Wieczysta Krakow"
+  ],
+  "league": [
+   "ekst",
+   "ekst"
+  ],
+  "description": "This market will settle to the winner at the end of 90 minutes plus stoppage time in the Wieczysta Krakow vs Wisla Plock Ekstraklasa match scheduled for 2026-10-09 12:00PM ET. If the match is tied following 90 minutes plus stoppage time, the market will settle to Tie. If the match is delayed, postponed, or suspended and not rescheduled to a date within two weeks of the originally scheduled date, the market will settle to the last fair market price. Outcome sourced from Ekstraklasa SA.",
+  "outcomePrices": "[\"1\",\"0\"]",
+  "openPx": 0.45,
+  "highPx": 0.99,
+  "lowPx": 0.44,
+  "lastPx": 0.99,
+  "shares": 10975.32,
+  "notional": 9547.2884,
+  "openSet": 1791520534.567922,
+  "highSet": 1791567544.235826,
+  "lowSet": 1791563495.061398,
+  "settleSet": 1791572420.323887,
+  "settlePx": 1.0,
+  "settlement": 1,
+  "state": "MARKET_STATE_EXPIRED"
+ },
+ "cpc-btc-above-hr-2026-10-09-1800z-82200": {
+  "found": true,
+  "question": "BTC Price at 2:00PM ET on Fri, Oct 9",
+  "marketType": "",
+  "smt": "",
+  "smt2": "SPORTS_MARKET_TYPE_UNSPECIFIED",
+  "gameStart": 1791565200.0,
+  "endDate": 1791568828.0,
+  "status": "MARKET_STATUS_RESOLVED",
+  "fee": 0.0695,
+  "long": [
+   "Yes"
+  ],
+  "short": [
+   "No"
+  ],
+  "league": [
+   null,
+   null
+  ],
+  "description": "This market will settle to Yes if the price of Bitcoin is at or above $82,200 at 2:00PM ET on Oct 9, 2026. Otherwise, this market will settle to No. Outcome sourced from CF Benchmarks' Bitcoin Real-Time Index (BRTI), available at https://www.cfbenchmarks.com/data/indices/BRTI. The settlement value is determined as follows: in the last minute before 2:00PM ET on Oct 9, 2026, 60 BRTI prices are collected. The official and final value is the simple average of these prices, rounded to the nearest 2 decimal places. The market settles to Yes if the settlement value is greater than or equal to $82,20",
+  "outcomePrices": "[\"1\",\"0\"]",
+  "openPx": 0.99,
+  "highPx": 0.99,
+  "lowPx": 0.99,
+  "lastPx": 0.99,
+  "shares": 1.0,
+  "notional": 0.99,
+  "openSet": 1791567052.879076,
+  "highSet": 1791567052.879076,
+  "lowSet": 1791567052.879076,
+  "settleSet": 1791568830.352997,
+  "settlePx": 1.0,
+  "settlement": 1,
+  "state": "MARKET_STATE_EXPIRED"
+ },
+ "atc-den1-hil-fre-2026-10-10-hil": {
+  "found": true,
+  "question": "Will Hillerod Fodbold win against FC Fredericia in the Danish 1. Division match scheduled for Oct 10, 2026?",
+  "marketType": "drawable_outcome",
+  "smt": "soccer_team_full_time_winner",
+  "smt2": "SPORTS_MARKET_TYPE_DRAWABLE_OUTCOME",
+  "gameStart": 1791630000.0,
+  "endDate": 1791639622.0,
+  "status": "MARKET_STATUS_RESOLVED",
+  "fee": 0.0695,
+  "long": [
+   "Hillerod Fodbold"
+  ],
+  "short": [
+   "Hillerod Fodbold"
+  ],
+  "league": [
+   "den1",
+   "den1"
+  ],
+  "description": "This market will settle to the winner at the end of 90 minutes plus stoppage time in the Hillerod Fodbold vs FC Fredericia Danish 1. Division match scheduled for 2026-10-10 7:00AM ET. If the match is tied following 90 minutes plus stoppage time, the market will settle to Tie. If the match is delayed, postponed, or suspended and not rescheduled to a date within two weeks of the originally scheduled date, the market will settle to the last fair market price. Outcome sourced from DBU.",
+  "outcomePrices": "[\"0\",\"1\"]",
+  "openPx": 0.18,
+  "highPx": 0.18,
+  "lowPx": 0.01,
+  "lastPx": 0.01,
+  "shares": 755.49,
+  "notional": 25.4871,
+  "openSet": 1791516965.152304,
+  "highSet": 1791516965.152304,
+  "lowSet": 1791632910.146216,
+  "settleSet": 1791639624.91159,
+  "settlePx": 0.0,
+  "settlement": 0,
+  "state": "MARKET_STATE_EXPIRED"
+ },
+ "aec-cs2-mel-hon-2026-10-10": {
+  "found": true,
+  "question": "Who will win in the upcoming esports event mellren vs Honved scheduled for October 10, 2026 at 8:00 AM UTC?",
+  "marketType": "moneyline",
+  "smt": "esports_match_winner",
+  "smt2": "SPORTS_MARKET_TYPE_MONEYLINE",
+  "gameStart": 1791619200.0,
+  "endDate": 1791625013.0,
+  "status": "MARKET_STATUS_RESOLVED",
+  "fee": 0.0695,
+  "long": [
+   "mellren"
+  ],
+  "short": [
+   "Honv\u00e9d"
+  ],
+  "league": [
+   "cs2",
+   "cs2"
+  ],
+  "description": "This market will settle to Yes if mellren wins the mellren vs Honv\u00e9d CS2 match scheduled for October 10, 2026 at 8:00 AM UTC. If the match ends in a tie, the market will settle to $0.50. If the match does not begin due to a forfeit or disqualification, the market will settle to the last fair market price. If the match is delayed, postponed, or suspended and not rescheduled to a date within two weeks of the originally scheduled date, the market will settle to the last fair market price. Outcome sourced from Valve.",
+  "outcomePrices": "[\"1\",\"0\"]",
+  "openPx": 0.66,
+  "highPx": 0.99,
+  "lowPx": 0.66,
+  "lastPx": 0.99,
+  "shares": 7813.76,
+  "notional": 6887.8559,
+  "openSet": 1791601722.263022,
+  "highSet": 1791624195.313151,
+  "lowSet": 1791601722.263022,
+  "settleSet": 1791625014.904589,
+  "settlePx": 1.0,
+  "settlement": 1,
+  "state": "MARKET_STATE_EXPIRED"
+ },
+ "cpc-btc-above-hr-2026-10-10-0800z-82400": {
+  "found": true,
+  "question": "BTC Price at 4:00AM ET on Sat, Oct 10",
+  "marketType": "",
+  "smt": "",
+  "smt2": "SPORTS_MARKET_TYPE_UNSPECIFIED",
+  "gameStart": 1791615600.0,
+  "endDate": 1791619229.0,
+  "status": "MARKET_STATUS_RESOLVED",
+  "fee": 0.0695,
+  "long": [
+   "Yes"
+  ],
+  "short": [
+   "No"
+  ],
+  "league": [
+   null,
+   null
+  ],
+  "description": "This market will settle to Yes if the price of Bitcoin is at or above $82,400 at 4:00AM ET on Oct 10, 2026. Otherwise, this market will settle to No. Outcome sourced from CF Benchmarks' Bitcoin Real-Time Index (BRTI), available at https://www.cfbenchmarks.com/data/indices/BRTI. The settlement value is determined as follows: in the last minute before 4:00AM ET on Oct 10, 2026, 60 BRTI prices are collected. The official and final value is the simple average of these prices, rounded to the nearest 2 decimal places. The market settles to Yes if the settlement value is greater than or equal to $82,",
+  "outcomePrices": "[\"1\",\"0\"]",
+  "openPx": 0.95,
+  "highPx": 0.99,
+  "lowPx": 0.93,
+  "lastPx": 0.99,
+  "shares": 1048.83,
+  "notional": 987.0102,
+  "openSet": 1791616308.766622,
+  "highSet": 1791617493.362906,
+  "lowSet": 1791616318.38835,
+  "settleSet": 1791619230.225674,
+  "settlePx": 1.0,
+  "settlement": 1,
+  "state": "MARKET_STATE_EXPIRED"
+ },
+ "aec-wtadb-siniakzhang-rousut-2026-10-10": {
+  "found": true,
+  "question": "Who will win in the upcoming wtadb event Siniakova / Zhang vs Routliffe / Sutjiadi scheduled for October 10, 2026 at 5:00 AM UTC?",
+  "marketType": "moneyline",
+  "smt": "tennis_match_winner",
+  "smt2": "SPORTS_MARKET_TYPE_MONEYLINE",
+  "gameStart": 1791608400.0,
+  "endDate": 1791614031.0,
+  "status": "MARKET_STATUS_RESOLVED",
+  "fee": 0.0695,
+  "long": [
+   "Siniakova K / Zhang S"
+  ],
+  "short": [
+   "Routliffe / Sutjiadi"
+  ],
+  "league": [
+   "wtadb",
+   "wtadb"
+  ],
+  "description": "This market will settle to the winner of the Siniakova / Zhang vs Routliffe / Sutjiadi WTA match scheduled for Oct 10, 2026. If the match does not begin due to a walkover, withdrawal, or cancellation, the market will settle to the last fair market price. If the match is delayed, postponed, or suspended and not rescheduled to a date within two weeks of the originally scheduled date, the market will settle to the last fair market price. Outcome sourced from WTA.",
+  "outcomePrices": "[\"1\",\"0\"]",
+  "openPx": 0.75,
+  "highPx": 0.99,
+  "lowPx": 0.68,
+  "lastPx": 0.98,
+  "shares": 10075.92,
+  "notional": 9357.9912,
+  "openSet": 1791569618.021224,
+  "highSet": 1791613125.166378,
+  "lowSet": 1791609435.240464,
+  "settleSet": 1791614034.881731,
+  "settlePx": 1.0,
+  "settlement": 1,
+  "state": "MARKET_STATE_EXPIRED"
+ },
+ "atc-bun2-fcm-h96-2026-10-10-fcm": {
+  "found": true,
+  "question": "Will 1. FC Magdeburg win against Hannover 96 in the 2. Bundesliga match scheduled for Oct 10, 2026?",
+  "marketType": "drawable_outcome",
+  "smt": "soccer_team_full_time_winner",
+  "smt2": "SPORTS_MARKET_TYPE_DRAWABLE_OUTCOME",
+  "gameStart": 1791630000.0,
+  "endDate": 1791637199.0,
+  "status": "MARKET_STATUS_RESOLVED",
+  "fee": 0.0695,
+  "long": [
+   "1. FC Magdeburg"
+  ],
+  "short": [
+   "1. FC Magdeburg"
+  ],
+  "league": [
+   "bun2",
+   "bun2"
+  ],
+  "description": "This market will settle to the winner at the end of 90 minutes plus stoppage time in the 1. FC Magdeburg vs Hannover 96 2. Bundesliga match scheduled for 2026-10-10 7:00AM ET. If the match is tied following 90 minutes plus stoppage time, the market will settle to Tie. If the match is delayed, postponed, or suspended and not rescheduled to a date within two weeks of the originally scheduled date, the market will settle to the last fair market price. Outcome sourced from DFL.",
+  "outcomePrices": "[\"1\",\"0\"]",
+  "openPx": 0.4,
+  "highPx": 0.99,
+  "lowPx": 0.4,
+  "lastPx": 0.99,
+  "shares": 17233.79,
+  "notional": 14448.1618,
+  "openSet": 1791603889.330595,
+  "highSet": 1791635904.719508,
+  "lowSet": 1791603889.330595,
+  "settleSet": 1791637199.962302,
+  "settlePx": 1.0,
+  "settlement": 1,
+  "state": "MARKET_STATE_EXPIRED"
+ }
+}

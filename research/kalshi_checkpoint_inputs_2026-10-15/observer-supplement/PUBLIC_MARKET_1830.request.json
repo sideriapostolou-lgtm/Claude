@@ -1,0 +1,26 @@
+{
+  "url": "https://api.elections.kalshi.com/trade-api/v2/markets/KXBTC15M-26OCT151830-30",
+  "method": "GET",
+  "authentication": "none",
+  "requested_at_utc": "2026-10-15T22:37:41.636622+00:00",
+  "received_at_utc": "2026-10-15T22:37:42.935813+00:00",
+  "http_status": 200,
+  "response_headers": {
+    "content-type": "application/json",
+    "date": "Thu, 15 Oct 2026 22:37:42 GMT",
+    "x-content-type-options": "nosniff",
+    "x-kalshi-cache-hits": "1",
+    "content-security-policy": "default-src 'none';",
+    "strict-transport-security": "max-age=31536000; includeSubDomains",
+    "vary": "Accept-Encoding",
+    "x-cache": "Miss from cloudfront",
+    "via": "1.1 63deeb80697e9147d9fd2dbc6d5bdefa.cloudfront.net (CloudFront)",
+    "x-amz-cf-pop": "WAW51-P6",
+    "x-amz-cf-id": "eRbflE-ZwZq-T7WdbUpon_YDSFeisJO1FE-DAKFDW64cEvR-glE9EA==",
+    "x-envoy-upstream-service-time": "1175",
+    "server": "envoy",
+    "connection": "close",
+    "transfer-encoding": "chunked"
+  },
+  "sha256": "119c8202da502f11892ac63b37011508f3bb93458885dc0b0ad12e593f58955f"
+}

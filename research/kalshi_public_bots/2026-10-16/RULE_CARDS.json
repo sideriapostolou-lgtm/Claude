@@ -1,0 +1,126 @@
+{
+  "purpose": "Observational research cards only, not executable code/configuration. Read-only exact current-source reconstruction plus explicit causal replication requirements; no live-policy, order, cap, stop, resume or variable authorization.",
+  "repository": "J0shusmc/Kalshi-BTC",
+  "source_sha": "d5a55bf10c02ddc2b429eec78b1fd847fa1b6760",
+  "source_anchors": {
+    "configuration": "scripts/btc15_live_monitor.py:2068",
+    "predicates": "scripts/btc15_live_monitor.py:2095",
+    "btc_context": "scripts/btc15_live_monitor.py:1991",
+    "entry_cutoff": "scripts/btc15_live_monitor.py:2644",
+    "sizing": "scripts/btc15_live_monitor.py:1319",
+    "orders": "scripts/btc15_live_monitor.py:489"
+  },
+  "source_common_gates": [
+    "BTC context available, with decision_time = market.open_time + 5 minutes and now >= decision_time.",
+    "first_window BTC rows satisfy market.open_time <= row.ts < decision_time; open reference is first row.open.",
+    "decision BTC close is last returned row with market.open_time < row.ts + 1 minute <= decision_time.",
+    "signal_minute is ordinal index of latest received Kalshi candle, not separately validated elapsed minute; must be 6 through 10 inclusive.",
+    "early_low is minimum side ask_low in first 5 received Kalshi candle rows.",
+    "latest side ask_close > minute-5 side ask_close, and latest ask_close > latest ask_open.",
+    "seconds_left >= 300 when close_time is available; missing close_time does not block this gate.",
+    "current side ask exists and is within lane's inclusive live-ask band.",
+    "one entered-signals key per ticker, side and strategy; do not conflate source requests with actual fills."
+  ],
+  "current_lanes": [
+    {
+      "id": "RECLAIM_70",
+      "side": "yes",
+      "early_ask_low_dollars": {
+        "gt": 0.15,
+        "lte": 0.3
+      },
+      "latest_side_ask_close_dollars": {
+        "gte": 0.35,
+        "lt": 0.55
+      },
+      "current_side_ask_dollars": {
+        "gte": 0.35,
+        "lte": 0.55
+      },
+      "first_five_btc_return_usd": {
+        "gte": -20.0,
+        "lte": 20.0
+      },
+      "decision_btc_close_minus_15m_ema21_usd": {
+        "gte": -150.0,
+        "lt": -50.0
+      },
+      "exit_limit_cents": 70
+    },
+    {
+      "id": "NO_RECLAIM_80",
+      "side": "no",
+      "early_side_ask_low_dollars": {
+        "gt": 0.35,
+        "lte": 0.4
+      },
+      "latest_side_ask_close_dollars": {
+        "gte": 0.5,
+        "lt": 0.7
+      },
+      "current_side_ask_dollars": {
+        "gte": 0.5,
+        "lte": 0.7
+      },
+      "side_signed_first_five_btc_return_usd": {
+        "gte": -75.0,
+        "lte": -25.0
+      },
+      "equivalent_actual_btc_return_usd": {
+        "gte": 25.0,
+        "lte": 75.0
+      },
+      "ema_filter": null,
+      "exit_limit_cents": 80
+    }
+  ],
+  "retired_lane": {
+    "id": "BTC_FADE_90",
+    "source_status": "Retired 2026-09-22; historical name retained only for display; absent from current configs.",
+    "evidence_status": "Historical reconstruction from committed first5 recovery report, historical signals snapshot and local entry records at this pin; no current executable predicate branch exists.",
+    "side": "yes",
+    "decision_minute": 5,
+    "entry_minute_range_inclusive": [
+      6,
+      10
+    ],
+    "early_side_ask_low_dollars": {
+      "gt": 0.25,
+      "lte": 0.3
+    },
+    "latest_side_ask_close_dollars": {
+      "gte": 0.45,
+      "lt": 0.65
+    },
+    "current_side_ask_upper_bound_dollars": 0.65,
+    "latest_candle_recovery": "Green side candle and ask_close > minute5 ask_close.",
+    "first_five_btc_return_usd": {
+      "gte": -75.0,
+      "lte": -25.0
+    },
+    "ema_filter": null,
+    "advertised_exit_limit_cents": 90,
+    "realized_receipt_subset_exit": "Seven closed BTC_FADE windows effectively exited70c via ACCOUNT_SYNC; eighth lost at official settlement. This is different from advertised90c policy.",
+    "source_references": [
+      "scripts/btc15_live_monitor.py:49",
+      "reports/btc15_first5_btc_recovery_research.md:37",
+      "reports/btc15_live_latest.json signals array",
+      "reports/btc15_trade_log.json"
+    ]
+  },
+  "source_execution": {
+    "default_size": "ceil(20% of cash cents / rounded entry cents); omits fee reserve and can exceed intended budget by one contract; if risk_pct=0 uses fixed5.",
+    "entry": "GTC limit buy at rounded current ask, post_only=false; receipt/remaining exposure must be reconciled separately.",
+    "exit": "Separate GTC sell at lane target, once current-market position observed; no ordinary stop-loss or cancellation/repricing lifecycle shown.",
+    "historical_mismatch": "12 of13 newer-lane receipt windows closed at70c (ACCOUNT_SYNC), including advertised80/90c lanes; one BTC_FADE lost at settlement."
+  },
+  "causal_replication_requirements_not_present_as_complete_source_guards": [
+    "Use actual market window timestamps and Kalshi end_period_ts, reject missing/duplicate/out-of-order minute bars rather than ordinal relabelling.",
+    "A candle is usable only after its close time and recorded first-visible receipt time; no same-boundary use of a candle whose ts labels start.",
+    "Freeze first5 BTC/EMA inputs from observations received by the declared decision cutoff. Join by completed-candle end <= cutoff, never nearest candle-start close.",
+    "Compute 15-minute EMA21 from actual completed 15-minute close buckets; match source clock convention and predeclare warmup/history.",
+    "Evaluate latest completed eligible bar6 through10, then use the next available executable side quote after the signal and declared delay; no retrospective close fill.",
+    "Require current delayed depth for desired simulated size and preserve unknown fills/queue/cancel outcomes, fees and official settlement losses.",
+    "Keep current2lane and historical3lane/realized70c-exit hypotheses distinct; research unit size is fixed for comparison, with no production cap/risk change."
+  ]
+}

@@ -1,0 +1,7 @@
+{
+  "at": "2026-10-15T18:08:53.895623+00:00",
+  "paths": {
+    "src/nightcrawler/speeddesk_live.py": "2471adff4eca63ee6abba73031da75793ae5e1b3cb0468e30e1e2d6b9934efd5",
+    "tests/test_speeddesk_lock_send_freshness.py": "e170bbc84e4b986ef370cbf267acd4a4dee9da45547042609ba858c4418f314c"
+  }
+}

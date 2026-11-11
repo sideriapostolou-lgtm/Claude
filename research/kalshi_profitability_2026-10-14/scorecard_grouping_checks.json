@@ -1,0 +1,36 @@
+{
+  "status": "READY_NOT_DEPLOYED",
+  "checked_at_pacific": "2026-10-14 4:07 PM PDT",
+  "reviewed_bundle": "5f2612a5a39bd58b70919f0f99fb75e5bbdbe67dae1f1d758ae7557e26ce872c",
+  "base": "55736fd9362188a2f9deb064a8768bbd5b666e58",
+  "full_pytest": "5502 passed /14 existing skips in304.06s",
+  "pytest_process": {
+    "started_at_utc": "2026-10-14T23:02:01.650922+00:00",
+    "ended_at_utc": "2026-10-14T23:07:07.275330+00:00",
+    "pytest_returncode": 0,
+    "command": [
+      "/workspace/shared/nightcrawler-venv/bin/python",
+      "-m",
+      "pytest",
+      "-q"
+    ],
+    "cwd": "/workspace/nightcrawler-next-evidence",
+    "log": "/workspace/shared/scorecard-grouping-full-pytest-confirmed.log",
+    "tail": [
+      "SKIPPED [1] tests/test_sources_pumpfun_trades.py:669: live network test; set NIGHTCRAWLER_LIVE_TESTS=1 to run",
+      "SKIPPED [1] tests/test_sources_rugcheck.py:296: live network test; set NIGHTCRAWLER_LIVE_TESTS=1 to run",
+      "SKIPPED [1] tests/test_sources_solana_rpc.py:306: live network test; set NIGHTCRAWLER_LIVE_TESTS=1 to run",
+      "SKIPPED [1] tests/test_trenddesk.py:339: lab 3's cache is not here (/tmp/claude-0/-home-user-Claude/05bcdce0-3f75-5784-bd4b-6b2d4ca643ba/scratchpad/lab3)",
+      "5502 passed, 14 skipped in 304.06s (0:05:04)"
+    ]
+  },
+  "first_full_run": "5502 passed/14skips306.34s, contradictory tool exit1 retained; cause unestablished",
+  "mypy": "126 source files clean",
+  "ruff": "all3 changed Python files clean",
+  "benchmark_script_sha256": "900d14dcc8e8d2bfa1dcc8be1732fa7d1c375159864907233c755ebcf93c96b9",
+  "benchmark_results_sha256": "72653d8f8085d9819adf2d7dd90de85894931b7a8aeec9461b95bce4dc6427f2",
+  "evidence_archive_sha256": "f293f17678c212214537755f766255ebf22bc5bb01dece3c9da291218d3a7220",
+  "benchmark_limitation": "Invented zero-fee history; no causal production speedup or profitability claim. Exact first-run script bytes not retained; first observations preserved.",
+  "financial_changes": false,
+  "remaining": "Safe release, exact deployment and retained-accounting checks, then actual post-change timing evidence. EXEC-DELAY-001 remains open."
+}

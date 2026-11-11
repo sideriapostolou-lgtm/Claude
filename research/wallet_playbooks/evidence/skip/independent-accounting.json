@@ -1,0 +1,15 @@
+{
+  "source": "independent second implementation Decimal sum raw activity, raw Gamma and strictlyinterior window slug set",
+  "types": {
+    "TRADE": 5136,
+    "REDEEM": 65
+  },
+  "purchase": "61820.415432",
+  "redemptions": "61305.675022",
+  "payout_from_gamma_and_quantity": "61305.675022",
+  "gross_price_times_size": "60194.9215420167206301",
+  "increment_in_actual_purchase_cash": "1625.4938899832793699",
+  "net_before_later_rebates": "-514.740410",
+  "windows": 65,
+  "each_redemption_matches_quantity_gamma": true
+}

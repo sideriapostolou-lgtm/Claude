@@ -1,0 +1,218 @@
+"""Independent fake-only architecture acceptance checks; no production client."""
+import copy
+import itertools
+
+import pytest
+
+from nightcrawler.speeddesk_live_model import ActualFill, LiveLimits, LiveRiskBook
+from nightcrawler.speeddesk_model import Window
+
+W = 'KXBTC15M-INDEPENDENT'
+CAPS = LiveLimits(window_usd=10, open_usd=20, day_loss_usd=6, total_loss_usd=10,
+                  clip=5, fee_precision=.0001)
+
+
+def fresh():
+    b = LiveRiskBook(CAPS)
+    b.add_window(Window(W, 1000, 1900, 100, taker_coefficient=.07,
+                        maker_coefficient=0, venue='kalshi'))
+    b.update_cash(30, 1010)
+    return b
+
+
+def place(b, name, side, price, size, *, lock=False, now=1010):
+    return b.reserve_intent(W, side, 'take' if lock else 'rest', price, size,
+                            now, 'nc-speed-' + name, .9, lock=lock)
+
+
+def fill(b, intent, size, name, *, fee=0, now=1011):
+    assert b.record_fill(ActualFill(name, 'venue-' + intent.client_order_id,
+                                   intent.client_order_id, W, intent.side,
+                                   intent.price, size, fee, now))
+
+
+def race_book():
+    b = fresh()
+    first = place(b, 'first', 'down', .49, 5)
+    fill(b, first, 4, 'first-four')
+    hedge = place(b, 'hedge', 'up', .45, 4)
+    fill(b, hedge, 4, 'hedge-four', now=1012)
+    assert b.protected_windows == {W}
+    assert first.remaining == 1 and first.reservation_active
+    fill(b, first, 1, 'late-first', now=1013)
+    return b
+
+
+def test_new_scope_restricts_old_admission_without_lowering_stops():
+    b = fresh()
+    for name, side, price in [('d','down',.49),('u','up',.45)]:
+        order = place(b, name, side, price, 5)
+        fill(b, order, 5, name)
+    assert b.inventory[W].spent == pytest.approx(4.7)
+    assert b.can_buy(W, 'down', 'rest', .51, 3, 1012) == 'pair_protected'
+    assert b.can_buy(W, 'up', 'rest', .45, 1, 1012) == 'pair_protected'
+    assert b.limits == CAPS
+    assert not b.halted and not b.day_latched(1012)
+
+
+def test_sticky_race_and_same_side_reservation_are_not_free_hedge_capacity():
+    b = race_book()
+    assert b.inventory[W].up.shares == 4 and b.inventory[W].down.shares == 5
+    assert b.can_buy(W, 'down', 'rest', .49, 1, 1013) == 'pair_protected'
+    assert b.can_buy(W, 'up', 'rest', .45, 1, 1013) == ''
+    hedge = place(b, 'repair', 'up', .45, 1, now=1013)
+    assert b.strictly_balancing_intent(hedge.client_order_id)
+    b.request_cancel(hedge.client_order_id)
+    assert b.can_buy(W, 'up', 'rest', .44, 1, 1013) == 'order_pending'
+    assert hedge.reservation_active and hedge.reserved == pytest.approx(.45)
+    fill(b, hedge, .5, 'repair-half', now=1014)
+    assert b.strictly_balancing_intent(hedge.client_order_id)
+    assert b.protected_windows == {W}
+    assert b.can_buy(W, 'down', 'rest', .49, 1, 1014) == 'pair_protected'
+
+
+def test_durable_marker_and_legacy_current_only_are_distinct():
+    b = race_book()
+    state = b.to_state()
+    restored = LiveRiskBook.from_state(copy.deepcopy(state))
+    restored.update_cash(30,1013)
+    assert restored.protected_windows == {W}
+    assert restored.can_buy(W,'down','rest',.49,1,1013) == 'pair_protected'
+    legacy = copy.deepcopy(state)
+    del legacy['protected_windows']
+    old = LiveRiskBook.from_state(legacy)
+    old.update_cash(30,1013)
+    assert old.protected_windows == set()
+    assert old.can_buy(W,'down','rest',.49,1,1013) == ''
+    # Restore must not alter a single financial field or infer a historical balance from fill ordering.
+    for key, value in state.items():
+        if key != 'protected_windows':
+            assert restored.to_state()[key] == value
+
+
+def test_legacy_current_pair_seeds_without_historical_replay():
+    b = fresh()
+    for side in ['up','down']:
+        i=place(b,side,side,.45,5)
+        fill(b,i,5,side)
+    state=b.to_state()
+    del state['protected_windows']
+    state['fills']=dict(reversed(list(state['fills'].items())))
+    loaded=LiveRiskBook.from_state(state)
+    assert loaded.protected_windows == {W}
+
+
+@pytest.mark.parametrize('bad',[None, 'x', {}, [W,W], ['KXBTC15M-UNKNOWN'], [1], [True], [[]]])
+def test_bad_marker_fails_closed(bad):
+    state=race_book().to_state()
+    state['protected_windows']=bad
+    with pytest.raises(ValueError):
+        LiveRiskBook.from_state(state)
+
+
+@pytest.mark.parametrize('other_price,fee,protected',[(.50,0,True),(.51,0,False),(.51,.01,False),(.50,.05,False)])
+def test_pair_profit_includes_actual_fees_and_late_lock_remains(other_price,fee,protected):
+    b=fresh()
+    first=place(b,'first','down',.49,5)
+    fill(b,first,5,'first')
+    b.update_cash(30,1670)
+    assert b.can_lock(W,'up',other_price,5,1670) == ''
+    hedge=place(b,'lock','up',other_price,5,lock=True,now=1670)
+    fill(b,hedge,5,'lock',fee=fee,now=1671)
+    assert not b.integrity_error
+    assert (W in b.protected_windows) is protected
+
+
+def test_floor_improves_for_every_admitted_repair_partial():
+    # A first remainder raced after a partial4/4pair; new repairs may reduce that directional exposure.
+    for price,qty in itertools.product([.01,.20,.45,.50,.98],[1,2,3,4,5]):
+        b=race_book()
+        if b.can_buy(W,'up','rest',price,qty,1013):
+            continue
+        assert qty == 1
+        before=min(b.inventory[W].up.shares,b.inventory[W].down.shares)-b.inventory[W].spent
+        for part in [.01,.25,.5,1.0]:
+            payout=min(b.inventory[W].up.shares+part,b.inventory[W].down.shares)
+            assert payout-b.inventory[W].spent-part*price >= before-1e-9
+
+
+def test_uncheckpointed_batch_replay_gap_is_explicit_not_historical_claim():
+    # Exact accepted orders exist before checkpoint; full pair is seen in one receipt ordering only.
+    b=fresh()
+    first=place(b,'first','down',.49,5)
+    fill(b,first,4,'first-four')
+    hedge=place(b,'hedge','up',.45,4)
+    before=b.to_state()
+    fill(b,hedge,4,'hedge-four',now=1012)
+    fill(b,first,1,'late-first',now=1013)
+    assert b.protected_windows == {W}
+    recovered=LiveRiskBook.from_state(before)
+    # Venue response order need not be chronological after crash before checkpoint.
+    fill(recovered,recovered.intents[first.client_order_id],1,'late-first',now=1013)
+    fill(recovered,recovered.intents[hedge.client_order_id],4,'hedge-four',now=1012)
+    assert recovered.protected_windows == set()
+    assert recovered.inventory[W] == b.inventory[W]
+
+
+def attach_book(desk,b):
+    from nightcrawler.speeddesk_live import Intent
+    desk.book=b
+    desk.intents={key:Intent(key,i.window,i.side,i.kind,i.price,i.size,i.fair or .5,
+                            i.created_at,order_id=i.order_id or '',terminal=not i.reservation_active)
+                  for key,i in b.intents.items()}
+
+
+def test_real_checkpoint_archive_restore_keeps_top_level_marker(tmp_path):
+    from test_speeddesk_live import make_desk,reopen
+    from nightcrawler.speeddesk_live_model import WINDOW_PARTS
+    desk,account,clock=make_desk(tmp_path,caps={'speeddesk_kalshi_window_usd':10.,'speeddesk_kalshi_open_usd':20.})
+    b=race_book()
+    b.settle(W,True,1901,'settled')
+    attach_book(desk,b)
+    before=b.to_state()
+    desk.checkpoint()
+    saved=desk.ledger.get_kv('kalshi_live_state')
+    assert saved['book']['protected_windows'] == [W]
+    assert W not in saved['book']['windows']
+    chunk=desk.ledger.get_kv('kalshi_live_archive/0')
+    assert set(chunk['book']) == set(WINDOW_PARTS)
+    restored=reopen(tmp_path,desk,account,clock,caps={'speeddesk_kalshi_window_usd':10.,'speeddesk_kalshi_open_usd':20.})
+    try:
+        assert restored.book.protected_windows == {W}
+        after=restored.book.to_state()
+        for key,value in before.items():
+            if key != 'limits':
+                assert after[key] == value
+    finally:
+        restored.close()
+
+
+def test_cancel_request_retains_legacy_residual_and_transport_guard_refuses(tmp_path):
+    import asyncio
+    from test_speeddesk_live import make_desk
+    b=fresh()
+    for side in ['up','down']:
+        i=place(b,side,side,.45,5)
+        fill(b,i,5,side)
+    # Legacy existing liability: construct the old admission policy before enforcing its new restriction.
+    b.protected_windows.clear()
+    extra=place(b,'legacy-extra','up',.45,3)
+    b.mark_submitted(extra.client_order_id,'venue-extra')
+    b.protected_windows.add(W)
+    desk,account,clock=make_desk(tmp_path)
+    attach_book(desk,b)
+    desk.client=account
+    desk.authenticated=desk.startup_done=True
+    desk.account_at=clock.now()
+    try:
+        assert desk._send_guard(extra.client_order_id) is False
+        original=b.reserved_usd
+        asyncio.run(desk._cancel_unsafe())
+        assert account.cancels == ['venue-extra']
+        assert b.intents[extra.client_order_id].cancel_requested
+        assert b.intents[extra.client_order_id].reservation_active
+        assert b.reserved_usd == original
+        assert desk.cancel_reasons[extra.client_order_id] == 'pair_protected'
+        assert extra.client_order_id in desk.cancel_acked
+    finally:
+        desk.close()

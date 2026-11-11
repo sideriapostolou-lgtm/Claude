@@ -1,0 +1,56 @@
+{
+  "bytes": {
+    "states_including_duplicated_legacy": [
+      77775,
+      78195,
+      78195,
+      78195,
+      78195,
+      77775
+    ],
+    "joint_optional": 436561,
+    "lineage_panel": 1667,
+    "full_arena_panel": 18815
+  },
+  "gates": {
+    "per_state_262144": true,
+    "joint_2MiB": true,
+    "full_panel_256KiB": true,
+    "checkpoint_p95_100ms": true,
+    "checkpoint_max_250ms": true,
+    "extra_frame_mean_1ms": true,
+    "save_sequence_and_durability_equal": true
+  },
+  "cpu_summary": {
+    "checkpoint_and_json": {
+      "n": 20,
+      "mean": 23.6916805,
+      "p95": 25.562234,
+      "max": 28.4044
+    },
+    "one_learner_state_and_json": {
+      "n": 20,
+      "mean": 2.0868160000000002,
+      "p95": 2.237098,
+      "max": 2.300356
+    },
+    "full_panel_and_json": {
+      "n": 20,
+      "mean": 0.4296349,
+      "p95": 0.542102,
+      "max": 0.58302
+    },
+    "startup_restore": {
+      "n": 10,
+      "mean": 91.7846528,
+      "p95": 124.64718,
+      "max": 124.64718
+    },
+    "steady_frame_extra": {
+      "n": 20,
+      "mean": 0.0142122975,
+      "p95": 0.01966852000000001,
+      "max": 0.020398290000000006
+    }
+  }
+}

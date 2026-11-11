@@ -1,0 +1,21 @@
+..........................................................F.             [100%]
+=================================== FAILURES ===================================
+__________________ test_bounded_history_labels_and_json_state __________________
+
+    def test_bounded_history_labels_and_json_state() -> None:
+        learner = ProbabilityLearning(0)
+        for i in range(100):
+            w = window(1000 + 900 * i)
+            learner.discover([w], w.start - 100)
+            predict(learner, w, w.start + 300)
+            learner.labels_received([(w.slug, bool(i % 2))], w.end)
+            learner.advance([w], 100, .001, w.end, w.end)
+>       assert len(learner.recent) == len(learner.labels) == 64 and len(learner.pending) == 0
+E       AssertionError: assert (1 == 64)
+E        +  where 1 = len({'KXBTC15M-1000': {'outcome': False, 'received_at': 1900}})
+E        +    where {'KXBTC15M-1000': {'outcome': False, 'received_at': 1900}} = <nightcrawler.kalshi_probability_learning.ProbabilityLearning object at 0x7fc0f1e10dd0>.labels
+
+tests/test_kalshi_probability_learning.py:263: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_kalshi_probability_learning.py::test_bounded_history_labels_and_json_state
+1 failed, 59 passed in 0.27s

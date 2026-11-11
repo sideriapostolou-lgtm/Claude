@@ -1,0 +1,20 @@
+def scorecard(self, day: str, *, twin: bool = False) -> dict[str, Any]:
+    windows = [asdict(window) for window in self.book.windows.values() if window.end <= self.clock()]
+    fills = self.evidence.fills if twin else [asdict(row) for row in self.book.fills.values()]
+    settlements = ([asdict(row) for row in self.twin.closed] if twin else
+                   [asdict(row) for row in self.book.settled.values()])
+    coverage = self.evidence.coverage(windows)
+    if not twin:
+        for window in windows:
+            if self.book.integrity_error or any(
+                intent.window == window["slug"] and (not intent.terminal or intent.uncertain
+                    or self.book.intents[intent.client_order_id].reservation_active)
+                for intent in self.intents.values()
+            ):
+                coverage[window["slug"]] = None
+    report = window_scorecard(day, windows=windows, fills=fills, settlements=settlements,
+                            coverage=coverage, scope="practice_twin" if twin else "real",
+                            as_of=self.clock(), day_coverage_complete=self.evidence.complete_kalshi_day(
+                                day, windows, self.clock()))
+    report.update(self.evidence.availability([window for window in windows if utc_day(window["end"]) == day]))
+    return report

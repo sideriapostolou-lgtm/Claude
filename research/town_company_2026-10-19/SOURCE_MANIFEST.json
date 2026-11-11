@@ -1,0 +1,46 @@
+{
+  "base_commit": "9c2c776bfc4492b2ccf7e2b93122a07dc2025041",
+  "files": [
+    {
+      "path": "src/nightcrawler/worldtycoon.py",
+      "sha256": "512a9d5cd286d15456da9aa4bfb233c063c72da0292f94bd1b0345a04bc7987d",
+      "bytes": 62751
+    },
+    {
+      "path": "src/nightcrawler/worldtycoon_camera.py",
+      "sha256": "7c7b1ccc7518ed64b121bfe9d48d41cc9c2d356efd7014572ec9c35811ac97fb",
+      "bytes": 11476
+    },
+    {
+      "path": "src/nightcrawler/worldtycoon_company.py",
+      "sha256": "9f8cccd456da8a8d80743376ec595bf8ae80c45100c0a2e6173c67c9934c2558",
+      "bytes": 15352
+    },
+    {
+      "path": "src/nightcrawler/worldtycoon_park.py",
+      "sha256": "4496bfd06aa865bd3513b2fe25ecd97ebb1a3694db8f095875f012e0a5b3dfb5",
+      "bytes": 22904
+    },
+    {
+      "path": "src/nightcrawler/worldtycoon_workflow.py",
+      "sha256": "f9ab94c6aa4fc4cdd22d7073b988bdcf62cc3a8007ff9bcdc064e8b7d69de772",
+      "bytes": 7183
+    },
+    {
+      "path": "tests/test_world_tycoon_camera.py",
+      "sha256": "7600dbd0ce65b788370b53315c9efb63e4d8f26d3bb253dba62911ba02d207bd",
+      "bytes": 11875
+    },
+    {
+      "path": "tests/test_world_tycoon_campus_art.py",
+      "sha256": "502f9bff55272fef22b4eacb61052c2f96bcc5084b45ab31c7c92ae9b447e856",
+      "bytes": 2531
+    },
+    {
+      "path": "tests/test_world_tycoon_company.py",
+      "sha256": "3e42127fd5d2b8b491db00bdc029e8869dc0224975396519ac99e6965431ae0c",
+      "bytes": 12078
+    }
+  ],
+  "status": "local candidate, not deployed"
+}

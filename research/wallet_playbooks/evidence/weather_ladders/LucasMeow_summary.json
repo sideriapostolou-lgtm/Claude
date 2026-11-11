@@ -1,0 +1,60 @@
+{
+  "name": "LucasMeow",
+  "retrieved_at": "2026-10-13T18:57:32.352811+00:00",
+  "url": "https://data-api.polymarket.com/trades?user=0x7f3c8979d0afa00007bae4747d5347122af05613&limit=500&offset=0&takerOnly=false",
+  "status": 200,
+  "sha256": "52993c45f3c5472a94589b0ac50fc7e5b662406610324b48b3adcad4f430a187",
+  "n": 500,
+  "min_timestamp": 1782206386,
+  "max_timestamp": 1791826794,
+  "buy_count": 493,
+  "sell_count": 7,
+  "price_median": 0.98,
+  "size_median": 199.99,
+  "buy_outcomes": {
+    "No": 444,
+    "Yes": 49
+  },
+  "titles": [
+    [
+      "Will Bitcoin dip to $60,000 in August?",
+      44
+    ],
+    [
+      "Will Ethereum reach $3,000 in August?",
+      31
+    ],
+    [
+      "Will Ethereum reach $2,500 in July?",
+      30
+    ],
+    [
+      "Will Bitcoin dip to $35,000 by December 31, 2026?",
+      27
+    ],
+    [
+      "Will Bitcoin reach $75,000 in July?",
+      26
+    ],
+    [
+      "Will Norway win on 2026-07-05?",
+      23
+    ],
+    [
+      "AI bubble burst in 2026?",
+      22
+    ],
+    [
+      "Will Bitcoin dip to $45,000 by December 31, 2026?",
+      21
+    ],
+    [
+      "Will Bitcoin dip to $60,000 in September?",
+      19
+    ],
+    [
+      "Will Argentina win on 2026-07-07?",
+      18
+    ]
+  ]
+}

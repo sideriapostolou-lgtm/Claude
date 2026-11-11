@@ -1,0 +1,21 @@
+{
+  "recorded_at_utc": "2026-10-15T19:45:12.800183+00:00",
+  "finite_next_read": {
+    "start": "2026-10-15T19:30:00Z",
+    "end": "2026-10-15T19:47:00Z",
+    "events": 12,
+    "limit_each": 500
+  },
+  "required_checks": [
+    "Exact declared target, original pre-outcome forecast and matching frozen fields in official score.",
+    "Strict boolean outcome, score at or after declared end, baseline/shadow Brier arithmetic, source/protocol and original status counts.",
+    "Original public market result and exact BRTI/tie rules; preserve any failed read or unsettled result.",
+    "Actual target fills and settlement split fees/locked/direction; exclude prior partial and next tail only from target results, retain all losses.",
+    "Source still8c8681a, no live decision changes; both services and boundedTraceback/halt query, missing native volume/disk/continuouscoverage explicit.",
+    "Independent original reparse; release archive hashes/CRC/privacy then docs-only publication."
+  ],
+  "not_completion_claims": [
+    "One prediction cannot prove betteraccuracy, guaranteedprofit, solvedupstreamgaps or fullnativecheckpointdurability.",
+    "No cap increase, stopreset/resume, newlivedesk, Railwayvariable change or manualmeasurementorder."
+  ]
+}

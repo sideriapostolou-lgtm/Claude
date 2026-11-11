@@ -1,0 +1,108 @@
+{
+  "checked_at_utc": "2026-10-15T08:25:12Z",
+  "checked_at_pacific": "Thursday, October 15, 2026 at 1:25:12 AM PDT",
+  "branch_head": "936ed53d930ecc036087a80dc21bdd37992ddf45",
+  "github_files": [
+    {
+      "path": "AGENTS.md",
+      "blob_sha": "389266a51ccba3d21072371fd680bc8e4aff2af9"
+    },
+    {
+      "path": "docs/COORDINATION.md",
+      "blob_sha": "7ed7a14a435a101e683a0ac377a4e9ac5f2b6858"
+    },
+    {
+      "path": "docs/WORKLOG.md",
+      "blob_sha": "7cb210374be132cebb621da22d3aad97b9d24d96"
+    },
+    {
+      "path": "research/kalshi_profitability_2026-10-14/PR47_DEPLOYMENT.md",
+      "blob_sha": "33c13fb39f85c958e322b8afbcaecfc052d6531b"
+    },
+    {
+      "path": "research/tjr_validation_2026-10-14/HISTORICAL_STATUS.json",
+      "blob_sha": "e079d3c762ced81b2262a5261ab164f291e3d5ac"
+    }
+  ],
+  "gate": {
+    "pr47_exact_deployment_restart_evidence_recorded_complete": true,
+    "current_execution_work_complete": false,
+    "earlier_explicit_offline_reprioritization_recorded": true,
+    "new_reprioritization_or_production_authority_from_reminder": false,
+    "reason": "EXEC-DELAY-001 remains open for main-feed freshness attribution/correction and verification. Existing offline TJR priority persists, but actual MNQ development bars and verified costs are absent."
+  },
+  "historical": {
+    "source_version": "TJR_BC23_MNQZ25_SWEEP_BOS_v0.1.1_calendar",
+    "status": "BLOCKED",
+    "reason": "VERIFIED_ACTUAL_MNQZ2025_DATA_BUNDLE_MISSING",
+    "historical_trades": 0,
+    "historical_pnl_usd": null,
+    "holdout_opened": false,
+    "paper_started": false,
+    "live_enabled": false,
+    "profitability_claim_allowed": false
+  },
+  "saved_full_page_snapshot_hashes_verified": {
+    "MAIN_HANDOFF.md": "48c693c921bb6e30df7ddec4e21003db8b5a3708c23181f6d53ef884c08ed238",
+    "MNQ_PROTOTYPE.md": "301af993b19232a855265405a15cc04a5aa3d0d0eabfe21a06cd13f2ee79b706"
+  },
+  "page_checks": {
+    "shape": "Current change feeds from the exact sequences in the previously completed full saved reads, not new full reads.",
+    "original_saved_block_counts": {
+      "main": 92,
+      "prototype": 32
+    },
+    "responses": [
+      {
+        "content": [
+          {
+            "type": "text",
+            "text": "{\n  \"after_sequence\": 2,\n  \"changed_blocks\": [],\n  \"changes\": [],\n  \"deleted_block_ids\": [],\n  \"markdown_diff\": \"\",\n  \"page_id\": \"page_d0294998a7cc8191b771278fbfb98a2f\",\n  \"resync_required\": false,\n  \"through_sequence\": 2,\n  \"truncated\": false\n}"
+          }
+        ],
+        "structuredContent": {
+          "page_id": "page_d0294998a7cc8191b771278fbfb98a2f",
+          "after_sequence": 2,
+          "through_sequence": 2,
+          "markdown_diff": "",
+          "changes": [],
+          "changed_blocks": [],
+          "deleted_block_ids": [],
+          "truncated": false,
+          "resync_required": false
+        },
+        "isError": false
+      },
+      {
+        "content": [
+          {
+            "type": "text",
+            "text": "{\n  \"after_sequence\": 1,\n  \"changed_blocks\": [],\n  \"changes\": [],\n  \"deleted_block_ids\": [],\n  \"markdown_diff\": \"\",\n  \"page_id\": \"page_33c0bb7e8dac81919e012fc502bae98a\",\n  \"resync_required\": false,\n  \"through_sequence\": 1,\n  \"truncated\": false\n}"
+          }
+        ],
+        "structuredContent": {
+          "page_id": "page_33c0bb7e8dac81919e012fc502bae98a",
+          "after_sequence": 1,
+          "through_sequence": 1,
+          "markdown_diff": "",
+          "changes": [],
+          "changed_blocks": [],
+          "deleted_block_ids": [],
+          "truncated": false,
+          "resync_required": false
+        },
+        "isError": false
+      }
+    ],
+    "conclusion": "Both current Page versions unchanged: main2/prototype1, no diff, no truncation or resync. Saved complete content/code and tests reused."
+  },
+  "independent_read_check": {
+    "requested_model": "gpt-6-luna",
+    "task": "/root/tjr_queue_0821_evidence",
+    "scope": "Exactly two pinned PR47/status GitHub reads; root checked local Git objects."
+  },
+  "access_note": "One local exec process-creation attempt failed with exec-server transport disconnected before its command ran. Subsequent pwd and the required git fetch/fast-forward/status completed successfully. GitHub/Page reads succeeded; no historical-data access attempted.",
+  "decision": "Keep TJR queued/blocked, unfinished and automation unchanged. No substantive validation/paper milestone or material access-blocker change; suppress routine unchanged owner notification.",
+  "next": "Authorized actual MNQZ2025 Sep19–Oct31 development minute OHLCV with verified contract mapping/license/timestamps/bar convention and actual account/execution/platform/data costs; then saved frozen development validation. Later paper requires verified current contract/feed/runtime and saved start evidence. Live remains disabled.",
+  "scope": "Current evidence/Pages version check and docs only. No reconstruction, duplicate synthetic testing, data probe, historical/holdout run, source release, production deployment, order, funding, Railway variable, money cap, stop or resume change."
+}

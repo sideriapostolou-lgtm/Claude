@@ -1,0 +1,1893 @@
+{
+  "target": "KXBTC15M-26OCT152245-45",
+  "period_utc": [
+    "2026-10-16T02:30:00Z",
+    "2026-10-16T02:45:00Z"
+  ],
+  "period_pdt": [
+    "2026-10-15T19:30:00-07:00",
+    "2026-10-15T19:45:00-07:00"
+  ],
+  "source_app": "0520f7468174d6a37f0ee7dfe64284b1a6921439",
+  "deployment": "d32c256b-618d-4927-b44a-f182d569977b",
+  "scope": "bounded supplied native receipts only; no new requests/source changes/strategy fit",
+  "input_sha256": {
+    "PRIOR_LOSS_FILLS.json": "29b1ce4ba725757801b4df12f18cf6be77b920ebfcedac758084a0db90cde448",
+    "PRIOR_LOSS_ORDERS.json": "29e3afa2d825a0eb312900ca870cfc7bfb9d479c8aaab97a5273085092adf773",
+    "PRIOR_LOSS_REJECTS.json": "819e48831b76e70128fd339e9be4a7b64422780bc399c93733e4321a100e771e",
+    "PRE_RELEASE_SETTLEMENT.json": "3f40a2d3aee4629d27e0315bb41fb185a7b936f0ff0f7fa3d9fe1bd932ee9b68",
+    "FINAL_PRE_FINANCIAL.json": "8e3859ba381ab691b886288f9be920c2d690ab43310609b68f1a78e5d340a130",
+    "OLD_FINAL_STATUS_ACTIONS.json": "7384af6b107b8c9ab4fad33bb8ccbb2e416e3e11f44514a5b784738216b6a6e9"
+  },
+  "row_counts": {
+    "fills_all": 4,
+    "fills_target": 3,
+    "fills_excluded_next_window": 1,
+    "order_rows_all": 68,
+    "order_rows_target": 45,
+    "order_rows_excluded_next_window": 23,
+    "target_intents": 23,
+    "target_acks": 22,
+    "target_intents_by_side": {
+      "down": 6,
+      "up": 17
+    },
+    "rejects_all": 2,
+    "rejects_target": 1,
+    "rejects_excluded_next_window": 1
+  },
+  "reconciliation": {
+    "up_qty": "5.0",
+    "down_qty": "8.0",
+    "up_cost": "2.250",
+    "down_cost": "3.980",
+    "cost_usd": "6.230",
+    "fees_usd": "0.0",
+    "official_up_wins": true,
+    "payout_usd": "5.0",
+    "net_usd": "-1.230",
+    "up_average_cost": "0.45",
+    "down_average_cost": "0.4975",
+    "locked_usd": "0.26250",
+    "directional_usd": "-1.49250",
+    "unmatched_down_qty": "3",
+    "settlement_native_payload": {
+      "at": "1792118701.815494",
+      "venue": "kalshi",
+      "window": "KXBTC15M-26OCT152245-45",
+      "settlement_id": "kalshi:KXBTC15M-26OCT152245-45",
+      "up_wins": true,
+      "up_shares": "5.0",
+      "down_shares": "8.0",
+      "cost_usd": "6.23",
+      "fee_usd": "0.0",
+      "paired_credit_usd": "5.0",
+      "net_payout_usd": "0.0",
+      "payout_usd": "5.0",
+      "locked_usd": "0.26249999999999996",
+      "direction_usd": "-1.4925000000000004",
+      "pnl_usd": "-1.2300000000000004",
+      "observed_at": "1792118704.1476908",
+      "time_source": "venue settled_time"
+    },
+    "producer_float_tolerance_usd": "0.000000000001"
+  },
+  "fill_timeline": [
+    {
+      "fill_id": "072448a5-1329-98d2-6f2c-72d75d8d44b0",
+      "order_id": "01a1428b-af08-7324-aac6-7b80c5cd9970",
+      "client_order_id": "nc-speed-6da21f6e47fe4500b3a82d4cc3d1aac8",
+      "venue_fill_at": "1792117813.721327",
+      "native_log_timestamp": "2026-10-16T02:30:14.787460881Z",
+      "side": "down",
+      "size": "5.0",
+      "price": "0.49",
+      "fee_usd": "0.0",
+      "cumulative_up": "0",
+      "cumulative_down": "5.0",
+      "cumulative_cost": "2.450",
+      "unmatched_side": "down",
+      "unmatched_qty": "5.0"
+    },
+    {
+      "fill_id": "072448bb-9c29-b0ed-9aef-1203f89c436e",
+      "order_id": "01a1428b-ce48-73c3-afe5-839e52a2b546",
+      "client_order_id": "nc-speed-9d5a1b2269cc44848867ff07a6f5f258",
+      "venue_fill_at": "1792117839.717268",
+      "native_log_timestamp": "2026-10-16T02:30:40.815721742Z",
+      "side": "up",
+      "size": "5.0",
+      "price": "0.45",
+      "fee_usd": "0.0",
+      "cumulative_up": "5.0",
+      "cumulative_down": "5.0",
+      "cumulative_cost": "4.700",
+      "unmatched_side": null,
+      "unmatched_qty": "0.0"
+    },
+    {
+      "fill_id": "072448be-3a09-806d-6ff5-0a34bb92ab9e",
+      "order_id": "01a1428c-89c8-744b-85d4-fe9b9b93da86",
+      "client_order_id": "nc-speed-c3deb3c77c06488e834f2c2f6c31e9a5",
+      "venue_fill_at": "1792117878.834001",
+      "native_log_timestamp": "2026-10-16T02:31:19.988206957Z",
+      "side": "down",
+      "size": "3.0",
+      "price": "0.51",
+      "fee_usd": "0.0",
+      "cumulative_up": "5.0",
+      "cumulative_down": "8.0",
+      "cumulative_cost": "6.230",
+      "unmatched_side": "down",
+      "unmatched_qty": "3.0"
+    }
+  ],
+  "orders_by_client_id": [
+    {
+      "client_order_id": "nc-speed-6da21f6e47fe4500b3a82d4cc3d1aac8",
+      "acks": [
+        {
+          "at": "1792117813.7153854",
+          "venue": {
+            "ts_ms": 1792117813704,
+            "sent_ms": "1792117813586.0",
+            "acked_ms": "1792117813715.4",
+            "offset_ms": "53.3",
+            "rtt_ms": "129.3"
+          },
+          "client_order_id": "nc-speed-6da21f6e47fe4500b3a82d4cc3d1aac8",
+          "order_id": "01a1428b-af08-7324-aac6-7b80c5cd9970",
+          "window": "KXBTC15M-26OCT152245-45",
+          "state": "accepted; waiting for real fills",
+          "timing": {
+            "metric": "decision_to_ack",
+            "scope": "real_kalshi",
+            "at": "1792117813.5455298",
+            "value_ms": "169.7550038807094",
+            "status": "ok"
+          },
+          "stages": {
+            "save_ms": "13.237262144684792",
+            "decision_to_send_ms": "40.43528065085411",
+            "send_to_ack_ms": "129.3197232298553"
+          }
+        }
+      ],
+      "fills": [
+        {
+          "at": "1792117813.721327",
+          "venue": "kalshi",
+          "fill_id": "072448a5-1329-98d2-6f2c-72d75d8d44b0",
+          "order_id": "01a1428b-af08-7324-aac6-7b80c5cd9970",
+          "client_order_id": "nc-speed-6da21f6e47fe4500b3a82d4cc3d1aac8",
+          "window": "KXBTC15M-26OCT152245-45",
+          "side": "down",
+          "price": "0.49",
+          "size": "5.0",
+          "fee_usd": "0.0",
+          "is_taker": false
+        }
+      ],
+      "intent": {
+        "at": "1792117813.5456543",
+        "venue": "kalshi",
+        "client_order_id": "nc-speed-6da21f6e47fe4500b3a82d4cc3d1aac8",
+        "window": "KXBTC15M-26OCT152245-45",
+        "side": "down",
+        "kind": "rest",
+        "price": "0.49",
+        "size": "5.0",
+        "fair": "0.5289048412353338",
+        "state": "durable intent",
+        "timing": [
+          {
+            "metric": "btc_exchange_to_decision",
+            "scope": "real_kalshi",
+            "at": "1792117813.5455298",
+            "value_ms": "326.1872297152877",
+            "status": "ok"
+          },
+          {
+            "metric": "btc_receipt_to_decision",
+            "scope": "real_kalshi",
+            "at": "1792117813.5455298",
+            "value_ms": "207.33509119600058",
+            "status": "ok"
+          }
+        ]
+      },
+      "intent_native_timestamp": "2026-10-16T02:30:14.138878543Z"
+    },
+    {
+      "client_order_id": "nc-speed-d57e2ab9f2be4e309bfb020c3ecf8334",
+      "acks": [
+        {
+          "at": "1792117815.771381",
+          "venue": {
+            "ts_ms": 1792117815757,
+            "sent_ms": "1792117815736.5",
+            "acked_ms": "1792117815771.4",
+            "offset_ms": "3.1",
+            "rtt_ms": "34.8"
+          },
+          "client_order_id": "nc-speed-d57e2ab9f2be4e309bfb020c3ecf8334",
+          "order_id": "01a1428b-b6d8-72ba-8b94-c3566293dce8",
+          "window": "KXBTC15M-26OCT152245-45",
+          "state": "accepted; waiting for real fills",
+          "timing": {
+            "metric": "decision_to_ack",
+            "scope": "real_kalshi",
+            "at": "1792117815.7250097",
+            "value_ms": "46.26392433419824",
+            "status": "ok"
+          },
+          "stages": {
+            "save_ms": "5.290539003908634",
+            "decision_to_send_ms": "11.452039238065481",
+            "send_to_ack_ms": "34.811885096132755"
+          }
+        }
+      ],
+      "fills": [],
+      "intent": {
+        "at": "1792117815.725153",
+        "venue": "kalshi",
+        "client_order_id": "nc-speed-d57e2ab9f2be4e309bfb020c3ecf8334",
+        "window": "KXBTC15M-26OCT152245-45",
+        "side": "up",
+        "kind": "rest",
+        "price": "0.46",
+        "size": "5.0",
+        "fair": "0.49808306013902603",
+        "state": "durable intent",
+        "timing": [
+          {
+            "metric": "btc_exchange_to_decision",
+            "scope": "real_kalshi",
+            "at": "1792117815.7250097",
+            "value_ms": "55.01875141635537",
+            "status": "ok"
+          },
+          {
+            "metric": "btc_receipt_to_decision",
+            "scope": "real_kalshi",
+            "at": "1792117815.7250097",
+            "value_ms": "24.09037807956338",
+            "status": "ok"
+          }
+        ]
+      },
+      "intent_native_timestamp": "2026-10-16T02:30:16.427991189Z"
+    },
+    {
+      "client_order_id": "nc-speed-9d5a1b2269cc44848867ff07a6f5f258",
+      "acks": [
+        {
+          "at": "1792117821.3731217",
+          "venue": {
+            "ts_ms": 1792117821338,
+            "sent_ms": "1792117821281.2",
+            "acked_ms": "1792117821373.1",
+            "offset_ms": "10.8",
+            "rtt_ms": "91.9"
+          },
+          "client_order_id": "nc-speed-9d5a1b2269cc44848867ff07a6f5f258",
+          "order_id": "01a1428b-ce48-73c3-afe5-839e52a2b546",
+          "window": "KXBTC15M-26OCT152245-45",
+          "state": "accepted; waiting for real fills",
+          "timing": {
+            "metric": "decision_to_ack",
+            "scope": "real_kalshi",
+            "at": "1792117821.2526853",
+            "value_ms": "120.33725110813975",
+            "status": "ok"
+          },
+          "stages": {
+            "save_ms": "15.019624959677458",
+            "decision_to_send_ms": "28.450696263462305",
+            "send_to_ack_ms": "91.88655484467745"
+          }
+        }
+      ],
+      "fills": [
+        {
+          "at": "1792117839.717268",
+          "venue": "kalshi",
+          "fill_id": "072448bb-9c29-b0ed-9aef-1203f89c436e",
+          "order_id": "01a1428b-ce48-73c3-afe5-839e52a2b546",
+          "client_order_id": "nc-speed-9d5a1b2269cc44848867ff07a6f5f258",
+          "window": "KXBTC15M-26OCT152245-45",
+          "side": "up",
+          "price": "0.45",
+          "size": "5.0",
+          "fee_usd": "0.0",
+          "is_taker": false
+        }
+      ],
+      "intent": {
+        "at": "1792117821.2528305",
+        "venue": "kalshi",
+        "client_order_id": "nc-speed-9d5a1b2269cc44848867ff07a6f5f258",
+        "window": "KXBTC15M-26OCT152245-45",
+        "side": "up",
+        "kind": "rest",
+        "price": "0.45",
+        "size": "5.0",
+        "fair": "0.4855359316557754",
+        "state": "durable intent",
+        "timing": [
+          {
+            "metric": "btc_exchange_to_decision",
+            "scope": "real_kalshi",
+            "at": "1792117821.2526853",
+            "value_ms": "415.03750812262297",
+            "status": "ok"
+          },
+          {
+            "metric": "btc_receipt_to_decision",
+            "scope": "real_kalshi",
+            "at": "1792117821.2526853",
+            "value_ms": "411.0029889270663",
+            "status": "ok"
+          }
+        ]
+      },
+      "intent_native_timestamp": "2026-10-16T02:30:22.247291381Z"
+    },
+    {
+      "client_order_id": "nc-speed-786a842b7c1b46dfa34797195cf1267a",
+      "acks": [
+        {
+          "at": "1792117841.39275",
+          "venue": {
+            "ts_ms": 1792117841366,
+            "sent_ms": "1792117841324.2",
+            "acked_ms": "1792117841392.7",
+            "offset_ms": "7.5",
+            "rtt_ms": "68.6"
+          },
+          "client_order_id": "nc-speed-786a842b7c1b46dfa34797195cf1267a",
+          "order_id": "01a1428c-1c68-7cc1-84f3-f0a21d6fba94",
+          "window": "KXBTC15M-26OCT152245-45",
+          "state": "accepted; waiting for real fills",
+          "timing": {
+            "metric": "decision_to_ack",
+            "scope": "real_kalshi",
+            "at": "1792117841.2930353",
+            "value_ms": "99.6530600823462",
+            "status": "ok"
+          },
+          "stages": {
+            "save_ms": "22.651541978120804",
+            "decision_to_send_ms": "31.091350130736828",
+            "send_to_ack_ms": "68.56170995160937"
+          }
+        }
+      ],
+      "fills": [],
+      "intent": {
+        "at": "1792117841.2931242",
+        "venue": "kalshi",
+        "client_order_id": "nc-speed-786a842b7c1b46dfa34797195cf1267a",
+        "window": "KXBTC15M-26OCT152245-45",
+        "side": "down",
+        "kind": "rest",
+        "price": "0.54",
+        "size": "3.0",
+        "fair": "0.5778905611832492",
+        "state": "durable intent",
+        "timing": [
+          {
+            "metric": "btc_exchange_to_decision",
+            "scope": "real_kalshi",
+            "at": "1792117841.2930353",
+            "value_ms": "64.96841600164771",
+            "status": "ok"
+          },
+          {
+            "metric": "btc_receipt_to_decision",
+            "scope": "real_kalshi",
+            "at": "1792117841.2930353",
+            "value_ms": "57.167360093444586",
+            "status": "ok"
+          }
+        ]
+      },
+      "intent_native_timestamp": "2026-10-16T02:30:42.773664735Z"
+    },
+    {
+      "client_order_id": "nc-speed-541ab4b262f54fb8aa012d7bbb45725b",
+      "acks": [
+        {
+          "at": "1792117842.2863603",
+          "venue": {
+            "ts_ms": 1792117842223,
+            "sent_ms": "1792117842171.0",
+            "acked_ms": "1792117842286.3",
+            "offset_ms": "-5.7",
+            "rtt_ms": "115.3"
+          },
+          "client_order_id": "nc-speed-541ab4b262f54fb8aa012d7bbb45725b",
+          "order_id": "01a1428c-2050-7729-81d2-27819ea31961",
+          "window": "KXBTC15M-26OCT152245-45",
+          "state": "accepted; waiting for real fills",
+          "timing": {
+            "metric": "decision_to_ack",
+            "scope": "real_kalshi",
+            "at": "1792117842.1634157",
+            "value_ms": "122.87060683593154",
+            "status": "ok"
+          },
+          "stages": {
+            "save_ms": "6.078801117837429",
+            "decision_to_send_ms": "7.5649069622159",
+            "send_to_ack_ms": "115.30569987371564"
+          }
+        }
+      ],
+      "fills": [],
+      "intent": {
+        "at": "1792117842.1635172",
+        "venue": "kalshi",
+        "client_order_id": "nc-speed-541ab4b262f54fb8aa012d7bbb45725b",
+        "window": "KXBTC15M-26OCT152245-45",
+        "side": "up",
+        "kind": "rest",
+        "price": "0.39",
+        "size": "3.0",
+        "fair": "0.4220236299386689",
+        "state": "durable intent",
+        "timing": [
+          {
+            "metric": "btc_exchange_to_decision",
+            "scope": "real_kalshi",
+            "at": "1792117842.1634157",
+            "value_ms": "225.60331132262945",
+            "status": "ok"
+          },
+          {
+            "metric": "btc_receipt_to_decision",
+            "scope": "real_kalshi",
+            "at": "1792117842.1634157",
+            "value_ms": "46.902148984372616",
+            "status": "ok"
+          }
+        ]
+      },
+      "intent_native_timestamp": "2026-10-16T02:30:42.774503267Z"
+    },
+    {
+      "client_order_id": "nc-speed-634dfd6579824e2fb276998c65a2308b",
+      "acks": [
+        {
+          "at": "1792117846.4655883",
+          "venue": {
+            "ts_ms": 1792117846447,
+            "sent_ms": "1792117846411.5",
+            "acked_ms": "1792117846465.6",
+            "offset_ms": "8.5",
+            "rtt_ms": "54.0"
+          },
+          "client_order_id": "nc-speed-634dfd6579824e2fb276998c65a2308b",
+          "order_id": "01a1428c-2ff0-7250-b7c0-5342b6b3a67b",
+          "window": "KXBTC15M-26OCT152245-45",
+          "state": "accepted; waiting for real fills",
+          "timing": {
+            "metric": "decision_to_ack",
+            "scope": "real_kalshi",
+            "at": "1792117846.4008925",
+            "value_ms": "64.62248787283897",
+            "status": "ok"
+          },
+          "stages": {
+            "save_ms": "9.586248081177473",
+            "decision_to_send_ms": "10.6004080735147",
+            "send_to_ack_ms": "54.022079799324274"
+          }
+        }
+      ],
+      "fills": [],
+      "intent": {
+        "at": "1792117846.4009936",
+        "venue": "kalshi",
+        "client_order_id": "nc-speed-634dfd6579824e2fb276998c65a2308b",
+        "window": "KXBTC15M-26OCT152245-45",
+        "side": "up",
+        "kind": "rest",
+        "price": "0.38",
+        "size": "3.0",
+        "fair": "0.4158717829857147",
+        "state": "durable intent",
+        "timing": [
+          {
+            "metric": "btc_exchange_to_decision",
+            "scope": "real_kalshi",
+            "at": "1792117846.4008925",
+            "value_ms": "550.0014987774193",
+            "status": "ok"
+          },
+          {
+            "metric": "btc_receipt_to_decision",
+            "scope": "real_kalshi",
+            "at": "1792117846.4008925",
+            "value_ms": "523.957606870681",
+            "status": "ok"
+          }
+        ]
+      },
+      "intent_native_timestamp": "2026-10-16T02:30:46.757874049Z"
+    },
+    {
+      "client_order_id": "nc-speed-7c10e0a4c41a431c81f8128a00179c1e",
+      "acks": [
+        {
+          "at": "1792117851.3972456",
+          "venue": {
+            "ts_ms": 1792117851369,
+            "sent_ms": "1792117851302.8",
+            "acked_ms": "1792117851397.2",
+            "offset_ms": "19.0",
+            "rtt_ms": "94.4"
+          },
+          "client_order_id": "nc-speed-7c10e0a4c41a431c81f8128a00179c1e",
+          "order_id": "01a1428c-4378-7c90-b73a-de2f800781f0",
+          "window": "KXBTC15M-26OCT152245-45",
+          "state": "accepted; waiting for real fills",
+          "timing": {
+            "metric": "decision_to_ack",
+            "scope": "real_kalshi",
+            "at": "1792117851.280644",
+            "value_ms": "116.53182934969664",
+            "status": "ok"
+          },
+          "stages": {
+            "save_ms": "12.567689176648855",
+            "decision_to_send_ms": "22.167307324707508",
+            "send_to_ack_ms": "94.36452202498913"
+          }
+        }
+      ],
+      "fills": [],
+      "intent": {
+        "at": "1792117851.280738",
+        "venue": "kalshi",
+        "client_order_id": "nc-speed-7c10e0a4c41a431c81f8128a00179c1e",
+        "window": "KXBTC15M-26OCT152245-45",
+        "side": "down",
+        "kind": "rest",
+        "price": "0.57",
+        "size": "3.0",
+        "fair": "0.6076877180841258",
+        "state": "durable intent",
+        "timing": [
+          {
+            "metric": "btc_exchange_to_decision",
+            "scope": "real_kalshi",
+            "at": "1792117851.280644",
+            "value_ms": "120.86718529462814",
+            "status": "ok"
+          },
+          {
+            "metric": "btc_receipt_to_decision",
+            "scope": "real_kalshi",
+            "at": "1792117851.280644",
+            "value_ms": "115.92524498701096",
+            "status": "ok"
+          }
+        ]
+      },
+      "intent_native_timestamp": "2026-10-16T02:30:51.694098110Z"
+    },
+    {
+      "client_order_id": "nc-speed-1b6b9ab6b7104621a1d5b920fff973c4",
+      "acks": [
+        {
+          "at": "1792117854.7120821",
+          "venue": {
+            "ts_ms": 1792117854224,
+            "sent_ms": "1792117854196.4",
+            "acked_ms": "1792117854712.1",
+            "offset_ms": "-230.2",
+            "rtt_ms": "515.7"
+          },
+          "client_order_id": "nc-speed-1b6b9ab6b7104621a1d5b920fff973c4",
+          "order_id": "01a1428c-4f30-7171-8fe0-c7c6aa213288",
+          "window": "KXBTC15M-26OCT152245-45",
+          "state": "accepted; waiting for real fills",
+          "timing": {
+            "metric": "decision_to_ack",
+            "scope": "real_kalshi",
+            "at": "1792117854.1773443",
+            "value_ms": "534.6688870340586",
+            "status": "ok"
+          },
+          "stages": {
+            "save_ms": "14.456749893724918",
+            "decision_to_send_ms": "18.982597161084414",
+            "send_to_ack_ms": "515.6862898729742"
+          }
+        }
+      ],
+      "fills": [],
+      "intent": {
+        "at": "1792117854.1774364",
+        "venue": "kalshi",
+        "client_order_id": "nc-speed-1b6b9ab6b7104621a1d5b920fff973c4",
+        "window": "KXBTC15M-26OCT152245-45",
+        "side": "up",
+        "kind": "rest",
+        "price": "0.32",
+        "size": "3.0",
+        "fair": "0.35500168537247156",
+        "state": "durable intent",
+        "timing": [
+          {
+            "metric": "btc_exchange_to_decision",
+            "scope": "real_kalshi",
+            "at": "1792117854.1773443",
+            "value_ms": "296.07797833159566",
+            "status": "ok"
+          },
+          {
+            "metric": "btc_receipt_to_decision",
+            "scope": "real_kalshi",
+            "at": "1792117854.1773443",
+            "value_ms": "290.3659460134804",
+            "status": "ok"
+          }
+        ]
+      },
+      "intent_native_timestamp": "2026-10-16T02:30:54.958925570Z"
+    },
+    {
+      "client_order_id": "nc-speed-b5f011ad6d3248e0867f5418c147b848",
+      "acks": [
+        {
+          "at": "1792117855.9897196",
+          "venue": {
+            "ts_ms": 1792117855942,
+            "sent_ms": "1792117855896.4",
+            "acked_ms": "1792117855989.7",
+            "offset_ms": "-1.1",
+            "rtt_ms": "93.3"
+          },
+          "client_order_id": "nc-speed-b5f011ad6d3248e0867f5418c147b848",
+          "order_id": "01a1428c-5318-7eb8-a39e-1d5ea0e3aa35",
+          "window": "KXBTC15M-26OCT152245-45",
+          "state": "accepted; waiting for real fills",
+          "timing": {
+            "metric": "decision_to_ack",
+            "scope": "real_kalshi",
+            "at": "1792117855.8676348",
+            "value_ms": "122.02203692868352",
+            "status": "ok"
+          },
+          "stages": {
+            "save_ms": "7.752615958452225",
+            "decision_to_send_ms": "28.764683287590742",
+            "send_to_ack_ms": "93.25735364109278"
+          }
+        }
+      ],
+      "fills": [],
+      "intent": {
+        "at": "1792117855.8677347",
+        "venue": "kalshi",
+        "client_order_id": "nc-speed-b5f011ad6d3248e0867f5418c147b848",
+        "window": "KXBTC15M-26OCT152245-45",
+        "side": "down",
+        "kind": "rest",
+        "price": "0.61",
+        "size": "3.0",
+        "fair": "0.6451853664139917",
+        "state": "durable intent",
+        "timing": [
+          {
+            "metric": "btc_exchange_to_decision",
+            "scope": "real_kalshi",
+            "at": "1792117855.8676348",
+            "value_ms": "805.9139843098819",
+            "status": "ok"
+          },
+          {
+            "metric": "btc_receipt_to_decision",
+            "scope": "real_kalshi",
+            "at": "1792117855.8676348",
+            "value_ms": "796.5889568440616",
+            "status": "ok"
+          }
+        ]
+      },
+      "intent_native_timestamp": "2026-10-16T02:30:56.102734077Z"
+    },
+    {
+      "client_order_id": "nc-speed-043e51bb8576413ba8971e08ce3fb697",
+      "acks": [
+        {
+          "at": "1792117860.5919545",
+          "venue": {
+            "ts_ms": 1792117860530,
+            "sent_ms": "1792117860501.1",
+            "acked_ms": "1792117860591.9",
+            "offset_ms": "-16.5",
+            "rtt_ms": "90.9"
+          },
+          "client_order_id": "nc-speed-043e51bb8576413ba8971e08ce3fb697",
+          "order_id": "01a1428c-66a0-7d88-a254-ed5ad00bab2f",
+          "window": "KXBTC15M-26OCT152245-45",
+          "state": "accepted; waiting for real fills",
+          "timing": {
+            "metric": "decision_to_ack",
+            "scope": "real_kalshi",
+            "at": "1792117860.1720793",
+            "value_ms": "419.7976333089173",
+            "status": "ok"
+          },
+          "stages": {
+            "save_ms": "29.376777820289135",
+            "decision_to_send_ms": "328.9416469633579",
+            "send_to_ack_ms": "90.85598634555936"
+          }
+        }
+      ],
+      "fills": [],
+      "intent": {
+        "at": "1792117860.1721869",
+        "venue": "kalshi",
+        "client_order_id": "nc-speed-043e51bb8576413ba8971e08ce3fb697",
+        "window": "KXBTC15M-26OCT152245-45",
+        "side": "up",
+        "kind": "rest",
+        "price": "0.32",
+        "size": "3.0",
+        "fair": "0.35515463468354674",
+        "state": "durable intent",
+        "timing": [
+          {
+            "metric": "btc_exchange_to_decision",
+            "scope": "real_kalshi",
+            "at": "1792117860.1720793",
+            "value_ms": "408.58733421191573",
+            "status": "ok"
+          },
+          {
+            "metric": "btc_receipt_to_decision",
+            "scope": "real_kalshi",
+            "at": "1792117860.1720793",
+            "value_ms": "329.493401106447",
+            "status": "ok"
+          }
+        ]
+      },
+      "intent_native_timestamp": "2026-10-16T02:31:00.813355778Z"
+    },
+    {
+      "client_order_id": "nc-speed-802320fb51ed4b469466a09fd36decec",
+      "acks": [
+        {
+          "at": "1792117866.0754855",
+          "venue": {
+            "ts_ms": 1792117866015,
+            "sent_ms": "1792117865971.6",
+            "acked_ms": "1792117866075.5",
+            "offset_ms": "-8.5",
+            "rtt_ms": "103.9"
+          },
+          "client_order_id": "nc-speed-802320fb51ed4b469466a09fd36decec",
+          "order_id": "01a1428c-7e10-7b1d-ae24-d9a4536e0469",
+          "window": "KXBTC15M-26OCT152245-45",
+          "state": "accepted; waiting for real fills",
+          "timing": {
+            "metric": "decision_to_ack",
+            "scope": "real_kalshi",
+            "at": "1792117865.9280474",
+            "value_ms": "147.36435282975435",
+            "status": "ok"
+          },
+          "stages": {
+            "save_ms": "36.80439665913582",
+            "decision_to_send_ms": "43.53421088308096",
+            "send_to_ack_ms": "103.8301419466734"
+          }
+        }
+      ],
+      "fills": [],
+      "intent": {
+        "at": "1792117865.928142",
+        "venue": "kalshi",
+        "client_order_id": "nc-speed-802320fb51ed4b469466a09fd36decec",
+        "window": "KXBTC15M-26OCT152245-45",
+        "side": "up",
+        "kind": "rest",
+        "price": "0.39",
+        "size": "3.0",
+        "fair": "0.4298946635020815",
+        "state": "durable intent",
+        "timing": [
+          {
+            "metric": "btc_exchange_to_decision",
+            "scope": "real_kalshi",
+            "at": "1792117865.9280474",
+            "value_ms": "90.0225774385035",
+            "status": "ok"
+          },
+          {
+            "metric": "btc_receipt_to_decision",
+            "scope": "real_kalshi",
+            "at": "1792117865.9280474",
+            "value_ms": "65.60923019424081",
+            "status": "ok"
+          }
+        ]
+      },
+      "intent_native_timestamp": "2026-10-16T02:31:07.082166128Z"
+    },
+    {
+      "client_order_id": "nc-speed-911d9e5416af40039a30535202851181",
+      "acks": [],
+      "fills": [],
+      "intent": {
+        "at": "1792117866.7592337",
+        "venue": "kalshi",
+        "client_order_id": "nc-speed-911d9e5416af40039a30535202851181",
+        "window": "KXBTC15M-26OCT152245-45",
+        "side": "down",
+        "kind": "rest",
+        "price": "0.53",
+        "size": "3.0",
+        "fair": "0.5655442917609697",
+        "state": "durable intent",
+        "timing": [
+          {
+            "metric": "btc_exchange_to_decision",
+            "scope": "real_kalshi",
+            "at": "1792117866.7591174",
+            "value_ms": "348.70382584631443",
+            "status": "ok"
+          },
+          {
+            "metric": "btc_receipt_to_decision",
+            "scope": "real_kalshi",
+            "at": "1792117866.7591174",
+            "value_ms": "339.93169106543064",
+            "status": "ok"
+          }
+        ]
+      },
+      "intent_native_timestamp": "2026-10-16T02:31:07.082763601Z",
+      "reject": {
+        "at": "1792117866.8355021",
+        "venue": "kalshi",
+        "client_order_id": "nc-speed-911d9e5416af40039a30535202851181",
+        "window": "KXBTC15M-26OCT152245-45",
+        "reason": "Kalshi refused this one order; still trading",
+        "error": "KalshiClientError",
+        "operation": "create_order",
+        "detail": "request rejected",
+        "status": 400,
+        "code": "invalid_order"
+      }
+    },
+    {
+      "client_order_id": "nc-speed-cfa86c8417ab4c3f960771b41c820994",
+      "acks": [
+        {
+          "at": "1792117869.2315314",
+          "venue": {
+            "ts_ms": 1792117869215,
+            "sent_ms": "1792117869196.1",
+            "acked_ms": "1792117869231.5",
+            "offset_ms": "1.2",
+            "rtt_ms": "35.4"
+          },
+          "client_order_id": "nc-speed-cfa86c8417ab4c3f960771b41c820994",
+          "order_id": "01a1428c-89c8-7c22-bbac-be77b6ac9a34",
+          "window": "KXBTC15M-26OCT152245-45",
+          "state": "accepted; waiting for real fills",
+          "timing": {
+            "metric": "decision_to_ack",
+            "scope": "real_kalshi",
+            "at": "1792117869.1364071",
+            "value_ms": "95.05914710462093",
+            "status": "ok"
+          },
+          "stages": {
+            "save_ms": "34.725616220384836",
+            "decision_to_send_ms": "59.62905799970031",
+            "send_to_ack_ms": "35.430089104920626"
+          }
+        }
+      ],
+      "fills": [],
+      "intent": {
+        "at": "1792117869.1365056",
+        "venue": "kalshi",
+        "client_order_id": "nc-speed-cfa86c8417ab4c3f960771b41c820994",
+        "window": "KXBTC15M-26OCT152245-45",
+        "side": "up",
+        "kind": "rest",
+        "price": "0.42",
+        "size": "3.0",
+        "fair": "0.4554179212683828",
+        "state": "durable intent",
+        "timing": [
+          {
+            "metric": "btc_exchange_to_decision",
+            "scope": "real_kalshi",
+            "at": "1792117869.1364071",
+            "value_ms": "692.1989344991744",
+            "status": "ok"
+          },
+          {
+            "metric": "btc_receipt_to_decision",
+            "scope": "real_kalshi",
+            "at": "1792117869.1364071",
+            "value_ms": "630.6151770986617",
+            "status": "ok"
+          }
+        ]
+      },
+      "intent_native_timestamp": "2026-10-16T02:31:09.938339238Z"
+    },
+    {
+      "client_order_id": "nc-speed-c3deb3c77c06488e834f2c2f6c31e9a5",
+      "acks": [
+        {
+          "at": "1792117869.6542997",
+          "venue": {
+            "ts_ms": 1792117869611,
+            "sent_ms": "1792117869586.2",
+            "acked_ms": "1792117869654.3",
+            "offset_ms": "-9.3",
+            "rtt_ms": "68.0"
+          },
+          "client_order_id": "nc-speed-c3deb3c77c06488e834f2c2f6c31e9a5",
+          "order_id": "01a1428c-89c8-744b-85d4-fe9b9b93da86",
+          "window": "KXBTC15M-26OCT152245-45",
+          "state": "accepted; waiting for real fills",
+          "timing": {
+            "metric": "decision_to_ack",
+            "scope": "real_kalshi",
+            "at": "1792117869.56057",
+            "value_ms": "93.65461999550462",
+            "status": "ok"
+          },
+          "stages": {
+            "save_ms": "8.135952055454254",
+            "decision_to_send_ms": "25.629214011132717",
+            "send_to_ack_ms": "68.0254059843719"
+          }
+        }
+      ],
+      "fills": [
+        {
+          "at": "1792117878.834001",
+          "venue": "kalshi",
+          "fill_id": "072448be-3a09-806d-6ff5-0a34bb92ab9e",
+          "order_id": "01a1428c-89c8-744b-85d4-fe9b9b93da86",
+          "client_order_id": "nc-speed-c3deb3c77c06488e834f2c2f6c31e9a5",
+          "window": "KXBTC15M-26OCT152245-45",
+          "side": "down",
+          "price": "0.51",
+          "size": "3.0",
+          "fee_usd": "0.0",
+          "is_taker": false
+        }
+      ],
+      "intent": {
+        "at": "1792117869.560675",
+        "venue": "kalshi",
+        "client_order_id": "nc-speed-c3deb3c77c06488e834f2c2f6c31e9a5",
+        "window": "KXBTC15M-26OCT152245-45",
+        "side": "down",
+        "kind": "rest",
+        "price": "0.51",
+        "size": "3.0",
+        "fair": "0.5445939814076124",
+        "state": "durable intent",
+        "timing": [
+          {
+            "metric": "btc_exchange_to_decision",
+            "scope": "real_kalshi",
+            "at": "1792117869.56057",
+            "value_ms": "12.758649419993162",
+            "status": "ok"
+          },
+          {
+            "metric": "btc_receipt_to_decision",
+            "scope": "real_kalshi",
+            "at": "1792117869.56057",
+            "value_ms": "1.7539630644023418",
+            "status": "ok"
+          }
+        ]
+      },
+      "intent_native_timestamp": "2026-10-16T02:31:09.938358198Z"
+    },
+    {
+      "client_order_id": "nc-speed-6cfd2524fe674de0bf9e5a8de4becdf2",
+      "acks": [
+        {
+          "at": "1792117882.310603",
+          "venue": {
+            "ts_ms": 1792117882281,
+            "sent_ms": "1792117882253.7",
+            "acked_ms": "1792117882310.6",
+            "offset_ms": "-1.2",
+            "rtt_ms": "56.9"
+          },
+          "client_order_id": "nc-speed-6cfd2524fe674de0bf9e5a8de4becdf2",
+          "order_id": "01a1428c-bc90-79e6-9dd4-57a186b9eed9",
+          "window": "KXBTC15M-26OCT152245-45",
+          "state": "accepted; waiting for real fills",
+          "timing": {
+            "metric": "decision_to_ack",
+            "scope": "real_kalshi",
+            "at": "1792117882.2317183",
+            "value_ms": "78.82305327802896",
+            "status": "ok"
+          },
+          "stages": {
+            "save_ms": "13.76219792291522",
+            "decision_to_send_ms": "21.980508230626583",
+            "send_to_ack_ms": "56.84254504740238"
+          }
+        }
+      ],
+      "fills": [],
+      "intent": {
+        "at": "1792117882.2318144",
+        "venue": "kalshi",
+        "client_order_id": "nc-speed-6cfd2524fe674de0bf9e5a8de4becdf2",
+        "window": "KXBTC15M-26OCT152245-45",
+        "side": "up",
+        "kind": "rest",
+        "price": "0.45",
+        "size": "5.0",
+        "fair": "0.4806604197437029",
+        "state": "durable intent",
+        "timing": [
+          {
+            "metric": "btc_exchange_to_decision",
+            "scope": "real_kalshi",
+            "at": "1792117882.2317183",
+            "value_ms": "14.554887544363737",
+            "status": "ok"
+          },
+          {
+            "metric": "btc_receipt_to_decision",
+            "scope": "real_kalshi",
+            "at": "1792117882.2317183",
+            "value_ms": "9.964614640921354",
+            "status": "ok"
+          }
+        ]
+      },
+      "intent_native_timestamp": "2026-10-16T02:31:22.488760162Z"
+    },
+    {
+      "client_order_id": "nc-speed-a4606a8dd5e54082aff178cb9c329d19",
+      "acks": [
+        {
+          "at": "1792117884.7643719",
+          "venue": {
+            "ts_ms": 1792117884704,
+            "sent_ms": "1792117884666.4",
+            "acked_ms": "1792117884764.4",
+            "offset_ms": "-11.4",
+            "rtt_ms": "98.0"
+          },
+          "client_order_id": "nc-speed-a4606a8dd5e54082aff178cb9c329d19",
+          "order_id": "01a1428c-c460-7c86-8510-7b4b3cdd8682",
+          "window": "KXBTC15M-26OCT152245-45",
+          "state": "accepted; waiting for real fills",
+          "timing": {
+            "metric": "decision_to_ack",
+            "scope": "real_kalshi",
+            "at": "1792117884.6456017",
+            "value_ms": "118.70613973587751",
+            "status": "ok"
+          },
+          "stages": {
+            "save_ms": "8.214370347559452",
+            "decision_to_send_ms": "20.74301103129983",
+            "send_to_ack_ms": "97.96312870457768"
+          }
+        }
+      ],
+      "fills": [],
+      "intent": {
+        "at": "1792117884.6456969",
+        "venue": "kalshi",
+        "client_order_id": "nc-speed-a4606a8dd5e54082aff178cb9c329d19",
+        "window": "KXBTC15M-26OCT152245-45",
+        "side": "up",
+        "kind": "rest",
+        "price": "0.4",
+        "size": "5.0",
+        "fair": "0.4310979833286491",
+        "state": "durable intent",
+        "timing": [
+          {
+            "metric": "btc_exchange_to_decision",
+            "scope": "real_kalshi",
+            "at": "1792117884.6456017",
+            "value_ms": "604.4205115176737",
+            "status": "ok"
+          },
+          {
+            "metric": "btc_receipt_to_decision",
+            "scope": "real_kalshi",
+            "at": "1792117884.6456017",
+            "value_ms": "359.01579121127725",
+            "status": "ok"
+          }
+        ]
+      },
+      "intent_native_timestamp": "2026-10-16T02:31:25.088543284Z"
+    },
+    {
+      "client_order_id": "nc-speed-97fbba2b30144370b3e9dc0d982d69e7",
+      "acks": [
+        {
+          "at": "1792117887.5750792",
+          "venue": {
+            "ts_ms": 1792117887559,
+            "sent_ms": "1792117887530.7",
+            "acked_ms": "1792117887575.1",
+            "offset_ms": "6.1",
+            "rtt_ms": "44.4"
+          },
+          "client_order_id": "nc-speed-97fbba2b30144370b3e9dc0d982d69e7",
+          "order_id": "01a1428c-d018-73ea-9e43-574f8c06e78f",
+          "window": "KXBTC15M-26OCT152245-45",
+          "state": "accepted; waiting for real fills",
+          "timing": {
+            "metric": "decision_to_ack",
+            "scope": "real_kalshi",
+            "at": "1792117887.5158384",
+            "value_ms": "59.17602078989148",
+            "status": "ok"
+          },
+          "stages": {
+            "save_ms": "6.521247792989016",
+            "decision_to_send_ms": "14.7804981097579",
+            "send_to_ack_ms": "44.39552268013358"
+          }
+        }
+      ],
+      "fills": [],
+      "intent": {
+        "at": "1792117887.5159333",
+        "venue": "kalshi",
+        "client_order_id": "nc-speed-97fbba2b30144370b3e9dc0d982d69e7",
+        "window": "KXBTC15M-26OCT152245-45",
+        "side": "up",
+        "kind": "rest",
+        "price": "0.45",
+        "size": "5.0",
+        "fair": "0.4805909822014793",
+        "state": "durable intent",
+        "timing": [
+          {
+            "metric": "btc_exchange_to_decision",
+            "scope": "real_kalshi",
+            "at": "1792117887.5158384",
+            "value_ms": "602.267216425389",
+            "status": "ok"
+          },
+          {
+            "metric": "btc_receipt_to_decision",
+            "scope": "real_kalshi",
+            "at": "1792117887.5158384",
+            "value_ms": "477.9800879769027",
+            "status": "ok"
+          }
+        ]
+      },
+      "intent_native_timestamp": "2026-10-16T02:31:27.749872039Z"
+    },
+    {
+      "client_order_id": "nc-speed-0824eee733f344039c937ab579280467",
+      "acks": [
+        {
+          "at": "1792117897.496494",
+          "venue": {
+            "ts_ms": 1792117897479,
+            "sent_ms": "1792117897444.2",
+            "acked_ms": "1792117897496.5",
+            "offset_ms": "8.6",
+            "rtt_ms": "52.3"
+          },
+          "client_order_id": "nc-speed-0824eee733f344039c937ab579280467",
+          "order_id": "01a1428c-f728-739d-8ae6-ff1675a0493f",
+          "window": "KXBTC15M-26OCT152245-45",
+          "state": "accepted; waiting for real fills",
+          "timing": {
+            "metric": "decision_to_ack",
+            "scope": "real_kalshi",
+            "at": "1792117897.4275274",
+            "value_ms": "68.90330836176872",
+            "status": "ok"
+          },
+          "stages": {
+            "save_ms": "9.179641958326101",
+            "decision_to_send_ms": "16.663140151649714",
+            "send_to_ack_ms": "52.24016821011901"
+          }
+        }
+      ],
+      "fills": [],
+      "intent": {
+        "at": "1792117897.4276273",
+        "venue": "kalshi",
+        "client_order_id": "nc-speed-0824eee733f344039c937ab579280467",
+        "window": "KXBTC15M-26OCT152245-45",
+        "side": "up",
+        "kind": "rest",
+        "price": "0.46",
+        "size": "5.0",
+        "fair": "0.49423546717971195",
+        "state": "durable intent",
+        "timing": [
+          {
+            "metric": "btc_exchange_to_decision",
+            "scope": "real_kalshi",
+            "at": "1792117897.4275274",
+            "value_ms": "98.83031947538257",
+            "status": "ok"
+          },
+          {
+            "metric": "btc_receipt_to_decision",
+            "scope": "real_kalshi",
+            "at": "1792117897.4275274",
+            "value_ms": "79.7914038412273",
+            "status": "ok"
+          }
+        ]
+      },
+      "intent_native_timestamp": "2026-10-16T02:31:37.638949159Z"
+    },
+    {
+      "client_order_id": "nc-speed-f4b3c190f28b467a95049c53742c8de6",
+      "acks": [
+        {
+          "at": "1792117902.2820697",
+          "venue": {
+            "ts_ms": 1792117902256,
+            "sent_ms": "1792117902235.6",
+            "acked_ms": "1792117902282.1",
+            "offset_ms": "-2.8",
+            "rtt_ms": "46.5"
+          },
+          "client_order_id": "nc-speed-f4b3c190f28b467a95049c53742c8de6",
+          "order_id": "01a1428d-0ab0-789e-8041-e889fbcf9ea3",
+          "window": "KXBTC15M-26OCT152245-45",
+          "state": "accepted; waiting for real fills",
+          "timing": {
+            "metric": "decision_to_ack",
+            "scope": "real_kalshi",
+            "at": "1792117902.2151852",
+            "value_ms": "66.76430907100439",
+            "status": "ok"
+          },
+          "stages": {
+            "save_ms": "10.108273010700941",
+            "decision_to_send_ms": "20.284435246139765",
+            "send_to_ack_ms": "46.479873824864626"
+          }
+        }
+      ],
+      "fills": [],
+      "intent": {
+        "at": "1792117902.2153623",
+        "venue": "kalshi",
+        "client_order_id": "nc-speed-f4b3c190f28b467a95049c53742c8de6",
+        "window": "KXBTC15M-26OCT152245-45",
+        "side": "up",
+        "kind": "rest",
+        "price": "0.47",
+        "size": "5.0",
+        "fair": "0.5061026876985467",
+        "state": "durable intent",
+        "timing": [
+          {
+            "metric": "btc_exchange_to_decision",
+            "scope": "real_kalshi",
+            "at": "1792117902.2151852",
+            "value_ms": "43.00536122173071",
+            "status": "ok"
+          },
+          {
+            "metric": "btc_receipt_to_decision",
+            "scope": "real_kalshi",
+            "at": "1792117902.2151852",
+            "value_ms": "12.867107056081295",
+            "status": "ok"
+          }
+        ]
+      },
+      "intent_native_timestamp": "2026-10-16T02:31:43.026241458Z"
+    },
+    {
+      "client_order_id": "nc-speed-03861cd8798d4389846f99dfeb9e1911",
+      "acks": [
+        {
+          "at": "1792117905.6124475",
+          "venue": {
+            "ts_ms": 1792117905592,
+            "sent_ms": "1792117905553.7",
+            "acked_ms": "1792117905612.4",
+            "offset_ms": "8.9",
+            "rtt_ms": "58.7"
+          },
+          "client_order_id": "nc-speed-03861cd8798d4389846f99dfeb9e1911",
+          "order_id": "01a1428d-1668-7c47-9c01-a0e5c043c49a",
+          "window": "KXBTC15M-26OCT152245-45",
+          "state": "accepted; waiting for real fills",
+          "timing": {
+            "metric": "decision_to_ack",
+            "scope": "real_kalshi",
+            "at": "1792117905.5170724",
+            "value_ms": "95.31115507707",
+            "status": "ok"
+          },
+          "stages": {
+            "save_ms": "11.95621583610773",
+            "decision_to_send_ms": "36.633498035371304",
+            "send_to_ack_ms": "58.677657041698694"
+          }
+        }
+      ],
+      "fills": [],
+      "intent": {
+        "at": "1792117905.5171695",
+        "venue": "kalshi",
+        "client_order_id": "nc-speed-03861cd8798d4389846f99dfeb9e1911",
+        "window": "KXBTC15M-26OCT152245-45",
+        "side": "up",
+        "kind": "rest",
+        "price": "0.54",
+        "size": "4.0",
+        "fair": "0.5704664712204146",
+        "state": "durable intent",
+        "timing": [
+          {
+            "metric": "btc_exchange_to_decision",
+            "scope": "real_kalshi",
+            "at": "1792117905.5170724",
+            "value_ms": "889.657256193459",
+            "status": "ok"
+          },
+          {
+            "metric": "btc_receipt_to_decision",
+            "scope": "real_kalshi",
+            "at": "1792117905.5170724",
+            "value_ms": "879.7991247847676",
+            "status": "ok"
+          }
+        ]
+      },
+      "intent_native_timestamp": "2026-10-16T02:31:46.172409899Z"
+    },
+    {
+      "client_order_id": "nc-speed-d57bb4e63a99404e86a6b123058be7e8",
+      "acks": [
+        {
+          "at": "1792117913.16969",
+          "venue": {
+            "ts_ms": 1792117913130,
+            "sent_ms": "1792117913103.5",
+            "acked_ms": "1792117913169.7",
+            "offset_ms": "-6.6",
+            "rtt_ms": "66.2"
+          },
+          "client_order_id": "nc-speed-d57bb4e63a99404e86a6b123058be7e8",
+          "order_id": "01a1428d-35a8-7c4a-8fb9-604e681e9b3c",
+          "window": "KXBTC15M-26OCT152245-45",
+          "state": "accepted; waiting for real fills",
+          "timing": {
+            "metric": "decision_to_ack",
+            "scope": "real_kalshi",
+            "at": "1792117913.072734",
+            "value_ms": "96.88787395134568",
+            "status": "ok"
+          },
+          "stages": {
+            "save_ms": "26.980437338352203",
+            "decision_to_send_ms": "30.729633755981922",
+            "send_to_ack_ms": "66.15824019536376"
+          }
+        }
+      ],
+      "fills": [],
+      "intent": {
+        "at": "1792117913.0728326",
+        "venue": "kalshi",
+        "client_order_id": "nc-speed-d57bb4e63a99404e86a6b123058be7e8",
+        "window": "KXBTC15M-26OCT152245-45",
+        "side": "up",
+        "kind": "rest",
+        "price": "0.59",
+        "size": "2.0",
+        "fair": "0.6240611094488796",
+        "state": "durable intent",
+        "timing": [
+          {
+            "metric": "btc_exchange_to_decision",
+            "scope": "real_kalshi",
+            "at": "1792117913.072734",
+            "value_ms": "617.6351830363274",
+            "status": "ok"
+          },
+          {
+            "metric": "btc_receipt_to_decision",
+            "scope": "real_kalshi",
+            "at": "1792117913.072734",
+            "value_ms": "613.955669105053",
+            "status": "ok"
+          }
+        ]
+      },
+      "intent_native_timestamp": "2026-10-16T02:31:53.298673152Z"
+    },
+    {
+      "client_order_id": "nc-speed-12e7cd7900c84c35b0adc4b1251ff1b7",
+      "acks": [
+        {
+          "at": "1792117926.775329",
+          "venue": {
+            "ts_ms": 1792117926748,
+            "sent_ms": "1792117926730.9",
+            "acked_ms": "1792117926775.3",
+            "offset_ms": "-5.1",
+            "rtt_ms": "44.4"
+          },
+          "client_order_id": "nc-speed-12e7cd7900c84c35b0adc4b1251ff1b7",
+          "order_id": "01a1428d-6870-77e7-812b-9fe55189c8ad",
+          "window": "KXBTC15M-26OCT152245-45",
+          "state": "accepted; waiting for real fills",
+          "timing": {
+            "metric": "decision_to_ack",
+            "scope": "real_kalshi",
+            "at": "1792117926.7020943",
+            "value_ms": "73.16473126411438",
+            "status": "ok"
+          },
+          "stages": {
+            "save_ms": "21.04439213871956",
+            "decision_to_send_ms": "28.775542974472046",
+            "send_to_ack_ms": "44.389188289642334"
+          }
+        }
+      ],
+      "fills": [],
+      "intent": {
+        "at": "1792117926.7021885",
+        "venue": "kalshi",
+        "client_order_id": "nc-speed-12e7cd7900c84c35b0adc4b1251ff1b7",
+        "window": "KXBTC15M-26OCT152245-45",
+        "side": "up",
+        "kind": "rest",
+        "price": "0.65",
+        "size": "1.0",
+        "fair": "0.6815904748980026",
+        "state": "durable intent",
+        "timing": [
+          {
+            "metric": "btc_exchange_to_decision",
+            "scope": "real_kalshi",
+            "at": "1792117926.7020943",
+            "value_ms": "31.793732196092606",
+            "status": "ok"
+          },
+          {
+            "metric": "btc_receipt_to_decision",
+            "scope": "real_kalshi",
+            "at": "1792117926.7020943",
+            "value_ms": "2.31899693608284",
+            "status": "ok"
+          }
+        ]
+      },
+      "intent_native_timestamp": "2026-10-16T02:32:08.073435592Z"
+    },
+    {
+      "client_order_id": "nc-speed-28fd0b10cfaf455bb5c90e76182d06fe",
+      "acks": [
+        {
+          "at": "1792117931.5717752",
+          "venue": {
+            "ts_ms": 1792117931534,
+            "sent_ms": "1792117931478.3",
+            "acked_ms": "1792117931571.8",
+            "offset_ms": "9.0",
+            "rtt_ms": "93.5"
+          },
+          "client_order_id": "nc-speed-28fd0b10cfaf455bb5c90e76182d06fe",
+          "order_id": "01a1428d-7bf8-74c9-8afc-7f27428ccd61",
+          "window": "KXBTC15M-26OCT152245-45",
+          "state": "accepted; waiting for real fills",
+          "timing": {
+            "metric": "decision_to_ack",
+            "scope": "real_kalshi",
+            "at": "1792117931.4638646",
+            "value_ms": "107.84903727471828",
+            "status": "ok"
+          },
+          "stages": {
+            "save_ms": "7.750151678919792",
+            "decision_to_send_ms": "14.367842115461826",
+            "send_to_ack_ms": "93.48119515925646"
+          }
+        }
+      ],
+      "fills": [],
+      "intent": {
+        "at": "1792117931.4639597",
+        "venue": "kalshi",
+        "client_order_id": "nc-speed-28fd0b10cfaf455bb5c90e76182d06fe",
+        "window": "KXBTC15M-26OCT152245-45",
+        "side": "up",
+        "kind": "rest",
+        "price": "0.68",
+        "size": "1.0",
+        "fair": "0.7169716927983518",
+        "state": "durable intent",
+        "timing": [
+          {
+            "metric": "btc_exchange_to_decision",
+            "scope": "real_kalshi",
+            "at": "1792117931.4638646",
+            "value_ms": "488.99222211912274",
+            "status": "ok"
+          },
+          {
+            "metric": "btc_receipt_to_decision",
+            "scope": "real_kalshi",
+            "at": "1792117931.4638646",
+            "value_ms": "485.23784475401044",
+            "status": "ok"
+          }
+        ]
+      },
+      "intent_native_timestamp": "2026-10-16T02:32:12.043277729Z"
+    }
+  ],
+  "third_fill_origin": {
+    "decision_metric_at": "1792117869.56057",
+    "local_intent_receipt_at": "1792117869.560675",
+    "local_ack_receipt_at": "1792117869.6542997",
+    "venue_fill_at": "1792117878.834001",
+    "decision_minus_first_pair_venue_fill_s": "29.843302",
+    "intent_receipt_minus_first_pair_venue_fill_s": "29.843407",
+    "ack_receipt_minus_first_pair_venue_fill_s": "29.9370317",
+    "venue_fill_minus_first_pair_venue_fill_s": "39.116733",
+    "known_new_intent_after_first_pair": true,
+    "not_a_preexisting_bid_at_first_pair": true,
+    "prior_up3_42cent_intent_and_ack": {
+      "client_order_id": "nc-speed-cfa86c8417ab4c3f960771b41c820994",
+      "acks": [
+        {
+          "at": "1792117869.2315314",
+          "venue": {
+            "ts_ms": 1792117869215,
+            "sent_ms": "1792117869196.1",
+            "acked_ms": "1792117869231.5",
+            "offset_ms": "1.2",
+            "rtt_ms": "35.4"
+          },
+          "client_order_id": "nc-speed-cfa86c8417ab4c3f960771b41c820994",
+          "order_id": "01a1428c-89c8-7c22-bbac-be77b6ac9a34",
+          "window": "KXBTC15M-26OCT152245-45",
+          "state": "accepted; waiting for real fills",
+          "timing": {
+            "metric": "decision_to_ack",
+            "scope": "real_kalshi",
+            "at": "1792117869.1364071",
+            "value_ms": "95.05914710462093",
+            "status": "ok"
+          },
+          "stages": {
+            "save_ms": "34.725616220384836",
+            "decision_to_send_ms": "59.62905799970031",
+            "send_to_ack_ms": "35.430089104920626"
+          }
+        }
+      ],
+      "fills": [],
+      "intent": {
+        "at": "1792117869.1365056",
+        "venue": "kalshi",
+        "client_order_id": "nc-speed-cfa86c8417ab4c3f960771b41c820994",
+        "window": "KXBTC15M-26OCT152245-45",
+        "side": "up",
+        "kind": "rest",
+        "price": "0.42",
+        "size": "3.0",
+        "fair": "0.4554179212683828",
+        "state": "durable intent",
+        "timing": [
+          {
+            "metric": "btc_exchange_to_decision",
+            "scope": "real_kalshi",
+            "at": "1792117869.1364071",
+            "value_ms": "692.1989344991744",
+            "status": "ok"
+          },
+          {
+            "metric": "btc_receipt_to_decision",
+            "scope": "real_kalshi",
+            "at": "1792117869.1364071",
+            "value_ms": "630.6151770986617",
+            "status": "ok"
+          }
+        ]
+      },
+      "intent_native_timestamp": "2026-10-16T02:31:09.938339238Z"
+    },
+    "prior_up3_resting_at_third_decision": "not proven without complete cancel/expiration lifecycle"
+  },
+  "observed_target_status_tail": [
+    {
+      "event": "speeddesk_live_order",
+      "at": "1792117926.775329",
+      "venue": {
+        "ts_ms": 1792117926748,
+        "sent_ms": "1792117926730.9",
+        "acked_ms": "1792117926775.3",
+        "offset_ms": "-5.1",
+        "rtt_ms": "44.4"
+      },
+      "client_order_id": "nc-speed-12e7cd7900c84c35b0adc4b1251ff1b7",
+      "order_id": "01a1428d-6870-77e7-812b-9fe55189c8ad",
+      "window": "KXBTC15M-26OCT152245-45",
+      "state": "accepted; waiting for real fills",
+      "timing": {
+        "metric": "decision_to_ack",
+        "scope": "real_kalshi",
+        "at": "1792117926.7020943",
+        "value_ms": "73.16473126411438",
+        "status": "ok"
+      },
+      "stages": {
+        "save_ms": "21.04439213871956",
+        "decision_to_send_ms": "28.775542974472046",
+        "send_to_ack_ms": "44.389188289642334"
+      }
+    },
+    {
+      "event": "speeddesk_cancel",
+      "at": "1792117929.482645",
+      "venue": "kalshi",
+      "window": "KXBTC15M-26OCT152245-45",
+      "side": "up",
+      "price": "0.65",
+      "size": "1.0",
+      "fair": "0.6815904748980026",
+      "edge": "0.031590474898002596",
+      "latency_ms": "2780.550718307495",
+      "bitcoin_price": "82021.62",
+      "bitcoin_staleness_s": "0.22803711891174316",
+      "reason": "reprice",
+      "order_id": 9333,
+      "fee_usd": "0.0",
+      "kind": "rest"
+    },
+    {
+      "event": "speeddesk_live_cancel",
+      "at": "1792117929.640947",
+      "venue": {
+        "ts_ms": 1792117929521,
+        "sent_ms": "1792117929482.7",
+        "acked_ms": "1792117929640.9",
+        "offset_ms": "-40.8",
+        "rtt_ms": "158.3"
+      },
+      "client_order_id": "nc-speed-12e7cd7900c84c35b0adc4b1251ff1b7",
+      "order_id": "01a1428d-6870-77e7-812b-9fe55189c8ad",
+      "window": "KXBTC15M-26OCT152245-45",
+      "reason": "reprice",
+      "state": "requested; reservation retained until fills reconcile",
+      "reduced_by": "1.00",
+      "timing": {
+        "decision_to_ack_ms": "158.3",
+        "send_to_ack_ms": "158.2"
+      }
+    },
+    {
+      "event": "speeddesk_live_order",
+      "at": "1792117931.4639597",
+      "venue": "kalshi",
+      "client_order_id": "nc-speed-28fd0b10cfaf455bb5c90e76182d06fe",
+      "window": "KXBTC15M-26OCT152245-45",
+      "side": "up",
+      "kind": "rest",
+      "price": "0.68",
+      "size": "1.0",
+      "fair": "0.7169716927983518",
+      "state": "durable intent",
+      "timing": [
+        {
+          "metric": "btc_exchange_to_decision",
+          "scope": "real_kalshi",
+          "at": "1792117931.4638646",
+          "value_ms": "488.99222211912274",
+          "status": "ok"
+        },
+        {
+          "metric": "btc_receipt_to_decision",
+          "scope": "real_kalshi",
+          "at": "1792117931.4638646",
+          "value_ms": "485.23784475401044",
+          "status": "ok"
+        }
+      ]
+    },
+    {
+      "event": "speeddesk_rest",
+      "at": "1792117931.4638646",
+      "venue": "kalshi",
+      "window": "KXBTC15M-26OCT152245-45",
+      "side": "up",
+      "price": "0.68",
+      "size": "1.0",
+      "fair": "0.7169716927983518",
+      "edge": "0.036971692798351774",
+      "latency_ms": "0.0",
+      "bitcoin_price": "82021.67",
+      "bitcoin_staleness_s": "0.488985538482666",
+      "reason": "",
+      "order_id": 9334,
+      "fee_usd": "0.0",
+      "kind": "rest"
+    },
+    {
+      "event": "speeddesk_live_order",
+      "at": "1792117931.5717752",
+      "venue": {
+        "ts_ms": 1792117931534,
+        "sent_ms": "1792117931478.3",
+        "acked_ms": "1792117931571.8",
+        "offset_ms": "9.0",
+        "rtt_ms": "93.5"
+      },
+      "client_order_id": "nc-speed-28fd0b10cfaf455bb5c90e76182d06fe",
+      "order_id": "01a1428d-7bf8-74c9-8afc-7f27428ccd61",
+      "window": "KXBTC15M-26OCT152245-45",
+      "state": "accepted; waiting for real fills",
+      "timing": {
+        "metric": "decision_to_ack",
+        "scope": "real_kalshi",
+        "at": "1792117931.4638646",
+        "value_ms": "107.84903727471828",
+        "status": "ok"
+      },
+      "stages": {
+        "save_ms": "7.750151678919792",
+        "decision_to_send_ms": "14.367842115461826",
+        "send_to_ack_ms": "93.48119515925646"
+      }
+    },
+    {
+      "event": "speeddesk_cancel",
+      "at": "1792117932.3198457",
+      "venue": "kalshi",
+      "window": "KXBTC15M-26OCT152245-45",
+      "side": "up",
+      "price": "0.68",
+      "size": "1.0",
+      "fair": "0.7169716927983518",
+      "edge": "0.036971692798351774",
+      "latency_ms": "855.9811115264893",
+      "bitcoin_price": "82033.99",
+      "bitcoin_staleness_s": "0.1502065658569336",
+      "reason": "reprice",
+      "order_id": 9334,
+      "fee_usd": "0.0",
+      "kind": "rest"
+    },
+    {
+      "event": "speeddesk_live_cancel",
+      "at": "1792117932.389883",
+      "venue": {
+        "ts_ms": 1792117932372,
+        "sent_ms": "1792117932319.9",
+        "acked_ms": "1792117932389.9",
+        "offset_ms": "17.1",
+        "rtt_ms": "70.0"
+      },
+      "client_order_id": "nc-speed-28fd0b10cfaf455bb5c90e76182d06fe",
+      "order_id": "01a1428d-7bf8-74c9-8afc-7f27428ccd61",
+      "window": "KXBTC15M-26OCT152245-45",
+      "reason": "reprice",
+      "state": "requested; reservation retained until fills reconcile",
+      "reduced_by": "1.00",
+      "timing": {
+        "decision_to_ack_ms": "70.0",
+        "send_to_ack_ms": "70.0"
+      }
+    },
+    {
+      "event": "speeddesk_live_lock",
+      "at": "1792118460.0293763",
+      "venue": "kalshi",
+      "window": "KXBTC15M-26OCT152245-45",
+      "side": "up",
+      "size": 3,
+      "state": "waiting to complete the pair",
+      "reason": "lock_price"
+    },
+    {
+      "event": "speeddesk_live_lock",
+      "at": "1792118633.9156127",
+      "venue": "kalshi",
+      "window": "KXBTC15M-26OCT152245-45",
+      "side": "up",
+      "size": 3,
+      "state": "waiting to complete the pair",
+      "reason": "no_ask"
+    }
+  ],
+  "isolated_cap_consistency_not_runtime_rejection_counts": [
+    {
+      "actual_requested_up_price": "0.54",
+      "actual_requested_up_size": "4",
+      "isolated_average_pair_cost_for_actual_size": "0.9875",
+      "next_larger_size_for_illustration_only": "5",
+      "isolated_average_pair_cost_larger_size": "0.9925",
+      "pair_cap": "0.99",
+      "not_an_observed_rejection_or_replay_of_pending_cash_stop_checks": true
+    },
+    {
+      "actual_requested_up_price": "0.59",
+      "actual_requested_up_size": "2",
+      "isolated_average_pair_cost_for_actual_size": "0.9875",
+      "next_larger_size_for_illustration_only": "3",
+      "isolated_average_pair_cost_larger_size": "1.0000",
+      "pair_cap": "0.99",
+      "not_an_observed_rejection_or_replay_of_pending_cash_stop_checks": true
+    },
+    {
+      "actual_requested_up_price": "0.65",
+      "actual_requested_up_size": "1",
+      "isolated_average_pair_cost_for_actual_size": "0.9808333333333333333333333333",
+      "next_larger_size_for_illustration_only": "2",
+      "isolated_average_pair_cost_larger_size": "1.004642857142857142857142857",
+      "pair_cap": "0.99",
+      "not_an_observed_rejection_or_replay_of_pending_cash_stop_checks": true
+    },
+    {
+      "actual_requested_up_price": "0.68",
+      "actual_requested_up_size": "1",
+      "isolated_average_pair_cost_for_actual_size": "0.9858333333333333333333333333",
+      "next_larger_size_for_illustration_only": "2",
+      "isolated_average_pair_cost_larger_size": "1.013214285714285714285714286",
+      "pair_cap": "0.99",
+      "not_an_observed_rejection_or_replay_of_pending_cash_stop_checks": true
+    }
+  ],
+  "observed_venue_rejects": [
+    {
+      "at": "1792117866.8355021",
+      "venue": "kalshi",
+      "client_order_id": "nc-speed-911d9e5416af40039a30535202851181",
+      "window": "KXBTC15M-26OCT152245-45",
+      "reason": "Kalshi refused this one order; still trading",
+      "error": "KalshiClientError",
+      "operation": "create_order",
+      "detail": "request rejected",
+      "status": 400,
+      "code": "invalid_order"
+    }
+  ],
+  "limitations": [
+    "No complete source-timestamped book/depth, own-inclusive queue or accepted print tape supplied.",
+    "No complete cancel lifecycle supplied for every prior bid; a recent acknowledgement is not proof still resting.",
+    "The sole target reject is venue400invalid_order for Down3@.53; local cap/pair/imbalance refusal counts are not in these files.",
+    "Ordinary reprice/quote lifetimes and late-lock lock_price/no_ask notes do not establish a profitable alternative hedge was available.",
+    "A stop-new-directional-after-complete-pair candidate differs from cancellation of already resting bids and cancel races; this selected historical loss does not prove a general edge.",
+    "No clipped hedge fills/profits, new thresholds or changed live policy are inferred."
+  ],
+  "next_prospective_evidence": "Use the frozen declared future cohort to join exact intent/copy/ack/cancel/expiry/fill clocks and remaining reservations; classify new-directional submission after first positive full pair separately from already-resting fill/cancel races. Preserve unknown books/queue/prints. Any later candidate needs a fresh frozen paper/read-only protocol including all wins/losses and missed rounds; do not tune the consumed loss."
+}

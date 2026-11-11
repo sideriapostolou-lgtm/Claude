@@ -1,0 +1,266 @@
+{
+  "queries": [
+    {
+      "query": {
+        "projectId": "75750847-85c0-41a3-a2a7-b7f2201a51e9",
+        "deploymentId": "3a1b0098-8b07-4bc7-b586-38a24fcc625a",
+        "types": [
+          "deploy"
+        ],
+        "startDate": "2026-10-16T14:20:12Z",
+        "endDate": "2026-10-16T14:23:23Z",
+        "limit": 10,
+        "filter": "speeddesk_live_resume"
+      },
+      "returned_rows": 3,
+      "native_rows": [
+        {
+          "timestamp": "2026-10-16T14:22:49.213913989Z",
+          "severity": "info",
+          "message": "2026-10-16T14:22:49Z INFO nightcrawler.speeddesk: speeddesk_live_resume {\"at\":1792160568.5129707,\"venue\":\"kalshi\",\"state\":\"ignored; this value was already used\",\"total_pnl_usd\":-24.619500000000002,\"counted_from_usd\":null,\"total_halted\":false}",
+          "attributes": [
+            {
+              "key": "level",
+              "value": "\"info\""
+            }
+          ]
+        }
+      ],
+      "excluded_embedded_or_other_rows": 2,
+      "status": "SUCCESS",
+      "coverage": "Bounded query; embedded latest_events/status copies excluded from event counts."
+    },
+    {
+      "query": {
+        "projectId": "75750847-85c0-41a3-a2a7-b7f2201a51e9",
+        "deploymentId": "3a1b0098-8b07-4bc7-b586-38a24fcc625a",
+        "types": [
+          "deploy"
+        ],
+        "startDate": "2026-10-16T14:20:12Z",
+        "endDate": "2026-10-16T14:23:23Z",
+        "limit": 10,
+        "filter": "speeddesk_live_day_reset"
+      },
+      "returned_rows": 3,
+      "native_rows": [
+        {
+          "timestamp": "2026-10-16T14:22:49.213919669Z",
+          "severity": "info",
+          "message": "2026-10-16T14:22:49Z INFO nightcrawler.speeddesk: speeddesk_live_day_reset {\"at\":1792160568.5129848,\"venue\":\"kalshi\",\"state\":\"ignored; this value was already used\"}",
+          "attributes": [
+            {
+              "key": "level",
+              "value": "\"info\""
+            }
+          ]
+        }
+      ],
+      "excluded_embedded_or_other_rows": 2,
+      "status": "SUCCESS",
+      "coverage": "Bounded query; embedded latest_events/status copies excluded from event counts."
+    },
+    {
+      "query": {
+        "projectId": "75750847-85c0-41a3-a2a7-b7f2201a51e9",
+        "deploymentId": "3a1b0098-8b07-4bc7-b586-38a24fcc625a",
+        "types": [
+          "deploy"
+        ],
+        "startDate": "2026-10-16T14:20:12Z",
+        "endDate": "2026-10-16T14:23:23Z",
+        "limit": 10,
+        "filter": "speeddesk_live_integrity_reset"
+      },
+      "returned_rows": 3,
+      "native_rows": [
+        {
+          "timestamp": "2026-10-16T14:22:49.213916919Z",
+          "severity": "info",
+          "message": "2026-10-16T14:22:49Z INFO nightcrawler.speeddesk: speeddesk_live_integrity_reset {\"at\":1792160568.5129795,\"venue\":\"kalshi\",\"code\":null,\"state\":\"ignored; this value was already used\"}",
+          "attributes": [
+            {
+              "key": "level",
+              "value": "\"info\""
+            }
+          ]
+        }
+      ],
+      "excluded_embedded_or_other_rows": 2,
+      "status": "SUCCESS",
+      "coverage": "Bounded query; embedded latest_events/status copies excluded from event counts."
+    },
+    {
+      "query": {
+        "projectId": "75750847-85c0-41a3-a2a7-b7f2201a51e9",
+        "deploymentId": "3a1b0098-8b07-4bc7-b586-38a24fcc625a",
+        "types": [
+          "deploy"
+        ],
+        "startDate": "2026-10-16T14:20:12Z",
+        "endDate": "2026-10-16T14:23:23Z",
+        "limit": 10,
+        "filter": "speeddesk_started"
+      },
+      "returned_rows": 1,
+      "native_rows": [
+        {
+          "timestamp": "2026-10-16T14:22:49.773814130Z",
+          "severity": "info",
+          "message": "2026-10-16T14:22:49Z INFO nightcrawler.speeddesk: speeddesk_started {\"mode\":\"practice\",\"at\":1792160569.286378,\"real_orders\":false,\"trial_started_at\":1791831625.5335124,\"config\":{\"take_edge\":1.0,\"make_edge\":0.03,\"clip\":25.0,\"pair_cap\":0.99,\"max_imbalance\":0.25,\"window_usd\":20.0,\"open_usd\":20.0,\"day_stop_usd\":10.0,\"cutoff_s\":60.0,\"latency_ms\":250.0,\"stale_s\":3.0,\"reprice\":0.01,\"sigma_min_samples\":1500,\"sigma_warmup_s\":3600.0}}",
+          "attributes": [
+            {
+              "key": "level",
+              "value": "\"info\""
+            }
+          ]
+        }
+      ],
+      "excluded_embedded_or_other_rows": 0,
+      "status": "SUCCESS",
+      "coverage": "Bounded query; embedded latest_events/status copies excluded from event counts."
+    },
+    {
+      "query": {
+        "projectId": "75750847-85c0-41a3-a2a7-b7f2201a51e9",
+        "deploymentId": "3a1b0098-8b07-4bc7-b586-38a24fcc625a",
+        "types": [
+          "deploy"
+        ],
+        "startDate": "2026-10-16T14:20:12Z",
+        "endDate": "2026-10-16T14:23:23Z",
+        "limit": 10,
+        "filter": "Traceback"
+      },
+      "returned_rows": 0,
+      "native_rows": [],
+      "excluded_embedded_or_other_rows": 0,
+      "status": "SUCCESS",
+      "coverage": "Bounded query; embedded latest_events/status copies excluded from event counts."
+    },
+    {
+      "query": {
+        "projectId": "75750847-85c0-41a3-a2a7-b7f2201a51e9",
+        "deploymentId": "3a1b0098-8b07-4bc7-b586-38a24fcc625a",
+        "types": [
+          "deploy"
+        ],
+        "startDate": "2026-10-16T14:20:12Z",
+        "endDate": "2026-10-16T14:23:23Z",
+        "limit": 10,
+        "filter": "speeddesk_halted"
+      },
+      "returned_rows": 0,
+      "native_rows": [],
+      "excluded_embedded_or_other_rows": 0,
+      "status": "SUCCESS",
+      "coverage": "Bounded query; embedded latest_events/status copies excluded from event counts."
+    },
+    {
+      "query": {
+        "projectId": "75750847-85c0-41a3-a2a7-b7f2201a51e9",
+        "deploymentId": "3a1b0098-8b07-4bc7-b586-38a24fcc625a",
+        "types": [
+          "deploy"
+        ],
+        "startDate": "2026-10-16T14:20:12Z",
+        "endDate": "2026-10-16T14:23:23Z",
+        "limit": 10,
+        "filter": "speeddesk_live_reject"
+      },
+      "returned_rows": 0,
+      "native_rows": [],
+      "excluded_embedded_or_other_rows": 0,
+      "status": "SUCCESS",
+      "coverage": "Bounded query; embedded latest_events/status copies excluded from event counts."
+    }
+  ],
+  "polydesk": {
+    "query": {
+      "projectId": "75750847-85c0-41a3-a2a7-b7f2201a51e9",
+      "deploymentId": "3a1b0098-8b07-4bc7-b586-38a24fcc625a",
+      "types": [
+        "deploy"
+      ],
+      "startDate": "2026-10-16T14:20:12Z",
+      "endDate": "2026-10-16T14:21:50Z",
+      "limit": 8,
+      "filter": "polydesk_started"
+    },
+    "result": {
+      "status": "fulfilled",
+      "value": {
+        "content": [
+          {
+            "type": "text",
+            "text": "**Deployment 3a1b0098-8b07-4bc7-b586-38a24fcc625a** [SUCCESS]\nservice: f84d3b52-002f-44cb-931e-bc9e3e097e97, env: 17f7b0e0-104c-4903-9484-0106748b3cdb\n\n### Deploy logs (1)\n2026-10-16T14:21:38.735355221Z info 2026-10-16T14:21:38Z INFO nightcrawler.polydesk: polydesk_started theta=0.97 hours=1 ticket_usd=20 poll_s=90 (LIVE: 10 contract(s) per order)"
+          }
+        ],
+        "structuredContent": {
+          "scope": "deployment",
+          "deploymentId": "3a1b0098-8b07-4bc7-b586-38a24fcc625a",
+          "serviceId": "f84d3b52-002f-44cb-931e-bc9e3e097e97",
+          "environmentId": "17f7b0e0-104c-4903-9484-0106748b3cdb",
+          "status": "SUCCESS",
+          "deploy": [
+            {
+              "timestamp": "2026-10-16T14:21:38.735355221Z",
+              "severity": "info",
+              "message": "2026-10-16T14:21:38Z INFO nightcrawler.polydesk: polydesk_started theta=0.97 hours=1 ticket_usd=20 poll_s=90 (LIVE: 10 contract(s) per order)",
+              "attributes": [
+                {
+                  "key": "level",
+                  "value": "\"info\""
+                }
+              ]
+            }
+          ]
+        },
+        "isError": false
+      }
+    }
+  },
+  "initial_empty_queries": {
+    "first_status": {
+      "status": "fulfilled",
+      "value": {
+        "content": [
+          {
+            "type": "text",
+            "text": "**Deployment 3a1b0098-8b07-4bc7-b586-38a24fcc625a** [BUILDING]\nservice: f84d3b52-002f-44cb-931e-bc9e3e097e97, env: 17f7b0e0-104c-4903-9484-0106748b3cdb\n\n### Deploy logs (0)\n(no deploy logs in range)"
+          }
+        ],
+        "structuredContent": {
+          "scope": "deployment",
+          "deploymentId": "3a1b0098-8b07-4bc7-b586-38a24fcc625a",
+          "serviceId": "f84d3b52-002f-44cb-931e-bc9e3e097e97",
+          "environmentId": "17f7b0e0-104c-4903-9484-0106748b3cdb",
+          "status": "BUILDING",
+          "deploy": []
+        },
+        "isError": false
+      }
+    },
+    "warm_status": {
+      "status": "fulfilled",
+      "value": {
+        "content": [
+          {
+            "type": "text",
+            "text": "**Deployment 3a1b0098-8b07-4bc7-b586-38a24fcc625a** [SUCCESS]\nservice: f84d3b52-002f-44cb-931e-bc9e3e097e97, env: 17f7b0e0-104c-4903-9484-0106748b3cdb\n\n### Deploy logs (0)\n(no deploy logs in range)"
+          }
+        ],
+        "structuredContent": {
+          "scope": "deployment",
+          "deploymentId": "3a1b0098-8b07-4bc7-b586-38a24fcc625a",
+          "serviceId": "f84d3b52-002f-44cb-931e-bc9e3e097e97",
+          "environmentId": "17f7b0e0-104c-4903-9484-0106748b3cdb",
+          "status": "SUCCESS",
+          "deploy": []
+        },
+        "isError": false
+      }
+    }
+  },
+  "limitation": "Filters can match nested old events. Only explicit top-level native event lines retained above; not account or whole-history evidence."
+}

@@ -1,0 +1,65 @@
+{
+  "head": "72a4ddcc1a49f72f1d90973a9904c5312c9f59fd",
+  "files": {
+    "src/nightcrawler/kalshi_probability_epochs.py": {
+      "sha256": "b0c005018a50082f16b2a5622f6dfc19e6eb558aa73f9bd533eb458943b72bc2",
+      "bytes": 13555
+    },
+    "src/nightcrawler/kalshi_probability_learning.py": {
+      "sha256": "43d8f527fd24aee3a7dbb33d848dcaaaf0e39089ab605deddad32dfabc1e35ab",
+      "bytes": 27111
+    },
+    "src/nightcrawler/kalshi_arena.py": {
+      "sha256": "52b983cb87ba6ec593124aef525b37b2ad48ce8cabba0325f6b813d52e7a0676",
+      "bytes": 137209
+    },
+    "src/nightcrawler/pagestate.py": {
+      "sha256": "d73eec093164c7a659f12b08226844fb58cfd01e96278585b255575ea8212479",
+      "bytes": 234901
+    },
+    "tests/test_kalshi_probability_epochs.py": {
+      "sha256": "e04f8149dc058c1099b789b65ff00e33037677f459dc18e49730718504e4613b",
+      "bytes": 24007
+    },
+    "tests/test_kalshi_probability_arena.py": {
+      "sha256": "2f69e8c665b0b4d0277c398d4a7fa27aedfeecb544c1e32f9cb65a72cde8b4cb",
+      "bytes": 11571
+    },
+    "tests/test_kalshi_arena_page.py": {
+      "sha256": "2d922b6e2e586e7befa2b9d8f65c6477ea6ba36daf1e2f155198e04ecb516bfa",
+      "bytes": 23390
+    }
+  },
+  "patch_sha256": "baeea77b5d25df3fd5f0b7d5d0d64ef41930d3cfd08afc9d65ac3e54286220b3",
+  "patch_bytes": 52562,
+  "source_fingerprint": "567a1030f651b31b93616f18f4eb67a8e618d9276cc23114d2fa1aeef699708f",
+  "fingerprint_dependencies": [
+    "kalshi_probability_learning.py",
+    "kalshi_probability_epochs.py",
+    "speeddesk_model.py",
+    "speeddesk_feeds.py",
+    "speeddesk_kalshi.py",
+    "speeddesk_kalshi_ws.py",
+    "speeddesk_venues.py",
+    "speeddesk.py",
+    "kalshi_arena.py"
+  ],
+  "resource": {
+    "fixture_sha256": "d41d452ba82a89516a5bb85140c469f9ac21f89a71dcc1ce04ed931748166326",
+    "serialized_bytes": 432031,
+    "legacy_bytes": 71189,
+    "record_state_bytes": [
+      71189,
+      71990,
+      71990,
+      71990,
+      71990
+    ],
+    "lineage_panel_bytes": 1667,
+    "current_source": "567a1030f651b31b93616f18f4eb67a8e618d9276cc23114d2fa1aeef699708f",
+    "imported_modules": [
+      "/workspace/nightcrawler-probability-epochs/src/nightcrawler/kalshi_probability_epochs.py",
+      "/workspace/nightcrawler-probability-epochs/src/nightcrawler/kalshi_probability_learning.py"
+    ]
+  }
+}

@@ -1,0 +1,116 @@
+"""Offline native-wrapper recurrence analysis; no network, imports from bot, or writes to bot."""
+import argparse, collections, datetime as dt, hashlib, json, math, re
+from pathlib import Path
+
+DEPLOY='66e6e7e4-30d9-4628-a234-f2a8e97dad19'
+SOURCE='0c30491e0bd101250ee443912e1352f38718af45'
+TIMING='speeddesk_feed_kalshi_ws_timing'
+PAT=re.compile(r'^\S+ (INFO|WARNING|ERROR) nightcrawler\.speeddesk_kalshi_ws: (speeddesk_feed_kalshi_ws_(?:timing_unavailable|timing|gap))(?: (.*))?$')
+WARN=re.compile(r'reader_kind=(\w+) reader_instance=(\d+) reader_process=(\d+) reader_session=(\d+|None)')
+FAMILY={'practice_checkpoint','practice_state','practice_ledger','practice_daily_reports','live_checkpoint','live_state','live_ledger','live_reports'}
+def utc(s): return dt.datetime.fromisoformat(s.replace('Z','+00:00')).timestamp()
+def num(x): return isinstance(x,(int,float)) and not isinstance(x,bool) and math.isfinite(x)
+def union(xs):
+    total=0.0;right=-math.inf
+    for a,b in sorted(xs):
+        total+=max(0.0,b-max(a,right));right=max(right,b)
+    return total*1000
+
+def wrappers(x):
+    if isinstance(x,dict):
+        if 'request' in x and ('result' in x or 'response' in x): yield x; return
+        for k,v in x.items():
+            if k not in ('content','structuredContent'): yield from wrappers(v)
+    elif isinstance(x,list):
+        for y in x: yield from wrappers(y)
+
+def analyze(paths,start,end,tail,expected_deployment=DEPLOY,expected_source=SOURCE):
+    manifest={};queries=[];seen={};problems=[]
+    for path in paths:
+        raw=Path(path).read_bytes();manifest[str(path)]=hashlib.sha256(raw).hexdigest()
+        try: data=json.loads(raw)
+        except Exception as e: problems.append({'input':str(path),'error':type(e).__name__}); continue
+        found=list(wrappers(data))
+        if not found: problems.append({'input':str(path),'error':'no_native_wrappers'});continue
+        for w in found:
+            req=w['request'];res=w.get('result',w.get('response'));q={'input':str(path),'request':req,'before':w.get('before'),'after':w.get('after')}
+            if not isinstance(res,dict): q['error']='non_object_result';queries.append(q);continue
+            structured=res.get('structuredContent',{})
+            if not isinstance(structured,dict) or not any(k in structured for k in ('deploy','logs')):q['error']='missing_native_log_rows';queries.append(q);continue
+            rows=structured.get('deploy',structured.get('logs',[]))
+            if not isinstance(rows,list): q['error']='non_list_rows';queries.append(q);continue
+            q.update(count=len(rows),saturated=len(rows)>=req.get('limit',0),isError=res.get('isError',False),deployment_matches=req.get('deploymentId')==expected_deployment)
+            queries.append(q)
+            if q['isError'] or not q['deployment_matches']:
+                problems.append({'input':str(path),'error':'native_query_error_or_deployment_mismatch'});continue
+            for row in rows:
+                if not isinstance(row,dict) or not isinstance(row.get('message'),str) or not isinstance(row.get('timestamp'),str): problems.append({'input':str(path),'error':'malformed_row'});continue
+                seen[(row['timestamp'],row['message'])]=row
+    parsed=[];excluded=collections.Counter(); conflicts=[];identities={};span_shown={}
+    for (stamp,message),row in sorted(seen.items()):
+        try: t=utc(stamp)
+        except Exception: excluded['bad_timestamp']+=1;continue
+        if not start<=t<tail: excluded['outside_fixed_bounds']+=1;continue
+        m=PAT.match(message)
+        if not m: excluded['non_original_prefix']+=1;continue
+        level,event,body=m.groups();r={'timestamp':stamp,'segment':'target' if t<end else 'tail','event':event,'level':level}
+        if event!=TIMING:
+            r['text']=body
+            wm=WARN.search(body or '')
+            if wm:r['reader_session_context']={'kind':wm[1],'instance':int(wm[2]),'process':int(wm[3]),'session':None if wm[4]=='None' else int(wm[4])}
+            parsed.append(r);continue
+        try: p=json.loads(body)
+        except Exception: r['unknown']='invalid_json';parsed.append(r);continue
+        if not isinstance(p,dict):r['unknown']='non_object_payload';parsed.append(r);continue
+        reader=p.get('reader') or {};receipt=p.get('receipt') or {}
+        if not isinstance(reader,dict) or not isinstance(receipt,dict):r['unknown']='invalid_identity_or_receipt_shape';parsed.append(r);continue
+        r.update(reader=reader,session=p.get('session'),timing_event=p.get('event'),kind=p.get('kind'),receipt=receipt,connection=p.get('connection'),previous_message=p.get('previous_message'))
+        r['population']='main' if reader=={'kind':'speeddesk','instance':1,'process':1} else 'other:'+json.dumps(reader,sort_keys=True,separators=(',',':')) if reader else 'unknown_reader'
+        r['apply_wall_segment']='unknown' if not num(p.get('apply_wall')) else 'target' if start<=p['apply_wall']<end else 'tail' if end<=p['apply_wall']<tail else 'outside'
+        key=(json.dumps(reader,sort_keys=True),p.get('session'),receipt.get('ordinal'),p.get('event'))
+        canonical=json.dumps(p,sort_keys=True)
+        if key in identities and identities[key]!=canonical: conflicts.append({'identity':key,'timestamp':stamp})
+        identities[key]=canonical
+        values=[receipt.get('accepted_monotonic'),p.get('recv_call_mono'),receipt.get('received_monotonic'),p.get('recv_return_mono'),p.get('apply_mono')]
+        if receipt.get('status')!='known': r['unknown']='receipt_'+str(receipt.get('status','missing'));parsed.append(r);continue
+        if not isinstance(receipt.get('ordinal'),int) or isinstance(receipt.get('ordinal'),bool) or not all(num(x) for x in values): r['unknown']='missing_or_invalid_stamps';parsed.append(r);continue
+        connection=p.get('connection')
+        if not isinstance(connection,dict) or connection.get('received')!=receipt['ordinal']:r['unknown']='unmatched_receipt_ordinal';parsed.append(r);continue
+        a,c,d,f,g=values
+        if not(a<=d<=f<=g and c<=d):r['unknown']='inconsistent_order';parsed.append(r);continue
+        parts={'accepted_to_recv_call_ms':(c-a)*1000,'recv_call_to_receipt_ms':(d-c)*1000,'receipt_to_return_ms':(f-d)*1000,'return_to_apply_ms':(g-f)*1000}
+        comparisons={'residence_ms':((d-a)*1000,receipt.get('residence_ms')),'recv_wait_ms':((f-c)*1000,p.get('recv_wait_ms')),'return_to_apply_ms':((g-f)*1000,p.get('return_to_apply_ms'))}
+        inconsistent={k:v for k,v in comparisons.items() if not num(v[1]) or abs(v[0]-v[1])>.1}
+        if inconsistent:r['unknown']='inconsistent_reported_delta';r['inconsistent']=inconsistent;parsed.append(r);continue
+        r.update(segments_ms=parts,accepted_before_recv_call=a<=c,over_1000=parts['accepted_to_recv_call_ms']>1000,over_3000=parts['accepted_to_recv_call_ms']>3000)
+        r['acceptance_wall_before_target']=num(receipt.get('accepted_wall')) and receipt['accepted_wall']<start
+        work=p.get('local_work')
+        if isinstance(work,dict):
+            r['local_work_summary']={k:v for k,v in work.items() if k!='spans'}
+            shown=[];byname=collections.defaultdict(list);allfamily=[]
+            for s in work.get('spans',[]):
+                item=dict(s);left=s.get('start_mono');right=s.get('end_mono')
+                if num(left) and num(right) and left<=right:
+                    clip=(max(a,left),min(c,right));item['pre_recv_call_overlap_ms']=max(0,clip[1]-clip[0])*1000
+                    if clip[0]<clip[1]:
+                        byname[s.get('name','unknown')].append(clip)
+                        if s.get('name') in FAMILY:allfamily.append(clip)
+                    sk=(reader.get('kind'),reader.get('instance'),reader.get('process'),s.get('span_id'))
+                    old=span_shown.get(sk)
+                    identity={k:s.get(k) for k in ['name','span_id','parent_id','start_mono','end_mono','wall_ms','cpu_ms']}
+                    if old and old!=identity:conflicts.append({'span_identity':sk,'timestamp':stamp})
+                    span_shown[sk]=identity
+                shown.append(item)
+            r['shown_spans']=shown;r['shown_pre_call_union_ms_by_name']={k:union(v) for k,v in byname.items()};r['shown_checkpoint_family_pre_call_union_lower_bound_ms']=union(allfamily)
+        parsed.append(r)
+    groups={}
+    for segment in ('target','tail'):
+        for population in sorted({'main','unknown_reader'}|{r['population'] for r in parsed if 'population' in r}):
+            for event in ('gap','status'):
+                rows=[r for r in parsed if r.get('event')==TIMING and r['segment']==segment and r.get('population')==population and r.get('timing_event')==event]
+                known=[r for r in rows if 'segments_ms' in r];slow=[r for r in known if r['over_1000']]
+                groups[f'{segment}/{population}/{event}']={'logged_rows':len(rows),'observed_sessions':sorted({r.get('session') for r in rows if isinstance(r.get('session'),int)}),'valid_known':len(known),'unknown':dict(collections.Counter(r.get('unknown') for r in rows if 'unknown' in r)),'accepted_after_call':sum(not r['accepted_before_recv_call'] for r in known),'over_1000':len(slow),'over_3000':sum(r['over_3000'] for r in known),'over_1000_with_shown_checkpoint_overlap':sum(r.get('shown_checkpoint_family_pre_call_union_lower_bound_ms',0)>0 for r in slow),'max_accepted_to_recv_call_ms':max((r['segments_ms']['accepted_to_recv_call_ms'] for r in known),default=None)}
+    return {'expected_source':expected_source,'expected_deployment':expected_deployment,'source_identity_is_root_verified_not_proved_by_this_script':True,'bounds_utc':{'start':dt.datetime.fromtimestamp(start,dt.timezone.utc).isoformat(),'end':dt.datetime.fromtimestamp(end,dt.timezone.utc).isoformat(),'tail_end':dt.datetime.fromtimestamp(tail,dt.timezone.utc).isoformat()},'inputs_sha256':manifest,'queries':queries,'event_counts':dict(collections.Counter(r['event'] for r in parsed)),'unknown_counts_all_populations':dict(collections.Counter(r['unknown'] for r in parsed if 'unknown' in r)),'input_problems':problems,'conflicts':conflicts,'excluded':dict(excluded),'groups':groups,'originals':parsed,'unique_shown_spans':list(span_shown.values()),'coverage_certified':False,'limits':['Finite error-triggered/minute-status logged samples, not all-stream rates.','Saturated parents may be replaced by complete split leaves; original attempts retained for root review.','Zero recurrence means unobserved, never eliminated.','Nested wall/CPU spans and full-bin/slow coverage populations are not additive.','Shown checkpoint-family unions are lower bounds; no CPU or unique causal/profit claim.','Query completeness and actual retrieval after tail require separate root verification.']}
+if __name__=='__main__':
+    ap=argparse.ArgumentParser();ap.add_argument('inputs',nargs='+');ap.add_argument('--start',default='2026-10-15T21:45:00Z');ap.add_argument('--end',default='2026-10-15T22:00:00Z');ap.add_argument('--tail',default='2026-10-15T22:02:00Z');ap.add_argument('--output',required=True);ap.add_argument('--expected-deployment',default=DEPLOY);ap.add_argument('--expected-source',default=SOURCE);args=ap.parse_args()
+    result=analyze(args.inputs,utc(args.start),utc(args.end),utc(args.tail),args.expected_deployment,args.expected_source);Path(args.output).write_text(json.dumps(result,indent=2,allow_nan=False)+'\n');print(json.dumps({'output':args.output,'sha256':hashlib.sha256(Path(args.output).read_bytes()).hexdigest(),'groups':result['groups'],'problems':result['input_problems'],'conflicts':len(result['conflicts']),'queries':len(result['queries'])},indent=2))

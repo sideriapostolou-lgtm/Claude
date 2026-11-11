@@ -1,0 +1,76 @@
+FF                                                                       [100%]
+=================================== FAILURES ===================================
+_ test_transport_wait_rechecks_account_and_cash_before_first_byte[account_age_4] _
+
+tmp_path = PosixPath('/tmp/pytest-of-agent/pytest-175/test_transport_wait_rechecks_a0')
+case = 'account_age_4'
+
+    @pytest.mark.parametrize("case", ["account_age_4", "cash_age_6"])
+    def test_transport_wait_rechecks_account_and_cash_before_first_byte(tmp_path: Path, case: str) -> None:
+        desk, account, clock = make_desk(tmp_path)
+        try:
+            starter_filled(desk, account, clock)
+            at_lock_time(desk, clock, up_ask=.3, down_ask=.7)
+            original_create = account.create_order
+            attempted = []
+    
+            def delayed_create(**kwargs: Any) -> dict[str, Any]:
+                attempted.append(kwargs["client_order_id"])
+                # Quotes remain fresh after the simulated worker/rate-limit wait.
+                if case == "account_age_4":
+                    clock.advance(4)
+                    refresh_quotes(desk, clock)
+                else:
+                    desk.book.cash_at = clock.now() - 6
+                return original_create(**kwargs)
+    
+            account.create_order = delayed_create  # type: ignore[method-assign]
+            asyncio.run(desk.step())
+>           assert len(attempted) == 1 and len(account.creates) == 1  # only the earlier starter reached the fake venue
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E           AssertionError: assert (1 == 1 and 2 == 1)
+E            +  where 1 = len(['nc-speed-ef874c63244d40cc874029aff20c3f23'])
+E            +  and   2 = len([{'ticker': 'KXBTC15M-26OCT121900-00', 'side': 'up', 'kind': 'take', 'price': 0.4, ...}, {'ticker': 'KXBTC15M-26OCT121900-00', 'side': 'down', 'kind': 'take', 'price': 0.7, ...}])
+E            +    where [{'ticker': 'KXBTC15M-26OCT121900-00', 'side': 'up', 'kind': 'take', 'price': 0.4, ...}, {'ticker': 'KXBTC15M-26OCT121900-00', 'side': 'down', 'kind': 'take', 'price': 0.7, ...}] = <test_speeddesk_live.FakeAccount object at 0x7f6365332600>.creates
+
+tests/test_speeddesk_lock_send_freshness.py:43: AssertionError
+_ test_transport_wait_rechecks_account_and_cash_before_first_byte[cash_age_6] __
+
+tmp_path = PosixPath('/tmp/pytest-of-agent/pytest-175/test_transport_wait_rechecks_a1')
+case = 'cash_age_6'
+
+    @pytest.mark.parametrize("case", ["account_age_4", "cash_age_6"])
+    def test_transport_wait_rechecks_account_and_cash_before_first_byte(tmp_path: Path, case: str) -> None:
+        desk, account, clock = make_desk(tmp_path)
+        try:
+            starter_filled(desk, account, clock)
+            at_lock_time(desk, clock, up_ask=.3, down_ask=.7)
+            original_create = account.create_order
+            attempted = []
+    
+            def delayed_create(**kwargs: Any) -> dict[str, Any]:
+                attempted.append(kwargs["client_order_id"])
+                # Quotes remain fresh after the simulated worker/rate-limit wait.
+                if case == "account_age_4":
+                    clock.advance(4)
+                    refresh_quotes(desk, clock)
+                else:
+                    desk.book.cash_at = clock.now() - 6
+                return original_create(**kwargs)
+    
+            account.create_order = delayed_create  # type: ignore[method-assign]
+            asyncio.run(desk.step())
+>           assert len(attempted) == 1 and len(account.creates) == 1  # only the earlier starter reached the fake venue
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E           AssertionError: assert (1 == 1 and 2 == 1)
+E            +  where 1 = len(['nc-speed-a023b580f1564ef388a931245fb0f8f7'])
+E            +  and   2 = len([{'ticker': 'KXBTC15M-26OCT121900-00', 'side': 'up', 'kind': 'take', 'price': 0.4, ...}, {'ticker': 'KXBTC15M-26OCT121900-00', 'side': 'down', 'kind': 'take', 'price': 0.7, ...}])
+E            +    where [{'ticker': 'KXBTC15M-26OCT121900-00', 'side': 'up', 'kind': 'take', 'price': 0.4, ...}, {'ticker': 'KXBTC15M-26OCT121900-00', 'side': 'down', 'kind': 'take', 'price': 0.7, ...}] = <test_speeddesk_live.FakeAccount object at 0x7f63654b6960>.creates
+
+tests/test_speeddesk_lock_send_freshness.py:43: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_speeddesk_lock_send_freshness.py::test_transport_wait_rechecks_account_and_cash_before_first_byte[account_age_4]
+FAILED tests/test_speeddesk_lock_send_freshness.py::test_transport_wait_rechecks_account_and_cash_before_first_byte[cash_age_6]
+2 failed, 26 deselected in 0.25s
+
+CAPTURED_EXIT=1

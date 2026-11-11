@@ -1,0 +1,14 @@
+{
+  "before": "2026-10-15T20:45:51.062302610Z",
+  "after": "2026-10-15T20:54:18.514262585Z",
+  "selected": 68,
+  "equal": 67,
+  "changed": [
+    {
+      "path": "ladder.start_pnl_usd",
+      "before": -3.7461000000000038,
+      "after": -3.7461
+    }
+  ],
+  "limitation": "selected reported original status only, not native volume/cash/control ledger export"
+}

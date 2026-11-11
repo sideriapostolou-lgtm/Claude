@@ -1,0 +1,571 @@
+{
+  "scope": "selected native financial/epoch/observer/control fields only; not raw ledger, full bodies or continuous source coverage",
+  "checks": [
+    {
+      "name": "selected_financial:mode",
+      "passed": true
+    },
+    {
+      "name": "selected_financial:configured_mode",
+      "passed": true
+    },
+    {
+      "name": "selected_financial:status",
+      "passed": true
+    },
+    {
+      "name": "selected_financial:reason",
+      "passed": true
+    },
+    {
+      "name": "selected_financial:trading_now",
+      "passed": true
+    },
+    {
+      "name": "selected_financial:authenticated",
+      "passed": true
+    },
+    {
+      "name": "selected_financial:fee_precision_verified",
+      "passed": true
+    },
+    {
+      "name": "selected_financial:fee_precision_usd",
+      "passed": true
+    },
+    {
+      "name": "selected_financial:cash_usd",
+      "passed": true
+    },
+    {
+      "name": "selected_financial:reserved_usd",
+      "passed": true
+    },
+    {
+      "name": "selected_financial:open_risk_usd",
+      "passed": true
+    },
+    {
+      "name": "selected_financial:open_cost_usd",
+      "passed": true
+    },
+    {
+      "name": "selected_financial:at_risk_usd",
+      "passed": true
+    },
+    {
+      "name": "selected_financial:open_orders",
+      "passed": true
+    },
+    {
+      "name": "selected_financial:positions",
+      "passed": true
+    },
+    {
+      "name": "selected_financial:total_halted",
+      "passed": true
+    },
+    {
+      "name": "selected_financial:day_stop_latched",
+      "passed": true
+    },
+    {
+      "name": "selected_financial:real_orders_available",
+      "passed": true
+    },
+    {
+      "name": "selected_financial:integrity_error",
+      "passed": true
+    },
+    {
+      "name": "selected_financial:pair_protection",
+      "passed": true
+    },
+    {
+      "name": "selected_financial:integrity_reset",
+      "passed": true
+    },
+    {
+      "name": "selected_financial:cleanup_pending",
+      "passed": true
+    },
+    {
+      "name": "selected_financial:caps",
+      "passed": true
+    },
+    {
+      "name": "today:day",
+      "passed": true
+    },
+    {
+      "name": "today:windows",
+      "passed": true
+    },
+    {
+      "name": "today:fills",
+      "passed": true
+    },
+    {
+      "name": "today:settled_windows",
+      "passed": true
+    },
+    {
+      "name": "today:fees_usd",
+      "passed": true
+    },
+    {
+      "name": "today:locked_usd",
+      "passed": true
+    },
+    {
+      "name": "today:directional_usd",
+      "passed": true
+    },
+    {
+      "name": "today:pnl_usd",
+      "passed": true
+    },
+    {
+      "name": "today:worst_usd",
+      "passed": true
+    },
+    {
+      "name": "today:take_attempts",
+      "passed": true
+    },
+    {
+      "name": "today:take_fills",
+      "passed": true
+    },
+    {
+      "name": "today:maker_orders",
+      "passed": true
+    },
+    {
+      "name": "today:maker_fills",
+      "passed": true
+    },
+    {
+      "name": "today:locks",
+      "passed": true
+    },
+    {
+      "name": "today:lock_fills",
+      "passed": true
+    },
+    {
+      "name": "today:take_fill_rate",
+      "passed": true
+    },
+    {
+      "name": "today:maker_fill_rate",
+      "passed": true
+    },
+    {
+      "name": "today:avg_latency_ms",
+      "passed": true
+    },
+    {
+      "name": "today:latency_definition",
+      "passed": true
+    },
+    {
+      "name": "total:day",
+      "passed": true
+    },
+    {
+      "name": "total:windows",
+      "passed": true
+    },
+    {
+      "name": "total:fills",
+      "passed": true
+    },
+    {
+      "name": "total:latency",
+      "passed": true
+    },
+    {
+      "name": "total:scorecard",
+      "passed": true
+    },
+    {
+      "name": "total:settled_windows",
+      "passed": true
+    },
+    {
+      "name": "total:fees_usd",
+      "passed": true
+    },
+    {
+      "name": "total:locked_usd",
+      "passed": true
+    },
+    {
+      "name": "total:directional_usd",
+      "passed": true
+    },
+    {
+      "name": "total:pnl_usd",
+      "passed": true
+    },
+    {
+      "name": "total:worst_usd",
+      "passed": true
+    },
+    {
+      "name": "total:take_attempts",
+      "passed": true
+    },
+    {
+      "name": "total:take_fills",
+      "passed": true
+    },
+    {
+      "name": "total:maker_orders",
+      "passed": true
+    },
+    {
+      "name": "total:maker_fills",
+      "passed": true
+    },
+    {
+      "name": "total:locks",
+      "passed": true
+    },
+    {
+      "name": "total:lock_fills",
+      "passed": true
+    },
+    {
+      "name": "total:take_fill_rate",
+      "passed": true
+    },
+    {
+      "name": "total:maker_fill_rate",
+      "passed": true
+    },
+    {
+      "name": "total:avg_latency_ms",
+      "passed": true
+    },
+    {
+      "name": "total:latency_definition",
+      "passed": true
+    },
+    {
+      "name": "ladder_rung",
+      "passed": true
+    },
+    {
+      "name": "ladder_limits",
+      "passed": true
+    },
+    {
+      "name": "ladder:configured_max_window_usd",
+      "passed": true
+    },
+    {
+      "name": "ladder:enabled",
+      "passed": true
+    },
+    {
+      "name": "ladder:top_rung",
+      "passed": true
+    },
+    {
+      "name": "ladder:change_pending",
+      "passed": true
+    },
+    {
+      "name": "ladder:recheck_pending",
+      "passed": true
+    },
+    {
+      "name": "ladder:effective_from",
+      "passed": true
+    },
+    {
+      "name": "ladder:pending_limits",
+      "passed": true
+    },
+    {
+      "name": "ladder:rung_started_at",
+      "passed": true
+    },
+    {
+      "name": "ladder:start_pnl_usd",
+      "passed": true
+    },
+    {
+      "name": "ladder:last_change",
+      "passed": true
+    },
+    {
+      "name": "queue_enabled",
+      "passed": true
+    },
+    {
+      "name": "queue_no_error",
+      "passed": true
+    },
+    {
+      "name": "queue_no_starts_while_stopped",
+      "passed": true
+    },
+    {
+      "name": "epoch:archived",
+      "passed": true
+    },
+    {
+      "name": "epoch:legacy_sha256",
+      "passed": true
+    },
+    {
+      "name": "epoch:active_ordinal",
+      "passed": true
+    },
+    {
+      "name": "epoch:current_source_fingerprint",
+      "passed": true
+    },
+    {
+      "name": "epoch:retained_active",
+      "passed": true
+    },
+    {
+      "name": "speeddesk_live_resume:used_value_ignored",
+      "passed": true
+    },
+    {
+      "name": "speeddesk_live_integrity_reset:used_value_ignored",
+      "passed": true
+    },
+    {
+      "name": "speeddesk_live_day_reset:used_value_ignored",
+      "passed": true
+    }
+  ],
+  "check_count": 86,
+  "all_passed": true,
+  "before_platform": "2026-10-16T07:33:21.316526563Z",
+  "after_platform": "2026-10-16T07:41:06.400271921Z",
+  "before_payload_at": 1792136000.6526937,
+  "after_payload_at": 1792136466.008717,
+  "financial": {
+    "mode": "paper",
+    "configured_mode": "live",
+    "status": "PRACTICE",
+    "reason": "Daily loss stop; no new risk until 00:00 UTC or the owner's day reset",
+    "trading_now": false,
+    "authenticated": true,
+    "fee_precision_verified": true,
+    "fee_precision_usd": 0.0001,
+    "cash_usd": 25.1219,
+    "reserved_usd": 0,
+    "open_risk_usd": 0,
+    "open_cost_usd": 0,
+    "at_risk_usd": 0.0,
+    "open_orders": 0,
+    "positions": 0,
+    "total_halted": false,
+    "day_stop_latched": true,
+    "real_orders_available": false,
+    "integrity_error": null,
+    "pair_protection": {
+      "protected_windows": [],
+      "total_windows": 102
+    },
+    "integrity_reset": null,
+    "cleanup_pending": false,
+    "caps": {
+      "window_usd": 10.0,
+      "open_usd": 20.0,
+      "day_stop_usd": 6.0,
+      "clip": 5.0,
+      "total_stop_usd": 10.0
+    }
+  },
+  "totals": {
+    "today": {
+      "day": "2026-10-16",
+      "windows": 23,
+      "fills": 86,
+      "settled_windows": 24,
+      "fees_usd": 0.2797,
+      "locked_usd": 0.7515832167832175,
+      "directional_usd": -5.879283216783216,
+      "pnl_usd": -5.127699999999999,
+      "worst_usd": -2.8509,
+      "take_attempts": 0,
+      "take_fills": 0,
+      "maker_orders": 1124,
+      "maker_fills": 69,
+      "locks": 15,
+      "lock_fills": 13,
+      "take_fill_rate": null,
+      "maker_fill_rate": 0.06138790035587188,
+      "avg_latency_ms": 4637.066988095845,
+      "latency_definition": "durable real decision to venue fill timestamp; maker includes resting time"
+    },
+    "total": {
+      "day": null,
+      "windows": 203,
+      "fills": 912,
+      "latency": null,
+      "scorecard": null,
+      "settled_windows": 219,
+      "fees_usd": 3.39642,
+      "locked_usd": 4.431532337662325,
+      "directional_usd": -29.05103233766233,
+      "pnl_usd": -24.61950000000001,
+      "worst_usd": -2.9791999999999987,
+      "take_attempts": 39,
+      "take_fills": 17,
+      "maker_orders": 8125,
+      "maker_fills": 656,
+      "locks": 157,
+      "lock_fills": 124,
+      "take_fill_rate": 0.4358974358974359,
+      "maker_fill_rate": 0.08073846153846154,
+      "avg_latency_ms": 3919.943953179694,
+      "latency_definition": "durable real decision to venue fill timestamp; maker includes resting time"
+    }
+  },
+  "queue": {
+    "mode": "diagnostic",
+    "version": 1,
+    "session_id": "5d3b81b927f647c8884fac58c85736c1",
+    "enabled": true,
+    "in_flight": false,
+    "buffered": 0,
+    "max_buffered": 64,
+    "cadence_s": 1.0,
+    "counts": {
+      "no_candidate": 56
+    },
+    "last": null,
+    "registry_size": 0,
+    "registry_limit": 32,
+    "coverage": "new_owned_ordinary_rest_acks_only; no_history_or_recovered_order_backfill",
+    "publication": "next_existing_checkpoint",
+    "financial_authority": false,
+    "error": null
+  },
+  "epoch": {
+    "active_ordinal": 2,
+    "archived_count": 2,
+    "metadata_equal": true,
+    "full_archived_or_pending_bodies_verified": false
+  },
+  "inventory": [
+    {
+      "file": "PRE_DEPLOY_STATUS_NATIVE.json",
+      "sha256": "007c9bbb6e15cae12259871075d32ac78a4d8f8f433d18d77065a69426ae53b1",
+      "deployment_id": "39d26485-3c73-4af7-b0e6-6a7e161636d2",
+      "scope": "deployment",
+      "requested": {
+        "projectId": "75750847-85c0-41a3-a2a7-b7f2201a51e9",
+        "deploymentId": "39d26485-3c73-4af7-b0e6-6a7e161636d2",
+        "startDate": "2026-10-16T07:31:00Z",
+        "endDate": "2026-10-16T07:35:00Z",
+        "filter": "\"nightcrawler.speeddesk: speeddesk_live_status\"",
+        "limit": 5,
+        "types": [
+          "deploy"
+        ]
+      },
+      "retrieved_before": {
+        "current_time": "2026-10-16 07:34:00 UTC"
+      },
+      "retrieved_after": {
+        "current_time": "2026-10-16 07:34:00 UTC"
+      },
+      "rows": 3,
+      "parsed": 3,
+      "other": [],
+      "coverage": "selected returned rows only; not complete venue/ledger coverage"
+    },
+    {
+      "file": "POST_DEPLOY_STATUS_WARM_NATIVE.json",
+      "sha256": "0dd6ff22bf3144b0dfe8ce45b4bdefbace05e1c1c27630a644f39a6bbdbb3267",
+      "deployment_id": "3e6e1589-0247-4eaa-b11c-e6117a72fa0b",
+      "scope": "deployment",
+      "requested": {
+        "projectId": "75750847-85c0-41a3-a2a7-b7f2201a51e9",
+        "deploymentId": "3e6e1589-0247-4eaa-b11c-e6117a72fa0b",
+        "startDate": "2026-10-16T07:40:00Z",
+        "endDate": "2026-10-16T07:41:28Z",
+        "filter": "\"nightcrawler.speeddesk: speeddesk_live_status\"",
+        "limit": 10,
+        "types": [
+          "deploy"
+        ]
+      },
+      "retrieved_before": {
+        "current_time": "2026-10-16 07:41:28 UTC"
+      },
+      "retrieved_after": {
+        "current_time": "2026-10-16 07:41:28 UTC"
+      },
+      "rows": 2,
+      "parsed": 2,
+      "other": [],
+      "coverage": "selected returned rows only; not complete venue/ledger coverage"
+    },
+    {
+      "file": "PRE_EPOCH_BROAD_NATIVE.json",
+      "sha256": "b7334e59c90d6138e0978ca781913fe188eb8d60f4600b76c9c5d10483eb50f0",
+      "deployment_id": "39d26485-3c73-4af7-b0e6-6a7e161636d2",
+      "scope": "deployment",
+      "requested": {
+        "projectId": "75750847-85c0-41a3-a2a7-b7f2201a51e9",
+        "deploymentId": "39d26485-3c73-4af7-b0e6-6a7e161636d2",
+        "startDate": "2026-10-16T06:54:00Z",
+        "endDate": "2026-10-16T07:30:00Z",
+        "filter": "kalshi_probability_epoch_status",
+        "limit": 5,
+        "types": [
+          "deploy"
+        ]
+      },
+      "retrieved_before": {
+        "current_time": "2026-10-16 07:28:02 UTC"
+      },
+      "retrieved_after": {
+        "current_time": "2026-10-16 07:28:04 UTC"
+      },
+      "rows": 1,
+      "parsed": 1,
+      "other": [],
+      "coverage": "selected returned rows only; not complete venue/ledger coverage"
+    },
+    {
+      "file": "POST_EPOCH_NATIVE.json",
+      "sha256": "71f3c28f45b44c04981449c1e7b87565ed23947833457c1adb90790a34bffca9",
+      "deployment_id": "3e6e1589-0247-4eaa-b11c-e6117a72fa0b",
+      "scope": "deployment",
+      "requested": {
+        "projectId": "75750847-85c0-41a3-a2a7-b7f2201a51e9",
+        "deploymentId": "3e6e1589-0247-4eaa-b11c-e6117a72fa0b",
+        "startDate": "2026-10-16T07:38:00Z",
+        "endDate": "2026-10-16T07:40:08Z",
+        "filter": "kalshi_probability_epoch_status",
+        "limit": 5,
+        "types": [
+          "deploy"
+        ]
+      },
+      "retrieved_before": {
+        "current_time": "2026-10-16 07:40:08 UTC"
+      },
+      "retrieved_after": {
+        "current_time": "2026-10-16 07:40:10 UTC"
+      },
+      "rows": 1,
+      "parsed": 1,
+      "other": [],
+      "coverage": "selected returned rows only; not complete venue/ledger coverage"
+    }
+  ]
+}

@@ -1,0 +1,268 @@
+[
+ {
+  "candidates": [
+   {
+    "name": "LucasMeow",
+    "wallet": "0x7f3c8979d0afa00007bae4747d5347122af05613",
+    "archetype": "Tail seller on monthly crypto one-touch ladders: buys only NO on far strikes and holds it to settlement, mostly with resting bids (90% of fills are maker)",
+    "markets": "Polymarket 'What price will Bitcoin/Ethereum hit in <month>' ladders (87% of buy $). NO side only, 85% of buy $ at >=0.97 (median price 0.99). Median 10.7 days before expiry; median strike distance z = 4.1 (10th percentile 1.7), using 30-day realized vol",
+    "record": "+$344,872 from the daily P&L series (user-pnl-api), active 2025-02-28 to 2026-10-12 (592 days). 223 markets traded; 205 closed: 200 won, 5 lost. The losses total -$4,725 against +$307,929 in wins, and none were core NO-at-0.99 bets. 20 of 21 months up (worst month -$1). Max drawdown $17.7k (5% of profit); worst day -$13.4k; 87% of weeks up; top 5 days = 19% of profit. October 2025 crash month +$30k. In my fill sample every resolved market with z >= 1.5 won (67/67; 48/48 at z >= 3)",
+    "where_we_trade_it": "Kalshi KXBTCMAXMON, KXBTCMINMON, KXETHMAXMON, KXETHMINMON (monthly one-touch, settled on a CF Benchmarks trimmed mean), plus annual KXBTCMAXY / KXBTCMINY / KXETHMAXY. Live check 2026-10-12: NO asks 0.96-0.99 at z 2.5-3.9 against a model fair value of 0.99-1.00 (about 1-3.5c of model edge), 49-2,099 contracts at the ask. No Polymarket US twin",
+    "needs_speed": "no",
+    "small_size_ok": "yes",
+    "lock_kind": "edge with risk",
+    "fit_score": 8,
+    "why": "The cleanest inferable rule on the boards: buy NO on a monthly touch strike when z >= ~2.5-3 and NO is priced below the one-touch fair value 1-2N(-z), then hold. Kalshi lists the same contract family, prices it the same way today and has depth. It needs no speed (positions last weeks) and works at 1-25 contracts; the fee is about 0.2c per contract at 0.97, rounded up per order. It is not a lock: it sells crash/spike insurance, one losing month wipes out roughly 30-50 wins, money is tied up for weeks, and the expected gain is only about 1-3% per position-month. My model is driftless and uses realized vol; crypto has fat tails and Kalshi settles on a trimmed mean, not Polymarket's Binance highs.",
+    "sources": [
+     "https://polymarket.com/profile/0x7f3c8979d0afa00007bae4747d5347122af05613",
+     "https://user-pnl-api.polymarket.com/user-pnl?user_address=0x7f3c8979d0afa00007bae4747d5347122af05613&interval=all&fidelity=1d",
+     "https://data-api.polymarket.com/closed-positions?user=0x7f3c8979d0afa00007bae4747d5347122af05613",
+     "research/lab9/leaderboard/ladder_rule.py",
+     "research/lab9/leaderboard/kalshi_touch_now.py"
+    ]
+   },
+   {
+    "name": "x6916Cc00AA1c3e75ECf4081DF7caE7D2f3592fd",
+    "wallet": "0x6916cc00aa1c3e75ecf4081df7cae7d2f3592fd4",
+    "archetype": "Market maker on crypto touch ladders: 100% maker fills on both sides (cheap YES and expensive NO), and it also sells (49% of fills), so it does not always hold to settlement",
+    "markets": "Polymarket 'What price will Bitcoin hit in <month>/before <date>/<week>' ladders (92% of buy $), some ETH. NO buys: median price 0.95, median z 2.1, about 18 days before expiry; 81% of buy $ is NO",
+    "record": "+$492,184, active 2025-03-31 to 2026-10-12 (561 days). 3,170 markets traded. 19 of 20 months up; the only down month was its first (-$276). Max drawdown $10.8k (2.2% of profit); worst day -$8.3k; 93% of weeks up; top 5 days = 15% of profit. October 2025 +$49k. Resolved NO markets at z >= 1.5 in my sample: 78 of 79 won",
+    "where_we_trade_it": "Same Kalshi series: KXBTCMAXMON / KXBTCMINMON / KXETHMAXMON / KXETHMINMON (monthly), KXBTCMAXY / KXBTCMINY / KXETHMAXY (annual)",
+    "needs_speed": "some",
+    "small_size_ok": "yes",
+    "lock_kind": "edge with risk",
+    "fit_score": 7,
+    "why": "An independent second track record for the same contract family as LucasMeow, with an even smoother curve. The NO-tail part can be copied as-is. The market-making part needs resting quotes that are repriced when BTC moves; that is slow on weeks-long contracts but still a latency exposure. Its quoting and sell rules are harder to infer than LucasMeow's. Same tail risk.",
+    "sources": [
+     "https://polymarket.com/profile/0x6916cc00aa1c3e75ecf4081df7cae7d2f3592fd4",
+     "https://user-pnl-api.polymarket.com/user-pnl?user_address=0x6916cc00aa1c3e75ecf4081df7cae7d2f3592fd4&interval=all&fidelity=1d",
+     "research/lab9/leaderboard/ladder_rule.py"
+    ]
+   },
+   {
+    "name": "Weatherstappen",
+    "wallet": "0xb9012e0d9b60d3920286309328b935cdfa609fc4",
+    "archetype": "Weather dead-bucket NO: once the day's observed temperature has passed a bucket, buy NO on that bucket and hold it to settlement (77% maker)",
+    "markets": "Polymarket 'Highest temperature in <city> on <date>'. 98% of buy $ is NO on buckets below the final high, 78% bought between 12:00 and 18:00 local time, 77% of buy $ at >=0.97. Cities: Munich 23%, Milan 20%, Singapore, Karachi, Istanbul, Toronto; only 4% US",
+    "record": "+$53,153, active 2026-03-29 to 2026-10-12 (198 days). 2,356 markets traded; 98.5% of the last 1,500 closed markets won (worst market -$906). 8 of 8 months up (Apr +$15.5k ... Sep +$4.3k). Max drawdown $1,171; worst day -$883; 97% of weeks and 95% of days up",
+    "where_we_trade_it": "Kalshi daily highs for the 20 US cities with open markets: KXHIGHNY, KXHIGHCHI, KXHIGHMIA, KXHIGHLAX, KXHIGHAUS, KXHIGHDEN, KXHIGHPHIL, KXHIGHTHOU, KXHIGHTBOS, KXHIGHTATL, KXHIGHTDAL, KXHIGHTDC, KXHIGHTSFO, KXHIGHTSEA, KXHIGHTPHX, KXHIGHTMIN, KXHIGHTOKC, KXHIGHTNOLA, KXHIGHTLV, KXHIGHTSATX. Kalshi's international series had no open markets on 2026-10-12, so the method must be moved from its international cities to US ones",
+    "needs_speed": "some",
+    "small_size_ok": "yes",
+    "lock_kind": "edge with risk",
+    "fit_score": 6,
+    "why": "The rule can be inferred and rests on public data: a day's maximum never falls, so a bucket below the temperature already observed is dead. Residual risk is the official settlement value differing from the live reading (station, rounding, C/F conversion, revisions); Kalshi settles on the NWS climate value via The Weather Company. The edge is thin: 1-3c per contract. In tonight's Kalshi snapshot dead brackets already sat at NO 0.99, so the margin there may be about 1c minus a fee rounded up per order. Overlaps the sibling lab9/weather folder.",
+    "sources": [
+     "https://polymarket.com/profile/0xb9012e0d9b60d3920286309328b935cdfa609fc4",
+     "research/lab9/leaderboard/weather_side.py",
+     "research/lab9/leaderboard/weather_timing.py"
+    ]
+   },
+   {
+    "name": "HighTempTation",
+    "wallet": "0x6011655c4afb76f36dd1b08a137a1ba73466b31e",
+    "archetype": "Weather dead-bucket NO, taker version (95% taker): highest- and lowest-temperature markets",
+    "markets": "Polymarket highest/lowest temperature markets. 87% of buy $ is NO on buckets below the final high, bought 10:00-18:00 local; another 12% is morning NO on buckets above the final high (a forecast call). 82% of buy $ at >=0.90. US cities 20%",
+    "record": "+$97,728, active 2026-03-07 to 2026-10-12 (220 days). 4,378 markets traded; 99.8% of the last 1,500 closed markets won (worst market -$1,924). 6 of 8 months up (the two misses were -$10 and -$15). Max drawdown $1,100; worst day -$1,024; 95% of days up; last 90 days +$56k",
+    "where_we_trade_it": "Kalshi KXHIGH* (20 live US cities, as above) and KXLOWT* daily lows (e.g. KXLOWTNYC, KXLOWTCHI, KXLOWTDEN)",
+    "needs_speed": "some",
+    "small_size_ok": "yes",
+    "lock_kind": "edge with risk",
+    "fit_score": 5,
+    "why": "Confirms the Weatherstappen rule independently, with more markets. Because it takes liquidity, it races other bots to each newly dead bucket, which favours fast observation feeds. The owner can only tolerate a few minutes of lag, so expect lower fill rates.",
+    "sources": [
+     "https://polymarket.com/profile/0x6011655c4afb76f36dd1b08a137a1ba73466b31e",
+     "research/lab9/leaderboard/weather_side.py"
+    ]
+   },
+   {
+    "name": "amis",
+    "wallet": "0xc1a58674dbcc1d3208f7e61a0a8b252162caf290",
+    "archetype": "Tail seller across commodity and crypto touch ladders: buys NO at 0.90-0.99 about a month before expiry and holds",
+    "markets": "Polymarket 'Will Crude Oil (CL) / Silver (SI) / Gold hit X by end of <month>', 'What price will WTI hit in <month>', crypto 'dip to' strikes. 89% of buy $ at 0.90-0.99; crypto part: median z 2.6, about 30 days out, almost all downside strikes",
+    "record": "+$79,468, active 2024-11-29 to 2026-10-12 (683 days). 375 markets traded; 342 closed, 87.7% won (worst -$3.7k, a side bet). 21 of 24 months up (worst month -$1,816). Max drawdown $9.4k; worst day -$5.6k; 74% of weeks up. Crypto NO in my sample: 25 of 25 resolved won",
+    "where_we_trade_it": "Crypto part: KXBTCMINMON / KXETHMINMON / KXBTCMINY. Commodities: Kalshi has no touch ladders, only terminal closes (KXSILVERMON, KXNATGASMON, KXCOPPERMON monthly; KXGOLDDIRY, KXWTIDIRY annual), which pay out differently",
+    "needs_speed": "no",
+    "small_size_ok": "yes",
+    "lock_kind": "edge with risk",
+    "fit_score": 5,
+    "why": "A third long, steady record for the same tail-selling rule, extended to oil and metals; it supports the LucasMeow rule. Only the crypto half has an exact Kalshi twin.",
+    "sources": [
+     "https://polymarket.com/profile/0xc1a58674dbcc1d3208f7e61a0a8b252162caf290",
+     "research/lab9/leaderboard/ladder_rule.py"
+    ]
+   },
+   {
+    "name": "podairpod (with perfectnostalgia)",
+    "wallet": "0x2ed8f7a10686dbb0fb15f5c3335f30e0043793d4",
+    "archetype": "Macro-release specialist: Fed / ECB / BoE decisions and inflation ladders, mostly maker (73%), buys 0.50-0.90 favourites and holds",
+    "markets": "Polymarket fed-decision-in-<month>, how-many-fed-rate-cuts, ecb-interest-rates, how-high-will-inflation-get (79% of buy $ in econ)",
+    "record": "podairpod: +$34,692, active 2024-12-12 to 2026-10-12 (670 days), 778 markets, 23 of 23 months up (worst +$7), max drawdown $3.65k, worst day -$3.6k, 76% of weeks up; 769 closed, 61% won. perfectnostalgia (0x0ffcad4963e25dc150774363f4061ebe840c8236): +$157,426, 683 days, 844 markets, 21 of 24 months up, worst month -$5.8k, max drawdown $12k",
+    "where_we_trade_it": "Kalshi Economics: KXFEDDECISION / KXFED (Fed), KXCPI (inflation). Economics is NOT in the owner's stated open categories (Crypto, Climate & Weather, Commodities, Financials), so his access must be verified. No Kalshi twin found for ECB/BoE. These series charge maker fees (quadratic_with_maker_fees)",
+    "needs_speed": "no",
+    "small_size_ok": "yes",
+    "lock_kind": "edge with risk",
+    "fit_score": 4,
+    "why": "The most consistent month-by-month record found, and no speed needed. But the method looks discretionary (macro judgement), so it cannot be turned into rules from public data, and venue access is uncertain.",
+    "sources": [
+     "https://polymarket.com/profile/0x2ed8f7a10686dbb0fb15f5c3335f30e0043793d4",
+     "https://polymarket.com/profile/0x0ffcad4963e25dc150774363f4061ebe840c8236"
+    ]
+   },
+   {
+    "name": "0xDB5",
+    "wallet": "0xdb5ad26b68d77ae966d29e7180147272ab7a3965",
+    "archetype": "Daily crypto price-ladder trader: buys the high-probability side about a day before settlement (41% taker; also sells 40% of fills)",
+    "markets": "Polymarket bitcoin-above-on-<date> (50% of $), ethereum-above-on-<date>, bitcoin-price-on-<date>, 'what price will bitcoin hit on <date>'. 76% of buy $ at >=0.90; median about 20 hours before settlement",
+    "record": "+$193,268, active 2025-02-13 to 2026-10-12 (607 days). 12,165 markets traded. 20 of 21 months up (worst -$3.6k, June 2026). Max drawdown $16.1k; worst day -$14.9k; 77% of weeks up; top 5 days = 11% of profit",
+    "where_we_trade_it": "Kalshi KXBTCD / KXETHD hourly above/below (including the 5pm ET daily close); Polymarket US BTC hourly 'above' ladder. Settlement differs: Polymarket uses Binance at noon ET, Kalshi and PM US use CF Benchmarks",
+    "needs_speed": "some",
+    "small_size_ok": "yes",
+    "lock_kind": "edge with risk",
+    "fit_score": 4,
+    "why": "Long, steady record in a family with direct twins. But its NO buys paid on average 5.8c above my driftless vol model, so its edge is not a simple distance-in-vol rule and I could not infer the rule. It sits in the same territory as lab5 and lab8 (spot plus vol fair value), so it needs new evidence before anyone tests it.",
+    "sources": [
+     "https://polymarket.com/profile/0xdb5ad26b68d77ae966d29e7180147272ab7a3965"
+    ]
+   },
+   {
+    "name": "0xcE25E214D5cfE4f459cf67F08DF581885AAE7F",
+    "wallet": "0xce25e214d5cfe4f459cf67f08df581885aae7fdc",
+    "archetype": "15-minute crypto two-sided accumulation: buys Up and Down at different moments so that a matched pair costs under $1 (64% taker)",
+    "markets": "Polymarket btc/eth-updown-15m (88%) and 5m (12%). Buys both sides in 76% of windows; median pair cost 0.946 (below 1 in 62% of windows); median share imbalance 22%; fills spread over the window (median 258 s before close)",
+    "record": "+$699,046, active 2026-05-02 to 2026-10-12 (164 days), 135,996 markets traded. 6 of 6 months up, max drawdown $2.2k, 100% of weeks up. But monthly profit is falling fast: $212k (May), $158k, $157k, $96k, $66k (Sep), $8k (Oct 1-12), so the edge is being competed away",
+    "where_we_trade_it": "Kalshi KXBTC15M / KXETH15M (one YES/NO book, so pairs can only be built by buying the legs at different times); Polymarket US BTC 15m (thin)",
+    "needs_speed": "yes",
+    "small_size_ok": "yes",
+    "lock_kind": "edge with risk",
+    "fit_score": 3,
+    "why": "Same archetype as the excluded dangerously-skip-permissions speed bot, moved to 15-minute windows. On Kalshi the fee is about 1.75c per leg at mid (about 3.5c per pair) against about 5.4c gross. Listed only so it is not re-scouted.",
+    "sources": [
+     "https://polymarket.com/profile/0xce25e214d5cfe4f459cf67f08df581885aae7fdc"
+    ]
+   }
+  ],
+  "notes": "The best fit is the tail-selling rule shared by LucasMeow, x6916Cc00 and amis: buy NO on far strikes of monthly crypto touch ladders and hold. Kalshi lists the same contracts (KXBTCMAXMON etc.), prices them the same way today, it needs no speed and it works at $25. It is not a lock. Of everything I found, only complete-set or neg-risk merging comes close to riskless arbitrage, and I found no such opportunity the owner can run.\n\nWHAT I DID (all read-only, keyless, public endpoints; scripts and data in /home/user/Claude/research/lab9/leaderboard/; raw/ is 916 MB and gitignored by research/lab9/.gitignore; nothing committed):\n- Leaderboards. data-api.polymarket.com/v1/leaderboard works with timePeriod=all|month|week|day, orderBy=PNL, limit up to 50, offset, and category=crypto|weather|economics|finance|politics|sports|tech|culture|mentions; lb-api.polymarket.com/profit?window=all also works. I pulled overall all/month/week (top 200 each) and crypto/weather/economics/finance all/month/week (top 100 each): 1,278 unique wallets.\n- Stage A, every wallet: the daily cumulative P&L series (user-pnl-api.polymarket.com/user-pnl?interval=all&fidelity=1d) and the newest 500 activity rows. Market families came from a slug classifier (classify.py). Output: stage_a.csv.\n- Filter: mostly twin-able non-sports markets; active at least 120 days and within the last 30; profit over $20k; top 5 days under 50% of profit; max drawdown under 50% of profit; at least 60% of months up. 57 twin-able wallets and 20 sports wallets passed.\n- Stage B, 46 wallets: newest 3,000 activity rows plus slices 7-240 days back, maker/taker split, 1,500 closed positions, open positions, Gamma market end dates, Coinbase hourly spot. Analyses: ladder z-scores and outcomes (ladder_rule.py) and weather bucket vs final high by local time (weather_side.py).\n- Live Kalshi checks: the touch-ladder pricing above (kalshi_touch_now.py), and complete sets on 28 weather events (kalshi_set_arb.py): none cost less than $1 after fees.\n\nMEASUREMENT CAVEATS:\n- Win rates from closed-positions alone read too high, because many bots never redeem losing positions (one 15m bot had more than $69k of unredeemed losers). I used the P&L series for drawdown and consistency, and reported win rates only where unredeemed losers were small.\n- Leaderboards only show survivors.\n- The z-model is driftless lognormal on realized vol; implied vol and fat tails mean the 1-4c Kalshi 'edge' is partly a risk premium.\n\nHONEST ON 'THE LOCK':\n- Kalshi uses one YES/NO book per market, so YES ask + NO ask is always at least $1: there is no instant pair arbitrage there.\n- Kalshi weather complete sets cost $1.01-1.15 after fees in the snapshot.\n- The closest thing to true arbitrage seen was 0x496f76bd5cf4c2819c710ae90ed1c84b2dc6fa5d: Polymarket weather neg-risk / complete-set merging (569 MERGE + 137 CONVERSION in 6 hours), +$39.6k over 198 days, max drawdown $293. It relies on Polymarket's merge/convert, which Kalshi doesn't have.\n\nEXCLUDED, WITH REASONS:\n- 0xD9E0AACa (0xd9e0aaca471f489be338fd0f91a26e8669a805f2): sports market maker, +$1.63M over 612 days, 21 of 21 months up, max drawdown $2.7k, 95% maker, 18k fills a day. It needs fast in-play quotes; Polymarket US sports books are thin.\n- BoneReader (0xd84c2b6d65dc596f49c7b6aadd6d74ca91e407b9): buys at >=0.97 a median 11 s AFTER 5m/15m windows close (already-decided outcomes). A speed play; Kalshi stops trading at close; it stopped in April 2026.\n- mo-money (0x32ed2e546b187ca15e2841edc82b22c713cf8ec3): 89% maker on 5m/15m windows, median pair cost 1.02.\n- rwo (0xd189664c5308903476f9f079820431e4fd7d06f4): 5m market maker, 19 of 20 months up, but only $26k in the last 90 days.\n- Poligarch (0xb40e89677d59665d5188541ad860450a6e2a7cc9): weather market maker, +$207k over 408 days, max drawdown $3.8k, 91% maker, 42% US cities. The rule isn't clean.\n- BeefSlayer (0x331bf91c132af9d921e1908ca0979363fc47193f): 90% Kalshi-live US cities, +$87k over 389 days, 11 of 14 months up, max drawdown $1.6k. It trades forecast-style across buckets, so no clean rule.\n- uninfromedfloww, En111006, 0x29de3c62: late-window directional 15m taker bots.\n- thanksforplayin and grasstoucher69: single-stock daily markets, no Kalshi twin.\n- JnStrtPrdctnMrkts, Tokor, 0xf705fa, getbipped: concentrated in a few days or deep drawdowns.\n\nSUGGESTED NEXT STEP: pre-register a paper test of the LucasMeow rule on Kalshi. Buy NO on KXBTCMAXMON / KXBTCMINMON / KXETHMAXMON / KXETHMINMON strikes when z >= 3 (30-day vol) and NO ask <= fair - 1c, at 10-25 contracts, hold to settlement. Check it on the history of past Polymarket monthly ladders (Gamma plus Binance highs) before risking real money.\n\nKey files: /home/user/Claude/research/lab9/leaderboard/stage_a.csv, final_records.json, ladder_rule.py, weather_side.py, kalshi_touch_now.py, kalshi_set_arb.py, raw/kalshi_touch_now.json, raw/kalshi_set_arb.json."
+ },
+ {
+  "candidates": [
+   {
+    "name": "HighTempTation",
+    "wallet": "0x6011655c4afb76f36dd1b08a137a1ba73466b31e",
+    "archetype": "Observation-lock sniper. It buys the bucket outcome (96% 'No') that the latest METAR has already ruled out, then sells at 0.99 to recycle capital.",
+    "markets": "Polymarket international daily highest/lowest temperature, about 50 cities (Taipei, Cape Town, Mexico City, Lucknow, Paris, Miami, NYC ...). US cities are 22% of its PnL.",
+    "record": "Cash-flow ledger from public /activity plus gamma resolutions: 4,358 markets (3,167 city-days), 2026-04-03 to 2026-10-12, PnL +$92,607 on $1.138M bought (+8.1% per $). 99.6% of markets won, 96.6% of 147 days positive, 1 of 23 weeks negative (worst week -$15), max drawdown $1,216, worst day -$922. The weather leaderboard says +$92,084, which agrees. Last 90 days +$52.5k on $707k. Monthly: Jun $22.2k, Jul $26.9k, Aug $20.3k, Sep $14.7k, so it is fading. Method check (862 buys, Sep 15 to Oct 10, against IEM METAR archive): 81% of buy dollars went on outcomes already decided at the moment of the buy. Median delay 1.4 min after the deciding observation's valid time (p10 0.3, p90 4.1). Median buy price 0.971.",
+    "where_we_trade_it": "Kalshi KXHIGHNY, KXHIGHCHI, KXHIGHMIA, KXHIGHLAX, KXHIGHAUS, KXHIGHDEN, KXHIGHTHOU, KXHIGHTATL, KXHIGHTBOS, KXHIGHPHIL, KXHIGHTDC, KXHIGHTSEA, KXHIGHTSFO, KXHIGHTDAL, KXHIGHTPHX, KXHIGHTMIN (+8 more KXHIGHT*; 24 high series, 1.06M contracts/24h), KXLOWT* (24 series, 138k/24h) and KXRAIN (874k/24h). Polymarket US tc-temp-nychigh / mdwhigh / miahigh / laxhigh / sfohigh, which use the same NWS CLI stations as Kalshi.",
+    "needs_speed": "yes",
+    "small_size_ok": "yes",
+    "lock_kind": "true arbitrage",
+    "fit_score": 4,
+    "why": "This is the real weather 'lock': the outcome is already decided by an observation. Of 243 Kalshi brackets the METAR had decided, 0 settled against the lock. The CLI max is never below the METAR max: it is +1F on 12/21 NYC days, 11/21 CHI and 12/21 MIA. But the money goes only to the first minutes. On Kalshi (6 cities, 104 event-days) the decided side traded at an average 0.967 in the 0-2 min after the METAR valid time (6,531 contracts at <=0.97) and 0.984 at 2-5 min (2,584). After 5 min not one contract traded below 0.99. All the edge at <=0.97 came to about $1,350 over 104 event-days, roughly $13/day for every fast bot combined. Some traders move before the METAR is out, using 1-minute ASOS data. The rain version (KXRAIN, 16 markets) is the same: the whole window is 1-3 min after the METAR, average Yes 0.755 at 1-2 min, 0.99 from minute 3. Fees are not the problem: Kalshi taker fee at 0.97 is about 0.2c per contract, maker fee is 0. Speed is the problem, and the owner has none.",
+    "sources": [
+     "https://data-api.polymarket.com/v1/leaderboard?category=WEATHER&timePeriod=ALL&orderBy=PNL",
+     "https://data-api.polymarket.com/activity?user=0x6011655c4afb76f36dd1b08a137a1ba73466b31e",
+     "https://gamma-api.polymarket.com/events?tag_slug=weather",
+     "https://mesonet.agron.iastate.edu/cgi-bin/request/asos.py",
+     "https://api.elections.kalshi.com/trade-api/v2/markets/trades",
+     "/home/user/Claude/research/lab9/weather/lockcheck.py",
+     "/home/user/Claude/research/lab9/weather/ledger.py",
+     "/home/user/Claude/research/lab9/weather/raw/kalshi_lock_summary.txt"
+    ]
+   },
+   {
+    "name": "Weatherstappen",
+    "wallet": "0xb9012e0d9b60d3920286309328b935cdfa609fc4",
+    "archetype": "Observation-lock at 99c. It buys the already-decided side at 0.99 within about a minute of the METAR and sells at 0.998.",
+    "markets": "Polymarket international daily highest temperature, mostly non-US cities. Cities where Kalshi uses the same station gave $2.0k of its PnL.",
+    "record": "Ledger: 2,346 markets, 2026-03-27 to 2026-10-12, PnL +$51,259 on $1.128M bought (+4.5% per $). 99.0% of markets won, 98% of 196 days positive, 1 of 30 weeks negative (worst -$1), max drawdown $701. The leaderboard says +$50,159. Monthly: Apr $15.9k, May $7.8k, Jun $11.1k, Jul $4.6k, Aug $6.9k, Sep $4.3k, Oct 1-12 $0.8k, so it is decaying. Method check (2,398 buys, Aug 15 to Oct 10): 98.3% of buy dollars on outcomes already decided at the buy, median 1.3 min after the deciding METAR, median price 0.990, sells mostly at 0.998.",
+    "where_we_trade_it": "Same as HighTempTation: Kalshi KXHIGH*/KXLOWT* and Polymarket US tc-temp-*high. On Kalshi the price tick is 1 cent, so the decided side sits at exactly 0.99 for hours.",
+    "needs_speed": "yes",
+    "small_size_ok": "yes",
+    "lock_kind": "true arbitrage",
+    "fit_score": 4,
+    "why": "This is the 'slow-looking' form of the lock, and it still depends on reaction time. On Kalshi, 2.27M contracts traded at exactly 0.99 more than 5 min after a lock, and in those the taker never bought the decided side. So a slow bot would have to rest a 0.99 bid and wait in a FIFO queue. On 12 Oct NYC that queue was already 16.5k to 115.5k contracts per bracket. The gross gain is 1% a night with no fee (Kalshi weather has no maker fee), but whether a late order would ever fill was not measured and looks unlikely. On Polymarket international the late price is 0.999, so it is worth nothing (see OraculumNobius).",
+    "sources": [
+     "https://data-api.polymarket.com/activity?user=0xb9012e0d9b60d3920286309328b935cdfa609fc4",
+     "https://data-api.polymarket.com/v1/leaderboard?category=WEATHER&timePeriod=ALL&orderBy=PNL",
+     "https://api.elections.kalshi.com/trade-api/v2/markets?event_ticker=KXHIGHNY-26OCT12",
+     "/home/user/Claude/research/lab9/weather/raw/lock_Weatherstappen.json"
+    ]
+   },
+   {
+    "name": "LowTempTation",
+    "wallet": "0x8e40e10d9b34b28c77c4962be5026c6fdd1f3797",
+    "archetype": "Nowcast sniper. In the early afternoon (12-17h local), when a METAR shows the temperature has just reached a bucket, it buys that bucket's Yes at about 0.5. It also takes METAR locks on lows and highs.",
+    "markets": "Polymarket international daily highest and lowest temperature, about 47 cities (Lucknow, Denver, Panama City, Karachi, Cape Town ...).",
+    "record": "Ledger: 395 markets, 2026-08-04 to 2026-10-11 (68 days only), PnL +$13,053 on $49.5k bought (+26% per $). 99% of markets won, 98.5% of days positive, 0 of 10 weeks negative, max drawdown $899. The leaderboard says +$12,895. Buy-level check: 67% of dollars were in locks (median 1.4 min after the METAR) but earned only +0.9%. The profit came from 172 not-yet-decided buys at a median price of 0.505, of which 97.7% won, giving +$12.9k on $13.2k. Those buys came a median 1.75 min after a METAR in which the latest reading equalled the day's maximum. That bucket then traded at a median 0.94 within 5 min of its buy, 0.97 at 5-15 min, and 0.988 at 30-60 min.",
+    "where_we_trade_it": "Kalshi KXHIGH* (2F brackets settled on CLI) and Polymarket US tc-temp-*high. On Kalshi the CLI max is the METAR max +1F on about 55% of days, so 'bucket = current METAR max' has to be redone with that offset.",
+    "needs_speed": "yes",
+    "small_size_ok": "yes",
+    "lock_kind": "edge with risk",
+    "fit_score": 3,
+    "why": "It is the biggest per-dollar edge in the niche, but the record is only 68 days. The mispricing is also gone within about 5 minutes: a buyer at 5-15 min pays about 0.97 for a 97.7% winner, so after fees there is nothing left. It is a speed method, and its rules (reached bucket + time of day + METAR) are easy to infer but useless without speed. In a Kalshi evening check (19:00 and 22:00 local standard time, NY and CHI, 178 bracket-hours) the winning bracket was already priced 0.99-1.00 and the neighbours were 1-9c with no edge.",
+    "sources": [
+     "https://data-api.polymarket.com/activity?user=0x8e40e10d9b34b28c77c4962be5026c6fdd1f3797",
+     "https://data-api.polymarket.com/trades?market=<conditionId>",
+     "/home/user/Claude/research/lab9/weather/nowcast_probe.py",
+     "/home/user/Claude/research/lab9/weather/raw/nowcast_probe_LowTempTation.json"
+    ]
+   },
+   {
+    "name": "BeefSlayer",
+    "wallet": "0x331bf91c132af9d921e1908ca0979363fc47193f",
+    "archetype": "Event-day nowcast and longshot buyer on US cities, with tiny tickets (median fill $0.40, median $24.86 per market). It buys cheap Yes on buckets during the local day and some mid-price buckets.",
+    "markets": "Polymarket international daily highest temperature: NYC, Seattle, Atlanta, Dallas, Chicago, Miami, Austin ... (US is 85% of its PnL).",
+    "record": "Ledger: 2,455 markets, 2025-09-30 to 2026-10-11 (333 active days), PnL +$83,949 on $388k bought (+21.5% per $). 47.8% of markets won, 69% of days positive, 11 of 54 weeks negative (worst -$659), max drawdown $2,026, longest losing streak 9 days. The leaderboard says +$80,060. The top 1% of markets made 51% of PnL; the biggest single win was +$4.9k on a Panama City resolution anomaly. Jan-Apr 2026: +$59k, with buys not yet decided at 2-50c returning +75% to +130% per $. Aug-Oct 2026: the same 2-25c buys lost 1-24% per $; the profit came from 6 sub-2c lottery wins, one of them the anomaly. The edge has decayed.",
+    "where_we_trade_it": "Kalshi KXHIGHMIA, KXHIGHLAX, KXHIGHAUS, KXHIGHTHOU, KXHIGHTATL, KXHIGHTSEA, KXHIGHTSFO use the same station as Polymarket ($25.6k of its PnL). NYC, Chicago, Dallas and Denver settle on other stations on Kalshi (Central Park vs LaGuardia, Midway vs O'Hare, DFW vs Love Field, DEN vs Buckley), so those do not transfer.",
+    "needs_speed": "some",
+    "small_size_ok": "yes",
+    "lock_kind": "edge with risk",
+    "fit_score": 3,
+    "why": "It is the only consistent-ish winner that is not a pure seconds race and that already trades at the owner's size. But its edge peaked in H1 2026 and is close to gone now, and the profit is concentrated in lottery hits. On Kalshi, fees hit cheap tickets hard: 0.07*p*(1-p) per contract, rounded up to the cent per order, is about 7% of a $3 ticket at 3c. The same decay shows in its peers: ShyGuy1 +$98k but -$6.2k in Aug, jjavi +$60k then stopped Aug 31, huskyvs +$42k with 84% of it from its top 1% of markets.",
+    "sources": [
+     "https://data-api.polymarket.com/activity?user=0x331bf91c132af9d921e1908ca0979363fc47193f",
+     "https://data-api.polymarket.com/v1/leaderboard?category=WEATHER&timePeriod=ALL&orderBy=PNL",
+     "/home/user/Claude/research/lab9/weather/buy_pnl.py",
+     "/home/user/Claude/research/lab9/weather/concentration.py"
+    ]
+   },
+   {
+    "name": "OraculumNobius (late 99.9c decided-side buyer)",
+    "wallet": "0xd25b8718f61fb64a754356ad8cf16b5579f59f3d",
+    "archetype": "Slow lock buyer. It buys the already-decided weather outcome 30+ minutes after the deciding observation at 0.999.",
+    "markets": "Polymarket international daily temperature markets.",
+    "record": "Weather leaderboard (all time): PnL +$10,031 on $14.14M volume (0.07%). In a sample of 250 markets the speed bots had locked, it bought the decided side late in 37 of them, at a median 0.999. Peers doing the same thing: ccccq +$1,031 on $3.61M, horrerex -$5 on $0.81M, iliabouchouev -$10,910 on $8.41M, 0xAE6d1b51... -$30,445 on $5.08M, Simmelariii -$10,736 on $3.34M. Across the 250 markets, decided-side buys more than 30 min after the lock: 2,804 fills at a median 0.999.",
+    "where_we_trade_it": "Kalshi KXHIGH*, KXLOWT*, KXRAIN after the lock: the decided side rests at the 0.99 tick, so the gross is 1% rather than 0.1%. Polymarket US tc-temp-*high: thin books (about 800-3,000 shares a side), and the lag after a lock is unmeasured because the venue publishes no trade history.",
+    "needs_speed": "no",
+    "small_size_ok": "yes",
+    "lock_kind": "true arbitrage",
+    "fit_score": 2,
+    "why": "This is the only weather method that needs no speed. The public record shows it earns about nothing: margins of 0.03-0.07% on Polymarket international, and several wallets lost five figures, presumably because one bad resolution wipes out a thousand 0.1% wins. On Kalshi the 1-cent tick makes it 1% gross, with no maker fee and 0 violations in 243 locked brackets. But late orders queue behind 16.5k-115.5k contracts already resting at 0.99, so a $25 account would probably earn cents. It is honest to call this a near-riskless lock that is worth almost nothing.",
+    "sources": [
+     "https://data-api.polymarket.com/v1/leaderboard?category=WEATHER&timePeriod=ALL&orderBy=PNL&user=0xd25b8718f61fb64a754356ad8cf16b5579f59f3d",
+     "https://data-api.polymarket.com/trades?market=<conditionId>&takerOnly=false",
+     "/home/user/Claude/research/lab9/weather/slow_buyers.py",
+     "/home/user/Claude/research/lab9/weather/raw/slow_buyers_rows.json"
+    ]
+   },
+   {
+    "name": "HenryTheAtmoPhD (longshot cohort)",
+    "wallet": "0x57ee70867b4e387de9de34fd62bc685aa02a8112",
+    "archetype": "Longshot buyer. Many 0.1-5c Yes tickets on temperature buckets (median $8.80 per market), mostly on the event day.",
+    "markets": "Polymarket international daily highest temperature, worldwide.",
+    "record": "Ledger: 4,192 markets, 2025-02-20 to 2026-08-28 (515 active days), PnL +$47,589 on $123k bought (+38.7% per $). 17.8% of markets won, 25 of 80 weeks negative, max drawdown $1,696. The leaderboard says +$46,057. The top 1% of markets made 99% of PnL, and the last 90 days are -$97, so it has stopped or decayed. Same pattern in the rest of the cohort: JoeTheMeteorologist +$93.9k with one $38.9k Paris win and 92% of PnL from its top 1% (last 90 days -$121); automatedAItradingbot +$66.8k, 77% from its top 1%, inactive since July 2026; 0xafde461f... +$52.3k, 87% from its top 10 markets.",
+    "where_we_trade_it": "Kalshi KXHIGH*, cheap brackets.",
+    "needs_speed": "no",
+    "small_size_ok": "yes",
+    "lock_kind": "edge with risk",
+    "fit_score": 1,
+    "why": "This archetype is lottery-style: a few huge hits, some of them resolution or data anomalies on Polymarket that Kalshi's CLI settlement would not repeat. The edge mostly disappeared by mid-2026, and Kalshi's fee rounding on penny tickets would eat a large part of what is left. It is included to show what the slow, small-size winners actually were, and why they are not a lock.",
+    "sources": [
+     "https://data-api.polymarket.com/activity?user=0x57ee70867b4e387de9de34fd62bc685aa02a8112",
+     "https://data-api.polymarket.com/v1/leaderboard?category=WEATHER&timePeriod=ALL&orderBy=PNL",
+     "/home/user/Claude/research/lab9/weather/concentration.py"
+    ]
+   }
+  ],
+  "notes": "BOTTOM LINE: I found no weather 'lock' that fits the owner. The consistent weather winners are all observation-reaction bots: they buy outcomes a fresh METAR has just decided, within seconds to about 2 minutes of the report. The lock itself is genuine: 0 of 243 METAR-locked Kalshi brackets settled against it, and HighTempTation won 99.6% of 4,358 markets. But on Kalshi the price is at the 0.99 tick within 5 minutes (rain: within 3), and Polymarket international reaches 0.997-0.999 even faster. A slow, small account is left with either about 1% gross at Kalshi's 0.99 tick, behind resting queues of 16.5k-115.5k contracts, or lottery-style longshot buying whose edge decayed in mid-2026.\n\nVENUES:\n- Kalshi Climate & Weather: 422 series; 57 with open markets today (2026-10-12). By 24h contracts: KXRAIN 873,950; KXHIGHLAX 240,132; KXHIGHMIA 156,185; KXHIGHNY 103,734; KXHIGHCHI 102,093; then HOU, ATL, BOS, AUS, PHIL, MIN, DC, PHX, SFO, DAL, DEN, OKC, SEA, NOLA, LV, SATX, SAN, TTN, EWR, SDF. The 24 KXHIGH* series total 1.06M; the 24 KXLOWT* total 138k; hourly KXTEMP* have under 1k.\n- Kalshi settlement: 'maximum temperature recorded at <CLI site> according to The Weather Company' (weather.com/kalshi), i.e. the NWS daily climate report value, on a local-standard-time day. Last trade 11:59 PM local; expiry the next 7-8 AM ET. Stations: CLINYC Central Park, CLIMDW Midway, CLIMIA, CLILAX, CLIAUS Bergstrom, CLIDEN, CLIHOU Hobby, CLIDFW, and others.\n- Fees: Kalshi fee_type is quadratic with multiplier 1, i.e. taker 0.07*p*(1-p) and no maker fee.\n- Polymarket US has daily-high markets too: tc-temp-{nyc,mdw,mia,lax,sfo}high, 3,061 markets since 2026-04-22. They settle on the NWS CLI at the same stations as Kalshi, with fee coefficient 0.0695. A snapshot of 30 matching Oct-13 brackets showed quotes within about 1c of Kalshi and no cross-venue arbitrage (best net -0.17c after fees). It has no public trade history, so its lag after a lock is unmeasured.\n- Polymarket international resolves on the NOAA timeseries (METAR), often at other stations: LaGuardia, O'Hare, Love Field, Buckley. The same station is used for MIA, LAX, AUS, HOU, ATL, SEA, SFO.\n- The CLI max equals the METAR max or exceeds it by 1-2F, never less (NY +1 on 12 of 21 days; CHI +1 11/21 and +2 1/21; MIA +1 12/21 and +2 3/21). So locks transfer safely, but nowcast rules must account for the offset.\n\nHOW MEASURED: The weather leaderboard (data-api /v1/leaderboard?category=WEATHER works; lb-api /profit also answers) gave the pool. 167,893 resolved weather markets came from gamma. Records are per-market cash-flow ledgers built from /activity. They match the leaderboard within about 1-5% for HighTempTation, Weatherstappen, BeefSlayer and badatmath. Do not use /closed-positions for wallets that split or merge: it gave badatmath. +$552k against a ledger +$65k and leaderboard +$68k. One gap is unresolved: HondaCivic is ledger +$244k against leaderboard +$68.6k (a lock-style bot at about 0.99, inactive since June). Market makers were excluded: badatmath. (+$65k incl. $18.4k rewards, max DD $18.3k), opopv. (+$68k, of which $42.6k rewards) and ColdMath. Lock and timing checks compare each buy to the IEM METAR archive; whether an outcome was decided by observations matched the real resolution in 7,153 of 7,172 checked buys.\n\nLIMITS:\n- Kalshi was throttled hard; a sibling process, kalshi_board.py, shares the IP. The Kalshi sample is therefore 6 high series (NY, CHI, MIA, LAX, AUS, DEN) over 2026-09-21..10-11, 16 KXRAIN markets, and evening candles for NY and CHI. Lows were not measured on Kalshi.\n- Nothing was traded, no key was used, nothing was committed. All my jobs are stopped.\n\nFILES: Scripts are in /home/user/Claude/research/lab9/weather/: kalshi_scan.py, pm_leaderboard.py, pm_activity.py, ledger.py, record.py, concentration.py, lockcheck.py, buy_pnl.py, timing.py, slow_buyers.py, nowcast_probe.py, kalshi_lock.py, kalshi_lock_summary.py, kalshi_rain.py, kalshi_rain_summary.py, kalshi_evening.py, xvenue_snapshot.py, live_lock.py, pmus_temp.py, cities.py, resolutions.py. Raw data (2.0 GB, git-ignored by research/lab9/.gitignore) is in raw/; the key outputs are raw/kalshi_lock_summary.txt, raw/kalshi_rain_summary.txt, raw/lock_*.json, raw/pm_weather_leaderboard.json and raw/xvenue_*.json.\n\nPOSSIBLE NEXT STEP (not done): run a paper-only recorder of Polymarket US and Kalshi books around METAR times for the 5 shared cities. That would show whether Polymarket US, with fewer bots, stays mispriced for minutes after a lock. It is still a speed method, so only worth doing if the owner accepts a fast public-data poller (NWS/aviationweather), which needs data latency rather than network latency."
+ }
+]

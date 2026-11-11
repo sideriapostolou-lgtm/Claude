@@ -1,0 +1,233 @@
+{
+  "snapshot_query": {
+    "tool_clock_utc": "2026-10-15T00:01:01Z",
+    "projectId": "75750847-85c0-41a3-a2a7-b7f2201a51e9",
+    "environmentId": "17f7b0e0-104c-4903-9484-0106748b3cdb",
+    "serviceId": "736b1c8a-8311-4ee0-9043-d05f508cd821",
+    "deploymentId": "8453f919-b891-4aa7-8478-6fcf6b9c24ee",
+    "log_query": {
+      "types": [
+        "deploy"
+      ],
+      "startDate": "2026-10-14T23:59:00.000Z",
+      "endDate": "2026-10-15T00:00:56.000Z",
+      "limit": 500,
+      "scope": "deployment",
+      "returned_rows": 1,
+      "service_status": "SUCCESS"
+    },
+    "health_query": {
+      "serviceFilter": "*recorder*",
+      "includeSuccessful": true,
+      "hoursBack": 8,
+      "limit": 10
+    }
+  },
+  "raw_log_receipts": [
+    {
+      "platform_timestamp": "2026-10-15T00:00:02.447256659Z",
+      "severity": "info",
+      "application_timestamp_prefix": "2026-10-15 00:00:00,824 INFO nightcrawler.kalshi_recorder",
+      "logger_status_prefix": "kalshi_recorder_evidence",
+      "evidence": {
+        "status": "available",
+        "source": "saved_hourly_manifest",
+        "observed_at": 1792022400.8234572,
+        "commit": "a0782b743a31369fe25ddf6d2eea96df8511cd8d",
+        "manifest_sha256": "d680aa40c1d365e8c897a8743a65c2fa92038892cf99227398611cd2e5aac186",
+        "period": {
+          "from": 1792018800,
+          "partial": false,
+          "to": 1792022400
+        },
+        "coverage": {
+          "backfill_jobs_pending": 0,
+          "btc15m_fresh_minutes": 60,
+          "btc15m_minutes": 60,
+          "candidate_book_fresh_share": 1,
+          "minutes_sampled": 60,
+          "trade_covered_to": 1792022394,
+          "trade_tape_minutes": 60
+        },
+        "gaps": {
+          "by_cause": {},
+          "by_lane": {},
+          "open_ended_records": 0,
+          "records": 0
+        },
+        "storage": {
+          "cap_bytes": 4831838208,
+          "deleted_segments": 0,
+          "level": 0,
+          "used_bytes": 326687745
+        },
+        "coverage_certified": false,
+        "per_venue_spot_ticks_verified": false,
+        "sealed_only": true,
+        "segment_hash_basis": "index_metadata_computed_at_seal_not_rechecked",
+        "segment_hashes_reverified": false,
+        "rows_and_test_outcomes_read": false
+      }
+    }
+  ],
+  "platform_health_receipt": {
+    "environment": {
+      "id": "17f7b0e0-104c-4903-9484-0106748b3cdb",
+      "name": "production"
+    },
+    "services": [
+      {
+        "serviceId": "736b1c8a-8311-4ee0-9043-d05f508cd821",
+        "serviceName": "kalshi-recorder",
+        "state": "online",
+        "statusText": "Online",
+        "activeDeployments": [
+          {
+            "id": "8453f919-b891-4aa7-8478-6fcf6b9c24ee",
+            "status": "SUCCESS",
+            "createdAt": "2026-10-14T16:36:40.384Z",
+            "statusUpdatedAt": "2026-10-14T16:38:15.302Z"
+          }
+        ],
+        "replicaStatus": {
+          "running": 1,
+          "crashed": 0,
+          "total": 1
+        },
+        "cronJob": null,
+        "issues": {
+          "warningCount": 0,
+          "criticalCount": 0
+        },
+        "recentFailures": 0,
+        "recentFailedDeployments": [],
+        "hasIssues": false,
+        "isCronJob": false,
+        "hasVolume": true
+      }
+    ],
+    "pendingWork": [
+      {
+        "id": "patch:9a84e13c-3caf-4a85-b5f5-d9a2fcb8a021",
+        "kind": "EnvironmentPatch",
+        "status": "staged",
+        "changes": [],
+        "startedAt": "2026-10-12T16:21:53.480Z",
+        "workflowId": "commitChanges/17f7b0e0-104c-4903-9484-0106748b3cdb/9a84e13c-3caf-4a85-b5f5-d9a2fcb8a021"
+      }
+    ],
+    "summary": {
+      "totalServices": 1,
+      "servicesWithIssues": 0,
+      "totalFailures": 0
+    }
+  },
+  "deployment_receipt": {
+    "id": "8453f919-b891-4aa7-8478-6fcf6b9c24ee",
+    "status": "SUCCESS",
+    "createdAt": "2026-10-14T16:36:40.384Z",
+    "updatedAt": "2026-10-14T16:38:15.303Z",
+    "serviceId": "736b1c8a-8311-4ee0-9043-d05f508cd821",
+    "environmentId": "17f7b0e0-104c-4903-9484-0106748b3cdb",
+    "url": null,
+    "snapshotId": "06b34b50-a125-4877-ba96-3673d9ba48a1",
+    "creator": {
+      "id": "ed8c7ddc-ac1f-4839-a696-9504201a60ee",
+      "name": null,
+      "email": "sideriapostolou@gmail.com"
+    },
+    "canRollback": true,
+    "canRedeploy": true,
+    "regions": [
+      "us-west2"
+    ],
+    "meta": {
+      "reason": "deploy",
+      "commitMessage": "Merge pull request #48 from sideriapostolou-lgtm/codex/kalshi-recorder-evidence\n\nLIVE ON MERGE: verify saved recorder metadata in bounded logs",
+      "commitHash": "a0782b743a31369fe25ddf6d2eea96df8511cd8d",
+      "branch": "claude/kalshi-recorder"
+    }
+  },
+  "source_identity": {
+    "repository": "sideriapostolou-lgtm/Claude",
+    "branch": "claude/kalshi-recorder",
+    "commit": "a0782b743a31369fe25ddf6d2eea96df8511cd8d",
+    "source_path": "src/nightcrawler/kalshi_recorder.py",
+    "source_blob_sha": "e7ab5cc20087d34f179997801a51c9c1a0579d68",
+    "cadence_receipt": "/workspace/shared/recorder-evidence-cadence.json",
+    "cadence_conclusion": "one evidence log per completed hourly manifest, with an additional prior-hour log at startup; no periodic heartbeat."
+  },
+  "extracted_current_metadata": {
+    "platform_log_timestamp": "2026-10-15T00:00:02.447256659Z",
+    "application_log_timestamp": "2026-10-15 00:00:00,824 INFO nightcrawler.kalshi_recorder",
+    "observed_at_epoch": 1792022400.8234572,
+    "observed_at_utc": "2026-10-15T00:00:00.823Z",
+    "commit": "a0782b743a31369fe25ddf6d2eea96df8511cd8d",
+    "period": {
+      "from": 1792018800,
+      "partial": false,
+      "to": 1792022400
+    },
+    "storage": {
+      "cap_bytes": 4831838208,
+      "deleted_segments": 0,
+      "level": 0,
+      "used_bytes": 326687745
+    },
+    "gap_counts": {
+      "by_cause": {},
+      "by_lane": {},
+      "open_ended_records": 0,
+      "records": 0
+    },
+    "coverage": {
+      "minutes_sampled": 60,
+      "candidate_book_fresh_share": 1,
+      "btc15m_minutes": 60,
+      "btc15m_fresh_minutes": 60,
+      "trade_tape_minutes": 60,
+      "trade_covered_to": 1792022394
+    },
+    "coverage_certified": false,
+    "per_venue_spot_ticks_verified": false,
+    "sealed_only": true,
+    "segment_hash_basis": "index_metadata_computed_at_seal_not_rechecked",
+    "segment_hashes_reverified": false,
+    "rows_and_test_outcomes_read": false
+  },
+  "comparison_to_last_4pm_sample": {
+    "sample_name": "last 4 PM PDT hourly sample (23:00 UTC evidence)",
+    "timestamp": "2026-10-14T23:00:00.769Z",
+    "platform_timestamp": "2026-10-14T23:00:04.784126955Z",
+    "commit": "a0782b743a31369fe25ddf6d2eea96df8511cd8d",
+    "storage": {
+      "used_bytes": 313640667,
+      "cap_bytes": 4831838208,
+      "level": 0,
+      "deleted_segments": 0
+    },
+    "gap_records": 0,
+    "coverage_certified": false,
+    "per_venue_spot_ticks_verified": false,
+    "segment_hashes_reverified": false,
+    "btc15m_minutes": 60,
+    "btc15m_fresh_minutes": 60,
+    "candidate_book_fresh_share": 1,
+    "trade_tape_minutes": 60
+  },
+  "storage_comparison": {
+    "previous_used_bytes": 313640667,
+    "current_used_bytes": 326687745,
+    "delta_used_bytes": 13047078,
+    "previous_cap_bytes": 4831838208,
+    "current_cap_bytes": 4831838208,
+    "cap_unchanged": true,
+    "note": "cap_bytes is the recorder's configured archive cap, not a Railway host-free-volume metric."
+  },
+  "limitations": [
+    "The hourly manifest reports recorder archive bytes against its configured archive cap; it is not host free disk.",
+    "The platform health receipt describes service/deployment health only and is not evidence that every data lane is complete.",
+    "coverage_certified=false, per_venue_spot_ticks_verified=false, and segment_hashes_reverified=false remain explicit.",
+    "No raw market rows, replay records, TEST outcomes, request latency, or trading/performance outcomes were retained in this receipt."
+  ]
+}

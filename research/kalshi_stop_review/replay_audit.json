@@ -1,0 +1,818 @@
+{
+  "actual": {
+    "windows": 29,
+    "order_rows": 750,
+    "filled_orders": 145,
+    "cost": "269.2890",
+    "fees": "0.62642",
+    "payout": "258.0",
+    "pnl": "-11.91542"
+  },
+  "reconstructions": [
+    {
+      "mode": "actual",
+      "extra_hedge_fills": false,
+      "pnl": "-7.90934",
+      "windows": [
+        {
+          "time_pt": "9:00 AM",
+          "actual_pnl": "-1.8604",
+          "pnl": "-1.8604",
+          "first_actual_size": "5.0",
+          "first_new_size": "5.0",
+          "starting_reference_pnl": "1.9733",
+          "hedged_pair_reserve": "1.01"
+        },
+        {
+          "time_pt": "9:15 AM",
+          "actual_pnl": "-2.9792",
+          "pnl": "-1.4896",
+          "first_actual_size": "10.0",
+          "first_new_size": "5",
+          "starting_reference_pnl": "0.1129",
+          "hedged_pair_reserve": "1.01"
+        },
+        {
+          "time_pt": "9:30 AM",
+          "actual_pnl": "0.0",
+          "pnl": "0.400",
+          "first_actual_size": "10.0",
+          "first_new_size": "5",
+          "starting_reference_pnl": "-2.8663",
+          "hedged_pair_reserve": "1.01"
+        },
+        {
+          "time_pt": "9:45 AM",
+          "actual_pnl": "1.5971",
+          "pnl": "0.170",
+          "first_actual_size": "10.0",
+          "first_new_size": "5",
+          "starting_reference_pnl": "-2.8663",
+          "hedged_pair_reserve": "1.01"
+        },
+        {
+          "time_pt": "10:00 AM",
+          "actual_pnl": "1.0879",
+          "pnl": "0.70074",
+          "first_actual_size": "7.0",
+          "first_new_size": "5",
+          "starting_reference_pnl": "-1.2692",
+          "hedged_pair_reserve": "1.01"
+        },
+        {
+          "time_pt": "10:15 AM",
+          "actual_pnl": "-1.6978",
+          "pnl": "-0.21738",
+          "first_actual_size": "10.0",
+          "first_new_size": "5",
+          "starting_reference_pnl": "-0.1813",
+          "hedged_pair_reserve": "1.01"
+        },
+        {
+          "time_pt": "10:30 AM",
+          "actual_pnl": "0.26",
+          "pnl": "0.26",
+          "first_actual_size": "5.0",
+          "first_new_size": "5.0",
+          "starting_reference_pnl": "-1.8791",
+          "hedged_pair_reserve": "1.01"
+        },
+        {
+          "time_pt": "10:45 AM",
+          "actual_pnl": "0.02",
+          "pnl": "0.02",
+          "first_actual_size": "5.0",
+          "first_new_size": "5.0",
+          "starting_reference_pnl": "-1.6191",
+          "hedged_pair_reserve": "1.01"
+        },
+        {
+          "time_pt": "11:00 AM",
+          "actual_pnl": "-1.7509",
+          "pnl": "-1.7509",
+          "first_actual_size": "5.0",
+          "first_new_size": "5.0",
+          "starting_reference_pnl": "-1.5991",
+          "hedged_pair_reserve": "1.01"
+        },
+        {
+          "time_pt": "11:15 AM",
+          "actual_pnl": "0.2",
+          "pnl": "0.2",
+          "first_actual_size": "5.0",
+          "first_new_size": "5.0",
+          "starting_reference_pnl": "-3.3500",
+          "hedged_pair_reserve": "1.01"
+        },
+        {
+          "time_pt": "11:30 AM",
+          "actual_pnl": "0.4094",
+          "pnl": "0.4094",
+          "first_actual_size": "5.0",
+          "first_new_size": "5.0",
+          "starting_reference_pnl": "-3.1500",
+          "hedged_pair_reserve": "1.01"
+        },
+        {
+          "time_pt": "11:45 AM",
+          "actual_pnl": "-1.6845",
+          "pnl": "-1.6845",
+          "first_actual_size": "5.0",
+          "first_new_size": "5.0",
+          "starting_reference_pnl": "-2.7406",
+          "hedged_pair_reserve": "1.01"
+        },
+        {
+          "time_pt": "12:00 PM",
+          "actual_pnl": "-0.06",
+          "pnl": "-0.06",
+          "first_actual_size": "5.0",
+          "first_new_size": "5.0",
+          "starting_reference_pnl": "-4.4251",
+          "hedged_pair_reserve": "1.00"
+        },
+        {
+          "time_pt": "12:15 PM",
+          "actual_pnl": "-0.5117",
+          "pnl": "-0.5117",
+          "first_actual_size": "5.0",
+          "first_new_size": "5.0",
+          "starting_reference_pnl": "-4.4851",
+          "hedged_pair_reserve": "1.01"
+        },
+        {
+          "time_pt": "12:30 PM",
+          "actual_pnl": "1.5363",
+          "pnl": "0.040",
+          "first_actual_size": "5.0",
+          "first_new_size": "4",
+          "starting_reference_pnl": "-4.9968",
+          "hedged_pair_reserve": "1.01"
+        },
+        {
+          "time_pt": "12:45 PM",
+          "actual_pnl": "-0.8117",
+          "pnl": "-0.8117",
+          "first_actual_size": "5.0",
+          "first_new_size": "5.0",
+          "starting_reference_pnl": "-3.4605",
+          "hedged_pair_reserve": "1.01"
+        },
+        {
+          "time_pt": "1:00 PM",
+          "actual_pnl": "0.7665",
+          "pnl": "0.7665",
+          "first_actual_size": "5.0",
+          "first_new_size": "5.0",
+          "starting_reference_pnl": "-4.2722",
+          "hedged_pair_reserve": "1.01"
+        },
+        {
+          "time_pt": "1:15 PM",
+          "actual_pnl": "-0.2692",
+          "pnl": "-0.2692",
+          "first_actual_size": "5.0",
+          "first_new_size": "5.0",
+          "starting_reference_pnl": "-3.5057",
+          "hedged_pair_reserve": "1.01"
+        },
+        {
+          "time_pt": "1:30 PM",
+          "actual_pnl": "0.0288",
+          "pnl": "0.0288",
+          "first_actual_size": "5.0",
+          "first_new_size": "5.0",
+          "starting_reference_pnl": "-3.7749",
+          "hedged_pair_reserve": "1.01"
+        },
+        {
+          "time_pt": "1:45 PM",
+          "actual_pnl": "-0.6758",
+          "pnl": "-0.6758",
+          "first_actual_size": "5.0",
+          "first_new_size": "5.0",
+          "starting_reference_pnl": "-3.7461",
+          "hedged_pair_reserve": "1.01"
+        },
+        {
+          "time_pt": "2:00 PM",
+          "actual_pnl": "-0.2178",
+          "pnl": "-0.2178",
+          "first_actual_size": "5.0",
+          "first_new_size": "5.0",
+          "starting_reference_pnl": "-4.4219",
+          "hedged_pair_reserve": "1.01"
+        },
+        {
+          "time_pt": "2:15 PM",
+          "actual_pnl": "0.886",
+          "pnl": "0.886",
+          "first_actual_size": "5.0",
+          "first_new_size": "5.0",
+          "starting_reference_pnl": "-4.6397",
+          "hedged_pair_reserve": "1.01"
+        },
+        {
+          "time_pt": "2:30 PM",
+          "actual_pnl": "-0.55",
+          "pnl": "-0.55",
+          "first_actual_size": "5.0",
+          "first_new_size": "5.0",
+          "starting_reference_pnl": "-3.7537",
+          "hedged_pair_reserve": "1.01"
+        },
+        {
+          "time_pt": "2:45 PM",
+          "actual_pnl": "-1.762",
+          "pnl": "-1.762",
+          "first_actual_size": "5.0",
+          "first_new_size": "5.0",
+          "starting_reference_pnl": "-4.3037",
+          "hedged_pair_reserve": "1.01"
+        },
+        {
+          "time_pt": "3:00 PM",
+          "actual_pnl": "-0.01",
+          "pnl": "0.45",
+          "first_actual_size": "5.0",
+          "first_new_size": "3",
+          "starting_reference_pnl": "-6.0657",
+          "hedged_pair_reserve": "1.01"
+        },
+        {
+          "time_pt": "3:15 PM",
+          "actual_pnl": "-1.0596",
+          "pnl": "0.150",
+          "first_actual_size": "5.0",
+          "first_new_size": "3",
+          "starting_reference_pnl": "-6.0757",
+          "hedged_pair_reserve": "1.01"
+        },
+        {
+          "time_pt": "3:30 PM",
+          "actual_pnl": "-1.3296",
+          "pnl": "-0.3174",
+          "first_actual_size": "5.0",
+          "first_new_size": "2",
+          "starting_reference_pnl": "-7.1353",
+          "hedged_pair_reserve": "1.01"
+        },
+        {
+          "time_pt": "3:45 PM",
+          "actual_pnl": "-0.6372",
+          "pnl": "-0.2124",
+          "first_actual_size": "3.0",
+          "first_new_size": "1",
+          "starting_reference_pnl": "-8.4649",
+          "hedged_pair_reserve": "1.01"
+        },
+        {
+          "time_pt": "4:00 PM",
+          "actual_pnl": "-0.84",
+          "pnl": "0.00",
+          "first_actual_size": "2.0",
+          "first_new_size": "0",
+          "starting_reference_pnl": "-9.1021",
+          "hedged_pair_reserve": "1.01"
+        }
+      ]
+    },
+    {
+      "mode": "simulated",
+      "extra_hedge_fills": false,
+      "pnl": "-10.02224",
+      "windows": [
+        {
+          "time_pt": "9:00 AM",
+          "actual_pnl": "-1.8604",
+          "pnl": "-1.8604",
+          "first_actual_size": "5.0",
+          "first_new_size": "5.0",
+          "starting_reference_pnl": "1.9733",
+          "hedged_pair_reserve": "1.01"
+        },
+        {
+          "time_pt": "9:15 AM",
+          "actual_pnl": "-2.9792",
+          "pnl": "-1.4896",
+          "first_actual_size": "10.0",
+          "first_new_size": "5",
+          "starting_reference_pnl": "0.1129",
+          "hedged_pair_reserve": "1.01"
+        },
+        {
+          "time_pt": "9:30 AM",
+          "actual_pnl": "0.0",
+          "pnl": "0.400",
+          "first_actual_size": "10.0",
+          "first_new_size": "5",
+          "starting_reference_pnl": "-1.3767",
+          "hedged_pair_reserve": "1.01"
+        },
+        {
+          "time_pt": "9:45 AM",
+          "actual_pnl": "1.5971",
+          "pnl": "0.170",
+          "first_actual_size": "10.0",
+          "first_new_size": "5",
+          "starting_reference_pnl": "-0.9767",
+          "hedged_pair_reserve": "1.01"
+        },
+        {
+          "time_pt": "10:00 AM",
+          "actual_pnl": "1.0879",
+          "pnl": "0.70074",
+          "first_actual_size": "7.0",
+          "first_new_size": "5",
+          "starting_reference_pnl": "-0.8067",
+          "hedged_pair_reserve": "1.01"
+        },
+        {
+          "time_pt": "10:15 AM",
+          "actual_pnl": "-1.6978",
+          "pnl": "-0.21738",
+          "first_actual_size": "10.0",
+          "first_new_size": "5",
+          "starting_reference_pnl": "-0.10596",
+          "hedged_pair_reserve": "1.01"
+        },
+        {
+          "time_pt": "10:30 AM",
+          "actual_pnl": "0.26",
+          "pnl": "0.26",
+          "first_actual_size": "5.0",
+          "first_new_size": "5.0",
+          "starting_reference_pnl": "-0.32334",
+          "hedged_pair_reserve": "1.01"
+        },
+        {
+          "time_pt": "10:45 AM",
+          "actual_pnl": "0.02",
+          "pnl": "0.02",
+          "first_actual_size": "5.0",
+          "first_new_size": "5.0",
+          "starting_reference_pnl": "-0.06334",
+          "hedged_pair_reserve": "1.01"
+        },
+        {
+          "time_pt": "11:00 AM",
+          "actual_pnl": "-1.7509",
+          "pnl": "-1.7509",
+          "first_actual_size": "5.0",
+          "first_new_size": "5.0",
+          "starting_reference_pnl": "-0.04334",
+          "hedged_pair_reserve": "1.01"
+        },
+        {
+          "time_pt": "11:15 AM",
+          "actual_pnl": "0.2",
+          "pnl": "0.2",
+          "first_actual_size": "5.0",
+          "first_new_size": "5.0",
+          "starting_reference_pnl": "-1.79424",
+          "hedged_pair_reserve": "1.01"
+        },
+        {
+          "time_pt": "11:30 AM",
+          "actual_pnl": "0.4094",
+          "pnl": "0.4094",
+          "first_actual_size": "5.0",
+          "first_new_size": "5.0",
+          "starting_reference_pnl": "-1.59424",
+          "hedged_pair_reserve": "1.01"
+        },
+        {
+          "time_pt": "11:45 AM",
+          "actual_pnl": "-1.6845",
+          "pnl": "-1.6845",
+          "first_actual_size": "5.0",
+          "first_new_size": "5.0",
+          "starting_reference_pnl": "-1.18484",
+          "hedged_pair_reserve": "1.01"
+        },
+        {
+          "time_pt": "12:00 PM",
+          "actual_pnl": "-0.06",
+          "pnl": "-0.06",
+          "first_actual_size": "5.0",
+          "first_new_size": "5.0",
+          "starting_reference_pnl": "-2.86934",
+          "hedged_pair_reserve": "1.00"
+        },
+        {
+          "time_pt": "12:15 PM",
+          "actual_pnl": "-0.5117",
+          "pnl": "-0.5117",
+          "first_actual_size": "5.0",
+          "first_new_size": "5.0",
+          "starting_reference_pnl": "-2.92934",
+          "hedged_pair_reserve": "1.01"
+        },
+        {
+          "time_pt": "12:30 PM",
+          "actual_pnl": "1.5363",
+          "pnl": "1.5363",
+          "first_actual_size": "5.0",
+          "first_new_size": "5.0",
+          "starting_reference_pnl": "-3.44104",
+          "hedged_pair_reserve": "1.01"
+        },
+        {
+          "time_pt": "12:45 PM",
+          "actual_pnl": "-0.8117",
+          "pnl": "-0.8117",
+          "first_actual_size": "5.0",
+          "first_new_size": "5.0",
+          "starting_reference_pnl": "-1.90474",
+          "hedged_pair_reserve": "1.01"
+        },
+        {
+          "time_pt": "1:00 PM",
+          "actual_pnl": "0.7665",
+          "pnl": "0.7665",
+          "first_actual_size": "5.0",
+          "first_new_size": "5.0",
+          "starting_reference_pnl": "-2.71644",
+          "hedged_pair_reserve": "1.01"
+        },
+        {
+          "time_pt": "1:15 PM",
+          "actual_pnl": "-0.2692",
+          "pnl": "-0.2692",
+          "first_actual_size": "5.0",
+          "first_new_size": "5.0",
+          "starting_reference_pnl": "-1.94994",
+          "hedged_pair_reserve": "1.01"
+        },
+        {
+          "time_pt": "1:30 PM",
+          "actual_pnl": "0.0288",
+          "pnl": "0.0288",
+          "first_actual_size": "5.0",
+          "first_new_size": "5.0",
+          "starting_reference_pnl": "-2.21914",
+          "hedged_pair_reserve": "1.01"
+        },
+        {
+          "time_pt": "1:45 PM",
+          "actual_pnl": "-0.6758",
+          "pnl": "-0.6758",
+          "first_actual_size": "5.0",
+          "first_new_size": "5.0",
+          "starting_reference_pnl": "-2.19034",
+          "hedged_pair_reserve": "1.01"
+        },
+        {
+          "time_pt": "2:00 PM",
+          "actual_pnl": "-0.2178",
+          "pnl": "-0.2178",
+          "first_actual_size": "5.0",
+          "first_new_size": "5.0",
+          "starting_reference_pnl": "-2.86614",
+          "hedged_pair_reserve": "1.01"
+        },
+        {
+          "time_pt": "2:15 PM",
+          "actual_pnl": "0.886",
+          "pnl": "0.886",
+          "first_actual_size": "5.0",
+          "first_new_size": "5.0",
+          "starting_reference_pnl": "-3.08394",
+          "hedged_pair_reserve": "1.01"
+        },
+        {
+          "time_pt": "2:30 PM",
+          "actual_pnl": "-0.55",
+          "pnl": "-0.55",
+          "first_actual_size": "5.0",
+          "first_new_size": "5.0",
+          "starting_reference_pnl": "-2.19794",
+          "hedged_pair_reserve": "1.01"
+        },
+        {
+          "time_pt": "2:45 PM",
+          "actual_pnl": "-1.762",
+          "pnl": "-1.762",
+          "first_actual_size": "5.0",
+          "first_new_size": "5.0",
+          "starting_reference_pnl": "-2.74794",
+          "hedged_pair_reserve": "1.01"
+        },
+        {
+          "time_pt": "3:00 PM",
+          "actual_pnl": "-0.01",
+          "pnl": "-0.01",
+          "first_actual_size": "5.0",
+          "first_new_size": "5.0",
+          "starting_reference_pnl": "-4.50994",
+          "hedged_pair_reserve": "1.01"
+        },
+        {
+          "time_pt": "3:15 PM",
+          "actual_pnl": "-1.0596",
+          "pnl": "-1.0596",
+          "first_actual_size": "5.0",
+          "first_new_size": "5.0",
+          "starting_reference_pnl": "-4.51994",
+          "hedged_pair_reserve": "1.01"
+        },
+        {
+          "time_pt": "3:30 PM",
+          "actual_pnl": "-1.3296",
+          "pnl": "-0.9922",
+          "first_actual_size": "5.0",
+          "first_new_size": "4",
+          "starting_reference_pnl": "-5.57954",
+          "hedged_pair_reserve": "1.01"
+        },
+        {
+          "time_pt": "3:45 PM",
+          "actual_pnl": "-0.6372",
+          "pnl": "-0.6372",
+          "first_actual_size": "3.0",
+          "first_new_size": "3.0",
+          "starting_reference_pnl": "-6.57174",
+          "hedged_pair_reserve": "1.01"
+        },
+        {
+          "time_pt": "4:00 PM",
+          "actual_pnl": "-0.84",
+          "pnl": "-0.84",
+          "first_actual_size": "2.0",
+          "first_new_size": "2.0",
+          "starting_reference_pnl": "-7.20894",
+          "hedged_pair_reserve": "1.01"
+        }
+      ]
+    },
+    {
+      "mode": "actual",
+      "extra_hedge_fills": true,
+      "pnl": "-7.8553",
+      "windows": [
+        {
+          "time_pt": "9:00 AM",
+          "actual_pnl": "-1.8604",
+          "pnl": "-1.8604",
+          "first_actual_size": "5.0",
+          "first_new_size": "5.0",
+          "starting_reference_pnl": "1.9733",
+          "hedged_pair_reserve": "1.01"
+        },
+        {
+          "time_pt": "9:15 AM",
+          "actual_pnl": "-2.9792",
+          "pnl": "-1.4896",
+          "first_actual_size": "10.0",
+          "first_new_size": "5",
+          "starting_reference_pnl": "0.1129",
+          "hedged_pair_reserve": "1.01"
+        },
+        {
+          "time_pt": "9:30 AM",
+          "actual_pnl": "0.0",
+          "pnl": "0.10",
+          "first_actual_size": "10.0",
+          "first_new_size": "5",
+          "starting_reference_pnl": "-2.8663",
+          "hedged_pair_reserve": "1.01"
+        },
+        {
+          "time_pt": "9:45 AM",
+          "actual_pnl": "1.5971",
+          "pnl": "0.250",
+          "first_actual_size": "10.0",
+          "first_new_size": "5",
+          "starting_reference_pnl": "-2.8663",
+          "hedged_pair_reserve": "1.01"
+        },
+        {
+          "time_pt": "10:00 AM",
+          "actual_pnl": "1.0879",
+          "pnl": "0.300",
+          "first_actual_size": "7.0",
+          "first_new_size": "5",
+          "starting_reference_pnl": "-1.2692",
+          "hedged_pair_reserve": "1.01"
+        },
+        {
+          "time_pt": "10:15 AM",
+          "actual_pnl": "-1.6978",
+          "pnl": "0.100",
+          "first_actual_size": "10.0",
+          "first_new_size": "5",
+          "starting_reference_pnl": "-0.1813",
+          "hedged_pair_reserve": "1.01"
+        },
+        {
+          "time_pt": "10:30 AM",
+          "actual_pnl": "0.26",
+          "pnl": "0.26",
+          "first_actual_size": "5.0",
+          "first_new_size": "5.0",
+          "starting_reference_pnl": "-1.8791",
+          "hedged_pair_reserve": "1.01"
+        },
+        {
+          "time_pt": "10:45 AM",
+          "actual_pnl": "0.02",
+          "pnl": "0.02",
+          "first_actual_size": "5.0",
+          "first_new_size": "5.0",
+          "starting_reference_pnl": "-1.6191",
+          "hedged_pair_reserve": "1.01"
+        },
+        {
+          "time_pt": "11:00 AM",
+          "actual_pnl": "-1.7509",
+          "pnl": "-1.7509",
+          "first_actual_size": "5.0",
+          "first_new_size": "5.0",
+          "starting_reference_pnl": "-1.5991",
+          "hedged_pair_reserve": "1.01"
+        },
+        {
+          "time_pt": "11:15 AM",
+          "actual_pnl": "0.2",
+          "pnl": "0.2",
+          "first_actual_size": "5.0",
+          "first_new_size": "5.0",
+          "starting_reference_pnl": "-3.3500",
+          "hedged_pair_reserve": "1.01"
+        },
+        {
+          "time_pt": "11:30 AM",
+          "actual_pnl": "0.4094",
+          "pnl": "0.4094",
+          "first_actual_size": "5.0",
+          "first_new_size": "5.0",
+          "starting_reference_pnl": "-3.1500",
+          "hedged_pair_reserve": "1.01"
+        },
+        {
+          "time_pt": "11:45 AM",
+          "actual_pnl": "-1.6845",
+          "pnl": "-1.6845",
+          "first_actual_size": "5.0",
+          "first_new_size": "5.0",
+          "starting_reference_pnl": "-2.7406",
+          "hedged_pair_reserve": "1.01"
+        },
+        {
+          "time_pt": "12:00 PM",
+          "actual_pnl": "-0.06",
+          "pnl": "-0.06",
+          "first_actual_size": "5.0",
+          "first_new_size": "5.0",
+          "starting_reference_pnl": "-4.4251",
+          "hedged_pair_reserve": "1.00"
+        },
+        {
+          "time_pt": "12:15 PM",
+          "actual_pnl": "-0.5117",
+          "pnl": "-0.5117",
+          "first_actual_size": "5.0",
+          "first_new_size": "5.0",
+          "starting_reference_pnl": "-4.4851",
+          "hedged_pair_reserve": "1.01"
+        },
+        {
+          "time_pt": "12:30 PM",
+          "actual_pnl": "1.5363",
+          "pnl": "0.040",
+          "first_actual_size": "5.0",
+          "first_new_size": "4",
+          "starting_reference_pnl": "-4.9968",
+          "hedged_pair_reserve": "1.01"
+        },
+        {
+          "time_pt": "12:45 PM",
+          "actual_pnl": "-0.8117",
+          "pnl": "-0.8117",
+          "first_actual_size": "5.0",
+          "first_new_size": "5.0",
+          "starting_reference_pnl": "-3.4605",
+          "hedged_pair_reserve": "1.01"
+        },
+        {
+          "time_pt": "1:00 PM",
+          "actual_pnl": "0.7665",
+          "pnl": "0.7665",
+          "first_actual_size": "5.0",
+          "first_new_size": "5.0",
+          "starting_reference_pnl": "-4.2722",
+          "hedged_pair_reserve": "1.01"
+        },
+        {
+          "time_pt": "1:15 PM",
+          "actual_pnl": "-0.2692",
+          "pnl": "-0.2692",
+          "first_actual_size": "5.0",
+          "first_new_size": "5.0",
+          "starting_reference_pnl": "-3.5057",
+          "hedged_pair_reserve": "1.01"
+        },
+        {
+          "time_pt": "1:30 PM",
+          "actual_pnl": "0.0288",
+          "pnl": "0.0288",
+          "first_actual_size": "5.0",
+          "first_new_size": "5.0",
+          "starting_reference_pnl": "-3.7749",
+          "hedged_pair_reserve": "1.01"
+        },
+        {
+          "time_pt": "1:45 PM",
+          "actual_pnl": "-0.6758",
+          "pnl": "-0.6758",
+          "first_actual_size": "5.0",
+          "first_new_size": "5.0",
+          "starting_reference_pnl": "-3.7461",
+          "hedged_pair_reserve": "1.01"
+        },
+        {
+          "time_pt": "2:00 PM",
+          "actual_pnl": "-0.2178",
+          "pnl": "-0.2178",
+          "first_actual_size": "5.0",
+          "first_new_size": "5.0",
+          "starting_reference_pnl": "-4.4219",
+          "hedged_pair_reserve": "1.01"
+        },
+        {
+          "time_pt": "2:15 PM",
+          "actual_pnl": "0.886",
+          "pnl": "0.886",
+          "first_actual_size": "5.0",
+          "first_new_size": "5.0",
+          "starting_reference_pnl": "-4.6397",
+          "hedged_pair_reserve": "1.01"
+        },
+        {
+          "time_pt": "2:30 PM",
+          "actual_pnl": "-0.55",
+          "pnl": "-0.55",
+          "first_actual_size": "5.0",
+          "first_new_size": "5.0",
+          "starting_reference_pnl": "-3.7537",
+          "hedged_pair_reserve": "1.01"
+        },
+        {
+          "time_pt": "2:45 PM",
+          "actual_pnl": "-1.762",
+          "pnl": "-1.762",
+          "first_actual_size": "5.0",
+          "first_new_size": "5.0",
+          "starting_reference_pnl": "-4.3037",
+          "hedged_pair_reserve": "1.01"
+        },
+        {
+          "time_pt": "3:00 PM",
+          "actual_pnl": "-0.01",
+          "pnl": "0.45",
+          "first_actual_size": "5.0",
+          "first_new_size": "3",
+          "starting_reference_pnl": "-6.0657",
+          "hedged_pair_reserve": "1.01"
+        },
+        {
+          "time_pt": "3:15 PM",
+          "actual_pnl": "-1.0596",
+          "pnl": "0.150",
+          "first_actual_size": "5.0",
+          "first_new_size": "3",
+          "starting_reference_pnl": "-6.0757",
+          "hedged_pair_reserve": "1.01"
+        },
+        {
+          "time_pt": "3:30 PM",
+          "actual_pnl": "-1.3296",
+          "pnl": "0.040",
+          "first_actual_size": "5.0",
+          "first_new_size": "2",
+          "starting_reference_pnl": "-7.1353",
+          "hedged_pair_reserve": "1.01"
+        },
+        {
+          "time_pt": "3:45 PM",
+          "actual_pnl": "-0.6372",
+          "pnl": "-0.2124",
+          "first_actual_size": "3.0",
+          "first_new_size": "1",
+          "starting_reference_pnl": "-8.4649",
+          "hedged_pair_reserve": "1.01"
+        },
+        {
+          "time_pt": "4:00 PM",
+          "actual_pnl": "-0.84",
+          "pnl": "0.00",
+          "first_actual_size": "2.0",
+          "first_new_size": "0",
+          "starting_reference_pnl": "-9.1021",
+          "hedged_pair_reserve": "1.01"
+        }
+      ]
+    }
+  ],
+  "warning": "Arithmetic sensitivity illustration only: historical fill selection, no queue or timing replay, actual anchors condition later risk on losses our modified trades did not incur, fees scaled from actual fills, no counterfactual additional decisions or explicit latch/pull/cancel/reconcile state machine."
+}

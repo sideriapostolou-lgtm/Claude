@@ -1,0 +1,2672 @@
+{
+  "observed_at_utc": "2026-10-14T22:34:22Z",
+  "observed_at_pacific": "2026-10-14 3:34:22 PM PDT",
+  "pr": 54,
+  "source_commit": "89b7b6db8b7c887f8398d604c8b3bfe8ce9d16cc",
+  "deployment": {
+    "id": "af3e9f29-2124-4849-8c02-33e91dc46fdb",
+    "status": "SUCCESS",
+    "createdAt": "2026-10-14T22:32:20.620Z",
+    "updatedAt": "2026-10-14T22:33:15.252Z",
+    "meta": {
+      "reason": "deploy",
+      "commitMessage": "feat: measure quiet callback occupancy (touches real money) (#54)",
+      "commitHash": "89b7b6db8b7c887f8398d604c8b3bfe8ce9d16cc",
+      "branch": "claude/nightcrawler-memecoin-bot-Gwnb1S"
+    }
+  },
+  "health": {
+    "environment": {
+      "id": "17f7b0e0-104c-4903-9484-0106748b3cdb",
+      "name": "production"
+    },
+    "services": [
+      {
+        "serviceId": "f84d3b52-002f-44cb-931e-bc9e3e097e97",
+        "serviceName": "bot",
+        "state": "online",
+        "statusText": "Online",
+        "activeDeployments": [
+          {
+            "id": "af3e9f29-2124-4849-8c02-33e91dc46fdb",
+            "status": "SUCCESS",
+            "createdAt": "2026-10-14T22:32:20.620Z",
+            "statusUpdatedAt": "2026-10-14T22:33:15.251Z"
+          }
+        ],
+        "replicaStatus": {
+          "running": 1,
+          "crashed": 0,
+          "total": 1
+        },
+        "cronJob": null,
+        "issues": {
+          "warningCount": 0,
+          "criticalCount": 0
+        },
+        "recentFailures": 0,
+        "recentFailedDeployments": [],
+        "hasIssues": false,
+        "isCronJob": false,
+        "hasVolume": true
+      },
+      {
+        "serviceId": "736b1c8a-8311-4ee0-9043-d05f508cd821",
+        "serviceName": "kalshi-recorder",
+        "state": "online",
+        "statusText": "Online",
+        "activeDeployments": [
+          {
+            "id": "8453f919-b891-4aa7-8478-6fcf6b9c24ee",
+            "status": "SUCCESS",
+            "createdAt": "2026-10-14T16:36:40.384Z",
+            "statusUpdatedAt": "2026-10-14T16:38:15.302Z"
+          }
+        ],
+        "replicaStatus": {
+          "running": 1,
+          "crashed": 0,
+          "total": 1
+        },
+        "cronJob": null,
+        "issues": {
+          "warningCount": 0,
+          "criticalCount": 0
+        },
+        "recentFailures": 0,
+        "recentFailedDeployments": [],
+        "hasIssues": false,
+        "isCronJob": false,
+        "hasVolume": true
+      }
+    ],
+    "pendingWork": [
+      {
+        "id": "patch:9a84e13c-3caf-4a85-b5f5-d9a2fcb8a021",
+        "kind": "EnvironmentPatch",
+        "status": "staged",
+        "changes": [],
+        "startedAt": "2026-10-12T16:21:53.480Z",
+        "workflowId": "commitChanges/17f7b0e0-104c-4903-9484-0106748b3cdb/9a84e13c-3caf-4a85-b5f5-d9a2fcb8a021"
+      }
+    ],
+    "summary": {
+      "totalServices": 2,
+      "servicesWithIssues": 0,
+      "totalFailures": 0
+    }
+  },
+  "polydesk_startup": [
+    {
+      "timestamp": "2026-10-14T22:33:12.603966753Z",
+      "message": "2026-10-14T22:33:12Z INFO nightcrawler.polydesk: polydesk_started theta=0.97 hours=1 ticket_usd=20 poll_s=90 (LIVE: 10 contract(s) per order)"
+    }
+  ],
+  "pre_restart": [
+    {
+      "timestamp": "2026-10-14T22:32:04.816525595Z",
+      "at": 1792017124.5095887,
+      "venue": "kalshi",
+      "mode": "live",
+      "configured_mode": "live",
+      "status": "REAL MONEY (Kalshi)",
+      "reason": "pair_cap",
+      "authenticated": true,
+      "cash_usd": 34.9543,
+      "cash_at": 1792017123.7903125,
+      "reserved_usd": 0,
+      "open_risk_usd": 0.49,
+      "open_cost_usd": 0.49,
+      "at_risk_usd": 0.49,
+      "open_orders": 0,
+      "positions": 1,
+      "total_halted": false,
+      "day_stop_latched": false,
+      "integrity_error": null,
+      "cleanup_pending": false,
+      "caps": {
+        "window_usd": 10,
+        "open_usd": 20,
+        "day_stop_usd": 6,
+        "clip": 5,
+        "total_stop_usd": 10
+      },
+      "total": {
+        "day": null,
+        "windows": 106,
+        "fills": 514,
+        "latency": null,
+        "scorecard": null,
+        "settled_windows": 119,
+        "fees_usd": 2.27122,
+        "locked_usd": -1.001201648351652,
+        "directional_usd": -13.295898351648349,
+        "pnl_usd": -14.2971,
+        "worst_usd": -2.9791999999999987,
+        "take_attempts": 39,
+        "take_fills": 17,
+        "maker_orders": 3351,
+        "maker_fills": 353,
+        "locks": 81,
+        "lock_fills": 72,
+        "take_fill_rate": 0.4358974358974359,
+        "maker_fill_rate": 0.10534168904804536,
+        "avg_latency_ms": 4338.4299485823685,
+        "latency_definition": "durable real decision to venue fill timestamp; maker includes resting time"
+      },
+      "save": {
+        "last_ms": 401.4059333130717,
+        "build_ms": 25.011216290295124,
+        "ledger_ms": 166.60068975761533,
+        "mirror_ms": 209.70885828137398,
+        "archived_windows": 202,
+        "saved_orders": 169
+      },
+      "loop": {
+        "ms": {
+          "event_loop_lag": {
+            "n": 1500,
+            "median_ms": 10.3,
+            "p90_ms": 41.3,
+            "max_ms": 1008.7
+          },
+          "list_orders_worker_queue": {
+            "n": 72,
+            "median_ms": 4.1,
+            "p90_ms": 114.6,
+            "max_ms": 391.1
+          },
+          "list_orders_worker_resume": {
+            "n": 72,
+            "median_ms": 7.8,
+            "p90_ms": 189.3,
+            "max_ms": 779.3
+          },
+          "fills_worker_queue": {
+            "n": 36,
+            "median_ms": 0.2,
+            "p90_ms": 25,
+            "max_ms": 64.5
+          },
+          "fills_worker_resume": {
+            "n": 36,
+            "median_ms": 6,
+            "p90_ms": 46.9,
+            "max_ms": 480.5
+          },
+          "positions_worker_queue": {
+            "n": 36,
+            "median_ms": 0.6,
+            "p90_ms": 12.2,
+            "max_ms": 56
+          },
+          "positions_worker_resume": {
+            "n": 36,
+            "median_ms": 8.2,
+            "p90_ms": 94.1,
+            "max_ms": 206.9
+          },
+          "balance_worker_queue": {
+            "n": 36,
+            "median_ms": 0.9,
+            "p90_ms": 12,
+            "max_ms": 41.7
+          },
+          "balance_worker_resume": {
+            "n": 36,
+            "median_ms": 13.2,
+            "p90_ms": 46.1,
+            "max_ms": 87.7
+          },
+          "cancel_worker_queue": {
+            "n": 3,
+            "median_ms": 15.7,
+            "p90_ms": 35.9,
+            "max_ms": 35.9
+          },
+          "cancel_worker_resume": {
+            "n": 3,
+            "median_ms": 134.1,
+            "p90_ms": 268.3,
+            "max_ms": 268.3
+          },
+          "cancel_decision_to_ack": {
+            "n": 3,
+            "median_ms": 362.7,
+            "p90_ms": 455.3,
+            "max_ms": 455.3
+          },
+          "cancel_send_to_ack": {
+            "n": 3,
+            "median_ms": 362.7,
+            "p90_ms": 455.2,
+            "max_ms": 455.2
+          },
+          "create_order_worker_queue": {
+            "n": 2,
+            "median_ms": 7.3,
+            "p90_ms": 16.7,
+            "max_ms": 16.7
+          },
+          "create_order_worker_resume": {
+            "n": 2,
+            "median_ms": 16.4,
+            "p90_ms": 80.9,
+            "max_ms": 80.9
+          }
+        },
+        "counts": {}
+      },
+      "reconcile": {
+        "ms": {
+          "recent_ms": {
+            "n": 35,
+            "median_ms": 392,
+            "p90_ms": 972.4,
+            "max_ms": 1716.3
+          },
+          "list_orders_ms": {
+            "n": 72,
+            "median_ms": 71.4,
+            "p90_ms": 360.1,
+            "max_ms": 989.7
+          },
+          "fills_ms": {
+            "n": 36,
+            "median_ms": 55,
+            "p90_ms": 115.2,
+            "max_ms": 473.8
+          },
+          "positions_ms": {
+            "n": 36,
+            "median_ms": 59.6,
+            "p90_ms": 136.4,
+            "max_ms": 336
+          },
+          "balance_ms": {
+            "n": 36,
+            "median_ms": 55.8,
+            "p90_ms": 107.6,
+            "max_ms": 372.9
+          },
+          "full_ms": {
+            "n": 1,
+            "median_ms": 1261.5,
+            "p90_ms": 1261.5,
+            "max_ms": 1261.5
+          }
+        },
+        "counts": {
+          "pages": 150,
+          "rows": 10962,
+          "bytes": 8486155
+        },
+        "last": {
+          "full": true,
+          "ms": 1261.5,
+          "failed": false,
+          "checks": {},
+          "reads": [
+            {
+              "read": "list_orders",
+              "ms": 538.9,
+              "rows": 3461,
+              "pages": 4,
+              "bytes": 2741380
+            },
+            {
+              "read": "fills",
+              "ms": 309.3,
+              "rows": 519,
+              "pages": 1,
+              "bytes": 264798
+            },
+            {
+              "read": "list_orders",
+              "ms": 269.3,
+              "rows": 3461,
+              "pages": 4,
+              "bytes": 2741380
+            },
+            {
+              "read": "positions",
+              "ms": 48.5,
+              "rows": 3,
+              "pages": 1,
+              "bytes": 1403
+            },
+            {
+              "read": "balance",
+              "ms": 33.4,
+              "rows": null,
+              "pages": null,
+              "bytes": null
+            }
+          ]
+        }
+      },
+      "resume_history_events": []
+    },
+    {
+      "timestamp": "2026-10-14T22:33:04.686285111Z",
+      "at": 1792017184.5929906,
+      "venue": "kalshi",
+      "mode": "live",
+      "configured_mode": "live",
+      "status": "REAL MONEY (Kalshi)",
+      "reason": "pair_cap",
+      "authenticated": true,
+      "cash_usd": 34.9543,
+      "cash_at": 1792017183.547783,
+      "reserved_usd": 0,
+      "open_risk_usd": 0.49,
+      "open_cost_usd": 0.49,
+      "at_risk_usd": 0.49,
+      "open_orders": 0,
+      "positions": 1,
+      "total_halted": false,
+      "day_stop_latched": false,
+      "integrity_error": null,
+      "cleanup_pending": false,
+      "caps": {
+        "window_usd": 10,
+        "open_usd": 20,
+        "day_stop_usd": 6,
+        "clip": 5,
+        "total_stop_usd": 10
+      },
+      "total": {
+        "day": null,
+        "windows": 106,
+        "fills": 514,
+        "latency": null,
+        "scorecard": null,
+        "settled_windows": 119,
+        "fees_usd": 2.27122,
+        "locked_usd": -1.001201648351652,
+        "directional_usd": -13.295898351648349,
+        "pnl_usd": -14.2971,
+        "worst_usd": -2.9791999999999987,
+        "take_attempts": 39,
+        "take_fills": 17,
+        "maker_orders": 3352,
+        "maker_fills": 353,
+        "locks": 81,
+        "lock_fills": 72,
+        "take_fill_rate": 0.4358974358974359,
+        "maker_fill_rate": 0.10531026252983293,
+        "avg_latency_ms": 4338.4299485823685,
+        "latency_definition": "durable real decision to venue fill timestamp; maker includes resting time"
+      },
+      "save": {
+        "last_ms": 505.8101359754801,
+        "build_ms": 15.533862635493279,
+        "ledger_ms": 184.75139420479536,
+        "mirror_ms": 305.446439422667,
+        "archived_windows": 202,
+        "saved_orders": 170
+      },
+      "loop": {
+        "ms": {
+          "event_loop_lag": {
+            "n": 1389,
+            "median_ms": 10.5,
+            "p90_ms": 45.4,
+            "max_ms": 1087.7
+          },
+          "list_orders_worker_queue": {
+            "n": 72,
+            "median_ms": 6.9,
+            "p90_ms": 55.9,
+            "max_ms": 388.5
+          },
+          "list_orders_worker_resume": {
+            "n": 72,
+            "median_ms": 9.7,
+            "p90_ms": 84.4,
+            "max_ms": 956.4
+          },
+          "fills_worker_queue": {
+            "n": 36,
+            "median_ms": 1.2,
+            "p90_ms": 19.4,
+            "max_ms": 29.4
+          },
+          "fills_worker_resume": {
+            "n": 36,
+            "median_ms": 28,
+            "p90_ms": 119,
+            "max_ms": 335.9
+          },
+          "positions_worker_queue": {
+            "n": 36,
+            "median_ms": 1,
+            "p90_ms": 12.1,
+            "max_ms": 63.3
+          },
+          "positions_worker_resume": {
+            "n": 36,
+            "median_ms": 8.4,
+            "p90_ms": 121.7,
+            "max_ms": 341.1
+          },
+          "balance_worker_queue": {
+            "n": 36,
+            "median_ms": 1.7,
+            "p90_ms": 19.6,
+            "max_ms": 35.1
+          },
+          "balance_worker_resume": {
+            "n": 36,
+            "median_ms": 9.2,
+            "p90_ms": 336.4,
+            "max_ms": 647.2
+          },
+          "create_order_worker_queue": {
+            "n": 1,
+            "median_ms": 10.9,
+            "p90_ms": 10.9,
+            "max_ms": 10.9
+          },
+          "create_order_worker_resume": {
+            "n": 1,
+            "median_ms": 11.7,
+            "p90_ms": 11.7,
+            "max_ms": 11.7
+          },
+          "cancel_worker_queue": {
+            "n": 1,
+            "median_ms": 84.9,
+            "p90_ms": 84.9,
+            "max_ms": 84.9
+          },
+          "cancel_worker_resume": {
+            "n": 1,
+            "median_ms": 2.2,
+            "p90_ms": 2.2,
+            "max_ms": 2.2
+          },
+          "cancel_decision_to_ack": {
+            "n": 1,
+            "median_ms": 128.4,
+            "p90_ms": 128.4,
+            "max_ms": 128.4
+          },
+          "cancel_send_to_ack": {
+            "n": 1,
+            "median_ms": 128.4,
+            "p90_ms": 128.4,
+            "max_ms": 128.4
+          }
+        },
+        "counts": {}
+      },
+      "reconcile": {
+        "ms": {
+          "recent_ms": {
+            "n": 36,
+            "median_ms": 424.6,
+            "p90_ms": 1216.2,
+            "max_ms": 1558.9
+          },
+          "list_orders_ms": {
+            "n": 72,
+            "median_ms": 69.7,
+            "p90_ms": 356.6,
+            "max_ms": 1279.9
+          },
+          "fills_ms": {
+            "n": 36,
+            "median_ms": 65.8,
+            "p90_ms": 220.3,
+            "max_ms": 429.3
+          },
+          "positions_ms": {
+            "n": 36,
+            "median_ms": 55.9,
+            "p90_ms": 187.9,
+            "max_ms": 413.3
+          },
+          "balance_ms": {
+            "n": 36,
+            "median_ms": 49.3,
+            "p90_ms": 344.4,
+            "max_ms": 940.8
+          }
+        },
+        "counts": {
+          "pages": 144,
+          "rows": 3100,
+          "bytes": 2404704
+        },
+        "last": {
+          "full": false,
+          "ms": 1558.9,
+          "failed": false,
+          "checks": {},
+          "reads": [
+            {
+              "read": "list_orders",
+              "ms": 1279.9,
+              "rows": 37,
+              "pages": 1,
+              "bytes": 29354
+            },
+            {
+              "read": "fills",
+              "ms": 126.4,
+              "rows": 2,
+              "pages": 1,
+              "bytes": 1043
+            },
+            {
+              "read": "list_orders",
+              "ms": 58.1,
+              "rows": 37,
+              "pages": 1,
+              "bytes": 29354
+            },
+            {
+              "read": "positions",
+              "ms": 45.2,
+              "rows": 3,
+              "pages": 1,
+              "bytes": 1403
+            },
+            {
+              "read": "balance",
+              "ms": 46,
+              "rows": null,
+              "pages": null,
+              "bytes": null
+            }
+          ]
+        }
+      },
+      "resume_history_events": []
+    }
+  ],
+  "post_restart": [
+    {
+      "timestamp": "2026-10-14T22:33:46.229107127Z",
+      "at": 1792017220.0539246,
+      "venue": "kalshi",
+      "mode": "live",
+      "configured_mode": "live",
+      "status": "REAL MONEY (Kalshi)",
+      "reason": "pair_cap",
+      "authenticated": true,
+      "cash_usd": 34.9543,
+      "cash_at": 1792017219.9937296,
+      "reserved_usd": 0,
+      "open_risk_usd": 0.49,
+      "open_cost_usd": 0.49,
+      "at_risk_usd": 0.49,
+      "open_orders": 0,
+      "positions": 1,
+      "total_halted": false,
+      "day_stop_latched": false,
+      "integrity_error": null,
+      "cleanup_pending": false,
+      "caps": {
+        "window_usd": 10,
+        "open_usd": 20,
+        "day_stop_usd": 6,
+        "clip": 5,
+        "total_stop_usd": 10
+      },
+      "total": {
+        "day": null,
+        "windows": 106,
+        "fills": 514,
+        "latency": null,
+        "scorecard": null,
+        "settled_windows": 119,
+        "fees_usd": 2.27122,
+        "locked_usd": -1.001201648351652,
+        "directional_usd": -13.295898351648349,
+        "pnl_usd": -14.2971,
+        "worst_usd": -2.9791999999999987,
+        "take_attempts": 39,
+        "take_fills": 17,
+        "maker_orders": 3353,
+        "maker_fills": 353,
+        "locks": 81,
+        "lock_fills": 72,
+        "take_fill_rate": 0.4358974358974359,
+        "maker_fill_rate": 0.10527885475693409,
+        "avg_latency_ms": 4338.4299485823685,
+        "latency_definition": "durable real decision to venue fill timestamp; maker includes resting time"
+      },
+      "save": {
+        "last_ms": 601.7217170447111,
+        "build_ms": 303.2083590514958,
+        "ledger_ms": 56.12521292641759,
+        "mirror_ms": 239.82066614553332,
+        "archived_windows": 202,
+        "saved_orders": 171
+      },
+      "loop": {
+        "ms": {
+          "event_loop_lag": {
+            "n": 58,
+            "median_ms": 8.8,
+            "p90_ms": 68.5,
+            "max_ms": 966.8
+          },
+          "other_worker_queue": {
+            "n": 1,
+            "median_ms": 1.7,
+            "p90_ms": 1.7,
+            "max_ms": 1.7
+          },
+          "other_worker_resume": {
+            "n": 1,
+            "median_ms": 974.5,
+            "p90_ms": 974.5,
+            "max_ms": 974.5
+          },
+          "cancel_worker_queue": {
+            "n": 1,
+            "median_ms": 0.6,
+            "p90_ms": 0.6,
+            "max_ms": 0.6
+          },
+          "cancel_worker_resume": {
+            "n": 1,
+            "median_ms": 27.9,
+            "p90_ms": 27.9,
+            "max_ms": 27.9
+          },
+          "cancel_decision_to_ack": {
+            "n": 1,
+            "median_ms": 119.1,
+            "p90_ms": 119.1,
+            "max_ms": 119.1
+          },
+          "cancel_send_to_ack": {
+            "n": 1,
+            "median_ms": 119.1,
+            "p90_ms": 119.1,
+            "max_ms": 119.1
+          },
+          "list_orders_worker_queue": {
+            "n": 2,
+            "median_ms": 2.8,
+            "p90_ms": 20.1,
+            "max_ms": 20.1
+          },
+          "list_orders_worker_resume": {
+            "n": 2,
+            "median_ms": 5.2,
+            "p90_ms": 5.9,
+            "max_ms": 5.9
+          },
+          "fills_worker_queue": {
+            "n": 1,
+            "median_ms": 5.3,
+            "p90_ms": 5.3,
+            "max_ms": 5.3
+          },
+          "fills_worker_resume": {
+            "n": 1,
+            "median_ms": 22.2,
+            "p90_ms": 22.2,
+            "max_ms": 22.2
+          },
+          "positions_worker_queue": {
+            "n": 1,
+            "median_ms": 18.2,
+            "p90_ms": 18.2,
+            "max_ms": 18.2
+          },
+          "positions_worker_resume": {
+            "n": 1,
+            "median_ms": 102,
+            "p90_ms": 102,
+            "max_ms": 102
+          }
+        },
+        "counts": {}
+      },
+      "reconcile": {
+        "ms": {
+          "full_ms": {
+            "n": 1,
+            "median_ms": 1928,
+            "p90_ms": 1928,
+            "max_ms": 1928
+          },
+          "list_orders_ms": {
+            "n": 2,
+            "median_ms": 599.8,
+            "p90_ms": 758.2,
+            "max_ms": 758.2
+          },
+          "fills_ms": {
+            "n": 1,
+            "median_ms": 120.5,
+            "p90_ms": 120.5,
+            "max_ms": 120.5
+          },
+          "positions_ms": {
+            "n": 1,
+            "median_ms": 192.3,
+            "p90_ms": 192.3,
+            "max_ms": 192.3
+          },
+          "balance_ms": {
+            "n": 1,
+            "median_ms": 192.1,
+            "p90_ms": 192.1,
+            "max_ms": 192.1
+          }
+        },
+        "counts": {
+          "pages": 10,
+          "rows": 7448,
+          "bytes": 5752141
+        },
+        "last": {
+          "full": true,
+          "ms": 1928,
+          "failed": false,
+          "checks": {},
+          "reads": [
+            {
+              "read": "list_orders",
+              "ms": 599.8,
+              "rows": 3463,
+              "pages": 4,
+              "bytes": 2742970
+            },
+            {
+              "read": "fills",
+              "ms": 120.5,
+              "rows": 519,
+              "pages": 1,
+              "bytes": 264798
+            },
+            {
+              "read": "list_orders",
+              "ms": 758.2,
+              "rows": 3463,
+              "pages": 4,
+              "bytes": 2742970
+            },
+            {
+              "read": "positions",
+              "ms": 192.3,
+              "rows": 3,
+              "pages": 1,
+              "bytes": 1403
+            },
+            {
+              "read": "balance",
+              "ms": 192.1,
+              "rows": null,
+              "pages": null,
+              "bytes": null
+            }
+          ]
+        }
+      },
+      "resume_history_events": [
+        {
+          "event": "speeddesk_live_resume",
+          "state": "ignored; this value was already used",
+          "total_pnl_usd": -14.297100000000004
+        },
+        {
+          "event": "speeddesk_live_integrity_reset",
+          "state": "ignored; this value was already used"
+        },
+        {
+          "event": "speeddesk_live_day_reset",
+          "state": "ignored; this value was already used"
+        }
+      ]
+    }
+  ],
+  "traces": [
+    {
+      "timestamp": "2026-10-14T22:33:50.640321585Z",
+      "message": "2026-10-14T22:33:50Z INFO nightcrawler.speeddesk: speeddesk_reconcile_trace {\"at\":1792017229.9008837,\"venue\":\"kalshi\",\"mode\":\"diagnostic\",\"version\":1,\"cycle\":5,\"started_at\":1792017226.7995622,\"full\":false,\"retry_remaining_s\":0.0,\"previous_fills_returned_at\":1792017224.7541597,\"marks_ms\":{\"fills_wrapper_returned\":2109.001},\"new_fills\":[],\"new_fills_omitted\":0,\"reads_omitted\":0,\"elapsed_ms\":3101.321,\"failed\":false,\"reads\":[{\"read\":\"list_orders\",\"marks_ms\":{\"submitted\":0.142,\"worker_started\":249.708,\"worker_completed\":340.198,\"coroutine_resumed\":1897.222,\"wrapper_returned\":1897.303},\"rows\":34,\"pages\":1,\"bytes\":26974,\"cancel_calls\":2,\"cancel_ms\":0.064,\"cancel_spans\":[],\"cancel_spans_omitted\":0},{\"read\":\"fills\",\"marks_ms\":{\"submitted\":1897.582,\"worker_started\":1978.381,\"worker_completed\":2032.784,\"coroutine_resumed\":2108.942,\"wrapper_returned\":2108.994},\"rows\":2,\"pages\":1,\"bytes\":1043,\"cancel_calls\":2,\"cancel_ms\":0.063,\"cancel_spans\":[],\"cancel_spans_omitted\":0},{\"read\":\"list_orders\",\"marks_ms\":{\"submitted\":2109.697,\"worker_started\":2116.466,\"worker_completed\":2165.146,\"coroutine_resumed\":2229.956,\"wrapper_returned\":2230.006},\"rows\":34,\"pages\":1,\"bytes\":26974,\"cancel_calls\":1,\"cancel_ms\":0.031,\"cancel_spans\":[],\"cancel_spans_omitted\":0},{\"read\":\"positions\",\"marks_ms\":{\"submitted\":2230.437,\"worker_started\":2270.046,\"worker_completed\":2314.893,\"coroutine_resumed\":2879.031,\"wrapper_returned\":2879.109},\"rows\":3,\"pages\":1,\"bytes\":1403,\"cancel_calls\":2,\"cancel_ms\":0.077,\"cancel_spans\":[],\"cancel_spans_omitted\":0},{\"read\":\"balance\",\"marks_ms\":{\"submitted\":2880.214,\"worker_started\":3024.75,\"worker_completed\":3070.871,\"coroutine_resumed\":3101.106,\"wrapper_returned\":3101.149},\"rows\":null,\"pages\":null,\"bytes\":null,\"cancel_calls\":2,\"cancel_ms\":0.069,\"cancel_spans\":[],\"cancel_spans_omitted\":0}],\"counts\":{\"cycles\":5,\"reported\":1,\"quiet\":4,\"suppressed\":0},\"clock_basis\":\"monotonic_offsets_from_started_at\",\"worker_complete_basis\":\"entire_client_callback_not_http_arrival\",\"not_realized_pnl\":true,\"max_reports_per_60s\":12,\"callback_work\":{\"enabled\":true,\"error\":null,\"start_mono\":3548333.237074783,\"end_mono\":3548336.338428733,\"interval_wall_ms\":3101.353949867189,\"spans\":[{\"name\":\"practice_step\",\"span_id\":16905,\"parent_id\":null,\"start_mono\":3548333.237298251,\"end_mono\":3548333.252231129,\"wall_ms\":14.932877849787474,\"cpu_ms\":8.238489000000015,\"overlap_start_mono\":3548333.237298251,\"overlap_end_mono\":3548333.252231129,\"overlap_wall_ms\":14.932877849787474},{\"name\":\"feed_book\",\"span_id\":17763,\"parent_id\":null,\"start_mono\":3548333.604649218,\"end_mono\":3548333.620866916,\"wall_ms\":16.217698343098164,\"cpu_ms\":0.8187209999999112,\"overlap_start_mono\":3548333.604649218,\"overlap_end_mono\":3548333.620866916,\"overlap_wall_ms\":16.217698343098164},{\"name\":\"feed_book\",\"span_id\":18551,\"parent_id\":null,\"start_mono\":3548333.75420778,\"end_mono\":3548333.796148078,\"wall_ms\":41.940297931432724,\"cpu_ms\":0.26413999999874704,\"overlap_start_mono\":3548333.75420778,\"overlap_end_mono\":3548333.796148078,\"overlap_wall_ms\":41.940297931432724},{\"name\":\"feed_book\",\"span_id\":18591,\"parent_id\":null,\"start_mono\":3548333.801212597,\"end_mono\":3548333.811197235,\"wall_ms\":9.9846376106143,\"cpu_ms\":0.2602300000003055,\"overlap_start_mono\":3548333.801212597,\"overlap_end_mono\":3548333.811197235,\"overlap_wall_ms\":9.9846376106143},{\"name\":\"feed_book\",\"span_id\":18678,\"parent_id\":null,\"start_mono\":3548333.822256485,\"end_mono\":3548333.832530961,\"wall_ms\":10.274475906044245,\"cpu_ms\":0.46308000000117033,\"overlap_start_mono\":3548333.822256485,\"overlap_end_mono\":3548333.832530961,\"overlap_wall_ms\":10.274475906044245},{\"name\":\"feed_book\",\"span_id\":18900,\"parent_id\":null,\"start_mono\":3548333.86819667,\"end_mono\":3548333.880548449,\"wall_ms\":12.3517788015306,\"cpu_ms\":0.47810999999953196,\"overlap_start_mono\":3548333.86819667,\"overlap_end_mono\":3548333.880548449,\"overlap_wall_ms\":12.3517788015306},{\"name\":\"feed_book\",\"span_id\":19008,\"parent_id\":null,\"start_mono\":3548333.89764741,\"end_mono\":3548333.906746207,\"wall_ms\":9.098796639591455,\"cpu_ms\":0.22931200000009255,\"overlap_start_mono\":3548333.89764741,\"overlap_end_mono\":3548333.906746207,\"overlap_wall_ms\":9.098796639591455},{\"name\":\"feed_book\",\"span_id\":19391,\"parent_id\":null,\"start_mono\":3548333.959437257,\"end_mono\":3548333.971879546,\"wall_ms\":12.442288920283318,\"cpu_ms\":0.21904099999936477,\"overlap_start_mono\":3548333.959437257,\"overlap_end_mono\":3548333.971879546,\"overlap_wall_ms\":12.442288920283318},{\"name\":\"feed_book\",\"span_id\":20046,\"parent_id\":null,\"start_mono\":3548334.063001823,\"end_mono\":3548334.073483398,\"wall_ms\":10.481575038284063,\"cpu_ms\":0.20928999999902942,\"overlap_start_mono\":3548334.063001823,\"overlap_end_mono\":3548334.073483398,\"overlap_wall_ms\":10.481575038284063},{\"name\":\"feed_book\",\"span_id\":20385,\"parent_id\":null,\"start_mono\":3548334.336715663,\"end_mono\":3548334.346287905,\"wall_ms\":9.57224192097783,\"cpu_ms\":0.23977000000030557,\"overlap_start_mono\":3548334.336715663,\"overlap_end_mono\":3548334.346287905,\"overlap_wall_ms\":9.57224192097783},{\"name\":\"feed_book\",\"span_id\":20816,\"parent_id\":null,\"start_mono\":3548334.39967082,\"end_mono\":3548334.411769091,\"wall_ms\":12.098270934075117,\"cpu_ms\":9.247539000000415,\"overlap_start_mono\":3548334.39967082,\"overlap_end_mono\":3548334.411769091,\"overlap_wall_ms\":12.098270934075117},{\"name\":\"practice_step\",\"span_id\":21742,\"parent_id\":null,\"start_mono\":3548334.572316314,\"end_mono\":3548334.747352248,\"wall_ms\":175.03593396395445,\"cpu_ms\":121.52667099999981,\"overlap_start_mono\":3548334.572316314,\"overlap_end_mono\":3548334.747352248,\"overlap_wall_ms\":175.03593396395445},{\"name\":\"practice_checkpoint\",\"span_id\":21743,\"parent_id\":21742,\"start_mono\":3548334.575775286,\"end_mono\":3548334.740474974,\"wall_ms\":164.69968762248755,\"cpu_ms\":112.95800099999909,\"overlap_start_mono\":3548334.575775286,\"overlap_end_mono\":3548334.740474974,\"overlap_wall_ms\":164.69968762248755},{\"name\":\"practice_state\",\"span_id\":21745,\"parent_id\":21743,\"start_mono\":3548334.584125927,\"end_mono\":3548334.681419514,\"wall_ms\":97.293586935848,\"cpu_ms\":63.38773300000078,\"overlap_start_mono\":3548334.584125927,\"overlap_end_mono\":3548334.681419514,\"overlap_wall_ms\":97.293586935848},{\"name\":\"practice_panel\",\"span_id\":21746,\"parent_id\":21745,\"start_mono\":3548334.597576168,\"end_mono\":3548334.681407934,\"wall_ms\":83.83176615461707,\"cpu_ms\":51.77274899999951,\"overlap_start_mono\":3548334.597576168,\"overlap_end_mono\":3548334.681407934,\"overlap_wall_ms\":83.83176615461707},{\"name\":\"live_panel\",\"span_id\":21747,\"parent_id\":21746,\"start_mono\":3548334.605986419,\"end_mono\":3548334.681356774,\"wall_ms\":75.37035504356027,\"cpu_ms\":45.933033000000734,\"overlap_start_mono\":3548334.605986419,\"overlap_end_mono\":3548334.681356774,\"overlap_wall_ms\":75.37035504356027},{\"name\":\"practice_ledger\",\"span_id\":21748,\"parent_id\":21743,\"start_mono\":3548334.681434625,\"end_mono\":3548334.721618707,\"wall_ms\":40.18408199772239,\"cpu_ms\":26.179322000000838,\"overlap_start_mono\":3548334.681434625,\"overlap_end_mono\":3548334.721618707,\"overlap_wall_ms\":40.18408199772239},{\"name\":\"practice_mirror\",\"span_id\":21750,\"parent_id\":21743,\"start_mono\":3548334.721654897,\"end_mono\":3548334.739460091,\"wall_ms\":17.80519401654601,\"cpu_ms\":14.355546000000885,\"overlap_start_mono\":3548334.721654897,\"overlap_end_mono\":3548334.739460091,\"overlap_wall_ms\":17.80519401654601},{\"name\":\"kalshi_decode_apply\",\"span_id\":22403,\"parent_id\":null,\"start_mono\":3548335.004383283,\"end_mono\":3548335.014065054,\"wall_ms\":9.681770578026772,\"cpu_ms\":0.06634999999910463,\"overlap_start_mono\":3548335.004383283,\"overlap_end_mono\":3548335.014065054,\"overlap_wall_ms\":9.681770578026772},{\"name\":\"feed_book\",\"span_id\":23010,\"parent_id\":null,\"start_mono\":3548335.096181565,\"end_mono\":3548335.109301718,\"wall_ms\":13.120152987539768,\"cpu_ms\":0.22753999999913788,\"overlap_start_mono\":3548335.096181565,\"overlap_end_mono\":3548335.109301718,\"overlap_wall_ms\":13.120152987539768},{\"name\":\"practice_step\",\"span_id\":23120,\"parent_id\":null,\"start_mono\":3548335.134721261,\"end_mono\":3548335.14713108,\"wall_ms\":12.409818824380636,\"cpu_ms\":8.323999999999998,\"overlap_start_mono\":3548335.134721261,\"overlap_end_mono\":3548335.14713108,\"overlap_wall_ms\":12.409818824380636},{\"name\":\"practice_step\",\"span_id\":23563,\"parent_id\":null,\"start_mono\":3548335.288423729,\"end_mono\":3548335.297231387,\"wall_ms\":8.80765775218606,\"cpu_ms\":8.333179000000968,\"overlap_start_mono\":3548335.288423729,\"overlap_end_mono\":3548335.297231387,\"overlap_wall_ms\":8.80765775218606},{\"name\":\"practice_step\",\"span_id\":23688,\"parent_id\":null,\"start_mono\":3548335.348804327,\"end_mono\":3548335.358800935,\"wall_ms\":9.996607899665833,\"cpu_ms\":8.282998000000319,\"overlap_start_mono\":3548335.348804327,\"overlap_end_mono\":3548335.358800935,\"overlap_wall_ms\":9.996607899665833},{\"name\":\"feed_book\",\"span_id\":23901,\"parent_id\":null,\"start_mono\":3548335.415742631,\"end_mono\":3548335.431391884,\"wall_ms\":15.649253036826849,\"cpu_ms\":0.3852819999998758,\"overlap_start_mono\":3548335.415742631,\"overlap_end_mono\":3548335.431391884,\"overlap_wall_ms\":15.649253036826849},{\"name\":\"feed_book\",\"span_id\":24024,\"parent_id\":null,\"start_mono\":3548335.45282051,\"end_mono\":3548335.465129399,\"wall_ms\":12.30888906866312,\"cpu_ms\":0.3507009999985655,\"overlap_start_mono\":3548335.45282051,\"overlap_end_mono\":3548335.465129399,\"overlap_wall_ms\":12.30888906866312},{\"name\":\"practice_step\",\"span_id\":24050,\"parent_id\":null,\"start_mono\":3548335.504465848,\"end_mono\":3548335.518532283,\"wall_ms\":14.066434931010008,\"cpu_ms\":8.766779000000113,\"overlap_start_mono\":3548335.504465848,\"overlap_end_mono\":3548335.518532283,\"overlap_wall_ms\":14.066434931010008},{\"name\":\"practice_step\",\"span_id\":24450,\"parent_id\":null,\"start_mono\":3548335.664910001,\"end_mono\":3548335.675398935,\"wall_ms\":10.488933883607388,\"cpu_ms\":8.413429999999167,\"overlap_start_mono\":3548335.664910001,\"overlap_end_mono\":3548335.675398935,\"overlap_wall_ms\":10.488933883607388},{\"name\":\"feed_book\",\"span_id\":24924,\"parent_id\":null,\"start_mono\":3548335.799460955,\"end_mono\":3548336.037917192,\"wall_ms\":238.45623712986708,\"cpu_ms\":0.9333209999997649,\"overlap_start_mono\":3548335.799460955,\"overlap_end_mono\":3548336.037917192,\"overlap_wall_ms\":238.45623712986708},{\"name\":\"feed_book\",\"span_id\":25035,\"parent_id\":null,\"start_mono\":3548336.120795336,\"end_mono\":3548336.134831353,\"wall_ms\":14.036017004400492,\"cpu_ms\":0.3095210000001458,\"overlap_start_mono\":3548336.120795336,\"overlap_end_mono\":3548336.134831353,\"overlap_wall_ms\":14.036017004400492},{\"name\":\"feed_book\",\"span_id\":25133,\"parent_id\":null,\"start_mono\":3548336.14983306,\"end_mono\":3548336.164696769,\"wall_ms\":14.86370898783207,\"cpu_ms\":0.3311300000010675,\"overlap_start_mono\":3548336.14983306,\"overlap_end_mono\":3548336.164696769,\"overlap_wall_ms\":14.86370898783207},{\"name\":\"feed_book\",\"span_id\":25704,\"parent_id\":null,\"start_mono\":3548336.26888048,\"end_mono\":3548336.279587953,\"wall_ms\":10.707472916692495,\"cpu_ms\":0.18758099999871547,\"overlap_start_mono\":3548336.26888048,\"overlap_end_mono\":3548336.279587953,\"overlap_wall_ms\":10.707472916692495},{\"name\":\"practice_step\",\"span_id\":25860,\"parent_id\":null,\"start_mono\":3548336.302432037,\"end_mono\":3548336.317171737,\"wall_ms\":14.739700127393007,\"cpu_ms\":9.41451199999932,\"overlap_start_mono\":3548336.302432037,\"overlap_end_mono\":3548336.317171737,\"overlap_wall_ms\":14.739700127393007}],\"retained_overlapping_spans\":56,\"omitted_spans\":24,\"covered_wall_ms\":887.0932133868337,\"unattributed_wall_ms\":2214.2607364803553,\"retention_loss\":false,\"evicted_spans\":0,\"before_observation\":false,\"active_spans\":0,\"quiet_spans_total\":25784,\"coverage_scope\":\"completed retained slow synchronous spans only\",\"all_sync_work_lower_bound\":{\"covered_wall_lower_bound_ms\":1882.3717990890145,\"unattributed_or_boundary_ms\":1218.9821507781744,\"contained_span_cpu_ms\":870.1655240000968,\"cpu_basis\":\"whole top-level spans inside one retained full bin only; crossing spans omitted\",\"query_boundary_ms\":38.85394986718893,\"query_full_bins\":98,\"retained_full_bins\":98,\"populated_full_bins\":79,\"retention_loss\":false,\"before_observation\":false,\"after_last_completed_span\":true,\"bin_ms\":31.25,\"capacity\":512,\"top_level_spans\":25907,\"clipped_spans\":0,\"scope\":\"completed top-level synchronous work, including quiet spans; full bins only\",\"not_additive_to_slow_span_coverage\":true},\"cpu_basis\":\"full span thread CPU; not apportioned to overlap; nested values are not additive\"},\"read_resume_work\":[{\"read\":\"list_orders\",\"enabled\":true,\"error\":null,\"start_mono\":3548333.577272783,\"end_mono\":3548335.1342967832,\"interval_wall_ms\":1557.0240002125502,\"spans\":[{\"name\":\"feed_book\",\"span_id\":18551,\"parent_id\":null,\"start_mono\":3548333.75420778,\"end_mono\":3548333.796148078,\"wall_ms\":41.940297931432724,\"cpu_ms\":0.26413999999874704,\"overlap_start_mono\":3548333.75420778,\"overlap_end_mono\":3548333.796148078,\"overlap_wall_ms\":41.940297931432724},{\"name\":\"practice_step\",\"span_id\":21742,\"parent_id\":null,\"start_mono\":3548334.572316314,\"end_mono\":3548334.747352248,\"wall_ms\":175.03593396395445,\"cpu_ms\":121.52667099999981,\"overlap_start_mono\":3548334.572316314,\"overlap_end_mono\":3548334.747352248,\"overlap_wall_ms\":175.03593396395445},{\"name\":\"practice_checkpoint\",\"span_id\":21743,\"parent_id\":21742,\"start_mono\":3548334.575775286,\"end_mono\":3548334.740474974,\"wall_ms\":164.69968762248755,\"cpu_ms\":112.95800099999909,\"overlap_start_mono\":3548334.575775286,\"overlap_end_mono\":3548334.740474974,\"overlap_wall_ms\":164.69968762248755},{\"name\":\"practice_state\",\"span_id\":21745,\"parent_id\":21743,\"start_mono\":3548334.584125927,\"end_mono\":3548334.681419514,\"wall_ms\":97.293586935848,\"cpu_ms\":63.38773300000078,\"overlap_start_mono\":3548334.584125927,\"overlap_end_mono\":3548334.681419514,\"overlap_wall_ms\":97.293586935848},{\"name\":\"practice_panel\",\"span_id\":21746,\"parent_id\":21745,\"start_mono\":3548334.597576168,\"end_mono\":3548334.681407934,\"wall_ms\":83.83176615461707,\"cpu_ms\":51.77274899999951,\"overlap_start_mono\":3548334.597576168,\"overlap_end_mono\":3548334.681407934,\"overlap_wall_ms\":83.83176615461707},{\"name\":\"live_panel\",\"span_id\":21747,\"parent_id\":21746,\"start_mono\":3548334.605986419,\"end_mono\":3548334.681356774,\"wall_ms\":75.37035504356027,\"cpu_ms\":45.933033000000734,\"overlap_start_mono\":3548334.605986419,\"overlap_end_mono\":3548334.681356774,\"overlap_wall_ms\":75.37035504356027},{\"name\":\"practice_ledger\",\"span_id\":21748,\"parent_id\":21743,\"start_mono\":3548334.681434625,\"end_mono\":3548334.721618707,\"wall_ms\":40.18408199772239,\"cpu_ms\":26.179322000000838,\"overlap_start_mono\":3548334.681434625,\"overlap_end_mono\":3548334.721618707,\"overlap_wall_ms\":40.18408199772239},{\"name\":\"practice_mirror\",\"span_id\":21750,\"parent_id\":21743,\"start_mono\":3548334.721654897,\"end_mono\":3548334.739460091,\"wall_ms\":17.80519401654601,\"cpu_ms\":14.355546000000885,\"overlap_start_mono\":3548334.721654897,\"overlap_end_mono\":3548334.739460091,\"overlap_wall_ms\":17.80519401654601}],\"retained_overlapping_spans\":35,\"omitted_spans\":27,\"covered_wall_ms\":444.2568547092378,\"unattributed_wall_ms\":1112.7671455033123,\"retention_loss\":false,\"evicted_spans\":0,\"before_observation\":false,\"active_spans\":0,\"quiet_spans_total\":25784,\"coverage_scope\":\"completed retained slow synchronous spans only\",\"all_sync_work_lower_bound\":{\"covered_wall_lower_bound_ms\":1055.061595980078,\"unattributed_or_boundary_ms\":501.9624042324722,\"contained_span_cpu_ms\":503.600728000043,\"cpu_basis\":\"whole top-level spans inside one retained full bin only; crossing spans omitted\",\"query_boundary_ms\":25.774000212550163,\"query_full_bins\":49,\"retained_full_bins\":49,\"populated_full_bins\":40,\"retention_loss\":false,\"before_observation\":false,\"after_last_completed_span\":false,\"bin_ms\":31.25,\"capacity\":512,\"top_level_spans\":25907,\"clipped_spans\":0,\"scope\":\"completed top-level synchronous work, including quiet spans; full bins only\",\"not_additive_to_slow_span_coverage\":true},\"cpu_basis\":\"full span thread CPU; not apportioned to overlap; nested values are not additive\"},{\"read\":\"fills\",\"enabled\":true,\"error\":null,\"start_mono\":3548335.269858783,\"end_mono\":3548335.3460167833,\"interval_wall_ms\":76.15800015628338,\"spans\":[{\"name\":\"practice_step\",\"span_id\":23563,\"parent_id\":null,\"start_mono\":3548335.288423729,\"end_mono\":3548335.297231387,\"wall_ms\":8.80765775218606,\"cpu_ms\":8.333179000000968,\"overlap_start_mono\":3548335.288423729,\"overlap_end_mono\":3548335.297231387,\"overlap_wall_ms\":8.80765775218606}],\"retained_overlapping_spans\":1,\"omitted_spans\":0,\"covered_wall_ms\":8.80765775218606,\"unattributed_wall_ms\":67.35034240409732,\"retention_loss\":false,\"evicted_spans\":0,\"before_observation\":false,\"active_spans\":0,\"quiet_spans_total\":25784,\"coverage_scope\":\"completed retained slow synchronous spans only\",\"all_sync_work_lower_bound\":{\"covered_wall_lower_bound_ms\":23.758117575198412,\"unattributed_or_boundary_ms\":52.39988258108497,\"contained_span_cpu_ms\":22.176396000011422,\"cpu_basis\":\"whole top-level spans inside one retained full bin only; crossing spans omitted\",\"query_boundary_ms\":13.658000156283379,\"query_full_bins\":2,\"retained_full_bins\":2,\"populated_full_bins\":2,\"retention_loss\":false,\"before_observation\":false,\"after_last_completed_span\":false,\"bin_ms\":31.25,\"capacity\":512,\"top_level_spans\":25907,\"clipped_spans\":0,\"scope\":\"completed top-level synchronous work, including quiet spans; full bins only\",\"not_additive_to_slow_span_coverage\":true},\"cpu_basis\":\"full span thread CPU; not apportioned to overlap; nested values are not additive\"},{\"read\":\"list_orders\",\"enabled\":true,\"error\":null,\"start_mono\":3548335.4022207833,\"end_mono\":3548335.467030783,\"interval_wall_ms\":64.80999989435077,\"spans\":[{\"name\":\"feed_book\",\"span_id\":23901,\"parent_id\":null,\"start_mono\":3548335.415742631,\"end_mono\":3548335.431391884,\"wall_ms\":15.649253036826849,\"cpu_ms\":0.3852819999998758,\"overlap_start_mono\":3548335.415742631,\"overlap_end_mono\":3548335.431391884,\"overlap_wall_ms\":15.649253036826849},{\"name\":\"feed_book\",\"span_id\":24024,\"parent_id\":null,\"start_mono\":3548335.45282051,\"end_mono\":3548335.465129399,\"wall_ms\":12.30888906866312,\"cpu_ms\":0.3507009999985655,\"overlap_start_mono\":3548335.45282051,\"overlap_end_mono\":3548335.465129399,\"overlap_wall_ms\":12.30888906866312}],\"retained_overlapping_spans\":2,\"omitted_spans\":0,\"covered_wall_ms\":27.95814210548997,\"unattributed_wall_ms\":36.8518577888608,\"retention_loss\":false,\"evicted_spans\":0,\"before_observation\":false,\"active_spans\":0,\"quiet_spans_total\":25784,\"coverage_scope\":\"completed retained slow synchronous spans only\",\"all_sync_work_lower_bound\":{\"covered_wall_lower_bound_ms\":27.42838067933917,\"unattributed_or_boundary_ms\":37.3816192150116,\"contained_span_cpu_ms\":12.002913999999976,\"cpu_basis\":\"whole top-level spans inside one retained full bin only; crossing spans omitted\",\"query_boundary_ms\":33.55999989435077,\"query_full_bins\":1,\"retained_full_bins\":1,\"populated_full_bins\":1,\"retention_loss\":false,\"before_observation\":false,\"after_last_completed_span\":false,\"bin_ms\":31.25,\"capacity\":512,\"top_level_spans\":25907,\"clipped_spans\":0,\"scope\":\"completed top-level synchronous work, including quiet spans; full bins only\",\"not_additive_to_slow_span_coverage\":true},\"cpu_basis\":\"full span thread CPU; not apportioned to overlap; nested values are not additive\"},{\"read\":\"positions\",\"enabled\":true,\"error\":null,\"start_mono\":3548335.551967783,\"end_mono\":3548336.1161057833,\"interval_wall_ms\":564.1380003653467,\"spans\":[{\"name\":\"feed_book\",\"span_id\":24225,\"parent_id\":null,\"start_mono\":3548335.597501201,\"end_mono\":3548335.604364154,\"wall_ms\":6.8629528395831585,\"cpu_ms\":0.21107999999969707,\"overlap_start_mono\":3548335.597501201,\"overlap_end_mono\":3548335.604364154,\"overlap_wall_ms\":6.8629528395831585},{\"name\":\"practice_step\",\"span_id\":24450,\"parent_id\":null,\"start_mono\":3548335.664910001,\"end_mono\":3548335.675398935,\"wall_ms\":10.488933883607388,\"cpu_ms\":8.413429999999167,\"overlap_start_mono\":3548335.664910001,\"overlap_end_mono\":3548335.675398935,\"overlap_wall_ms\":10.488933883607388},{\"name\":\"feed_book\",\"span_id\":24875,\"parent_id\":null,\"start_mono\":3548335.789155529,\"end_mono\":3548335.794556235,\"wall_ms\":5.400706082582474,\"cpu_ms\":0.2070199999995026,\"overlap_start_mono\":3548335.789155529,\"overlap_end_mono\":3548335.794556235,\"overlap_wall_ms\":5.400706082582474},{\"name\":\"feed_book\",\"span_id\":24924,\"parent_id\":null,\"start_mono\":3548335.799460955,\"end_mono\":3548336.037917192,\"wall_ms\":238.45623712986708,\"cpu_ms\":0.9333209999997649,\"overlap_start_mono\":3548335.799460955,\"overlap_end_mono\":3548336.037917192,\"overlap_wall_ms\":238.45623712986708}],\"retained_overlapping_spans\":4,\"omitted_spans\":0,\"covered_wall_ms\":261.2088299356401,\"unattributed_wall_ms\":302.9291704297066,\"retention_loss\":false,\"evicted_spans\":0,\"before_observation\":false,\"active_spans\":0,\"quiet_spans_total\":25784,\"coverage_scope\":\"completed retained slow synchronous spans only\",\"all_sync_work_lower_bound\":{\"covered_wall_lower_bound_ms\":350.29332106933,\"unattributed_or_boundary_ms\":213.8446792960167,\"contained_span_cpu_ms\":85.62812700001032,\"cpu_basis\":\"whole top-level spans inside one retained full bin only; crossing spans omitted\",\"query_boundary_ms\":32.88800036534667,\"query_full_bins\":17,\"retained_full_bins\":17,\"populated_full_bins\":15,\"retention_loss\":false,\"before_observation\":false,\"after_last_completed_span\":false,\"bin_ms\":31.25,\"capacity\":512,\"top_level_spans\":25907,\"clipped_spans\":0,\"scope\":\"completed top-level synchronous work, including quiet spans; full bins only\",\"not_additive_to_slow_span_coverage\":true},\"cpu_basis\":\"full span thread CPU; not apportioned to overlap; nested values are not additive\"},{\"read\":\"balance\",\"enabled\":true,\"error\":null,\"start_mono\":3548336.3079457833,\"end_mono\":3548336.338180783,\"interval_wall_ms\":30.23499995470047,\"spans\":[{\"name\":\"practice_step\",\"span_id\":25860,\"parent_id\":null,\"start_mono\":3548336.302432037,\"end_mono\":3548336.317171737,\"wall_ms\":14.739700127393007,\"cpu_ms\":9.41451199999932,\"overlap_start_mono\":3548336.3079457833,\"overlap_end_mono\":3548336.317171737,\"overlap_wall_ms\":9.225953835994005}],\"retained_overlapping_spans\":1,\"omitted_spans\":0,\"covered_wall_ms\":9.225953835994005,\"unattributed_wall_ms\":21.009046118706465,\"retention_loss\":false,\"evicted_spans\":0,\"before_observation\":false,\"active_spans\":0,\"quiet_spans_total\":25784,\"coverage_scope\":\"completed retained slow synchronous spans only\",\"all_sync_work_lower_bound\":{\"covered_wall_lower_bound_ms\":0.0,\"unattributed_or_boundary_ms\":30.23499995470047,\"contained_span_cpu_ms\":0.0,\"cpu_basis\":\"whole top-level spans inside one retained full bin only; crossing spans omitted\",\"query_boundary_ms\":30.23499995470047,\"query_full_bins\":0,\"retained_full_bins\":0,\"populated_full_bins\":0,\"retention_loss\":false,\"before_observation\":false,\"after_last_completed_span\":true,\"bin_ms\":31.25,\"capacity\":512,\"top_level_spans\":25907,\"clipped_spans\":0,\"scope\":\"completed top-level synchronous work, including quiet spans; full bins only\",\"not_additive_to_slow_span_coverage\":true},\"cpu_basis\":\"full span thread CPU; not apportioned to overlap; nested values are not additive\"}]}",
+      "payload": {
+        "at": 1792017229.9008837,
+        "venue": "kalshi",
+        "mode": "diagnostic",
+        "version": 1,
+        "cycle": 5,
+        "started_at": 1792017226.7995622,
+        "full": false,
+        "retry_remaining_s": 0,
+        "previous_fills_returned_at": 1792017224.7541597,
+        "marks_ms": {
+          "fills_wrapper_returned": 2109.001
+        },
+        "new_fills": [],
+        "new_fills_omitted": 0,
+        "reads_omitted": 0,
+        "elapsed_ms": 3101.321,
+        "failed": false,
+        "reads": [
+          {
+            "read": "list_orders",
+            "marks_ms": {
+              "submitted": 0.142,
+              "worker_started": 249.708,
+              "worker_completed": 340.198,
+              "coroutine_resumed": 1897.222,
+              "wrapper_returned": 1897.303
+            },
+            "rows": 34,
+            "pages": 1,
+            "bytes": 26974,
+            "cancel_calls": 2,
+            "cancel_ms": 0.064,
+            "cancel_spans": [],
+            "cancel_spans_omitted": 0
+          },
+          {
+            "read": "fills",
+            "marks_ms": {
+              "submitted": 1897.582,
+              "worker_started": 1978.381,
+              "worker_completed": 2032.784,
+              "coroutine_resumed": 2108.942,
+              "wrapper_returned": 2108.994
+            },
+            "rows": 2,
+            "pages": 1,
+            "bytes": 1043,
+            "cancel_calls": 2,
+            "cancel_ms": 0.063,
+            "cancel_spans": [],
+            "cancel_spans_omitted": 0
+          },
+          {
+            "read": "list_orders",
+            "marks_ms": {
+              "submitted": 2109.697,
+              "worker_started": 2116.466,
+              "worker_completed": 2165.146,
+              "coroutine_resumed": 2229.956,
+              "wrapper_returned": 2230.006
+            },
+            "rows": 34,
+            "pages": 1,
+            "bytes": 26974,
+            "cancel_calls": 1,
+            "cancel_ms": 0.031,
+            "cancel_spans": [],
+            "cancel_spans_omitted": 0
+          },
+          {
+            "read": "positions",
+            "marks_ms": {
+              "submitted": 2230.437,
+              "worker_started": 2270.046,
+              "worker_completed": 2314.893,
+              "coroutine_resumed": 2879.031,
+              "wrapper_returned": 2879.109
+            },
+            "rows": 3,
+            "pages": 1,
+            "bytes": 1403,
+            "cancel_calls": 2,
+            "cancel_ms": 0.077,
+            "cancel_spans": [],
+            "cancel_spans_omitted": 0
+          },
+          {
+            "read": "balance",
+            "marks_ms": {
+              "submitted": 2880.214,
+              "worker_started": 3024.75,
+              "worker_completed": 3070.871,
+              "coroutine_resumed": 3101.106,
+              "wrapper_returned": 3101.149
+            },
+            "rows": null,
+            "pages": null,
+            "bytes": null,
+            "cancel_calls": 2,
+            "cancel_ms": 0.069,
+            "cancel_spans": [],
+            "cancel_spans_omitted": 0
+          }
+        ],
+        "counts": {
+          "cycles": 5,
+          "reported": 1,
+          "quiet": 4,
+          "suppressed": 0
+        },
+        "clock_basis": "monotonic_offsets_from_started_at",
+        "worker_complete_basis": "entire_client_callback_not_http_arrival",
+        "not_realized_pnl": true,
+        "max_reports_per_60s": 12,
+        "callback_work": {
+          "enabled": true,
+          "error": null,
+          "start_mono": 3548333.237074783,
+          "end_mono": 3548336.338428733,
+          "interval_wall_ms": 3101.353949867189,
+          "spans": [
+            {
+              "name": "practice_step",
+              "span_id": 16905,
+              "parent_id": null,
+              "start_mono": 3548333.237298251,
+              "end_mono": 3548333.252231129,
+              "wall_ms": 14.932877849787474,
+              "cpu_ms": 8.238489000000015,
+              "overlap_start_mono": 3548333.237298251,
+              "overlap_end_mono": 3548333.252231129,
+              "overlap_wall_ms": 14.932877849787474
+            },
+            {
+              "name": "feed_book",
+              "span_id": 17763,
+              "parent_id": null,
+              "start_mono": 3548333.604649218,
+              "end_mono": 3548333.620866916,
+              "wall_ms": 16.217698343098164,
+              "cpu_ms": 0.8187209999999112,
+              "overlap_start_mono": 3548333.604649218,
+              "overlap_end_mono": 3548333.620866916,
+              "overlap_wall_ms": 16.217698343098164
+            },
+            {
+              "name": "feed_book",
+              "span_id": 18551,
+              "parent_id": null,
+              "start_mono": 3548333.75420778,
+              "end_mono": 3548333.796148078,
+              "wall_ms": 41.940297931432724,
+              "cpu_ms": 0.26413999999874704,
+              "overlap_start_mono": 3548333.75420778,
+              "overlap_end_mono": 3548333.796148078,
+              "overlap_wall_ms": 41.940297931432724
+            },
+            {
+              "name": "feed_book",
+              "span_id": 18591,
+              "parent_id": null,
+              "start_mono": 3548333.801212597,
+              "end_mono": 3548333.811197235,
+              "wall_ms": 9.9846376106143,
+              "cpu_ms": 0.2602300000003055,
+              "overlap_start_mono": 3548333.801212597,
+              "overlap_end_mono": 3548333.811197235,
+              "overlap_wall_ms": 9.9846376106143
+            },
+            {
+              "name": "feed_book",
+              "span_id": 18678,
+              "parent_id": null,
+              "start_mono": 3548333.822256485,
+              "end_mono": 3548333.832530961,
+              "wall_ms": 10.274475906044245,
+              "cpu_ms": 0.46308000000117033,
+              "overlap_start_mono": 3548333.822256485,
+              "overlap_end_mono": 3548333.832530961,
+              "overlap_wall_ms": 10.274475906044245
+            },
+            {
+              "name": "feed_book",
+              "span_id": 18900,
+              "parent_id": null,
+              "start_mono": 3548333.86819667,
+              "end_mono": 3548333.880548449,
+              "wall_ms": 12.3517788015306,
+              "cpu_ms": 0.47810999999953196,
+              "overlap_start_mono": 3548333.86819667,
+              "overlap_end_mono": 3548333.880548449,
+              "overlap_wall_ms": 12.3517788015306
+            },
+            {
+              "name": "feed_book",
+              "span_id": 19008,
+              "parent_id": null,
+              "start_mono": 3548333.89764741,
+              "end_mono": 3548333.906746207,
+              "wall_ms": 9.098796639591455,
+              "cpu_ms": 0.22931200000009255,
+              "overlap_start_mono": 3548333.89764741,
+              "overlap_end_mono": 3548333.906746207,
+              "overlap_wall_ms": 9.098796639591455
+            },
+            {
+              "name": "feed_book",
+              "span_id": 19391,
+              "parent_id": null,
+              "start_mono": 3548333.959437257,
+              "end_mono": 3548333.971879546,
+              "wall_ms": 12.442288920283318,
+              "cpu_ms": 0.21904099999936477,
+              "overlap_start_mono": 3548333.959437257,
+              "overlap_end_mono": 3548333.971879546,
+              "overlap_wall_ms": 12.442288920283318
+            },
+            {
+              "name": "feed_book",
+              "span_id": 20046,
+              "parent_id": null,
+              "start_mono": 3548334.063001823,
+              "end_mono": 3548334.073483398,
+              "wall_ms": 10.481575038284063,
+              "cpu_ms": 0.20928999999902942,
+              "overlap_start_mono": 3548334.063001823,
+              "overlap_end_mono": 3548334.073483398,
+              "overlap_wall_ms": 10.481575038284063
+            },
+            {
+              "name": "feed_book",
+              "span_id": 20385,
+              "parent_id": null,
+              "start_mono": 3548334.336715663,
+              "end_mono": 3548334.346287905,
+              "wall_ms": 9.57224192097783,
+              "cpu_ms": 0.23977000000030557,
+              "overlap_start_mono": 3548334.336715663,
+              "overlap_end_mono": 3548334.346287905,
+              "overlap_wall_ms": 9.57224192097783
+            },
+            {
+              "name": "feed_book",
+              "span_id": 20816,
+              "parent_id": null,
+              "start_mono": 3548334.39967082,
+              "end_mono": 3548334.411769091,
+              "wall_ms": 12.098270934075117,
+              "cpu_ms": 9.247539000000415,
+              "overlap_start_mono": 3548334.39967082,
+              "overlap_end_mono": 3548334.411769091,
+              "overlap_wall_ms": 12.098270934075117
+            },
+            {
+              "name": "practice_step",
+              "span_id": 21742,
+              "parent_id": null,
+              "start_mono": 3548334.572316314,
+              "end_mono": 3548334.747352248,
+              "wall_ms": 175.03593396395445,
+              "cpu_ms": 121.52667099999981,
+              "overlap_start_mono": 3548334.572316314,
+              "overlap_end_mono": 3548334.747352248,
+              "overlap_wall_ms": 175.03593396395445
+            },
+            {
+              "name": "practice_checkpoint",
+              "span_id": 21743,
+              "parent_id": 21742,
+              "start_mono": 3548334.575775286,
+              "end_mono": 3548334.740474974,
+              "wall_ms": 164.69968762248755,
+              "cpu_ms": 112.95800099999909,
+              "overlap_start_mono": 3548334.575775286,
+              "overlap_end_mono": 3548334.740474974,
+              "overlap_wall_ms": 164.69968762248755
+            },
+            {
+              "name": "practice_state",
+              "span_id": 21745,
+              "parent_id": 21743,
+              "start_mono": 3548334.584125927,
+              "end_mono": 3548334.681419514,
+              "wall_ms": 97.293586935848,
+              "cpu_ms": 63.38773300000078,
+              "overlap_start_mono": 3548334.584125927,
+              "overlap_end_mono": 3548334.681419514,
+              "overlap_wall_ms": 97.293586935848
+            },
+            {
+              "name": "practice_panel",
+              "span_id": 21746,
+              "parent_id": 21745,
+              "start_mono": 3548334.597576168,
+              "end_mono": 3548334.681407934,
+              "wall_ms": 83.83176615461707,
+              "cpu_ms": 51.77274899999951,
+              "overlap_start_mono": 3548334.597576168,
+              "overlap_end_mono": 3548334.681407934,
+              "overlap_wall_ms": 83.83176615461707
+            },
+            {
+              "name": "live_panel",
+              "span_id": 21747,
+              "parent_id": 21746,
+              "start_mono": 3548334.605986419,
+              "end_mono": 3548334.681356774,
+              "wall_ms": 75.37035504356027,
+              "cpu_ms": 45.933033000000734,
+              "overlap_start_mono": 3548334.605986419,
+              "overlap_end_mono": 3548334.681356774,
+              "overlap_wall_ms": 75.37035504356027
+            },
+            {
+              "name": "practice_ledger",
+              "span_id": 21748,
+              "parent_id": 21743,
+              "start_mono": 3548334.681434625,
+              "end_mono": 3548334.721618707,
+              "wall_ms": 40.18408199772239,
+              "cpu_ms": 26.179322000000838,
+              "overlap_start_mono": 3548334.681434625,
+              "overlap_end_mono": 3548334.721618707,
+              "overlap_wall_ms": 40.18408199772239
+            },
+            {
+              "name": "practice_mirror",
+              "span_id": 21750,
+              "parent_id": 21743,
+              "start_mono": 3548334.721654897,
+              "end_mono": 3548334.739460091,
+              "wall_ms": 17.80519401654601,
+              "cpu_ms": 14.355546000000885,
+              "overlap_start_mono": 3548334.721654897,
+              "overlap_end_mono": 3548334.739460091,
+              "overlap_wall_ms": 17.80519401654601
+            },
+            {
+              "name": "kalshi_decode_apply",
+              "span_id": 22403,
+              "parent_id": null,
+              "start_mono": 3548335.004383283,
+              "end_mono": 3548335.014065054,
+              "wall_ms": 9.681770578026772,
+              "cpu_ms": 0.06634999999910463,
+              "overlap_start_mono": 3548335.004383283,
+              "overlap_end_mono": 3548335.014065054,
+              "overlap_wall_ms": 9.681770578026772
+            },
+            {
+              "name": "feed_book",
+              "span_id": 23010,
+              "parent_id": null,
+              "start_mono": 3548335.096181565,
+              "end_mono": 3548335.109301718,
+              "wall_ms": 13.120152987539768,
+              "cpu_ms": 0.22753999999913788,
+              "overlap_start_mono": 3548335.096181565,
+              "overlap_end_mono": 3548335.109301718,
+              "overlap_wall_ms": 13.120152987539768
+            },
+            {
+              "name": "practice_step",
+              "span_id": 23120,
+              "parent_id": null,
+              "start_mono": 3548335.134721261,
+              "end_mono": 3548335.14713108,
+              "wall_ms": 12.409818824380636,
+              "cpu_ms": 8.323999999999998,
+              "overlap_start_mono": 3548335.134721261,
+              "overlap_end_mono": 3548335.14713108,
+              "overlap_wall_ms": 12.409818824380636
+            },
+            {
+              "name": "practice_step",
+              "span_id": 23563,
+              "parent_id": null,
+              "start_mono": 3548335.288423729,
+              "end_mono": 3548335.297231387,
+              "wall_ms": 8.80765775218606,
+              "cpu_ms": 8.333179000000968,
+              "overlap_start_mono": 3548335.288423729,
+              "overlap_end_mono": 3548335.297231387,
+              "overlap_wall_ms": 8.80765775218606
+            },
+            {
+              "name": "practice_step",
+              "span_id": 23688,
+              "parent_id": null,
+              "start_mono": 3548335.348804327,
+              "end_mono": 3548335.358800935,
+              "wall_ms": 9.996607899665833,
+              "cpu_ms": 8.282998000000319,
+              "overlap_start_mono": 3548335.348804327,
+              "overlap_end_mono": 3548335.358800935,
+              "overlap_wall_ms": 9.996607899665833
+            },
+            {
+              "name": "feed_book",
+              "span_id": 23901,
+              "parent_id": null,
+              "start_mono": 3548335.415742631,
+              "end_mono": 3548335.431391884,
+              "wall_ms": 15.649253036826849,
+              "cpu_ms": 0.3852819999998758,
+              "overlap_start_mono": 3548335.415742631,
+              "overlap_end_mono": 3548335.431391884,
+              "overlap_wall_ms": 15.649253036826849
+            },
+            {
+              "name": "feed_book",
+              "span_id": 24024,
+              "parent_id": null,
+              "start_mono": 3548335.45282051,
+              "end_mono": 3548335.465129399,
+              "wall_ms": 12.30888906866312,
+              "cpu_ms": 0.3507009999985655,
+              "overlap_start_mono": 3548335.45282051,
+              "overlap_end_mono": 3548335.465129399,
+              "overlap_wall_ms": 12.30888906866312
+            },
+            {
+              "name": "practice_step",
+              "span_id": 24050,
+              "parent_id": null,
+              "start_mono": 3548335.504465848,
+              "end_mono": 3548335.518532283,
+              "wall_ms": 14.066434931010008,
+              "cpu_ms": 8.766779000000113,
+              "overlap_start_mono": 3548335.504465848,
+              "overlap_end_mono": 3548335.518532283,
+              "overlap_wall_ms": 14.066434931010008
+            },
+            {
+              "name": "practice_step",
+              "span_id": 24450,
+              "parent_id": null,
+              "start_mono": 3548335.664910001,
+              "end_mono": 3548335.675398935,
+              "wall_ms": 10.488933883607388,
+              "cpu_ms": 8.413429999999167,
+              "overlap_start_mono": 3548335.664910001,
+              "overlap_end_mono": 3548335.675398935,
+              "overlap_wall_ms": 10.488933883607388
+            },
+            {
+              "name": "feed_book",
+              "span_id": 24924,
+              "parent_id": null,
+              "start_mono": 3548335.799460955,
+              "end_mono": 3548336.037917192,
+              "wall_ms": 238.45623712986708,
+              "cpu_ms": 0.9333209999997649,
+              "overlap_start_mono": 3548335.799460955,
+              "overlap_end_mono": 3548336.037917192,
+              "overlap_wall_ms": 238.45623712986708
+            },
+            {
+              "name": "feed_book",
+              "span_id": 25035,
+              "parent_id": null,
+              "start_mono": 3548336.120795336,
+              "end_mono": 3548336.134831353,
+              "wall_ms": 14.036017004400492,
+              "cpu_ms": 0.3095210000001458,
+              "overlap_start_mono": 3548336.120795336,
+              "overlap_end_mono": 3548336.134831353,
+              "overlap_wall_ms": 14.036017004400492
+            },
+            {
+              "name": "feed_book",
+              "span_id": 25133,
+              "parent_id": null,
+              "start_mono": 3548336.14983306,
+              "end_mono": 3548336.164696769,
+              "wall_ms": 14.86370898783207,
+              "cpu_ms": 0.3311300000010675,
+              "overlap_start_mono": 3548336.14983306,
+              "overlap_end_mono": 3548336.164696769,
+              "overlap_wall_ms": 14.86370898783207
+            },
+            {
+              "name": "feed_book",
+              "span_id": 25704,
+              "parent_id": null,
+              "start_mono": 3548336.26888048,
+              "end_mono": 3548336.279587953,
+              "wall_ms": 10.707472916692495,
+              "cpu_ms": 0.18758099999871547,
+              "overlap_start_mono": 3548336.26888048,
+              "overlap_end_mono": 3548336.279587953,
+              "overlap_wall_ms": 10.707472916692495
+            },
+            {
+              "name": "practice_step",
+              "span_id": 25860,
+              "parent_id": null,
+              "start_mono": 3548336.302432037,
+              "end_mono": 3548336.317171737,
+              "wall_ms": 14.739700127393007,
+              "cpu_ms": 9.41451199999932,
+              "overlap_start_mono": 3548336.302432037,
+              "overlap_end_mono": 3548336.317171737,
+              "overlap_wall_ms": 14.739700127393007
+            }
+          ],
+          "retained_overlapping_spans": 56,
+          "omitted_spans": 24,
+          "covered_wall_ms": 887.0932133868337,
+          "unattributed_wall_ms": 2214.2607364803553,
+          "retention_loss": false,
+          "evicted_spans": 0,
+          "before_observation": false,
+          "active_spans": 0,
+          "quiet_spans_total": 25784,
+          "coverage_scope": "completed retained slow synchronous spans only",
+          "all_sync_work_lower_bound": {
+            "covered_wall_lower_bound_ms": 1882.3717990890145,
+            "unattributed_or_boundary_ms": 1218.9821507781744,
+            "contained_span_cpu_ms": 870.1655240000968,
+            "cpu_basis": "whole top-level spans inside one retained full bin only; crossing spans omitted",
+            "query_boundary_ms": 38.85394986718893,
+            "query_full_bins": 98,
+            "retained_full_bins": 98,
+            "populated_full_bins": 79,
+            "retention_loss": false,
+            "before_observation": false,
+            "after_last_completed_span": true,
+            "bin_ms": 31.25,
+            "capacity": 512,
+            "top_level_spans": 25907,
+            "clipped_spans": 0,
+            "scope": "completed top-level synchronous work, including quiet spans; full bins only",
+            "not_additive_to_slow_span_coverage": true
+          },
+          "cpu_basis": "full span thread CPU; not apportioned to overlap; nested values are not additive"
+        },
+        "read_resume_work": [
+          {
+            "read": "list_orders",
+            "enabled": true,
+            "error": null,
+            "start_mono": 3548333.577272783,
+            "end_mono": 3548335.1342967832,
+            "interval_wall_ms": 1557.0240002125502,
+            "spans": [
+              {
+                "name": "feed_book",
+                "span_id": 18551,
+                "parent_id": null,
+                "start_mono": 3548333.75420778,
+                "end_mono": 3548333.796148078,
+                "wall_ms": 41.940297931432724,
+                "cpu_ms": 0.26413999999874704,
+                "overlap_start_mono": 3548333.75420778,
+                "overlap_end_mono": 3548333.796148078,
+                "overlap_wall_ms": 41.940297931432724
+              },
+              {
+                "name": "practice_step",
+                "span_id": 21742,
+                "parent_id": null,
+                "start_mono": 3548334.572316314,
+                "end_mono": 3548334.747352248,
+                "wall_ms": 175.03593396395445,
+                "cpu_ms": 121.52667099999981,
+                "overlap_start_mono": 3548334.572316314,
+                "overlap_end_mono": 3548334.747352248,
+                "overlap_wall_ms": 175.03593396395445
+              },
+              {
+                "name": "practice_checkpoint",
+                "span_id": 21743,
+                "parent_id": 21742,
+                "start_mono": 3548334.575775286,
+                "end_mono": 3548334.740474974,
+                "wall_ms": 164.69968762248755,
+                "cpu_ms": 112.95800099999909,
+                "overlap_start_mono": 3548334.575775286,
+                "overlap_end_mono": 3548334.740474974,
+                "overlap_wall_ms": 164.69968762248755
+              },
+              {
+                "name": "practice_state",
+                "span_id": 21745,
+                "parent_id": 21743,
+                "start_mono": 3548334.584125927,
+                "end_mono": 3548334.681419514,
+                "wall_ms": 97.293586935848,
+                "cpu_ms": 63.38773300000078,
+                "overlap_start_mono": 3548334.584125927,
+                "overlap_end_mono": 3548334.681419514,
+                "overlap_wall_ms": 97.293586935848
+              },
+              {
+                "name": "practice_panel",
+                "span_id": 21746,
+                "parent_id": 21745,
+                "start_mono": 3548334.597576168,
+                "end_mono": 3548334.681407934,
+                "wall_ms": 83.83176615461707,
+                "cpu_ms": 51.77274899999951,
+                "overlap_start_mono": 3548334.597576168,
+                "overlap_end_mono": 3548334.681407934,
+                "overlap_wall_ms": 83.83176615461707
+              },
+              {
+                "name": "live_panel",
+                "span_id": 21747,
+                "parent_id": 21746,
+                "start_mono": 3548334.605986419,
+                "end_mono": 3548334.681356774,
+                "wall_ms": 75.37035504356027,
+                "cpu_ms": 45.933033000000734,
+                "overlap_start_mono": 3548334.605986419,
+                "overlap_end_mono": 3548334.681356774,
+                "overlap_wall_ms": 75.37035504356027
+              },
+              {
+                "name": "practice_ledger",
+                "span_id": 21748,
+                "parent_id": 21743,
+                "start_mono": 3548334.681434625,
+                "end_mono": 3548334.721618707,
+                "wall_ms": 40.18408199772239,
+                "cpu_ms": 26.179322000000838,
+                "overlap_start_mono": 3548334.681434625,
+                "overlap_end_mono": 3548334.721618707,
+                "overlap_wall_ms": 40.18408199772239
+              },
+              {
+                "name": "practice_mirror",
+                "span_id": 21750,
+                "parent_id": 21743,
+                "start_mono": 3548334.721654897,
+                "end_mono": 3548334.739460091,
+                "wall_ms": 17.80519401654601,
+                "cpu_ms": 14.355546000000885,
+                "overlap_start_mono": 3548334.721654897,
+                "overlap_end_mono": 3548334.739460091,
+                "overlap_wall_ms": 17.80519401654601
+              }
+            ],
+            "retained_overlapping_spans": 35,
+            "omitted_spans": 27,
+            "covered_wall_ms": 444.2568547092378,
+            "unattributed_wall_ms": 1112.7671455033123,
+            "retention_loss": false,
+            "evicted_spans": 0,
+            "before_observation": false,
+            "active_spans": 0,
+            "quiet_spans_total": 25784,
+            "coverage_scope": "completed retained slow synchronous spans only",
+            "all_sync_work_lower_bound": {
+              "covered_wall_lower_bound_ms": 1055.061595980078,
+              "unattributed_or_boundary_ms": 501.9624042324722,
+              "contained_span_cpu_ms": 503.600728000043,
+              "cpu_basis": "whole top-level spans inside one retained full bin only; crossing spans omitted",
+              "query_boundary_ms": 25.774000212550163,
+              "query_full_bins": 49,
+              "retained_full_bins": 49,
+              "populated_full_bins": 40,
+              "retention_loss": false,
+              "before_observation": false,
+              "after_last_completed_span": false,
+              "bin_ms": 31.25,
+              "capacity": 512,
+              "top_level_spans": 25907,
+              "clipped_spans": 0,
+              "scope": "completed top-level synchronous work, including quiet spans; full bins only",
+              "not_additive_to_slow_span_coverage": true
+            },
+            "cpu_basis": "full span thread CPU; not apportioned to overlap; nested values are not additive"
+          },
+          {
+            "read": "fills",
+            "enabled": true,
+            "error": null,
+            "start_mono": 3548335.269858783,
+            "end_mono": 3548335.3460167833,
+            "interval_wall_ms": 76.15800015628338,
+            "spans": [
+              {
+                "name": "practice_step",
+                "span_id": 23563,
+                "parent_id": null,
+                "start_mono": 3548335.288423729,
+                "end_mono": 3548335.297231387,
+                "wall_ms": 8.80765775218606,
+                "cpu_ms": 8.333179000000968,
+                "overlap_start_mono": 3548335.288423729,
+                "overlap_end_mono": 3548335.297231387,
+                "overlap_wall_ms": 8.80765775218606
+              }
+            ],
+            "retained_overlapping_spans": 1,
+            "omitted_spans": 0,
+            "covered_wall_ms": 8.80765775218606,
+            "unattributed_wall_ms": 67.35034240409732,
+            "retention_loss": false,
+            "evicted_spans": 0,
+            "before_observation": false,
+            "active_spans": 0,
+            "quiet_spans_total": 25784,
+            "coverage_scope": "completed retained slow synchronous spans only",
+            "all_sync_work_lower_bound": {
+              "covered_wall_lower_bound_ms": 23.758117575198412,
+              "unattributed_or_boundary_ms": 52.39988258108497,
+              "contained_span_cpu_ms": 22.176396000011422,
+              "cpu_basis": "whole top-level spans inside one retained full bin only; crossing spans omitted",
+              "query_boundary_ms": 13.658000156283379,
+              "query_full_bins": 2,
+              "retained_full_bins": 2,
+              "populated_full_bins": 2,
+              "retention_loss": false,
+              "before_observation": false,
+              "after_last_completed_span": false,
+              "bin_ms": 31.25,
+              "capacity": 512,
+              "top_level_spans": 25907,
+              "clipped_spans": 0,
+              "scope": "completed top-level synchronous work, including quiet spans; full bins only",
+              "not_additive_to_slow_span_coverage": true
+            },
+            "cpu_basis": "full span thread CPU; not apportioned to overlap; nested values are not additive"
+          },
+          {
+            "read": "list_orders",
+            "enabled": true,
+            "error": null,
+            "start_mono": 3548335.4022207833,
+            "end_mono": 3548335.467030783,
+            "interval_wall_ms": 64.80999989435077,
+            "spans": [
+              {
+                "name": "feed_book",
+                "span_id": 23901,
+                "parent_id": null,
+                "start_mono": 3548335.415742631,
+                "end_mono": 3548335.431391884,
+                "wall_ms": 15.649253036826849,
+                "cpu_ms": 0.3852819999998758,
+                "overlap_start_mono": 3548335.415742631,
+                "overlap_end_mono": 3548335.431391884,
+                "overlap_wall_ms": 15.649253036826849
+              },
+              {
+                "name": "feed_book",
+                "span_id": 24024,
+                "parent_id": null,
+                "start_mono": 3548335.45282051,
+                "end_mono": 3548335.465129399,
+                "wall_ms": 12.30888906866312,
+                "cpu_ms": 0.3507009999985655,
+                "overlap_start_mono": 3548335.45282051,
+                "overlap_end_mono": 3548335.465129399,
+                "overlap_wall_ms": 12.30888906866312
+              }
+            ],
+            "retained_overlapping_spans": 2,
+            "omitted_spans": 0,
+            "covered_wall_ms": 27.95814210548997,
+            "unattributed_wall_ms": 36.8518577888608,
+            "retention_loss": false,
+            "evicted_spans": 0,
+            "before_observation": false,
+            "active_spans": 0,
+            "quiet_spans_total": 25784,
+            "coverage_scope": "completed retained slow synchronous spans only",
+            "all_sync_work_lower_bound": {
+              "covered_wall_lower_bound_ms": 27.42838067933917,
+              "unattributed_or_boundary_ms": 37.3816192150116,
+              "contained_span_cpu_ms": 12.002913999999976,
+              "cpu_basis": "whole top-level spans inside one retained full bin only; crossing spans omitted",
+              "query_boundary_ms": 33.55999989435077,
+              "query_full_bins": 1,
+              "retained_full_bins": 1,
+              "populated_full_bins": 1,
+              "retention_loss": false,
+              "before_observation": false,
+              "after_last_completed_span": false,
+              "bin_ms": 31.25,
+              "capacity": 512,
+              "top_level_spans": 25907,
+              "clipped_spans": 0,
+              "scope": "completed top-level synchronous work, including quiet spans; full bins only",
+              "not_additive_to_slow_span_coverage": true
+            },
+            "cpu_basis": "full span thread CPU; not apportioned to overlap; nested values are not additive"
+          },
+          {
+            "read": "positions",
+            "enabled": true,
+            "error": null,
+            "start_mono": 3548335.551967783,
+            "end_mono": 3548336.1161057833,
+            "interval_wall_ms": 564.1380003653467,
+            "spans": [
+              {
+                "name": "feed_book",
+                "span_id": 24225,
+                "parent_id": null,
+                "start_mono": 3548335.597501201,
+                "end_mono": 3548335.604364154,
+                "wall_ms": 6.8629528395831585,
+                "cpu_ms": 0.21107999999969707,
+                "overlap_start_mono": 3548335.597501201,
+                "overlap_end_mono": 3548335.604364154,
+                "overlap_wall_ms": 6.8629528395831585
+              },
+              {
+                "name": "practice_step",
+                "span_id": 24450,
+                "parent_id": null,
+                "start_mono": 3548335.664910001,
+                "end_mono": 3548335.675398935,
+                "wall_ms": 10.488933883607388,
+                "cpu_ms": 8.413429999999167,
+                "overlap_start_mono": 3548335.664910001,
+                "overlap_end_mono": 3548335.675398935,
+                "overlap_wall_ms": 10.488933883607388
+              },
+              {
+                "name": "feed_book",
+                "span_id": 24875,
+                "parent_id": null,
+                "start_mono": 3548335.789155529,
+                "end_mono": 3548335.794556235,
+                "wall_ms": 5.400706082582474,
+                "cpu_ms": 0.2070199999995026,
+                "overlap_start_mono": 3548335.789155529,
+                "overlap_end_mono": 3548335.794556235,
+                "overlap_wall_ms": 5.400706082582474
+              },
+              {
+                "name": "feed_book",
+                "span_id": 24924,
+                "parent_id": null,
+                "start_mono": 3548335.799460955,
+                "end_mono": 3548336.037917192,
+                "wall_ms": 238.45623712986708,
+                "cpu_ms": 0.9333209999997649,
+                "overlap_start_mono": 3548335.799460955,
+                "overlap_end_mono": 3548336.037917192,
+                "overlap_wall_ms": 238.45623712986708
+              }
+            ],
+            "retained_overlapping_spans": 4,
+            "omitted_spans": 0,
+            "covered_wall_ms": 261.2088299356401,
+            "unattributed_wall_ms": 302.9291704297066,
+            "retention_loss": false,
+            "evicted_spans": 0,
+            "before_observation": false,
+            "active_spans": 0,
+            "quiet_spans_total": 25784,
+            "coverage_scope": "completed retained slow synchronous spans only",
+            "all_sync_work_lower_bound": {
+              "covered_wall_lower_bound_ms": 350.29332106933,
+              "unattributed_or_boundary_ms": 213.8446792960167,
+              "contained_span_cpu_ms": 85.62812700001032,
+              "cpu_basis": "whole top-level spans inside one retained full bin only; crossing spans omitted",
+              "query_boundary_ms": 32.88800036534667,
+              "query_full_bins": 17,
+              "retained_full_bins": 17,
+              "populated_full_bins": 15,
+              "retention_loss": false,
+              "before_observation": false,
+              "after_last_completed_span": false,
+              "bin_ms": 31.25,
+              "capacity": 512,
+              "top_level_spans": 25907,
+              "clipped_spans": 0,
+              "scope": "completed top-level synchronous work, including quiet spans; full bins only",
+              "not_additive_to_slow_span_coverage": true
+            },
+            "cpu_basis": "full span thread CPU; not apportioned to overlap; nested values are not additive"
+          },
+          {
+            "read": "balance",
+            "enabled": true,
+            "error": null,
+            "start_mono": 3548336.3079457833,
+            "end_mono": 3548336.338180783,
+            "interval_wall_ms": 30.23499995470047,
+            "spans": [
+              {
+                "name": "practice_step",
+                "span_id": 25860,
+                "parent_id": null,
+                "start_mono": 3548336.302432037,
+                "end_mono": 3548336.317171737,
+                "wall_ms": 14.739700127393007,
+                "cpu_ms": 9.41451199999932,
+                "overlap_start_mono": 3548336.3079457833,
+                "overlap_end_mono": 3548336.317171737,
+                "overlap_wall_ms": 9.225953835994005
+              }
+            ],
+            "retained_overlapping_spans": 1,
+            "omitted_spans": 0,
+            "covered_wall_ms": 9.225953835994005,
+            "unattributed_wall_ms": 21.009046118706465,
+            "retention_loss": false,
+            "evicted_spans": 0,
+            "before_observation": false,
+            "active_spans": 0,
+            "quiet_spans_total": 25784,
+            "coverage_scope": "completed retained slow synchronous spans only",
+            "all_sync_work_lower_bound": {
+              "covered_wall_lower_bound_ms": 0,
+              "unattributed_or_boundary_ms": 30.23499995470047,
+              "contained_span_cpu_ms": 0,
+              "cpu_basis": "whole top-level spans inside one retained full bin only; crossing spans omitted",
+              "query_boundary_ms": 30.23499995470047,
+              "query_full_bins": 0,
+              "retained_full_bins": 0,
+              "populated_full_bins": 0,
+              "retention_loss": false,
+              "before_observation": false,
+              "after_last_completed_span": true,
+              "bin_ms": 31.25,
+              "capacity": 512,
+              "top_level_spans": 25907,
+              "clipped_spans": 0,
+              "scope": "completed top-level synchronous work, including quiet spans; full bins only",
+              "not_additive_to_slow_span_coverage": true
+            },
+            "cpu_basis": "full span thread CPU; not apportioned to overlap; nested values are not additive"
+          }
+        ]
+      }
+    },
+    {
+      "timestamp": "2026-10-14T22:34:10.580548925Z",
+      "message": "2026-10-14T22:34:07Z INFO nightcrawler.speeddesk: speeddesk_reconcile_trace {\"at\":1792017247.4595478,\"venue\":\"kalshi\",\"mode\":\"diagnostic\",\"version\":1,\"cycle\":14,\"started_at\":1792017244.3474374,\"full\":false,\"retry_remaining_s\":0.0,\"previous_fills_returned_at\":1792017243.0278459,\"marks_ms\":{\"fills_wrapper_returned\":1255.062},\"new_fills\":[],\"new_fills_omitted\":0,\"reads_omitted\":0,\"elapsed_ms\":3112.11,\"failed\":false,\"reads\":[{\"read\":\"list_orders\",\"marks_ms\":{\"submitted\":0.143,\"worker_started\":27.548,\"worker_completed\":97.171,\"coroutine_resumed\":136.109,\"wrapper_returned\":136.192},\"rows\":32,\"pages\":1,\"bytes\":25386,\"cancel_calls\":2,\"cancel_ms\":0.074,\"cancel_spans\":[],\"cancel_spans_omitted\":0},{\"read\":\"fills\",\"marks_ms\":{\"submitted\":136.404,\"worker_started\":193.232,\"worker_completed\":226.139,\"coroutine_resumed\":1254.989,\"wrapper_returned\":1255.059},\"rows\":2,\"pages\":1,\"bytes\":1043,\"cancel_calls\":1,\"cancel_ms\":0.037,\"cancel_spans\":[],\"cancel_spans_omitted\":0},{\"read\":\"list_orders\",\"marks_ms\":{\"submitted\":1255.821,\"worker_started\":1397.252,\"worker_completed\":1504.519,\"coroutine_resumed\":2739.47,\"wrapper_returned\":2739.529},\"rows\":32,\"pages\":1,\"bytes\":25386,\"cancel_calls\":2,\"cancel_ms\":0.062,\"cancel_spans\":[],\"cancel_spans_omitted\":0},{\"read\":\"positions\",\"marks_ms\":{\"submitted\":2739.92,\"worker_started\":2797.851,\"worker_completed\":2868.201,\"coroutine_resumed\":2973.546,\"wrapper_returned\":2973.604},\"rows\":3,\"pages\":1,\"bytes\":1403,\"cancel_calls\":1,\"cancel_ms\":0.037,\"cancel_spans\":[],\"cancel_spans_omitted\":0},{\"read\":\"balance\",\"marks_ms\":{\"submitted\":2974.752,\"worker_started\":3030.362,\"worker_completed\":3080.029,\"coroutine_resumed\":3111.898,\"wrapper_returned\":3111.952},\"rows\":null,\"pages\":null,\"bytes\":null,\"cancel_calls\":2,\"cancel_ms\":0.065,\"cancel_spans\":[],\"cancel_spans_omitted\":0}],\"counts\":{\"cycles\":14,\"reported\":2,\"quiet\":12,\"suppressed\":0},\"clock_basis\":\"monotonic_offsets_from_started_at\",\"worker_complete_basis\":\"entire_client_callback_not_http_arrival\",\"not_realized_pnl\":true,\"max_reports_per_60s\":12,\"callback_work\":{\"enabled\":true,\"error\":null,\"start_mono\":3548350.78494986,\"end_mono\":3548353.897090409,\"interval_wall_ms\":3112.1405488811433,\"spans\":[{\"name\":\"practice_step\",\"span_id\":46255,\"parent_id\":null,\"start_mono\":3548350.859567373,\"end_mono\":3548350.879244482,\"wall_ms\":19.677109085023403,\"cpu_ms\":16.014647000000437,\"overlap_start_mono\":3548350.859567373,\"overlap_end_mono\":3548350.879244482,\"overlap_wall_ms\":19.677109085023403},{\"name\":\"practice_step\",\"span_id\":48884,\"parent_id\":null,\"start_mono\":3548351.312423083,\"end_mono\":3548351.332987126,\"wall_ms\":20.56404296308756,\"cpu_ms\":16.105128999999607,\"overlap_start_mono\":3548351.312423083,\"overlap_end_mono\":3548351.332987126,\"overlap_wall_ms\":20.56404296308756},{\"name\":\"feed_book\",\"span_id\":48907,\"parent_id\":null,\"start_mono\":3548351.446405602,\"end_mono\":3548351.451431742,\"wall_ms\":5.026139784604311,\"cpu_ms\":0.22938100000047257,\"overlap_start_mono\":3548351.446405602,\"overlap_end_mono\":3548351.451431742,\"overlap_wall_ms\":5.026139784604311},{\"name\":\"kalshi_decode_apply\",\"span_id\":48939,\"parent_id\":null,\"start_mono\":3548351.456357381,\"end_mono\":3548351.461559528,\"wall_ms\":5.202147178351879,\"cpu_ms\":0.07961999999928082,\"overlap_start_mono\":3548351.456357381,\"overlap_end_mono\":3548351.461559528,\"overlap_wall_ms\":5.202147178351879},{\"name\":\"feed_book\",\"span_id\":50009,\"parent_id\":null,\"start_mono\":3548351.608749449,\"end_mono\":3548351.628270301,\"wall_ms\":19.520852249115705,\"cpu_ms\":17.66225100000085,\"overlap_start_mono\":3548351.608749449,\"overlap_end_mono\":3548351.628270301,\"overlap_wall_ms\":19.520852249115705},{\"name\":\"feed_book\",\"span_id\":51787,\"parent_id\":null,\"start_mono\":3548351.847107708,\"end_mono\":3548351.853739024,\"wall_ms\":6.631316151469946,\"cpu_ms\":0.2793610000004776,\"overlap_start_mono\":3548351.847107708,\"overlap_end_mono\":3548351.853739024,\"overlap_wall_ms\":6.631316151469946},{\"name\":\"feed_book\",\"span_id\":51838,\"parent_id\":null,\"start_mono\":3548351.858527515,\"end_mono\":3548351.896758983,\"wall_ms\":38.231467828154564,\"cpu_ms\":0.3570400000008078,\"overlap_start_mono\":3548351.858527515,\"overlap_end_mono\":3548351.896758983,\"overlap_wall_ms\":38.231467828154564},{\"name\":\"feed_book\",\"span_id\":51988,\"parent_id\":null,\"start_mono\":3548351.911669923,\"end_mono\":3548351.917408895,\"wall_ms\":5.738972220569849,\"cpu_ms\":0.20553000000056443,\"overlap_start_mono\":3548351.911669923,\"overlap_end_mono\":3548351.917408895,\"overlap_wall_ms\":5.738972220569849},{\"name\":\"kalshi_decode_apply\",\"span_id\":53153,\"parent_id\":null,\"start_mono\":3548352.187471446,\"end_mono\":3548352.194240631,\"wall_ms\":6.769184954464436,\"cpu_ms\":0.060510000000846276,\"overlap_start_mono\":3548352.187471446,\"overlap_end_mono\":3548352.194240631,\"overlap_wall_ms\":6.769184954464436},{\"name\":\"feed_book\",\"span_id\":55035,\"parent_id\":null,\"start_mono\":3548352.410396119,\"end_mono\":3548352.420632186,\"wall_ms\":10.23606676608324,\"cpu_ms\":0.40788099999922167,\"overlap_start_mono\":3548352.410396119,\"overlap_end_mono\":3548352.420632186,\"overlap_wall_ms\":10.23606676608324},{\"name\":\"feed_book\",\"span_id\":55167,\"parent_id\":null,\"start_mono\":3548352.437806617,\"end_mono\":3548352.444833619,\"wall_ms\":7.027002051472664,\"cpu_ms\":1.422121000000942,\"overlap_start_mono\":3548352.437806617,\"overlap_end_mono\":3548352.444833619,\"overlap_wall_ms\":7.027002051472664},{\"name\":\"practice_step\",\"span_id\":56793,\"parent_id\":null,\"start_mono\":3548352.635048999,\"end_mono\":3548352.643319333,\"wall_ms\":8.270333986729383,\"cpu_ms\":7.992278000001463,\"overlap_start_mono\":3548352.635048999,\"overlap_end_mono\":3548352.643319333,\"overlap_wall_ms\":8.270333986729383},{\"name\":\"feed_book\",\"span_id\":57194,\"parent_id\":null,\"start_mono\":3548352.79837151,\"end_mono\":3548352.806506223,\"wall_ms\":8.134712930768728,\"cpu_ms\":0.18145999999852336,\"overlap_start_mono\":3548352.79837151,\"overlap_end_mono\":3548352.806506223,\"overlap_wall_ms\":8.134712930768728},{\"name\":\"kalshi_decode_apply\",\"span_id\":57370,\"parent_id\":null,\"start_mono\":3548352.830599877,\"end_mono\":3548352.840821334,\"wall_ms\":10.221457108855247,\"cpu_ms\":0.07395000000087748,\"overlap_start_mono\":3548352.830599877,\"overlap_end_mono\":3548352.840821334,\"overlap_wall_ms\":10.221457108855247},{\"name\":\"feed_book\",\"span_id\":57422,\"parent_id\":null,\"start_mono\":3548352.845786622,\"end_mono\":3548352.853528659,\"wall_ms\":7.7420370653271675,\"cpu_ms\":0.24078099999869096,\"overlap_start_mono\":3548352.845786622,\"overlap_end_mono\":3548352.853528659,\"overlap_wall_ms\":7.7420370653271675},{\"name\":\"feed_book\",\"span_id\":58323,\"parent_id\":null,\"start_mono\":3548352.951943298,\"end_mono\":3548352.964584885,\"wall_ms\":12.641587294638157,\"cpu_ms\":0.30682000000048504,\"overlap_start_mono\":3548352.951943298,\"overlap_end_mono\":3548352.964584885,\"overlap_wall_ms\":12.641587294638157},{\"name\":\"feed_book\",\"span_id\":58422,\"parent_id\":null,\"start_mono\":3548352.974910021,\"end_mono\":3548352.983468481,\"wall_ms\":8.558460045605898,\"cpu_ms\":0.19505099999861386,\"overlap_start_mono\":3548352.974910021,\"overlap_end_mono\":3548352.983468481,\"overlap_wall_ms\":8.558460045605898},{\"name\":\"feed_book\",\"span_id\":58926,\"parent_id\":null,\"start_mono\":3548353.037885258,\"end_mono\":3548353.042945647,\"wall_ms\":5.060389172285795,\"cpu_ms\":0.21264000000087435,\"overlap_start_mono\":3548353.037885258,\"overlap_end_mono\":3548353.042945647,\"overlap_wall_ms\":5.060389172285795},{\"name\":\"practice_step\",\"span_id\":59634,\"parent_id\":null,\"start_mono\":3548353.154518129,\"end_mono\":3548353.427732143,\"wall_ms\":273.2140142470598,\"cpu_ms\":8.819289000001618,\"overlap_start_mono\":3548353.154518129,\"overlap_end_mono\":3548353.427732143,\"overlap_wall_ms\":273.2140142470598},{\"name\":\"feed_book\",\"span_id\":59712,\"parent_id\":null,\"start_mono\":3548353.481731963,\"end_mono\":3548353.486915521,\"wall_ms\":5.183557979762554,\"cpu_ms\":0.27943999999990865,\"overlap_start_mono\":3548353.481731963,\"overlap_end_mono\":3548353.486915521,\"overlap_wall_ms\":5.183557979762554},{\"name\":\"practice_step\",\"span_id\":60089,\"parent_id\":null,\"start_mono\":3548353.592308453,\"end_mono\":3548353.627528015,\"wall_ms\":35.219562239944935,\"cpu_ms\":15.963178999999883,\"overlap_start_mono\":3548353.592308453,\"overlap_end_mono\":3548353.627528015,\"overlap_wall_ms\":35.219562239944935},{\"name\":\"feed_book\",\"span_id\":60188,\"parent_id\":null,\"start_mono\":3548353.664485964,\"end_mono\":3548353.671811795,\"wall_ms\":7.325830869376659,\"cpu_ms\":0.1843810000003998,\"overlap_start_mono\":3548353.664485964,\"overlap_end_mono\":3548353.671811795,\"overlap_wall_ms\":7.325830869376659},{\"name\":\"practice_step\",\"span_id\":60889,\"parent_id\":null,\"start_mono\":3548353.821590045,\"end_mono\":3548353.830314723,\"wall_ms\":8.724677842110395,\"cpu_ms\":8.401240000001309,\"overlap_start_mono\":3548353.821590045,\"overlap_end_mono\":3548353.830314723,\"overlap_wall_ms\":8.724677842110395},{\"name\":\"feed_book\",\"span_id\":60939,\"parent_id\":null,\"start_mono\":3548353.836651642,\"end_mono\":3548353.847618182,\"wall_ms\":10.966540314257145,\"cpu_ms\":0.18531999999993332,\"overlap_start_mono\":3548353.836651642,\"overlap_end_mono\":3548353.847618182,\"overlap_wall_ms\":10.966540314257145},{\"name\":\"practice_step\",\"span_id\":61075,\"parent_id\":null,\"start_mono\":3548353.883746138,\"end_mono\":3548353.896730282,\"wall_ms\":12.984144035726786,\"cpu_ms\":9.059839999999042,\"overlap_start_mono\":3548353.883746138,\"overlap_end_mono\":3548353.896730282,\"overlap_wall_ms\":12.984144035726786}],\"retained_overlapping_spans\":25,\"omitted_spans\":0,\"covered_wall_ms\":558.8716063648462,\"unattributed_wall_ms\":2553.268942516297,\"retention_loss\":false,\"evicted_spans\":0,\"before_observation\":false,\"active_spans\":0,\"quiet_spans_total\":60733,\"coverage_scope\":\"completed retained slow synchronous spans only\",\"all_sync_work_lower_bound\":{\"covered_wall_lower_bound_ms\":2108.056896366179,\"unattributed_or_boundary_ms\":1004.0836525149643,\"contained_span_cpu_ms\":1395.2971630000768,\"cpu_basis\":\"whole top-level spans inside one retained full bin only; crossing spans omitted\",\"query_boundary_ms\":49.64054888114333,\"query_full_bins\":98,\"retained_full_bins\":98,\"populated_full_bins\":87,\"retention_loss\":false,\"before_observation\":false,\"after_last_completed_span\":true,\"bin_ms\":31.25,\"capacity\":512,\"top_level_spans\":60999,\"clipped_spans\":0,\"scope\":\"completed top-level synchronous work, including quiet spans; full bins only\",\"not_additive_to_slow_span_coverage\":true},\"cpu_basis\":\"full span thread CPU; not apportioned to overlap; nested values are not additive\"},\"read_resume_work\":[{\"read\":\"list_orders\",\"enabled\":true,\"error\":null,\"start_mono\":3548350.8821208603,\"end_mono\":3548350.92105886,\"interval_wall_ms\":38.93799986690283,\"spans\":[],\"retained_overlapping_spans\":0,\"omitted_spans\":0,\"covered_wall_ms\":0.0,\"unattributed_wall_ms\":38.93799986690283,\"retention_loss\":false,\"evicted_spans\":0,\"before_observation\":false,\"active_spans\":0,\"quiet_spans_total\":60733,\"coverage_scope\":\"completed retained slow synchronous spans only\",\"all_sync_work_lower_bound\":{\"covered_wall_lower_bound_ms\":0.0,\"unattributed_or_boundary_ms\":38.93799986690283,\"contained_span_cpu_ms\":0.0,\"cpu_basis\":\"whole top-level spans inside one retained full bin only; crossing spans omitted\",\"query_boundary_ms\":38.93799986690283,\"query_full_bins\":0,\"retained_full_bins\":0,\"populated_full_bins\":0,\"retention_loss\":false,\"before_observation\":false,\"after_last_completed_span\":false,\"bin_ms\":31.25,\"capacity\":512,\"top_level_spans\":60999,\"clipped_spans\":0,\"scope\":\"completed top-level synchronous work, including quiet spans; full bins only\",\"not_additive_to_slow_span_coverage\":true},\"cpu_basis\":\"full span thread CPU; not apportioned to overlap; nested values are not additive\"},{\"read\":\"fills\",\"enabled\":true,\"error\":null,\"start_mono\":3548351.01108886,\"end_mono\":3548352.03993886,\"interval_wall_ms\":1028.8499998860061,\"spans\":[{\"name\":\"practice_step\",\"span_id\":48884,\"parent_id\":null,\"start_mono\":3548351.312423083,\"end_mono\":3548351.332987126,\"wall_ms\":20.56404296308756,\"cpu_ms\":16.105128999999607,\"overlap_start_mono\":3548351.312423083,\"overlap_end_mono\":3548351.332987126,\"overlap_wall_ms\":20.56404296308756},{\"name\":\"feed_book\",\"span_id\":48907,\"parent_id\":null,\"start_mono\":3548351.446405602,\"end_mono\":3548351.451431742,\"wall_ms\":5.026139784604311,\"cpu_ms\":0.22938100000047257,\"overlap_start_mono\":3548351.446405602,\"overlap_end_mono\":3548351.451431742,\"overlap_wall_ms\":5.026139784604311},{\"name\":\"kalshi_decode_apply\",\"span_id\":48939,\"parent_id\":null,\"start_mono\":3548351.456357381,\"end_mono\":3548351.461559528,\"wall_ms\":5.202147178351879,\"cpu_ms\":0.07961999999928082,\"overlap_start_mono\":3548351.456357381,\"overlap_end_mono\":3548351.461559528,\"overlap_wall_ms\":5.202147178351879},{\"name\":\"feed_book\",\"span_id\":50009,\"parent_id\":null,\"start_mono\":3548351.608749449,\"end_mono\":3548351.628270301,\"wall_ms\":19.520852249115705,\"cpu_ms\":17.66225100000085,\"overlap_start_mono\":3548351.608749449,\"overlap_end_mono\":3548351.628270301,\"overlap_wall_ms\":19.520852249115705},{\"name\":\"feed_book\",\"span_id\":51787,\"parent_id\":null,\"start_mono\":3548351.847107708,\"end_mono\":3548351.853739024,\"wall_ms\":6.631316151469946,\"cpu_ms\":0.2793610000004776,\"overlap_start_mono\":3548351.847107708,\"overlap_end_mono\":3548351.853739024,\"overlap_wall_ms\":6.631316151469946},{\"name\":\"feed_book\",\"span_id\":51838,\"parent_id\":null,\"start_mono\":3548351.858527515,\"end_mono\":3548351.896758983,\"wall_ms\":38.231467828154564,\"cpu_ms\":0.3570400000008078,\"overlap_start_mono\":3548351.858527515,\"overlap_end_mono\":3548351.896758983,\"overlap_wall_ms\":38.231467828154564},{\"name\":\"feed_book\",\"span_id\":51988,\"parent_id\":null,\"start_mono\":3548351.911669923,\"end_mono\":3548351.917408895,\"wall_ms\":5.738972220569849,\"cpu_ms\":0.20553000000056443,\"overlap_start_mono\":3548351.911669923,\"overlap_end_mono\":3548351.917408895,\"overlap_wall_ms\":5.738972220569849}],\"retained_overlapping_spans\":7,\"omitted_spans\":0,\"covered_wall_ms\":100.91493837535381,\"unattributed_wall_ms\":927.9350615106523,\"retention_loss\":false,\"evicted_spans\":0,\"before_observation\":false,\"active_spans\":0,\"quiet_spans_total\":60733,\"coverage_scope\":\"completed retained slow synchronous spans only\",\"all_sync_work_lower_bound\":{\"covered_wall_lower_bound_ms\":756.0307225212455,\"unattributed_or_boundary_ms\":272.81927736476064,\"contained_span_cpu_ms\":568.1583279999263,\"cpu_basis\":\"whole top-level spans inside one retained full bin only; crossing spans omitted\",\"query_boundary_ms\":28.849999886006117,\"query_full_bins\":32,\"retained_full_bins\":32,\"populated_full_bins\":28,\"retention_loss\":false,\"before_observation\":false,\"after_last_completed_span\":false,\"bin_ms\":31.25,\"capacity\":512,\"top_level_spans\":60999,\"clipped_spans\":0,\"scope\":\"completed top-level synchronous work, including quiet spans; full bins only\",\"not_additive_to_slow_span_coverage\":true},\"cpu_basis\":\"full span thread CPU; not apportioned to overlap; nested values are not additive\"},{\"read\":\"list_orders\",\"enabled\":true,\"error\":null,\"start_mono\":3548352.2894688603,\"end_mono\":3548353.52441986,\"interval_wall_ms\":1234.9509997293353,\"spans\":[{\"name\":\"feed_book\",\"span_id\":55035,\"parent_id\":null,\"start_mono\":3548352.410396119,\"end_mono\":3548352.420632186,\"wall_ms\":10.23606676608324,\"cpu_ms\":0.40788099999922167,\"overlap_start_mono\":3548352.410396119,\"overlap_end_mono\":3548352.420632186,\"overlap_wall_ms\":10.23606676608324},{\"name\":\"practice_step\",\"span_id\":56793,\"parent_id\":null,\"start_mono\":3548352.635048999,\"end_mono\":3548352.643319333,\"wall_ms\":8.270333986729383,\"cpu_ms\":7.992278000001463,\"overlap_start_mono\":3548352.635048999,\"overlap_end_mono\":3548352.643319333,\"overlap_wall_ms\":8.270333986729383},{\"name\":\"feed_book\",\"span_id\":57194,\"parent_id\":null,\"start_mono\":3548352.79837151,\"end_mono\":3548352.806506223,\"wall_ms\":8.134712930768728,\"cpu_ms\":0.18145999999852336,\"overlap_start_mono\":3548352.79837151,\"overlap_end_mono\":3548352.806506223,\"overlap_wall_ms\":8.134712930768728},{\"name\":\"kalshi_decode_apply\",\"span_id\":57370,\"parent_id\":null,\"start_mono\":3548352.830599877,\"end_mono\":3548352.840821334,\"wall_ms\":10.221457108855247,\"cpu_ms\":0.07395000000087748,\"overlap_start_mono\":3548352.830599877,\"overlap_end_mono\":3548352.840821334,\"overlap_wall_ms\":10.221457108855247},{\"name\":\"feed_book\",\"span_id\":57422,\"parent_id\":null,\"start_mono\":3548352.845786622,\"end_mono\":3548352.853528659,\"wall_ms\":7.7420370653271675,\"cpu_ms\":0.24078099999869096,\"overlap_start_mono\":3548352.845786622,\"overlap_end_mono\":3548352.853528659,\"overlap_wall_ms\":7.7420370653271675},{\"name\":\"feed_book\",\"span_id\":58323,\"parent_id\":null,\"start_mono\":3548352.951943298,\"end_mono\":3548352.964584885,\"wall_ms\":12.641587294638157,\"cpu_ms\":0.30682000000048504,\"overlap_start_mono\":3548352.951943298,\"overlap_end_mono\":3548352.964584885,\"overlap_wall_ms\":12.641587294638157},{\"name\":\"feed_book\",\"span_id\":58422,\"parent_id\":null,\"start_mono\":3548352.974910021,\"end_mono\":3548352.983468481,\"wall_ms\":8.558460045605898,\"cpu_ms\":0.19505099999861386,\"overlap_start_mono\":3548352.974910021,\"overlap_end_mono\":3548352.983468481,\"overlap_wall_ms\":8.558460045605898},{\"name\":\"practice_step\",\"span_id\":59634,\"parent_id\":null,\"start_mono\":3548353.154518129,\"end_mono\":3548353.427732143,\"wall_ms\":273.2140142470598,\"cpu_ms\":8.819289000001618,\"overlap_start_mono\":3548353.154518129,\"overlap_end_mono\":3548353.427732143,\"overlap_wall_ms\":273.2140142470598}],\"retained_overlapping_spans\":11,\"omitted_spans\":3,\"covered_wall_ms\":356.28961864858866,\"unattributed_wall_ms\":878.6613810807467,\"retention_loss\":false,\"evicted_spans\":0,\"before_observation\":false,\"active_spans\":0,\"quiet_spans_total\":60733,\"coverage_scope\":\"completed retained slow synchronous spans only\",\"all_sync_work_lower_bound\":{\"covered_wall_lower_bound_ms\":917.9829354397953,\"unattributed_or_boundary_ms\":316.96806428954005,\"contained_span_cpu_ms\":536.5324870000663,\"cpu_basis\":\"whole top-level spans inside one retained full bin only; crossing spans omitted\",\"query_boundary_ms\":47.45099972933531,\"query_full_bins\":38,\"retained_full_bins\":38,\"populated_full_bins\":34,\"retention_loss\":false,\"before_observation\":false,\"after_last_completed_span\":false,\"bin_ms\":31.25,\"capacity\":512,\"top_level_spans\":60999,\"clipped_spans\":0,\"scope\":\"completed top-level synchronous work, including quiet spans; full bins only\",\"not_additive_to_slow_span_coverage\":true},\"cpu_basis\":\"full span thread CPU; not apportioned to overlap; nested values are not additive\"},{\"read\":\"positions\",\"enabled\":true,\"error\":null,\"start_mono\":3548353.65315086,\"end_mono\":3548353.7584958603,\"interval_wall_ms\":105.34500004723668,\"spans\":[{\"name\":\"feed_book\",\"span_id\":60188,\"parent_id\":null,\"start_mono\":3548353.664485964,\"end_mono\":3548353.671811795,\"wall_ms\":7.325830869376659,\"cpu_ms\":0.1843810000003998,\"overlap_start_mono\":3548353.664485964,\"overlap_end_mono\":3548353.671811795,\"overlap_wall_ms\":7.325830869376659}],\"retained_overlapping_spans\":1,\"omitted_spans\":0,\"covered_wall_ms\":7.325830869376659,\"unattributed_wall_ms\":98.01916917786002,\"retention_loss\":false,\"evicted_spans\":0,\"before_observation\":false,\"active_spans\":0,\"quiet_spans_total\":60733,\"coverage_scope\":\"completed retained slow synchronous spans only\",\"all_sync_work_lower_bound\":{\"covered_wall_lower_bound_ms\":74.29347326979041,\"unattributed_or_boundary_ms\":31.05152677744627,\"contained_span_cpu_ms\":55.33555400000267,\"cpu_basis\":\"whole top-level spans inside one retained full bin only; crossing spans omitted\",\"query_boundary_ms\":11.595000047236681,\"query_full_bins\":3,\"retained_full_bins\":3,\"populated_full_bins\":3,\"retention_loss\":false,\"before_observation\":false,\"after_last_completed_span\":false,\"bin_ms\":31.25,\"capacity\":512,\"top_level_spans\":60999,\"clipped_spans\":0,\"scope\":\"completed top-level synchronous work, including quiet spans; full bins only\",\"not_additive_to_slow_span_coverage\":true},\"cpu_basis\":\"full span thread CPU; not apportioned to overlap; nested values are not additive\"},{\"read\":\"balance\",\"enabled\":true,\"error\":null,\"start_mono\":3548353.86497886,\"end_mono\":3548353.89684786,\"interval_wall_ms\":31.86899982392788,\"spans\":[{\"name\":\"practice_step\",\"span_id\":61075,\"parent_id\":null,\"start_mono\":3548353.883746138,\"end_mono\":3548353.896730282,\"wall_ms\":12.984144035726786,\"cpu_ms\":9.059839999999042,\"overlap_start_mono\":3548353.883746138,\"overlap_end_mono\":3548353.896730282,\"overlap_wall_ms\":12.984144035726786}],\"retained_overlapping_spans\":1,\"omitted_spans\":0,\"covered_wall_ms\":12.984144035726786,\"unattributed_wall_ms\":18.884855788201094,\"retention_loss\":false,\"evicted_spans\":0,\"before_observation\":false,\"active_spans\":0,\"quiet_spans_total\":60733,\"coverage_scope\":\"completed retained slow synchronous spans only\",\"all_sync_work_lower_bound\":{\"covered_wall_lower_bound_ms\":0.0,\"unattributed_or_boundary_ms\":31.86899982392788,\"contained_span_cpu_ms\":0.0,\"cpu_basis\":\"whole top-level spans inside one retained full bin only; crossing spans omitted\",\"query_boundary_ms\":31.86899982392788,\"query_full_bins\":0,\"retained_full_bins\":0,\"populated_full_bins\":0,\"retention_loss\":false,\"before_observation\":false,\"after_last_completed_span\":true,\"bin_ms\":31.25,\"capacity\":512,\"top_level_spans\":60999,\"clipped_spans\":0,\"scope\":\"completed top-level synchronous work, including quiet spans; full bins only\",\"not_additive_to_slow_span_coverage\":true},\"cpu_basis\":\"full span thread CPU; not apportioned to overlap; nested values are not additive\"}]}",
+      "payload": {
+        "at": 1792017247.4595478,
+        "venue": "kalshi",
+        "mode": "diagnostic",
+        "version": 1,
+        "cycle": 14,
+        "started_at": 1792017244.3474374,
+        "full": false,
+        "retry_remaining_s": 0,
+        "previous_fills_returned_at": 1792017243.0278459,
+        "marks_ms": {
+          "fills_wrapper_returned": 1255.062
+        },
+        "new_fills": [],
+        "new_fills_omitted": 0,
+        "reads_omitted": 0,
+        "elapsed_ms": 3112.11,
+        "failed": false,
+        "reads": [
+          {
+            "read": "list_orders",
+            "marks_ms": {
+              "submitted": 0.143,
+              "worker_started": 27.548,
+              "worker_completed": 97.171,
+              "coroutine_resumed": 136.109,
+              "wrapper_returned": 136.192
+            },
+            "rows": 32,
+            "pages": 1,
+            "bytes": 25386,
+            "cancel_calls": 2,
+            "cancel_ms": 0.074,
+            "cancel_spans": [],
+            "cancel_spans_omitted": 0
+          },
+          {
+            "read": "fills",
+            "marks_ms": {
+              "submitted": 136.404,
+              "worker_started": 193.232,
+              "worker_completed": 226.139,
+              "coroutine_resumed": 1254.989,
+              "wrapper_returned": 1255.059
+            },
+            "rows": 2,
+            "pages": 1,
+            "bytes": 1043,
+            "cancel_calls": 1,
+            "cancel_ms": 0.037,
+            "cancel_spans": [],
+            "cancel_spans_omitted": 0
+          },
+          {
+            "read": "list_orders",
+            "marks_ms": {
+              "submitted": 1255.821,
+              "worker_started": 1397.252,
+              "worker_completed": 1504.519,
+              "coroutine_resumed": 2739.47,
+              "wrapper_returned": 2739.529
+            },
+            "rows": 32,
+            "pages": 1,
+            "bytes": 25386,
+            "cancel_calls": 2,
+            "cancel_ms": 0.062,
+            "cancel_spans": [],
+            "cancel_spans_omitted": 0
+          },
+          {
+            "read": "positions",
+            "marks_ms": {
+              "submitted": 2739.92,
+              "worker_started": 2797.851,
+              "worker_completed": 2868.201,
+              "coroutine_resumed": 2973.546,
+              "wrapper_returned": 2973.604
+            },
+            "rows": 3,
+            "pages": 1,
+            "bytes": 1403,
+            "cancel_calls": 1,
+            "cancel_ms": 0.037,
+            "cancel_spans": [],
+            "cancel_spans_omitted": 0
+          },
+          {
+            "read": "balance",
+            "marks_ms": {
+              "submitted": 2974.752,
+              "worker_started": 3030.362,
+              "worker_completed": 3080.029,
+              "coroutine_resumed": 3111.898,
+              "wrapper_returned": 3111.952
+            },
+            "rows": null,
+            "pages": null,
+            "bytes": null,
+            "cancel_calls": 2,
+            "cancel_ms": 0.065,
+            "cancel_spans": [],
+            "cancel_spans_omitted": 0
+          }
+        ],
+        "counts": {
+          "cycles": 14,
+          "reported": 2,
+          "quiet": 12,
+          "suppressed": 0
+        },
+        "clock_basis": "monotonic_offsets_from_started_at",
+        "worker_complete_basis": "entire_client_callback_not_http_arrival",
+        "not_realized_pnl": true,
+        "max_reports_per_60s": 12,
+        "callback_work": {
+          "enabled": true,
+          "error": null,
+          "start_mono": 3548350.78494986,
+          "end_mono": 3548353.897090409,
+          "interval_wall_ms": 3112.1405488811433,
+          "spans": [
+            {
+              "name": "practice_step",
+              "span_id": 46255,
+              "parent_id": null,
+              "start_mono": 3548350.859567373,
+              "end_mono": 3548350.879244482,
+              "wall_ms": 19.677109085023403,
+              "cpu_ms": 16.014647000000437,
+              "overlap_start_mono": 3548350.859567373,
+              "overlap_end_mono": 3548350.879244482,
+              "overlap_wall_ms": 19.677109085023403
+            },
+            {
+              "name": "practice_step",
+              "span_id": 48884,
+              "parent_id": null,
+              "start_mono": 3548351.312423083,
+              "end_mono": 3548351.332987126,
+              "wall_ms": 20.56404296308756,
+              "cpu_ms": 16.105128999999607,
+              "overlap_start_mono": 3548351.312423083,
+              "overlap_end_mono": 3548351.332987126,
+              "overlap_wall_ms": 20.56404296308756
+            },
+            {
+              "name": "feed_book",
+              "span_id": 48907,
+              "parent_id": null,
+              "start_mono": 3548351.446405602,
+              "end_mono": 3548351.451431742,
+              "wall_ms": 5.026139784604311,
+              "cpu_ms": 0.22938100000047257,
+              "overlap_start_mono": 3548351.446405602,
+              "overlap_end_mono": 3548351.451431742,
+              "overlap_wall_ms": 5.026139784604311
+            },
+            {
+              "name": "kalshi_decode_apply",
+              "span_id": 48939,
+              "parent_id": null,
+              "start_mono": 3548351.456357381,
+              "end_mono": 3548351.461559528,
+              "wall_ms": 5.202147178351879,
+              "cpu_ms": 0.07961999999928082,
+              "overlap_start_mono": 3548351.456357381,
+              "overlap_end_mono": 3548351.461559528,
+              "overlap_wall_ms": 5.202147178351879
+            },
+            {
+              "name": "feed_book",
+              "span_id": 50009,
+              "parent_id": null,
+              "start_mono": 3548351.608749449,
+              "end_mono": 3548351.628270301,
+              "wall_ms": 19.520852249115705,
+              "cpu_ms": 17.66225100000085,
+              "overlap_start_mono": 3548351.608749449,
+              "overlap_end_mono": 3548351.628270301,
+              "overlap_wall_ms": 19.520852249115705
+            },
+            {
+              "name": "feed_book",
+              "span_id": 51787,
+              "parent_id": null,
+              "start_mono": 3548351.847107708,
+              "end_mono": 3548351.853739024,
+              "wall_ms": 6.631316151469946,
+              "cpu_ms": 0.2793610000004776,
+              "overlap_start_mono": 3548351.847107708,
+              "overlap_end_mono": 3548351.853739024,
+              "overlap_wall_ms": 6.631316151469946
+            },
+            {
+              "name": "feed_book",
+              "span_id": 51838,
+              "parent_id": null,
+              "start_mono": 3548351.858527515,
+              "end_mono": 3548351.896758983,
+              "wall_ms": 38.231467828154564,
+              "cpu_ms": 0.3570400000008078,
+              "overlap_start_mono": 3548351.858527515,
+              "overlap_end_mono": 3548351.896758983,
+              "overlap_wall_ms": 38.231467828154564
+            },
+            {
+              "name": "feed_book",
+              "span_id": 51988,
+              "parent_id": null,
+              "start_mono": 3548351.911669923,
+              "end_mono": 3548351.917408895,
+              "wall_ms": 5.738972220569849,
+              "cpu_ms": 0.20553000000056443,
+              "overlap_start_mono": 3548351.911669923,
+              "overlap_end_mono": 3548351.917408895,
+              "overlap_wall_ms": 5.738972220569849
+            },
+            {
+              "name": "kalshi_decode_apply",
+              "span_id": 53153,
+              "parent_id": null,
+              "start_mono": 3548352.187471446,
+              "end_mono": 3548352.194240631,
+              "wall_ms": 6.769184954464436,
+              "cpu_ms": 0.060510000000846276,
+              "overlap_start_mono": 3548352.187471446,
+              "overlap_end_mono": 3548352.194240631,
+              "overlap_wall_ms": 6.769184954464436
+            },
+            {
+              "name": "feed_book",
+              "span_id": 55035,
+              "parent_id": null,
+              "start_mono": 3548352.410396119,
+              "end_mono": 3548352.420632186,
+              "wall_ms": 10.23606676608324,
+              "cpu_ms": 0.40788099999922167,
+              "overlap_start_mono": 3548352.410396119,
+              "overlap_end_mono": 3548352.420632186,
+              "overlap_wall_ms": 10.23606676608324
+            },
+            {
+              "name": "feed_book",
+              "span_id": 55167,
+              "parent_id": null,
+              "start_mono": 3548352.437806617,
+              "end_mono": 3548352.444833619,
+              "wall_ms": 7.027002051472664,
+              "cpu_ms": 1.422121000000942,
+              "overlap_start_mono": 3548352.437806617,
+              "overlap_end_mono": 3548352.444833619,
+              "overlap_wall_ms": 7.027002051472664
+            },
+            {
+              "name": "practice_step",
+              "span_id": 56793,
+              "parent_id": null,
+              "start_mono": 3548352.635048999,
+              "end_mono": 3548352.643319333,
+              "wall_ms": 8.270333986729383,
+              "cpu_ms": 7.992278000001463,
+              "overlap_start_mono": 3548352.635048999,
+              "overlap_end_mono": 3548352.643319333,
+              "overlap_wall_ms": 8.270333986729383
+            },
+            {
+              "name": "feed_book",
+              "span_id": 57194,
+              "parent_id": null,
+              "start_mono": 3548352.79837151,
+              "end_mono": 3548352.806506223,
+              "wall_ms": 8.134712930768728,
+              "cpu_ms": 0.18145999999852336,
+              "overlap_start_mono": 3548352.79837151,
+              "overlap_end_mono": 3548352.806506223,
+              "overlap_wall_ms": 8.134712930768728
+            },
+            {
+              "name": "kalshi_decode_apply",
+              "span_id": 57370,
+              "parent_id": null,
+              "start_mono": 3548352.830599877,
+              "end_mono": 3548352.840821334,
+              "wall_ms": 10.221457108855247,
+              "cpu_ms": 0.07395000000087748,
+              "overlap_start_mono": 3548352.830599877,
+              "overlap_end_mono": 3548352.840821334,
+              "overlap_wall_ms": 10.221457108855247
+            },
+            {
+              "name": "feed_book",
+              "span_id": 57422,
+              "parent_id": null,
+              "start_mono": 3548352.845786622,
+              "end_mono": 3548352.853528659,
+              "wall_ms": 7.7420370653271675,
+              "cpu_ms": 0.24078099999869096,
+              "overlap_start_mono": 3548352.845786622,
+              "overlap_end_mono": 3548352.853528659,
+              "overlap_wall_ms": 7.7420370653271675
+            },
+            {
+              "name": "feed_book",
+              "span_id": 58323,
+              "parent_id": null,
+              "start_mono": 3548352.951943298,
+              "end_mono": 3548352.964584885,
+              "wall_ms": 12.641587294638157,
+              "cpu_ms": 0.30682000000048504,
+              "overlap_start_mono": 3548352.951943298,
+              "overlap_end_mono": 3548352.964584885,
+              "overlap_wall_ms": 12.641587294638157
+            },
+            {
+              "name": "feed_book",
+              "span_id": 58422,
+              "parent_id": null,
+              "start_mono": 3548352.974910021,
+              "end_mono": 3548352.983468481,
+              "wall_ms": 8.558460045605898,
+              "cpu_ms": 0.19505099999861386,
+              "overlap_start_mono": 3548352.974910021,
+              "overlap_end_mono": 3548352.983468481,
+              "overlap_wall_ms": 8.558460045605898
+            },
+            {
+              "name": "feed_book",
+              "span_id": 58926,
+              "parent_id": null,
+              "start_mono": 3548353.037885258,
+              "end_mono": 3548353.042945647,
+              "wall_ms": 5.060389172285795,
+              "cpu_ms": 0.21264000000087435,
+              "overlap_start_mono": 3548353.037885258,
+              "overlap_end_mono": 3548353.042945647,
+              "overlap_wall_ms": 5.060389172285795
+            },
+            {
+              "name": "practice_step",
+              "span_id": 59634,
+              "parent_id": null,
+              "start_mono": 3548353.154518129,
+              "end_mono": 3548353.427732143,
+              "wall_ms": 273.2140142470598,
+              "cpu_ms": 8.819289000001618,
+              "overlap_start_mono": 3548353.154518129,
+              "overlap_end_mono": 3548353.427732143,
+              "overlap_wall_ms": 273.2140142470598
+            },
+            {
+              "name": "feed_book",
+              "span_id": 59712,
+              "parent_id": null,
+              "start_mono": 3548353.481731963,
+              "end_mono": 3548353.486915521,
+              "wall_ms": 5.183557979762554,
+              "cpu_ms": 0.27943999999990865,
+              "overlap_start_mono": 3548353.481731963,
+              "overlap_end_mono": 3548353.486915521,
+              "overlap_wall_ms": 5.183557979762554
+            },
+            {
+              "name": "practice_step",
+              "span_id": 60089,
+              "parent_id": null,
+              "start_mono": 3548353.592308453,
+              "end_mono": 3548353.627528015,
+              "wall_ms": 35.219562239944935,
+              "cpu_ms": 15.963178999999883,
+              "overlap_start_mono": 3548353.592308453,
+              "overlap_end_mono": 3548353.627528015,
+              "overlap_wall_ms": 35.219562239944935
+            },
+            {
+              "name": "feed_book",
+              "span_id": 60188,
+              "parent_id": null,
+              "start_mono": 3548353.664485964,
+              "end_mono": 3548353.671811795,
+              "wall_ms": 7.325830869376659,
+              "cpu_ms": 0.1843810000003998,
+              "overlap_start_mono": 3548353.664485964,
+              "overlap_end_mono": 3548353.671811795,
+              "overlap_wall_ms": 7.325830869376659
+            },
+            {
+              "name": "practice_step",
+              "span_id": 60889,
+              "parent_id": null,
+              "start_mono": 3548353.821590045,
+              "end_mono": 3548353.830314723,
+              "wall_ms": 8.724677842110395,
+              "cpu_ms": 8.401240000001309,
+              "overlap_start_mono": 3548353.821590045,
+              "overlap_end_mono": 3548353.830314723,
+              "overlap_wall_ms": 8.724677842110395
+            },
+            {
+              "name": "feed_book",
+              "span_id": 60939,
+              "parent_id": null,
+              "start_mono": 3548353.836651642,
+              "end_mono": 3548353.847618182,
+              "wall_ms": 10.966540314257145,
+              "cpu_ms": 0.18531999999993332,
+              "overlap_start_mono": 3548353.836651642,
+              "overlap_end_mono": 3548353.847618182,
+              "overlap_wall_ms": 10.966540314257145
+            },
+            {
+              "name": "practice_step",
+              "span_id": 61075,
+              "parent_id": null,
+              "start_mono": 3548353.883746138,
+              "end_mono": 3548353.896730282,
+              "wall_ms": 12.984144035726786,
+              "cpu_ms": 9.059839999999042,
+              "overlap_start_mono": 3548353.883746138,
+              "overlap_end_mono": 3548353.896730282,
+              "overlap_wall_ms": 12.984144035726786
+            }
+          ],
+          "retained_overlapping_spans": 25,
+          "omitted_spans": 0,
+          "covered_wall_ms": 558.8716063648462,
+          "unattributed_wall_ms": 2553.268942516297,
+          "retention_loss": false,
+          "evicted_spans": 0,
+          "before_observation": false,
+          "active_spans": 0,
+          "quiet_spans_total": 60733,
+          "coverage_scope": "completed retained slow synchronous spans only",
+          "all_sync_work_lower_bound": {
+            "covered_wall_lower_bound_ms": 2108.056896366179,
+            "unattributed_or_boundary_ms": 1004.0836525149643,
+            "contained_span_cpu_ms": 1395.2971630000768,
+            "cpu_basis": "whole top-level spans inside one retained full bin only; crossing spans omitted",
+            "query_boundary_ms": 49.64054888114333,
+            "query_full_bins": 98,
+            "retained_full_bins": 98,
+            "populated_full_bins": 87,
+            "retention_loss": false,
+            "before_observation": false,
+            "after_last_completed_span": true,
+            "bin_ms": 31.25,
+            "capacity": 512,
+            "top_level_spans": 60999,
+            "clipped_spans": 0,
+            "scope": "completed top-level synchronous work, including quiet spans; full bins only",
+            "not_additive_to_slow_span_coverage": true
+          },
+          "cpu_basis": "full span thread CPU; not apportioned to overlap; nested values are not additive"
+        },
+        "read_resume_work": [
+          {
+            "read": "list_orders",
+            "enabled": true,
+            "error": null,
+            "start_mono": 3548350.8821208603,
+            "end_mono": 3548350.92105886,
+            "interval_wall_ms": 38.93799986690283,
+            "spans": [],
+            "retained_overlapping_spans": 0,
+            "omitted_spans": 0,
+            "covered_wall_ms": 0,
+            "unattributed_wall_ms": 38.93799986690283,
+            "retention_loss": false,
+            "evicted_spans": 0,
+            "before_observation": false,
+            "active_spans": 0,
+            "quiet_spans_total": 60733,
+            "coverage_scope": "completed retained slow synchronous spans only",
+            "all_sync_work_lower_bound": {
+              "covered_wall_lower_bound_ms": 0,
+              "unattributed_or_boundary_ms": 38.93799986690283,
+              "contained_span_cpu_ms": 0,
+              "cpu_basis": "whole top-level spans inside one retained full bin only; crossing spans omitted",
+              "query_boundary_ms": 38.93799986690283,
+              "query_full_bins": 0,
+              "retained_full_bins": 0,
+              "populated_full_bins": 0,
+              "retention_loss": false,
+              "before_observation": false,
+              "after_last_completed_span": false,
+              "bin_ms": 31.25,
+              "capacity": 512,
+              "top_level_spans": 60999,
+              "clipped_spans": 0,
+              "scope": "completed top-level synchronous work, including quiet spans; full bins only",
+              "not_additive_to_slow_span_coverage": true
+            },
+            "cpu_basis": "full span thread CPU; not apportioned to overlap; nested values are not additive"
+          },
+          {
+            "read": "fills",
+            "enabled": true,
+            "error": null,
+            "start_mono": 3548351.01108886,
+            "end_mono": 3548352.03993886,
+            "interval_wall_ms": 1028.8499998860061,
+            "spans": [
+              {
+                "name": "practice_step",
+                "span_id": 48884,
+                "parent_id": null,
+                "start_mono": 3548351.312423083,
+                "end_mono": 3548351.332987126,
+                "wall_ms": 20.56404296308756,
+                "cpu_ms": 16.105128999999607,
+                "overlap_start_mono": 3548351.312423083,
+                "overlap_end_mono": 3548351.332987126,
+                "overlap_wall_ms": 20.56404296308756
+              },
+              {
+                "name": "feed_book",
+                "span_id": 48907,
+                "parent_id": null,
+                "start_mono": 3548351.446405602,
+                "end_mono": 3548351.451431742,
+                "wall_ms": 5.026139784604311,
+                "cpu_ms": 0.22938100000047257,
+                "overlap_start_mono": 3548351.446405602,
+                "overlap_end_mono": 3548351.451431742,
+                "overlap_wall_ms": 5.026139784604311
+              },
+              {
+                "name": "kalshi_decode_apply",
+                "span_id": 48939,
+                "parent_id": null,
+                "start_mono": 3548351.456357381,
+                "end_mono": 3548351.461559528,
+                "wall_ms": 5.202147178351879,
+                "cpu_ms": 0.07961999999928082,
+                "overlap_start_mono": 3548351.456357381,
+                "overlap_end_mono": 3548351.461559528,
+                "overlap_wall_ms": 5.202147178351879
+              },
+              {
+                "name": "feed_book",
+                "span_id": 50009,
+                "parent_id": null,
+                "start_mono": 3548351.608749449,
+                "end_mono": 3548351.628270301,
+                "wall_ms": 19.520852249115705,
+                "cpu_ms": 17.66225100000085,
+                "overlap_start_mono": 3548351.608749449,
+                "overlap_end_mono": 3548351.628270301,
+                "overlap_wall_ms": 19.520852249115705
+              },
+              {
+                "name": "feed_book",
+                "span_id": 51787,
+                "parent_id": null,
+                "start_mono": 3548351.847107708,
+                "end_mono": 3548351.853739024,
+                "wall_ms": 6.631316151469946,
+                "cpu_ms": 0.2793610000004776,
+                "overlap_start_mono": 3548351.847107708,
+                "overlap_end_mono": 3548351.853739024,
+                "overlap_wall_ms": 6.631316151469946
+              },
+              {
+                "name": "feed_book",
+                "span_id": 51838,
+                "parent_id": null,
+                "start_mono": 3548351.858527515,
+                "end_mono": 3548351.896758983,
+                "wall_ms": 38.231467828154564,
+                "cpu_ms": 0.3570400000008078,
+                "overlap_start_mono": 3548351.858527515,
+                "overlap_end_mono": 3548351.896758983,
+                "overlap_wall_ms": 38.231467828154564
+              },
+              {
+                "name": "feed_book",
+                "span_id": 51988,
+                "parent_id": null,
+                "start_mono": 3548351.911669923,
+                "end_mono": 3548351.917408895,
+                "wall_ms": 5.738972220569849,
+                "cpu_ms": 0.20553000000056443,
+                "overlap_start_mono": 3548351.911669923,
+                "overlap_end_mono": 3548351.917408895,
+                "overlap_wall_ms": 5.738972220569849
+              }
+            ],
+            "retained_overlapping_spans": 7,
+            "omitted_spans": 0,
+            "covered_wall_ms": 100.91493837535381,
+            "unattributed_wall_ms": 927.9350615106523,
+            "retention_loss": false,
+            "evicted_spans": 0,
+            "before_observation": false,
+            "active_spans": 0,
+            "quiet_spans_total": 60733,
+            "coverage_scope": "completed retained slow synchronous spans only",
+            "all_sync_work_lower_bound": {
+              "covered_wall_lower_bound_ms": 756.0307225212455,
+              "unattributed_or_boundary_ms": 272.81927736476064,
+              "contained_span_cpu_ms": 568.1583279999263,
+              "cpu_basis": "whole top-level spans inside one retained full bin only; crossing spans omitted",
+              "query_boundary_ms": 28.849999886006117,
+              "query_full_bins": 32,
+              "retained_full_bins": 32,
+              "populated_full_bins": 28,
+              "retention_loss": false,
+              "before_observation": false,
+              "after_last_completed_span": false,
+              "bin_ms": 31.25,
+              "capacity": 512,
+              "top_level_spans": 60999,
+              "clipped_spans": 0,
+              "scope": "completed top-level synchronous work, including quiet spans; full bins only",
+              "not_additive_to_slow_span_coverage": true
+            },
+            "cpu_basis": "full span thread CPU; not apportioned to overlap; nested values are not additive"
+          },
+          {
+            "read": "list_orders",
+            "enabled": true,
+            "error": null,
+            "start_mono": 3548352.2894688603,
+            "end_mono": 3548353.52441986,
+            "interval_wall_ms": 1234.9509997293353,
+            "spans": [
+              {
+                "name": "feed_book",
+                "span_id": 55035,
+                "parent_id": null,
+                "start_mono": 3548352.410396119,
+                "end_mono": 3548352.420632186,
+                "wall_ms": 10.23606676608324,
+                "cpu_ms": 0.40788099999922167,
+                "overlap_start_mono": 3548352.410396119,
+                "overlap_end_mono": 3548352.420632186,
+                "overlap_wall_ms": 10.23606676608324
+              },
+              {
+                "name": "practice_step",
+                "span_id": 56793,
+                "parent_id": null,
+                "start_mono": 3548352.635048999,
+                "end_mono": 3548352.643319333,
+                "wall_ms": 8.270333986729383,
+                "cpu_ms": 7.992278000001463,
+                "overlap_start_mono": 3548352.635048999,
+                "overlap_end_mono": 3548352.643319333,
+                "overlap_wall_ms": 8.270333986729383
+              },
+              {
+                "name": "feed_book",
+                "span_id": 57194,
+                "parent_id": null,
+                "start_mono": 3548352.79837151,
+                "end_mono": 3548352.806506223,
+                "wall_ms": 8.134712930768728,
+                "cpu_ms": 0.18145999999852336,
+                "overlap_start_mono": 3548352.79837151,
+                "overlap_end_mono": 3548352.806506223,
+                "overlap_wall_ms": 8.134712930768728
+              },
+              {
+                "name": "kalshi_decode_apply",
+                "span_id": 57370,
+                "parent_id": null,
+                "start_mono": 3548352.830599877,
+                "end_mono": 3548352.840821334,
+                "wall_ms": 10.221457108855247,
+                "cpu_ms": 0.07395000000087748,
+                "overlap_start_mono": 3548352.830599877,
+                "overlap_end_mono": 3548352.840821334,
+                "overlap_wall_ms": 10.221457108855247
+              },
+              {
+                "name": "feed_book",
+                "span_id": 57422,
+                "parent_id": null,
+                "start_mono": 3548352.845786622,
+                "end_mono": 3548352.853528659,
+                "wall_ms": 7.7420370653271675,
+                "cpu_ms": 0.24078099999869096,
+                "overlap_start_mono": 3548352.845786622,
+                "overlap_end_mono": 3548352.853528659,
+                "overlap_wall_ms": 7.7420370653271675
+              },
+              {
+                "name": "feed_book",
+                "span_id": 58323,
+                "parent_id": null,
+                "start_mono": 3548352.951943298,
+                "end_mono": 3548352.964584885,
+                "wall_ms": 12.641587294638157,
+                "cpu_ms": 0.30682000000048504,
+                "overlap_start_mono": 3548352.951943298,
+                "overlap_end_mono": 3548352.964584885,
+                "overlap_wall_ms": 12.641587294638157
+              },
+              {
+                "name": "feed_book",
+                "span_id": 58422,
+                "parent_id": null,
+                "start_mono": 3548352.974910021,
+                "end_mono": 3548352.983468481,
+                "wall_ms": 8.558460045605898,
+                "cpu_ms": 0.19505099999861386,
+                "overlap_start_mono": 3548352.974910021,
+                "overlap_end_mono": 3548352.983468481,
+                "overlap_wall_ms": 8.558460045605898
+              },
+              {
+                "name": "practice_step",
+                "span_id": 59634,
+                "parent_id": null,
+                "start_mono": 3548353.154518129,
+                "end_mono": 3548353.427732143,
+                "wall_ms": 273.2140142470598,
+                "cpu_ms": 8.819289000001618,
+                "overlap_start_mono": 3548353.154518129,
+                "overlap_end_mono": 3548353.427732143,
+                "overlap_wall_ms": 273.2140142470598
+              }
+            ],
+            "retained_overlapping_spans": 11,
+            "omitted_spans": 3,
+            "covered_wall_ms": 356.28961864858866,
+            "unattributed_wall_ms": 878.6613810807467,
+            "retention_loss": false,
+            "evicted_spans": 0,
+            "before_observation": false,
+            "active_spans": 0,
+            "quiet_spans_total": 60733,
+            "coverage_scope": "completed retained slow synchronous spans only",
+            "all_sync_work_lower_bound": {
+              "covered_wall_lower_bound_ms": 917.9829354397953,
+              "unattributed_or_boundary_ms": 316.96806428954005,
+              "contained_span_cpu_ms": 536.5324870000663,
+              "cpu_basis": "whole top-level spans inside one retained full bin only; crossing spans omitted",
+              "query_boundary_ms": 47.45099972933531,
+              "query_full_bins": 38,
+              "retained_full_bins": 38,
+              "populated_full_bins": 34,
+              "retention_loss": false,
+              "before_observation": false,
+              "after_last_completed_span": false,
+              "bin_ms": 31.25,
+              "capacity": 512,
+              "top_level_spans": 60999,
+              "clipped_spans": 0,
+              "scope": "completed top-level synchronous work, including quiet spans; full bins only",
+              "not_additive_to_slow_span_coverage": true
+            },
+            "cpu_basis": "full span thread CPU; not apportioned to overlap; nested values are not additive"
+          },
+          {
+            "read": "positions",
+            "enabled": true,
+            "error": null,
+            "start_mono": 3548353.65315086,
+            "end_mono": 3548353.7584958603,
+            "interval_wall_ms": 105.34500004723668,
+            "spans": [
+              {
+                "name": "feed_book",
+                "span_id": 60188,
+                "parent_id": null,
+                "start_mono": 3548353.664485964,
+                "end_mono": 3548353.671811795,
+                "wall_ms": 7.325830869376659,
+                "cpu_ms": 0.1843810000003998,
+                "overlap_start_mono": 3548353.664485964,
+                "overlap_end_mono": 3548353.671811795,
+                "overlap_wall_ms": 7.325830869376659
+              }
+            ],
+            "retained_overlapping_spans": 1,
+            "omitted_spans": 0,
+            "covered_wall_ms": 7.325830869376659,
+            "unattributed_wall_ms": 98.01916917786002,
+            "retention_loss": false,
+            "evicted_spans": 0,
+            "before_observation": false,
+            "active_spans": 0,
+            "quiet_spans_total": 60733,
+            "coverage_scope": "completed retained slow synchronous spans only",
+            "all_sync_work_lower_bound": {
+              "covered_wall_lower_bound_ms": 74.29347326979041,
+              "unattributed_or_boundary_ms": 31.05152677744627,
+              "contained_span_cpu_ms": 55.33555400000267,
+              "cpu_basis": "whole top-level spans inside one retained full bin only; crossing spans omitted",
+              "query_boundary_ms": 11.595000047236681,
+              "query_full_bins": 3,
+              "retained_full_bins": 3,
+              "populated_full_bins": 3,
+              "retention_loss": false,
+              "before_observation": false,
+              "after_last_completed_span": false,
+              "bin_ms": 31.25,
+              "capacity": 512,
+              "top_level_spans": 60999,
+              "clipped_spans": 0,
+              "scope": "completed top-level synchronous work, including quiet spans; full bins only",
+              "not_additive_to_slow_span_coverage": true
+            },
+            "cpu_basis": "full span thread CPU; not apportioned to overlap; nested values are not additive"
+          },
+          {
+            "read": "balance",
+            "enabled": true,
+            "error": null,
+            "start_mono": 3548353.86497886,
+            "end_mono": 3548353.89684786,
+            "interval_wall_ms": 31.86899982392788,
+            "spans": [
+              {
+                "name": "practice_step",
+                "span_id": 61075,
+                "parent_id": null,
+                "start_mono": 3548353.883746138,
+                "end_mono": 3548353.896730282,
+                "wall_ms": 12.984144035726786,
+                "cpu_ms": 9.059839999999042,
+                "overlap_start_mono": 3548353.883746138,
+                "overlap_end_mono": 3548353.896730282,
+                "overlap_wall_ms": 12.984144035726786
+              }
+            ],
+            "retained_overlapping_spans": 1,
+            "omitted_spans": 0,
+            "covered_wall_ms": 12.984144035726786,
+            "unattributed_wall_ms": 18.884855788201094,
+            "retention_loss": false,
+            "evicted_spans": 0,
+            "before_observation": false,
+            "active_spans": 0,
+            "quiet_spans_total": 60733,
+            "coverage_scope": "completed retained slow synchronous spans only",
+            "all_sync_work_lower_bound": {
+              "covered_wall_lower_bound_ms": 0,
+              "unattributed_or_boundary_ms": 31.86899982392788,
+              "contained_span_cpu_ms": 0,
+              "cpu_basis": "whole top-level spans inside one retained full bin only; crossing spans omitted",
+              "query_boundary_ms": 31.86899982392788,
+              "query_full_bins": 0,
+              "retained_full_bins": 0,
+              "populated_full_bins": 0,
+              "retention_loss": false,
+              "before_observation": false,
+              "after_last_completed_span": true,
+              "bin_ms": 31.25,
+              "capacity": 512,
+              "top_level_spans": 60999,
+              "clipped_spans": 0,
+              "scope": "completed top-level synchronous work, including quiet spans; full bins only",
+              "not_additive_to_slow_span_coverage": true
+            },
+            "cpu_basis": "full span thread CPU; not apportioned to overlap; nested values are not additive"
+          }
+        ]
+      }
+    }
+  ],
+  "error_queries": {
+    "broad_filter_note": "Initial unqualified error terms matched info payloads containing error:null; not used as an absence-of-errors check.",
+    "severity_filter": "@level:error",
+    "severity_filtered_rows": [
+      {
+        "timestamp": "2026-10-14T22:33:12.962531039Z",
+        "platform_severity": "error",
+        "message": "2026-10-14T22:33:12Z WARNING nightcrawler.sources.pumpfun: pumpfun_backoff host=frontend-api-v3.pump.fun status=403 cooldown_s=60"
+      },
+      {
+        "timestamp": "2026-10-14T22:33:12.962542369Z",
+        "platform_severity": "error",
+        "message": "2026-10-14T22:33:12Z WARNING nightcrawler.learn.recorder: learn_breaker_open host=frontend-api-v3.pump.fun pause_s=600"
+      },
+      {
+        "timestamp": "2026-10-14T22:35:22.322822411Z",
+        "platform_severity": "error",
+        "message": "2026-10-14T22:35:22Z WARNING nightcrawler.weatherwatch: weatherwatch_paused reason=Callback queue capacity exceeded; capture has a gap"
+      }
+    ],
+    "traceback_filter": "\"Traceback (most recent call last)\"",
+    "traceback_rows": 0,
+    "queried_through_utc": "2026-10-14T22:36:15Z"
+  },
+  "checks": {
+    "full_pytest": "5471 passed /14 existing skips in305.84s",
+    "mypy": "126 source files clean",
+    "ruff": "all4 changed Python files clean",
+    "independent_source_test_bundle": "db8dfd78384b96cf1c251cdb2614b628767392263287419a16b8e8a52c8ff135"
+  },
+  "limitations": [
+    "New-runtime observations are restart-partial; no completed window on the measurement release is claimed.",
+    "CPU is whole-span contained-in-bin lower bound; boundary, retention and uninstrumented work remain explicit.",
+    "Slow-span coverage and binned all-work coverage overlap; never add them.",
+    "This observes delay contributors, not a completed latency correction or profitable strategy.",
+    "Application warnings include pump.fun403/backoff and a weatherwatch callback-queue capture gap; healthy platform replicas do not certify capture completeness.",
+    "Real/practice accounting, existing losses/caps/stops and used resume history are preserved; no variable/order/risk actions by verification."
+  ]
+}

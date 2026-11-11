@@ -1,0 +1,168 @@
+{
+  "retrieval_asof_utc": "2026-10-16T02:10:41.822270+00:00",
+  "partitions": {
+    "dev": {
+      "planned_windows": 96,
+      "official_selected_windows": 96,
+      "markets_with_book": 58,
+      "btc_book_rows": 49765,
+      "within_market_gaps_over_3s": 9,
+      "max_within_market_gap_ms": 34845,
+      "missing_yes_ask_rows": 1016,
+      "unusable_official_side_bars": 182,
+      "missing_btc_1m_count": 1,
+      "publisher_official_label_mismatches": 0,
+      "http_errors_by_status": {
+        "400": 1
+      },
+      "first_retrieval_utc": "2026-10-16T01:54:27.165771+00:00",
+      "last_retrieval_utc": "2026-10-16T01:55:41.498576+00:00",
+      "coverage_by_day": {
+        "2026-10-03": {
+          "btc_rows": 49765,
+          "missing_yes_ask_rows": 1016,
+          "rows_at_or_after_market_close": 11,
+          "markets_with_book": 58,
+          "first_receipt_ms": 1791019951771,
+          "last_receipt_ms": 1791071999491,
+          "largest_within_market_gap_ms": 34845,
+          "within_market_gaps_over_3s": 9
+        }
+      }
+    },
+    "val": {
+      "planned_windows": 576,
+      "official_selected_windows": 568,
+      "markets_with_book": 568,
+      "btc_book_rows": 480132,
+      "within_market_gaps_over_3s": 202,
+      "max_within_market_gap_ms": 573962,
+      "missing_yes_ask_rows": 13880,
+      "unusable_official_side_bars": 1078,
+      "missing_btc_1m_count": 0,
+      "publisher_official_label_mismatches": 0,
+      "http_errors_by_status": {},
+      "first_retrieval_utc": "2026-10-16T01:56:24.997052+00:00",
+      "last_retrieval_utc": "2026-10-16T01:57:45.365824+00:00",
+      "coverage_by_day": {
+        "2026-10-04": {
+          "btc_rows": 82185,
+          "missing_yes_ask_rows": 2152,
+          "rows_at_or_after_market_close": 29,
+          "markets_with_book": 96,
+          "first_receipt_ms": 1791072054689,
+          "last_receipt_ms": 1791158399602,
+          "largest_within_market_gap_ms": 73791,
+          "within_market_gaps_over_3s": 29
+        },
+        "2026-10-05": {
+          "btc_rows": 81831,
+          "rows_at_or_after_market_close": 26,
+          "missing_yes_ask_rows": 2245,
+          "markets_with_book": 96,
+          "first_receipt_ms": 1791158465820,
+          "last_receipt_ms": 1791244799248,
+          "largest_within_market_gap_ms": 134891,
+          "within_market_gaps_over_3s": 32
+        },
+        "2026-10-06": {
+          "btc_rows": 81337,
+          "outside_selected_markets": 1,
+          "missing_yes_ask_rows": 1950,
+          "rows_at_or_after_market_close": 22,
+          "markets_with_book": 96,
+          "first_receipt_ms": 1791244850358,
+          "last_receipt_ms": 1791331199259,
+          "largest_within_market_gap_ms": 246960,
+          "within_market_gaps_over_3s": 64
+        },
+        "2026-10-07": {
+          "btc_rows": 81239,
+          "outside_selected_markets": 1,
+          "missing_yes_ask_rows": 2242,
+          "rows_at_or_after_market_close": 26,
+          "markets_with_book": 96,
+          "first_receipt_ms": 1791331218415,
+          "last_receipt_ms": 1791417599086,
+          "largest_within_market_gap_ms": 328443,
+          "within_market_gaps_over_3s": 32
+        },
+        "2026-10-08": {
+          "btc_rows": 73489,
+          "outside_selected_markets": 1,
+          "rows_at_or_after_market_close": 20,
+          "missing_yes_ask_rows": 2331,
+          "markets_with_book": 88,
+          "first_receipt_ms": 1791417650348,
+          "last_receipt_ms": 1791503999077,
+          "largest_within_market_gap_ms": 479525,
+          "within_market_gaps_over_3s": 20
+        },
+        "2026-10-09": {
+          "btc_rows": 80051,
+          "outside_selected_markets": 1,
+          "missing_yes_ask_rows": 2960,
+          "rows_at_or_after_market_close": 20,
+          "markets_with_book": 96,
+          "first_receipt_ms": 1791504060234,
+          "last_receipt_ms": 1791590399537,
+          "largest_within_market_gap_ms": 573962,
+          "within_market_gaps_over_3s": 25
+        }
+      }
+    },
+    "confirmation": {
+      "planned_windows": 288,
+      "official_selected_windows": 288,
+      "markets_with_book": 248,
+      "btc_book_rows": 206785,
+      "within_market_gaps_over_3s": 35,
+      "max_within_market_gap_ms": 628078,
+      "missing_yes_ask_rows": 5692,
+      "unusable_official_side_bars": 546,
+      "missing_btc_1m_count": 0,
+      "publisher_official_label_mismatches": 0,
+      "http_errors_by_status": {},
+      "first_retrieval_utc": "2026-10-16T02:08:56.662032+00:00",
+      "last_retrieval_utc": "2026-10-16T02:09:42.984431+00:00",
+      "coverage_by_day": {
+        "2026-10-10": {
+          "btc_rows": 79998,
+          "missing_yes_ask_rows": 2019,
+          "rows_at_or_after_market_close": 27,
+          "markets_with_book": 96,
+          "first_receipt_ms": 1791590424665,
+          "last_receipt_ms": 1791676799423,
+          "largest_within_market_gap_ms": 628078,
+          "within_market_gaps_over_3s": 14
+        },
+        "2026-10-11": {
+          "btc_rows": 79250,
+          "missing_yes_ask_rows": 2410,
+          "rows_at_or_after_market_close": 22,
+          "markets_with_book": 95,
+          "first_receipt_ms": 1791676824484,
+          "last_receipt_ms": 1791763199638,
+          "largest_within_market_gap_ms": 619584,
+          "within_market_gaps_over_3s": 12
+        },
+        "2026-10-12": {
+          "btc_rows": 47537,
+          "missing_yes_ask_rows": 1263,
+          "rows_at_or_after_market_close": 11,
+          "markets_with_book": 57,
+          "first_receipt_ms": 1791763235799,
+          "last_receipt_ms": 1791814897863,
+          "largest_within_market_gap_ms": 4624,
+          "within_market_gaps_over_3s": 9
+        }
+      }
+    }
+  },
+  "limitations": [
+    "Sample rows do not prove continuous duration or quote survival. No exchange sequence/actualfills/queueprovenance.",
+    "Oct8 07:00-09:00UTC eight windows absent from exact official response88/cursorempty; cause unknown, not an exchange-outage claim.",
+    "DEV partialbook58/96 and one missing BTCminute Oct2 16:47UTC excluded from evaluation.",
+    "Pre-signal unknowns are policyabstentions not proven no-signals; snapshots absent windows are not zero-riskfullcoverage."
+  ]
+}

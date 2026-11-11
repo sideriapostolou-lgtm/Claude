@@ -1,0 +1,58 @@
+{
+  "reviewer": "/root/input_cause_review",
+  "decision": "ACCEPT exact v1 corrective patch, subject to root full repository checks and release verification",
+  "base": "beea7bf09be5405612cd11e4fcd7ee6c5678d469",
+  "identity": {
+    "only_lock_guard_ast_diff": true,
+    "hashes": {
+      "src/nightcrawler/speeddesk_live.py": "2471adff4eca63ee6abba73031da75793ae5e1b3cb0468e30e1e2d6b9934efd5",
+      "tests/test_speeddesk_lock_send_freshness.py": "e170bbc84e4b986ef370cbf267acd4a4dee9da45547042609ba858c4418f314c"
+    },
+    "patch_sha256": "0e8a034b60529c871b5c6f1f612bdc33df26a7f34d1f147b5232f930f4243878",
+    "src_changes": [
+      "src/nightcrawler/speeddesk_live.py"
+    ]
+  },
+  "scope": "Read-only independent money-sensitive review; private receipts only, no source/repository writes or production queries",
+  "blocking_findings": [],
+  "implementation_review": {
+    "source": "src/nightcrawler/speeddesk_live.py:2210",
+    "change": "Before sending a journaled balancing lock, require authenticated account, existing waiting checks (startup/account age/uncertainty/cancel state), cash presence and nonnegative bounded age under per-window cash_max_age_s.",
+    "authority_timing": "_submit passes guard into client.create_order; client._call runs before_send after acquiring mutation transport lock and rate wait, immediately before transport. Existing client tests verify false/exception sends no byte and successful guard makes one attempt.",
+    "preserved": [
+      "Only _lock_guard AST differs from base; model, cash budgets, financial stops, price/size/cap thresholds, ledger implementation, strategy, ordinary send/cancel, Polymarket, learner and history unchanged.",
+      "No can_lock re-entry/double counting of own reservation: fresh reserved lock still sends.",
+      "Existing day and total-loss stop exemption remains for balancing locks; guard does not call _trade_reason.",
+      "Existing shutdown/paper/integrity/foreign or changed window/book freshness/time/side/unpaired quantity/ask checks retained."
+    ],
+    "recovery": "Definite guard refusal takes existing no-byte rejection path: no venue order ID, terminal local intent, reservation released; journal reflects refusal; account_at cleared and a new complete account sync required before a later fresh lock with a different ID. Restart case verifies restored refusal remains terminal and unreserved.",
+    "clock_semantics": "Existing account bound3s and per-window cash bound remain inclusive; negative/reversed, None, NaN and infinities rejected by existing/new range expressions. No new timestamp or threshold introduced.",
+    "limitations": [
+      "No runtime freshness-rejection incidence or saved money is established.",
+      "Generic existing refusal log says prices moved even when freshness caused rejection; do not use that wording to attribute production freshness-specific counts.",
+      "The new fake invalidation cases include unreachable or unproven concurrent mutations to test fail-closed boundaries; they do not assert these events occurred live."
+    ]
+  },
+  "independent_verification": {
+    "original_repro": "/workspace/kalshi-lock-guard-repro.py",
+    "original_result": "/workspace/kalshi-lock-guard-repro.json",
+    "candidate_repro": "/workspace/kalshi-lock-guard-repro-v1.py",
+    "candidate_result": "/workspace/kalshi-lock-guard-repro-v1.json",
+    "candidate_repro_cases": 10,
+    "candidate_behavior": "account_age4/cash_age6/both_age6/missing account/auth loss now reject; fresh/daystop/totalstop send; paper/shutdown reject.",
+    "pytest_command": "/workspace/shared/nightcrawler-venv/bin/python -m pytest -q tests/test_speeddesk_lock_send_freshness.py tests/test_speeddesk_kalshi_client.py -k \"freshness or send_guard\"",
+    "pytest_result": "31 passed,93 deselected in0.72s; exit0 (28new admission/recovery cases plus3transport guard cases)",
+    "identity_result": "Exact source/test/patch hashes independently match frozen values; only _lock_guard AST differs and source file is sole src diff.",
+    "full_suite": "Not repeated by reviewer; running under root, outcome required separately."
+  },
+  "financial_evidence_limit": {
+    "observed_prior_loss_usd": -0.2965,
+    "observed_pre_send_ms": 9.856907650828362,
+    "conclusion": "Prior loss is consistent with intended97c-limit lock filling96.4c after a33c maker, plus.0025fee.9.86ms recorded pre-send interval does not establish this stale-after-wait bug as cause. Proposed correction is execution safety, not a profitable edge or historical loss recovery."
+  },
+  "artifacts_sha256": {
+    "/workspace/kalshi-lock-guard-repro-v1.py": "e34e28e50298e3b107c509e03f0bf871eb656840e181bd5f18799182b7b1008c",
+    "/workspace/kalshi-lock-guard-repro-v1.json": "3934a9e20a6ea67f36f344656663cc02efa06084d1acb3149958ea936462bc1a",
+    "/workspace/kalshi-next-fix-review.json": "3aeebc2731818906adaeae4a7114ff86f85a5091c696ace0715f67e7ab385a60"
+  }
+}

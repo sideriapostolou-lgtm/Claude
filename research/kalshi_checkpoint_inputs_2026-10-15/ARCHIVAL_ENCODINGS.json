@@ -1,0 +1,21 @@
+{
+  "artifacts": [
+    {
+      "path": "candidate/COMPLETE.patch.b64",
+      "original_artifact_name": "candidate/COMPLETE.patch",
+      "encoding": "base64; decode to recover exact original unified diff including its context-space blank lines",
+      "original_bytes": 32246,
+      "original_sha256": "475dc5aa1177815292b91d16bebb2a093692b1e38b0169578ed66fb3ac040b78",
+      "stored_sha256": "b7968f97eadfe44b15a525fda87e95a90c665a1b35391651dfd504c8f19a107e"
+    },
+    {
+      "path": "candidate/frozen.patch.b64",
+      "original_artifact_name": "candidate/frozen.patch",
+      "encoding": "base64; decode to recover exact original unified diff including its context-space blank lines",
+      "original_bytes": 8280,
+      "original_sha256": "5a130bcb593bd1133c06b3e69419d17256d8a5536d73b83290bda923f46b4cd1",
+      "stored_sha256": "4f7f83c84cd265cde8dac091f0ee4df8224960610f74cd024045f65a21de9ccb"
+    }
+  ],
+  "note": "Private original unified diffs remain unchanged. Raw diff context markers are data; base64 preserves every original byte while keeping repository whitespace checks meaningful."
+}

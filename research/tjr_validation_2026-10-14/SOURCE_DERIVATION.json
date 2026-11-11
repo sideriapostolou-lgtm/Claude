@@ -1,0 +1,47 @@
+{
+  "generatedAtUTC": "2026-10-14T18:53:44.195Z",
+  "version": "TJR_BC23_MNQZ25_SWEEP_BOS_v0.1.1_calendar",
+  "originalArchive": "../tjr_mnq_2026-10-14/SOURCE_MANIFEST.json",
+  "sourceHashes": {
+    "originalCombined": "7008b3c3da5f087f7371740d6ceb98725b56585e45cbd31a89f903c1a3ee141f",
+    "originalEngine": "c33084666c94fd4256cdc0b26421e88f9c992ccd344adf78ec8cf95b069b1b2e",
+    "originalTests": "42aaeb83912761a23ab5898b6dd987f95020b32322ba276db794ea1dbdb3e0b9",
+    "feature": "b51750e013f6a72fac10e59b3a5530b0468d09f4eab81cd7fddcf02c525d289c",
+    "derivative": "00befa923a4eaf0b32013999ca4cc9c1819ac942e2afceeedb8d713f00141c52"
+  },
+  "parameterHash": "109433964edd2f777cb1aa03bc02d7e786b0f406b9630d0cdaf2f9b6bca71505",
+  "protocol": {
+    "version": "TJR_DEVELOPMENT_RUNNER_v1",
+    "sourceVersion": "TJR_BC23_MNQZ25_SWEEP_BOS_v0.1.1_calendar",
+    "contract": "MNQZ2025",
+    "warmup": "2025-09-19",
+    "start": "2025-09-22",
+    "end": "2025-10-31",
+    "partition": "DEVELOPMENT",
+    "holdout": [
+      "2025-11-03",
+      "2025-12-12"
+    ],
+    "liveExecutionEnabled": false,
+    "priceUnit": "INTEGER_TICKS",
+    "tickSize": 0.25,
+    "tickUSD": 0.5,
+    "assumedBarAvailability": "INTERVAL_CLOSE",
+    "observedLatency": false
+  },
+  "changes": [
+    "Version label v0.1 -> v0.1.1_calendar",
+    "Unknown or missing current/prior calendar status is BLOCKED/CALENDAR_UNVERIFIED, not a planned SKIPPED day."
+  ],
+  "unchanged": [
+    "All trading parameters, entry/exit rules, costs, frozen historical cohorts.",
+    "Original archived Pages and tests."
+  ],
+  "calendar": {
+    "path": "VERIFIED_DEVELOPMENT_CALENDAR.json",
+    "sha256": "2cd1ee6a8cf10588d9dc6255151984d31a2d338dae864e107817ad429e76fb3a",
+    "civilDates": 43,
+    "regularSessionsIncludingWarmup": 31,
+    "developmentSessions": 30
+  }
+}

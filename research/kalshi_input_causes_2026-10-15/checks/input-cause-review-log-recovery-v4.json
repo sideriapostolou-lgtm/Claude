@@ -1,0 +1,82 @@
+[
+  {
+    "write_then_raise": false,
+    "count": 1,
+    "forecasts": 1,
+    "scored": 1,
+    "events": [
+      [
+        "KXBTC15M-logfail-0",
+        "scored",
+        "late_first_pass",
+        false
+      ]
+    ]
+  },
+  {
+    "write_then_raise": true,
+    "count": 1,
+    "forecasts": 1,
+    "scored": 1,
+    "events": [
+      [
+        "KXBTC15M-logfail-0",
+        "forecast",
+        "due",
+        true
+      ],
+      [
+        "KXBTC15M-logfail-0",
+        "scored",
+        "late_first_pass",
+        false
+      ]
+    ]
+  },
+  {
+    "write_then_raise": false,
+    "count": 2,
+    "forecasts": 2,
+    "scored": 2,
+    "events": [
+      [
+        "KXBTC15M-logfail-0",
+        "scored",
+        "late_first_pass",
+        false
+      ],
+      [
+        "KXBTC15M-logfail-1",
+        "scored",
+        "late_first_pass",
+        false
+      ]
+    ]
+  },
+  {
+    "write_then_raise": true,
+    "count": 2,
+    "forecasts": 2,
+    "scored": 2,
+    "events": [
+      [
+        "KXBTC15M-logfail-0",
+        "forecast",
+        "due",
+        true
+      ],
+      [
+        "KXBTC15M-logfail-0",
+        "scored",
+        "late_first_pass",
+        false
+      ],
+      [
+        "KXBTC15M-logfail-1",
+        "scored",
+        "late_first_pass",
+        false
+      ]
+    ]
+  }
+]

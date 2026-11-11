@@ -1,0 +1,325 @@
+{
+  "nickname": "szg.szg",
+  "retrieved_at": "2026-10-13T13:25:20.359989+00:00",
+  "source_urls": [
+    "https://api.elections.kalshi.com/v1/social/trades?nickname=szg.szg",
+    "https://external-api.kalshi.com/trade-api/v2/markets/trades",
+    "https://external-api.kalshi.com/trade-api/v2/markets/{ticker}"
+  ],
+  "pages": 3,
+  "total_unique_fills": 300,
+  "windows": [
+    {
+      "ticker": "KXBTC15M-26OCT130915-15",
+      "fills": 112,
+      "role_counts": {
+        "maker": 83,
+        "taker": 29
+      },
+      "first": "2026-10-13T13:09:11.98104Z",
+      "last": "2026-10-13T13:13:24.575128Z",
+      "median_count_fp": 58.995000000000005,
+      "min_count_fp": 0.01,
+      "max_count_fp": 14787.33,
+      "taker_action_counts": {
+        "buy": 85,
+        "sell": 27
+      },
+      "market_close_time": "2026-10-13T13:15:00Z",
+      "social_taker_side_counts": {
+        "yes": 83,
+        "no": 29
+      },
+      "min_seconds_before_close": 95.4248719215393,
+      "max_seconds_before_close": 348.0189599990845,
+      "median_seconds_before_close": 170.34206759929657,
+      "fills_in_last_60_seconds": 0,
+      "canonical_joined_fills": 52,
+      "canonical_exposure_direction_counts": {
+        "no": 52
+      },
+      "canonical_direction_price_min": 0.998,
+      "canonical_direction_price_max": 0.998,
+      "canonical_direction_price_median": 0.998,
+      "market_status": "finalized",
+      "market_result": "no",
+      "market_settlement_value_dollars": "0.0000"
+    },
+    {
+      "ticker": "KXBTC15M-26OCT130900-00",
+      "fills": 58,
+      "role_counts": {
+        "maker": 58
+      },
+      "first": "2026-10-13T12:58:36.113698Z",
+      "last": "2026-10-13T12:59:05.934731Z",
+      "median_count_fp": 62.0,
+      "min_count_fp": 0.02,
+      "max_count_fp": 6411.64,
+      "taker_action_counts": {
+        "sell": 32,
+        "buy": 26
+      },
+      "market_close_time": "2026-10-13T13:00:00Z",
+      "social_taker_side_counts": {
+        "no": 58
+      },
+      "min_seconds_before_close": 54.065268993377686,
+      "max_seconds_before_close": 83.88630199432373,
+      "median_seconds_before_close": 62.31812858581543,
+      "fills_in_last_60_seconds": 22,
+      "canonical_joined_fills": 58,
+      "canonical_exposure_direction_counts": {
+        "yes": 58
+      },
+      "canonical_direction_price_min": 0.998,
+      "canonical_direction_price_max": 0.999,
+      "canonical_direction_price_median": 0.999,
+      "market_status": "finalized",
+      "market_result": "yes",
+      "market_settlement_value_dollars": "1.0000"
+    },
+    {
+      "ticker": "KXBTC15M-26OCT130845-45",
+      "fills": 4,
+      "role_counts": {
+        "taker": 4
+      },
+      "first": "2026-10-13T12:43:55.623743Z",
+      "last": "2026-10-13T12:43:55.623743Z",
+      "median_count_fp": 13469.975,
+      "min_count_fp": 100.0,
+      "max_count_fp": 22960.05,
+      "taker_action_counts": {
+        "buy": 4
+      },
+      "market_close_time": "2026-10-13T12:45:00Z",
+      "social_taker_side_counts": {
+        "no": 4
+      },
+      "min_seconds_before_close": 64.37625694274902,
+      "max_seconds_before_close": 64.37625694274902,
+      "median_seconds_before_close": 64.37625694274902,
+      "fills_in_last_60_seconds": 0,
+      "canonical_joined_fills": 4,
+      "canonical_exposure_direction_counts": {
+        "no": 4
+      },
+      "canonical_direction_price_min": 0.999,
+      "canonical_direction_price_max": 0.999,
+      "canonical_direction_price_median": 0.999,
+      "market_status": "finalized",
+      "market_result": "no",
+      "market_settlement_value_dollars": "0.0000"
+    },
+    {
+      "ticker": "KXBTC15M-26OCT130830-30",
+      "fills": 48,
+      "role_counts": {
+        "maker": 48
+      },
+      "first": "2026-10-13T12:28:25.995374Z",
+      "last": "2026-10-13T12:29:29.223511Z",
+      "median_count_fp": 57.315,
+      "min_count_fp": 0.02,
+      "max_count_fp": 18319.03,
+      "taker_action_counts": {
+        "buy": 25,
+        "sell": 23
+      },
+      "market_close_time": "2026-10-13T12:30:00Z",
+      "social_taker_side_counts": {
+        "no": 48
+      },
+      "min_seconds_before_close": 30.77648901939392,
+      "max_seconds_before_close": 94.00462603569031,
+      "median_seconds_before_close": 55.69188344478607,
+      "fills_in_last_60_seconds": 40,
+      "canonical_joined_fills": 48,
+      "canonical_exposure_direction_counts": {
+        "yes": 48
+      },
+      "canonical_direction_price_min": 0.997,
+      "canonical_direction_price_max": 0.999,
+      "canonical_direction_price_median": 0.999,
+      "market_status": "finalized",
+      "market_result": "yes",
+      "market_settlement_value_dollars": "1.0000"
+    },
+    {
+      "ticker": "KXBTC15M-26OCT130815-15",
+      "fills": 2,
+      "role_counts": {
+        "taker": 2
+      },
+      "first": "2026-10-13T12:13:56.251986Z",
+      "last": "2026-10-13T12:14:19.757027Z",
+      "median_count_fp": 23743.0,
+      "min_count_fp": 3042.0,
+      "max_count_fp": 44444.0,
+      "taker_action_counts": {
+        "buy": 2
+      },
+      "market_close_time": "2026-10-13T12:15:00Z",
+      "social_taker_side_counts": {
+        "no": 2
+      },
+      "min_seconds_before_close": 40.24297308921814,
+      "max_seconds_before_close": 63.748013973236084,
+      "median_seconds_before_close": 51.99549353122711,
+      "fills_in_last_60_seconds": 1,
+      "canonical_joined_fills": 2,
+      "canonical_exposure_direction_counts": {
+        "no": 2
+      },
+      "canonical_direction_price_min": 0.998,
+      "canonical_direction_price_max": 0.999,
+      "canonical_direction_price_median": 0.9984999999999999,
+      "market_status": "finalized",
+      "market_result": "no",
+      "market_settlement_value_dollars": "0.0000"
+    },
+    {
+      "ticker": "KXBTC15M-26OCT130715-15",
+      "fills": 25,
+      "role_counts": {
+        "maker": 9,
+        "taker": 16
+      },
+      "first": "2026-10-13T11:13:19.669132Z",
+      "last": "2026-10-13T11:13:21.788821Z",
+      "median_count_fp": 263.0,
+      "min_count_fp": 0.01,
+      "max_count_fp": 3468.61,
+      "taker_action_counts": {
+        "buy": 23,
+        "sell": 2
+      },
+      "market_close_time": "2026-10-13T11:15:00Z",
+      "social_taker_side_counts": {
+        "yes": 9,
+        "no": 16
+      },
+      "min_seconds_before_close": 98.21117901802063,
+      "max_seconds_before_close": 100.33086800575256,
+      "median_seconds_before_close": 100.33086800575256,
+      "fills_in_last_60_seconds": 0,
+      "canonical_joined_fills": 25,
+      "canonical_exposure_direction_counts": {
+        "no": 25
+      },
+      "canonical_direction_price_min": 0.997,
+      "canonical_direction_price_max": 0.997,
+      "canonical_direction_price_median": 0.997,
+      "market_status": "finalized",
+      "market_result": "no",
+      "market_settlement_value_dollars": "0.0000"
+    },
+    {
+      "ticker": "KXBTC15M-26OCT130645-45",
+      "fills": 28,
+      "role_counts": {
+        "taker": 18,
+        "maker": 10
+      },
+      "first": "2026-10-13T10:42:30.243522Z",
+      "last": "2026-10-13T10:43:22.160899Z",
+      "median_count_fp": 19.009999999999998,
+      "min_count_fp": 0.01,
+      "max_count_fp": 26624.0,
+      "taker_action_counts": {
+        "buy": 22,
+        "sell": 6
+      },
+      "market_close_time": "2026-10-13T10:45:00Z",
+      "social_taker_side_counts": {
+        "no": 18,
+        "yes": 10
+      },
+      "min_seconds_before_close": 97.8391010761261,
+      "max_seconds_before_close": 149.75647807121277,
+      "median_seconds_before_close": 137.57510650157928,
+      "fills_in_last_60_seconds": 0,
+      "canonical_joined_fills": 14,
+      "canonical_exposure_direction_counts": {
+        "no": 14
+      },
+      "canonical_direction_price_min": 0.995,
+      "canonical_direction_price_max": 0.999,
+      "canonical_direction_price_median": 0.995,
+      "market_status": "finalized",
+      "market_result": "no",
+      "market_settlement_value_dollars": "0.0000"
+    },
+    {
+      "ticker": "KXBTC15M-26OCT130145-45",
+      "fills": 23,
+      "role_counts": {
+        "maker": 21,
+        "taker": 2
+      },
+      "first": "2026-10-13T05:40:30.133485Z",
+      "last": "2026-10-13T05:44:06.738605Z",
+      "median_count_fp": 440.07,
+      "min_count_fp": 1.39,
+      "max_count_fp": 36454.44,
+      "taker_action_counts": {
+        "buy": 17,
+        "sell": 6
+      },
+      "market_close_time": "2026-10-13T05:45:00Z",
+      "social_taker_side_counts": {
+        "yes": 21,
+        "no": 2
+      },
+      "min_seconds_before_close": 53.26139497756958,
+      "max_seconds_before_close": 269.86651492118835,
+      "median_seconds_before_close": 119.40663599967957,
+      "fills_in_last_60_seconds": 8,
+      "canonical_joined_fills": 17,
+      "canonical_exposure_direction_counts": {
+        "no": 17
+      },
+      "canonical_direction_price_min": 0.998,
+      "canonical_direction_price_max": 0.999,
+      "canonical_direction_price_median": 0.998,
+      "market_status": "finalized",
+      "market_result": "no",
+      "market_settlement_value_dollars": "0.0000"
+    }
+  ],
+  "limitations": [
+    "Latest three paginated Social pages, not full history; first/last windows may be partial.",
+    "Only canonical_joined_fills have verified exposure direction and direction price from public v2 trade IDs. Unjoined direction left unknown.",
+    "v1 taker_action cannot be combined with v1 taker_side using legacy flip: observed v1 sell/yes equals v2 taker_outcome_side=yes.",
+    "Exposure direction is not proof of opening inventory vs closing; no private fills/order IDs/fees/deposits/cancels are available.",
+    "No historical order books, so no fillability or price-trigger inference and no verified trading P&L.",
+    "The 76.3% maker statistic uses number of fills; share of contract quantity is 59.33%. Fills need not be distinct orders.",
+    "The 220 exact joins come from bounded first pages of the public trade tape. This introduces time and price selection; 99.5\u201399.9c describes only that joined subset.",
+    "The 80 unmatched rows have Social YES prices of 0.006\u20130.058; their economic direction/price remains blank, not zero or inferred."
+  ],
+  "total_maker_fills": 229,
+  "total_taker_fills": 71,
+  "median_fill_count": 80.185,
+  "more_history_available": true,
+  "captured_at_utc": {
+    "first_social_page": "2026-10-13T13:23:50.962748+00:00",
+    "second_social_page": "2026-10-13T13:25:18.255907+00:00",
+    "third_social_page": "2026-10-13T13:25:19.857861+00:00"
+  },
+  "export_checks": {
+    "csv_rows": 300,
+    "unique_trade_ids": 300,
+    "matched_rows": 220,
+    "unmatched_rows": 80,
+    "window_count": 8,
+    "maker_fill_count": 229,
+    "taker_fill_count": 71,
+    "total_contract_count_fp": "340981.49",
+    "maker_contract_count_fp": "202317.56",
+    "maker_share_of_fill_count": 0.7633333333333333,
+    "maker_share_of_contract_count": 0.5933388349027392,
+    "unmatched_social_yes_price_min_dollars": "0.0060",
+    "unmatched_social_yes_price_max_dollars": "0.0580"
+  }
+}

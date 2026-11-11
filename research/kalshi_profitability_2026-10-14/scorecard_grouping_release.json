@@ -1,0 +1,1473 @@
+{
+  "observed_at_utc": "2026-10-14T23:12:18Z",
+  "observed_at_pacific": "2026-10-14 4:12:18 PM PDT",
+  "pr": 55,
+  "merge_commit": "4b0ea4004060e5b66d09b509ee0b6e79b5e63c72",
+  "merged_at_utc": "2026-10-14T23:08:35Z",
+  "deployment": {
+    "id": "f2477918-6a76-4cc5-946b-a2e2e320e236",
+    "status": "SUCCESS",
+    "createdAt": "2026-10-14T23:08:36.855Z",
+    "updatedAt": "2026-10-14T23:10:22.641Z",
+    "serviceId": "f84d3b52-002f-44cb-931e-bc9e3e097e97",
+    "environmentId": "17f7b0e0-104c-4903-9484-0106748b3cdb",
+    "url": null,
+    "snapshotId": "38550033-97b3-453d-b11b-bb5b69d387d2",
+    "canRollback": true,
+    "canRedeploy": true,
+    "regions": [
+      "us-east4-eqdc4a"
+    ],
+    "meta": {
+      "reason": "deploy",
+      "commitMessage": "fix: group live scorecard intents per report (touches real money)",
+      "commitHash": "4b0ea4004060e5b66d09b509ee0b6e79b5e63c72",
+      "branch": "claude/nightcrawler-memecoin-bot-Gwnb1S"
+    }
+  },
+  "health": {
+    "environment": {
+      "id": "17f7b0e0-104c-4903-9484-0106748b3cdb",
+      "name": "production"
+    },
+    "services": [
+      {
+        "serviceId": "f84d3b52-002f-44cb-931e-bc9e3e097e97",
+        "serviceName": "bot",
+        "state": "online",
+        "statusText": "Online",
+        "activeDeployments": [
+          {
+            "id": "f2477918-6a76-4cc5-946b-a2e2e320e236",
+            "status": "SUCCESS",
+            "createdAt": "2026-10-14T23:08:36.855Z",
+            "statusUpdatedAt": "2026-10-14T23:10:22.640Z"
+          }
+        ],
+        "replicaStatus": {
+          "running": 1,
+          "crashed": 0,
+          "total": 1
+        },
+        "cronJob": null,
+        "issues": {
+          "warningCount": 0,
+          "criticalCount": 0
+        },
+        "recentFailures": 0,
+        "recentFailedDeployments": [],
+        "hasIssues": false,
+        "isCronJob": false,
+        "hasVolume": true
+      },
+      {
+        "serviceId": "736b1c8a-8311-4ee0-9043-d05f508cd821",
+        "serviceName": "kalshi-recorder",
+        "state": "online",
+        "statusText": "Online",
+        "activeDeployments": [
+          {
+            "id": "8453f919-b891-4aa7-8478-6fcf6b9c24ee",
+            "status": "SUCCESS",
+            "createdAt": "2026-10-14T16:36:40.384Z",
+            "statusUpdatedAt": "2026-10-14T16:38:15.302Z"
+          }
+        ],
+        "replicaStatus": {
+          "running": 1,
+          "crashed": 0,
+          "total": 1
+        },
+        "cronJob": null,
+        "issues": {
+          "warningCount": 0,
+          "criticalCount": 0
+        },
+        "recentFailures": 0,
+        "recentFailedDeployments": [],
+        "hasIssues": false,
+        "isCronJob": false,
+        "hasVolume": true
+      }
+    ],
+    "pendingWork": [
+      {
+        "id": "patch:9a84e13c-3caf-4a85-b5f5-d9a2fcb8a021",
+        "kind": "EnvironmentPatch",
+        "status": "staged",
+        "changes": [],
+        "startedAt": "2026-10-12T16:21:53.480Z",
+        "workflowId": "commitChanges/17f7b0e0-104c-4903-9484-0106748b3cdb/9a84e13c-3caf-4a85-b5f5-d9a2fcb8a021"
+      }
+    ],
+    "summary": {
+      "totalServices": 2,
+      "servicesWithIssues": 0,
+      "totalFailures": 0
+    }
+  },
+  "polydesk_startup": [
+    {
+      "timestamp": "2026-10-14T23:10:20.047913778Z",
+      "severity": "info",
+      "message": "2026-10-14T23:10:19Z INFO nightcrawler.polydesk: polydesk_started theta=0.97 hours=1 ticket_usd=20 poll_s=90 (LIVE: 10 contract(s) per order)",
+      "attributes": [
+        {
+          "key": "level",
+          "value": "\"info\""
+        }
+      ]
+    }
+  ],
+  "pre_restart": {
+    "timestamp": "2026-10-14T23:09:53.509906024Z",
+    "payload": {
+      "mode": "live",
+      "configured_mode": "live",
+      "status": "REAL MONEY (Kalshi)",
+      "reason": "Kalshi account data stale",
+      "authenticated": true,
+      "cash_usd": 35.2643,
+      "cash_at": 1792019393.3070636,
+      "reserved_usd": 0,
+      "open_risk_usd": 0,
+      "open_cost_usd": 0.96,
+      "at_risk_usd": 0,
+      "open_orders": 0,
+      "positions": 0,
+      "total_halted": false,
+      "day_stop_latched": false,
+      "integrity_error": null,
+      "cleanup_pending": false,
+      "caps": {
+        "window_usd": 10,
+        "open_usd": 20,
+        "day_stop_usd": 6,
+        "clip": 5,
+        "total_stop_usd": 10
+      },
+      "total": {
+        "day": null,
+        "windows": 108,
+        "fills": 518,
+        "latency": null,
+        "scorecard": null,
+        "settled_windows": 121,
+        "fees_usd": 2.27122,
+        "locked_usd": -0.8912016483516519,
+        "directional_usd": -13.625898351648349,
+        "pnl_usd": -14.517100000000001,
+        "worst_usd": -2.9791999999999987,
+        "take_attempts": 39,
+        "take_fills": 17,
+        "maker_orders": 3383,
+        "maker_fills": 357,
+        "locks": 81,
+        "lock_fills": 72,
+        "take_fill_rate": 0.4358974358974359,
+        "maker_fill_rate": 0.10552763819095477,
+        "avg_latency_ms": 4306.465337326476,
+        "latency_definition": "durable real decision to venue fill timestamp; maker includes resting time"
+      },
+      "save": {
+        "last_ms": 178.75923542305827,
+        "build_ms": 17.52887200564146,
+        "ledger_ms": 161.1863630823791,
+        "mirror_ms": null,
+        "archived_windows": 204,
+        "saved_orders": 92
+      },
+      "loop": {
+        "ms": {
+          "event_loop_lag": {
+            "n": 1112,
+            "median_ms": 9.5,
+            "p90_ms": 63.9,
+            "max_ms": 2347.9
+          },
+          "list_orders_worker_queue": {
+            "n": 56,
+            "median_ms": 9.5,
+            "p90_ms": 164.1,
+            "max_ms": 1043
+          },
+          "list_orders_worker_resume": {
+            "n": 56,
+            "median_ms": 13.5,
+            "p90_ms": 238.1,
+            "max_ms": 2162.2
+          },
+          "fills_worker_queue": {
+            "n": 28,
+            "median_ms": 5.1,
+            "p90_ms": 105.3,
+            "max_ms": 132.4
+          },
+          "fills_worker_resume": {
+            "n": 28,
+            "median_ms": 10.3,
+            "p90_ms": 195.2,
+            "max_ms": 1473.1
+          },
+          "positions_worker_queue": {
+            "n": 28,
+            "median_ms": 0.2,
+            "p90_ms": 9.8,
+            "max_ms": 23.4
+          },
+          "positions_worker_resume": {
+            "n": 28,
+            "median_ms": 12.3,
+            "p90_ms": 139,
+            "max_ms": 330.5
+          },
+          "balance_worker_queue": {
+            "n": 27,
+            "median_ms": 0.2,
+            "p90_ms": 27.5,
+            "max_ms": 41.3
+          },
+          "balance_worker_resume": {
+            "n": 27,
+            "median_ms": 9.5,
+            "p90_ms": 221.2,
+            "max_ms": 335.2
+          }
+        },
+        "counts": {}
+      },
+      "reconcile_trace": {
+        "mode": "diagnostic",
+        "enabled": true,
+        "version": 1,
+        "counts": {
+          "cycles": 1351,
+          "reported": 23,
+          "quiet": 1328,
+          "suppressed": 0
+        },
+        "max_reports_per_60s": 12,
+        "max_reads": 12,
+        "max_new_fills": 16,
+        "max_cancel_spans_per_read": 8,
+        "previous_fills_returned_at": 1792019392.948798,
+        "session_only": true,
+        "callback_work": {
+          "enabled": true,
+          "error": null,
+          "completed": 4385703,
+          "quiet": 4360229,
+          "evicted": 24962,
+          "errors": 0,
+          "retained": 512,
+          "max_spans": 512,
+          "max_details": 32,
+          "slow_threshold_ms": 5,
+          "sections": {
+            "coinbase_decode": {
+              "count": 37245,
+              "quiet": 37243,
+              "slow": 2,
+              "max_wall_ms": 6.003376096487045,
+              "max_cpu_ms": 0.41872099995998724
+            },
+            "feed_book": {
+              "count": 2681586,
+              "quiet": 2676218,
+              "slow": 5368,
+              "max_wall_ms": 341.1919781938195,
+              "max_cpu_ms": 330.24603300009403
+            },
+            "feed_status": {
+              "count": 213,
+              "quiet": 213,
+              "slow": 0,
+              "max_wall_ms": 1.9836942665278912,
+              "max_cpu_ms": 1.9119219999765846
+            },
+            "feed_tick": {
+              "count": 12003,
+              "quiet": 11955,
+              "slow": 48,
+              "max_wall_ms": 27.25605806335807,
+              "max_cpu_ms": 10.515902000008737
+            },
+            "feed_trade": {
+              "count": 224292,
+              "quiet": 224171,
+              "slow": 121,
+              "max_wall_ms": 488.9698000624776,
+              "max_cpu_ms": 318.89928800001144
+            },
+            "feed_windows": {
+              "count": 281,
+              "quiet": 281,
+              "slow": 0,
+              "max_wall_ms": 3.41007299721241,
+              "max_cpu_ms": 3.411003999985951
+            },
+            "kalshi_decode_apply": {
+              "count": 1404509,
+              "quiet": 1404179,
+              "slow": 330,
+              "max_wall_ms": 23.762257304042578,
+              "max_cpu_ms": 6.815847999973812
+            },
+            "live_checkpoint": {
+              "count": 452,
+              "quiet": 0,
+              "slow": 452,
+              "max_wall_ms": 852.4461509659886,
+              "max_cpu_ms": 471.0528090000139
+            },
+            "live_ledger": {
+              "count": 452,
+              "quiet": 0,
+              "slow": 452,
+              "max_wall_ms": 481.1727749183774,
+              "max_cpu_ms": 327.5855079999701
+            },
+            "live_logs": {
+              "count": 452,
+              "quiet": 419,
+              "slow": 33,
+              "max_wall_ms": 20.182855892926455,
+              "max_cpu_ms": 1.4842509999652975
+            },
+            "live_mirror": {
+              "count": 188,
+              "quiet": 0,
+              "slow": 188,
+              "max_wall_ms": 656.7160300910473,
+              "max_cpu_ms": 407.4167200000005
+            },
+            "live_panel": {
+              "count": 711,
+              "quiet": 0,
+              "slow": 711,
+              "max_wall_ms": 315.4866751283407,
+              "max_cpu_ms": 293.4008379999966
+            },
+            "live_reports": {
+              "count": 34,
+              "quiet": 0,
+              "slow": 34,
+              "max_wall_ms": 132.32426019385457,
+              "max_cpu_ms": 109.65670699999919
+            },
+            "live_state": {
+              "count": 452,
+              "quiet": 0,
+              "slow": 452,
+              "max_wall_ms": 252.56594689562917,
+              "max_cpu_ms": 247.8360570000291
+            },
+            "practice_checkpoint": {
+              "count": 443,
+              "quiet": 0,
+              "slow": 443,
+              "max_wall_ms": 579.981483053416,
+              "max_cpu_ms": 408.4152929999618
+            },
+            "practice_daily_reports": {
+              "count": 443,
+              "quiet": 0,
+              "slow": 443,
+              "max_wall_ms": 248.214571736753,
+              "max_cpu_ms": 244.41736899996158
+            },
+            "practice_ledger": {
+              "count": 443,
+              "quiet": 0,
+              "slow": 443,
+              "max_wall_ms": 424.3905209004879,
+              "max_cpu_ms": 297.02326399999635
+            },
+            "practice_logs": {
+              "count": 443,
+              "quiet": 429,
+              "slow": 14,
+              "max_wall_ms": 11.50397676974535,
+              "max_cpu_ms": 1.3878620000014052
+            },
+            "practice_mirror": {
+              "count": 443,
+              "quiet": 0,
+              "slow": 443,
+              "max_wall_ms": 272.9403139092028,
+              "max_cpu_ms": 39.760184999977355
+            },
+            "practice_panel": {
+              "count": 486,
+              "quiet": 0,
+              "slow": 486,
+              "max_wall_ms": 318.75125877559185,
+              "max_cpu_ms": 289.009815
+            },
+            "practice_state": {
+              "count": 443,
+              "quiet": 0,
+              "slow": 443,
+              "max_wall_ms": 383.38621286675334,
+              "max_cpu_ms": 352.72165800006405
+            },
+            "practice_step": {
+              "count": 19689,
+              "quiet": 5121,
+              "slow": 14568,
+              "max_wall_ms": 603.7667412310839,
+              "max_cpu_ms": 417.43641400000797
+            }
+          },
+          "all_sync_work_lower_bound": {
+            "capacity": 512,
+            "bin_ms": 31.25,
+            "retention_s": 16,
+            "top_level_spans": 4380320,
+            "clipped_spans": 0,
+            "scope": "completed top-level synchronous work; conservative fully contained bins"
+          },
+          "cpu_basis": "thread CPU; full and nested spans are not additive"
+        },
+        "publication": "next_existing_checkpoint",
+        "buffered": 1,
+        "buffer_dropped": 0
+      }
+    }
+  },
+  "post_restart": {
+    "timestamp": "2026-10-14T23:10:54.280414939Z",
+    "payload": {
+      "mode": "live",
+      "configured_mode": "live",
+      "status": "REAL MONEY (Kalshi)",
+      "reason": "imbalance",
+      "authenticated": true,
+      "cash_usd": 35.2643,
+      "cash_at": 1792019448.9780452,
+      "reserved_usd": 0,
+      "open_risk_usd": 0,
+      "open_cost_usd": 0.96,
+      "at_risk_usd": 0,
+      "open_orders": 0,
+      "positions": 0,
+      "total_halted": false,
+      "day_stop_latched": false,
+      "integrity_error": null,
+      "cleanup_pending": false,
+      "caps": {
+        "window_usd": 10,
+        "open_usd": 20,
+        "day_stop_usd": 6,
+        "clip": 5,
+        "total_stop_usd": 10
+      },
+      "total": {
+        "day": null,
+        "windows": 108,
+        "fills": 518,
+        "latency": null,
+        "scorecard": null,
+        "settled_windows": 121,
+        "fees_usd": 2.27122,
+        "locked_usd": -0.8912016483516519,
+        "directional_usd": -13.625898351648349,
+        "pnl_usd": -14.517100000000001,
+        "worst_usd": -2.9791999999999987,
+        "take_attempts": 39,
+        "take_fills": 17,
+        "maker_orders": 3383,
+        "maker_fills": 357,
+        "locks": 81,
+        "lock_fills": 72,
+        "take_fill_rate": 0.4358974358974359,
+        "maker_fill_rate": 0.10552763819095477,
+        "avg_latency_ms": 4306.465337326476,
+        "latency_definition": "durable real decision to venue fill timestamp; maker includes resting time"
+      },
+      "save": {
+        "last_ms": 269.6064719930291,
+        "build_ms": 31.709731090813875,
+        "ledger_ms": 86.06289187446237,
+        "mirror_ms": 151.41184395179152,
+        "archived_windows": 204,
+        "saved_orders": 92
+      },
+      "loop": {
+        "ms": {
+          "other_worker_queue": {
+            "n": 1,
+            "median_ms": 1.8,
+            "p90_ms": 1.8,
+            "max_ms": 1.8
+          },
+          "other_worker_resume": {
+            "n": 1,
+            "median_ms": 861.7,
+            "p90_ms": 861.7,
+            "max_ms": 861.7
+          },
+          "event_loop_lag": {
+            "n": 42,
+            "median_ms": 8.5,
+            "p90_ms": 222.6,
+            "max_ms": 1221.2
+          },
+          "list_orders_worker_queue": {
+            "n": 2,
+            "median_ms": 0.3,
+            "p90_ms": 117.7,
+            "max_ms": 117.7
+          },
+          "list_orders_worker_resume": {
+            "n": 2,
+            "median_ms": 10.7,
+            "p90_ms": 165,
+            "max_ms": 165
+          },
+          "fills_worker_queue": {
+            "n": 1,
+            "median_ms": 1.4,
+            "p90_ms": 1.4,
+            "max_ms": 1.4
+          },
+          "fills_worker_resume": {
+            "n": 1,
+            "median_ms": 303.9,
+            "p90_ms": 303.9,
+            "max_ms": 303.9
+          },
+          "positions_worker_queue": {
+            "n": 1,
+            "median_ms": 11,
+            "p90_ms": 11,
+            "max_ms": 11
+          },
+          "positions_worker_resume": {
+            "n": 1,
+            "median_ms": 19.2,
+            "p90_ms": 19.2,
+            "max_ms": 19.2
+          },
+          "balance_worker_queue": {
+            "n": 1,
+            "median_ms": 0.2,
+            "p90_ms": 0.2,
+            "max_ms": 0.2
+          },
+          "balance_worker_resume": {
+            "n": 1,
+            "median_ms": 0.2,
+            "p90_ms": 0.2,
+            "max_ms": 0.2
+          }
+        },
+        "counts": {}
+      },
+      "reconcile_trace": {
+        "mode": "diagnostic",
+        "enabled": true,
+        "version": 1,
+        "counts": {
+          "cycles": 1,
+          "reported": 0,
+          "quiet": 1,
+          "suppressed": 0
+        },
+        "max_reports_per_60s": 12,
+        "max_reads": 12,
+        "max_new_fills": 16,
+        "max_cancel_spans_per_read": 8,
+        "previous_fills_returned_at": 1792019447.0707407,
+        "session_only": true,
+        "callback_work": {
+          "enabled": true,
+          "error": null,
+          "completed": 9523,
+          "quiet": 9477,
+          "evicted": 0,
+          "errors": 0,
+          "retained": 46,
+          "max_spans": 512,
+          "max_details": 32,
+          "slow_threshold_ms": 5,
+          "sections": {
+            "coinbase_decode": {
+              "count": 37,
+              "quiet": 37,
+              "slow": 0,
+              "max_wall_ms": 0.07537007331848145,
+              "max_cpu_ms": 0.07500099999990795
+            },
+            "feed_book": {
+              "count": 5932,
+              "quiet": 5915,
+              "slow": 17,
+              "max_wall_ms": 229.86543271690607,
+              "max_cpu_ms": 226.58968899999988
+            },
+            "feed_status": {
+              "count": 14,
+              "quiet": 14,
+              "slow": 0,
+              "max_wall_ms": 0.05246885120868683,
+              "max_cpu_ms": 0.049869999999785364
+            },
+            "feed_tick": {
+              "count": 8,
+              "quiet": 8,
+              "slow": 0,
+              "max_wall_ms": 1.2161056511104107,
+              "max_cpu_ms": 1.2166110000002561
+            },
+            "feed_trade": {
+              "count": 448,
+              "quiet": 448,
+              "slow": 0,
+              "max_wall_ms": 1.5593431890010834,
+              "max_cpu_ms": 0.675249999999572
+            },
+            "feed_windows": {
+              "count": 2,
+              "quiet": 2,
+              "slow": 0,
+              "max_wall_ms": 0.6394525989890099,
+              "max_cpu_ms": 0.6398509999998581
+            },
+            "kalshi_decode_apply": {
+              "count": 3046,
+              "quiet": 3045,
+              "slow": 1,
+              "max_wall_ms": 10.351755190640688,
+              "max_cpu_ms": 0.8518099999998974
+            },
+            "live_checkpoint": {
+              "count": 0,
+              "quiet": 0,
+              "slow": 0,
+              "max_wall_ms": 0,
+              "max_cpu_ms": 0
+            },
+            "live_ledger": {
+              "count": 0,
+              "quiet": 0,
+              "slow": 0,
+              "max_wall_ms": 0,
+              "max_cpu_ms": 0
+            },
+            "live_logs": {
+              "count": 0,
+              "quiet": 0,
+              "slow": 0,
+              "max_wall_ms": 0,
+              "max_cpu_ms": 0
+            },
+            "live_mirror": {
+              "count": 0,
+              "quiet": 0,
+              "slow": 0,
+              "max_wall_ms": 0,
+              "max_cpu_ms": 0
+            },
+            "live_panel": {
+              "count": 4,
+              "quiet": 0,
+              "slow": 4,
+              "max_wall_ms": 26.299300137907267,
+              "max_cpu_ms": 16.780918000000256
+            },
+            "live_reports": {
+              "count": 0,
+              "quiet": 0,
+              "slow": 0,
+              "max_wall_ms": 0,
+              "max_cpu_ms": 0
+            },
+            "live_state": {
+              "count": 0,
+              "quiet": 0,
+              "slow": 0,
+              "max_wall_ms": 0,
+              "max_cpu_ms": 0
+            },
+            "practice_checkpoint": {
+              "count": 2,
+              "quiet": 0,
+              "slow": 2,
+              "max_wall_ms": 316.9943308457732,
+              "max_cpu_ms": 252.47735399999982
+            },
+            "practice_daily_reports": {
+              "count": 2,
+              "quiet": 0,
+              "slow": 2,
+              "max_wall_ms": 9.775393642485142,
+              "max_cpu_ms": 9.661902000000389
+            },
+            "practice_ledger": {
+              "count": 2,
+              "quiet": 0,
+              "slow": 2,
+              "max_wall_ms": 86.92928403615952,
+              "max_cpu_ms": 27.58538200000027
+            },
+            "practice_logs": {
+              "count": 2,
+              "quiet": 1,
+              "slow": 1,
+              "max_wall_ms": 5.175193306058645,
+              "max_cpu_ms": 0.9426710000002281
+            },
+            "practice_mirror": {
+              "count": 2,
+              "quiet": 0,
+              "slow": 2,
+              "max_wall_ms": 20.633083768188953,
+              "max_cpu_ms": 11.66409299999982
+            },
+            "practice_panel": {
+              "count": 3,
+              "quiet": 0,
+              "slow": 3,
+              "max_wall_ms": 221.03279689326882,
+              "max_cpu_ms": 203.07269500000035
+            },
+            "practice_state": {
+              "count": 2,
+              "quiet": 0,
+              "slow": 2,
+              "max_wall_ms": 232.7268677763641,
+              "max_cpu_ms": 208.13272999999998
+            },
+            "practice_step": {
+              "count": 17,
+              "quiet": 7,
+              "slow": 10,
+              "max_wall_ms": 192.29582510888577,
+              "max_cpu_ms": 105.13666200000004
+            }
+          },
+          "all_sync_work_lower_bound": {
+            "capacity": 512,
+            "bin_ms": 31.25,
+            "retention_s": 16,
+            "top_level_spans": 9506,
+            "clipped_spans": 0,
+            "scope": "completed top-level synchronous work; conservative fully contained bins"
+          },
+          "cpu_basis": "thread CPU; full and nested spans are not additive"
+        },
+        "publication": "next_existing_checkpoint",
+        "buffered": 0,
+        "buffer_dropped": 0
+      }
+    }
+  },
+  "principal_comparisons": {
+    "cash_usd": true,
+    "open_cost_usd": true,
+    "open_risk_usd": true,
+    "at_risk_usd": true,
+    "reserved_usd": true,
+    "total_halted": true,
+    "day_stop_latched": true,
+    "caps": true,
+    "integrity_error": true,
+    "total.fills": true,
+    "total.fees_usd": true,
+    "total.pnl_usd": true,
+    "total.locked_usd": true,
+    "total.directional_usd": true
+  },
+  "resume": [
+    {
+      "timestamp": "2026-10-14T23:10:54.276755489Z",
+      "state": "ignored; this value was already used"
+    }
+  ],
+  "later_statuses": [
+    {
+      "timestamp": "2026-10-14T23:10:54.280414939Z",
+      "payload": {
+        "mode": "live",
+        "configured_mode": "live",
+        "status": "REAL MONEY (Kalshi)",
+        "reason": "imbalance",
+        "authenticated": true,
+        "cash_usd": 35.2643,
+        "cash_at": 1792019448.9780452,
+        "reserved_usd": 0,
+        "open_risk_usd": 0,
+        "open_cost_usd": 0.96,
+        "at_risk_usd": 0,
+        "open_orders": 0,
+        "positions": 0,
+        "total_halted": false,
+        "day_stop_latched": false,
+        "integrity_error": null,
+        "cleanup_pending": false,
+        "caps": {
+          "window_usd": 10,
+          "open_usd": 20,
+          "day_stop_usd": 6,
+          "clip": 5,
+          "total_stop_usd": 10
+        },
+        "total": {
+          "day": null,
+          "windows": 108,
+          "fills": 518,
+          "latency": null,
+          "scorecard": null,
+          "settled_windows": 121,
+          "fees_usd": 2.27122,
+          "locked_usd": -0.8912016483516519,
+          "directional_usd": -13.625898351648349,
+          "pnl_usd": -14.517100000000001,
+          "worst_usd": -2.9791999999999987,
+          "take_attempts": 39,
+          "take_fills": 17,
+          "maker_orders": 3383,
+          "maker_fills": 357,
+          "locks": 81,
+          "lock_fills": 72,
+          "take_fill_rate": 0.4358974358974359,
+          "maker_fill_rate": 0.10552763819095477,
+          "avg_latency_ms": 4306.465337326476,
+          "latency_definition": "durable real decision to venue fill timestamp; maker includes resting time"
+        },
+        "save": {
+          "last_ms": 269.6064719930291,
+          "build_ms": 31.709731090813875,
+          "ledger_ms": 86.06289187446237,
+          "mirror_ms": 151.41184395179152,
+          "archived_windows": 204,
+          "saved_orders": 92
+        },
+        "loop": {
+          "ms": {
+            "other_worker_queue": {
+              "n": 1,
+              "median_ms": 1.8,
+              "p90_ms": 1.8,
+              "max_ms": 1.8
+            },
+            "other_worker_resume": {
+              "n": 1,
+              "median_ms": 861.7,
+              "p90_ms": 861.7,
+              "max_ms": 861.7
+            },
+            "event_loop_lag": {
+              "n": 42,
+              "median_ms": 8.5,
+              "p90_ms": 222.6,
+              "max_ms": 1221.2
+            },
+            "list_orders_worker_queue": {
+              "n": 2,
+              "median_ms": 0.3,
+              "p90_ms": 117.7,
+              "max_ms": 117.7
+            },
+            "list_orders_worker_resume": {
+              "n": 2,
+              "median_ms": 10.7,
+              "p90_ms": 165,
+              "max_ms": 165
+            },
+            "fills_worker_queue": {
+              "n": 1,
+              "median_ms": 1.4,
+              "p90_ms": 1.4,
+              "max_ms": 1.4
+            },
+            "fills_worker_resume": {
+              "n": 1,
+              "median_ms": 303.9,
+              "p90_ms": 303.9,
+              "max_ms": 303.9
+            },
+            "positions_worker_queue": {
+              "n": 1,
+              "median_ms": 11,
+              "p90_ms": 11,
+              "max_ms": 11
+            },
+            "positions_worker_resume": {
+              "n": 1,
+              "median_ms": 19.2,
+              "p90_ms": 19.2,
+              "max_ms": 19.2
+            },
+            "balance_worker_queue": {
+              "n": 1,
+              "median_ms": 0.2,
+              "p90_ms": 0.2,
+              "max_ms": 0.2
+            },
+            "balance_worker_resume": {
+              "n": 1,
+              "median_ms": 0.2,
+              "p90_ms": 0.2,
+              "max_ms": 0.2
+            }
+          },
+          "counts": {}
+        },
+        "reconcile_trace": {
+          "mode": "diagnostic",
+          "enabled": true,
+          "version": 1,
+          "counts": {
+            "cycles": 1,
+            "reported": 0,
+            "quiet": 1,
+            "suppressed": 0
+          },
+          "max_reports_per_60s": 12,
+          "max_reads": 12,
+          "max_new_fills": 16,
+          "max_cancel_spans_per_read": 8,
+          "previous_fills_returned_at": 1792019447.0707407,
+          "session_only": true,
+          "callback_work": {
+            "enabled": true,
+            "error": null,
+            "completed": 9523,
+            "quiet": 9477,
+            "evicted": 0,
+            "errors": 0,
+            "retained": 46,
+            "max_spans": 512,
+            "max_details": 32,
+            "slow_threshold_ms": 5,
+            "sections": {
+              "coinbase_decode": {
+                "count": 37,
+                "quiet": 37,
+                "slow": 0,
+                "max_wall_ms": 0.07537007331848145,
+                "max_cpu_ms": 0.07500099999990795
+              },
+              "feed_book": {
+                "count": 5932,
+                "quiet": 5915,
+                "slow": 17,
+                "max_wall_ms": 229.86543271690607,
+                "max_cpu_ms": 226.58968899999988
+              },
+              "feed_status": {
+                "count": 14,
+                "quiet": 14,
+                "slow": 0,
+                "max_wall_ms": 0.05246885120868683,
+                "max_cpu_ms": 0.049869999999785364
+              },
+              "feed_tick": {
+                "count": 8,
+                "quiet": 8,
+                "slow": 0,
+                "max_wall_ms": 1.2161056511104107,
+                "max_cpu_ms": 1.2166110000002561
+              },
+              "feed_trade": {
+                "count": 448,
+                "quiet": 448,
+                "slow": 0,
+                "max_wall_ms": 1.5593431890010834,
+                "max_cpu_ms": 0.675249999999572
+              },
+              "feed_windows": {
+                "count": 2,
+                "quiet": 2,
+                "slow": 0,
+                "max_wall_ms": 0.6394525989890099,
+                "max_cpu_ms": 0.6398509999998581
+              },
+              "kalshi_decode_apply": {
+                "count": 3046,
+                "quiet": 3045,
+                "slow": 1,
+                "max_wall_ms": 10.351755190640688,
+                "max_cpu_ms": 0.8518099999998974
+              },
+              "live_checkpoint": {
+                "count": 0,
+                "quiet": 0,
+                "slow": 0,
+                "max_wall_ms": 0,
+                "max_cpu_ms": 0
+              },
+              "live_ledger": {
+                "count": 0,
+                "quiet": 0,
+                "slow": 0,
+                "max_wall_ms": 0,
+                "max_cpu_ms": 0
+              },
+              "live_logs": {
+                "count": 0,
+                "quiet": 0,
+                "slow": 0,
+                "max_wall_ms": 0,
+                "max_cpu_ms": 0
+              },
+              "live_mirror": {
+                "count": 0,
+                "quiet": 0,
+                "slow": 0,
+                "max_wall_ms": 0,
+                "max_cpu_ms": 0
+              },
+              "live_panel": {
+                "count": 4,
+                "quiet": 0,
+                "slow": 4,
+                "max_wall_ms": 26.299300137907267,
+                "max_cpu_ms": 16.780918000000256
+              },
+              "live_reports": {
+                "count": 0,
+                "quiet": 0,
+                "slow": 0,
+                "max_wall_ms": 0,
+                "max_cpu_ms": 0
+              },
+              "live_state": {
+                "count": 0,
+                "quiet": 0,
+                "slow": 0,
+                "max_wall_ms": 0,
+                "max_cpu_ms": 0
+              },
+              "practice_checkpoint": {
+                "count": 2,
+                "quiet": 0,
+                "slow": 2,
+                "max_wall_ms": 316.9943308457732,
+                "max_cpu_ms": 252.47735399999982
+              },
+              "practice_daily_reports": {
+                "count": 2,
+                "quiet": 0,
+                "slow": 2,
+                "max_wall_ms": 9.775393642485142,
+                "max_cpu_ms": 9.661902000000389
+              },
+              "practice_ledger": {
+                "count": 2,
+                "quiet": 0,
+                "slow": 2,
+                "max_wall_ms": 86.92928403615952,
+                "max_cpu_ms": 27.58538200000027
+              },
+              "practice_logs": {
+                "count": 2,
+                "quiet": 1,
+                "slow": 1,
+                "max_wall_ms": 5.175193306058645,
+                "max_cpu_ms": 0.9426710000002281
+              },
+              "practice_mirror": {
+                "count": 2,
+                "quiet": 0,
+                "slow": 2,
+                "max_wall_ms": 20.633083768188953,
+                "max_cpu_ms": 11.66409299999982
+              },
+              "practice_panel": {
+                "count": 3,
+                "quiet": 0,
+                "slow": 3,
+                "max_wall_ms": 221.03279689326882,
+                "max_cpu_ms": 203.07269500000035
+              },
+              "practice_state": {
+                "count": 2,
+                "quiet": 0,
+                "slow": 2,
+                "max_wall_ms": 232.7268677763641,
+                "max_cpu_ms": 208.13272999999998
+              },
+              "practice_step": {
+                "count": 17,
+                "quiet": 7,
+                "slow": 10,
+                "max_wall_ms": 192.29582510888577,
+                "max_cpu_ms": 105.13666200000004
+              }
+            },
+            "all_sync_work_lower_bound": {
+              "capacity": 512,
+              "bin_ms": 31.25,
+              "retention_s": 16,
+              "top_level_spans": 9506,
+              "clipped_spans": 0,
+              "scope": "completed top-level synchronous work; conservative fully contained bins"
+            },
+            "cpu_basis": "thread CPU; full and nested spans are not additive"
+          },
+          "publication": "next_existing_checkpoint",
+          "buffered": 0,
+          "buffer_dropped": 0
+        }
+      }
+    },
+    {
+      "timestamp": "2026-10-14T23:11:49.543225893Z",
+      "payload": {
+        "mode": "live",
+        "configured_mode": "live",
+        "status": "REAL MONEY (Kalshi)",
+        "reason": "Window has not started",
+        "authenticated": true,
+        "cash_usd": 35.2643,
+        "cash_at": 1792019509.4220312,
+        "reserved_usd": 0,
+        "open_risk_usd": 0,
+        "open_cost_usd": 0.96,
+        "at_risk_usd": 0,
+        "open_orders": 0,
+        "positions": 0,
+        "total_halted": false,
+        "day_stop_latched": false,
+        "integrity_error": null,
+        "cleanup_pending": false,
+        "caps": {
+          "window_usd": 10,
+          "open_usd": 20,
+          "day_stop_usd": 6,
+          "clip": 5,
+          "total_stop_usd": 10
+        },
+        "total": {
+          "day": null,
+          "windows": 108,
+          "fills": 518,
+          "latency": null,
+          "scorecard": null,
+          "settled_windows": 121,
+          "fees_usd": 2.27122,
+          "locked_usd": -0.8912016483516519,
+          "directional_usd": -13.625898351648349,
+          "pnl_usd": -14.517100000000001,
+          "worst_usd": -2.9791999999999987,
+          "take_attempts": 39,
+          "take_fills": 17,
+          "maker_orders": 3383,
+          "maker_fills": 357,
+          "locks": 81,
+          "lock_fills": 72,
+          "take_fill_rate": 0.4358974358974359,
+          "maker_fill_rate": 0.10552763819095477,
+          "avg_latency_ms": 4306.465337326476,
+          "latency_definition": "durable real decision to venue fill timestamp; maker includes resting time"
+        },
+        "save": {
+          "last_ms": 376.95344956591725,
+          "build_ms": 59.9592849612236,
+          "ledger_ms": 152.21576998010278,
+          "mirror_ms": 164.69470597803593,
+          "archived_windows": 204,
+          "saved_orders": 92
+        },
+        "loop": {
+          "ms": {
+            "event_loop_lag": {
+              "n": 1102,
+              "median_ms": 8.6,
+              "p90_ms": 70.3,
+              "max_ms": 1906.2
+            },
+            "list_orders_worker_queue": {
+              "n": 54,
+              "median_ms": 8.2,
+              "p90_ms": 167.8,
+              "max_ms": 718.7
+            },
+            "list_orders_worker_resume": {
+              "n": 54,
+              "median_ms": 28.9,
+              "p90_ms": 269.2,
+              "max_ms": 1058.7
+            },
+            "fills_worker_queue": {
+              "n": 27,
+              "median_ms": 3,
+              "p90_ms": 35.3,
+              "max_ms": 203.9
+            },
+            "fills_worker_resume": {
+              "n": 27,
+              "median_ms": 13.3,
+              "p90_ms": 539.6,
+              "max_ms": 633.2
+            },
+            "positions_worker_queue": {
+              "n": 27,
+              "median_ms": 2.1,
+              "p90_ms": 22,
+              "max_ms": 81.1
+            },
+            "positions_worker_resume": {
+              "n": 27,
+              "median_ms": 46.3,
+              "p90_ms": 486.5,
+              "max_ms": 1204.9
+            },
+            "balance_worker_queue": {
+              "n": 27,
+              "median_ms": 10.1,
+              "p90_ms": 71.9,
+              "max_ms": 131.7
+            },
+            "balance_worker_resume": {
+              "n": 27,
+              "median_ms": 17.8,
+              "p90_ms": 95.9,
+              "max_ms": 487.8
+            }
+          },
+          "counts": {}
+        },
+        "reconcile_trace": {
+          "mode": "diagnostic",
+          "enabled": true,
+          "version": 1,
+          "counts": {
+            "cycles": 28,
+            "reported": 0,
+            "quiet": 28,
+            "suppressed": 0
+          },
+          "max_reports_per_60s": 12,
+          "max_reads": 12,
+          "max_new_fills": 16,
+          "max_cancel_spans_per_read": 8,
+          "previous_fills_returned_at": 1792019508.7324336,
+          "session_only": true,
+          "callback_work": {
+            "enabled": true,
+            "error": null,
+            "completed": 155253,
+            "quiet": 154516,
+            "evicted": 225,
+            "errors": 0,
+            "retained": 512,
+            "max_spans": 512,
+            "max_details": 32,
+            "slow_threshold_ms": 5,
+            "sections": {
+              "coinbase_decode": {
+                "count": 1030,
+                "quiet": 1030,
+                "slow": 0,
+                "max_wall_ms": 0.07537007331848145,
+                "max_cpu_ms": 0.07500099999990795
+              },
+              "feed_book": {
+                "count": 96100,
+                "quiet": 95852,
+                "slow": 248,
+                "max_wall_ms": 246.10446533188224,
+                "max_cpu_ms": 241.34728900000013
+              },
+              "feed_status": {
+                "count": 17,
+                "quiet": 17,
+                "slow": 0,
+                "max_wall_ms": 0.05246885120868683,
+                "max_cpu_ms": 0.049869999999785364
+              },
+              "feed_tick": {
+                "count": 319,
+                "quiet": 316,
+                "slow": 3,
+                "max_wall_ms": 12.114257086068392,
+                "max_cpu_ms": 2.09145200000016
+              },
+              "feed_trade": {
+                "count": 7206,
+                "quiet": 7203,
+                "slow": 3,
+                "max_wall_ms": 9.363067802041769,
+                "max_cpu_ms": 3.3899630000000514
+              },
+              "feed_windows": {
+                "count": 9,
+                "quiet": 9,
+                "slow": 0,
+                "max_wall_ms": 1.4683147892355919,
+                "max_cpu_ms": 1.4699119999992405
+              },
+              "kalshi_decode_apply": {
+                "count": 49994,
+                "quiet": 49977,
+                "slow": 17,
+                "max_wall_ms": 16.81447634473443,
+                "max_cpu_ms": 0.8518099999998974
+              },
+              "live_checkpoint": {
+                "count": 11,
+                "quiet": 0,
+                "slow": 11,
+                "max_wall_ms": 1336.4590820856392,
+                "max_cpu_ms": 220.49390400000135
+              },
+              "live_ledger": {
+                "count": 11,
+                "quiet": 0,
+                "slow": 11,
+                "max_wall_ms": 1325.4714203067124,
+                "max_cpu_ms": 42.16142000000023
+              },
+              "live_logs": {
+                "count": 11,
+                "quiet": 11,
+                "slow": 0,
+                "max_wall_ms": 2.59102089330554,
+                "max_cpu_ms": 1.3463320000006718
+              },
+              "live_mirror": {
+                "count": 5,
+                "quiet": 0,
+                "slow": 5,
+                "max_wall_ms": 326.53951505199075,
+                "max_cpu_ms": 160.89457100000004
+              },
+              "live_panel": {
+                "count": 23,
+                "quiet": 0,
+                "slow": 23,
+                "max_wall_ms": 51.98446102440357,
+                "max_cpu_ms": 29.275304000000446
+              },
+              "live_reports": {
+                "count": 1,
+                "quiet": 0,
+                "slow": 1,
+                "max_wall_ms": 45.424950774759054,
+                "max_cpu_ms": 26.90085000000053
+              },
+              "live_state": {
+                "count": 11,
+                "quiet": 0,
+                "slow": 11,
+                "max_wall_ms": 30.625286977738142,
+                "max_cpu_ms": 14.845787000000499
+              },
+              "practice_checkpoint": {
+                "count": 14,
+                "quiet": 0,
+                "slow": 14,
+                "max_wall_ms": 436.21131777763367,
+                "max_cpu_ms": 305.363882
+              },
+              "practice_daily_reports": {
+                "count": 14,
+                "quiet": 0,
+                "slow": 14,
+                "max_wall_ms": 248.74917790293694,
+                "max_cpu_ms": 241.77352099999982
+              },
+              "practice_ledger": {
+                "count": 14,
+                "quiet": 0,
+                "slow": 14,
+                "max_wall_ms": 378.57384979724884,
+                "max_cpu_ms": 28.491732000002656
+              },
+              "practice_logs": {
+                "count": 14,
+                "quiet": 13,
+                "slow": 1,
+                "max_wall_ms": 5.175193306058645,
+                "max_cpu_ms": 0.9426710000002281
+              },
+              "practice_mirror": {
+                "count": 14,
+                "quiet": 0,
+                "slow": 14,
+                "max_wall_ms": 45.74337787926197,
+                "max_cpu_ms": 14.356587000001753
+              },
+              "practice_panel": {
+                "count": 16,
+                "quiet": 0,
+                "slow": 16,
+                "max_wall_ms": 221.03279689326882,
+                "max_cpu_ms": 203.07269500000035
+              },
+              "practice_state": {
+                "count": 14,
+                "quiet": 0,
+                "slow": 14,
+                "max_wall_ms": 232.7268677763641,
+                "max_cpu_ms": 208.13272999999998
+              },
+              "practice_step": {
+                "count": 405,
+                "quiet": 88,
+                "slow": 317,
+                "max_wall_ms": 441.19334500283003,
+                "max_cpu_ms": 309.64077700000024
+              }
+            },
+            "all_sync_work_lower_bound": {
+              "capacity": 512,
+              "bin_ms": 31.25,
+              "retention_s": 16,
+              "top_level_spans": 155094,
+              "clipped_spans": 0,
+              "scope": "completed top-level synchronous work; conservative fully contained bins"
+            },
+            "cpu_basis": "thread CPU; full and nested spans are not additive"
+          },
+          "publication": "next_existing_checkpoint",
+          "buffered": 0,
+          "buffer_dropped": 0
+        }
+      }
+    }
+  ],
+  "error_queries": {
+    "start_utc": "2026-10-14T23:10:00Z",
+    "end_utc": "2026-10-14T23:12:15.000Z",
+    "severity_filter": "@level:error",
+    "severity_rows": [
+      {
+        "timestamp": "2026-10-14T23:10:20.448562277Z",
+        "severity": "error",
+        "message": "2026-10-14T23:10:20Z WARNING nightcrawler.sources.pumpfun: pumpfun_backoff host=frontend-api-v3.pump.fun status=403 cooldown_s=60",
+        "attributes": [
+          {
+            "key": "level",
+            "value": "\"error\""
+          }
+        ]
+      },
+      {
+        "timestamp": "2026-10-14T23:10:20.448566977Z",
+        "severity": "error",
+        "message": "2026-10-14T23:10:20Z WARNING nightcrawler.learn.recorder: learn_breaker_open host=frontend-api-v3.pump.fun pause_s=600",
+        "attributes": [
+          {
+            "key": "level",
+            "value": "\"error\""
+          }
+        ]
+      }
+    ],
+    "traceback_filter": "\"Traceback (most recent call last)\"",
+    "traceback_rows": []
+  },
+  "checks": "scorecard_grouping_checks.json",
+  "limitations": [
+    "Initial actual runtime observations are from the restart-partial23:00-23:15UTCwindow and cold saves; they do not establish sustained latency improvement or a profitable strategy.",
+    "The baseline3:45-4:00PDTwindow's0.33USDloss and all prior losses remain recorded.",
+    "Only principal financial facts are compared for equality; ongoing attempt counters and timing/session metrics may change normally.",
+    "Application warnings include unrelated pump.fun403/backoff; no exhaustive error-free capture or raw recorder coverage claim.",
+    "Full4:15-4:30PDTpost-restart window collection is actively assigned but not yet completed; EXEC-DELAY-001 remains open."
+  ]
+}

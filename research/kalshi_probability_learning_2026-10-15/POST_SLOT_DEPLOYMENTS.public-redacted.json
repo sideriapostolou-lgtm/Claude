@@ -1,0 +1,93 @@
+{
+  "request": {
+    "projectId": "75750847-85c0-41a3-a2a7-b7f2201a51e9",
+    "environmentId": "17f7b0e0-104c-4903-9484-0106748b3cdb",
+    "serviceId": "f84d3b52-002f-44cb-931e-bc9e3e097e97",
+    "limit": 3
+  },
+  "before": {
+    "current_time": "2026-10-15 19:37:18 UTC"
+  },
+  "after": {
+    "current_time": "2026-10-15 19:37:18 UTC"
+  },
+  "result": {
+    "content": [
+      {
+        "type": "text",
+        "text": "Found 3 deployment(s):\n\n- **3a0dfb75-cdec-41bb-917e-9614c8ec2849** [SKIPPED]\n  service: f84d3b52-002f-44cb-931e-bc9e3e097e97, env: 17f7b0e0-104c-4903-9484-0106748b3cdb\n  created: 2026-10-15T19:36:50.967Z by sideriapostolou@gmail.com\n  branch claude/nightcrawler-memecoin-bot-Gwnb1S \u00b7 commit 2c9198f \u00b7 docs: preserve first probability forecast before outcome\n- **81a0e9cf-8c3d-4007-8c95-5cebdaa35395** [SKIPPED]\n  service: f84d3b52-002f-44cb-931e-bc9e3e097e97, env: 17f7b0e0-104c-4903-9484-0106748b3cdb\n  created: 2026-10-15T19:28:56.186Z by sideriapostolou@gmail.com\n  branch claude/nightcrawler-memecoin-bot-Gwnb1S \u00b7 commit ac0da27 \u00b7 docs: freeze first full probability observation window\n- **2e88601d-c9c7-474f-add8-72c0a13c1a4b** [SUCCESS]\n  service: f84d3b52-002f-44cb-931e-bc9e3e097e97, env: 17f7b0e0-104c-4903-9484-0106748b3cdb\n  created: 2026-10-15T19:17:06.734Z by sideriapostolou@gmail.com\n  branch claude/nightcrawler-memecoin-bot-Gwnb1S \u00b7 commit 8c8681a \u00b7 Merge pull request #64 from sideriapostolou-lgtm/codex/kalshi-probability-learning\n\nLIVE ON MERGE: probability observer; touches real money on restart\n  regions: us-east4-eqdc4a\n  can redeploy \u00b7 can roll back"
+      }
+    ],
+    "structuredContent": {
+      "deployments": [
+        {
+          "id": "3a0dfb75-cdec-41bb-917e-9614c8ec2849",
+          "status": "SKIPPED",
+          "createdAt": "2026-10-15T19:36:50.967Z",
+          "updatedAt": "2026-10-15T19:36:50.967Z",
+          "serviceId": "f84d3b52-002f-44cb-931e-bc9e3e097e97",
+          "environmentId": "17f7b0e0-104c-4903-9484-0106748b3cdb",
+          "url": null,
+          "snapshotId": null,
+          "canRollback": false,
+          "canRedeploy": false,
+          "regions": [],
+          "meta": {
+            "commitMessage": "docs: preserve first probability forecast before outcome",
+            "commitHash": "2c9198fb69efd8ef9761d2fecf31d8dfc5a0b147",
+            "branch": "claude/nightcrawler-memecoin-bot-Gwnb1S"
+          }
+        },
+        {
+          "id": "81a0e9cf-8c3d-4007-8c95-5cebdaa35395",
+          "status": "SKIPPED",
+          "createdAt": "2026-10-15T19:28:56.186Z",
+          "updatedAt": "2026-10-15T19:28:56.186Z",
+          "serviceId": "f84d3b52-002f-44cb-931e-bc9e3e097e97",
+          "environmentId": "17f7b0e0-104c-4903-9484-0106748b3cdb",
+          "url": null,
+          "snapshotId": null,
+          "canRollback": false,
+          "canRedeploy": false,
+          "regions": [],
+          "meta": {
+            "commitMessage": "docs: freeze first full probability observation window",
+            "commitHash": "ac0da27c4ad35b8e98d3cb0abc9cae21ac3a851a",
+            "branch": "claude/nightcrawler-memecoin-bot-Gwnb1S"
+          }
+        },
+        {
+          "id": "2e88601d-c9c7-474f-add8-72c0a13c1a4b",
+          "status": "SUCCESS",
+          "createdAt": "2026-10-15T19:17:06.734Z",
+          "updatedAt": "2026-10-15T19:22:21.502Z",
+          "serviceId": "f84d3b52-002f-44cb-931e-bc9e3e097e97",
+          "environmentId": "17f7b0e0-104c-4903-9484-0106748b3cdb",
+          "url": null,
+          "snapshotId": "102aed5e-bb39-4141-b8b0-4371e1b569ae",
+          "canRollback": true,
+          "canRedeploy": true,
+          "regions": [
+            "us-east4-eqdc4a"
+          ],
+          "meta": {
+            "reason": "deploy",
+            "commitMessage": "Merge pull request #64 from sideriapostolou-lgtm/codex/kalshi-probability-learning\n\nLIVE ON MERGE: probability observer; touches real money on restart",
+            "commitHash": "8c8681a032a6181c49915ba88ba38d0818dc69d3",
+            "branch": "claude/nightcrawler-memecoin-bot-Gwnb1S"
+          }
+        }
+      ]
+    },
+    "isError": false
+  },
+  "public_derivative": {
+    "original_sha256": "954ac8bdd3c2f00447fb41290c0a9e348486a5d4217b65ca26fb8a17279a8618",
+    "redacted_json_paths": [
+      "$.result.structuredContent.deployments[0].creator",
+      "$.result.structuredContent.deployments[1].creator",
+      "$.result.structuredContent.deployments[2].creator"
+    ],
+    "reason": "Unneeded creator contacts/identity; full original retained privately."
+  }
+}

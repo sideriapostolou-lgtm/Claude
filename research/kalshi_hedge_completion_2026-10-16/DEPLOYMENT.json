@@ -1,0 +1,96 @@
+{
+  "source_commit": "2f0bba487b4c88fa39299924b7a112e8413cb933",
+  "feature_commit": "54589b43d4a1f8969604ca86d28e9c1e06f6a0da",
+  "pr": 75,
+  "merged_at": "2026-10-16T20:33:19Z",
+  "pacific_merged_at": "October 16, 2026, 1:33:19 PM PDT",
+  "safe_minute": 33,
+  "merge_tree": "f55288c623add23cd954baf98b0250c3fe66016d",
+  "feature_tree": "f55288c623add23cd954baf98b0250c3fe66016d",
+  "deployment": {
+    "id": "7582010e-5681-41bb-964b-951e8b3c6767",
+    "status": "SUCCESS",
+    "created_at": "2026-10-16T20:33:21.549Z",
+    "status_updated_at": "2026-10-16T20:34:33.499Z",
+    "source": "2f0bba487b4c88fa39299924b7a112e8413cb933"
+  },
+  "polymarket_startup": [
+    {
+      "timestamp": "2026-10-16T20:34:29.741915326Z",
+      "message": "2026-10-16T20:34:29Z INFO nightcrawler.polydesk: polydesk_started theta=0.97 hours=1 ticket_usd=20 poll_s=90 (LIVE: 10 contract(s) per order)"
+    }
+  ],
+  "kalshi_runtime": {
+    "status": "bounded acceptance verified",
+    "native_timestamp": "2026-10-16T20:39:21.213127288Z",
+    "mode": "live",
+    "trading_now": true,
+    "waiting": "",
+    "policy_version": 1,
+    "evidence": "RUNTIME.json",
+    "actual_new_policy_fill_verified": false
+  },
+  "limits_changed": false,
+  "variables_changed": false,
+  "stop_or_resume_action": false,
+  "manual_test_orders": false,
+  "closed_runtime_queries": {
+    "start_utc": "2026-10-16T20:34:00Z",
+    "end_utc": "2026-10-16T20:40:00Z",
+    "error_traceback": {
+      "returned": 0,
+      "limit": 30
+    },
+    "new_native_order_fill_settlement": {
+      "returned": 0,
+      "limit": 100
+    },
+    "qualification": "Unsaturated bounded log searches, not full ledger completeness. Startup low-disk warning preserved separately."
+  },
+  "health_query_started_after_utc": "2026-10-16T20:40:00Z",
+  "health_source_timestamp": "Not returned; deployment statusUpdatedAt fields are preserved separately",
+  "health": [
+    {
+      "service": "bot",
+      "state": "online",
+      "active_deployments": [
+        {
+          "id": "7582010e-5681-41bb-964b-951e8b3c6767",
+          "status": "SUCCESS",
+          "createdAt": "2026-10-16T20:33:21.549Z",
+          "statusUpdatedAt": "2026-10-16T20:34:33.498Z"
+        }
+      ],
+      "replicas": {
+        "running": 1,
+        "crashed": 0,
+        "total": 1
+      },
+      "issues": {
+        "warningCount": 0,
+        "criticalCount": 0
+      }
+    },
+    {
+      "service": "kalshi-recorder",
+      "state": "online",
+      "active_deployments": [
+        {
+          "id": "8453f919-b891-4aa7-8478-6fcf6b9c24ee",
+          "status": "SUCCESS",
+          "createdAt": "2026-10-14T16:36:40.384Z",
+          "statusUpdatedAt": "2026-10-14T16:38:15.302Z"
+        }
+      ],
+      "replicas": {
+        "running": 1,
+        "crashed": 0,
+        "total": 1
+      },
+      "issues": {
+        "warningCount": 0,
+        "criticalCount": 0
+      }
+    }
+  ]
+}

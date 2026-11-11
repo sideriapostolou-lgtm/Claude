@@ -1,0 +1,27 @@
+{
+  "MYPY": {
+    "command": [
+      "/workspace/shared/nightcrawler-venv/bin/python",
+      "-m",
+      "mypy",
+      "src/nightcrawler"
+    ],
+    "started_at_utc": "2026-10-15T20:42:31.930887+00:00",
+    "finished_at_utc": "2026-10-15T20:42:32.432960+00:00",
+    "exit_code": 0,
+    "output": "Success: no issues found in 129 source files\n"
+  },
+  "RUFF": {
+    "command": [
+      "/workspace/shared/nightcrawler-venv/bin/ruff",
+      "check",
+      "src/nightcrawler/speeddesk_kalshi.py",
+      "src/nightcrawler/speeddesk_kalshi_ws.py",
+      "tests/test_speeddesk_kalshi_rest_recovery.py"
+    ],
+    "started_at_utc": "2026-10-15T20:42:32.432975+00:00",
+    "finished_at_utc": "2026-10-15T20:42:32.439255+00:00",
+    "exit_code": 0,
+    "output": "All checks passed!\n"
+  }
+}

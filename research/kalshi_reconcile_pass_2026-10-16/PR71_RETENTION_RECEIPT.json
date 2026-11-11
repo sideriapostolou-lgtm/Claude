@@ -1,0 +1,12 @@
+{
+  "checks_passed": 90,
+  "checks_total": 90,
+  "files": {
+    "audit_pr71_retention.py": "c50af1b4a2be018220e0e408f4beacf8d7af9603b4bc10c033023fd0756a30ff",
+    "PR71_RETENTION_ANALYSIS.json": "6c6bb037d8eff3f7f02c63f8e310ed18d4e46296c407e20bd3079c4285dd273d",
+    "PR71_RETENTION_REVIEW.md": "61746c4d23ccf0b8997e6bad49e57bf3b791641ac69b96b2c8f7f75e250e34d4"
+  },
+  "replay_writes_only": [
+    "PR71_RETENTION_ANALYSIS.json"
+  ]
+}

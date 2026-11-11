@@ -1,0 +1,1 @@
+{"checks":[{"at":"2026-10-18T15:24:16.264776Z","path":"/healthz","status":200},{"at":"2026-10-18T15:24:16.483319Z","path":"/api/page","status":401}],"credentials_used":false}

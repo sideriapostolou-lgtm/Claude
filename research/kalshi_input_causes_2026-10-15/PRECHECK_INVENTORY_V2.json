@@ -1,0 +1,241 @@
+{
+  "inventory_kind": "bounded evidence inventory; no causal or trading conclusions",
+  "created_utc": "2026-10-15",
+  "repository": "/workspace/nightcrawler-input-causes",
+  "repository_head": "3ce8a0b92f53916768a3e1c09cac700281d3c1cd",
+  "working_tree_note": "Existing integration-owner change observed in src/nightcrawler/kalshi_arena.py; left untouched. Evidence folder is untracked. No repository files were edited by this inventory task.",
+  "source_runtime_documents": {
+    "source": {
+      "reference": "HEAD 3ce8a0b92f53916768a3e1c09cac700281d3c1cd, same commit object identified in instructions as base3ce8a0b",
+      "pure_learner_and_model_controlled_files": [
+        {
+          "path": "src/nightcrawler/kalshi_online_learning.py",
+          "sha256": "16a14ff7d8bb933d4eb8e4251d0fdcf943c81e6f8c6f8f1720ced3d5e14f5fa8",
+          "worktree_byte_identical_to_head": true
+        },
+        {
+          "path": "src/nightcrawler/speeddesk_model.py",
+          "sha256": "50ba3b4f78c6efd031fdcd8bb1cb1a59ea2988973c341b9ad275345d70de7429",
+          "worktree_byte_identical_to_head": true
+        },
+        {
+          "path": "src/nightcrawler/speeddesk_live_model.py",
+          "sha256": "689207e3a681b591f64a43f03a359d2dc0dbe424cbc2f74809669866ffab36de",
+          "worktree_byte_identical_to_head": true
+        },
+        {
+          "path": "src/nightcrawler/speeddesk_feeds.py",
+          "sha256": "4a942d649af275cc6ad7b467462236e66c9a629cab0920e1a1adb3c24982dffd",
+          "worktree_byte_identical_to_head": true
+        }
+      ],
+      "note": "This byte comparison is limited to the named learner/model/control files; it does not establish identity of arena hooks or the entire runtime.",
+      "protected_file_hashes_unchanged_from_v1_and_match_head": true
+    },
+    "runtime_evidence": "Four native snapshots below. Status text reports runtime observations later than the newest documentation entry; snapshots are bounded query results, not continuous runtime coverage.",
+    "latest_documentation": {
+      "path": "docs/WORKLOG.md",
+      "newest_entry": "2026-10-15 16:40 UTC (9:40 AM PDT)",
+      "related_priority": "EXEC-DELAY-001 / linked KALSHI-ONLINE-001 input-cause/timing evidence; unresolved source coverage and delays explicitly remain open in that entry."
+    }
+  },
+  "files": [
+    {
+      "path": "research/kalshi_input_causes_2026-10-15/pre_current_status.native.json",
+      "bytes": 208680,
+      "sha256": "140502a79c70fd48cba74831c1631f3fe40f403cd5de52d999e2e888de7fb95b",
+      "native_result": true,
+      "returned_deploy_log_rows": 2,
+      "first_log_timestamp_utc": "2026-10-15T16:48:58.055754654Z",
+      "last_log_timestamp_utc": "2026-10-15T16:49:58.837538885Z",
+      "at_cap": "not stated in saved result; cannot determine"
+    },
+    {
+      "path": "research/kalshi_input_causes_2026-10-15/pre_learning_status.native.json",
+      "bytes": 25107,
+      "sha256": "b7637e3ca0ed809455c21d85548272dca77589ba3a170e767fbd433256dde4b8",
+      "native_result": true,
+      "returned_deploy_log_rows": 9,
+      "first_log_timestamp_utc": "2026-10-15T16:30:12.214460748Z",
+      "last_log_timestamp_utc": "2026-10-15T16:46:26.231637266Z",
+      "at_cap": "not stated in saved result; cannot determine"
+    },
+    {
+      "path": "research/kalshi_input_causes_2026-10-15/pre_health.native.json",
+      "bytes": 2735,
+      "sha256": "74275bb02ece8f6fe08bcff7276f62b9098ab19bdc55d9655694bd3cadfc5215",
+      "native_result": true,
+      "returned_deploy_log_rows": 0,
+      "first_log_timestamp_utc": null,
+      "last_log_timestamp_utc": null,
+      "at_cap": "not applicable to this health snapshot; no request cap metadata"
+    },
+    {
+      "path": "research/kalshi_input_causes_2026-10-15/pre_deployments.selected.json",
+      "bytes": 1302,
+      "sha256": "9008c422c77d3d85453425b2348ff4852bb18b79a4c1207c12ba4cbfee08ea95",
+      "native_result": false,
+      "selected_deployment_rows": 5,
+      "statuses": {
+        "SUCCESS": 1,
+        "SKIPPED": 4
+      },
+      "created_at_utc_first_newest_to_oldest": "2026-10-15T16:41:21.858Z",
+      "created_at_utc_last_newest_to_oldest": "2026-10-15T15:43:02.182Z",
+      "at_cap": "not stated in saved result; cannot determine"
+    }
+  ],
+  "request_result_log_inventory": {
+    "saved_request_result_log_files_in_target_evidence_folder": 0,
+    "available_log_material": "Two native status results contain bounded embedded deploy-log rows; exact query metadata is now recorded in PRECHECK_REQUESTS.json.",
+    "queries": [
+      {
+        "file": "pre_current_status.native.json",
+        "startDate": "2026-10-15T16:48:00Z",
+        "endDate": "2026-10-15T16:53:00Z",
+        "filter": "\"speeddesk_live_status\"",
+        "limit": 12,
+        "returned": 2,
+        "at_cap": false,
+        "verified_sha256": "140502a79c70fd48cba74831c1631f3fe40f403cd5de52d999e2e888de7fb95b",
+        "saved_result_log_rows": 2
+      },
+      {
+        "file": "pre_learning_status.native.json",
+        "startDate": "2026-10-15T16:30:00Z",
+        "endDate": "2026-10-15T16:53:00Z",
+        "filter": "\"kalshi_online_learning_status\"",
+        "limit": 12,
+        "returned": 9,
+        "at_cap": false,
+        "verified_sha256": "b7637e3ca0ed809455c21d85548272dca77589ba3a170e767fbd433256dde4b8",
+        "saved_result_log_rows": 9
+      }
+    ],
+    "request_count": 2,
+    "at_cap": "Both queries returned below limit 12: current status 2/12 and learning status 9/12; neither reports at_cap. This only describes the bounded responses.",
+    "retrieval_wall_clock_utc": "Exact call wall clock not instrumented; bounded between root clock receipts16:49:13 and16:51:31UTC. Requested end16:53UTC lay in the future; these are point-status prechecks, NOT complete coverage of requested interval.",
+    "observed_at_utc": "2026-10-15T16:52:45.673344+00:00",
+    "coverage_interpretation": "Requested end 2026-10-15T16:53:00Z was in the future at retrieval. Results are point-status prechecks, not complete coverage of either requested interval. Successful/zero-error status does not establish complete log coverage.",
+    "deployment_scope_note": "service scoped log response deploymentId names latest SKIPPED docs deployment, not emitter. Running deployment established separately by native environment health and selected deployment list.",
+    "request_receipt": {
+      "path": "research/kalshi_input_causes_2026-10-15/PRECHECK_REQUESTS.json",
+      "sha256": "25e9c64ee71aee54c58d9a2a52e7e299dbbab073bd94f341d1b9dd0b7171688a",
+      "tool": "railway_get_logs",
+      "projectId": "75750847-85c0-41a3-a2a7-b7f2201a51e9",
+      "environmentId": "17f7b0e0-104c-4903-9484-0106748b3cdb",
+      "serviceId": "f84d3b52-002f-44cb-931e-bc9e3e097e97"
+    }
+  },
+  "coverage_limitations": [
+    "All four v1 pre snapshot hashes remain unchanged; the new request receipt adds exact filters, bounds, limits, returned counts, and at-cap flags for the two log queries.",
+    "Both query responses are below the cap (2/12 and 9/12), but bounded point-status retrieval with a future requested end does not establish complete interval coverage.",
+    "Service-scoped logs identify the latest SKIPPED documentation deployment as deploymentId; that identifier is not the emitter. Running deployment is established separately by saved native health and selected deployment evidence.",
+    "The deployment list remains a selected five-row result and does not establish complete deployment history."
+  ],
+  "inventory_version": 2,
+  "prior_inventory_receipt": {
+    "path": "/workspace/input-cause-evidence-inventory.json",
+    "sha256": "b5783982f7119232c28973a05ce8b61b470e0a66b1a74ff868501b699b859483",
+    "preserved_content": {
+      "inventory_kind": "bounded evidence inventory; no causal or trading conclusions",
+      "created_utc": "2026-10-15",
+      "repository": "/workspace/nightcrawler-input-causes",
+      "repository_head": "3ce8a0b92f53916768a3e1c09cac700281d3c1cd",
+      "working_tree_note": "Existing integration-owner change observed in src/nightcrawler/kalshi_arena.py; left untouched. Evidence folder is untracked. No repository files were edited by this inventory task.",
+      "source_runtime_documents": {
+        "source": {
+          "reference": "HEAD 3ce8a0b92f53916768a3e1c09cac700281d3c1cd, same commit object identified in instructions as base3ce8a0b",
+          "pure_learner_and_model_controlled_files": [
+            {
+              "path": "src/nightcrawler/kalshi_online_learning.py",
+              "sha256": "16a14ff7d8bb933d4eb8e4251d0fdcf943c81e6f8c6f8f1720ced3d5e14f5fa8",
+              "worktree_byte_identical_to_head": true
+            },
+            {
+              "path": "src/nightcrawler/speeddesk_model.py",
+              "sha256": "50ba3b4f78c6efd031fdcd8bb1cb1a59ea2988973c341b9ad275345d70de7429",
+              "worktree_byte_identical_to_head": true
+            },
+            {
+              "path": "src/nightcrawler/speeddesk_live_model.py",
+              "sha256": "689207e3a681b591f64a43f03a359d2dc0dbe424cbc2f74809669866ffab36de",
+              "worktree_byte_identical_to_head": true
+            },
+            {
+              "path": "src/nightcrawler/speeddesk_feeds.py",
+              "sha256": "4a942d649af275cc6ad7b467462236e66c9a629cab0920e1a1adb3c24982dffd",
+              "worktree_byte_identical_to_head": true
+            }
+          ],
+          "note": "This byte comparison is limited to the named learner/model/control files; it does not establish identity of arena hooks or the entire runtime.",
+          "protected_file_hashes_unchanged_from_v1_and_match_head": true
+        },
+        "runtime_evidence": "Four native snapshots below. Status text reports runtime observations later than the newest documentation entry; snapshots are bounded query results, not continuous runtime coverage.",
+        "latest_documentation": {
+          "path": "docs/WORKLOG.md",
+          "newest_entry": "2026-10-15 16:40 UTC (9:40 AM PDT)",
+          "related_priority": "EXEC-DELAY-001 / linked KALSHI-ONLINE-001 input-cause/timing evidence; unresolved source coverage and delays explicitly remain open in that entry."
+        }
+      },
+      "files": [
+        {
+          "path": "research/kalshi_input_causes_2026-10-15/pre_current_status.native.json",
+          "bytes": 208680,
+          "sha256": "140502a79c70fd48cba74831c1631f3fe40f403cd5de52d999e2e888de7fb95b",
+          "native_result": true,
+          "returned_deploy_log_rows": 2,
+          "first_log_timestamp_utc": "2026-10-15T16:48:58.055754654Z",
+          "last_log_timestamp_utc": "2026-10-15T16:49:58.837538885Z",
+          "at_cap": "not stated in saved result; cannot determine"
+        },
+        {
+          "path": "research/kalshi_input_causes_2026-10-15/pre_learning_status.native.json",
+          "bytes": 25107,
+          "sha256": "b7637e3ca0ed809455c21d85548272dca77589ba3a170e767fbd433256dde4b8",
+          "native_result": true,
+          "returned_deploy_log_rows": 9,
+          "first_log_timestamp_utc": "2026-10-15T16:30:12.214460748Z",
+          "last_log_timestamp_utc": "2026-10-15T16:46:26.231637266Z",
+          "at_cap": "not stated in saved result; cannot determine"
+        },
+        {
+          "path": "research/kalshi_input_causes_2026-10-15/pre_health.native.json",
+          "bytes": 2735,
+          "sha256": "74275bb02ece8f6fe08bcff7276f62b9098ab19bdc55d9655694bd3cadfc5215",
+          "native_result": true,
+          "returned_deploy_log_rows": 0,
+          "first_log_timestamp_utc": null,
+          "last_log_timestamp_utc": null,
+          "at_cap": "not applicable to this health snapshot; no request cap metadata"
+        },
+        {
+          "path": "research/kalshi_input_causes_2026-10-15/pre_deployments.selected.json",
+          "bytes": 1302,
+          "sha256": "9008c422c77d3d85453425b2348ff4852bb18b79a4c1207c12ba4cbfee08ea95",
+          "native_result": false,
+          "selected_deployment_rows": 5,
+          "statuses": {
+            "SUCCESS": 1,
+            "SKIPPED": 4
+          },
+          "created_at_utc_first_newest_to_oldest": "2026-10-15T16:41:21.858Z",
+          "created_at_utc_last_newest_to_oldest": "2026-10-15T15:43:02.182Z",
+          "at_cap": "not stated in saved result; cannot determine"
+        }
+      ],
+      "request_result_log_inventory": {
+        "saved_request_result_log_files_in_target_evidence_folder": 0,
+        "available_log_material": "Two native status results contain bounded embedded deploy-log rows: current status has 2 rows and learning status has 9 rows. These are returned log rows in native status results, not standalone request-result logs.",
+        "request_count": "Not recoverable from the four saved files; they do not contain a request ledger or query-parameter/cap receipt.",
+        "at_cap": "Unknown for log requests. No saved request metadata identifies requested limits, result truncation, or whether the returned row counts reached a cap. Zero errors or successful status responses do not certify complete log coverage."
+      },
+      "coverage_limitations": [
+        "The folder contained only the four named pre snapshots at inventory time; no standalone request-result log artifacts were present.",
+        "The embedded log counts and first/last timestamps describe only rows returned in those snapshots. They do not certify full source coverage, complete runtime history, or continuous health.",
+        "The current status and learning snapshots were captured at different bounded times; do not treat their intervals as one continuous stream.",
+        "The deployment list is a selected five-row result; saved data does not establish that it is a complete deployment history."
+      ]
+    }
+  }
+}

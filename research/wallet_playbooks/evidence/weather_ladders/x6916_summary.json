@@ -1,0 +1,60 @@
+{
+  "name": "x6916",
+  "retrieved_at": "2026-10-13T18:57:33.539585+00:00",
+  "url": "https://data-api.polymarket.com/trades?user=0x6916cc00aa1c3e75ecf4081df7cae7d2f3592fd4&limit=500&offset=0&takerOnly=false",
+  "status": 200,
+  "sha256": "8435599bf5fa21959ac2ca5bcecc9f5602b665c2ac078671456e4d0ab467c56d",
+  "n": 500,
+  "min_timestamp": 1791751386,
+  "max_timestamp": 1791916320,
+  "buy_count": 254,
+  "sell_count": 246,
+  "price_median": 0.5500000483,
+  "size_median": 85.02625,
+  "buy_outcomes": {
+    "Yes": 148,
+    "No": 106
+  },
+  "titles": [
+    [
+      "Will Bitcoin dip to $77,500 in October?",
+      29
+    ],
+    [
+      "Will Bitcoin reach $85,000 in October?",
+      26
+    ],
+    [
+      "Will Bitcoin reach $87,500 in October?",
+      19
+    ],
+    [
+      "Will Bitcoin dip to $80,000 in October?",
+      13
+    ],
+    [
+      "Will Bitcoin reach $90,000 by December 31, 2026?",
+      12
+    ],
+    [
+      "Will Ethereum dip to $2,400 October 12-18?",
+      12
+    ],
+    [
+      "Will Ethereum dip to $2,200 October 12-18?",
+      12
+    ],
+    [
+      "Will Bitcoin dip to $80,000 October 12-18?",
+      11
+    ],
+    [
+      "Will Bitcoin reach $92,500 in October?",
+      11
+    ],
+    [
+      "Will XRP dip to $1.00 in October?",
+      10
+    ]
+  ]
+}

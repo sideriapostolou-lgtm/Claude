@@ -1,0 +1,56 @@
+import importlib.util,sys,subprocess,tempfile,json,hashlib
+from pathlib import Path
+from dataclasses import replace
+from nightcrawler import kalshi_arena as current
+from nightcrawler.speeddesk_model import Window,Book,Trade
+BASE='3ce8a0b92f53916768a3e1c09cac700281d3c1cd'
+ROOT=Path('/workspace/nightcrawler-input-causes')
+class Clock:
+ def __init__(self):self.at=899.;self.reads=0
+ def __call__(self):self.reads+=1;return self.at+self.reads*.000001
+ def set(self,at):self.at=at;self.reads=0
+
+def main():
+ results=[]
+ with tempfile.TemporaryDirectory(prefix='independent-input-review-') as td:
+  d=Path(td);p=d/'base.py';p.write_bytes(subprocess.check_output(['git','show',BASE+':src/nightcrawler/kalshi_arena.py'],cwd=ROOT))
+  spec=importlib.util.spec_from_file_location('nightcrawler._independent_review_base',p);base=importlib.util.module_from_spec(spec);sys.modules[spec.name]=base;spec.loader.exec_module(base)
+  for scenario in ('normal','observer_failed','observer_disabled'):
+   pair=[];writes=[[],[]]
+   for idx,mod in enumerate((base,current)):
+    clock=Clock();v=mod.WireView();v.bitcoin_price=100.;v.sigma=.001;v.bitcoin_at=900.
+    a=mod.KalshiArena(mod.ArenaConfig(d/scenario/str(idx),population=2),lambda v=v:v,clock=clock,cpu=lambda:0.)
+    a.town_id='123456789abc';pair.append((a,v,clock))
+    orig=mod._write
+    def record(path,text,*,durable=False,idx=idx,orig=orig):
+     writes[idx].append((path.name,text,durable));return orig(path,text,durable=durable)
+    mod._write=record
+   if scenario=='observer_disabled':pair[1][0]._diagnostic=None
+   if scenario=='observer_failed':
+    def fail(*a,**kw):raise RuntimeError('injected observation-only error')
+    pair[1][0]._diagnostic.before=fail;pair[1][0]._diagnostic.cause=fail;pair[1][0]._diagnostic.after=fail
+   w=Window('KXBTC15M-review-one',1000,1900,100,venue='kalshi');w2=Window('KXBTC15M-review-two',2000,2900,100,venue='kalshi')
+   checkpoints=0
+   for at in (900,950,1000,1100,1300,1400,1900,2000,2300,2900):
+    for a,v,c in pair:
+     c.set(at);v.windows=(w,w2);v.bitcoin_at=at
+     if at==950:a.receive(('batch',1,949,0,0,[('g',[],False,False)]),v)
+     if at==1000:
+      a.receive(('batch',3,999,1,0,[('g',[w.slug],True,True),current.book_wire(Book(w.slug,'up',(),(),995,'fake')),current.trade_wire(Trade(w.slug,'up',.5,1,995,'dup',received_at=995))]),v)
+      a.receive(('batch',4,999.5,1,0,[('g',[],True,True),current.trade_wire(Trade(w.slug,'up',.5,1,995,'dup',received_at=995))]),v)
+     if at==1400:a.feed_gap((w.slug,),True,True)
+     if at==1900:v.outcomes={w.slug:False}
+     if at==2900:v.outcomes={w.slug:False,w2.slug:True}
+     a.step(at)
+    aa,av,ac=pair[0];bb,bv,bc=pair[1]
+    assert ac.reads==bc.reads,(scenario,at,'clockreads',ac.reads,bc.reads)
+    assert aa.state(at)==bb.state(at),(scenario,at,'state')
+    assert aa.panel(at)==bb.panel(at),(scenario,at,'panel')
+    assert aa.learning.state()==bb.learning.state(),(scenario,at,'learner')
+    assert writes[0]==writes[1],(scenario,at,'writes')
+    assert aa.learning.enabled,(scenario,at,aa.learning.error)
+    checkpoints+=1
+   results.append({'scenario':scenario,'checkpoints':checkpoints,'writes':len(writes[0]),'forecasts':aa.learning.counts['forecasts'],'scored':aa.learning.counts['scored'],'unknown':aa.learning.counts['unknown']})
+   base._write=current._write=orig
+ print(json.dumps({'base':BASE,'candidate_sha256':hashlib.sha256(Path(current.__file__).read_bytes()).hexdigest(),'results':results,'checks':['actual base vs candidate state','panels','learner complete state','exact serialized write bytes and fsync flags/order','number of clock reads'],'limitations':'synthetic bounded sequence, no production/network/real order calls'},indent=2))
+if __name__=='__main__':main()

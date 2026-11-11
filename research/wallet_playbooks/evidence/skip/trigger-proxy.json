@@ -1,0 +1,170 @@
+{
+  "interpretation": "Own-fill price-path proxy, endogenous selected executions not external quotes or Bitcoin signal. A singleton means entire market timestamp group has one fill; previous price uses strictly earlier same-side group VWAP. Strong direction requires current price above ALL or below ALL previous group prices. No millisecond inference or performance validation.",
+  "all_singleton_takers": {
+    "n": 1725,
+    "direction_counts": {
+      "rise": 933,
+      "fall": 655,
+      "same": 137
+    },
+    "certain_direction_counts": {
+      "rise": 889,
+      "fall": 638,
+      "same": 132,
+      "ambiguous_within_prior_price_range": 66
+    },
+    "delta_mean_cents": 0.1768221035128712,
+    "delta_median_cents": 1.0000000000000009,
+    "gap_seconds_median": 4
+  },
+  "by_size": {
+    "30": {
+      "n": 588,
+      "direction_counts": {
+        "rise": 311,
+        "fall": 228,
+        "same": 49
+      },
+      "certain_direction_counts": {
+        "rise": 287,
+        "fall": 225,
+        "same": 47,
+        "ambiguous_within_prior_price_range": 29
+      },
+      "delta_mean_cents": -0.3914801876731794,
+      "delta_median_cents": 0.9999953499999936,
+      "gap_seconds_median": 4.0
+    },
+    "60": {
+      "n": 262,
+      "direction_counts": {
+        "fall": 123,
+        "rise": 123,
+        "same": 16
+      },
+      "certain_direction_counts": {
+        "fall": 119,
+        "rise": 119,
+        "ambiguous_within_prior_price_range": 9,
+        "same": 15
+      },
+      "delta_mean_cents": -0.7006592300766034,
+      "delta_median_cents": 0.0,
+      "gap_seconds_median": 3.0
+    }
+  },
+  "by_inventory": {
+    "underweight": {
+      "n": 883,
+      "direction_counts": {
+        "fall": 349,
+        "rise": 481,
+        "same": 53
+      },
+      "certain_direction_counts": {
+        "fall": 342,
+        "rise": 460,
+        "same": 50,
+        "ambiguous_within_prior_price_range": 31
+      },
+      "delta_mean_cents": -0.034313837505947686,
+      "delta_median_cents": 1.0000000000000009,
+      "gap_seconds_median": 5
+    },
+    "equal_or_overweight": {
+      "n": 842,
+      "direction_counts": {
+        "rise": 452,
+        "fall": 306,
+        "same": 84
+      },
+      "certain_direction_counts": {
+        "rise": 429,
+        "fall": 296,
+        "same": 82,
+        "ambiguous_within_prior_price_range": 35
+      },
+      "delta_mean_cents": 0.39823901078082496,
+      "delta_median_cents": 1.0000000000000009,
+      "gap_seconds_median": 3.0
+    }
+  },
+  "by_size_inventory": {
+    "30_underweight": {
+      "n": 314,
+      "direction_counts": {
+        "fall": 131,
+        "rise": 164,
+        "same": 19
+      },
+      "certain_direction_counts": {
+        "fall": 129,
+        "rise": 153,
+        "same": 18,
+        "ambiguous_within_prior_price_range": 14
+      },
+      "delta_mean_cents": -1.0255663942004971,
+      "delta_median_cents": 0.515118300191296,
+      "gap_seconds_median": 5.0
+    },
+    "30_equal_or_overweight": {
+      "n": 274,
+      "direction_counts": {
+        "rise": 147,
+        "fall": 97,
+        "same": 30
+      },
+      "certain_direction_counts": {
+        "rise": 134,
+        "fall": 96,
+        "same": 29,
+        "ambiguous_within_prior_price_range": 15
+      },
+      "delta_mean_cents": 0.33517334827418493,
+      "delta_median_cents": 0.9999999999999981,
+      "gap_seconds_median": 4.0
+    },
+    "60_underweight": {
+      "n": 132,
+      "direction_counts": {
+        "fall": 61,
+        "rise": 65,
+        "same": 6
+      },
+      "certain_direction_counts": {
+        "fall": 59,
+        "rise": 61,
+        "same": 5,
+        "ambiguous_within_prior_price_range": 7
+      },
+      "delta_mean_cents": -0.31124144426383366,
+      "delta_median_cents": 1.3877787807814457e-15,
+      "gap_seconds_median": 3.5
+    },
+    "60_equal_or_overweight": {
+      "n": 130,
+      "direction_counts": {
+        "rise": 58,
+        "fall": 62,
+        "same": 10
+      },
+      "certain_direction_counts": {
+        "rise": 58,
+        "fall": 60,
+        "ambiguous_within_prior_price_range": 2,
+        "same": 10
+      },
+      "delta_mean_cents": -1.0960680587480311,
+      "delta_median_cents": 0.0,
+      "gap_seconds_median": 3.0
+    }
+  },
+  "price_range_correlations": {
+    "n": 65,
+    "range_definition": "mean of own Up fill max-min and own Down fill max-min in each window; endogenous to our sampling of executions, not external volatility",
+    "fills_pearson": 0.7156270728257896,
+    "fills_spearman": 0.73536387140835,
+    "gross_cash_pearson": 0.6261919010156642,
+    "gross_cash_spearman": 0.696031295738937
+  }
+}

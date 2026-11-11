@@ -1,0 +1,146 @@
+{
+  "verdict": "RAW_RECONCILIATION_PASS",
+  "assertions_passed": 2433,
+  "method": "Independent CSV parsing, signal timing/coverage and arithmetic; no simulator/runner import or call",
+  "review_script_sha256": "d0ca3a712e6256dc10fa28ccbfc9f7168cbed10e9d810930fc246b427fa8ff6b",
+  "data_sha256": "6dc53ce719b935022c668f36bd2532887a6548b83a7b28d6ac5df0b4f79ee83b",
+  "results_sha256": "1277f713102bd856ea2bcb45028ad4741b2fe5defa63218d6c4393280289df7a",
+  "manifest_sha256": "5334775bf3d55d6dbdeb011b27c90b5b2a7ce33ddb0c3279d8f549ff27e61467",
+  "reviewed_source_sha256": {
+    "simulator.py": "69caef01eb392211342524b2fc3bc695f5cb31eab9d6d64763a4fc4503c2615b",
+    "run_study.py": "e71008ad7604de1464eb63519457644254596cc16e80c0d76ad86fbb1fe35b0c",
+    "EVALUATION.md": "f43925d6a91017094b1acd10885c413eb2e43c61a77e2e7d22f92f32e8097dcf",
+    "../ifvg_intake_2026-10-19/V1_RULES.md": "59e43db6904ce48ff0da9e0c4e144a11e160c9c577c86339963c9e1b51aa6d18"
+  },
+  "scenarios_verified": 9,
+  "scenario_day_records_verified": 99,
+  "summary_blocks_verified": 27,
+  "baseline_daily_evidence": [
+    {
+      "date": "2026-10-02",
+      "decision": "NO_TRADE",
+      "reason": "NO_SWEEP"
+    },
+    {
+      "date": "2026-10-05",
+      "decision": "REJECTED",
+      "reason": "NO_ELIGIBLE_GAP",
+      "sweep_ny": "2026-10-05T09:31:00-04:00"
+    },
+    {
+      "date": "2026-10-06",
+      "decision": "NO_TRADE",
+      "reason": "NO_SWEEP"
+    },
+    {
+      "date": "2026-10-07",
+      "decision": "NO_TRADE",
+      "reason": "NO_SWEEP"
+    },
+    {
+      "date": "2026-10-08",
+      "decision": "TRADE",
+      "reason": "CLOSED_TARGET",
+      "sweep_ny": "2026-10-08T09:57:00-04:00",
+      "gap_c_ny": "2026-10-08T09:55:00-04:00",
+      "confirmation_ny": "2026-10-08T09:58:00-04:00",
+      "entry_ny": "2026-10-08T09:59:00-04:00",
+      "exit_bar_ny": "2026-10-08T10:18:00-04:00",
+      "planned_risk_usd": "58.00",
+      "net_usd": "114.00"
+    },
+    {
+      "date": "2026-10-09",
+      "decision": "REJECTED",
+      "reason": "OPPOSITE_SWEEP",
+      "sweep_ny": "2026-10-09T09:30:00-04:00",
+      "opposite_sweep_ny": "2026-10-09T09:35:00-04:00"
+    },
+    {
+      "date": "2026-10-12",
+      "decision": "NO_TRADE",
+      "reason": "NO_SWEEP"
+    },
+    {
+      "date": "2026-10-13",
+      "decision": "REJECTED",
+      "reason": "NO_ELIGIBLE_GAP",
+      "sweep_ny": "2026-10-13T09:30:00-04:00"
+    },
+    {
+      "date": "2026-10-14",
+      "decision": "NO_TRADE",
+      "reason": "NO_SWEEP"
+    },
+    {
+      "date": "2026-10-15",
+      "decision": "TRADE",
+      "reason": "CLOSED_STOP",
+      "sweep_ny": "2026-10-15T09:33:00-04:00",
+      "gap_c_ny": "2026-10-15T09:23:00-04:00",
+      "confirmation_ny": "2026-10-15T09:39:00-04:00",
+      "entry_ny": "2026-10-15T09:40:00-04:00",
+      "exit_bar_ny": "2026-10-15T09:53:00-04:00",
+      "planned_risk_usd": "283.50",
+      "net_usd": "-286.50"
+    },
+    {
+      "date": "2026-10-16",
+      "decision": "NO_TRADE",
+      "reason": "NO_SWEEP"
+    }
+  ],
+  "scenario_totals": [
+    {
+      "fee_per_side_cents": 50,
+      "friction_ticks": 1,
+      "net_usd": "-170.50"
+    },
+    {
+      "fee_per_side_cents": 50,
+      "friction_ticks": 2,
+      "net_usd": "-170.50"
+    },
+    {
+      "fee_per_side_cents": 50,
+      "friction_ticks": 4,
+      "net_usd": "-170.50"
+    },
+    {
+      "fee_per_side_cents": 100,
+      "friction_ticks": 1,
+      "net_usd": "-172.50"
+    },
+    {
+      "fee_per_side_cents": 100,
+      "friction_ticks": 2,
+      "net_usd": "-172.50"
+    },
+    {
+      "fee_per_side_cents": 100,
+      "friction_ticks": 4,
+      "net_usd": "-172.50"
+    },
+    {
+      "fee_per_side_cents": 150,
+      "friction_ticks": 1,
+      "net_usd": "-174.50"
+    },
+    {
+      "fee_per_side_cents": 150,
+      "friction_ticks": 2,
+      "net_usd": "-174.50"
+    },
+    {
+      "fee_per_side_cents": 150,
+      "friction_ticks": 4,
+      "net_usd": "-174.50"
+    }
+  ],
+  "limitations": [
+    "Exploratory root-series proxy only; actual contract/adjustment/roll unknown",
+    "Only 11 days and 2 modeled trades, with unequal one-contract dollar risk",
+    "Actual costs and operating net unknown; no proven future edge",
+    "Old TEST, network, accounts and production not accessed"
+  ]
+}

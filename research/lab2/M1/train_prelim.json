@@ -1,0 +1,189 @@
+{
+ "hypothesis": "M1",
+ "version": "m1-v1",
+ "stage": "train",
+ "split": "train",
+ "utc": "2026-10-09 00:31:01",
+ "provisional": true,
+ "debug_only": false,
+ "prereg_sha256": "ab926cd86b3ac78c35c4cec34ecd7a19e0c1151ed991cf4ac6311e85670c6f67",
+ "rerun_reason": null,
+ "coverage": {
+  "split": "train",
+  "bounds_utc": [
+   "2026-10-01 00:00:00",
+   "2026-10-05 00:00:00"
+  ],
+  "debug_only": false,
+  "graduates_in_split": 405,
+  "tradeable": 282,
+  "usable": 144,
+  "excluded": {
+   "b2_window_incomplete": 77,
+   "mayhem": 67,
+   "no_b2_row": 61,
+   "virt_unknown": 29,
+   "not_sol_quoted": 27
+  },
+  "created_inexact": 37,
+  "has_create0": 37,
+  "chain_hours_scanned_frac": 0.0625,
+  "days": [
+   {
+    "day": "2026-10-01",
+    "hours_in_split": 24,
+    "curve_hours": 0,
+    "b2_hours": 0,
+    "coins_created": 0,
+    "tradeable": 0,
+    "usable": 0,
+    "usable_frac": 0.0,
+    "partial": true
+   },
+   {
+    "day": "2026-10-02",
+    "hours_in_split": 24,
+    "curve_hours": 0,
+    "b2_hours": 0,
+    "coins_created": 0,
+    "tradeable": 0,
+    "usable": 0,
+    "usable_frac": 0.0,
+    "partial": true
+   },
+   {
+    "day": "2026-10-03",
+    "hours_in_split": 24,
+    "curve_hours": 0,
+    "b2_hours": 0,
+    "coins_created": 0,
+    "tradeable": 0,
+    "usable": 0,
+    "usable_frac": 0.0,
+    "partial": true
+   },
+   {
+    "day": "2026-10-04",
+    "hours_in_split": 24,
+    "curve_hours": 6,
+    "b2_hours": 3,
+    "coins_created": 405,
+    "tradeable": 282,
+    "usable": 144,
+    "usable_frac": 0.511,
+    "partial": true
+   }
+  ],
+  "days_expected": 4.0,
+  "days_full": 0,
+  "curve_span_utc": [
+   "2026-10-04 18:00:00",
+   "2026-10-08 21:00:00"
+  ],
+  "b2_span_utc": [
+   "2026-10-04 21:00:00",
+   "2026-10-08 21:00:00"
+  ],
+  "power": {
+   "entry_bar_coins": {
+    "need": 40,
+    "have_usable_coins": 144,
+    "ok": true
+   },
+   "x1_r0_trades_5_seeds": {
+    "need": 500,
+    "max_possible": 720,
+    "ok": true
+   },
+   "g1_flagged_coins_val": {
+    "need": 200,
+    "max_possible": 144,
+    "ok": false
+   }
+  },
+  "underpowered": false,
+  "complete": false,
+  "notes": [
+   "partial days present: results cover only the hours with data (see days[])",
+   "only 6.2% of the split's chain hours have graduates scanned (backfill in progress?)",
+   "SOL/USD series covers 0/144 coins; others use the nearest edge price (affects only $->SOL sizing and the alive filter's USD volume)"
+  ]
+ },
+ "n_coins": 144,
+ "span_days": 0.125625,
+ "allowed_coins": {
+  "OTHER": 94,
+  "OPERATOR": 9
+ },
+ "clusters_allowed": 17,
+ "clusters_operator": 2,
+ "model_check": {
+  "n_obs": 18,
+  "n_coins": 4,
+  "by_class": {
+   "OPERATOR": 18
+  },
+  "n_clusters": 2,
+  "need": {
+   "coins": 30,
+   "obs": 100,
+   "slope": 0.5,
+   "r2": 0.05
+  },
+  "fit": {
+   "slope": -0.3251593791131945,
+   "intercept": 0.053001661992270015,
+   "r2": 0.14306869803803912,
+   "n": 18
+  },
+  "decision": "UNDERPOWERED",
+  "slope_ci95_coin": [
+   -0.4632558616535648,
+   -0.0760570023385508
+  ],
+  "diagnostics": {
+   "one_obs_per_coin": {
+    "slope": -0.7038344687027096,
+    "intercept": 0.06387570616824667,
+    "r2": 0.9684421375884829,
+    "n": 4
+   },
+   "realized_winsorized_5_95": {
+    "slope": -0.29681678090715374,
+    "intercept": 0.05167151354695927,
+    "r2": 0.1251303159091256,
+    "n": 18
+   },
+   "log_log": {
+    "slope": -0.32348148711275015,
+    "intercept": 0.05180631175988159,
+    "r2": 0.1452646924668801,
+    "n": 18
+   },
+   "without_rug_windows": {
+    "slope": -0.3251593791131945,
+    "intercept": 0.053001661992270015,
+    "r2": 0.14306869803803912,
+    "n": 18
+   },
+   "rug_window_share": 0.0,
+   "mean_pred": 0.04559212584731479,
+   "mean_realized": 0.03817695465930651
+  },
+  "trial": {
+   "config": "M1-modelcheck|2c46ee343654",
+   "new_trial": true,
+   "n_trials_total": 2576,
+   "hypothesis_configs": 1,
+   "over_variant_limit": false
+  }
+ },
+ "decision": {
+  "verdict": "UNDERPOWERED_MODEL_CHECK",
+  "shortlist_written": false,
+  "note": "PLAN 4.5: the model check precedes any P&L; the grid was not run"
+ },
+ "runtime_s": 1.4,
+ "n_trials_total": 2576,
+ "overall": "PENDING (no official TRAIN run)"
+}

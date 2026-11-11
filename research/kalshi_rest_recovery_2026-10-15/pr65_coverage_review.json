@@ -1,0 +1,468 @@
+{
+  "decision": "ACCEPT bounded PR65 capture extraction; production obsolete-failure branch unobserved; broader EXEC/profitability remain open",
+  "at_utc": "2026-10-15T21:22:51.110824+00:00",
+  "native_sha256": "211a39ef48bd337b1acede43b5e29daed9b72ed297b55aba0d2a7553d70d7f92",
+  "queries": {
+    "learning": {
+      "count": 16,
+      "limit": 500,
+      "saturated": false,
+      "before": {
+        "current_time": "2026-10-15 21:21:32 UTC"
+      },
+      "after": {
+        "current_time": "2026-10-15 21:21:33 UTC"
+      },
+      "request": {
+        "projectId": "75750847-85c0-41a3-a2a7-b7f2201a51e9",
+        "deploymentId": "1c01ffe7-e231-40c6-a026-ac63fec01227",
+        "startDate": "2026-10-15T21:00:00Z",
+        "endDate": "2026-10-15T21:17:00Z",
+        "limit": 500,
+        "filter": "\"INFO nightcrawler.kalshi_probability_learning: kalshi_probability_learning_status \" OR \"INFO nightcrawler.kalshi_online_learning: kalshi_online_learning_status \""
+      }
+    },
+    "tracebacks": {
+      "count": 0,
+      "limit": 500,
+      "saturated": false,
+      "before": {
+        "current_time": "2026-10-15 21:21:32 UTC"
+      },
+      "after": {
+        "current_time": "2026-10-15 21:21:33 UTC"
+      },
+      "request": {
+        "projectId": "75750847-85c0-41a3-a2a7-b7f2201a51e9",
+        "deploymentId": "1c01ffe7-e231-40c6-a026-ac63fec01227",
+        "startDate": "2026-10-15T21:00:00Z",
+        "endDate": "2026-10-15T21:17:00Z",
+        "limit": 500,
+        "filter": "\"Traceback\""
+      }
+    },
+    "twins": {
+      "count": 2,
+      "limit": 500,
+      "saturated": false,
+      "before": {
+        "current_time": "2026-10-15 21:21:32 UTC"
+      },
+      "after": {
+        "current_time": "2026-10-15 21:21:33 UTC"
+      },
+      "request": {
+        "projectId": "75750847-85c0-41a3-a2a7-b7f2201a51e9",
+        "deploymentId": "1c01ffe7-e231-40c6-a026-ac63fec01227",
+        "startDate": "2026-10-15T21:00:00Z",
+        "endDate": "2026-10-15T21:17:00Z",
+        "limit": 500,
+        "filter": "\"INFO nightcrawler.speeddesk: speeddesk_twin_settlement \""
+      }
+    },
+    "feeds": {
+      "count": 108,
+      "limit": 500,
+      "saturated": false,
+      "before": {
+        "current_time": "2026-10-15 21:21:32 UTC"
+      },
+      "after": {
+        "current_time": "2026-10-15 21:21:33 UTC"
+      },
+      "request": {
+        "projectId": "75750847-85c0-41a3-a2a7-b7f2201a51e9",
+        "deploymentId": "1c01ffe7-e231-40c6-a026-ac63fec01227",
+        "startDate": "2026-10-15T21:00:00Z",
+        "endDate": "2026-10-15T21:17:00Z",
+        "limit": 500,
+        "filter": "\"speeddesk_feed_kalshi_book_failed\" OR \"speeddesk_feed_kalshi_trade_gap\" OR \"speeddesk_feed_kalshi_ws_timing\" OR \"speeddesk_feed_kalshi_ws_gap\""
+      }
+    },
+    "statuses": {
+      "count": 17,
+      "limit": 500,
+      "saturated": false,
+      "before": {
+        "current_time": "2026-10-15 21:21:32 UTC"
+      },
+      "after": {
+        "current_time": "2026-10-15 21:21:33 UTC"
+      },
+      "request": {
+        "projectId": "75750847-85c0-41a3-a2a7-b7f2201a51e9",
+        "deploymentId": "1c01ffe7-e231-40c6-a026-ac63fec01227",
+        "startDate": "2026-10-15T21:00:00Z",
+        "endDate": "2026-10-15T21:17:00Z",
+        "limit": 500,
+        "filter": "\"INFO nightcrawler.speeddesk: speeddesk_live_status \""
+      }
+    }
+  },
+  "feed_original_counts": {
+    "speeddesk_feed_kalshi_ws_timing": 73,
+    "speeddesk_feed_kalshi_ws_gap": 34,
+    "speeddesk_feed_kalshi_trade_gap": 1
+  },
+  "reader_evidence": {
+    "speeddesk": {
+      "timing_rows": 54,
+      "gap_rows": 23,
+      "gap_receipt_status_counts": {
+        "overflow": 20,
+        "known": 3
+      },
+      "status_receipt_status_counts": {
+        "known": 29,
+        "overflow": 2
+      },
+      "known_gaps": [
+        {
+          "timestamp": "2026-10-15T21:12:17.453037815Z",
+          "residence_ms": 2629.845576826483,
+          "session": 28,
+          "in_target_before_close": true
+        },
+        {
+          "timestamp": "2026-10-15T21:15:03.504533391Z",
+          "residence_ms": 2980.8204816654325,
+          "session": 29,
+          "in_target_before_close": false
+        },
+        {
+          "timestamp": "2026-10-15T21:16:58.251612472Z",
+          "residence_ms": 3423.116020858288,
+          "session": 32,
+          "in_target_before_close": false
+        }
+      ],
+      "max_known_gap_residence_ms": 3423.116020858288
+    },
+    "derived_market_reader": {
+      "timing_rows": 19,
+      "gap_rows": 10,
+      "gap_receipt_status_counts": {
+        "known": 3,
+        "overflow": 7
+      },
+      "status_receipt_status_counts": {
+        "known": 5,
+        "overflow": 4
+      },
+      "known_gaps": [
+        {
+          "timestamp": "2026-10-15T21:00:05.431178527Z",
+          "residence_ms": 10053.556497674435,
+          "session": 7,
+          "in_target_before_close": true
+        },
+        {
+          "timestamp": "2026-10-15T21:03:50.157312278Z",
+          "residence_ms": 3214.0114889480174,
+          "session": 10,
+          "in_target_before_close": true
+        },
+        {
+          "timestamp": "2026-10-15T21:07:44.507772007Z",
+          "residence_ms": 5047.939511016011,
+          "session": 15,
+          "in_target_before_close": true
+        }
+      ],
+      "max_known_gap_residence_ms": 10053.556497674435
+    }
+  },
+  "ws_gap_warning_reader_counts": {
+    "speeddesk": 23,
+    "derived_market_reader": 11
+  },
+  "failure_originals": [
+    {
+      "timestamp": "2026-10-15T21:08:35.581821370Z",
+      "event": "speeddesk_feed_kalshi_trade_gap",
+      "body": "error=ValueError invalidated=True",
+      "payload": null
+    }
+  ],
+  "obsolete_failure_invalidated_false_count": 0,
+  "learner_originals": {
+    "kalshi_online_learning_status": {
+      "count": 8,
+      "first": {
+        "timestamp": "2026-10-15T21:00:01.251247427Z",
+        "event": "kalshi_online_learning_status",
+        "body": "{\"at\":1792098001.2371666,\"mode\":\"observe_only\",\"live_application\":false,\"profitability_proven\":false,\"protocol\":\"kalshi-online-calibration-v1-h300-g5-b10-prior20\",\"source_fingerprint\":\"b6112b7ef8955b20af734157c1e7f5ec533bf98f70e034558f06670578c391f2\",\"learning\":{\"mode\":\"observe_only\",\"enabled\":true,\"live_application\":false,\"profitability_proven\":false,\"protocol\":\"kalshi-online-calibration-v1-h300-g5-b10-prior20\",\"source_fingerprint\":\"b6112b7ef8955b20af734157c1e7f5ec533bf98f70e034558f06670578c391f2\",\"history_protocol\":\"kalshi-online-calibration-v1-h300-g5-b10-prior20\",\"history_source_fingerprint\":\"b6112b7ef8955b20af734157c1e7f5ec533bf98f70e034558f06670578c391f2\",\"forecast_horizon_s\":300,\"grace_s\":5,\"bins\":10,\"pending\":0,\"forecasts\":0,\"scored\":0,\"unknown\":29,\"brier_baseline\":null,\"brier_shadow\":null,\"error\":null,\"coverage\":\"quiet observations; full data coverage not certified\",\"exclusions\":{\"startup_inside\":3,\"late\":0,\"invalid\":0,\"pregap\":26,\"terms_changed\":0,\"missing_label\":0,\"outcome_known\":0,\"invalid_label\":0,\"capacity\":0}}}",
+        "payload": {
+          "at": 1792098001.2371666,
+          "mode": "observe_only",
+          "live_application": false,
+          "profitability_proven": false,
+          "protocol": "kalshi-online-calibration-v1-h300-g5-b10-prior20",
+          "source_fingerprint": "b6112b7ef8955b20af734157c1e7f5ec533bf98f70e034558f06670578c391f2",
+          "learning": {
+            "mode": "observe_only",
+            "enabled": true,
+            "live_application": false,
+            "profitability_proven": false,
+            "protocol": "kalshi-online-calibration-v1-h300-g5-b10-prior20",
+            "source_fingerprint": "b6112b7ef8955b20af734157c1e7f5ec533bf98f70e034558f06670578c391f2",
+            "history_protocol": "kalshi-online-calibration-v1-h300-g5-b10-prior20",
+            "history_source_fingerprint": "b6112b7ef8955b20af734157c1e7f5ec533bf98f70e034558f06670578c391f2",
+            "forecast_horizon_s": 300,
+            "grace_s": 5,
+            "bins": 10,
+            "pending": 0,
+            "forecasts": 0,
+            "scored": 0,
+            "unknown": 29,
+            "brier_baseline": null,
+            "brier_shadow": null,
+            "error": null,
+            "coverage": "quiet observations; full data coverage not certified",
+            "exclusions": {
+              "startup_inside": 3,
+              "late": 0,
+              "invalid": 0,
+              "pregap": 26,
+              "terms_changed": 0,
+              "missing_label": 0,
+              "outcome_known": 0,
+              "invalid_label": 0,
+              "capacity": 0
+            }
+          }
+        }
+      },
+      "last": {
+        "timestamp": "2026-10-15T21:16:46.022135488Z",
+        "event": "kalshi_online_learning_status",
+        "body": "{\"at\":1792099005.9267094,\"mode\":\"observe_only\",\"live_application\":false,\"profitability_proven\":false,\"protocol\":\"kalshi-online-calibration-v1-h300-g5-b10-prior20\",\"source_fingerprint\":\"b6112b7ef8955b20af734157c1e7f5ec533bf98f70e034558f06670578c391f2\",\"learning\":{\"mode\":\"observe_only\",\"enabled\":true,\"live_application\":false,\"profitability_proven\":false,\"protocol\":\"kalshi-online-calibration-v1-h300-g5-b10-prior20\",\"source_fingerprint\":\"b6112b7ef8955b20af734157c1e7f5ec533bf98f70e034558f06670578c391f2\",\"history_protocol\":\"kalshi-online-calibration-v1-h300-g5-b10-prior20\",\"history_source_fingerprint\":\"b6112b7ef8955b20af734157c1e7f5ec533bf98f70e034558f06670578c391f2\",\"forecast_horizon_s\":300,\"grace_s\":5,\"bins\":10,\"pending\":0,\"forecasts\":0,\"scored\":0,\"unknown\":30,\"brier_baseline\":null,\"brier_shadow\":null,\"error\":null,\"coverage\":\"quiet observations; full data coverage not certified\",\"exclusions\":{\"startup_inside\":3,\"late\":0,\"invalid\":0,\"pregap\":27,\"terms_changed\":0,\"missing_label\":0,\"outcome_known\":0,\"invalid_label\":0,\"capacity\":0}}}",
+        "payload": {
+          "at": 1792099005.9267094,
+          "mode": "observe_only",
+          "live_application": false,
+          "profitability_proven": false,
+          "protocol": "kalshi-online-calibration-v1-h300-g5-b10-prior20",
+          "source_fingerprint": "b6112b7ef8955b20af734157c1e7f5ec533bf98f70e034558f06670578c391f2",
+          "learning": {
+            "mode": "observe_only",
+            "enabled": true,
+            "live_application": false,
+            "profitability_proven": false,
+            "protocol": "kalshi-online-calibration-v1-h300-g5-b10-prior20",
+            "source_fingerprint": "b6112b7ef8955b20af734157c1e7f5ec533bf98f70e034558f06670578c391f2",
+            "history_protocol": "kalshi-online-calibration-v1-h300-g5-b10-prior20",
+            "history_source_fingerprint": "b6112b7ef8955b20af734157c1e7f5ec533bf98f70e034558f06670578c391f2",
+            "forecast_horizon_s": 300,
+            "grace_s": 5,
+            "bins": 10,
+            "pending": 0,
+            "forecasts": 0,
+            "scored": 0,
+            "unknown": 30,
+            "brier_baseline": null,
+            "brier_shadow": null,
+            "error": null,
+            "coverage": "quiet observations; full data coverage not certified",
+            "exclusions": {
+              "startup_inside": 3,
+              "late": 0,
+              "invalid": 0,
+              "pregap": 27,
+              "terms_changed": 0,
+              "missing_label": 0,
+              "outcome_known": 0,
+              "invalid_label": 0,
+              "capacity": 0
+            }
+          }
+        }
+      }
+    },
+    "kalshi_probability_learning_status": {
+      "count": 8,
+      "first": {
+        "timestamp": "2026-10-15T21:00:01.251251617Z",
+        "event": "kalshi_probability_learning_status",
+        "body": "{\"at\":1792098001.2371666,\"mode\":\"observe_only\",\"live_application\":false,\"profitability_proven\":false,\"protocol\":\"kalshi-probability-calibration-v2-h300-g5-b10-prior20\",\"source_fingerprint\":\"19387e3a38d6d387f3cf74acfa1d3d90bd2aafda60a795d21111bf2ea5586f84\",\"learning\":{\"mode\":\"observe_only\",\"enabled\":false,\"live_application\":false,\"profitability_proven\":false,\"protocol\":\"kalshi-probability-calibration-v2-h300-g5-b10-prior20\",\"source_fingerprint\":\"19387e3a38d6d387f3cf74acfa1d3d90bd2aafda60a795d21111bf2ea5586f84\",\"history_protocol\":\"kalshi-probability-calibration-v2-h300-g5-b10-prior20\",\"history_source_fingerprint\":\"e79897062a3ebbd61fe5dc70617f02c44bb7d29c9dbf51e23940459686653c7c\",\"forecast_horizon_s\":300,\"grace_s\":5,\"bins\":10,\"pending\":0,\"forecasts\":5,\"scored\":5,\"unknown\":1,\"brier_baseline\":0.18726215950008984,\"brier_shadow\":0.1796062816651917,\"error\":\"source_or_protocol_mismatch\",\"coverage\":\"conditional fresh-input probabilities; continuous coverage and profitability not certified\",\"exclusions\":{\"startup_inside\":1,\"late\":0,\"invalid\":0,\"pregap\":0,\"terms_changed\":0,\"missing_label\":0,\"outcome_known\":0,\"invalid_label\":0,\"capacity\":0,\"invalid_batch\":0,\"invalid_strike\":0}}}",
+        "payload": {
+          "at": 1792098001.2371666,
+          "mode": "observe_only",
+          "live_application": false,
+          "profitability_proven": false,
+          "protocol": "kalshi-probability-calibration-v2-h300-g5-b10-prior20",
+          "source_fingerprint": "19387e3a38d6d387f3cf74acfa1d3d90bd2aafda60a795d21111bf2ea5586f84",
+          "learning": {
+            "mode": "observe_only",
+            "enabled": false,
+            "live_application": false,
+            "profitability_proven": false,
+            "protocol": "kalshi-probability-calibration-v2-h300-g5-b10-prior20",
+            "source_fingerprint": "19387e3a38d6d387f3cf74acfa1d3d90bd2aafda60a795d21111bf2ea5586f84",
+            "history_protocol": "kalshi-probability-calibration-v2-h300-g5-b10-prior20",
+            "history_source_fingerprint": "e79897062a3ebbd61fe5dc70617f02c44bb7d29c9dbf51e23940459686653c7c",
+            "forecast_horizon_s": 300,
+            "grace_s": 5,
+            "bins": 10,
+            "pending": 0,
+            "forecasts": 5,
+            "scored": 5,
+            "unknown": 1,
+            "brier_baseline": 0.18726215950008984,
+            "brier_shadow": 0.1796062816651917,
+            "error": "source_or_protocol_mismatch",
+            "coverage": "conditional fresh-input probabilities; continuous coverage and profitability not certified",
+            "exclusions": {
+              "startup_inside": 1,
+              "late": 0,
+              "invalid": 0,
+              "pregap": 0,
+              "terms_changed": 0,
+              "missing_label": 0,
+              "outcome_known": 0,
+              "invalid_label": 0,
+              "capacity": 0,
+              "invalid_batch": 0,
+              "invalid_strike": 0
+            }
+          }
+        }
+      },
+      "last": {
+        "timestamp": "2026-10-15T21:16:46.022148288Z",
+        "event": "kalshi_probability_learning_status",
+        "body": "{\"at\":1792099005.9267094,\"mode\":\"observe_only\",\"live_application\":false,\"profitability_proven\":false,\"protocol\":\"kalshi-probability-calibration-v2-h300-g5-b10-prior20\",\"source_fingerprint\":\"19387e3a38d6d387f3cf74acfa1d3d90bd2aafda60a795d21111bf2ea5586f84\",\"learning\":{\"mode\":\"observe_only\",\"enabled\":false,\"live_application\":false,\"profitability_proven\":false,\"protocol\":\"kalshi-probability-calibration-v2-h300-g5-b10-prior20\",\"source_fingerprint\":\"19387e3a38d6d387f3cf74acfa1d3d90bd2aafda60a795d21111bf2ea5586f84\",\"history_protocol\":\"kalshi-probability-calibration-v2-h300-g5-b10-prior20\",\"history_source_fingerprint\":\"e79897062a3ebbd61fe5dc70617f02c44bb7d29c9dbf51e23940459686653c7c\",\"forecast_horizon_s\":300,\"grace_s\":5,\"bins\":10,\"pending\":0,\"forecasts\":5,\"scored\":5,\"unknown\":1,\"brier_baseline\":0.18726215950008984,\"brier_shadow\":0.1796062816651917,\"error\":\"source_or_protocol_mismatch\",\"coverage\":\"conditional fresh-input probabilities; continuous coverage and profitability not certified\",\"exclusions\":{\"startup_inside\":1,\"late\":0,\"invalid\":0,\"pregap\":0,\"terms_changed\":0,\"missing_label\":0,\"outcome_known\":0,\"invalid_label\":0,\"capacity\":0,\"invalid_batch\":0,\"invalid_strike\":0}}}",
+        "payload": {
+          "at": 1792099005.9267094,
+          "mode": "observe_only",
+          "live_application": false,
+          "profitability_proven": false,
+          "protocol": "kalshi-probability-calibration-v2-h300-g5-b10-prior20",
+          "source_fingerprint": "19387e3a38d6d387f3cf74acfa1d3d90bd2aafda60a795d21111bf2ea5586f84",
+          "learning": {
+            "mode": "observe_only",
+            "enabled": false,
+            "live_application": false,
+            "profitability_proven": false,
+            "protocol": "kalshi-probability-calibration-v2-h300-g5-b10-prior20",
+            "source_fingerprint": "19387e3a38d6d387f3cf74acfa1d3d90bd2aafda60a795d21111bf2ea5586f84",
+            "history_protocol": "kalshi-probability-calibration-v2-h300-g5-b10-prior20",
+            "history_source_fingerprint": "e79897062a3ebbd61fe5dc70617f02c44bb7d29c9dbf51e23940459686653c7c",
+            "forecast_horizon_s": 300,
+            "grace_s": 5,
+            "bins": 10,
+            "pending": 0,
+            "forecasts": 5,
+            "scored": 5,
+            "unknown": 1,
+            "brier_baseline": 0.18726215950008984,
+            "brier_shadow": 0.1796062816651917,
+            "error": "source_or_protocol_mismatch",
+            "coverage": "conditional fresh-input probabilities; continuous coverage and profitability not certified",
+            "exclusions": {
+              "startup_inside": 1,
+              "late": 0,
+              "invalid": 0,
+              "pregap": 0,
+              "terms_changed": 0,
+              "missing_label": 0,
+              "outcome_known": 0,
+              "invalid_label": 0,
+              "capacity": 0,
+              "invalid_batch": 0,
+              "invalid_strike": 0
+            }
+          }
+        }
+      }
+    }
+  },
+  "last_status_selected": {
+    "at": 1792098984.7677584,
+    "as_of": 1792098984.7269757,
+    "mode": "live",
+    "authenticated": true,
+    "trading_now": true,
+    "waiting": "",
+    "reason": "Window has not started",
+    "cash_usd": 30.7296,
+    "cash_at": 1792098983.8952303,
+    "open_risk_usd": 0.0,
+    "reserved_usd": 0.45,
+    "open_orders": 1,
+    "positions": 0,
+    "open_cost_usd": 0.0,
+    "caps": {
+      "window_usd": 10.0,
+      "open_usd": 20.0,
+      "day_stop_usd": 6.0,
+      "clip": 5.0,
+      "total_stop_usd": 10.0
+    },
+    "total_halted": false,
+    "day_stop_latched": false,
+    "total_pnl_usd": -19.011800000000008,
+    "today_pnl_usd": -4.564700000000008,
+    "log_timestamp": "2026-10-15T21:16:33.087381961Z"
+  },
+  "waiting_rows": [
+    {
+      "timestamp": "2026-10-15T21:04:22.751998301Z",
+      "waiting": "Reconciling an uncertain order; no new orders"
+    }
+  ],
+  "practice_settlements": [
+    {
+      "timestamp": "2026-10-15T21:00:21.452852152Z",
+      "event": "speeddesk_twin_settlement",
+      "body": "{\"at\":1792098016.783569,\"venue\":\"kalshi\",\"window\":\"KXBTC15M-26OCT151700-00\",\"up_wins\":false,\"up_shares\":0.0,\"down_shares\":1.0,\"cost_usd\":0.55,\"fee_usd\":0.0,\"payout_usd\":1.0,\"locked_usd\":0.0,\"direction_usd\":0.44999999999999996,\"pnl_usd\":0.44999999999999996}",
+      "payload": {
+        "at": 1792098016.783569,
+        "venue": "kalshi",
+        "window": "KXBTC15M-26OCT151700-00",
+        "up_wins": false,
+        "up_shares": 0.0,
+        "down_shares": 1.0,
+        "cost_usd": 0.55,
+        "fee_usd": 0.0,
+        "payout_usd": 1.0,
+        "locked_usd": 0.0,
+        "direction_usd": 0.44999999999999996,
+        "pnl_usd": 0.44999999999999996
+      }
+    },
+    {
+      "timestamp": "2026-10-15T21:15:14.165819980Z",
+      "event": "speeddesk_twin_settlement",
+      "body": "{\"at\":1792098912.9790437,\"venue\":\"kalshi\",\"window\":\"KXBTC15M-26OCT151715-15\",\"up_wins\":true,\"up_shares\":0.0,\"down_shares\":0.0,\"cost_usd\":0.0,\"fee_usd\":0.0,\"payout_usd\":0.0,\"locked_usd\":0.0,\"direction_usd\":0.0,\"pnl_usd\":0.0}",
+      "payload": {
+        "at": 1792098912.9790437,
+        "venue": "kalshi",
+        "window": "KXBTC15M-26OCT151715-15",
+        "up_wins": true,
+        "up_shares": 0.0,
+        "down_shares": 0.0,
+        "cost_usd": 0.0,
+        "fee_usd": 0.0,
+        "payout_usd": 0.0,
+        "locked_usd": 0.0,
+        "direction_usd": 0.0,
+        "pnl_usd": 0.0
+      }
+    }
+  ],
+  "traceback_matches": 0,
+  "limitations": [
+    "All query bounds21:00\u201321:17UTC fixed; delayed retrieval does not extend event cohort.",
+    "No query saturated; absence within these filters/bounds is not continuous coverage or complete account export.",
+    "Known protocol residence is local lower-bound timing, not upstream/network cause; overflow timing unknown remains.",
+    "Main speeddesk reader and derived market reader kept distinct; no practice flags substituted for main reader evidence.",
+    "Only one known main gap occurs before target close; other two known gaps occur in declared tail.",
+    "Last selected real status precedes next-window Down fill21:16:53 and cannot certify final-tail cash/exposure.",
+    "as_of is panel time, not account-read age; last-account-read age remains unpublished.",
+    "Observed trade gap invalidated=True is genuine rejection path; no observed invalidated=False means production corrected late-failure branch not demonstrated.",
+    "V2 disabled throughout with old five scores retained; no ongoing source-matched observation claim.",
+    "Practice target zero-share settlement is separate from actual target+0.16; no profitability/causal saved-dollar inference.",
+    "Initial truncated/hung sibling transfers are excluded; exact complete root originals are authoritative."
+  ]
+}

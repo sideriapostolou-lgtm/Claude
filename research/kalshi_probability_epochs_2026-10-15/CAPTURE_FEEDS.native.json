@@ -1,0 +1,862 @@
+{
+  "timing": {
+    "request": {
+      "projectId": "75750847-85c0-41a3-a2a7-b7f2201a51e9",
+      "deploymentId": "66e6e7e4-30d9-4628-a234-f2a8e97dad19",
+      "startDate": "2026-10-15T21:45:00Z",
+      "endDate": "2026-10-15T22:02:00Z",
+      "filter": "\"INFO nightcrawler.speeddesk_kalshi_ws: speeddesk_feed_kalshi_ws_timing \"",
+      "limit": 500
+    },
+    "before": {
+      "current_time": "2026-10-15 22:03:38 UTC"
+    },
+    "after": {
+      "current_time": "2026-10-15 22:03:39 UTC"
+    },
+    "result": {
+      "content": [
+        {
+          "type": "text",
+          "text": "**Deployment 66e6e7e4-30d9-4628-a234-f2a8e97dad19** [SUCCESS]\nservice: f84d3b52-002f-44cb-931e-bc9e3e097e97, env: 17f7b0e0-104c-4903-9484-0106748b3cdb\n\n### Deploy logs (48)\n2026-10-15T21:45:07.653558924Z info 2026-10-15T21:45:07Z INFO nightcrawler.speeddesk_kalshi_ws: speeddesk_feed_kalshi_ws_timing {\"reader\":{\"kind\":\"speeddesk\",\"instance\":1,\"process\":1},\"session\":13,\"event\":\"status\",\"kind\":\"orderbook_delta\",\"recv_call_mono\":3631814.077759072,\"recv_return_mono\":3631814.077802122,\"apply_mono\":3631814.077831833,\"apply_wall\":1792100707.6403196,\"recv_wait_ms\":0.04304992035031319,\"return_to_apply_ms\":0.029711052775382996,\"sending_ts_ms\":1792100705437,\"engine_ts_ms\":1792100705433,\"receipt\":{\"ordinal\":28315,\"status\":\"overflow\",\"accepted_monotonic\":null,\"accepted_wall\":null,\"received_monotonic\":3631814.077787732,\"received_wall\":1792100707.6402757,\"residence_ms\":null},\"connection\":{\"accepted\":28637,\"received\":28315,\"retained\":256,\"overflow\":11936,\"unknown\":11870,\"known\":16445,\"max_residence_ms\":1953.9610631763935,\"disabled\":0,\"errors\":0,\"unsupported\":0},\"previous_message\":{\"processing_ms\":0.7123951800167561,\"yield_resume_ms\":325.5076720379293},\"basis\":\"complete frame protocol acceptance to public recv; excludes earlier local and network delay\"}\n2026-10-15T21:45:15.440247672Z info 2026-10-15T21:45:15Z INFO nightcrawler.speeddesk_kalshi_ws: speeddesk_feed_kalshi_ws_timing {\"reader\":{\"kind\":\"speeddesk\",\"instance\":1,\"process\":1},\"session\":14,\"event\":\"status\",\"kind\":\"subscribed\",\"recv_call_mono\":3631821.815885706,\"recv_return_mono\":3631821.820533669,\"apply_mono\":3631821.820559899,\"apply_wall\":1792100715.3830476,\"recv_wait_ms\":4.647963214665651,\"return_to_apply_ms\":0.026229768991470337,\"sending_ts_ms\":1792100715370,\"engine_ts_ms\":null,\"receipt\":{\"ordinal\":1,\"status\":\"known\",\"accepted_monotonic\":3631821.820487679,\"accepted_wall\":1792100715.382976,\"received_monotonic\":3631821.820519399,\"received_wall\":1792100715.3830073,\"residence_ms\":0.03171991556882858},\"connection\":{\"accepted\":4,\"received\":1,\"retained\":3,\"overflow\":0,\"unknown\":0,\"known\":1,\"max_residence_ms\":0.03171991556882858,\"disabled\":0,\"errors\":0,\"unsupported\":0},\"previous_message\":null,\"basis\":\"complete frame protocol acceptance to public recv; excludes earlier local and network delay\"}\n2026-10-15T21:46:15.392490815Z info 2026-10-15T21:46:15Z INFO nightcrawler.speeddesk_kalshi_ws: speeddesk_feed_kalshi_ws_timing {\"reader\":{\"kind\":\"speeddesk\",\"instance\":1,\"process\":1},\"session\":14,\"event\":\"gap\",\"kind\":\"orderbook_delta\",\"recv_call_mono\":3631881.478111669,\"recv_return_mono\":3631881.478146349,\"apply_mono\":3631881.478178638,\"apply_wall\":1792100775.0406663,\"recv_wait_ms\":0.03468012437224388,\"return_to_apply_ms\":0.03228895366191864,\"sending_ts_ms\":1792100771976,\"engine_ts_ms\":1792100771970,\"receipt\":{\"ordinal\":42041,\"status\":\"overflow\",\"accepted_monotonic\":null,\"accepted_wall\":null,\"received_monotonic\":3631881.478132029,\"received_wall\":1792100775.04062,\"residence_ms\":null},\"connection\":{\"accepted\":44316,\"received\":42041,\"retained\":256,\"overflow\":21222,\"unknown\":19203,\"known\":22838,\"max_residence_ms\":1950.1512590795755,\"disabled\":0,\"errors\":0,\"unsupported\":0},\"previous_message\":{\"processing_ms\":0.3811870701611042,\"yield_resume_ms\":261.42361713573337},\"basis\":\"complete frame protocol acceptance to public recv; excludes earlier local and network delay\"}\n2026-10-15T21:46:18.812495009Z info 2026-10-15T21:46:18Z INFO nightcrawler.speeddesk_kalshi_ws: speeddesk_feed_kalshi_ws_timing {\"reader\":{\"kind\":\"speeddesk\",\"instance\":1,\"process\":1},\"session\":15,\"event\":\"status\",\"kind\":\"subscribed\",\"recv_call_mono\":3631885.038636119,\"recv_return_mono\":3631885.11290827,\"apply_mono\":3631885.1129203,\"apply_wall\":1792100778.675408,\"recv_wait_ms\":74.27215110510588,\"return_to_apply_ms\":0.012029893696308136,\"sending_ts_ms\":1792100778607,\"engine_ts_ms\":null,\"receipt\":{\"ordinal\":1,\"status\":\"known\",\"accepted_monotonic\":3631885.112282365,\"accepted_wall\":1792100778.6747706,\"received_monotonic\":3631885.11289214,\"received_wall\":1792100778.67538,\"residence_ms\":0.609775073826313},\"connection\":{\"accepted\":11,\"received\":1,\"retained\":10,\"overflow\":0,\"unknown\":0,\"known\":1,\"max_residence_ms\":0.609775073826313,\"disabled\":0,\"errors\":0,\"unsupported\":0},\"previous_message\":null,\"basis\":\"complete frame protocol acceptance to public recv; excludes earlier local and network delay\"}\n2026-10-15T21:47:18.884100027Z info 2026-10-15T21:47:18Z INFO nightcrawler.speeddesk_kalshi_ws: speeddesk_feed_kalshi_ws_timing {\"reader\":{\"kind\":\"speeddesk\",\"instance\":1,\"process\":1},\"session\":15,\"event\":\"status\",\"kind\":\"orderbook_delta\",\"recv_call_mono\":3631945.113277985,\"recv_return_mono\":3631945.113294755,\"apply_mono\":3631945.113308305,\"apply_wall\":1792100838.675796,\"recv_wait_ms\":0.01677032560110092,\"return_to_apply_ms\":0.013549812138080597,\"sending_ts_ms\":1792100837384,\"engine_ts_ms\":1792100837378,\"receipt\":{\"ordinal\":34486,\"status\":\"overflow\",\"accepted_monotonic\":null,\"accepted_wall\":null,\"received_monotonic\":3631945.113289524,\"received_wall\":1792100838.6757772,\"residence_ms\":null},\"connection\":{\"accepted\":35128,\"received\":34486,\"retained\":256,\"overflow\":11867,\"unknown\":11481,\"known\":23005,\"max_residence_ms\":1623.8879607990384,\"disabled\":0,\"errors\":0,\"unsupported\":0},\"previous_message\":{\"processing_ms\":0.5671652033925056,\"yield_resume_ms\":0.016309786587953568},\"basis\":\"complete frame protocol acceptance to public recv; excludes earlier local and network delay\"}\n2026-10-15T21:48:00.140280238Z info 2026-10-15T21:47:59Z INFO nightcrawler.speeddesk_kalshi_ws: speeddesk_feed_kalshi_ws_timing {\"reader\":{\"kind\":\"speeddesk\",\"instance\":1,\"process\":1},\"session\":15,\"event\":\"gap\",\"kind\":\"orderbook_delta\",\"recv_call_mono\":3631986.132889797,\"recv_return_mono\":3631986.132940456,\"apply_mono\":3631986.132970086,\"apply_wall\":1792100879.6954577,\"recv_wait_ms\":0.050658825784921646,\"return_to_apply_ms\":0.02963002771139145,\"sending_ts_ms\":1792100876253,\"engine_ts_ms\":1792100876247,\"receipt\":{\"ordinal\":52009,\"status\":\"overflow\",\"accepted_monotonic\":null,\"accepted_wall\":null,\"received_monotonic\":3631986.132923737,\"received_wall\":1792100879.695412,\"residence_ms\":null},\"connection\":{\"accepted\":52738,\"received\":52009,\"retained\":256,\"overflow\":16184,\"unknown\":15711,\"known\":36298,\"max_residence_ms\":1679.573809262365,\"disabled\":0,\"errors\":0,\"unsupported\":0},\"previous_message\":{\"processing_ms\":452.31479685753584,\"yield_resume_ms\":3.6820610985159874},\"basis\":\"complete frame protocol acceptance to public recv; excludes earlier local and network delay\"}\n2026-10-15T21:48:03.500629535Z info 2026-10-15T21:48:03Z INFO nightcrawler.speeddesk_kalshi_ws: speeddesk_feed_kalshi_ws_timing {\"reader\":{\"kind\":\"speeddesk\",\"instance\":1,\"process\":1},\"session\":16,\"event\":\"status\",\"kind\":\"subscribed\",\"recv_call_mono\":3631989.865394187,\"recv_return_mono\":3631989.908846422,\"apply_mono\":3631989.908878611,\"apply_wall\":1792100883.4713664,\"recv_wait_ms\":43.45223493874073,\"return_to_apply_ms\":0.032188836485147476,\"sending_ts_ms\":1792100883435,\"engine_ts_ms\":null,\"receipt\":{\"ordinal\":1,\"status\":\"known\",\"accepted_monotonic\":3631989.908745613,\"accepted_wall\":1792100883.471234,\"received_monotonic\":3631989.908833192,\"received_wall\":1792100883.471321,\"residence_ms\":0.08757924661040306},\"connection\":{\"accepted\":5,\"received\":1,\"retained\":4,\"overflow\":0,\"unknown\":0,\"known\":1,\"max_residence_ms\":0.08757924661040306,\"disabled\":0,\"errors\":0,\"unsupported\":0},\"previous_message\":null,\"basis\":\"complete frame protocol acceptance to public recv; excludes earlier local and network delay\"}\n2026-10-15T21:48:25.605966698Z info 2026-10-15T21:48:25Z INFO nightcrawler.speeddesk_kalshi_ws: speeddesk_feed_kalshi_ws_timing {\"reader\":{\"kind\":\"speeddesk\",\"instance\":1,\"process\":1},\"session\":16,\"event\":\"gap\",\"kind\":\"orderbook_delta\",\"recv_call_mono\":3632011.994654499,\"recv_return_mono\":3632011.994707469,\"apply_mono\":3632011.994739329,\"apply_wall\":1792100905.557227,\"recv_wait_ms\":0.052969902753829956,\"return_to_apply_ms\":0.03186007961630821,\"sending_ts_ms\":1792100902106,\"engine_ts_ms\":1792100902102,\"receipt\":{\"ordinal\":11253,\"status\":\"overflow\",\"accepted_monotonic\":null,\"accepted_wall\":null,\"received_monotonic\":3632011.994693249,\"received_wall\":1792100905.5571811,\"residence_ms\":null},\"connection\":{\"accepted\":13080,\"received\":11253,\"retained\":256,\"overflow\":3722,\"unknown\":2151,\"known\":9102,\"max_residence_ms\":2593.0071249604225,\"disabled\":0,\"errors\":0,\"unsupported\":0},\"previous_message\":{\"processing_ms\":549.1200559772551,\"yield_resume_ms\":0.32830704003572464},\"basis\":\"complete frame protocol acceptance to public recv; excludes earlier local and network delay\"}\n2026-10-15T21:48:28.845043927Z info 2026-10-15T21:48:28Z INFO nightcrawler.speeddesk_kalshi_ws: speeddesk_feed_kalshi_ws_timing {\"reader\":{\"kind\":\"speeddesk\",\"instance\":1,\"process\":1},\"session\":17,\"event\":\"status\",\"kind\":\"subscribed\",\"recv_call_mono\":3632015.160184303,\"recv_return_mono\":3632015.18196452,\"apply_mono\":3632015.181981519,\"apply_wall\":1792100908.7444692,\"recv_wait_ms\":21.780217066407204,\"return_to_apply_ms\":0.01699896529316902,\"sending_ts_ms\":1792100908730,\"engine_ts_ms\":null,\"receipt\":{\"ordinal\":1,\"status\":\"known\",\"accepted_monotonic\":3632015.18192213,\"accepted_wall\":1792100908.7444103,\"received_monotonic\":3632015.18195051,\"received_wall\":1792100908.7444382,\"residence_ms\":0.028380192816257477},\"connection\":{\"accepted\":5,\"received\":1,\"retained\":4,\"overflow\":0,\"unknown\":0,\"known\":1,\"max_residence_ms\":0.028380192816257477,\"disabled\":0,\"errors\":0,\"unsupported\":0},\"previous_message\":null,\"basis\":\"complete frame protocol acceptance to public recv; excludes earlier local and network delay\"}\n2026-10-15T21:48:35.254330967Z info 2026-10-15T21:48:35Z INFO nightcrawler.speeddesk_kalshi_ws: speeddesk_feed_kalshi_ws_timing {\"reader\":{\"kind\":\"speeddesk\",\"instance\":1,\"process\":1},\"session\":17,\"event\":\"gap\",\"kind\":\"orderbook_delta\",\"recv_call_mono\":3632021.640177262,\"recv_return_mono\":3632021.640231611,\"apply_mono\":3632021.640274611,\"apply_wall\":1792100915.2027621,\"recv_wait_ms\":0.05434919148683548,\"return_to_apply_ms\":0.04299962893128395,\"sending_ts_ms\":1792100911925,\"engine_ts_ms\":1792100911919,\"receipt\":{\"ordinal\":3479,\"status\":\"overflow\",\"accepted_monotonic\":null,\"accepted_wall\":null,\"received_monotonic\":3632021.640217251,\"received_wall\":1792100915.2027054,\"residence_ms\":null},\"connection\":{\"accepted\":4607,\"received\":3479,\"retained\":256,\"overflow\":2623,\"unknown\":1751,\"known\":1728,\"max_residence_ms\":1445.005875080824,\"disabled\":0,\"errors\":0,\"unsupported\":0},\"previous_message\":{\"processing_ms\":283.96664187312126,\"yield_resume_ms\":13.467913959175348},\"basis\":\"complete frame protocol acceptance to public recv; excludes earlier local and network delay\"}\n2026-10-15T21:48:38.728974470Z info 2026-10-15T21:48:38Z INFO nightcrawler.speeddesk_kalshi_ws: speeddesk_feed_kalshi_ws_timing {\"reader\":{\"kind\":\"speeddesk\",\"instance\":1,\"process\":1},\"session\":18,\"event\":\"status\",\"kind\":\"subscribed\",\"recv_call_mono\":3632025.018150293,\"recv_return_mono\":3632025.042786617,\"apply_mono\":3632025.042813586,\"apply_wall\":1792100918.6053011,\"recv_wait_ms\":24.636324029415846,\"return_to_apply_ms\":0.026969239115715027,\"sending_ts_ms\":1792100918584,\"engine_ts_ms\":null,\"receipt\":{\"ordinal\":1,\"status\":\"known\",\"accepted_monotonic\":3632025.042731437,\"accepted_wall\":1792100918.6052196,\"received_monotonic\":3632025.042770597,\"received_wall\":1792100918.6052585,\"residence_ms\":0.03916025161743164},\"connection\":{\"accepted\":4,\"received\":1,\"retained\":3,\"overflow\":0,\"unknown\":0,\"known\":1,\"max_residence_ms\":0.03916025161743164,\"disabled\":0,\"errors\":0,\"unsupported\":0},\"previous_message\":null,\"basis\":\"complete frame protocol acceptance to public recv; excludes earlier local and network delay\"}\n2026-10-15T21:49:01.251728639Z info 2026-10-15T21:49:01Z INFO nightcrawler.speeddesk_kalshi_ws: speeddesk_feed_kalshi_ws_timing {\"reader\":{\"kind\":\"speeddesk\",\"instance\":1,\"process\":1},\"session\":18,\"event\":\"gap\",\"kind\":\"orderbook_delta\",\"recv_call_mono\":3632047.649814105,\"recv_return_mono\":3632047.649865345,\"apply_mono\":3632047.649896815,\"apply_wall\":1792100941.2123845,\"recv_wait_ms\":0.051239971071481705,\"return_to_apply_ms\":0.03146985545754433,\"sending_ts_ms\":1792100937874,\"engine_ts_ms\":1792100937868,\"receipt\":{\"ordinal\":16562,\"status\":\"overflow\",\"accepted_monotonic\":null,\"accepted_wall\":null,\"received_monotonic\":3632047.649849455,\"received_wall\":1792100941.2123375,\"residence_ms\":null},\"connection\":{\"accepted\":19310,\"received\":16562,\"retained\":256,\"overflow\":8313,\"unknown\":5821,\"known\":10741,\"max_residence_ms\":2368.729365989566,\"disabled\":0,\"errors\":0,\"unsupported\":0},\"previous_message\":{\"processing_ms\":0.2529066987335682,\"yield_resume_ms\":421.2147709913552},\"basis\":\"complete frame protocol acceptance to public recv; excludes earlier local and network delay\"}\n2026-10-15T21:49:04.876599955Z info 2026-10-15T21:49:04Z INFO nightcrawler.speeddesk_kalshi_ws: speeddesk_feed_kalshi_ws_timing {\"reader\":{\"kind\":\"speeddesk\",\"instance\":1,\"process\":1},\"session\":19,\"event\":\"status\",\"kind\":\"subscribed\",\"recv_call_mono\":3632051.260815984,\"recv_return_mono\":3632051.271008922,\"apply_mono\":3632051.271029162,\"apply_wall\":1792100944.8335168,\"recv_wait_ms\":10.192937683314085,\"return_to_apply_ms\":0.020240433514118195,\"sending_ts_ms\":1792100944817,\"engine_ts_ms\":null,\"receipt\":{\"ordinal\":1,\"status\":\"known\",\"accepted_monotonic\":3632051.270884673,\"accepted_wall\":1792100944.8333728,\"received_monotonic\":3632051.270996332,\"received_wall\":1792100944.8334842,\"residence_ms\":0.11165905743837357},\"connection\":{\"accepted\":3,\"received\":1,\"retained\":2,\"overflow\":0,\"unknown\":0,\"known\":1,\"max_residence_ms\":0.11165905743837357,\"disabled\":0,\"errors\":0,\"unsupported\":0},\"previous_message\":null,\"basis\":\"complete frame protocol acceptance to public recv; excludes earlier local and network delay\"}\n2026-10-15T21:49:30.963992602Z info 2026-10-15T21:49:30Z INFO nightcrawler.speeddesk_kalshi_ws: speeddesk_feed_kalshi_ws_timing {\"reader\":{\"kind\":\"speeddesk\",\"instance\":1,\"process\":1},\"session\":19,\"event\":\"gap\",\"kind\":\"trade\",\"recv_call_mono\":3632077.387981603,\"recv_return_mono\":3632077.388026873,\"apply_mono\":3632077.388049982,\"apply_wall\":1792100970.9505377,\"recv_wait_ms\":0.04527019336819649,\"return_to_apply_ms\":0.02310890704393387,\"sending_ts_ms\":1792100967674,\"engine_ts_ms\":1792100967671,\"receipt\":{\"ordinal\":14189,\"status\":\"overflow\",\"accepted_monotonic\":null,\"accepted_wall\":null,\"received_monotonic\":3632077.388013943,\"received_wall\":1792100970.950502,\"residence_ms\":null},\"connection\":{\"accepted\":15274,\"received\":14189,\"retained\":256,\"overflow\":7849,\"unknown\":7020,\"known\":7169,\"max_residence_ms\":2115.025636740029,\"disabled\":0,\"errors\":0,\"unsupported\":0},\"previous_message\":{\"processing_ms\":302.66499193385243,\"yield_resume_ms\":7.036843802779913},\"basis\":\"complete frame protocol acceptance to public recv; excludes earlier local and network delay\"}\n2026-10-15T21:49:34.470743647Z info 2026-10-15T21:49:34Z INFO nightcrawler.speeddesk_kalshi_ws: speeddesk_feed_kalshi_ws_timing {\"reader\":{\"kind\":\"speeddesk\",\"instance\":1,\"process\":1},\"session\":20,\"event\":\"status\",\"kind\":\"subscribed\",\"recv_call_mono\":3632080.854972315,\"recv_return_mono\":3632080.872751143,\"apply_mono\":3632080.872763113,\"apply_wall\":1792100974.4352508,\"recv_wait_ms\":17.77882780879736,\"return_to_apply_ms\":0.011970289051532745,\"sending_ts_ms\":1792100974424,\"engine_ts_ms\":null,\"receipt\":{\"ordinal\":1,\"status\":\"known\",\"accepted_monotonic\":3632080.872720783,\"accepted_wall\":1792100974.4352088,\"received_monotonic\":3632080.872738233,\"received_wall\":1792100974.4352262,\"residence_ms\":0.017449725419282913},\"connection\":{\"accepted\":1,\"received\":1,\"retained\":0,\"overflow\":0,\"unknown\":0,\"known\":1,\"max_residence_ms\":0.017449725419282913,\"disabled\":0,\"errors\":0,\"unsupported\":0},\"previous_message\":null,\"basis\":\"complete frame protocol acceptance to public recv; excludes earlier local and network delay\"}\n2026-10-15T21:49:51.410454788Z info 2026-10-15T21:49:51Z INFO nightcrawler.speeddesk_kalshi_ws: speeddesk_feed_kalshi_ws_timing {\"reader\":{\"kind\":\"speeddesk\",\"instance\":1,\"process\":1},\"session\":20,\"event\":\"gap\",\"kind\":\"orderbook_delta\",\"recv_call_mono\":3632097.813881574,\"recv_return_mono\":3632097.813892464,\"apply_mono\":3632097.813900814,\"apply_wall\":1792100991.3763885,\"recv_wait_ms\":0.01088995486497879,\"return_to_apply_ms\":0.008349772542715073,\"sending_ts_ms\":1792100988383,\"engine_ts_ms\":1792100988376,\"receipt\":{\"ordinal\":11870,\"status\":\"overflow\",\"accepted_monotonic\":null,\"accepted_wall\":null,\"received_monotonic\":3632097.813888994,\"received_wall\":1792100991.3763769,\"residence_ms\":null},\"connection\":{\"accepted\":14219,\"received\":11870,\"retained\":256,\"overflow\":9220,\"unknown\":7127,\"known\":4743,\"max_residence_ms\":2159.479188732803,\"disabled\":0,\"errors\":0,\"unsupported\":0},\"previous_message\":{\"processing_ms\":0.3722771070897579,\"yield_resume_ms\":0.010330229997634888},\"basis\":\"complete frame protocol acceptance to public recv; excludes earlier local and network delay\"}\n2026-10-15T21:49:54.858190695Z info 2026-10-15T21:49:54Z INFO nightcrawler.speeddesk_kalshi_ws: speeddesk_feed_kalshi_ws_timing {\"reader\":{\"kind\":\"speeddesk\",\"instance\":1,\"process\":1},\"session\":21,\"event\":\"status\",\"kind\":\"subscribed\",\"recv_call_mono\":3632101.180584765,\"recv_return_mono\":3632101.219776864,\"apply_mono\":3632101.219825653,\"apply_wall\":1792100994.782313,\"recv_wait_ms\":39.19209912419319,\"return_to_apply_ms\":0.048788730055093765,\"sending_ts_ms\":1792100994750,\"engine_ts_ms\":null,\"receipt\":{\"ordinal\":1,\"status\":\"known\",\"accepted_monotonic\":3632101.219625194,\"accepted_wall\":1792100994.782114,\"received_monotonic\":3632101.219753164,\"received_wall\":1792100994.782241,\"residence_ms\":0.12796977534890175},\"connection\":{\"accepted\":7,\"received\":1,\"retained\":6,\"overflow\":0,\"unknown\":0,\"known\":1,\"max_residence_ms\":0.12796977534890175,\"disabled\":0,\"errors\":0,\"unsupported\":0},\"previous_message\":null,\"basis\":\"complete frame protocol acceptance to public recv; excludes earlier local and network delay\"}\n2026-10-15T21:50:12.675975602Z info 2026-10-15T21:50:12Z INFO nightcrawler.speeddesk_kalshi_ws: speeddesk_feed_kalshi_ws_timing {\"reader\":{\"kind\":\"speeddesk\",\"instance\":1,\"process\":1},\"session\":21,\"event\":\"gap\",\"kind\":\"trade\",\"recv_call_mono\":3632119.098175869,\"recv_return_mono\":3632119.098211628,\"apply_mono\":3632119.098252788,\"apply_wall\":1792101012.6607404,\"recv_wait_ms\":0.03575906157493591,\"return_to_apply_ms\":0.04116026684641838,\"sending_ts_ms\":1792101009525,\"engine_ts_ms\":1792101009521,\"receipt\":{\"ordinal\":12269,\"status\":\"overflow\",\"accepted_monotonic\":null,\"accepted_wall\":null,\"received_monotonic\":3632119.098197848,\"received_wall\":1792101012.660686,\"residence_ms\":null},\"connection\":{\"accepted\":16298,\"received\":12269,\"retained\":256,\"overflow\":10215,\"unknown\":6442,\"known\":5827,\"max_residence_ms\":2134.194944985211,\"disabled\":0,\"errors\":0,\"unsupported\":0},\"previous_message\":{\"processing_ms\":0.4010959528386593,\"yield_resume_ms\":470.0624500401318},\"basis\":\"complete frame protocol acceptance to public recv; excludes earlier local and network delay\"}\n2026-10-15T21:50:16.735051226Z info 2026-10-15T21:50:16Z INFO nightcrawler.speeddesk_kalshi_ws: speeddesk_feed_kalshi_ws_timing {\"reader\":{\"kind\":\"speeddesk\",\"instance\":1,\"process\":1},\"session\":22,\"event\":\"status\",\"kind\":\"subscribed\",\"recv_call_mono\":3632123.154207966,\"recv_return_mono\":3632123.154250706,\"apply_mono\":3632123.154279486,\"apply_wall\":1792101016.7167673,\"recv_wait_ms\":0.04274025559425354,\"return_to_apply_ms\":0.028779730200767517,\"sending_ts_ms\":1792101016322,\"engine_ts_ms\":null,\"receipt\":{\"ordinal\":1,\"status\":\"overflow\",\"accepted_monotonic\":null,\"accepted_wall\":null,\"received_monotonic\":3632123.154235086,\"received_wall\":1792101016.716723,\"residence_ms\":null},\"connection\":{\"accepted\":273,\"received\":1,\"retained\":256,\"overflow\":17,\"unknown\":1,\"known\":0,\"max_residence_ms\":0.0,\"disabled\":0,\"errors\":0,\"unsupported\":0},\"previous_message\":null,\"basis\":\"complete frame protocol acceptance to public recv; excludes earlier local and network delay\"}\n2026-10-15T21:50:28.122614543Z info 2026-10-15T21:50:27Z INFO nightcrawler.speeddesk_kalshi_ws: speeddesk_feed_kalshi_ws_timing {\"reader\":{\"kind\":\"speeddesk\",\"instance\":1,\"process\":1},\"session\":22,\"event\":\"gap\",\"kind\":\"orderbook_delta\",\"recv_call_mono\":3632134.122959717,\"recv_return_mono\":3632134.122972137,\"apply_mono\":3632134.122981397,\"apply_wall\":1792101027.6854692,\"recv_wait_ms\":0.012419652193784714,\"return_to_apply_ms\":0.009260140359401703,\"sending_ts_ms\":1792101024689,\"engine_ts_ms\":1792101024685,\"receipt\":{\"ordinal\":9327,\"status\":\"overflow\",\"accepted_monotonic\":null,\"accepted_wall\":null,\"received_monotonic\":3632134.122968087,\"received_wall\":1792101027.6854558,\"residence_ms\":null},\"connection\":{\"accepted\":12281,\"received\":9327,\"retained\":256,\"overflow\":9639,\"unknown\":6941,\"known\":2386,\"max_residence_ms\":2007.0014540106058,\"disabled\":0,\"errors\":0,\"unsupported\":0},\"previous_message\":{\"processing_ms\":0.3673969767987728,\"yield_resume_ms\":0.5091964267194271},\"basis\":\"complete frame protocol acceptance to public recv; excludes earlier local and network delay\"}\n2026-10-15T21:50:30.911547211Z info 2026-10-15T21:50:30Z INFO nightcrawler.speeddesk_kalshi_ws: speeddesk_feed_kalshi_ws_timing {\"reader\":{\"kind\":\"speeddesk\",\"instance\":1,\"process\":1},\"session\":23,\"event\":\"status\",\"kind\":\"subscribed\",\"recv_call_mono\":3632137.290012465,\"recv_return_mono\":3632137.321616304,\"apply_mono\":3632137.321631074,\"apply_wall\":1792101030.8841188,\"recv_wait_ms\":31.603839248418808,\"return_to_apply_ms\":0.014769844710826874,\"sending_ts_ms\":1792101030860,\"engine_ts_ms\":null,\"receipt\":{\"ordinal\":1,\"status\":\"known\",\"accepted_monotonic\":3632137.321574255,\"accepted_wall\":1792101030.8840623,\"received_monotonic\":3632137.321604195,\"received_wall\":1792101030.884092,\"residence_ms\":0.029940158128738403},\"connection\":{\"accepted\":7,\"received\":1,\"retained\":6,\"overflow\":0,\"unknown\":0,\"known\":1,\"max_residence_ms\":0.029940158128738403,\"disabled\":0,\"errors\":0,\"unsupported\":0},\"previous_message\":null,\"basis\":\"complete frame protocol acceptance to public recv; excludes earlier local and network delay\"}\n2026-10-15T21:51:30.947604126Z info 2026-10-15T21:51:30Z INFO nightcrawler.speeddesk_kalshi_ws: speeddesk_feed_kalshi_ws_timing {\"reader\":{\"kind\":\"speeddesk\",\"instance\":1,\"process\":1},\"session\":23,\"event\":\"status\",\"kind\":\"orderbook_delta\",\"recv_call_mono\":3632197.317692127,\"recv_return_mono\":3632197.331506157,\"apply_mono\":3632197.331529047,\"apply_wall\":1792101090.8940165,\"recv_wait_ms\":13.81402974948287,\"return_to_apply_ms\":0.02289004623889923,\"sending_ts_ms\":1792101090872,\"engine_ts_ms\":1792101090868,\"receipt\":{\"ordinal\":28782,\"status\":\"known\",\"accepted_monotonic\":3632197.331448348,\"accepted_wall\":1792101090.8939364,\"received_monotonic\":3632197.331498347,\"received_wall\":1792101090.8939862,\"residence_ms\":0.04999944940209389},\"connection\":{\"accepted\":28789,\"received\":28782,\"retained\":7,\"overflow\":3307,\"unknown\":3307,\"known\":25475,\"max_residence_ms\":1332.7504461631179,\"disabled\":0,\"errors\":0,\"unsupported\":0},\"previous_message\":{\"processing_ms\":0.15990808606147766,\"yield_resume_ms\":0.009540002793073654},\"basis\":\"complete frame protocol acceptance to public recv; excludes earlier local and network delay\"}\n2026-10-15T21:52:32.754874480Z info 2026-10-15T21:52:31Z INFO nightcrawler.speeddesk_kalshi_ws: speeddesk_feed_kalshi_ws_timing {\"reader\":{\"kind\":\"speeddesk\",\"instance\":1,\"process\":1},\"session\":23,\"event\":\"status\",\"kind\":\"orderbook_delta\",\"recv_call_mono\":3632257.466582021,\"recv_return_mono\":3632257.481963648,\"apply_mono\":3632257.481977338,\"apply_wall\":1792101151.0444648,\"recv_wait_ms\":15.381626784801483,\"return_to_apply_ms\":0.013689976185560226,\"sending_ts_ms\":1792101150761,\"engine_ts_ms\":1792101150756,\"receipt\":{\"ordinal\":53780,\"status\":\"known\",\"accepted_monotonic\":3632257.478631205,\"accepted_wall\":1792101151.0411193,\"received_monotonic\":3632257.481950398,\"received_wall\":1792101151.0444384,\"residence_ms\":3.3191931433975697},\"connection\":{\"accepted\":53814,\"received\":53780,\"retained\":34,\"overflow\":5588,\"unknown\":5588,\"known\":48192,\"max_residence_ms\":1332.7504461631179,\"disabled\":0,\"errors\":0,\"unsupported\":0},\"previous_message\":{\"processing_ms\":0.31700823456048965,\"yield_resume_ms\":0.011689960956573486},\"basis\":\"complete frame protocol acceptance to public recv; excludes earlier local and network delay\"}\n2026-10-15T21:53:31.067777620Z info 2026-10-15T21:53:31Z INFO nightcrawler.speeddesk_kalshi_ws: speeddesk_feed_kalshi_ws_timing {\"reader\":{\"kind\":\"speeddesk\",\"instance\":1,\"process\":1},\"session\":23,\"event\":\"status\",\"kind\":\"orderbook_delta\",\"recv_call_mono\":3632317.48213976,\"recv_return_mono\":3632317.48215098,\"apply_mono\":3632317.48215854,\"apply_wall\":1792101211.0446463,\"recv_wait_ms\":0.01121964305639267,\"return_to_apply_ms\":0.007560010999441147,\"sending_ts_ms\":1792101210944,\"engine_ts_ms\":1792101210938,\"receipt\":{\"ordinal\":72399,\"status\":\"known\",\"accepted_monotonic\":3632317.440951888,\"accepted_wall\":1792101211.00344,\"received_monotonic\":3632317.48214685,\"received_wall\":1792101211.0446346,\"residence_ms\":41.19496187195182},\"connection\":{\"accepted\":72423,\"received\":72399,\"retained\":24,\"overflow\":6898,\"unknown\":6898,\"known\":65501,\"max_residence_ms\":1332.7504461631179,\"disabled\":0,\"errors\":0,\"unsupported\":0},\"previous_message\":{\"processing_ms\":0.32378826290369034,\"yield_resume_ms\":0.007879920303821564},\"basis\":\"complete frame protocol acceptance to public recv; excludes earlier local and network delay\"}\n2026-10-15T21:54:03.336867546Z info 2026-10-15T21:54:03Z INFO nightcrawler.speeddesk_kalshi_ws: speeddesk_feed_kalshi_ws_timing {\"reader\":{\"kind\":\"speeddesk\",\"instance\":1,\"process\":1},\"session\":23,\"event\":\"gap\",\"kind\":\"orderbook_delta\",\"recv_call_mono\":3632349.480869421,\"recv_return_mono\":3632349.480913961,\"apply_mono\":3632349.48094876,\"apply_wall\":1792101243.0434365,\"recv_wait_ms\":0.04454003646969795,\"return_to_apply_ms\":0.03479933366179466,\"sending_ts_ms\":1792101239984,\"engine_ts_ms\":1792101239980,\"receipt\":{\"ordinal\":89522,\"status\":\"overflow\",\"accepted_monotonic\":null,\"accepted_wall\":null,\"received_monotonic\":3632349.480899771,\"received_wall\":1792101243.0433877,\"residence_ms\":null},\"connection\":{\"accepted\":91396,\"received\":89522,\"retained\":256,\"overflow\":14210,\"unknown\":12592,\"known\":76930,\"max_residence_ms\":2081.151049118489,\"disabled\":0,\"errors\":0,\"unsupported\":0},\"previous_message\":{\"processing_ms\":0.31919684261083603,\"yield_resume_ms\":328.5702089779079},\"basis\":\"complete frame protocol acceptance to public recv; excludes earlier local and network delay\"}\n2026-10-15T21:54:06.970948104Z info 2026-10-15T21:54:06Z INFO nightcrawler.speeddesk_kalshi_ws: speeddesk_feed_kalshi_ws_timing {\"reader\":{\"kind\":\"speeddesk\",\"instance\":1,\"process\":1},\"session\":24,\"event\":\"status\",\"kind\":\"subscribed\",\"recv_call_mono\":3632353.380310283,\"recv_return_mono\":3632353.404357131,\"apply_mono\":3632353.404388631,\"apply_wall\":1792101246.9668765,\"recv_wait_ms\":24.046848062425852,\"return_to_apply_ms\":0.03150012344121933,\"sending_ts_ms\":1792101246950,\"engine_ts_ms\":null,\"receipt\":{\"ordinal\":1,\"status\":\"known\",\"accepted_monotonic\":3632353.404252242,\"accepted_wall\":1792101246.9667401,\"received_monotonic\":3632353.404342201,\"received_wall\":1792101246.96683,\"residence_ms\":0.08995924144983292},\"connection\":{\"accepted\":4,\"received\":1,\"retained\":3,\"overflow\":0,\"unknown\":0,\"known\":1,\"max_residence_ms\":0.08995924144983292,\"disabled\":0,\"errors\":0,\"unsupported\":0},\"previous_message\":null,\"basis\":\"complete frame protocol acceptance to public recv; excludes earlier local and network delay\"}\n2026-10-15T21:55:06.998733354Z info 2026-10-15T21:55:06Z INFO nightcrawler.speeddesk_kalshi_ws: speeddesk_feed_kalshi_ws_timing {\"reader\":{\"kind\":\"speeddesk\",\"instance\":1,\"process\":1},\"session\":24,\"event\":\"status\",\"kind\":\"trade\",\"recv_call_mono\":3632413.404649721,\"recv_return_mono\":3632413.404660001,\"apply_mono\":3632413.404670121,\"apply_wall\":1792101306.9671578,\"recv_wait_ms\":0.010279938578605652,\"return_to_apply_ms\":0.010120216757059097,\"sending_ts_ms\":1792101306950,\"engine_ts_ms\":1792101306944,\"receipt\":{\"ordinal\":33293,\"status\":\"known\",\"accepted_monotonic\":3632413.40223254,\"accepted_wall\":1792101306.9647205,\"received_monotonic\":3632413.404656291,\"received_wall\":1792101306.9671443,\"residence_ms\":2.4237511679530144},\"connection\":{\"accepted\":33295,\"received\":33293,\"retained\":2,\"overflow\":4960,\"unknown\":4960,\"known\":28333,\"max_residence_ms\":887.5502189621329,\"disabled\":0,\"errors\":0,\"unsupported\":0},\"previous_message\":{\"processing_ms\":0.3463076427578926,\"yield_resume_ms\":0.011280179023742676},\"basis\":\"complete frame protocol acceptance to public recv; excludes earlier local and network delay\"}\n2026-10-15T21:56:43.285270476Z info 2026-10-15T21:56:43Z INFO nightcrawler.speeddesk_kalshi_ws: speeddesk_feed_kalshi_ws_timing {\"reader\":{\"kind\":\"speeddesk\",\"instance\":1,\"process\":1},\"session\":24,\"event\":\"gap\",\"kind\":\"orderbook_delta\",\"recv_call_mono\":3632509.681745748,\"recv_return_mono\":3632509.681826187,\"apply_mono\":3632509.681873056,\"apply_wall\":1792101403.2443604,\"recv_wait_ms\":0.08043879643082619,\"return_to_apply_ms\":0.046869274228811264,\"sending_ts_ms\":1792101358272,\"engine_ts_ms\":1792101358268,\"receipt\":{\"ordinal\":56010,\"status\":\"overflow\",\"accepted_monotonic\":null,\"accepted_wall\":null,\"received_monotonic\":3632509.681805457,\"received_wall\":1792101403.2442935,\"residence_ms\":null},\"connection\":{\"accepted\":63833,\"received\":56010,\"retained\":256,\"overflow\":14441,\"unknown\":6874,\"known\":49136,\"max_residence_ms\":1365.5685419216752,\"disabled\":0,\"errors\":0,\"unsupported\":0},\"previous_message\":{\"processing_ms\":0.31431764364242554,\"yield_resume_ms\":0.005870126187801361},\"basis\":\"complete frame protocol acceptance to public recv; excludes earlier local and network delay\"}\n2026-10-15T21:56:46.984425042Z info 2026-10-15T21:56:46Z INFO nightcrawler.speeddesk_kalshi_ws: speeddesk_feed_kalshi_ws_timing {\"reader\":{\"kind\":\"speeddesk\",\"instance\":1,\"process\":1},\"session\":25,\"event\":\"status\",\"kind\":\"subscribed\",\"recv_call_mono\":3632513.390347709,\"recv_return_mono\":3632513.418824262,\"apply_mono\":3632513.418858941,\"apply_wall\":1792101406.9813466,\"recv_wait_ms\":28.476553037762642,\"return_to_apply_ms\":0.034679193049669266,\"sending_ts_ms\":1792101406957,\"engine_ts_ms\":null,\"receipt\":{\"ordinal\":1,\"status\":\"known\",\"accepted_monotonic\":3632513.418764432,\"accepted_wall\":1792101406.9812527,\"received_monotonic\":3632513.418807912,\"received_wall\":1792101406.9812958,\"residence_ms\":0.04348019137978554},\"connection\":{\"accepted\":4,\"received\":1,\"retained\":3,\"overflow\":0,\"unknown\":0,\"known\":1,\"max_residence_ms\":0.04348019137978554,\"disabled\":0,\"errors\":0,\"unsupported\":0},\"previous_message\":null,\"basis\":\"complete frame protocol acceptance to public recv; excludes earlier local and network delay\"}\n2026-10-15T21:57:46.996413962Z info 2026-10-15T21:57:46Z INFO nightcrawler.speeddesk_kalshi_ws: speeddesk_feed_kalshi_ws_timing {\"reader\":{\"kind\":\"speeddesk\",\"instance\":1,\"process\":1},\"session\":25,\"event\":\"status\",\"kind\":\"orderbook_delta\",\"recv_call_mono\":3632573.417718295,\"recv_return_mono\":3632573.427789645,\"apply_mono\":3632573.427812115,\"apply_wall\":1792101466.9902997,\"recv_wait_ms\":10.071349795907736,\"return_to_apply_ms\":0.02247001975774765,\"sending_ts_ms\":1792101466976,\"engine_ts_ms\":1792101466973,\"receipt\":{\"ordinal\":17925,\"status\":\"known\",\"accepted_monotonic\":3632573.427766995,\"accepted_wall\":1792101466.990255,\"received_monotonic\":3632573.427782115,\"received_wall\":1792101466.99027,\"residence_ms\":0.015120021998882294},\"connection\":{\"accepted\":17925,\"received\":17925,\"retained\":0,\"overflow\":188,\"unknown\":188,\"known\":17737,\"max_residence_ms\":822.403360158205,\"disabled\":0,\"errors\":0,\"unsupported\":0},\"previous_message\":{\"processing_ms\":0.18281815573573112,\"yield_resume_ms\":0.01019984483718872},\"basis\":\"complete frame protocol acceptance to public recv; excludes earlier local and network delay\"}\n2026-10-15T21:58:42.683550265Z info 2026-10-15T21:58:42Z INFO nightcrawler.speeddesk_kalshi_ws: speeddesk_feed_kalshi_ws_timing {\"reader\":{\"kind\":\"speeddesk\",\"instance\":1,\"process\":1},\"session\":25,\"event\":\"gap\",\"kind\":\"orderbook_delta\",\"recv_call_mono\":3632629.11144634,\"recv_return_mono\":3632629.111494119,\"apply_mono\":3632629.11152454,\"apply_wall\":1792101522.674012,\"recv_wait_ms\":0.04777871072292328,\"return_to_apply_ms\":0.030421186238527298,\"sending_ts_ms\":1792101519640,\"engine_ts_ms\":1792101519637,\"receipt\":{\"ordinal\":23943,\"status\":\"overflow\",\"accepted_monotonic\":null,\"accepted_wall\":null,\"received_monotonic\":3632629.111477059,\"received_wall\":1792101522.6739652,\"residence_ms\":null},\"connection\":{\"accepted\":24233,\"received\":23943,\"retained\":256,\"overflow\":224,\"unknown\":190,\"known\":23753,\"max_residence_ms\":822.403360158205,\"disabled\":0,\"errors\":0,\"unsupported\":0},\"previous_message\":{\"processing_ms\":534.9937966093421,\"yield_resume_ms\":16.73566922545433},\"basis\":\"complete frame protocol acceptance to public recv; excludes earlier local and network delay\"}\n2026-10-15T21:59:01.514356751Z info 2026-10-15T21:59:01Z INFO nightcrawler.speeddesk_kalshi_ws: speeddesk_feed_kalshi_ws_timing {\"reader\":{\"kind\":\"speeddesk\",\"instance\":1,\"process\":1},\"session\":26,\"event\":\"status\",\"kind\":\"subscribed\",\"recv_call_mono\":3632647.854239137,\"recv_return_mono\":3632647.889934086,\"apply_mono\":3632647.889980736,\"apply_wall\":1792101541.4524684,\"recv_wait_ms\":35.694948863238096,\"return_to_apply_ms\":0.04665041342377663,\"sending_ts_ms\":1792101541424,\"engine_ts_ms\":null,\"receipt\":{\"ordinal\":1,\"status\":\"known\",\"accepted_monotonic\":3632647.889831977,\"accepted_wall\":1792101541.4523206,\"received_monotonic\":3632647.889915926,\"received_wall\":1792101541.4524038,\"residence_ms\":0.08394895121455193},\"connection\":{\"accepted\":4,\"received\":1,\"retained\":3,\"overflow\":0,\"unknown\":0,\"known\":1,\"max_residence_ms\":0.08394895121455193,\"disabled\":0,\"errors\":0,\"unsupported\":0},\"previous_message\":null,\"basis\":\"complete frame protocol acceptance to public recv; excludes earlier local and network delay\"}\n2026-10-15T22:00:01.471235024Z info 2026-10-15T22:00:01Z INFO nightcrawler.speeddesk_kalshi_ws: speeddesk_feed_kalshi_ws_timing {\"reader\":{\"kind\":\"speeddesk\",\"instance\":1,\"process\":1},\"session\":26,\"event\":\"status\",\"kind\":\"orderbook_delta\",\"recv_call_mono\":3632707.890208461,\"recv_return_mono\":3632707.890219721,\"apply_mono\":3632707.890228571,\"apply_wall\":1792101601.4527164,\"recv_wait_ms\":0.011260155588388443,\"return_to_apply_ms\":0.008849892765283585,\"sending_ts_ms\":1792101600026,\"engine_ts_ms\":1792101600003,\"receipt\":{\"ordinal\":5914,\"status\":\"overflow\",\"accepted_monotonic\":null,\"accepted_wall\":null,\"received_monotonic\":3632707.890216221,\"received_wall\":1792101601.452704,\"residence_ms\":null},\"connection\":{\"accepted\":7887,\"received\":5914,\"retained\":256,\"overflow\":1972,\"unknown\":255,\"known\":5659,\"max_residence_ms\":434.0304327197373,\"disabled\":0,\"errors\":0,\"unsupported\":0},\"previous_message\":{\"processing_ms\":0.3049657680094242,\"yield_resume_ms\":0.009900424629449844},\"basis\":\"complete frame protocol acceptance to public recv; excludes earlier local and network delay\"}\n2026-10-15T22:00:05.458282453Z info 2026-10-15T22:00:05Z INFO nightcrawler.speeddesk_kalshi_ws: speeddesk_feed_kalshi_ws_timing {\"reader\":{\"kind\":\"speeddesk\",\"instance\":1,\"process\":1},\"session\":27,\"event\":\"status\",\"kind\":\"subscribed\",\"recv_call_mono\":3632711.808778504,\"recv_return_mono\":3632711.867467043,\"apply_mono\":3632711.867507492,\"apply_wall\":1792101605.4299953,\"recv_wait_ms\":58.68853908032179,\"return_to_apply_ms\":0.04044920206069946,\"sending_ts_ms\":1792101605377,\"engine_ts_ms\":null,\"receipt\":{\"ordinal\":1,\"status\":\"known\",\"accepted_monotonic\":3632711.867329734,\"accepted_wall\":1792101605.4298184,\"received_monotonic\":3632711.867449723,\"received_wall\":1792101605.4299376,\"residence_ms\":0.11998927220702171},\"connection\":{\"accepted\":12,\"received\":1,\"retained\":11,\"overflow\":0,\"unknown\":0,\"known\":1,\"max_residence_ms\":0.11998927220702171,\"disabled\":0,\"errors\":0,\"unsupported\":0},\"previous_message\":null,\"basis\":\"complete frame protocol acceptance to public recv; excludes earlier local and network delay\"}\n2026-10-15T22:00:21.090190256Z info 2026-10-15T22:00:21Z INFO nightcrawler.speeddesk_kalshi_ws: speeddesk_feed_kalshi_ws_timing {\"reader\":{\"kind\":\"speeddesk\",\"instance\":1,\"process\":1},\"session\":27,\"event\":\"gap\",\"kind\":\"orderbook_delta\",\"recv_call_mono\":3632726.972403021,\"recv_return_mono\":3632726.97244632,\"apply_mono\":3632726.9724783,\"apply_wall\":1792101620.534966,\"recv_wait_ms\":0.04329904913902283,\"return_to_apply_ms\":0.0319797545671463,\"sending_ts_ms\":1792101617216,\"engine_ts_ms\":1792101617212,\"receipt\":{\"ordinal\":6082,\"status\":\"overflow\",\"accepted_monotonic\":null,\"accepted_wall\":null,\"received_monotonic\":3632726.9724331,\"received_wall\":1792101620.534921,\"residence_ms\":null},\"connection\":{\"accepted\":8817,\"received\":6082,\"retained\":256,\"overflow\":3013,\"unknown\":534,\"known\":5548,\"max_residence_ms\":1727.2261939942837,\"disabled\":0,\"errors\":0,\"unsupported\":0},\"previous_message\":{\"processing_ms\":0.44104596599936485,\"yield_resume_ms\":531.8721467629075},\"basis\":\"complete frame protocol acceptance to public recv; excludes earlier local and network delay\"}\n2026-10-15T22:00:24.762046060Z info 2026-10-15T22:00:24Z INFO nightcrawler.speeddesk_kalshi_ws: speeddesk_feed_kalshi_ws_timing {\"reader\":{\"kind\":\"speeddesk\",\"instance\":1,\"process\":1},\"session\":28,\"event\":\"status\",\"kind\":\"subscribed\",\"recv_call_mono\":3632730.918138331,\"recv_return_mono\":3632730.966975045,\"apply_mono\":3632730.967013155,\"apply_wall\":1792101624.529501,\"recv_wait_ms\":48.83671412244439,\"return_to_apply_ms\":0.03811018541455269,\"sending_ts_ms\":1792101624488,\"engine_ts_ms\":null,\"receipt\":{\"ordinal\":1,\"status\":\"known\",\"accepted_monotonic\":3632730.966866146,\"accepted_wall\":1792101624.5293548,\"received_monotonic\":3632730.966953655,\"received_wall\":1792101624.5294416,\"residence_ms\":0.08750893175601959},\"connection\":{\"accepted\":5,\"received\":1,\"retained\":4,\"overflow\":0,\"unknown\":0,\"known\":1,\"max_residence_ms\":0.08750893175601959,\"disabled\":0,\"errors\":0,\"unsupported\":0},\"previous_message\":null,\"basis\":\"complete frame protocol acceptance to public recv; excludes earlier local and network delay\"}\n2026-10-15T22:00:38.377019086Z info 2026-10-15T22:00:38Z INFO nightcrawler.speeddesk_kalshi_ws: speeddesk_feed_kalshi_ws_timing {\"reader\":{\"kind\":\"speeddesk\",\"instance\":1,\"process\":1},\"session\":28,\"event\":\"gap\",\"kind\":\"orderbook_delta\",\"recv_call_mono\":3632744.245527987,\"recv_return_mono\":3632744.245573957,\"apply_mono\":3632744.245613586,\"apply_wall\":1792101637.8081012,\"recv_wait_ms\":0.04597008228302002,\"return_to_apply_ms\":0.039629172533750534,\"sending_ts_ms\":1792101634774,\"engine_ts_ms\":1792101634771,\"receipt\":{\"ordinal\":6877,\"status\":\"overflow\",\"accepted_monotonic\":null,\"accepted_wall\":null,\"received_monotonic\":3632744.245560377,\"received_wall\":1792101637.808048,\"residence_ms\":null},\"connection\":{\"accepted\":9431,\"received\":6877,\"retained\":256,\"overflow\":4462,\"unknown\":2164,\"known\":4713,\"max_residence_ms\":2825.1205780543387,\"disabled\":0,\"errors\":0,\"unsupported\":0},\"previous_message\":{\"processing_ms\":0.3113178536295891,\"yield_resume_ms\":102.35754726454616},\"basis\":\"complete frame protocol acceptance to public recv; excludes earlier local and network delay\"}\n2026-10-15T22:00:41.737858943Z info 2026-10-15T22:00:41Z INFO nightcrawler.speeddesk_kalshi_ws: speeddesk_feed_kalshi_ws_timing {\"reader\":{\"kind\":\"speeddesk\",\"instance\":1,\"process\":1},\"session\":29,\"event\":\"status\",\"kind\":\"subscribed\",\"recv_call_mono\":3632747.978949805,\"recv_return_mono\":3632748.014429495,\"apply_mono\":3632748.014456294,\"apply_wall\":1792101641.5769439,\"recv_wait_ms\":35.47969041392207,\"return_to_apply_ms\":0.026798807084560394,\"sending_ts_ms\":1792101641549,\"engine_ts_ms\":null,\"receipt\":{\"ordinal\":1,\"status\":\"known\",\"accepted_monotonic\":3632748.014322315,\"accepted_wall\":1792101641.5768106,\"received_monotonic\":3632748.014414025,\"received_wall\":1792101641.576902,\"residence_ms\":0.09171012789011002},\"connection\":{\"accepted\":4,\"received\":1,\"retained\":3,\"overflow\":0,\"unknown\":0,\"known\":1,\"max_residence_ms\":0.09171012789011002,\"disabled\":0,\"errors\":0,\"unsupported\":0},\"previous_message\":null,\"basis\":\"complete frame protocol acceptance to public recv; excludes earlier local and network delay\"}\n2026-10-15T22:00:45.688820570Z info 2026-10-15T22:00:45Z INFO nightcrawler.speeddesk_kalshi_ws: speeddesk_feed_kalshi_ws_timing {\"reader\":{\"kind\":\"speeddesk\",\"instance\":1,\"process\":1},\"session\":29,\"event\":\"gap\",\"kind\":\"orderbook_delta\",\"recv_call_mono\":3632751.803153408,\"recv_return_mono\":3632751.803203397,\"apply_mono\":3632751.803255837,\"apply_wall\":1792101645.3657434,\"recv_wait_ms\":0.04998873919248581,\"return_to_apply_ms\":0.05243998020887375,\"sending_ts_ms\":1792101642279,\"engine_ts_ms\":1792101642274,\"receipt\":{\"ordinal\":901,\"status\":\"overflow\",\"accepted_monotonic\":null,\"accepted_wall\":null,\"received_monotonic\":3632751.803187028,\"received_wall\":1792101645.365675,\"residence_ms\":null},\"connection\":{\"accepted\":5268,\"received\":901,\"retained\":256,\"overflow\":4725,\"unknown\":614,\"known\":287,\"max_residence_ms\":2508.25900118798,\"disabled\":0,\"errors\":0,\"unsupported\":0},\"previous_message\":{\"processing_ms\":0.6412030197679996,\"yield_resume_ms\":245.05369318649173},\"basis\":\"complete frame protocol acceptance to public recv; excludes earlier local and network delay\"}\n2026-10-15T22:00:50.300080362Z info 2026-10-15T22:00:50Z INFO nightcrawler.speeddesk_kalshi_ws: speeddesk_feed_kalshi_ws_timing {\"reader\":{\"kind\":\"speeddesk\",\"instance\":1,\"process\":1},\"session\":30,\"event\":\"status\",\"kind\":\"subscribed\",\"recv_call_mono\":3632756.6294685,\"recv_return_mono\":3632756.657857736,\"apply_mono\":3632756.657871546,\"apply_wall\":1792101650.220359,\"recv_wait_ms\":28.389235958456993,\"return_to_apply_ms\":0.013810116797685623,\"sending_ts_ms\":1792101650193,\"engine_ts_ms\":null,\"receipt\":{\"ordinal\":1,\"status\":\"known\",\"accepted_monotonic\":3632756.657701848,\"accepted_wall\":1792101650.22019,\"received_monotonic\":3632756.657839477,\"received_wall\":1792101650.2203274,\"residence_ms\":0.13762898743152618},\"connection\":{\"accepted\":32,\"received\":1,\"retained\":31,\"overflow\":0,\"unknown\":0,\"known\":1,\"max_residence_ms\":0.13762898743152618,\"disabled\":0,\"errors\":0,\"unsupported\":0},\"previous_message\":null,\"basis\":\"complete frame protocol acceptance to public recv; excludes earlier local and network delay\"}\n2026-10-15T22:00:53.213022881Z info 2026-10-15T22:00:53Z INFO nightcrawler.speeddesk_kalshi_ws: speeddesk_feed_kalshi_ws_timing {\"reader\":{\"kind\":\"speeddesk\",\"instance\":1,\"process\":1},\"session\":30,\"event\":\"gap\",\"kind\":\"orderbook_delta\",\"recv_call_mono\":3632759.634199036,\"recv_return_mono\":3632759.634238946,\"apply_mono\":3632759.634298425,\"apply_wall\":1792101653.1967862,\"recv_wait_ms\":0.0399099662899971,\"return_to_apply_ms\":0.05947938188910484,\"sending_ts_ms\":1792101650200,\"engine_ts_ms\":1792101650195,\"receipt\":{\"ordinal\":29,\"status\":\"overflow\",\"accepted_monotonic\":null,\"accepted_wall\":null,\"received_monotonic\":3632759.634227096,\"received_wall\":1792101653.196715,\"residence_ms\":null},\"connection\":{\"accepted\":4556,\"received\":29,\"retained\":256,\"overflow\":4272,\"unknown\":1,\"known\":28,\"max_residence_ms\":2281.5425749868155,\"disabled\":0,\"errors\":0,\"unsupported\":0},\"previous_message\":{\"processing_ms\":0.5254549905657768,\"yield_resume_ms\":694.3705775775015},\"basis\":\"complete frame protocol acceptance to public recv; excludes earlier local and network delay\"}\n2026-10-15T22:00:56.932969596Z info 2026-10-15T22:00:56Z INFO nightcrawler.speeddesk_kalshi_ws: speeddesk_feed_kalshi_ws_timing {\"reader\":{\"kind\":\"speeddesk\",\"instance\":1,\"process\":1},\"session\":31,\"event\":\"status\",\"kind\":\"subscribed\",\"recv_call_mono\":3632763.291230255,\"recv_return_mono\":3632763.318535682,\"apply_mono\":3632763.318552592,\"apply_wall\":1792101656.8810403,\"recv_wait_ms\":27.305427007377148,\"return_to_apply_ms\":0.016910023987293243,\"sending_ts_ms\":1792101656861,\"engine_ts_ms\":null,\"receipt\":{\"ordinal\":1,\"status\":\"known\",\"accepted_monotonic\":3632763.318441233,\"accepted_wall\":1792101656.8809292,\"received_monotonic\":3632763.318524062,\"received_wall\":1792101656.881012,\"residence_ms\":0.08282903581857681},\"connection\":{\"accepted\":7,\"received\":1,\"retained\":6,\"overflow\":0,\"unknown\":0,\"known\":1,\"max_residence_ms\":0.08282903581857681,\"disabled\":0,\"errors\":0,\"unsupported\":0},\"previous_message\":null,\"basis\":\"complete frame protocol acceptance to public recv; excludes earlier local and network delay\"}\n2026-10-15T22:01:04.495476831Z info 2026-10-15T22:01:04Z INFO nightcrawler.speeddesk_kalshi_ws: speeddesk_feed_kalshi_ws_timing {\"reader\":{\"kind\":\"speeddesk\",\"instance\":1,\"process\":1},\"session\":31,\"event\":\"gap\",\"kind\":\"orderbook_delta\",\"recv_call_mono\":3632770.496923901,\"recv_return_mono\":3632770.4969635,\"apply_mono\":3632770.49698967,\"apply_wall\":1792101664.0594773,\"recv_wait_ms\":0.03959890455007553,\"return_to_apply_ms\":0.026170164346694946,\"sending_ts_ms\":1792101661007,\"engine_ts_ms\":1792101660998,\"receipt\":{\"ordinal\":3637,\"status\":\"overflow\",\"accepted_monotonic\":null,\"accepted_wall\":null,\"received_monotonic\":3632770.49695023,\"received_wall\":1792101664.059438,\"residence_ms\":null},\"connection\":{\"accepted\":5167,\"received\":3637,\"retained\":256,\"overflow\":3062,\"unknown\":1788,\"known\":1849,\"max_residence_ms\":783.1912818364799,\"disabled\":0,\"errors\":0,\"unsupported\":0},\"previous_message\":{\"processing_ms\":0.3276672214269638,\"yield_resume_ms\":502.06033419817686},\"basis\":\"complete frame protocol acceptance to public recv; excludes earlier local and network delay\"}\n2026-10-15T22:01:08.044552025Z info 2026-10-15T22:01:08Z INFO nightcrawler.speeddesk_kalshi_ws: speeddesk_feed_kalshi_ws_timing {\"reader\":{\"kind\":\"speeddesk\",\"instance\":1,\"process\":1},\"session\":32,\"event\":\"status\",\"kind\":\"subscribed\",\"recv_call_mono\":3632774.412172326,\"recv_return_mono\":3632774.447176522,\"apply_mono\":3632774.447198751,\"apply_wall\":1792101668.0096865,\"recv_wait_ms\":35.00419622287154,\"return_to_apply_ms\":0.02222880721092224,\"sending_ts_ms\":1792101667971,\"engine_ts_ms\":null,\"receipt\":{\"ordinal\":1,\"status\":\"known\",\"accepted_monotonic\":3632774.446990164,\"accepted_wall\":1792101668.009478,\"received_monotonic\":3632774.447160122,\"received_wall\":1792101668.009648,\"residence_ms\":0.1699579879641533},\"connection\":{\"accepted\":15,\"received\":1,\"retained\":14,\"overflow\":0,\"unknown\":0,\"known\":1,\"max_residence_ms\":0.1699579879641533,\"disabled\":0,\"errors\":0,\"unsupported\":0},\"previous_message\":null,\"basis\":\"complete frame protocol acceptance to public recv; excludes earlier local and network delay\"}\n2026-10-15T22:01:13.401369188Z info 2026-10-15T22:01:13Z INFO nightcrawler.speeddesk_kalshi_ws: speeddesk_feed_kalshi_ws_timing {\"reader\":{\"kind\":\"speeddesk\",\"instance\":1,\"process\":1},\"session\":32,\"event\":\"gap\",\"kind\":\"orderbook_delta\",\"recv_call_mono\":3632779.467194564,\"recv_return_mono\":3632779.467244884,\"apply_mono\":3632779.467294593,\"apply_wall\":1792101673.0297823,\"recv_wait_ms\":0.05031982436776161,\"return_to_apply_ms\":0.04970887675881386,\"sending_ts_ms\":1792101670020,\"engine_ts_ms\":1792101670015,\"receipt\":{\"ordinal\":1467,\"status\":\"overflow\",\"accepted_monotonic\":null,\"accepted_wall\":null,\"received_monotonic\":3632779.467228414,\"received_wall\":1792101673.0297163,\"residence_ms\":null},\"connection\":{\"accepted\":4916,\"received\":1467,\"retained\":256,\"overflow\":3498,\"unknown\":305,\"known\":1162,\"max_residence_ms\":2576.779004186392,\"disabled\":0,\"errors\":0,\"unsupported\":0},\"previous_message\":{\"processing_ms\":0.35231607034802437,\"yield_resume_ms\":382.99640268087387},\"basis\":\"complete frame protocol acceptance to public recv; excludes earlier local and network delay\"}\n2026-10-15T22:01:16.677969852Z info 2026-10-15T22:01:16Z INFO nightcrawler.speeddesk_kalshi_ws: speeddesk_feed_kalshi_ws_timing {\"reader\":{\"kind\":\"speeddesk\",\"instance\":1,\"process\":1},\"session\":33,\"event\":\"status\",\"kind\":\"subscribed\",\"recv_call_mono\":3632782.938953055,\"recv_return_mono\":3632783.010874061,\"apply_mono\":3632783.010883401,\"apply_wall\":1792101676.5733712,\"recv_wait_ms\":71.92100584506989,\"return_to_apply_ms\":0.009340234100818634,\"sending_ts_ms\":1792101676508,\"engine_ts_ms\":null,\"receipt\":{\"ordinal\":1,\"status\":\"known\",\"accepted_monotonic\":3632783.009404615,\"accepted_wall\":1792101676.5718927,\"received_monotonic\":3632783.010856971,\"received_wall\":1792101676.573345,\"residence_ms\":1.4523561112582684},\"connection\":{\"accepted\":12,\"received\":1,\"retained\":11,\"overflow\":0,\"unknown\":0,\"known\":1,\"max_residence_ms\":1.4523561112582684,\"disabled\":0,\"errors\":0,\"unsupported\":0},\"previous_message\":null,\"basis\":\"complete frame protocol acceptance to public recv; excludes earlier local and network delay\"}\n2026-10-15T22:01:29.327986252Z info 2026-10-15T22:01:29Z INFO nightcrawler.speeddesk_kalshi_ws: speeddesk_feed_kalshi_ws_timing {\"reader\":{\"kind\":\"speeddesk\",\"instance\":1,\"process\":1},\"session\":33,\"event\":\"gap\",\"kind\":\"orderbook_delta\",\"recv_call_mono\":3632795.728940333,\"recv_return_mono\":3632795.728981652,\"apply_mono\":3632795.729022272,\"apply_wall\":1792101689.2915099,\"recv_wait_ms\":0.04131905734539032,\"return_to_apply_ms\":0.0406200997531414,\"sending_ts_ms\":1792101686001,\"engine_ts_ms\":1792101685994,\"receipt\":{\"ordinal\":7248,\"status\":\"overflow\",\"accepted_monotonic\":null,\"accepted_wall\":null,\"received_monotonic\":3632795.728970092,\"received_wall\":1792101689.2914581,\"residence_ms\":null},\"connection\":{\"accepted\":8186,\"received\":7248,\"retained\":256,\"overflow\":4521,\"unknown\":3839,\"known\":3409,\"max_residence_ms\":2214.8231118917465,\"disabled\":0,\"errors\":0,\"unsupported\":0},\"previous_message\":{\"processing_ms\":306.2702822498977,\"yield_resume_ms\":2.9063327237963676},\"basis\":\"complete frame protocol acceptance to public recv; excludes earlier local and network delay\"}\n2026-10-15T22:01:32.484881962Z info 2026-10-15T22:01:32Z INFO nightcrawler.speeddesk_kalshi_ws: speeddesk_feed_kalshi_ws_timing {\"reader\":{\"kind\":\"speeddesk\",\"instance\":1,\"process\":1},\"session\":34,\"event\":\"status\",\"kind\":\"subscribed\",\"recv_call_mono\":3632798.873440975,\"recv_return_mono\":3632798.906392782,\"apply_mono\":3632798.906424592,\"apply_wall\":1792101692.4689121,\"recv_wait_ms\":32.951807137578726,\"return_to_apply_ms\":0.031809788197278976,\"sending_ts_ms\":1792101692443,\"engine_ts_ms\":null,\"receipt\":{\"ordinal\":1,\"status\":\"known\",\"accepted_monotonic\":3632798.906339783,\"accepted_wall\":1792101692.468828,\"received_monotonic\":3632798.906378102,\"received_wall\":1792101692.468866,\"residence_ms\":0.038318801671266556},\"connection\":{\"accepted\":6,\"received\":1,\"retained\":5,\"overflow\":0,\"unknown\":0,\"known\":1,\"max_residence_ms\":0.038318801671266556,\"disabled\":0,\"errors\":0,\"unsupported\":0},\"previous_message\":null,\"basis\":\"complete frame protocol acceptance to public recv; excludes earlier local and network delay\"}"
+        }
+      ],
+      "structuredContent": {
+        "scope": "deployment",
+        "deploymentId": "66e6e7e4-30d9-4628-a234-f2a8e97dad19",
+        "serviceId": "f84d3b52-002f-44cb-931e-bc9e3e097e97",
+        "environmentId": "17f7b0e0-104c-4903-9484-0106748b3cdb",
+        "status": "SUCCESS",
+        "deploy": [
+          {
+            "timestamp": "2026-10-15T21:45:07.653558924Z",
+            "severity": "info",
+            "message": "2026-10-15T21:45:07Z INFO nightcrawler.speeddesk_kalshi_ws: speeddesk_feed_kalshi_ws_timing {\"reader\":{\"kind\":\"speeddesk\",\"instance\":1,\"process\":1},\"session\":13,\"event\":\"status\",\"kind\":\"orderbook_delta\",\"recv_call_mono\":3631814.077759072,\"recv_return_mono\":3631814.077802122,\"apply_mono\":3631814.077831833,\"apply_wall\":1792100707.6403196,\"recv_wait_ms\":0.04304992035031319,\"return_to_apply_ms\":0.029711052775382996,\"sending_ts_ms\":1792100705437,\"engine_ts_ms\":1792100705433,\"receipt\":{\"ordinal\":28315,\"status\":\"overflow\",\"accepted_monotonic\":null,\"accepted_wall\":null,\"received_monotonic\":3631814.077787732,\"received_wall\":1792100707.6402757,\"residence_ms\":null},\"connection\":{\"accepted\":28637,\"received\":28315,\"retained\":256,\"overflow\":11936,\"unknown\":11870,\"known\":16445,\"max_residence_ms\":1953.9610631763935,\"disabled\":0,\"errors\":0,\"unsupported\":0},\"previous_message\":{\"processing_ms\":0.7123951800167561,\"yield_resume_ms\":325.5076720379293},\"basis\":\"complete frame protocol acceptance to public recv; excludes earlier local and network delay\"}",
+            "attributes": [
+              {
+                "key": "level",
+                "value": "\"info\""
+              }
+            ]
+          },
+          {
+            "timestamp": "2026-10-15T21:45:15.440247672Z",
+            "severity": "info",
+            "message": "2026-10-15T21:45:15Z INFO nightcrawler.speeddesk_kalshi_ws: speeddesk_feed_kalshi_ws_timing {\"reader\":{\"kind\":\"speeddesk\",\"instance\":1,\"process\":1},\"session\":14,\"event\":\"status\",\"kind\":\"subscribed\",\"recv_call_mono\":3631821.815885706,\"recv_return_mono\":3631821.820533669,\"apply_mono\":3631821.820559899,\"apply_wall\":1792100715.3830476,\"recv_wait_ms\":4.647963214665651,\"return_to_apply_ms\":0.026229768991470337,\"sending_ts_ms\":1792100715370,\"engine_ts_ms\":null,\"receipt\":{\"ordinal\":1,\"status\":\"known\",\"accepted_monotonic\":3631821.820487679,\"accepted_wall\":1792100715.382976,\"received_monotonic\":3631821.820519399,\"received_wall\":1792100715.3830073,\"residence_ms\":0.03171991556882858},\"connection\":{\"accepted\":4,\"received\":1,\"retained\":3,\"overflow\":0,\"unknown\":0,\"known\":1,\"max_residence_ms\":0.03171991556882858,\"disabled\":0,\"errors\":0,\"unsupported\":0},\"previous_message\":null,\"basis\":\"complete frame protocol acceptance to public recv; excludes earlier local and network delay\"}",
+            "attributes": [
+              {
+                "key": "level",
+                "value": "\"info\""
+              }
+            ]
+          },
+          {
+            "timestamp": "2026-10-15T21:46:15.392490815Z",
+            "severity": "info",
+            "message": "2026-10-15T21:46:15Z INFO nightcrawler.speeddesk_kalshi_ws: speeddesk_feed_kalshi_ws_timing {\"reader\":{\"kind\":\"speeddesk\",\"instance\":1,\"process\":1},\"session\":14,\"event\":\"gap\",\"kind\":\"orderbook_delta\",\"recv_call_mono\":3631881.478111669,\"recv_return_mono\":3631881.478146349,\"apply_mono\":3631881.478178638,\"apply_wall\":1792100775.0406663,\"recv_wait_ms\":0.03468012437224388,\"return_to_apply_ms\":0.03228895366191864,\"sending_ts_ms\":1792100771976,\"engine_ts_ms\":1792100771970,\"receipt\":{\"ordinal\":42041,\"status\":\"overflow\",\"accepted_monotonic\":null,\"accepted_wall\":null,\"received_monotonic\":3631881.478132029,\"received_wall\":1792100775.04062,\"residence_ms\":null},\"connection\":{\"accepted\":44316,\"received\":42041,\"retained\":256,\"overflow\":21222,\"unknown\":19203,\"known\":22838,\"max_residence_ms\":1950.1512590795755,\"disabled\":0,\"errors\":0,\"unsupported\":0},\"previous_message\":{\"processing_ms\":0.3811870701611042,\"yield_resume_ms\":261.42361713573337},\"basis\":\"complete frame protocol acceptance to public recv; excludes earlier local and network delay\"}",
+            "attributes": [
+              {
+                "key": "level",
+                "value": "\"info\""
+              }
+            ]
+          },
+          {
+            "timestamp": "2026-10-15T21:46:18.812495009Z",
+            "severity": "info",
+            "message": "2026-10-15T21:46:18Z INFO nightcrawler.speeddesk_kalshi_ws: speeddesk_feed_kalshi_ws_timing {\"reader\":{\"kind\":\"speeddesk\",\"instance\":1,\"process\":1},\"session\":15,\"event\":\"status\",\"kind\":\"subscribed\",\"recv_call_mono\":3631885.038636119,\"recv_return_mono\":3631885.11290827,\"apply_mono\":3631885.1129203,\"apply_wall\":1792100778.675408,\"recv_wait_ms\":74.27215110510588,\"return_to_apply_ms\":0.012029893696308136,\"sending_ts_ms\":1792100778607,\"engine_ts_ms\":null,\"receipt\":{\"ordinal\":1,\"status\":\"known\",\"accepted_monotonic\":3631885.112282365,\"accepted_wall\":1792100778.6747706,\"received_monotonic\":3631885.11289214,\"received_wall\":1792100778.67538,\"residence_ms\":0.609775073826313},\"connection\":{\"accepted\":11,\"received\":1,\"retained\":10,\"overflow\":0,\"unknown\":0,\"known\":1,\"max_residence_ms\":0.609775073826313,\"disabled\":0,\"errors\":0,\"unsupported\":0},\"previous_message\":null,\"basis\":\"complete frame protocol acceptance to public recv; excludes earlier local and network delay\"}",
+            "attributes": [
+              {
+                "key": "level",
+                "value": "\"info\""
+              }
+            ]
+          },
+          {
+            "timestamp": "2026-10-15T21:47:18.884100027Z",
+            "severity": "info",
+            "message": "2026-10-15T21:47:18Z INFO nightcrawler.speeddesk_kalshi_ws: speeddesk_feed_kalshi_ws_timing {\"reader\":{\"kind\":\"speeddesk\",\"instance\":1,\"process\":1},\"session\":15,\"event\":\"status\",\"kind\":\"orderbook_delta\",\"recv_call_mono\":3631945.113277985,\"recv_return_mono\":3631945.113294755,\"apply_mono\":3631945.113308305,\"apply_wall\":1792100838.675796,\"recv_wait_ms\":0.01677032560110092,\"return_to_apply_ms\":0.013549812138080597,\"sending_ts_ms\":1792100837384,\"engine_ts_ms\":1792100837378,\"receipt\":{\"ordinal\":34486,\"status\":\"overflow\",\"accepted_monotonic\":null,\"accepted_wall\":null,\"received_monotonic\":3631945.113289524,\"received_wall\":1792100838.6757772,\"residence_ms\":null},\"connection\":{\"accepted\":35128,\"received\":34486,\"retained\":256,\"overflow\":11867,\"unknown\":11481,\"known\":23005,\"max_residence_ms\":1623.8879607990384,\"disabled\":0,\"errors\":0,\"unsupported\":0},\"previous_message\":{\"processing_ms\":0.5671652033925056,\"yield_resume_ms\":0.016309786587953568},\"basis\":\"complete frame protocol acceptance to public recv; excludes earlier local and network delay\"}",
+            "attributes": [
+              {
+                "key": "level",
+                "value": "\"info\""
+              }
+            ]
+          },
+          {
+            "timestamp": "2026-10-15T21:48:00.140280238Z",
+            "severity": "info",
+            "message": "2026-10-15T21:47:59Z INFO nightcrawler.speeddesk_kalshi_ws: speeddesk_feed_kalshi_ws_timing {\"reader\":{\"kind\":\"speeddesk\",\"instance\":1,\"process\":1},\"session\":15,\"event\":\"gap\",\"kind\":\"orderbook_delta\",\"recv_call_mono\":3631986.132889797,\"recv_return_mono\":3631986.132940456,\"apply_mono\":3631986.132970086,\"apply_wall\":1792100879.6954577,\"recv_wait_ms\":0.050658825784921646,\"return_to_apply_ms\":0.02963002771139145,\"sending_ts_ms\":1792100876253,\"engine_ts_ms\":1792100876247,\"receipt\":{\"ordinal\":52009,\"status\":\"overflow\",\"accepted_monotonic\":null,\"accepted_wall\":null,\"received_monotonic\":3631986.132923737,\"received_wall\":1792100879.695412,\"residence_ms\":null},\"connection\":{\"accepted\":52738,\"received\":52009,\"retained\":256,\"overflow\":16184,\"unknown\":15711,\"known\":36298,\"max_residence_ms\":1679.573809262365,\"disabled\":0,\"errors\":0,\"unsupported\":0},\"previous_message\":{\"processing_ms\":452.31479685753584,\"yield_resume_ms\":3.6820610985159874},\"basis\":\"complete frame protocol acceptance to public recv; excludes earlier local and network delay\"}",
+            "attributes": [
+              {
+                "key": "level",
+                "value": "\"info\""
+              }
+            ]
+          },
+          {
+            "timestamp": "2026-10-15T21:48:03.500629535Z",
+            "severity": "info",
+            "message": "2026-10-15T21:48:03Z INFO nightcrawler.speeddesk_kalshi_ws: speeddesk_feed_kalshi_ws_timing {\"reader\":{\"kind\":\"speeddesk\",\"instance\":1,\"process\":1},\"session\":16,\"event\":\"status\",\"kind\":\"subscribed\",\"recv_call_mono\":3631989.865394187,\"recv_return_mono\":3631989.908846422,\"apply_mono\":3631989.908878611,\"apply_wall\":1792100883.4713664,\"recv_wait_ms\":43.45223493874073,\"return_to_apply_ms\":0.032188836485147476,\"sending_ts_ms\":1792100883435,\"engine_ts_ms\":null,\"receipt\":{\"ordinal\":1,\"status\":\"known\",\"accepted_monotonic\":3631989.908745613,\"accepted_wall\":1792100883.471234,\"received_monotonic\":3631989.908833192,\"received_wall\":1792100883.471321,\"residence_ms\":0.08757924661040306},\"connection\":{\"accepted\":5,\"received\":1,\"retained\":4,\"overflow\":0,\"unknown\":0,\"known\":1,\"max_residence_ms\":0.08757924661040306,\"disabled\":0,\"errors\":0,\"unsupported\":0},\"previous_message\":null,\"basis\":\"complete frame protocol acceptance to public recv; excludes earlier local and network delay\"}",
+            "attributes": [
+              {
+                "key": "level",
+                "value": "\"info\""
+              }
+            ]
+          },
+          {
+            "timestamp": "2026-10-15T21:48:25.605966698Z",
+            "severity": "info",
+            "message": "2026-10-15T21:48:25Z INFO nightcrawler.speeddesk_kalshi_ws: speeddesk_feed_kalshi_ws_timing {\"reader\":{\"kind\":\"speeddesk\",\"instance\":1,\"process\":1},\"session\":16,\"event\":\"gap\",\"kind\":\"orderbook_delta\",\"recv_call_mono\":3632011.994654499,\"recv_return_mono\":3632011.994707469,\"apply_mono\":3632011.994739329,\"apply_wall\":1792100905.557227,\"recv_wait_ms\":0.052969902753829956,\"return_to_apply_ms\":0.03186007961630821,\"sending_ts_ms\":1792100902106,\"engine_ts_ms\":1792100902102,\"receipt\":{\"ordinal\":11253,\"status\":\"overflow\",\"accepted_monotonic\":null,\"accepted_wall\":null,\"received_monotonic\":3632011.994693249,\"received_wall\":1792100905.5571811,\"residence_ms\":null},\"connection\":{\"accepted\":13080,\"received\":11253,\"retained\":256,\"overflow\":3722,\"unknown\":2151,\"known\":9102,\"max_residence_ms\":2593.0071249604225,\"disabled\":0,\"errors\":0,\"unsupported\":0},\"previous_message\":{\"processing_ms\":549.1200559772551,\"yield_resume_ms\":0.32830704003572464},\"basis\":\"complete frame protocol acceptance to public recv; excludes earlier local and network delay\"}",
+            "attributes": [
+              {
+                "key": "level",
+                "value": "\"info\""
+              }
+            ]
+          },
+          {
+            "timestamp": "2026-10-15T21:48:28.845043927Z",
+            "severity": "info",
+            "message": "2026-10-15T21:48:28Z INFO nightcrawler.speeddesk_kalshi_ws: speeddesk_feed_kalshi_ws_timing {\"reader\":{\"kind\":\"speeddesk\",\"instance\":1,\"process\":1},\"session\":17,\"event\":\"status\",\"kind\":\"subscribed\",\"recv_call_mono\":3632015.160184303,\"recv_return_mono\":3632015.18196452,\"apply_mono\":3632015.181981519,\"apply_wall\":1792100908.7444692,\"recv_wait_ms\":21.780217066407204,\"return_to_apply_ms\":0.01699896529316902,\"sending_ts_ms\":1792100908730,\"engine_ts_ms\":null,\"receipt\":{\"ordinal\":1,\"status\":\"known\",\"accepted_monotonic\":3632015.18192213,\"accepted_wall\":1792100908.7444103,\"received_monotonic\":3632015.18195051,\"received_wall\":1792100908.7444382,\"residence_ms\":0.028380192816257477},\"connection\":{\"accepted\":5,\"received\":1,\"retained\":4,\"overflow\":0,\"unknown\":0,\"known\":1,\"max_residence_ms\":0.028380192816257477,\"disabled\":0,\"errors\":0,\"unsupported\":0},\"previous_message\":null,\"basis\":\"complete frame protocol acceptance to public recv; excludes earlier local and network delay\"}",
+            "attributes": [
+              {
+                "key": "level",
+                "value": "\"info\""
+              }
+            ]
+          },
+          {
+            "timestamp": "2026-10-15T21:48:35.254330967Z",
+            "severity": "info",
+            "message": "2026-10-15T21:48:35Z INFO nightcrawler.speeddesk_kalshi_ws: speeddesk_feed_kalshi_ws_timing {\"reader\":{\"kind\":\"speeddesk\",\"instance\":1,\"process\":1},\"session\":17,\"event\":\"gap\",\"kind\":\"orderbook_delta\",\"recv_call_mono\":3632021.640177262,\"recv_return_mono\":3632021.640231611,\"apply_mono\":3632021.640274611,\"apply_wall\":1792100915.2027621,\"recv_wait_ms\":0.05434919148683548,\"return_to_apply_ms\":0.04299962893128395,\"sending_ts_ms\":1792100911925,\"engine_ts_ms\":1792100911919,\"receipt\":{\"ordinal\":3479,\"status\":\"overflow\",\"accepted_monotonic\":null,\"accepted_wall\":null,\"received_monotonic\":3632021.640217251,\"received_wall\":1792100915.2027054,\"residence_ms\":null},\"connection\":{\"accepted\":4607,\"received\":3479,\"retained\":256,\"overflow\":2623,\"unknown\":1751,\"known\":1728,\"max_residence_ms\":1445.005875080824,\"disabled\":0,\"errors\":0,\"unsupported\":0},\"previous_message\":{\"processing_ms\":283.96664187312126,\"yield_resume_ms\":13.467913959175348},\"basis\":\"complete frame protocol acceptance to public recv; excludes earlier local and network delay\"}",
+            "attributes": [
+              {
+                "key": "level",
+                "value": "\"info\""
+              }
+            ]
+          },
+          {
+            "timestamp": "2026-10-15T21:48:38.728974470Z",
+            "severity": "info",
+            "message": "2026-10-15T21:48:38Z INFO nightcrawler.speeddesk_kalshi_ws: speeddesk_feed_kalshi_ws_timing {\"reader\":{\"kind\":\"speeddesk\",\"instance\":1,\"process\":1},\"session\":18,\"event\":\"status\",\"kind\":\"subscribed\",\"recv_call_mono\":3632025.018150293,\"recv_return_mono\":3632025.042786617,\"apply_mono\":3632025.042813586,\"apply_wall\":1792100918.6053011,\"recv_wait_ms\":24.636324029415846,\"return_to_apply_ms\":0.026969239115715027,\"sending_ts_ms\":1792100918584,\"engine_ts_ms\":null,\"receipt\":{\"ordinal\":1,\"status\":\"known\",\"accepted_monotonic\":3632025.042731437,\"accepted_wall\":1792100918.6052196,\"received_monotonic\":3632025.042770597,\"received_wall\":1792100918.6052585,\"residence_ms\":0.03916025161743164},\"connection\":{\"accepted\":4,\"received\":1,\"retained\":3,\"overflow\":0,\"unknown\":0,\"known\":1,\"max_residence_ms\":0.03916025161743164,\"disabled\":0,\"errors\":0,\"unsupported\":0},\"previous_message\":null,\"basis\":\"complete frame protocol acceptance to public recv; excludes earlier local and network delay\"}",
+            "attributes": [
+              {
+                "key": "level",
+                "value": "\"info\""
+              }
+            ]
+          },
+          {
+            "timestamp": "2026-10-15T21:49:01.251728639Z",
+            "severity": "info",
+            "message": "2026-10-15T21:49:01Z INFO nightcrawler.speeddesk_kalshi_ws: speeddesk_feed_kalshi_ws_timing {\"reader\":{\"kind\":\"speeddesk\",\"instance\":1,\"process\":1},\"session\":18,\"event\":\"gap\",\"kind\":\"orderbook_delta\",\"recv_call_mono\":3632047.649814105,\"recv_return_mono\":3632047.649865345,\"apply_mono\":3632047.649896815,\"apply_wall\":1792100941.2123845,\"recv_wait_ms\":0.051239971071481705,\"return_to_apply_ms\":0.03146985545754433,\"sending_ts_ms\":1792100937874,\"engine_ts_ms\":1792100937868,\"receipt\":{\"ordinal\":16562,\"status\":\"overflow\",\"accepted_monotonic\":null,\"accepted_wall\":null,\"received_monotonic\":3632047.649849455,\"received_wall\":1792100941.2123375,\"residence_ms\":null},\"connection\":{\"accepted\":19310,\"received\":16562,\"retained\":256,\"overflow\":8313,\"unknown\":5821,\"known\":10741,\"max_residence_ms\":2368.729365989566,\"disabled\":0,\"errors\":0,\"unsupported\":0},\"previous_message\":{\"processing_ms\":0.2529066987335682,\"yield_resume_ms\":421.2147709913552},\"basis\":\"complete frame protocol acceptance to public recv; excludes earlier local and network delay\"}",
+            "attributes": [
+              {
+                "key": "level",
+                "value": "\"info\""
+              }
+            ]
+          },
+          {
+            "timestamp": "2026-10-15T21:49:04.876599955Z",
+            "severity": "info",
+            "message": "2026-10-15T21:49:04Z INFO nightcrawler.speeddesk_kalshi_ws: speeddesk_feed_kalshi_ws_timing {\"reader\":{\"kind\":\"speeddesk\",\"instance\":1,\"process\":1},\"session\":19,\"event\":\"status\",\"kind\":\"subscribed\",\"recv_call_mono\":3632051.260815984,\"recv_return_mono\":3632051.271008922,\"apply_mono\":3632051.271029162,\"apply_wall\":1792100944.8335168,\"recv_wait_ms\":10.192937683314085,\"return_to_apply_ms\":0.020240433514118195,\"sending_ts_ms\":1792100944817,\"engine_ts_ms\":null,\"receipt\":{\"ordinal\":1,\"status\":\"known\",\"accepted_monotonic\":3632051.270884673,\"accepted_wall\":1792100944.8333728,\"received_monotonic\":3632051.270996332,\"received_wall\":1792100944.8334842,\"residence_ms\":0.11165905743837357},\"connection\":{\"accepted\":3,\"received\":1,\"retained\":2,\"overflow\":0,\"unknown\":0,\"known\":1,\"max_residence_ms\":0.11165905743837357,\"disabled\":0,\"errors\":0,\"unsupported\":0},\"previous_message\":null,\"basis\":\"complete frame protocol acceptance to public recv; excludes earlier local and network delay\"}",
+            "attributes": [
+              {
+                "key": "level",
+                "value": "\"info\""
+              }
+            ]
+          },
+          {
+            "timestamp": "2026-10-15T21:49:30.963992602Z",
+            "severity": "info",
+            "message": "2026-10-15T21:49:30Z INFO nightcrawler.speeddesk_kalshi_ws: speeddesk_feed_kalshi_ws_timing {\"reader\":{\"kind\":\"speeddesk\",\"instance\":1,\"process\":1},\"session\":19,\"event\":\"gap\",\"kind\":\"trade\",\"recv_call_mono\":3632077.387981603,\"recv_return_mono\":3632077.388026873,\"apply_mono\":3632077.388049982,\"apply_wall\":1792100970.9505377,\"recv_wait_ms\":0.04527019336819649,\"return_to_apply_ms\":0.02310890704393387,\"sending_ts_ms\":1792100967674,\"engine_ts_ms\":1792100967671,\"receipt\":{\"ordinal\":14189,\"status\":\"overflow\",\"accepted_monotonic\":null,\"accepted_wall\":null,\"received_monotonic\":3632077.388013943,\"received_wall\":1792100970.950502,\"residence_ms\":null},\"connection\":{\"accepted\":15274,\"received\":14189,\"retained\":256,\"overflow\":7849,\"unknown\":7020,\"known\":7169,\"max_residence_ms\":2115.025636740029,\"disabled\":0,\"errors\":0,\"unsupported\":0},\"previous_message\":{\"processing_ms\":302.66499193385243,\"yield_resume_ms\":7.036843802779913},\"basis\":\"complete frame protocol acceptance to public recv; excludes earlier local and network delay\"}",
+            "attributes": [
+              {
+                "key": "level",
+                "value": "\"info\""
+              }
+            ]
+          },
+          {
+            "timestamp": "2026-10-15T21:49:34.470743647Z",
+            "severity": "info",
+            "message": "2026-10-15T21:49:34Z INFO nightcrawler.speeddesk_kalshi_ws: speeddesk_feed_kalshi_ws_timing {\"reader\":{\"kind\":\"speeddesk\",\"instance\":1,\"process\":1},\"session\":20,\"event\":\"status\",\"kind\":\"subscribed\",\"recv_call_mono\":3632080.854972315,\"recv_return_mono\":3632080.872751143,\"apply_mono\":3632080.872763113,\"apply_wall\":1792100974.4352508,\"recv_wait_ms\":17.77882780879736,\"return_to_apply_ms\":0.011970289051532745,\"sending_ts_ms\":1792100974424,\"engine_ts_ms\":null,\"receipt\":{\"ordinal\":1,\"status\":\"known\",\"accepted_monotonic\":3632080.872720783,\"accepted_wall\":1792100974.4352088,\"received_monotonic\":3632080.872738233,\"received_wall\":1792100974.4352262,\"residence_ms\":0.017449725419282913},\"connection\":{\"accepted\":1,\"received\":1,\"retained\":0,\"overflow\":0,\"unknown\":0,\"known\":1,\"max_residence_ms\":0.017449725419282913,\"disabled\":0,\"errors\":0,\"unsupported\":0},\"previous_message\":null,\"basis\":\"complete frame protocol acceptance to public recv; excludes earlier local and network delay\"}",
+            "attributes": [
+              {
+                "key": "level",
+                "value": "\"info\""
+              }
+            ]
+          },
+          {
+            "timestamp": "2026-10-15T21:49:51.410454788Z",
+            "severity": "info",
+            "message": "2026-10-15T21:49:51Z INFO nightcrawler.speeddesk_kalshi_ws: speeddesk_feed_kalshi_ws_timing {\"reader\":{\"kind\":\"speeddesk\",\"instance\":1,\"process\":1},\"session\":20,\"event\":\"gap\",\"kind\":\"orderbook_delta\",\"recv_call_mono\":3632097.813881574,\"recv_return_mono\":3632097.813892464,\"apply_mono\":3632097.813900814,\"apply_wall\":1792100991.3763885,\"recv_wait_ms\":0.01088995486497879,\"return_to_apply_ms\":0.008349772542715073,\"sending_ts_ms\":1792100988383,\"engine_ts_ms\":1792100988376,\"receipt\":{\"ordinal\":11870,\"status\":\"overflow\",\"accepted_monotonic\":null,\"accepted_wall\":null,\"received_monotonic\":3632097.813888994,\"received_wall\":1792100991.3763769,\"residence_ms\":null},\"connection\":{\"accepted\":14219,\"received\":11870,\"retained\":256,\"overflow\":9220,\"unknown\":7127,\"known\":4743,\"max_residence_ms\":2159.479188732803,\"disabled\":0,\"errors\":0,\"unsupported\":0},\"previous_message\":{\"processing_ms\":0.3722771070897579,\"yield_resume_ms\":0.010330229997634888},\"basis\":\"complete frame protocol acceptance to public recv; excludes earlier local and network delay\"}",
+            "attributes": [
+              {
+                "key": "level",
+                "value": "\"info\""
+              }
+            ]
+          },
+          {
+            "timestamp": "2026-10-15T21:49:54.858190695Z",
+            "severity": "info",
+            "message": "2026-10-15T21:49:54Z INFO nightcrawler.speeddesk_kalshi_ws: speeddesk_feed_kalshi_ws_timing {\"reader\":{\"kind\":\"speeddesk\",\"instance\":1,\"process\":1},\"session\":21,\"event\":\"status\",\"kind\":\"subscribed\",\"recv_call_mono\":3632101.180584765,\"recv_return_mono\":3632101.219776864,\"apply_mono\":3632101.219825653,\"apply_wall\":1792100994.782313,\"recv_wait_ms\":39.19209912419319,\"return_to_apply_ms\":0.048788730055093765,\"sending_ts_ms\":1792100994750,\"engine_ts_ms\":null,\"receipt\":{\"ordinal\":1,\"status\":\"known\",\"accepted_monotonic\":3632101.219625194,\"accepted_wall\":1792100994.782114,\"received_monotonic\":3632101.219753164,\"received_wall\":1792100994.782241,\"residence_ms\":0.12796977534890175},\"connection\":{\"accepted\":7,\"received\":1,\"retained\":6,\"overflow\":0,\"unknown\":0,\"known\":1,\"max_residence_ms\":0.12796977534890175,\"disabled\":0,\"errors\":0,\"unsupported\":0},\"previous_message\":null,\"basis\":\"complete frame protocol acceptance to public recv; excludes earlier local and network delay\"}",
+            "attributes": [
+              {
+                "key": "level",
+                "value": "\"info\""
+              }
+            ]
+          },
+          {
+            "timestamp": "2026-10-15T21:50:12.675975602Z",
+            "severity": "info",
+            "message": "2026-10-15T21:50:12Z INFO nightcrawler.speeddesk_kalshi_ws: speeddesk_feed_kalshi_ws_timing {\"reader\":{\"kind\":\"speeddesk\",\"instance\":1,\"process\":1},\"session\":21,\"event\":\"gap\",\"kind\":\"trade\",\"recv_call_mono\":3632119.098175869,\"recv_return_mono\":3632119.098211628,\"apply_mono\":3632119.098252788,\"apply_wall\":1792101012.6607404,\"recv_wait_ms\":0.03575906157493591,\"return_to_apply_ms\":0.04116026684641838,\"sending_ts_ms\":1792101009525,\"engine_ts_ms\":1792101009521,\"receipt\":{\"ordinal\":12269,\"status\":\"overflow\",\"accepted_monotonic\":null,\"accepted_wall\":null,\"received_monotonic\":3632119.098197848,\"received_wall\":1792101012.660686,\"residence_ms\":null},\"connection\":{\"accepted\":16298,\"received\":12269,\"retained\":256,\"overflow\":10215,\"unknown\":6442,\"known\":5827,\"max_residence_ms\":2134.194944985211,\"disabled\":0,\"errors\":0,\"unsupported\":0},\"previous_message\":{\"processing_ms\":0.4010959528386593,\"yield_resume_ms\":470.0624500401318},\"basis\":\"complete frame protocol acceptance to public recv; excludes earlier local and network delay\"}",
+            "attributes": [
+              {
+                "key": "level",
+                "value": "\"info\""
+              }
+            ]
+          },
+          {
+            "timestamp": "2026-10-15T21:50:16.735051226Z",
+            "severity": "info",
+            "message": "2026-10-15T21:50:16Z INFO nightcrawler.speeddesk_kalshi_ws: speeddesk_feed_kalshi_ws_timing {\"reader\":{\"kind\":\"speeddesk\",\"instance\":1,\"process\":1},\"session\":22,\"event\":\"status\",\"kind\":\"subscribed\",\"recv_call_mono\":3632123.154207966,\"recv_return_mono\":3632123.154250706,\"apply_mono\":3632123.154279486,\"apply_wall\":1792101016.7167673,\"recv_wait_ms\":0.04274025559425354,\"return_to_apply_ms\":0.028779730200767517,\"sending_ts_ms\":1792101016322,\"engine_ts_ms\":null,\"receipt\":{\"ordinal\":1,\"status\":\"overflow\",\"accepted_monotonic\":null,\"accepted_wall\":null,\"received_monotonic\":3632123.154235086,\"received_wall\":1792101016.716723,\"residence_ms\":null},\"connection\":{\"accepted\":273,\"received\":1,\"retained\":256,\"overflow\":17,\"unknown\":1,\"known\":0,\"max_residence_ms\":0.0,\"disabled\":0,\"errors\":0,\"unsupported\":0},\"previous_message\":null,\"basis\":\"complete frame protocol acceptance to public recv; excludes earlier local and network delay\"}",
+            "attributes": [
+              {
+                "key": "level",
+                "value": "\"info\""
+              }
+            ]
+          },
+          {
+            "timestamp": "2026-10-15T21:50:28.122614543Z",
+            "severity": "info",
+            "message": "2026-10-15T21:50:27Z INFO nightcrawler.speeddesk_kalshi_ws: speeddesk_feed_kalshi_ws_timing {\"reader\":{\"kind\":\"speeddesk\",\"instance\":1,\"process\":1},\"session\":22,\"event\":\"gap\",\"kind\":\"orderbook_delta\",\"recv_call_mono\":3632134.122959717,\"recv_return_mono\":3632134.122972137,\"apply_mono\":3632134.122981397,\"apply_wall\":1792101027.6854692,\"recv_wait_ms\":0.012419652193784714,\"return_to_apply_ms\":0.009260140359401703,\"sending_ts_ms\":1792101024689,\"engine_ts_ms\":1792101024685,\"receipt\":{\"ordinal\":9327,\"status\":\"overflow\",\"accepted_monotonic\":null,\"accepted_wall\":null,\"received_monotonic\":3632134.122968087,\"received_wall\":1792101027.6854558,\"residence_ms\":null},\"connection\":{\"accepted\":12281,\"received\":9327,\"retained\":256,\"overflow\":9639,\"unknown\":6941,\"known\":2386,\"max_residence_ms\":2007.0014540106058,\"disabled\":0,\"errors\":0,\"unsupported\":0},\"previous_message\":{\"processing_ms\":0.3673969767987728,\"yield_resume_ms\":0.5091964267194271},\"basis\":\"complete frame protocol acceptance to public recv; excludes earlier local and network delay\"}",
+            "attributes": [
+              {
+                "key": "level",
+                "value": "\"info\""
+              }
+            ]
+          },
+          {
+            "timestamp": "2026-10-15T21:50:30.911547211Z",
+            "severity": "info",
+            "message": "2026-10-15T21:50:30Z INFO nightcrawler.speeddesk_kalshi_ws: speeddesk_feed_kalshi_ws_timing {\"reader\":{\"kind\":\"speeddesk\",\"instance\":1,\"process\":1},\"session\":23,\"event\":\"status\",\"kind\":\"subscribed\",\"recv_call_mono\":3632137.290012465,\"recv_return_mono\":3632137.321616304,\"apply_mono\":3632137.321631074,\"apply_wall\":1792101030.8841188,\"recv_wait_ms\":31.603839248418808,\"return_to_apply_ms\":0.014769844710826874,\"sending_ts_ms\":1792101030860,\"engine_ts_ms\":null,\"receipt\":{\"ordinal\":1,\"status\":\"known\",\"accepted_monotonic\":3632137.321574255,\"accepted_wall\":1792101030.8840623,\"received_monotonic\":3632137.321604195,\"received_wall\":1792101030.884092,\"residence_ms\":0.029940158128738403},\"connection\":{\"accepted\":7,\"received\":1,\"retained\":6,\"overflow\":0,\"unknown\":0,\"known\":1,\"max_residence_ms\":0.029940158128738403,\"disabled\":0,\"errors\":0,\"unsupported\":0},\"previous_message\":null,\"basis\":\"complete frame protocol acceptance to public recv; excludes earlier local and network delay\"}",
+            "attributes": [
+              {
+                "key": "level",
+                "value": "\"info\""
+              }
+            ]
+          },
+          {
+            "timestamp": "2026-10-15T21:51:30.947604126Z",
+            "severity": "info",
+            "message": "2026-10-15T21:51:30Z INFO nightcrawler.speeddesk_kalshi_ws: speeddesk_feed_kalshi_ws_timing {\"reader\":{\"kind\":\"speeddesk\",\"instance\":1,\"process\":1},\"session\":23,\"event\":\"status\",\"kind\":\"orderbook_delta\",\"recv_call_mono\":3632197.317692127,\"recv_return_mono\":3632197.331506157,\"apply_mono\":3632197.331529047,\"apply_wall\":1792101090.8940165,\"recv_wait_ms\":13.81402974948287,\"return_to_apply_ms\":0.02289004623889923,\"sending_ts_ms\":1792101090872,\"engine_ts_ms\":1792101090868,\"receipt\":{\"ordinal\":28782,\"status\":\"known\",\"accepted_monotonic\":3632197.331448348,\"accepted_wall\":1792101090.8939364,\"received_monotonic\":3632197.331498347,\"received_wall\":1792101090.8939862,\"residence_ms\":0.04999944940209389},\"connection\":{\"accepted\":28789,\"received\":28782,\"retained\":7,\"overflow\":3307,\"unknown\":3307,\"known\":25475,\"max_residence_ms\":1332.7504461631179,\"disabled\":0,\"errors\":0,\"unsupported\":0},\"previous_message\":{\"processing_ms\":0.15990808606147766,\"yield_resume_ms\":0.009540002793073654},\"basis\":\"complete frame protocol acceptance to public recv; excludes earlier local and network delay\"}",
+            "attributes": [
+              {
+                "key": "level",
+                "value": "\"info\""
+              }
+            ]
+          },
+          {
+            "timestamp": "2026-10-15T21:52:32.754874480Z",
+            "severity": "info",
+            "message": "2026-10-15T21:52:31Z INFO nightcrawler.speeddesk_kalshi_ws: speeddesk_feed_kalshi_ws_timing {\"reader\":{\"kind\":\"speeddesk\",\"instance\":1,\"process\":1},\"session\":23,\"event\":\"status\",\"kind\":\"orderbook_delta\",\"recv_call_mono\":3632257.466582021,\"recv_return_mono\":3632257.481963648,\"apply_mono\":3632257.481977338,\"apply_wall\":1792101151.0444648,\"recv_wait_ms\":15.381626784801483,\"return_to_apply_ms\":0.013689976185560226,\"sending_ts_ms\":1792101150761,\"engine_ts_ms\":1792101150756,\"receipt\":{\"ordinal\":53780,\"status\":\"known\",\"accepted_monotonic\":3632257.478631205,\"accepted_wall\":1792101151.0411193,\"received_monotonic\":3632257.481950398,\"received_wall\":1792101151.0444384,\"residence_ms\":3.3191931433975697},\"connection\":{\"accepted\":53814,\"received\":53780,\"retained\":34,\"overflow\":5588,\"unknown\":5588,\"known\":48192,\"max_residence_ms\":1332.7504461631179,\"disabled\":0,\"errors\":0,\"unsupported\":0},\"previous_message\":{\"processing_ms\":0.31700823456048965,\"yield_resume_ms\":0.011689960956573486},\"basis\":\"complete frame protocol acceptance to public recv; excludes earlier local and network delay\"}",
+            "attributes": [
+              {
+                "key": "level",
+                "value": "\"info\""
+              }
+            ]
+          },
+          {
+            "timestamp": "2026-10-15T21:53:31.067777620Z",
+            "severity": "info",
+            "message": "2026-10-15T21:53:31Z INFO nightcrawler.speeddesk_kalshi_ws: speeddesk_feed_kalshi_ws_timing {\"reader\":{\"kind\":\"speeddesk\",\"instance\":1,\"process\":1},\"session\":23,\"event\":\"status\",\"kind\":\"orderbook_delta\",\"recv_call_mono\":3632317.48213976,\"recv_return_mono\":3632317.48215098,\"apply_mono\":3632317.48215854,\"apply_wall\":1792101211.0446463,\"recv_wait_ms\":0.01121964305639267,\"return_to_apply_ms\":0.007560010999441147,\"sending_ts_ms\":1792101210944,\"engine_ts_ms\":1792101210938,\"receipt\":{\"ordinal\":72399,\"status\":\"known\",\"accepted_monotonic\":3632317.440951888,\"accepted_wall\":1792101211.00344,\"received_monotonic\":3632317.48214685,\"received_wall\":1792101211.0446346,\"residence_ms\":41.19496187195182},\"connection\":{\"accepted\":72423,\"received\":72399,\"retained\":24,\"overflow\":6898,\"unknown\":6898,\"known\":65501,\"max_residence_ms\":1332.7504461631179,\"disabled\":0,\"errors\":0,\"unsupported\":0},\"previous_message\":{\"processing_ms\":0.32378826290369034,\"yield_resume_ms\":0.007879920303821564},\"basis\":\"complete frame protocol acceptance to public recv; excludes earlier local and network delay\"}",
+            "attributes": [
+              {
+                "key": "level",
+                "value": "\"info\""
+              }
+            ]
+          },
+          {
+            "timestamp": "2026-10-15T21:54:03.336867546Z",
+            "severity": "info",
+            "message": "2026-10-15T21:54:03Z INFO nightcrawler.speeddesk_kalshi_ws: speeddesk_feed_kalshi_ws_timing {\"reader\":{\"kind\":\"speeddesk\",\"instance\":1,\"process\":1},\"session\":23,\"event\":\"gap\",\"kind\":\"orderbook_delta\",\"recv_call_mono\":3632349.480869421,\"recv_return_mono\":3632349.480913961,\"apply_mono\":3632349.48094876,\"apply_wall\":1792101243.0434365,\"recv_wait_ms\":0.04454003646969795,\"return_to_apply_ms\":0.03479933366179466,\"sending_ts_ms\":1792101239984,\"engine_ts_ms\":1792101239980,\"receipt\":{\"ordinal\":89522,\"status\":\"overflow\",\"accepted_monotonic\":null,\"accepted_wall\":null,\"received_monotonic\":3632349.480899771,\"received_wall\":1792101243.0433877,\"residence_ms\":null},\"connection\":{\"accepted\":91396,\"received\":89522,\"retained\":256,\"overflow\":14210,\"unknown\":12592,\"known\":76930,\"max_residence_ms\":2081.151049118489,\"disabled\":0,\"errors\":0,\"unsupported\":0},\"previous_message\":{\"processing_ms\":0.31919684261083603,\"yield_resume_ms\":328.5702089779079},\"basis\":\"complete frame protocol acceptance to public recv; excludes earlier local and network delay\"}",
+            "attributes": [
+              {
+                "key": "level",
+                "value": "\"info\""
+              }
+            ]
+          },
+          {
+            "timestamp": "2026-10-15T21:54:06.970948104Z",
+            "severity": "info",
+            "message": "2026-10-15T21:54:06Z INFO nightcrawler.speeddesk_kalshi_ws: speeddesk_feed_kalshi_ws_timing {\"reader\":{\"kind\":\"speeddesk\",\"instance\":1,\"process\":1},\"session\":24,\"event\":\"status\",\"kind\":\"subscribed\",\"recv_call_mono\":3632353.380310283,\"recv_return_mono\":3632353.404357131,\"apply_mono\":3632353.404388631,\"apply_wall\":1792101246.9668765,\"recv_wait_ms\":24.046848062425852,\"return_to_apply_ms\":0.03150012344121933,\"sending_ts_ms\":1792101246950,\"engine_ts_ms\":null,\"receipt\":{\"ordinal\":1,\"status\":\"known\",\"accepted_monotonic\":3632353.404252242,\"accepted_wall\":1792101246.9667401,\"received_monotonic\":3632353.404342201,\"received_wall\":1792101246.96683,\"residence_ms\":0.08995924144983292},\"connection\":{\"accepted\":4,\"received\":1,\"retained\":3,\"overflow\":0,\"unknown\":0,\"known\":1,\"max_residence_ms\":0.08995924144983292,\"disabled\":0,\"errors\":0,\"unsupported\":0},\"previous_message\":null,\"basis\":\"complete frame protocol acceptance to public recv; excludes earlier local and network delay\"}",
+            "attributes": [
+              {
+                "key": "level",
+                "value": "\"info\""
+              }
+            ]
+          },
+          {
+            "timestamp": "2026-10-15T21:55:06.998733354Z",
+            "severity": "info",
+            "message": "2026-10-15T21:55:06Z INFO nightcrawler.speeddesk_kalshi_ws: speeddesk_feed_kalshi_ws_timing {\"reader\":{\"kind\":\"speeddesk\",\"instance\":1,\"process\":1},\"session\":24,\"event\":\"status\",\"kind\":\"trade\",\"recv_call_mono\":3632413.404649721,\"recv_return_mono\":3632413.404660001,\"apply_mono\":3632413.404670121,\"apply_wall\":1792101306.9671578,\"recv_wait_ms\":0.010279938578605652,\"return_to_apply_ms\":0.010120216757059097,\"sending_ts_ms\":1792101306950,\"engine_ts_ms\":1792101306944,\"receipt\":{\"ordinal\":33293,\"status\":\"known\",\"accepted_monotonic\":3632413.40223254,\"accepted_wall\":1792101306.9647205,\"received_monotonic\":3632413.404656291,\"received_wall\":1792101306.9671443,\"residence_ms\":2.4237511679530144},\"connection\":{\"accepted\":33295,\"received\":33293,\"retained\":2,\"overflow\":4960,\"unknown\":4960,\"known\":28333,\"max_residence_ms\":887.5502189621329,\"disabled\":0,\"errors\":0,\"unsupported\":0},\"previous_message\":{\"processing_ms\":0.3463076427578926,\"yield_resume_ms\":0.011280179023742676},\"basis\":\"complete frame protocol acceptance to public recv; excludes earlier local and network delay\"}",
+            "attributes": [
+              {
+                "key": "level",
+                "value": "\"info\""
+              }
+            ]
+          },
+          {
+            "timestamp": "2026-10-15T21:56:43.285270476Z",
+            "severity": "info",
+            "message": "2026-10-15T21:56:43Z INFO nightcrawler.speeddesk_kalshi_ws: speeddesk_feed_kalshi_ws_timing {\"reader\":{\"kind\":\"speeddesk\",\"instance\":1,\"process\":1},\"session\":24,\"event\":\"gap\",\"kind\":\"orderbook_delta\",\"recv_call_mono\":3632509.681745748,\"recv_return_mono\":3632509.681826187,\"apply_mono\":3632509.681873056,\"apply_wall\":1792101403.2443604,\"recv_wait_ms\":0.08043879643082619,\"return_to_apply_ms\":0.046869274228811264,\"sending_ts_ms\":1792101358272,\"engine_ts_ms\":1792101358268,\"receipt\":{\"ordinal\":56010,\"status\":\"overflow\",\"accepted_monotonic\":null,\"accepted_wall\":null,\"received_monotonic\":3632509.681805457,\"received_wall\":1792101403.2442935,\"residence_ms\":null},\"connection\":{\"accepted\":63833,\"received\":56010,\"retained\":256,\"overflow\":14441,\"unknown\":6874,\"known\":49136,\"max_residence_ms\":1365.5685419216752,\"disabled\":0,\"errors\":0,\"unsupported\":0},\"previous_message\":{\"processing_ms\":0.31431764364242554,\"yield_resume_ms\":0.005870126187801361},\"basis\":\"complete frame protocol acceptance to public recv; excludes earlier local and network delay\"}",
+            "attributes": [
+              {
+                "key": "level",
+                "value": "\"info\""
+              }
+            ]
+          },
+          {
+            "timestamp": "2026-10-15T21:56:46.984425042Z",
+            "severity": "info",
+            "message": "2026-10-15T21:56:46Z INFO nightcrawler.speeddesk_kalshi_ws: speeddesk_feed_kalshi_ws_timing {\"reader\":{\"kind\":\"speeddesk\",\"instance\":1,\"process\":1},\"session\":25,\"event\":\"status\",\"kind\":\"subscribed\",\"recv_call_mono\":3632513.390347709,\"recv_return_mono\":3632513.418824262,\"apply_mono\":3632513.418858941,\"apply_wall\":1792101406.9813466,\"recv_wait_ms\":28.476553037762642,\"return_to_apply_ms\":0.034679193049669266,\"sending_ts_ms\":1792101406957,\"engine_ts_ms\":null,\"receipt\":{\"ordinal\":1,\"status\":\"known\",\"accepted_monotonic\":3632513.418764432,\"accepted_wall\":1792101406.9812527,\"received_monotonic\":3632513.418807912,\"received_wall\":1792101406.9812958,\"residence_ms\":0.04348019137978554},\"connection\":{\"accepted\":4,\"received\":1,\"retained\":3,\"overflow\":0,\"unknown\":0,\"known\":1,\"max_residence_ms\":0.04348019137978554,\"disabled\":0,\"errors\":0,\"unsupported\":0},\"previous_message\":null,\"basis\":\"complete frame protocol acceptance to public recv; excludes earlier local and network delay\"}",
+            "attributes": [
+              {
+                "key": "level",
+                "value": "\"info\""
+              }
+            ]
+          },
+          {
+            "timestamp": "2026-10-15T21:57:46.996413962Z",
+            "severity": "info",
+            "message": "2026-10-15T21:57:46Z INFO nightcrawler.speeddesk_kalshi_ws: speeddesk_feed_kalshi_ws_timing {\"reader\":{\"kind\":\"speeddesk\",\"instance\":1,\"process\":1},\"session\":25,\"event\":\"status\",\"kind\":\"orderbook_delta\",\"recv_call_mono\":3632573.417718295,\"recv_return_mono\":3632573.427789645,\"apply_mono\":3632573.427812115,\"apply_wall\":1792101466.9902997,\"recv_wait_ms\":10.071349795907736,\"return_to_apply_ms\":0.02247001975774765,\"sending_ts_ms\":1792101466976,\"engine_ts_ms\":1792101466973,\"receipt\":{\"ordinal\":17925,\"status\":\"known\",\"accepted_monotonic\":3632573.427766995,\"accepted_wall\":1792101466.990255,\"received_monotonic\":3632573.427782115,\"received_wall\":1792101466.99027,\"residence_ms\":0.015120021998882294},\"connection\":{\"accepted\":17925,\"received\":17925,\"retained\":0,\"overflow\":188,\"unknown\":188,\"known\":17737,\"max_residence_ms\":822.403360158205,\"disabled\":0,\"errors\":0,\"unsupported\":0},\"previous_message\":{\"processing_ms\":0.18281815573573112,\"yield_resume_ms\":0.01019984483718872},\"basis\":\"complete frame protocol acceptance to public recv; excludes earlier local and network delay\"}",
+            "attributes": [
+              {
+                "key": "level",
+                "value": "\"info\""
+              }
+            ]
+          },
+          {
+            "timestamp": "2026-10-15T21:58:42.683550265Z",
+            "severity": "info",
+            "message": "2026-10-15T21:58:42Z INFO nightcrawler.speeddesk_kalshi_ws: speeddesk_feed_kalshi_ws_timing {\"reader\":{\"kind\":\"speeddesk\",\"instance\":1,\"process\":1},\"session\":25,\"event\":\"gap\",\"kind\":\"orderbook_delta\",\"recv_call_mono\":3632629.11144634,\"recv_return_mono\":3632629.111494119,\"apply_mono\":3632629.11152454,\"apply_wall\":1792101522.674012,\"recv_wait_ms\":0.04777871072292328,\"return_to_apply_ms\":0.030421186238527298,\"sending_ts_ms\":1792101519640,\"engine_ts_ms\":1792101519637,\"receipt\":{\"ordinal\":23943,\"status\":\"overflow\",\"accepted_monotonic\":null,\"accepted_wall\":null,\"received_monotonic\":3632629.111477059,\"received_wall\":1792101522.6739652,\"residence_ms\":null},\"connection\":{\"accepted\":24233,\"received\":23943,\"retained\":256,\"overflow\":224,\"unknown\":190,\"known\":23753,\"max_residence_ms\":822.403360158205,\"disabled\":0,\"errors\":0,\"unsupported\":0},\"previous_message\":{\"processing_ms\":534.9937966093421,\"yield_resume_ms\":16.73566922545433},\"basis\":\"complete frame protocol acceptance to public recv; excludes earlier local and network delay\"}",
+            "attributes": [
+              {
+                "key": "level",
+                "value": "\"info\""
+              }
+            ]
+          },
+          {
+            "timestamp": "2026-10-15T21:59:01.514356751Z",
+            "severity": "info",
+            "message": "2026-10-15T21:59:01Z INFO nightcrawler.speeddesk_kalshi_ws: speeddesk_feed_kalshi_ws_timing {\"reader\":{\"kind\":\"speeddesk\",\"instance\":1,\"process\":1},\"session\":26,\"event\":\"status\",\"kind\":\"subscribed\",\"recv_call_mono\":3632647.854239137,\"recv_return_mono\":3632647.889934086,\"apply_mono\":3632647.889980736,\"apply_wall\":1792101541.4524684,\"recv_wait_ms\":35.694948863238096,\"return_to_apply_ms\":0.04665041342377663,\"sending_ts_ms\":1792101541424,\"engine_ts_ms\":null,\"receipt\":{\"ordinal\":1,\"status\":\"known\",\"accepted_monotonic\":3632647.889831977,\"accepted_wall\":1792101541.4523206,\"received_monotonic\":3632647.889915926,\"received_wall\":1792101541.4524038,\"residence_ms\":0.08394895121455193},\"connection\":{\"accepted\":4,\"received\":1,\"retained\":3,\"overflow\":0,\"unknown\":0,\"known\":1,\"max_residence_ms\":0.08394895121455193,\"disabled\":0,\"errors\":0,\"unsupported\":0},\"previous_message\":null,\"basis\":\"complete frame protocol acceptance to public recv; excludes earlier local and network delay\"}",
+            "attributes": [
+              {
+                "key": "level",
+                "value": "\"info\""
+              }
+            ]
+          },
+          {
+            "timestamp": "2026-10-15T22:00:01.471235024Z",
+            "severity": "info",
+            "message": "2026-10-15T22:00:01Z INFO nightcrawler.speeddesk_kalshi_ws: speeddesk_feed_kalshi_ws_timing {\"reader\":{\"kind\":\"speeddesk\",\"instance\":1,\"process\":1},\"session\":26,\"event\":\"status\",\"kind\":\"orderbook_delta\",\"recv_call_mono\":3632707.890208461,\"recv_return_mono\":3632707.890219721,\"apply_mono\":3632707.890228571,\"apply_wall\":1792101601.4527164,\"recv_wait_ms\":0.011260155588388443,\"return_to_apply_ms\":0.008849892765283585,\"sending_ts_ms\":1792101600026,\"engine_ts_ms\":1792101600003,\"receipt\":{\"ordinal\":5914,\"status\":\"overflow\",\"accepted_monotonic\":null,\"accepted_wall\":null,\"received_monotonic\":3632707.890216221,\"received_wall\":1792101601.452704,\"residence_ms\":null},\"connection\":{\"accepted\":7887,\"received\":5914,\"retained\":256,\"overflow\":1972,\"unknown\":255,\"known\":5659,\"max_residence_ms\":434.0304327197373,\"disabled\":0,\"errors\":0,\"unsupported\":0},\"previous_message\":{\"processing_ms\":0.3049657680094242,\"yield_resume_ms\":0.009900424629449844},\"basis\":\"complete frame protocol acceptance to public recv; excludes earlier local and network delay\"}",
+            "attributes": [
+              {
+                "key": "level",
+                "value": "\"info\""
+              }
+            ]
+          },
+          {
+            "timestamp": "2026-10-15T22:00:05.458282453Z",
+            "severity": "info",
+            "message": "2026-10-15T22:00:05Z INFO nightcrawler.speeddesk_kalshi_ws: speeddesk_feed_kalshi_ws_timing {\"reader\":{\"kind\":\"speeddesk\",\"instance\":1,\"process\":1},\"session\":27,\"event\":\"status\",\"kind\":\"subscribed\",\"recv_call_mono\":3632711.808778504,\"recv_return_mono\":3632711.867467043,\"apply_mono\":3632711.867507492,\"apply_wall\":1792101605.4299953,\"recv_wait_ms\":58.68853908032179,\"return_to_apply_ms\":0.04044920206069946,\"sending_ts_ms\":1792101605377,\"engine_ts_ms\":null,\"receipt\":{\"ordinal\":1,\"status\":\"known\",\"accepted_monotonic\":3632711.867329734,\"accepted_wall\":1792101605.4298184,\"received_monotonic\":3632711.867449723,\"received_wall\":1792101605.4299376,\"residence_ms\":0.11998927220702171},\"connection\":{\"accepted\":12,\"received\":1,\"retained\":11,\"overflow\":0,\"unknown\":0,\"known\":1,\"max_residence_ms\":0.11998927220702171,\"disabled\":0,\"errors\":0,\"unsupported\":0},\"previous_message\":null,\"basis\":\"complete frame protocol acceptance to public recv; excludes earlier local and network delay\"}",
+            "attributes": [
+              {
+                "key": "level",
+                "value": "\"info\""
+              }
+            ]
+          },
+          {
+            "timestamp": "2026-10-15T22:00:21.090190256Z",
+            "severity": "info",
+            "message": "2026-10-15T22:00:21Z INFO nightcrawler.speeddesk_kalshi_ws: speeddesk_feed_kalshi_ws_timing {\"reader\":{\"kind\":\"speeddesk\",\"instance\":1,\"process\":1},\"session\":27,\"event\":\"gap\",\"kind\":\"orderbook_delta\",\"recv_call_mono\":3632726.972403021,\"recv_return_mono\":3632726.97244632,\"apply_mono\":3632726.9724783,\"apply_wall\":1792101620.534966,\"recv_wait_ms\":0.04329904913902283,\"return_to_apply_ms\":0.0319797545671463,\"sending_ts_ms\":1792101617216,\"engine_ts_ms\":1792101617212,\"receipt\":{\"ordinal\":6082,\"status\":\"overflow\",\"accepted_monotonic\":null,\"accepted_wall\":null,\"received_monotonic\":3632726.9724331,\"received_wall\":1792101620.534921,\"residence_ms\":null},\"connection\":{\"accepted\":8817,\"received\":6082,\"retained\":256,\"overflow\":3013,\"unknown\":534,\"known\":5548,\"max_residence_ms\":1727.2261939942837,\"disabled\":0,\"errors\":0,\"unsupported\":0},\"previous_message\":{\"processing_ms\":0.44104596599936485,\"yield_resume_ms\":531.8721467629075},\"basis\":\"complete frame protocol acceptance to public recv; excludes earlier local and network delay\"}",
+            "attributes": [
+              {
+                "key": "level",
+                "value": "\"info\""
+              }
+            ]
+          },
+          {
+            "timestamp": "2026-10-15T22:00:24.762046060Z",
+            "severity": "info",
+            "message": "2026-10-15T22:00:24Z INFO nightcrawler.speeddesk_kalshi_ws: speeddesk_feed_kalshi_ws_timing {\"reader\":{\"kind\":\"speeddesk\",\"instance\":1,\"process\":1},\"session\":28,\"event\":\"status\",\"kind\":\"subscribed\",\"recv_call_mono\":3632730.918138331,\"recv_return_mono\":3632730.966975045,\"apply_mono\":3632730.967013155,\"apply_wall\":1792101624.529501,\"recv_wait_ms\":48.83671412244439,\"return_to_apply_ms\":0.03811018541455269,\"sending_ts_ms\":1792101624488,\"engine_ts_ms\":null,\"receipt\":{\"ordinal\":1,\"status\":\"known\",\"accepted_monotonic\":3632730.966866146,\"accepted_wall\":1792101624.5293548,\"received_monotonic\":3632730.966953655,\"received_wall\":1792101624.5294416,\"residence_ms\":0.08750893175601959},\"connection\":{\"accepted\":5,\"received\":1,\"retained\":4,\"overflow\":0,\"unknown\":0,\"known\":1,\"max_residence_ms\":0.08750893175601959,\"disabled\":0,\"errors\":0,\"unsupported\":0},\"previous_message\":null,\"basis\":\"complete frame protocol acceptance to public recv; excludes earlier local and network delay\"}",
+            "attributes": [
+              {
+                "key": "level",
+                "value": "\"info\""
+              }
+            ]
+          },
+          {
+            "timestamp": "2026-10-15T22:00:38.377019086Z",
+            "severity": "info",
+            "message": "2026-10-15T22:00:38Z INFO nightcrawler.speeddesk_kalshi_ws: speeddesk_feed_kalshi_ws_timing {\"reader\":{\"kind\":\"speeddesk\",\"instance\":1,\"process\":1},\"session\":28,\"event\":\"gap\",\"kind\":\"orderbook_delta\",\"recv_call_mono\":3632744.245527987,\"recv_return_mono\":3632744.245573957,\"apply_mono\":3632744.245613586,\"apply_wall\":1792101637.8081012,\"recv_wait_ms\":0.04597008228302002,\"return_to_apply_ms\":0.039629172533750534,\"sending_ts_ms\":1792101634774,\"engine_ts_ms\":1792101634771,\"receipt\":{\"ordinal\":6877,\"status\":\"overflow\",\"accepted_monotonic\":null,\"accepted_wall\":null,\"received_monotonic\":3632744.245560377,\"received_wall\":1792101637.808048,\"residence_ms\":null},\"connection\":{\"accepted\":9431,\"received\":6877,\"retained\":256,\"overflow\":4462,\"unknown\":2164,\"known\":4713,\"max_residence_ms\":2825.1205780543387,\"disabled\":0,\"errors\":0,\"unsupported\":0},\"previous_message\":{\"processing_ms\":0.3113178536295891,\"yield_resume_ms\":102.35754726454616},\"basis\":\"complete frame protocol acceptance to public recv; excludes earlier local and network delay\"}",
+            "attributes": [
+              {
+                "key": "level",
+                "value": "\"info\""
+              }
+            ]
+          },
+          {
+            "timestamp": "2026-10-15T22:00:41.737858943Z",
+            "severity": "info",
+            "message": "2026-10-15T22:00:41Z INFO nightcrawler.speeddesk_kalshi_ws: speeddesk_feed_kalshi_ws_timing {\"reader\":{\"kind\":\"speeddesk\",\"instance\":1,\"process\":1},\"session\":29,\"event\":\"status\",\"kind\":\"subscribed\",\"recv_call_mono\":3632747.978949805,\"recv_return_mono\":3632748.014429495,\"apply_mono\":3632748.014456294,\"apply_wall\":1792101641.5769439,\"recv_wait_ms\":35.47969041392207,\"return_to_apply_ms\":0.026798807084560394,\"sending_ts_ms\":1792101641549,\"engine_ts_ms\":null,\"receipt\":{\"ordinal\":1,\"status\":\"known\",\"accepted_monotonic\":3632748.014322315,\"accepted_wall\":1792101641.5768106,\"received_monotonic\":3632748.014414025,\"received_wall\":1792101641.576902,\"residence_ms\":0.09171012789011002},\"connection\":{\"accepted\":4,\"received\":1,\"retained\":3,\"overflow\":0,\"unknown\":0,\"known\":1,\"max_residence_ms\":0.09171012789011002,\"disabled\":0,\"errors\":0,\"unsupported\":0},\"previous_message\":null,\"basis\":\"complete frame protocol acceptance to public recv; excludes earlier local and network delay\"}",
+            "attributes": [
+              {
+                "key": "level",
+                "value": "\"info\""
+              }
+            ]
+          },
+          {
+            "timestamp": "2026-10-15T22:00:45.688820570Z",
+            "severity": "info",
+            "message": "2026-10-15T22:00:45Z INFO nightcrawler.speeddesk_kalshi_ws: speeddesk_feed_kalshi_ws_timing {\"reader\":{\"kind\":\"speeddesk\",\"instance\":1,\"process\":1},\"session\":29,\"event\":\"gap\",\"kind\":\"orderbook_delta\",\"recv_call_mono\":3632751.803153408,\"recv_return_mono\":3632751.803203397,\"apply_mono\":3632751.803255837,\"apply_wall\":1792101645.3657434,\"recv_wait_ms\":0.04998873919248581,\"return_to_apply_ms\":0.05243998020887375,\"sending_ts_ms\":1792101642279,\"engine_ts_ms\":1792101642274,\"receipt\":{\"ordinal\":901,\"status\":\"overflow\",\"accepted_monotonic\":null,\"accepted_wall\":null,\"received_monotonic\":3632751.803187028,\"received_wall\":1792101645.365675,\"residence_ms\":null},\"connection\":{\"accepted\":5268,\"received\":901,\"retained\":256,\"overflow\":4725,\"unknown\":614,\"known\":287,\"max_residence_ms\":2508.25900118798,\"disabled\":0,\"errors\":0,\"unsupported\":0},\"previous_message\":{\"processing_ms\":0.6412030197679996,\"yield_resume_ms\":245.05369318649173},\"basis\":\"complete frame protocol acceptance to public recv; excludes earlier local and network delay\"}",
+            "attributes": [
+              {
+                "key": "level",
+                "value": "\"info\""
+              }
+            ]
+          },
+          {
+            "timestamp": "2026-10-15T22:00:50.300080362Z",
+            "severity": "info",
+            "message": "2026-10-15T22:00:50Z INFO nightcrawler.speeddesk_kalshi_ws: speeddesk_feed_kalshi_ws_timing {\"reader\":{\"kind\":\"speeddesk\",\"instance\":1,\"process\":1},\"session\":30,\"event\":\"status\",\"kind\":\"subscribed\",\"recv_call_mono\":3632756.6294685,\"recv_return_mono\":3632756.657857736,\"apply_mono\":3632756.657871546,\"apply_wall\":1792101650.220359,\"recv_wait_ms\":28.389235958456993,\"return_to_apply_ms\":0.013810116797685623,\"sending_ts_ms\":1792101650193,\"engine_ts_ms\":null,\"receipt\":{\"ordinal\":1,\"status\":\"known\",\"accepted_monotonic\":3632756.657701848,\"accepted_wall\":1792101650.22019,\"received_monotonic\":3632756.657839477,\"received_wall\":1792101650.2203274,\"residence_ms\":0.13762898743152618},\"connection\":{\"accepted\":32,\"received\":1,\"retained\":31,\"overflow\":0,\"unknown\":0,\"known\":1,\"max_residence_ms\":0.13762898743152618,\"disabled\":0,\"errors\":0,\"unsupported\":0},\"previous_message\":null,\"basis\":\"complete frame protocol acceptance to public recv; excludes earlier local and network delay\"}",
+            "attributes": [
+              {
+                "key": "level",
+                "value": "\"info\""
+              }
+            ]
+          },
+          {
+            "timestamp": "2026-10-15T22:00:53.213022881Z",
+            "severity": "info",
+            "message": "2026-10-15T22:00:53Z INFO nightcrawler.speeddesk_kalshi_ws: speeddesk_feed_kalshi_ws_timing {\"reader\":{\"kind\":\"speeddesk\",\"instance\":1,\"process\":1},\"session\":30,\"event\":\"gap\",\"kind\":\"orderbook_delta\",\"recv_call_mono\":3632759.634199036,\"recv_return_mono\":3632759.634238946,\"apply_mono\":3632759.634298425,\"apply_wall\":1792101653.1967862,\"recv_wait_ms\":0.0399099662899971,\"return_to_apply_ms\":0.05947938188910484,\"sending_ts_ms\":1792101650200,\"engine_ts_ms\":1792101650195,\"receipt\":{\"ordinal\":29,\"status\":\"overflow\",\"accepted_monotonic\":null,\"accepted_wall\":null,\"received_monotonic\":3632759.634227096,\"received_wall\":1792101653.196715,\"residence_ms\":null},\"connection\":{\"accepted\":4556,\"received\":29,\"retained\":256,\"overflow\":4272,\"unknown\":1,\"known\":28,\"max_residence_ms\":2281.5425749868155,\"disabled\":0,\"errors\":0,\"unsupported\":0},\"previous_message\":{\"processing_ms\":0.5254549905657768,\"yield_resume_ms\":694.3705775775015},\"basis\":\"complete frame protocol acceptance to public recv; excludes earlier local and network delay\"}",
+            "attributes": [
+              {
+                "key": "level",
+                "value": "\"info\""
+              }
+            ]
+          },
+          {
+            "timestamp": "2026-10-15T22:00:56.932969596Z",
+            "severity": "info",
+            "message": "2026-10-15T22:00:56Z INFO nightcrawler.speeddesk_kalshi_ws: speeddesk_feed_kalshi_ws_timing {\"reader\":{\"kind\":\"speeddesk\",\"instance\":1,\"process\":1},\"session\":31,\"event\":\"status\",\"kind\":\"subscribed\",\"recv_call_mono\":3632763.291230255,\"recv_return_mono\":3632763.318535682,\"apply_mono\":3632763.318552592,\"apply_wall\":1792101656.8810403,\"recv_wait_ms\":27.305427007377148,\"return_to_apply_ms\":0.016910023987293243,\"sending_ts_ms\":1792101656861,\"engine_ts_ms\":null,\"receipt\":{\"ordinal\":1,\"status\":\"known\",\"accepted_monotonic\":3632763.318441233,\"accepted_wall\":1792101656.8809292,\"received_monotonic\":3632763.318524062,\"received_wall\":1792101656.881012,\"residence_ms\":0.08282903581857681},\"connection\":{\"accepted\":7,\"received\":1,\"retained\":6,\"overflow\":0,\"unknown\":0,\"known\":1,\"max_residence_ms\":0.08282903581857681,\"disabled\":0,\"errors\":0,\"unsupported\":0},\"previous_message\":null,\"basis\":\"complete frame protocol acceptance to public recv; excludes earlier local and network delay\"}",
+            "attributes": [
+              {
+                "key": "level",
+                "value": "\"info\""
+              }
+            ]
+          },
+          {
+            "timestamp": "2026-10-15T22:01:04.495476831Z",
+            "severity": "info",
+            "message": "2026-10-15T22:01:04Z INFO nightcrawler.speeddesk_kalshi_ws: speeddesk_feed_kalshi_ws_timing {\"reader\":{\"kind\":\"speeddesk\",\"instance\":1,\"process\":1},\"session\":31,\"event\":\"gap\",\"kind\":\"orderbook_delta\",\"recv_call_mono\":3632770.496923901,\"recv_return_mono\":3632770.4969635,\"apply_mono\":3632770.49698967,\"apply_wall\":1792101664.0594773,\"recv_wait_ms\":0.03959890455007553,\"return_to_apply_ms\":0.026170164346694946,\"sending_ts_ms\":1792101661007,\"engine_ts_ms\":1792101660998,\"receipt\":{\"ordinal\":3637,\"status\":\"overflow\",\"accepted_monotonic\":null,\"accepted_wall\":null,\"received_monotonic\":3632770.49695023,\"received_wall\":1792101664.059438,\"residence_ms\":null},\"connection\":{\"accepted\":5167,\"received\":3637,\"retained\":256,\"overflow\":3062,\"unknown\":1788,\"known\":1849,\"max_residence_ms\":783.1912818364799,\"disabled\":0,\"errors\":0,\"unsupported\":0},\"previous_message\":{\"processing_ms\":0.3276672214269638,\"yield_resume_ms\":502.06033419817686},\"basis\":\"complete frame protocol acceptance to public recv; excludes earlier local and network delay\"}",
+            "attributes": [
+              {
+                "key": "level",
+                "value": "\"info\""
+              }
+            ]
+          },
+          {
+            "timestamp": "2026-10-15T22:01:08.044552025Z",
+            "severity": "info",
+            "message": "2026-10-15T22:01:08Z INFO nightcrawler.speeddesk_kalshi_ws: speeddesk_feed_kalshi_ws_timing {\"reader\":{\"kind\":\"speeddesk\",\"instance\":1,\"process\":1},\"session\":32,\"event\":\"status\",\"kind\":\"subscribed\",\"recv_call_mono\":3632774.412172326,\"recv_return_mono\":3632774.447176522,\"apply_mono\":3632774.447198751,\"apply_wall\":1792101668.0096865,\"recv_wait_ms\":35.00419622287154,\"return_to_apply_ms\":0.02222880721092224,\"sending_ts_ms\":1792101667971,\"engine_ts_ms\":null,\"receipt\":{\"ordinal\":1,\"status\":\"known\",\"accepted_monotonic\":3632774.446990164,\"accepted_wall\":1792101668.009478,\"received_monotonic\":3632774.447160122,\"received_wall\":1792101668.009648,\"residence_ms\":0.1699579879641533},\"connection\":{\"accepted\":15,\"received\":1,\"retained\":14,\"overflow\":0,\"unknown\":0,\"known\":1,\"max_residence_ms\":0.1699579879641533,\"disabled\":0,\"errors\":0,\"unsupported\":0},\"previous_message\":null,\"basis\":\"complete frame protocol acceptance to public recv; excludes earlier local and network delay\"}",
+            "attributes": [
+              {
+                "key": "level",
+                "value": "\"info\""
+              }
+            ]
+          },
+          {
+            "timestamp": "2026-10-15T22:01:13.401369188Z",
+            "severity": "info",
+            "message": "2026-10-15T22:01:13Z INFO nightcrawler.speeddesk_kalshi_ws: speeddesk_feed_kalshi_ws_timing {\"reader\":{\"kind\":\"speeddesk\",\"instance\":1,\"process\":1},\"session\":32,\"event\":\"gap\",\"kind\":\"orderbook_delta\",\"recv_call_mono\":3632779.467194564,\"recv_return_mono\":3632779.467244884,\"apply_mono\":3632779.467294593,\"apply_wall\":1792101673.0297823,\"recv_wait_ms\":0.05031982436776161,\"return_to_apply_ms\":0.04970887675881386,\"sending_ts_ms\":1792101670020,\"engine_ts_ms\":1792101670015,\"receipt\":{\"ordinal\":1467,\"status\":\"overflow\",\"accepted_monotonic\":null,\"accepted_wall\":null,\"received_monotonic\":3632779.467228414,\"received_wall\":1792101673.0297163,\"residence_ms\":null},\"connection\":{\"accepted\":4916,\"received\":1467,\"retained\":256,\"overflow\":3498,\"unknown\":305,\"known\":1162,\"max_residence_ms\":2576.779004186392,\"disabled\":0,\"errors\":0,\"unsupported\":0},\"previous_message\":{\"processing_ms\":0.35231607034802437,\"yield_resume_ms\":382.99640268087387},\"basis\":\"complete frame protocol acceptance to public recv; excludes earlier local and network delay\"}",
+            "attributes": [
+              {
+                "key": "level",
+                "value": "\"info\""
+              }
+            ]
+          },
+          {
+            "timestamp": "2026-10-15T22:01:16.677969852Z",
+            "severity": "info",
+            "message": "2026-10-15T22:01:16Z INFO nightcrawler.speeddesk_kalshi_ws: speeddesk_feed_kalshi_ws_timing {\"reader\":{\"kind\":\"speeddesk\",\"instance\":1,\"process\":1},\"session\":33,\"event\":\"status\",\"kind\":\"subscribed\",\"recv_call_mono\":3632782.938953055,\"recv_return_mono\":3632783.010874061,\"apply_mono\":3632783.010883401,\"apply_wall\":1792101676.5733712,\"recv_wait_ms\":71.92100584506989,\"return_to_apply_ms\":0.009340234100818634,\"sending_ts_ms\":1792101676508,\"engine_ts_ms\":null,\"receipt\":{\"ordinal\":1,\"status\":\"known\",\"accepted_monotonic\":3632783.009404615,\"accepted_wall\":1792101676.5718927,\"received_monotonic\":3632783.010856971,\"received_wall\":1792101676.573345,\"residence_ms\":1.4523561112582684},\"connection\":{\"accepted\":12,\"received\":1,\"retained\":11,\"overflow\":0,\"unknown\":0,\"known\":1,\"max_residence_ms\":1.4523561112582684,\"disabled\":0,\"errors\":0,\"unsupported\":0},\"previous_message\":null,\"basis\":\"complete frame protocol acceptance to public recv; excludes earlier local and network delay\"}",
+            "attributes": [
+              {
+                "key": "level",
+                "value": "\"info\""
+              }
+            ]
+          },
+          {
+            "timestamp": "2026-10-15T22:01:29.327986252Z",
+            "severity": "info",
+            "message": "2026-10-15T22:01:29Z INFO nightcrawler.speeddesk_kalshi_ws: speeddesk_feed_kalshi_ws_timing {\"reader\":{\"kind\":\"speeddesk\",\"instance\":1,\"process\":1},\"session\":33,\"event\":\"gap\",\"kind\":\"orderbook_delta\",\"recv_call_mono\":3632795.728940333,\"recv_return_mono\":3632795.728981652,\"apply_mono\":3632795.729022272,\"apply_wall\":1792101689.2915099,\"recv_wait_ms\":0.04131905734539032,\"return_to_apply_ms\":0.0406200997531414,\"sending_ts_ms\":1792101686001,\"engine_ts_ms\":1792101685994,\"receipt\":{\"ordinal\":7248,\"status\":\"overflow\",\"accepted_monotonic\":null,\"accepted_wall\":null,\"received_monotonic\":3632795.728970092,\"received_wall\":1792101689.2914581,\"residence_ms\":null},\"connection\":{\"accepted\":8186,\"received\":7248,\"retained\":256,\"overflow\":4521,\"unknown\":3839,\"known\":3409,\"max_residence_ms\":2214.8231118917465,\"disabled\":0,\"errors\":0,\"unsupported\":0},\"previous_message\":{\"processing_ms\":306.2702822498977,\"yield_resume_ms\":2.9063327237963676},\"basis\":\"complete frame protocol acceptance to public recv; excludes earlier local and network delay\"}",
+            "attributes": [
+              {
+                "key": "level",
+                "value": "\"info\""
+              }
+            ]
+          },
+          {
+            "timestamp": "2026-10-15T22:01:32.484881962Z",
+            "severity": "info",
+            "message": "2026-10-15T22:01:32Z INFO nightcrawler.speeddesk_kalshi_ws: speeddesk_feed_kalshi_ws_timing {\"reader\":{\"kind\":\"speeddesk\",\"instance\":1,\"process\":1},\"session\":34,\"event\":\"status\",\"kind\":\"subscribed\",\"recv_call_mono\":3632798.873440975,\"recv_return_mono\":3632798.906392782,\"apply_mono\":3632798.906424592,\"apply_wall\":1792101692.4689121,\"recv_wait_ms\":32.951807137578726,\"return_to_apply_ms\":0.031809788197278976,\"sending_ts_ms\":1792101692443,\"engine_ts_ms\":null,\"receipt\":{\"ordinal\":1,\"status\":\"known\",\"accepted_monotonic\":3632798.906339783,\"accepted_wall\":1792101692.468828,\"received_monotonic\":3632798.906378102,\"received_wall\":1792101692.468866,\"residence_ms\":0.038318801671266556},\"connection\":{\"accepted\":6,\"received\":1,\"retained\":5,\"overflow\":0,\"unknown\":0,\"known\":1,\"max_residence_ms\":0.038318801671266556,\"disabled\":0,\"errors\":0,\"unsupported\":0},\"previous_message\":null,\"basis\":\"complete frame protocol acceptance to public recv; excludes earlier local and network delay\"}",
+            "attributes": [
+              {
+                "key": "level",
+                "value": "\"info\""
+              }
+            ]
+          }
+        ]
+      },
+      "isError": false
+    }
+  },
+  "gaps": {
+    "request": {
+      "projectId": "75750847-85c0-41a3-a2a7-b7f2201a51e9",
+      "deploymentId": "66e6e7e4-30d9-4628-a234-f2a8e97dad19",
+      "startDate": "2026-10-15T21:45:00Z",
+      "endDate": "2026-10-15T22:02:00Z",
+      "filter": "\"WARNING nightcrawler.speeddesk_kalshi_ws: speeddesk_feed_kalshi_ws_gap \"",
+      "limit": 500
+    },
+    "before": {
+      "current_time": "2026-10-15 22:03:38 UTC"
+    },
+    "after": {
+      "current_time": "2026-10-15 22:03:39 UTC"
+    },
+    "result": {
+      "content": [
+        {
+          "type": "text",
+          "text": "**Deployment 66e6e7e4-30d9-4628-a234-f2a8e97dad19** [SUCCESS]\nservice: f84d3b52-002f-44cb-931e-bc9e3e097e97, env: 17f7b0e0-104c-4903-9484-0106748b3cdb\n\n### Deploy logs (21)\n2026-10-15T21:45:14.280192108Z error 2026-10-15T21:45:14Z WARNING nightcrawler.speeddesk_kalshi_ws: speeddesk_feed_kalshi_ws_gap reason=market_set_changed reader_kind=speeddesk reader_instance=1 reader_process=1 reader_session=13\n2026-10-15T21:46:17.487893032Z error 2026-10-15T21:46:17Z WARNING nightcrawler.speeddesk_kalshi_ws: speeddesk_feed_kalshi_ws_gap reason=timestamp_missing_or_stale:orderbook_delta_network:age_s=3.065 reader_kind=speeddesk reader_instance=1 reader_process=1 reader_session=14\n2026-10-15T21:48:01.842009611Z error 2026-10-15T21:48:01Z WARNING nightcrawler.speeddesk_kalshi_ws: speeddesk_feed_kalshi_ws_gap reason=timestamp_missing_or_stale:orderbook_delta_network:age_s=3.442 reader_kind=speeddesk reader_instance=1 reader_process=1 reader_session=15\n2026-10-15T21:48:27.581694056Z error 2026-10-15T21:48:27Z WARNING nightcrawler.speeddesk_kalshi_ws: speeddesk_feed_kalshi_ws_gap reason=timestamp_missing_or_stale:orderbook_delta_network:age_s=3.451 reader_kind=speeddesk reader_instance=1 reader_process=1 reader_session=16\n2026-10-15T21:48:37.213705393Z error 2026-10-15T21:48:37Z WARNING nightcrawler.speeddesk_kalshi_ws: speeddesk_feed_kalshi_ws_gap reason=timestamp_missing_or_stale:orderbook_delta_network:age_s=3.278 reader_kind=speeddesk reader_instance=1 reader_process=1 reader_session=17\n2026-10-15T21:49:03.380366563Z error 2026-10-15T21:49:03Z WARNING nightcrawler.speeddesk_kalshi_ws: speeddesk_feed_kalshi_ws_gap reason=timestamp_missing_or_stale:orderbook_delta_network:age_s=3.338 reader_kind=speeddesk reader_instance=1 reader_process=1 reader_session=18\n2026-10-15T21:49:33.294412155Z error 2026-10-15T21:49:33Z WARNING nightcrawler.speeddesk_kalshi_ws: speeddesk_feed_kalshi_ws_gap reason=timestamp_missing_or_stale:trade_network:age_s=3.277 reader_kind=speeddesk reader_instance=1 reader_process=1 reader_session=19\n2026-10-15T21:49:53.461396480Z error 2026-10-15T21:49:53Z WARNING nightcrawler.speeddesk_kalshi_ws: speeddesk_feed_kalshi_ws_gap reason=timestamp_missing_or_stale:book_engine:age_s=3.000 reader_kind=speeddesk reader_instance=1 reader_process=1 reader_session=20\n2026-10-15T21:50:14.694775105Z error 2026-10-15T21:50:14Z WARNING nightcrawler.speeddesk_kalshi_ws: speeddesk_feed_kalshi_ws_gap reason=timestamp_missing_or_stale:trade_network:age_s=3.136 reader_kind=speeddesk reader_instance=1 reader_process=1 reader_session=21\n2026-10-15T21:50:29.704490421Z error 2026-10-15T21:50:29Z WARNING nightcrawler.speeddesk_kalshi_ws: speeddesk_feed_kalshi_ws_gap reason=timestamp_missing_or_stale:book_engine:age_s=3.000 reader_kind=speeddesk reader_instance=1 reader_process=1 reader_session=22\n2026-10-15T21:54:05.756795061Z error 2026-10-15T21:54:05Z WARNING nightcrawler.speeddesk_kalshi_ws: speeddesk_feed_kalshi_ws_gap reason=timestamp_missing_or_stale:orderbook_delta_network:age_s=3.059 reader_kind=speeddesk reader_instance=1 reader_process=1 reader_session=23\n2026-10-15T21:56:45.308124320Z error 2026-10-15T21:56:45Z WARNING nightcrawler.speeddesk_kalshi_ws: speeddesk_feed_kalshi_ws_gap reason=timestamp_missing_or_stale:orderbook_delta_network:age_s=44.972 reader_kind=speeddesk reader_instance=1 reader_process=1 reader_session=24\n2026-10-15T21:58:58.265852314Z error 2026-10-15T21:58:58Z WARNING nightcrawler.speeddesk_kalshi_ws: speeddesk_feed_kalshi_ws_gap reason=timestamp_missing_or_stale:orderbook_delta_network:age_s=3.034 reader_kind=speeddesk reader_instance=1 reader_process=1 reader_session=25\n2026-10-15T22:00:04.168635376Z error 2026-10-15T22:00:04Z WARNING nightcrawler.speeddesk_kalshi_ws: speeddesk_feed_kalshi_ws_gap reason=market_set_changed reader_kind=speeddesk reader_instance=1 reader_process=1 reader_session=26\n2026-10-15T22:00:23.335390566Z error 2026-10-15T22:00:23Z WARNING nightcrawler.speeddesk_kalshi_ws: speeddesk_feed_kalshi_ws_gap reason=timestamp_missing_or_stale:orderbook_delta_network:age_s=3.319 reader_kind=speeddesk reader_instance=1 reader_process=1 reader_session=27\n2026-10-15T22:00:40.440295034Z error 2026-10-15T22:00:40Z WARNING nightcrawler.speeddesk_kalshi_ws: speeddesk_feed_kalshi_ws_gap reason=timestamp_missing_or_stale:orderbook_delta_network:age_s=3.034 reader_kind=speeddesk reader_instance=1 reader_process=1 reader_session=28\n2026-10-15T22:00:47.717070426Z error 2026-10-15T22:00:47Z WARNING nightcrawler.speeddesk_kalshi_ws: speeddesk_feed_kalshi_ws_gap reason=timestamp_missing_or_stale:orderbook_delta_network:age_s=3.087 reader_kind=speeddesk reader_instance=1 reader_process=1 reader_session=29\n2026-10-15T22:00:55.656171373Z error 2026-10-15T22:00:55Z WARNING nightcrawler.speeddesk_kalshi_ws: speeddesk_feed_kalshi_ws_gap reason=timestamp_missing_or_stale:book_engine:age_s=3.002 reader_kind=speeddesk reader_instance=1 reader_process=1 reader_session=30\n2026-10-15T22:01:06.553524623Z error 2026-10-15T22:01:06Z WARNING nightcrawler.speeddesk_kalshi_ws: speeddesk_feed_kalshi_ws_gap reason=timestamp_missing_or_stale:orderbook_delta_network:age_s=3.052 reader_kind=speeddesk reader_instance=1 reader_process=1 reader_session=31\n2026-10-15T22:01:15.524478437Z error 2026-10-15T22:01:15Z WARNING nightcrawler.speeddesk_kalshi_ws: speeddesk_feed_kalshi_ws_gap reason=timestamp_missing_or_stale:orderbook_delta_network:age_s=3.010 reader_kind=speeddesk reader_instance=1 reader_process=1 reader_session=32\n2026-10-15T22:01:31.338811542Z error 2026-10-15T22:01:31Z WARNING nightcrawler.speeddesk_kalshi_ws: speeddesk_feed_kalshi_ws_gap reason=timestamp_missing_or_stale:orderbook_delta_network:age_s=3.291 reader_kind=speeddesk reader_instance=1 reader_process=1 reader_session=33"
+        }
+      ],
+      "structuredContent": {
+        "scope": "deployment",
+        "deploymentId": "66e6e7e4-30d9-4628-a234-f2a8e97dad19",
+        "serviceId": "f84d3b52-002f-44cb-931e-bc9e3e097e97",
+        "environmentId": "17f7b0e0-104c-4903-9484-0106748b3cdb",
+        "status": "SUCCESS",
+        "deploy": [
+          {
+            "timestamp": "2026-10-15T21:45:14.280192108Z",
+            "severity": "error",
+            "message": "2026-10-15T21:45:14Z WARNING nightcrawler.speeddesk_kalshi_ws: speeddesk_feed_kalshi_ws_gap reason=market_set_changed reader_kind=speeddesk reader_instance=1 reader_process=1 reader_session=13",
+            "attributes": [
+              {
+                "key": "level",
+                "value": "\"error\""
+              }
+            ]
+          },
+          {
+            "timestamp": "2026-10-15T21:46:17.487893032Z",
+            "severity": "error",
+            "message": "2026-10-15T21:46:17Z WARNING nightcrawler.speeddesk_kalshi_ws: speeddesk_feed_kalshi_ws_gap reason=timestamp_missing_or_stale:orderbook_delta_network:age_s=3.065 reader_kind=speeddesk reader_instance=1 reader_process=1 reader_session=14",
+            "attributes": [
+              {
+                "key": "level",
+                "value": "\"error\""
+              }
+            ]
+          },
+          {
+            "timestamp": "2026-10-15T21:48:01.842009611Z",
+            "severity": "error",
+            "message": "2026-10-15T21:48:01Z WARNING nightcrawler.speeddesk_kalshi_ws: speeddesk_feed_kalshi_ws_gap reason=timestamp_missing_or_stale:orderbook_delta_network:age_s=3.442 reader_kind=speeddesk reader_instance=1 reader_process=1 reader_session=15",
+            "attributes": [
+              {
+                "key": "level",
+                "value": "\"error\""
+              }
+            ]
+          },
+          {
+            "timestamp": "2026-10-15T21:48:27.581694056Z",
+            "severity": "error",
+            "message": "2026-10-15T21:48:27Z WARNING nightcrawler.speeddesk_kalshi_ws: speeddesk_feed_kalshi_ws_gap reason=timestamp_missing_or_stale:orderbook_delta_network:age_s=3.451 reader_kind=speeddesk reader_instance=1 reader_process=1 reader_session=16",
+            "attributes": [
+              {
+                "key": "level",
+                "value": "\"error\""
+              }
+            ]
+          },
+          {
+            "timestamp": "2026-10-15T21:48:37.213705393Z",
+            "severity": "error",
+            "message": "2026-10-15T21:48:37Z WARNING nightcrawler.speeddesk_kalshi_ws: speeddesk_feed_kalshi_ws_gap reason=timestamp_missing_or_stale:orderbook_delta_network:age_s=3.278 reader_kind=speeddesk reader_instance=1 reader_process=1 reader_session=17",
+            "attributes": [
+              {
+                "key": "level",
+                "value": "\"error\""
+              }
+            ]
+          },
+          {
+            "timestamp": "2026-10-15T21:49:03.380366563Z",
+            "severity": "error",
+            "message": "2026-10-15T21:49:03Z WARNING nightcrawler.speeddesk_kalshi_ws: speeddesk_feed_kalshi_ws_gap reason=timestamp_missing_or_stale:orderbook_delta_network:age_s=3.338 reader_kind=speeddesk reader_instance=1 reader_process=1 reader_session=18",
+            "attributes": [
+              {
+                "key": "level",
+                "value": "\"error\""
+              }
+            ]
+          },
+          {
+            "timestamp": "2026-10-15T21:49:33.294412155Z",
+            "severity": "error",
+            "message": "2026-10-15T21:49:33Z WARNING nightcrawler.speeddesk_kalshi_ws: speeddesk_feed_kalshi_ws_gap reason=timestamp_missing_or_stale:trade_network:age_s=3.277 reader_kind=speeddesk reader_instance=1 reader_process=1 reader_session=19",
+            "attributes": [
+              {
+                "key": "level",
+                "value": "\"error\""
+              }
+            ]
+          },
+          {
+            "timestamp": "2026-10-15T21:49:53.461396480Z",
+            "severity": "error",
+            "message": "2026-10-15T21:49:53Z WARNING nightcrawler.speeddesk_kalshi_ws: speeddesk_feed_kalshi_ws_gap reason=timestamp_missing_or_stale:book_engine:age_s=3.000 reader_kind=speeddesk reader_instance=1 reader_process=1 reader_session=20",
+            "attributes": [
+              {
+                "key": "level",
+                "value": "\"error\""
+              }
+            ]
+          },
+          {
+            "timestamp": "2026-10-15T21:50:14.694775105Z",
+            "severity": "error",
+            "message": "2026-10-15T21:50:14Z WARNING nightcrawler.speeddesk_kalshi_ws: speeddesk_feed_kalshi_ws_gap reason=timestamp_missing_or_stale:trade_network:age_s=3.136 reader_kind=speeddesk reader_instance=1 reader_process=1 reader_session=21",
+            "attributes": [
+              {
+                "key": "level",
+                "value": "\"error\""
+              }
+            ]
+          },
+          {
+            "timestamp": "2026-10-15T21:50:29.704490421Z",
+            "severity": "error",
+            "message": "2026-10-15T21:50:29Z WARNING nightcrawler.speeddesk_kalshi_ws: speeddesk_feed_kalshi_ws_gap reason=timestamp_missing_or_stale:book_engine:age_s=3.000 reader_kind=speeddesk reader_instance=1 reader_process=1 reader_session=22",
+            "attributes": [
+              {
+                "key": "level",
+                "value": "\"error\""
+              }
+            ]
+          },
+          {
+            "timestamp": "2026-10-15T21:54:05.756795061Z",
+            "severity": "error",
+            "message": "2026-10-15T21:54:05Z WARNING nightcrawler.speeddesk_kalshi_ws: speeddesk_feed_kalshi_ws_gap reason=timestamp_missing_or_stale:orderbook_delta_network:age_s=3.059 reader_kind=speeddesk reader_instance=1 reader_process=1 reader_session=23",
+            "attributes": [
+              {
+                "key": "level",
+                "value": "\"error\""
+              }
+            ]
+          },
+          {
+            "timestamp": "2026-10-15T21:56:45.308124320Z",
+            "severity": "error",
+            "message": "2026-10-15T21:56:45Z WARNING nightcrawler.speeddesk_kalshi_ws: speeddesk_feed_kalshi_ws_gap reason=timestamp_missing_or_stale:orderbook_delta_network:age_s=44.972 reader_kind=speeddesk reader_instance=1 reader_process=1 reader_session=24",
+            "attributes": [
+              {
+                "key": "level",
+                "value": "\"error\""
+              }
+            ]
+          },
+          {
+            "timestamp": "2026-10-15T21:58:58.265852314Z",
+            "severity": "error",
+            "message": "2026-10-15T21:58:58Z WARNING nightcrawler.speeddesk_kalshi_ws: speeddesk_feed_kalshi_ws_gap reason=timestamp_missing_or_stale:orderbook_delta_network:age_s=3.034 reader_kind=speeddesk reader_instance=1 reader_process=1 reader_session=25",
+            "attributes": [
+              {
+                "key": "level",
+                "value": "\"error\""
+              }
+            ]
+          },
+          {
+            "timestamp": "2026-10-15T22:00:04.168635376Z",
+            "severity": "error",
+            "message": "2026-10-15T22:00:04Z WARNING nightcrawler.speeddesk_kalshi_ws: speeddesk_feed_kalshi_ws_gap reason=market_set_changed reader_kind=speeddesk reader_instance=1 reader_process=1 reader_session=26",
+            "attributes": [
+              {
+                "key": "level",
+                "value": "\"error\""
+              }
+            ]
+          },
+          {
+            "timestamp": "2026-10-15T22:00:23.335390566Z",
+            "severity": "error",
+            "message": "2026-10-15T22:00:23Z WARNING nightcrawler.speeddesk_kalshi_ws: speeddesk_feed_kalshi_ws_gap reason=timestamp_missing_or_stale:orderbook_delta_network:age_s=3.319 reader_kind=speeddesk reader_instance=1 reader_process=1 reader_session=27",
+            "attributes": [
+              {
+                "key": "level",
+                "value": "\"error\""
+              }
+            ]
+          },
+          {
+            "timestamp": "2026-10-15T22:00:40.440295034Z",
+            "severity": "error",
+            "message": "2026-10-15T22:00:40Z WARNING nightcrawler.speeddesk_kalshi_ws: speeddesk_feed_kalshi_ws_gap reason=timestamp_missing_or_stale:orderbook_delta_network:age_s=3.034 reader_kind=speeddesk reader_instance=1 reader_process=1 reader_session=28",
+            "attributes": [
+              {
+                "key": "level",
+                "value": "\"error\""
+              }
+            ]
+          },
+          {
+            "timestamp": "2026-10-15T22:00:47.717070426Z",
+            "severity": "error",
+            "message": "2026-10-15T22:00:47Z WARNING nightcrawler.speeddesk_kalshi_ws: speeddesk_feed_kalshi_ws_gap reason=timestamp_missing_or_stale:orderbook_delta_network:age_s=3.087 reader_kind=speeddesk reader_instance=1 reader_process=1 reader_session=29",
+            "attributes": [
+              {
+                "key": "level",
+                "value": "\"error\""
+              }
+            ]
+          },
+          {
+            "timestamp": "2026-10-15T22:00:55.656171373Z",
+            "severity": "error",
+            "message": "2026-10-15T22:00:55Z WARNING nightcrawler.speeddesk_kalshi_ws: speeddesk_feed_kalshi_ws_gap reason=timestamp_missing_or_stale:book_engine:age_s=3.002 reader_kind=speeddesk reader_instance=1 reader_process=1 reader_session=30",
+            "attributes": [
+              {
+                "key": "level",
+                "value": "\"error\""
+              }
+            ]
+          },
+          {
+            "timestamp": "2026-10-15T22:01:06.553524623Z",
+            "severity": "error",
+            "message": "2026-10-15T22:01:06Z WARNING nightcrawler.speeddesk_kalshi_ws: speeddesk_feed_kalshi_ws_gap reason=timestamp_missing_or_stale:orderbook_delta_network:age_s=3.052 reader_kind=speeddesk reader_instance=1 reader_process=1 reader_session=31",
+            "attributes": [
+              {
+                "key": "level",
+                "value": "\"error\""
+              }
+            ]
+          },
+          {
+            "timestamp": "2026-10-15T22:01:15.524478437Z",
+            "severity": "error",
+            "message": "2026-10-15T22:01:15Z WARNING nightcrawler.speeddesk_kalshi_ws: speeddesk_feed_kalshi_ws_gap reason=timestamp_missing_or_stale:orderbook_delta_network:age_s=3.010 reader_kind=speeddesk reader_instance=1 reader_process=1 reader_session=32",
+            "attributes": [
+              {
+                "key": "level",
+                "value": "\"error\""
+              }
+            ]
+          },
+          {
+            "timestamp": "2026-10-15T22:01:31.338811542Z",
+            "severity": "error",
+            "message": "2026-10-15T22:01:31Z WARNING nightcrawler.speeddesk_kalshi_ws: speeddesk_feed_kalshi_ws_gap reason=timestamp_missing_or_stale:orderbook_delta_network:age_s=3.291 reader_kind=speeddesk reader_instance=1 reader_process=1 reader_session=33",
+            "attributes": [
+              {
+                "key": "level",
+                "value": "\"error\""
+              }
+            ]
+          }
+        ]
+      },
+      "isError": false
+    }
+  },
+  "timing_unavailable": {
+    "request": {
+      "projectId": "75750847-85c0-41a3-a2a7-b7f2201a51e9",
+      "deploymentId": "66e6e7e4-30d9-4628-a234-f2a8e97dad19",
+      "startDate": "2026-10-15T21:45:00Z",
+      "endDate": "2026-10-15T22:02:00Z",
+      "filter": "\"INFO nightcrawler.speeddesk_kalshi_ws: speeddesk_feed_kalshi_ws_timing_unavailable\"",
+      "limit": 500
+    },
+    "before": {
+      "current_time": "2026-10-15 22:03:38 UTC"
+    },
+    "after": {
+      "current_time": "2026-10-15 22:03:38 UTC"
+    },
+    "result": {
+      "content": [
+        {
+          "type": "text",
+          "text": "**Deployment 66e6e7e4-30d9-4628-a234-f2a8e97dad19** [SUCCESS]\nservice: f84d3b52-002f-44cb-931e-bc9e3e097e97, env: 17f7b0e0-104c-4903-9484-0106748b3cdb\n\n### Deploy logs (0)\n(no deploy logs in range)"
+        }
+      ],
+      "structuredContent": {
+        "scope": "deployment",
+        "deploymentId": "66e6e7e4-30d9-4628-a234-f2a8e97dad19",
+        "serviceId": "f84d3b52-002f-44cb-931e-bc9e3e097e97",
+        "environmentId": "17f7b0e0-104c-4903-9484-0106748b3cdb",
+        "status": "SUCCESS",
+        "deploy": []
+      },
+      "isError": false
+    }
+  }
+}

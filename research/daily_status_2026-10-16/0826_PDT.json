@@ -1,0 +1,1312 @@
+{
+  "schema": 1,
+  "prepared_at": "2026-10-16T15:26:44Z",
+  "prepared_pacific": "October 16, 2026, 8:26:44 AM PDT",
+  "scope": "Read-only production inspection and additive docs; selected native log fields, not raw-volume/account-ledger certification",
+  "repository_head": "e79ec291f44e7b6110288fc2d70419b19f6d8b76",
+  "bot": {
+    "deployment_id": "08a5cb96-aece-4b6a-95ad-21452871b728",
+    "deployment_source": "2b14e30cb6414b1549fee91eef663ab772a0b896",
+    "application_equivalent_to": "c9301a1f5d102cc7ed1403c89bc19a6118942d95",
+    "success_at": "2026-10-16T15:04:21.297Z",
+    "native_status": {
+      "received_at": "2026-10-16T15:26:00.105368820Z",
+      "at": 1792164359.8344274,
+      "as_of": 1792164359.7595403,
+      "venue": "kalshi",
+      "mode": "live",
+      "configured_mode": "live",
+      "status": "REAL MONEY (Kalshi)",
+      "reason": "pair_protected",
+      "trading_now": true,
+      "authenticated": true,
+      "real_orders_available": true,
+      "cash_usd": 51.1619,
+      "cash_total_usd": 51.1619,
+      "cash_at": 1792164359.757769,
+      "shard_funding": {
+        "source": "GET /portfolio/subaccounts/balances",
+        "subaccount_number": 0,
+        "at": 1792164359.757769,
+        "error": null,
+        "balances": [
+          {
+            "exchange_index": 0,
+            "balance_usd": 0
+          },
+          {
+            "exchange_index": 1,
+            "balance_usd": 0
+          },
+          {
+            "exchange_index": 2,
+            "balance_usd": 51.1619
+          }
+        ],
+        "external_resting_orders": 0,
+        "external_resting_unknown": false,
+        "refusal": null
+      },
+      "create_funding_cooldown": {
+        "until": 0,
+        "remaining_s": 0,
+        "refusals": 0
+      },
+      "reserved_usd": 0,
+      "open_risk_usd": 0,
+      "open_cost_usd": 2.96,
+      "at_risk_usd": 0,
+      "open_orders": 0,
+      "positions": 0,
+      "total_halted": false,
+      "day_stop_latched": false,
+      "integrity_error": null,
+      "pair_protection": {
+        "protected_windows": [
+          "KXBTC15M-26OCT161130-30"
+        ],
+        "total_windows": 103
+      },
+      "caps": {
+        "window_usd": 10,
+        "open_usd": 20,
+        "day_stop_usd": 6,
+        "clip": 5,
+        "total_stop_usd": 10
+      },
+      "ladder": {
+        "enabled": true,
+        "rung": 0,
+        "ladder_rung": 0,
+        "max_window_usd": 20,
+        "configured_max_window_usd": 50000,
+        "top_rung": 2,
+        "limits": {
+          "window_usd": 10,
+          "open_usd": 20,
+          "day_stop_usd": 6,
+          "clip": 5,
+          "total_stop_usd": 10
+        },
+        "change_pending": false,
+        "recheck_pending": false,
+        "effective_from": null,
+        "pending_limits": null,
+        "rung_started_at": 1791923645.5061624,
+        "start_pnl_usd": -3.746099999999995,
+        "promotion": {
+          "ready": false,
+          "blocked": [
+            "gain",
+            "house_money",
+            "stops"
+          ],
+          "rung": 0,
+          "next_rung": 1,
+          "next_limits": {
+            "window_usd": 15,
+            "open_usd": 30,
+            "day_stop_usd": 9,
+            "clip": 5,
+            "total_stop_usd": 10
+          },
+          "windows": 143,
+          "windows_needed": 96,
+          "gain_usd": -20.873400000000007,
+          "at_risk_usd": 0,
+          "gain_counted_usd": -20.873400000000007,
+          "gain_needed_usd": 25.704045029900545,
+          "sigma_usd": 1.0747401140558401,
+          "sd_usd": 1.0747401140558401,
+          "room_usd": -14.619500000000002,
+          "room_needed_usd": 24.75,
+          "available_cash_usd": 51.1619,
+          "cash_needed_usd": 30,
+          "last_stop_at": 1792157069.7834923,
+          "quiet_from": 1792243469.7834923,
+          "recheck": false
+        },
+        "demotion": {
+          "due": false,
+          "rung": 0,
+          "peak_pnl_usd": -3.746099999999995,
+          "total_pnl_usd": -24.619500000000002,
+          "giveback_usd": 20.873400000000007,
+          "giveback_limit_usd": 6,
+          "line_usd": null,
+          "at_floor": true
+        },
+        "last_change": null
+      }
+    },
+    "today": {
+      "day": "2026-10-16",
+      "windows": 24,
+      "fills": 88,
+      "settled_windows": 26,
+      "fees_usd": 0.2797,
+      "locked_usd": 0.7515832167832175,
+      "directional_usd": -5.879283216783216,
+      "pnl_usd": -5.127699999999999
+    },
+    "total": {
+      "fills": 914,
+      "settled_windows": 221,
+      "fees_usd": 3.39642,
+      "locked_usd": 4.431532337662325,
+      "directional_usd": -29.05103233766233,
+      "pnl_usd": -24.61950000000001
+    },
+    "new_native_fills": [
+      {
+        "timestamp": "2026-10-16T15:20:26.970953076Z",
+        "message": "2026-10-16T15:20:26Z INFO nightcrawler.speeddesk: speeddesk_live_fill {\"at\":1792164026.122949,\"venue\":\"kalshi\",\"fill_id\":\"0724507f-88e9-975e-6bc8-72b9ae33a357\",\"order_id\":\"01a1454c-d2a8-7d58-81c1-e0a9f75a974b\",\"client_order_id\":\"nc-speed-5dc11d58977c4284afbc9eba204f8722\",\"window\":\"KXBTC15M-26OCT161130-30\",\"side\":\"down\",\"price\":0.62,\"size\":4.0,\"fee_usd\":0.0,\"is_taker\":false}"
+      },
+      {
+        "timestamp": "2026-10-16T15:24:02.017388155Z",
+        "message": "2026-10-16T15:24:02Z INFO nightcrawler.speeddesk: speeddesk_live_fill {\"at\":1792164240.93735,\"venue\":\"kalshi\",\"fill_id\":\"07245010-6911-913e-c6e1-7a9f97841d96\",\"order_id\":\"01a14550-0310-71a8-8292-aa92fa9baa0e\",\"client_order_id\":\"nc-speed-3f9465cf9e704e61b0d54c8ce43ae8c4\",\"window\":\"KXBTC15M-26OCT161130-30\",\"side\":\"up\",\"price\":0.12,\"size\":4.0,\"fee_usd\":0.0,\"is_taker\":false}"
+      }
+    ],
+    "new_pair_calculation": {
+      "window": "KXBTC15M-26OCT161130-30",
+      "pairs": 4,
+      "cost_usd": 2.96,
+      "reported_fees_usd": 0,
+      "payout_if_normal_settlement_usd": 4,
+      "margin_not_yet_booked_usd": 1.04,
+      "settlement_verified": false
+    },
+    "bounded_queries": {
+      "from": "2026-10-16T15:03:37Z",
+      "to": "2026-10-16T15:23:15Z",
+      "reject_rows": 0,
+      "traceback_rows": 0,
+      "orders_response_saturated": true,
+      "complete_order_count": false
+    },
+    "funding_actor_or_transfer_history_inspected": false
+  },
+  "prior_day": {
+    "utc_day": "2026-10-15",
+    "pacific_interval": "October 14 5:00 PM through October 15 5:00 PM PDT, end exclusive",
+    "report": {
+      "day": "2026-10-15",
+      "real": {
+        "day": "2026-10-15",
+        "windows": 69,
+        "fills": 302,
+        "latency": {
+          "btc_exchange_to_decision": {
+            "unit": "ms",
+            "scope": "real_kalshi",
+            "cohort": "intents_created_on_utc_day",
+            "started_at": 1791843345.3511775,
+            "complete": true,
+            "partial_day": false,
+            "applicable": true,
+            "observations": 3582,
+            "samples": 3582,
+            "missing": 0,
+            "invalid": 0,
+            "errors": 0,
+            "timeouts": 0,
+            "overflow": false,
+            "median_ms": 222.96836832538247,
+            "p95_ms": 809.786566067487,
+            "limitation": "Age of accepted Coinbase input; exchange/local clock uncertainty remains"
+          },
+          "btc_receipt_to_decision": {
+            "unit": "ms",
+            "scope": "real_kalshi",
+            "cohort": "intents_created_on_utc_day",
+            "started_at": 1791843345.3511775,
+            "complete": true,
+            "partial_day": false,
+            "applicable": true,
+            "observations": 3582,
+            "samples": 3582,
+            "missing": 0,
+            "invalid": 0,
+            "errors": 0,
+            "timeouts": 0,
+            "overflow": false,
+            "median_ms": 167.6201680675149,
+            "p95_ms": 709.717177785933,
+            "limitation": "Age since strategy callback receipt; not pure computation or proven trigger reaction"
+          },
+          "decision_to_ack": {
+            "unit": "ms",
+            "scope": "real_kalshi",
+            "cohort": "intents_created_on_utc_day",
+            "started_at": 1791843345.3511775,
+            "complete": true,
+            "partial_day": false,
+            "applicable": true,
+            "observations": 3582,
+            "samples": 3505,
+            "missing": 0,
+            "invalid": 0,
+            "errors": 77,
+            "timeouts": 0,
+            "overflow": false,
+            "median_ms": 81.85902191326022,
+            "p95_ms": 349.6475061401725,
+            "limitation": "Decision to observed validated exchange acknowledgement; includes journal, queue and HTTP time",
+            "pending_or_lost_ack": 0
+          }
+        },
+        "scorecard": {
+          "version": 1,
+          "scope": "real",
+          "venue": "kalshi",
+          "day": "2026-10-15",
+          "cohort": "window end UTC day",
+          "population": "fully observed windows with complete fill history",
+          "coverage_basis": "complete window discovery and recorded ledger history; market availability reported separately",
+          "status": "partial",
+          "day_complete": false,
+          "utc_day_ended": true,
+          "reasons": [
+            "Full-day discovery and recording coverage is not certified",
+            "Some window coverage or fill history is missing or invalid"
+          ],
+          "eligible_windows": 88,
+          "complete_windows": 29,
+          "unknown_coverage_windows": 0,
+          "gap_windows": 59,
+          "invalid_windows": 0,
+          "invalid_fill_windows": 0,
+          "invalid_settlement_windows": 0,
+          "traded_windows": 26,
+          "zero_fill_windows": 3,
+          "fills": 124,
+          "fills_per_window": 4.275862068965517,
+          "fills_per_traded_window": 4.769230769230769,
+          "both_sides_windows": 22,
+          "both_sides_share": 0.7586206896551724,
+          "both_sides_traded_share": 0.8461538461538461,
+          "median_imbalance": 0,
+          "imbalance_basis": "final quantity imbalance in traded fully observed windows",
+          "taker_fill_share": 0.1532258064516129,
+          "known_role_taker_share": 0.1532258064516129,
+          "role_coverage": 1,
+          "unknown_role_fills": 0,
+          "matched_pairs": 167.83,
+          "matched_pair_cost_usd": 1.0272344038610497,
+          "matched_pair_fees_usd": 0.3744,
+          "unmatched_fees_usd": 0,
+          "fees_usd": 0.3744,
+          "settled_traded_windows": 26,
+          "unsettled_traded_windows": 0,
+          "settled_pnl_usd": -10.002800000000006,
+          "locked_usd": -4.570750000000006,
+          "directional_usd": -5.432049999999999,
+          "pnl_usd": -10.002800000000006,
+          "pnl_per_window_usd": -0.3449241379310347,
+          "worst_window_usd": -2.7667,
+          "worst_window_basis": "settled traded fully observed windows",
+          "full_cohort_worst_usd": -2.7667,
+          "cap_change_allowed": false,
+          "automatic_promotion": false,
+          "observed_window_seconds": 78221.32432866096,
+          "fresh_market_window_seconds": 74473.17172527313,
+          "fresh_market_fraction": 0.9520827263465996,
+          "availability_basis": "window-seconds; fresh BTC, both books and verified trades; known stale intervals retained",
+          "evidence_started_at": 1791843345.3511834,
+          "evidence_restore_error": false,
+          "clock_reversals": 0
+        },
+        "settled_windows": 71,
+        "fees_usd": 0.8455,
+        "locked_usd": 4.501150769230759,
+        "directional_usd": -9.545850769230768,
+        "pnl_usd": -5.044700000000009,
+        "worst_usd": -2.7667,
+        "take_attempts": 0,
+        "take_fills": 0,
+        "maker_orders": 3582,
+        "maker_fills": 224,
+        "locks": 61,
+        "lock_fills": 39,
+        "take_fill_rate": null,
+        "maker_fill_rate": 0.06253489670575098,
+        "avg_latency_ms": 3148.5478732422107,
+        "latency_definition": "durable real decision to venue fill timestamp; maker includes resting time"
+      },
+      "practice_twin": {
+        "day": "2026-10-15",
+        "windows": 14,
+        "settled_windows": 14,
+        "fills": 14,
+        "locked_usd": 0,
+        "directional_usd": 0.49999999999999967,
+        "pnl_usd": 0.49999999999999967,
+        "won": 8,
+        "lost": 6,
+        "worst_usd": -2.3000000000000003,
+        "take_attempts": 0,
+        "take_fills": 0,
+        "maker_orders": 3314,
+        "maker_fills": 14,
+        "take_fill_rate": null,
+        "maker_fill_rate": 0.004224502112251056,
+        "avg_latency_ms": 6552.3669719696045,
+        "venue": "kalshi",
+        "reporting_complete": true,
+        "fill_rate_basis": "orders_placed_on_day",
+        "latency": {
+          "btc_exchange_to_decision": {
+            "unit": "ms",
+            "scope": "practice_twin",
+            "cohort": "intents_created_on_utc_day",
+            "started_at": 1791843345.3511775,
+            "complete": true,
+            "partial_day": false,
+            "applicable": true,
+            "observations": 3314,
+            "samples": 3314,
+            "missing": 0,
+            "invalid": 0,
+            "errors": 0,
+            "timeouts": 0,
+            "overflow": false,
+            "median_ms": 218.95735198631883,
+            "p95_ms": 810.8731238171458,
+            "limitation": "Age of accepted Coinbase input; exchange/local clock uncertainty remains"
+          },
+          "btc_receipt_to_decision": {
+            "unit": "ms",
+            "scope": "practice_twin",
+            "cohort": "intents_created_on_utc_day",
+            "started_at": 1791843345.3511775,
+            "complete": true,
+            "partial_day": false,
+            "applicable": true,
+            "observations": 3314,
+            "samples": 3314,
+            "missing": 0,
+            "invalid": 0,
+            "errors": 0,
+            "timeouts": 0,
+            "overflow": false,
+            "median_ms": 165.52406665869057,
+            "p95_ms": 709.4650431536138,
+            "limitation": "Age since strategy callback receipt; not pure computation or proven trigger reaction"
+          },
+          "decision_to_ack": {
+            "unit": "ms",
+            "scope": "practice_twin",
+            "cohort": "intents_created_on_utc_day",
+            "started_at": 1791843345.3511775,
+            "complete": true,
+            "partial_day": false,
+            "applicable": false,
+            "observations": 0,
+            "samples": 0,
+            "missing": 0,
+            "invalid": 0,
+            "errors": 0,
+            "timeouts": 0,
+            "overflow": false,
+            "median_ms": null,
+            "p95_ms": null,
+            "limitation": "Decision to observed validated exchange acknowledgement; includes journal, queue and HTTP time"
+          }
+        },
+        "scorecard": {
+          "version": 1,
+          "scope": "practice_twin",
+          "venue": "kalshi",
+          "day": "2026-10-15",
+          "cohort": "window end UTC day",
+          "population": "fully observed windows with complete fill history",
+          "coverage_basis": "complete window discovery and recorded ledger history; market availability reported separately",
+          "status": "partial",
+          "day_complete": false,
+          "utc_day_ended": true,
+          "reasons": [
+            "Full-day discovery and recording coverage is not certified",
+            "Some window coverage or fill history is missing or invalid"
+          ],
+          "eligible_windows": 88,
+          "complete_windows": 29,
+          "unknown_coverage_windows": 0,
+          "gap_windows": 59,
+          "invalid_windows": 0,
+          "invalid_fill_windows": 0,
+          "invalid_settlement_windows": 0,
+          "traded_windows": 4,
+          "zero_fill_windows": 25,
+          "fills": 4,
+          "fills_per_window": 0.13793103448275862,
+          "fills_per_traded_window": 1,
+          "both_sides_windows": 0,
+          "both_sides_share": 0,
+          "both_sides_traded_share": 0,
+          "median_imbalance": 1,
+          "imbalance_basis": "final quantity imbalance in traded fully observed windows",
+          "taker_fill_share": 0,
+          "known_role_taker_share": 0,
+          "role_coverage": 1,
+          "unknown_role_fills": 0,
+          "matched_pairs": 0,
+          "matched_pair_cost_usd": null,
+          "matched_pair_fees_usd": 0,
+          "unmatched_fees_usd": 0,
+          "fees_usd": 0,
+          "settled_traded_windows": 4,
+          "unsettled_traded_windows": 0,
+          "settled_pnl_usd": 1.6099999999999999,
+          "locked_usd": 0,
+          "directional_usd": 1.6099999999999999,
+          "pnl_usd": 1.6099999999999999,
+          "pnl_per_window_usd": 0.05551724137931034,
+          "worst_window_usd": -0.44,
+          "worst_window_basis": "settled traded fully observed windows",
+          "full_cohort_worst_usd": -0.44,
+          "cap_change_allowed": false,
+          "automatic_promotion": false,
+          "observed_window_seconds": 78221.32432866096,
+          "fresh_market_window_seconds": 74473.17172527313,
+          "fresh_market_fraction": 0.9520827263465996,
+          "availability_basis": "window-seconds; fresh BTC, both books and verified trades; known stale intervals retained",
+          "evidence_started_at": 1791843345.3511834,
+          "evidence_restore_error": false,
+          "clock_reversals": 0
+        }
+      }
+    },
+    "coverage_limit": "88 eligible windows / 29 complete / 59 gaps; 96 calendar slots in a day; ledger totals are distinct from coverage-filtered scorecard",
+    "real_reconciled_audit": "research/kalshi_reconcile_pass_2026-10-16/OCT15_COHORT_REVIEW.md",
+    "practice_fees_exported": false
+  },
+  "recorder": {
+    "deployment_id": "8453f919-b891-4aa7-8478-6fcf6b9c24ee",
+    "source": "a0782b743a31369fe25ddf6d2eea96df8511cd8d",
+    "health": {
+      "serviceId": "736b1c8a-8311-4ee0-9043-d05f508cd821",
+      "serviceName": "kalshi-recorder",
+      "state": "online",
+      "statusText": "Online",
+      "activeDeployments": [
+        {
+          "id": "8453f919-b891-4aa7-8478-6fcf6b9c24ee",
+          "status": "SUCCESS",
+          "createdAt": "2026-10-14T16:36:40.384Z",
+          "statusUpdatedAt": "2026-10-14T16:38:15.302Z"
+        }
+      ],
+      "replicaStatus": {
+        "running": 1,
+        "crashed": 0,
+        "total": 1
+      },
+      "cronJob": null,
+      "issues": {
+        "warningCount": 0,
+        "criticalCount": 0
+      },
+      "recentFailures": 0,
+      "recentFailedDeployments": [],
+      "hasIssues": false,
+      "isCronJob": false,
+      "hasVolume": true
+    },
+    "metrics_queried_by": "2026-10-16T15:25:22Z",
+    "metrics": [
+      {
+        "measurement": "MEMORY_USAGE_GB",
+        "current": 0.999354368,
+        "average": 0.9996507236721309,
+        "min": 0.9985024,
+        "max": 0.99997696,
+        "sampleCount": 61
+      },
+      {
+        "measurement": "MEMORY_LIMIT_GB",
+        "current": 0.99999744,
+        "average": 0.9999974400000009,
+        "min": 0.99999744,
+        "max": 0.99999744,
+        "sampleCount": 61
+      },
+      {
+        "measurement": "DISK_USAGE_GB",
+        "current": 1.025695744,
+        "average": 1.0190633799344264,
+        "min": 1.011818496,
+        "max": 1.025695744,
+        "sampleCount": 61
+      }
+    ],
+    "metrics_sample_timestamps_available": false,
+    "saved_metadata": [
+      {
+        "received_at": "2026-10-16T00:00:08.655358218Z",
+        "period": {
+          "from": 1792105200,
+          "partial": false,
+          "to": 1792108800
+        },
+        "storage": {
+          "cap_bytes": 4831838208,
+          "deleted_segments": 0,
+          "level": 0,
+          "used_bytes": 640914364
+        },
+        "gaps": {
+          "by_cause": {
+            "spot_reconnected": 1
+          },
+          "by_lane": {
+            "spot": 1
+          },
+          "open_ended_records": 0,
+          "records": 1
+        },
+        "coverage": {
+          "backfill_jobs_pending": 0,
+          "btc15m_fresh_minutes": 60,
+          "btc15m_minutes": 60,
+          "candidate_book_fresh_share": 1,
+          "minutes_sampled": 60,
+          "trade_covered_to": 1792108794,
+          "trade_tape_minutes": 60
+        },
+        "coverage_certified": false,
+        "segment_hashes_reverified": false,
+        "per_venue_spot_ticks_verified": false,
+        "book_rtt_ms": {
+          "p50": 86.88,
+          "p95": 146.967,
+          "p99": 265.439
+        },
+        "book_429": null,
+        "trade_429": null,
+        "trade_receive_lag_s": {
+          "p50": 3.873,
+          "p95": 8.421,
+          "p99": 12.668
+        }
+      },
+      {
+        "received_at": "2026-10-16T01:00:02.476660508Z",
+        "period": {
+          "from": 1792108800,
+          "partial": false,
+          "to": 1792112400
+        },
+        "storage": {
+          "cap_bytes": 4831838208,
+          "deleted_segments": 0,
+          "level": 0,
+          "used_bytes": 655774519
+        },
+        "gaps": {
+          "by_cause": {
+            "spot_reconnected": 1
+          },
+          "by_lane": {
+            "spot": 1
+          },
+          "open_ended_records": 0,
+          "records": 1
+        },
+        "coverage": {
+          "backfill_jobs_pending": 0,
+          "btc15m_fresh_minutes": 60,
+          "btc15m_minutes": 60,
+          "candidate_book_fresh_share": 1,
+          "minutes_sampled": 60,
+          "trade_covered_to": 1792112392,
+          "trade_tape_minutes": 60
+        },
+        "coverage_certified": false,
+        "segment_hashes_reverified": false,
+        "per_venue_spot_ticks_verified": false,
+        "book_rtt_ms": {
+          "p50": 87.584,
+          "p95": 140.39,
+          "p99": 263.574
+        },
+        "book_429": null,
+        "trade_429": null,
+        "trade_receive_lag_s": {
+          "p50": 3.912,
+          "p95": 8.654,
+          "p99": 11.576
+        }
+      },
+      {
+        "received_at": "2026-10-16T02:00:09.414991899Z",
+        "period": {
+          "from": 1792112400,
+          "partial": false,
+          "to": 1792116000
+        },
+        "storage": {
+          "cap_bytes": 4831838208,
+          "deleted_segments": 0,
+          "level": 0,
+          "used_bytes": 671312030
+        },
+        "gaps": {
+          "by_cause": {
+            "spot_reconnected": 1
+          },
+          "by_lane": {
+            "spot": 1
+          },
+          "open_ended_records": 0,
+          "records": 1
+        },
+        "coverage": {
+          "backfill_jobs_pending": 0,
+          "btc15m_fresh_minutes": 60,
+          "btc15m_minutes": 60,
+          "candidate_book_fresh_share": 1,
+          "minutes_sampled": 60,
+          "trade_covered_to": 1792115994,
+          "trade_tape_minutes": 60
+        },
+        "coverage_certified": false,
+        "segment_hashes_reverified": false,
+        "per_venue_spot_ticks_verified": false,
+        "book_rtt_ms": {
+          "p50": 88.268,
+          "p95": 173.481,
+          "p99": 268.929
+        },
+        "book_429": null,
+        "trade_429": null,
+        "trade_receive_lag_s": {
+          "p50": 4.175,
+          "p95": 15.376,
+          "p99": 25.834
+        }
+      },
+      {
+        "received_at": "2026-10-16T03:00:05.354563502Z",
+        "period": {
+          "from": 1792116000,
+          "partial": false,
+          "to": 1792119600
+        },
+        "storage": {
+          "cap_bytes": 4831838208,
+          "deleted_segments": 0,
+          "level": 0,
+          "used_bytes": 685285339
+        },
+        "gaps": {
+          "by_cause": {},
+          "by_lane": {},
+          "open_ended_records": 0,
+          "records": 0
+        },
+        "coverage": {
+          "backfill_jobs_pending": 0,
+          "btc15m_fresh_minutes": 60,
+          "btc15m_minutes": 60,
+          "candidate_book_fresh_share": 1,
+          "minutes_sampled": 60,
+          "trade_covered_to": 1792119594,
+          "trade_tape_minutes": 60
+        },
+        "coverage_certified": false,
+        "segment_hashes_reverified": false,
+        "per_venue_spot_ticks_verified": false,
+        "book_rtt_ms": {
+          "p50": 88.426,
+          "p95": 173.843,
+          "p99": 268.592
+        },
+        "book_429": null,
+        "trade_429": 1,
+        "trade_receive_lag_s": {
+          "p50": 3.854,
+          "p95": 7.856,
+          "p99": 10.807
+        }
+      },
+      {
+        "received_at": "2026-10-16T04:00:06.397734828Z",
+        "period": {
+          "from": 1792119600,
+          "partial": false,
+          "to": 1792123200
+        },
+        "storage": {
+          "cap_bytes": 4831838208,
+          "deleted_segments": 0,
+          "level": 0,
+          "used_bytes": 697812451
+        },
+        "gaps": {
+          "by_cause": {},
+          "by_lane": {},
+          "open_ended_records": 0,
+          "records": 0
+        },
+        "coverage": {
+          "backfill_jobs_pending": 0,
+          "btc15m_fresh_minutes": 60,
+          "btc15m_minutes": 60,
+          "candidate_book_fresh_share": 1,
+          "minutes_sampled": 60,
+          "trade_covered_to": 1792123195,
+          "trade_tape_minutes": 60
+        },
+        "coverage_certified": false,
+        "segment_hashes_reverified": false,
+        "per_venue_spot_ticks_verified": false,
+        "book_rtt_ms": {
+          "p50": 89.412,
+          "p95": 168.489,
+          "p99": 268.277
+        },
+        "book_429": null,
+        "trade_429": null,
+        "trade_receive_lag_s": {
+          "p50": 3.905,
+          "p95": 7.471,
+          "p99": 11.556
+        }
+      },
+      {
+        "received_at": "2026-10-16T05:00:04.558684885Z",
+        "period": {
+          "from": 1792123200,
+          "partial": false,
+          "to": 1792126800
+        },
+        "storage": {
+          "cap_bytes": 4831838208,
+          "deleted_segments": 0,
+          "level": 0,
+          "used_bytes": 709666389
+        },
+        "gaps": {
+          "by_cause": {},
+          "by_lane": {},
+          "open_ended_records": 0,
+          "records": 0
+        },
+        "coverage": {
+          "backfill_jobs_pending": 0,
+          "btc15m_fresh_minutes": 60,
+          "btc15m_minutes": 60,
+          "candidate_book_fresh_share": 1,
+          "minutes_sampled": 60,
+          "trade_covered_to": 1792126796,
+          "trade_tape_minutes": 60
+        },
+        "coverage_certified": false,
+        "segment_hashes_reverified": false,
+        "per_venue_spot_ticks_verified": false,
+        "book_rtt_ms": {
+          "p50": 85.632,
+          "p95": 167.825,
+          "p99": 265.137
+        },
+        "book_429": null,
+        "trade_429": null,
+        "trade_receive_lag_s": {
+          "p50": 3.546,
+          "p95": 6.204,
+          "p99": 7.113
+        }
+      },
+      {
+        "received_at": "2026-10-16T06:00:06.628176730Z",
+        "period": {
+          "from": 1792126800,
+          "partial": false,
+          "to": 1792130400
+        },
+        "storage": {
+          "cap_bytes": 4831838208,
+          "deleted_segments": 0,
+          "level": 0,
+          "used_bytes": 720763022
+        },
+        "gaps": {
+          "by_cause": {},
+          "by_lane": {},
+          "open_ended_records": 0,
+          "records": 0
+        },
+        "coverage": {
+          "backfill_jobs_pending": 0,
+          "btc15m_fresh_minutes": 60,
+          "btc15m_minutes": 60,
+          "candidate_book_fresh_share": 1,
+          "minutes_sampled": 60,
+          "trade_covered_to": 1792130395,
+          "trade_tape_minutes": 60
+        },
+        "coverage_certified": false,
+        "segment_hashes_reverified": false,
+        "per_venue_spot_ticks_verified": false,
+        "book_rtt_ms": {
+          "p50": 86.955,
+          "p95": 163.351,
+          "p99": 267.02
+        },
+        "book_429": null,
+        "trade_429": null,
+        "trade_receive_lag_s": {
+          "p50": 3.521,
+          "p95": 6.026,
+          "p99": 6.919
+        }
+      },
+      {
+        "received_at": "2026-10-16T07:00:07.153195055Z",
+        "period": {
+          "from": 1792130400,
+          "partial": false,
+          "to": 1792134000
+        },
+        "storage": {
+          "cap_bytes": 4831838208,
+          "deleted_segments": 0,
+          "level": 0,
+          "used_bytes": 732528760
+        },
+        "gaps": {
+          "by_cause": {},
+          "by_lane": {},
+          "open_ended_records": 0,
+          "records": 0
+        },
+        "coverage": {
+          "backfill_jobs_pending": 0,
+          "btc15m_fresh_minutes": 60,
+          "btc15m_minutes": 60,
+          "candidate_book_fresh_share": 1,
+          "minutes_sampled": 60,
+          "trade_covered_to": 1792133994,
+          "trade_tape_minutes": 60
+        },
+        "coverage_certified": false,
+        "segment_hashes_reverified": false,
+        "per_venue_spot_ticks_verified": false,
+        "book_rtt_ms": {
+          "p50": 83.696,
+          "p95": 163.414,
+          "p99": 260.636
+        },
+        "book_429": null,
+        "trade_429": null,
+        "trade_receive_lag_s": {
+          "p50": 3.489,
+          "p95": 6.143,
+          "p99": 6.913
+        }
+      },
+      {
+        "received_at": "2026-10-16T08:00:10.071685112Z",
+        "period": {
+          "from": 1792134000,
+          "partial": false,
+          "to": 1792137600
+        },
+        "storage": {
+          "cap_bytes": 4831838208,
+          "deleted_segments": 0,
+          "level": 0,
+          "used_bytes": 744740767
+        },
+        "gaps": {
+          "by_cause": {
+            "spot_reconnected": 4
+          },
+          "by_lane": {
+            "spot": 4
+          },
+          "open_ended_records": 0,
+          "records": 4
+        },
+        "coverage": {
+          "backfill_jobs_pending": 0,
+          "btc15m_fresh_minutes": 60,
+          "btc15m_minutes": 60,
+          "candidate_book_fresh_share": 1,
+          "minutes_sampled": 60,
+          "trade_covered_to": 1792137599,
+          "trade_tape_minutes": 60
+        },
+        "coverage_certified": false,
+        "segment_hashes_reverified": false,
+        "per_venue_spot_ticks_verified": false,
+        "book_rtt_ms": {
+          "p50": 68.136,
+          "p95": 127.147,
+          "p99": 208.642
+        },
+        "book_429": null,
+        "trade_429": null,
+        "trade_receive_lag_s": {
+          "p50": 3.543,
+          "p95": 6.18,
+          "p99": 7.113
+        }
+      },
+      {
+        "received_at": "2026-10-16T09:00:08.445743593Z",
+        "period": {
+          "from": 1792137600,
+          "partial": false,
+          "to": 1792141200
+        },
+        "storage": {
+          "cap_bytes": 4831838208,
+          "deleted_segments": 0,
+          "level": 0,
+          "used_bytes": 756436827
+        },
+        "gaps": {
+          "by_cause": {
+            "spot_reconnected": 2
+          },
+          "by_lane": {
+            "spot": 2
+          },
+          "open_ended_records": 0,
+          "records": 2
+        },
+        "coverage": {
+          "backfill_jobs_pending": 0,
+          "btc15m_fresh_minutes": 60,
+          "btc15m_minutes": 60,
+          "candidate_book_fresh_share": 1,
+          "minutes_sampled": 60,
+          "trade_covered_to": 1792141198,
+          "trade_tape_minutes": 60
+        },
+        "coverage_certified": false,
+        "segment_hashes_reverified": false,
+        "per_venue_spot_ticks_verified": false,
+        "book_rtt_ms": {
+          "p50": 67.383,
+          "p95": 161.121,
+          "p99": 213.16
+        },
+        "book_429": null,
+        "trade_429": null,
+        "trade_receive_lag_s": {
+          "p50": 3.445,
+          "p95": 6.085,
+          "p99": 7.006
+        }
+      },
+      {
+        "received_at": "2026-10-16T10:00:06.621061330Z",
+        "period": {
+          "from": 1792141200,
+          "partial": false,
+          "to": 1792144800
+        },
+        "storage": {
+          "cap_bytes": 4831838208,
+          "deleted_segments": 0,
+          "level": 0,
+          "used_bytes": 771861926
+        },
+        "gaps": {
+          "by_cause": {
+            "spot_reconnected": 1
+          },
+          "by_lane": {
+            "spot": 1
+          },
+          "open_ended_records": 0,
+          "records": 1
+        },
+        "coverage": {
+          "backfill_jobs_pending": 0,
+          "btc15m_fresh_minutes": 60,
+          "btc15m_minutes": 60,
+          "candidate_book_fresh_share": 1,
+          "minutes_sampled": 60,
+          "trade_covered_to": 1792144797,
+          "trade_tape_minutes": 60
+        },
+        "coverage_certified": false,
+        "segment_hashes_reverified": false,
+        "per_venue_spot_ticks_verified": false,
+        "book_rtt_ms": {
+          "p50": 69.563,
+          "p95": 125.716,
+          "p99": 173.833
+        },
+        "book_429": null,
+        "trade_429": null,
+        "trade_receive_lag_s": {
+          "p50": 3.558,
+          "p95": 6.218,
+          "p99": 7.073
+        }
+      },
+      {
+        "received_at": "2026-10-16T11:00:05.619916573Z",
+        "period": {
+          "from": 1792144800,
+          "partial": false,
+          "to": 1792148400
+        },
+        "storage": {
+          "cap_bytes": 4831838208,
+          "deleted_segments": 0,
+          "level": 0,
+          "used_bytes": 784531084
+        },
+        "gaps": {
+          "by_cause": {
+            "spot_reconnected": 1
+          },
+          "by_lane": {
+            "spot": 1
+          },
+          "open_ended_records": 0,
+          "records": 1
+        },
+        "coverage": {
+          "backfill_jobs_pending": 0,
+          "btc15m_fresh_minutes": 60,
+          "btc15m_minutes": 60,
+          "candidate_book_fresh_share": 1,
+          "minutes_sampled": 60,
+          "trade_covered_to": 1792148396,
+          "trade_tape_minutes": 60
+        },
+        "coverage_certified": false,
+        "segment_hashes_reverified": false,
+        "per_venue_spot_ticks_verified": false,
+        "book_rtt_ms": {
+          "p50": 85.181,
+          "p95": 137.612,
+          "p99": 222.544
+        },
+        "book_429": null,
+        "trade_429": null,
+        "trade_receive_lag_s": {
+          "p50": 3.388,
+          "p95": 5.911,
+          "p99": 6.596
+        }
+      },
+      {
+        "received_at": "2026-10-16T12:00:09.835150500Z",
+        "period": {
+          "from": 1792148400,
+          "partial": false,
+          "to": 1792152000
+        },
+        "storage": {
+          "cap_bytes": 4831838208,
+          "deleted_segments": 0,
+          "level": 0,
+          "used_bytes": 796510399
+        },
+        "gaps": {
+          "by_cause": {
+            "spot_reconnected": 2
+          },
+          "by_lane": {
+            "spot": 2
+          },
+          "open_ended_records": 0,
+          "records": 2
+        },
+        "coverage": {
+          "backfill_jobs_pending": 0,
+          "btc15m_fresh_minutes": 60,
+          "btc15m_minutes": 60,
+          "candidate_book_fresh_share": 1,
+          "minutes_sampled": 60,
+          "trade_covered_to": 1792151998,
+          "trade_tape_minutes": 60
+        },
+        "coverage_certified": false,
+        "segment_hashes_reverified": false,
+        "per_venue_spot_ticks_verified": false,
+        "book_rtt_ms": {
+          "p50": 85.252,
+          "p95": 135.946,
+          "p99": 221.968
+        },
+        "book_429": null,
+        "trade_429": null,
+        "trade_receive_lag_s": {
+          "p50": 3.477,
+          "p95": 5.951,
+          "p99": 6.679
+        }
+      },
+      {
+        "received_at": "2026-10-16T13:00:05.704235409Z",
+        "period": {
+          "from": 1792152000,
+          "partial": false,
+          "to": 1792155600
+        },
+        "storage": {
+          "cap_bytes": 4831838208,
+          "deleted_segments": 0,
+          "level": 0,
+          "used_bytes": 808942527
+        },
+        "gaps": {
+          "by_cause": {
+            "spot_reconnected": 1
+          },
+          "by_lane": {
+            "spot": 1
+          },
+          "open_ended_records": 0,
+          "records": 1
+        },
+        "coverage": {
+          "backfill_jobs_pending": 0,
+          "btc15m_fresh_minutes": 60,
+          "btc15m_minutes": 60,
+          "candidate_book_fresh_share": 1,
+          "minutes_sampled": 60,
+          "trade_covered_to": 1792155595,
+          "trade_tape_minutes": 60
+        },
+        "coverage_certified": false,
+        "segment_hashes_reverified": false,
+        "per_venue_spot_ticks_verified": false,
+        "book_rtt_ms": {
+          "p50": 84.224,
+          "p95": 133.431,
+          "p99": 205.248
+        },
+        "book_429": null,
+        "trade_429": null,
+        "trade_receive_lag_s": {
+          "p50": 3.564,
+          "p95": 6.193,
+          "p99": 7.006
+        }
+      },
+      {
+        "received_at": "2026-10-16T14:00:05.658297554Z",
+        "period": {
+          "from": 1792155600,
+          "partial": false,
+          "to": 1792159200
+        },
+        "storage": {
+          "cap_bytes": 4831838208,
+          "deleted_segments": 0,
+          "level": 0,
+          "used_bytes": 823142029
+        },
+        "gaps": {
+          "by_cause": {},
+          "by_lane": {},
+          "open_ended_records": 0,
+          "records": 0
+        },
+        "coverage": {
+          "backfill_jobs_pending": 0,
+          "btc15m_fresh_minutes": 60,
+          "btc15m_minutes": 60,
+          "candidate_book_fresh_share": 1,
+          "minutes_sampled": 60,
+          "trade_covered_to": 1792159195,
+          "trade_tape_minutes": 60
+        },
+        "coverage_certified": false,
+        "segment_hashes_reverified": false,
+        "per_venue_spot_ticks_verified": false,
+        "book_rtt_ms": {
+          "p50": 84.047,
+          "p95": 134.358,
+          "p99": 220.202
+        },
+        "book_429": null,
+        "trade_429": null,
+        "trade_receive_lag_s": {
+          "p50": 3.692,
+          "p95": 6.894,
+          "p99": 8.514
+        }
+      },
+      {
+        "received_at": "2026-10-16T15:00:03.434422577Z",
+        "period": {
+          "from": 1792159200,
+          "partial": false,
+          "to": 1792162800
+        },
+        "storage": {
+          "cap_bytes": 4831838208,
+          "deleted_segments": 0,
+          "level": 0,
+          "used_bytes": 836864674
+        },
+        "gaps": {
+          "by_cause": {
+            "spot_reconnected": 1
+          },
+          "by_lane": {
+            "spot": 1
+          },
+          "open_ended_records": 0,
+          "records": 1
+        },
+        "coverage": {
+          "backfill_jobs_pending": 0,
+          "btc15m_fresh_minutes": 60,
+          "btc15m_minutes": 60,
+          "candidate_book_fresh_share": 1,
+          "minutes_sampled": 60,
+          "trade_covered_to": 1792162796,
+          "trade_tape_minutes": 60
+        },
+        "coverage_certified": false,
+        "segment_hashes_reverified": false,
+        "per_venue_spot_ticks_verified": false,
+        "book_rtt_ms": {
+          "p50": 81.202,
+          "p95": 131.493,
+          "p99": 211.297
+        },
+        "book_429": null,
+        "trade_429": null,
+        "trade_receive_lag_s": {
+          "p50": 3.739,
+          "p95": 7.662,
+          "p99": 14.903
+        }
+      }
+    ],
+    "owned_growth_bytes_per_day": 313520496,
+    "bounded_warning_query": {
+      "from": "2026-10-16T00:00:00Z",
+      "to": "2026-10-16T15:25:00Z",
+      "literal_warnings": 29,
+      "spot_disconnected": 14,
+      "gap_messages": 14,
+      "trade_429_warnings": 1,
+      "storage_warnings": 0,
+      "tracebacks": 0
+    },
+    "raw_status_verify_or_volume_export_available": false,
+    "cost_measured": false
+  },
+  "limitations": [
+    "Current cash is not trading P&L; external cash changes/actors not independently reconciled.",
+    "No complete account ledger, transfer-history or raw-volume export was accessed.",
+    "Native log limits and partial scorecards prevent complete replay/strategy edge claims.",
+    "Practice full-day fees are missing; reported P&L is not independently verified after fees.",
+    "Recorder null error/429 counters are unknown, not zero; log warning proves at least one rate limit.",
+    "Recorder memory metrics are near cap; they do not prove OOM or a memory leak.",
+    "No future TEST opened; no source, deployment, variable, order, funding, limit or stop action."
+  ]
+}
