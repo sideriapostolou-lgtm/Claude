@@ -1,0 +1,4 @@
+{
+  "about": "Extra picks for the NHL loves desk (nightcrawler.marcodesk.NHL, Nick Martin). The desk reads his picks itself from his Action Network profile every 15 minutes; this file only adds picks by hand (same schema as marco_picks.json).",
+  "episodes": []
+}

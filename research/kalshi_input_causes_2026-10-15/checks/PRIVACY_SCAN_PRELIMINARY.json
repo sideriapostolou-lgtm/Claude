@@ -1,0 +1,373 @@
+{
+  "passed": true,
+  "files_scanned": 71,
+  "recognized_patterns": [
+    "private_key_material",
+    "provider_secret_prefix",
+    "private_handoff_marker",
+    "personal_email"
+  ],
+  "reviewed_false_positives": [
+    {
+      "file": "SOURCE_SUPERSEDED_01.patch",
+      "classification": "diff prefix followed by known pytest decorator; not an email"
+    },
+    {
+      "file": "SOURCE_SUPERSEDED_01.patch",
+      "classification": "diff prefix followed by known pytest decorator; not an email"
+    },
+    {
+      "file": "SOURCE_SUPERSEDED_01.patch",
+      "classification": "diff prefix followed by known pytest decorator; not an email"
+    },
+    {
+      "file": "SOURCE_SUPERSEDED_01.patch",
+      "classification": "diff prefix followed by known pytest decorator; not an email"
+    },
+    {
+      "file": "SOURCE_SUPERSEDED_01.patch",
+      "classification": "diff prefix followed by known pytest decorator; not an email"
+    },
+    {
+      "file": "SOURCE_SUPERSEDED_01.patch",
+      "classification": "diff prefix followed by known pytest decorator; not an email"
+    },
+    {
+      "file": "SOURCE_SUPERSEDED_01.patch",
+      "classification": "diff prefix followed by known pytest decorator; not an email"
+    },
+    {
+      "file": "SOURCE_SUPERSEDED_01.patch",
+      "classification": "diff prefix followed by known pytest decorator; not an email"
+    },
+    {
+      "file": "SOURCE_SUPERSEDED_01.patch",
+      "classification": "diff prefix followed by known pytest decorator; not an email"
+    },
+    {
+      "file": "SOURCE_SUPERSEDED_01.patch",
+      "classification": "diff prefix followed by known pytest decorator; not an email"
+    },
+    {
+      "file": "SOURCE_SUPERSEDED_V4.patch",
+      "classification": "diff prefix followed by known pytest decorator; not an email"
+    },
+    {
+      "file": "SOURCE_SUPERSEDED_V4.patch",
+      "classification": "diff prefix followed by known pytest decorator; not an email"
+    },
+    {
+      "file": "SOURCE_SUPERSEDED_V4.patch",
+      "classification": "diff prefix followed by known pytest decorator; not an email"
+    },
+    {
+      "file": "SOURCE_SUPERSEDED_V4.patch",
+      "classification": "diff prefix followed by known pytest decorator; not an email"
+    },
+    {
+      "file": "SOURCE_SUPERSEDED_V4.patch",
+      "classification": "diff prefix followed by known pytest decorator; not an email"
+    },
+    {
+      "file": "SOURCE_SUPERSEDED_V4.patch",
+      "classification": "diff prefix followed by known pytest decorator; not an email"
+    },
+    {
+      "file": "SOURCE_SUPERSEDED_V4.patch",
+      "classification": "diff prefix followed by known pytest decorator; not an email"
+    },
+    {
+      "file": "SOURCE_SUPERSEDED_V4.patch",
+      "classification": "diff prefix followed by known pytest decorator; not an email"
+    },
+    {
+      "file": "SOURCE_SUPERSEDED_V4.patch",
+      "classification": "diff prefix followed by known pytest decorator; not an email"
+    },
+    {
+      "file": "SOURCE_SUPERSEDED_V4.patch",
+      "classification": "diff prefix followed by known pytest decorator; not an email"
+    },
+    {
+      "file": "SOURCE_SUPERSEDED_V4.patch",
+      "classification": "diff prefix followed by known pytest decorator; not an email"
+    },
+    {
+      "file": "SOURCE_FINAL.patch",
+      "classification": "diff prefix followed by known pytest decorator; not an email"
+    },
+    {
+      "file": "SOURCE_FINAL.patch",
+      "classification": "diff prefix followed by known pytest decorator; not an email"
+    },
+    {
+      "file": "SOURCE_FINAL.patch",
+      "classification": "diff prefix followed by known pytest decorator; not an email"
+    },
+    {
+      "file": "SOURCE_FINAL.patch",
+      "classification": "diff prefix followed by known pytest decorator; not an email"
+    },
+    {
+      "file": "SOURCE_FINAL.patch",
+      "classification": "diff prefix followed by known pytest decorator; not an email"
+    },
+    {
+      "file": "SOURCE_FINAL.patch",
+      "classification": "diff prefix followed by known pytest decorator; not an email"
+    },
+    {
+      "file": "SOURCE_FINAL.patch",
+      "classification": "diff prefix followed by known pytest decorator; not an email"
+    },
+    {
+      "file": "SOURCE_FINAL.patch",
+      "classification": "diff prefix followed by known pytest decorator; not an email"
+    },
+    {
+      "file": "SOURCE_FINAL.patch",
+      "classification": "diff prefix followed by known pytest decorator; not an email"
+    },
+    {
+      "file": "SOURCE_FINAL.patch",
+      "classification": "diff prefix followed by known pytest decorator; not an email"
+    },
+    {
+      "file": "SOURCE_FINAL.patch",
+      "classification": "diff prefix followed by known pytest decorator; not an email"
+    },
+    {
+      "file": "SOURCE_FINAL.patch",
+      "classification": "diff prefix followed by known pytest decorator; not an email"
+    },
+    {
+      "file": "SOURCE_FINAL.patch",
+      "classification": "diff prefix followed by known pytest decorator; not an email"
+    },
+    {
+      "file": "checks/implementation-source-and-newtest-v4.patch",
+      "classification": "diff prefix followed by known pytest decorator; not an email"
+    },
+    {
+      "file": "checks/implementation-source-and-newtest-v4.patch",
+      "classification": "diff prefix followed by known pytest decorator; not an email"
+    },
+    {
+      "file": "checks/implementation-source-and-newtest-v4.patch",
+      "classification": "diff prefix followed by known pytest decorator; not an email"
+    },
+    {
+      "file": "checks/implementation-source-and-newtest-v4.patch",
+      "classification": "diff prefix followed by known pytest decorator; not an email"
+    },
+    {
+      "file": "checks/implementation-source-and-newtest-v4.patch",
+      "classification": "diff prefix followed by known pytest decorator; not an email"
+    },
+    {
+      "file": "checks/implementation-source-and-newtest-v4.patch",
+      "classification": "diff prefix followed by known pytest decorator; not an email"
+    },
+    {
+      "file": "checks/implementation-source-and-newtest-v4.patch",
+      "classification": "diff prefix followed by known pytest decorator; not an email"
+    },
+    {
+      "file": "checks/implementation-source-and-newtest-v4.patch",
+      "classification": "diff prefix followed by known pytest decorator; not an email"
+    },
+    {
+      "file": "checks/implementation-source-and-newtest-v4.patch",
+      "classification": "diff prefix followed by known pytest decorator; not an email"
+    },
+    {
+      "file": "checks/implementation-source-and-newtest-v4.patch",
+      "classification": "diff prefix followed by known pytest decorator; not an email"
+    },
+    {
+      "file": "checks/implementation-source-and-newtest-v4.patch",
+      "classification": "diff prefix followed by known pytest decorator; not an email"
+    },
+    {
+      "file": "checks/implementation-source-and-newtest-v3.patch",
+      "classification": "diff prefix followed by known pytest decorator; not an email"
+    },
+    {
+      "file": "checks/implementation-source-and-newtest-v3.patch",
+      "classification": "diff prefix followed by known pytest decorator; not an email"
+    },
+    {
+      "file": "checks/implementation-source-and-newtest-v3.patch",
+      "classification": "diff prefix followed by known pytest decorator; not an email"
+    },
+    {
+      "file": "checks/implementation-source-and-newtest-v3.patch",
+      "classification": "diff prefix followed by known pytest decorator; not an email"
+    },
+    {
+      "file": "checks/implementation-source-and-newtest-v3.patch",
+      "classification": "diff prefix followed by known pytest decorator; not an email"
+    },
+    {
+      "file": "checks/implementation-source-and-newtest-v3.patch",
+      "classification": "diff prefix followed by known pytest decorator; not an email"
+    },
+    {
+      "file": "checks/implementation-source-and-newtest-v3.patch",
+      "classification": "diff prefix followed by known pytest decorator; not an email"
+    },
+    {
+      "file": "checks/implementation-source-and-newtest-v3.patch",
+      "classification": "diff prefix followed by known pytest decorator; not an email"
+    },
+    {
+      "file": "checks/implementation-source-and-newtest-v3.patch",
+      "classification": "diff prefix followed by known pytest decorator; not an email"
+    },
+    {
+      "file": "checks/implementation-source-and-newtest-v3.patch",
+      "classification": "diff prefix followed by known pytest decorator; not an email"
+    },
+    {
+      "file": "checks/implementation-source-and-newtest-v3.patch",
+      "classification": "diff prefix followed by known pytest decorator; not an email"
+    },
+    {
+      "file": "checks/implementation-source-and-newtest-v5.patch",
+      "classification": "diff prefix followed by known pytest decorator; not an email"
+    },
+    {
+      "file": "checks/implementation-source-and-newtest-v5.patch",
+      "classification": "diff prefix followed by known pytest decorator; not an email"
+    },
+    {
+      "file": "checks/implementation-source-and-newtest-v5.patch",
+      "classification": "diff prefix followed by known pytest decorator; not an email"
+    },
+    {
+      "file": "checks/implementation-source-and-newtest-v5.patch",
+      "classification": "diff prefix followed by known pytest decorator; not an email"
+    },
+    {
+      "file": "checks/implementation-source-and-newtest-v5.patch",
+      "classification": "diff prefix followed by known pytest decorator; not an email"
+    },
+    {
+      "file": "checks/implementation-source-and-newtest-v5.patch",
+      "classification": "diff prefix followed by known pytest decorator; not an email"
+    },
+    {
+      "file": "checks/implementation-source-and-newtest-v5.patch",
+      "classification": "diff prefix followed by known pytest decorator; not an email"
+    },
+    {
+      "file": "checks/implementation-source-and-newtest-v5.patch",
+      "classification": "diff prefix followed by known pytest decorator; not an email"
+    },
+    {
+      "file": "checks/implementation-source-and-newtest-v5.patch",
+      "classification": "diff prefix followed by known pytest decorator; not an email"
+    },
+    {
+      "file": "checks/implementation-source-and-newtest-v5.patch",
+      "classification": "diff prefix followed by known pytest decorator; not an email"
+    },
+    {
+      "file": "checks/implementation-source-and-newtest-v5.patch",
+      "classification": "diff prefix followed by known pytest decorator; not an email"
+    },
+    {
+      "file": "checks/implementation-source-and-newtest-v5.patch",
+      "classification": "diff prefix followed by known pytest decorator; not an email"
+    },
+    {
+      "file": "checks/implementation-source-and-newtest-v5.patch",
+      "classification": "diff prefix followed by known pytest decorator; not an email"
+    },
+    {
+      "file": "checks/implementation-source-and-newtest.patch",
+      "classification": "diff prefix followed by known pytest decorator; not an email"
+    },
+    {
+      "file": "checks/implementation-source-and-newtest.patch",
+      "classification": "diff prefix followed by known pytest decorator; not an email"
+    },
+    {
+      "file": "checks/implementation-source-and-newtest.patch",
+      "classification": "diff prefix followed by known pytest decorator; not an email"
+    },
+    {
+      "file": "checks/implementation-source-and-newtest.patch",
+      "classification": "diff prefix followed by known pytest decorator; not an email"
+    },
+    {
+      "file": "checks/implementation-source-and-newtest.patch",
+      "classification": "diff prefix followed by known pytest decorator; not an email"
+    },
+    {
+      "file": "checks/implementation-source-and-newtest.patch",
+      "classification": "diff prefix followed by known pytest decorator; not an email"
+    },
+    {
+      "file": "checks/implementation-source-and-newtest.patch",
+      "classification": "diff prefix followed by known pytest decorator; not an email"
+    },
+    {
+      "file": "checks/implementation-source-and-newtest.patch",
+      "classification": "diff prefix followed by known pytest decorator; not an email"
+    },
+    {
+      "file": "checks/implementation-source-and-newtest.patch",
+      "classification": "diff prefix followed by known pytest decorator; not an email"
+    },
+    {
+      "file": "checks/implementation-source-and-newtest.patch",
+      "classification": "diff prefix followed by known pytest decorator; not an email"
+    },
+    {
+      "file": "checks/implementation-source-and-newtest-v2.patch",
+      "classification": "diff prefix followed by known pytest decorator; not an email"
+    },
+    {
+      "file": "checks/implementation-source-and-newtest-v2.patch",
+      "classification": "diff prefix followed by known pytest decorator; not an email"
+    },
+    {
+      "file": "checks/implementation-source-and-newtest-v2.patch",
+      "classification": "diff prefix followed by known pytest decorator; not an email"
+    },
+    {
+      "file": "checks/implementation-source-and-newtest-v2.patch",
+      "classification": "diff prefix followed by known pytest decorator; not an email"
+    },
+    {
+      "file": "checks/implementation-source-and-newtest-v2.patch",
+      "classification": "diff prefix followed by known pytest decorator; not an email"
+    },
+    {
+      "file": "checks/implementation-source-and-newtest-v2.patch",
+      "classification": "diff prefix followed by known pytest decorator; not an email"
+    },
+    {
+      "file": "checks/implementation-source-and-newtest-v2.patch",
+      "classification": "diff prefix followed by known pytest decorator; not an email"
+    },
+    {
+      "file": "checks/implementation-source-and-newtest-v2.patch",
+      "classification": "diff prefix followed by known pytest decorator; not an email"
+    },
+    {
+      "file": "checks/implementation-source-and-newtest-v2.patch",
+      "classification": "diff prefix followed by known pytest decorator; not an email"
+    },
+    {
+      "file": "checks/implementation-source-and-newtest-v2.patch",
+      "classification": "diff prefix followed by known pytest decorator; not an email"
+    },
+    {
+      "file": "checks/implementation-source-and-newtest-v2.patch",
+      "classification": "diff prefix followed by known pytest decorator; not an email"
+    }
+  ],
+  "limitations": "Recognized pattern scan only. Long source/patch hashes and platform/order IDs intentionally retained; no private attachment copied. Initial broad email regex stopped at known diff +@pytest decorator; exact fixed exception only, no blanket filtering."
+}

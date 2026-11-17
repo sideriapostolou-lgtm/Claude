@@ -1,0 +1,132 @@
+{
+  "captured_at_utc": "2026-10-14 16:47:25 UTC",
+  "source": "Bounded read-only exact top-level Railway deployment logs; nested speeddesk_status copies excluded.",
+  "deployment_id": "f707494f-1b45-4610-9488-def9796b5923",
+  "commit": "e8db34ee34d95411ac7f695f704ceb82ef8e32d5",
+  "completed_real_window": {
+    "market": "KXBTC15M-26OCT141245-45",
+    "start_utc": "2026-10-14T16:30:00Z",
+    "end_utc": "2026-10-14T16:45:00Z",
+    "fill_records": 1,
+    "contracts": 5,
+    "maker_fill_records": 1,
+    "taker_fill_records": 0,
+    "fees_usd": 0,
+    "fill": {
+      "log_at": "2026-10-14T16:32:42.318847766Z",
+      "at": 1791995561.822508,
+      "window": "KXBTC15M-26OCT141245-45",
+      "side": "down",
+      "price": 0.43,
+      "size": 5,
+      "fee_usd": 0,
+      "is_taker": false
+    },
+    "settlement": {
+      "log_at": "2026-10-14T16:45:06.083931541Z",
+      "at": 1791996304.288478,
+      "window": "KXBTC15M-26OCT141245-45",
+      "up_wins": true,
+      "up_shares": 0,
+      "down_shares": 5,
+      "cost_usd": 2.15,
+      "fee_usd": 0,
+      "payout_usd": 0,
+      "locked_usd": 0,
+      "direction_usd": -2.15,
+      "pnl_usd": -2.15,
+      "observed_at": 1791996305.880114,
+      "time_source": "venue settled_time"
+    },
+    "venue_settlement_utc": "2026-10-14T16:45:04.288Z",
+    "local_settlement_observed_utc": "2026-10-14T16:45:05.880Z"
+  },
+  "latest_live_status": {
+    "log_at": "2026-10-14T16:46:21.239698266Z",
+    "at": 1791996381.123457,
+    "as_of": 1791996381.0948305,
+    "mode": "live",
+    "configured_mode": "live",
+    "status": "REAL MONEY (Kalshi)",
+    "reason": "Reconciling an uncertain order; no new orders",
+    "waiting": "Reconciling an uncertain order; no new orders",
+    "trading_now": false,
+    "authenticated": true,
+    "caps": {
+      "window_usd": 10,
+      "open_usd": 20,
+      "day_stop_usd": 6,
+      "clip": 5,
+      "total_stop_usd": 10
+    },
+    "total_halted": false,
+    "day_stop_latched": false,
+    "integrity_error": null,
+    "cash_usd": 37.3427,
+    "cash_at": 1791996381.0944114,
+    "open_cost_usd": 2.45,
+    "open_risk_usd": 2.45,
+    "reserved_usd": 2.3000000000000003,
+    "at_risk_usd": 2.45,
+    "open_orders": 1,
+    "positions": 1,
+    "lifetime_pnl_usd": -9.948700000000006,
+    "day": "2026-10-14",
+    "day_pnl_usd": -0.006600000000002118,
+    "lifetime_fills": 366,
+    "lifetime_fees_usd": 1.8718
+  },
+  "arena": {
+    "baseline": {
+      "received": 588941,
+      "late": 53649,
+      "dropped": 0,
+      "windows": 0,
+      "void": 69,
+      "void_feed": 60
+    },
+    "baseline_context": "Parent-provided first16:30 sample; cumulative counters retained by arena",
+    "latest": {
+      "log_at": "2026-10-14T16:46:07.779168670Z",
+      "event_time_text": "2026-10-14T16:46:07Z",
+      "residents": 12,
+      "windows": 1,
+      "void": 69,
+      "void_feed": 60,
+      "received": 1783110,
+      "dropped": 0,
+      "late": 53649,
+      "coalesced": 632386,
+      "pass_p99_ms": 68.291,
+      "pass_max_ms": 124.017,
+      "duty_pct": 12.02,
+      "lag_s": 1.17,
+      "errors": 0,
+      "live_flush_us_p99": 18662,
+      "live_flush_us_max": 41640
+    },
+    "deltas": {
+      "received": 1194169,
+      "late": 0,
+      "dropped": 0,
+      "windows": 1,
+      "void": 0,
+      "void_feed": 0
+    },
+    "conclusion": "Completed-window counter advanced from0 to1 while void/void_feed/drop/late counters remained unchanged. This independently verifies one accepted completed arena window after restart; status line does not include its market ID or resident P&L. No per-market complete receipt was retrieved; do not claim detailed matching or profitable validation.",
+    "preopen_caveat": "Previously late events can mark known future windows degraded. Flat post-open counters alone were not used to infer completion; the completed-window increment is separate observed evidence."
+  },
+  "stop_budget_context": {
+    "retained_stop_anchor_usd": -9.9921,
+    "authority": "Verified docs/WORKLOG.md lines434–446: owner explicitly approved a fresh$10 loss budget; the13:49:54 UTC resume receipt set counted_from_usd to−9.9921. PR47 did not reset it.",
+    "formula": "max(0,stop_anchor-realized_pnl)+at_risk",
+    "do_not_confuse": "Lifetime P&L is not measured from zero for this retained stop budget; the ladder start anchor−3.7461 is separate.",
+    "live_status_anchor_exposed": false
+  },
+  "limitations": [
+    "First completed real window after PR47 lost$2.15. One accepted arena window is a recording milestone, not a profitable-strategy result.",
+    "Latest status includes exposure in the following16:45–17:00 window; it is separate from completed16:30–16:45 P&L.",
+    "Railway ingestion timestamps, event timestamps, and venue settlement time are preserved separately.",
+    "No settings, order, deployment, source, or repository changes performed by this audit."
+  ]
+}

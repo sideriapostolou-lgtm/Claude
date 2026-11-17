@@ -1,0 +1,153 @@
+{
+  "reviewed_patch_sha256": "d3cdde2f73aff37f0be3b5c883359d714b1a3481c007e52b3684bde08be8643e",
+  "python": "3.12.14",
+  "initial_and_bounded_results": [
+    {
+      "local_log": "pytest-full.log",
+      "sha256": "14cd1a44a1599a90aea63d48fff38c4f546161672687e3cf5f6e2fb1182d149b",
+      "summary": [
+        "2 failed, 6312 passed, 22 skipped in 354.58s (0:05:54)"
+      ],
+      "performance": [
+        "flush CPU ms: median 0.138 p99 0.921 max 0.928; link {'running': True, 'pid': 3378, 'put': 4200, 'dropped': 0, 'frames': 200, 'kib': 560, 'pending': 0, 'pending_peak': 21, 'blocked': 0, 'sliced': 0, 'flush_us_p50': 132, 'flush_us_p99': 625, 'flush_us_max': 914}"
+      ],
+      "failures": [
+        "FAILED tests/test_kalshi_arena_feed.py::test_a_flush_of_a_busy_market_costs_well_under_half_a_millisecond",
+        "FAILED tests/test_kalshi_arena_feed_backlog.py::test_production_depth_and_delayed_steps_keep_up[700-0.3]"
+      ]
+    },
+    {
+      "local_log": "pytest-arena-isolated.log",
+      "sha256": "e8a85fa6e24162c0314fe1a22363765dd0b07a29430b932890ff45bea12a03a3",
+      "summary": [
+        "1 failed, 1 passed in 11.75s"
+      ],
+      "performance": [
+        "flush CPU ms: median 0.120 p99 0.954 max 17.995; link {'running': True, 'pid': 26993, 'put': 4200, 'dropped': 0, 'frames': 200, 'kib': 560, 'pending': 0, 'pending_peak': 26, 'blocked': 0, 'sliced': 1, 'flush_us_p50': 115, 'flush_us_p99': 391, 'flush_us_max': 17988}"
+      ],
+      "failures": [
+        "FAILED tests/test_kalshi_arena_feed.py::test_a_flush_of_a_busy_market_costs_well_under_half_a_millisecond"
+      ]
+    },
+    {
+      "local_log": "timing-1-baseline.log",
+      "sha256": "bf70115e0ebfbfd9db2073d3b937e5c2e28925b8f9050768225e9380666aae85",
+      "summary": [
+        "2 passed in 11.77s"
+      ],
+      "performance": [
+        "flush CPU ms: median 0.135 p99 0.392 max 0.443; link {'running': True, 'pid': 27213, 'put': 4200, 'dropped': 0, 'frames': 200, 'kib': 560, 'pending': 0, 'pending_peak': 21, 'blocked': 0, 'sliced': 0, 'flush_us_p50': 129, 'flush_us_p99': 387, 'flush_us_max': 437}"
+      ],
+      "failures": []
+    },
+    {
+      "local_log": "timing-2-patch.log",
+      "sha256": "6dd044a2ed46088280262dbf4ebd7e5a93d08ea65fbc0852ad3bec18b2d78563",
+      "summary": [
+        "1 failed, 1 passed in 12.00s"
+      ],
+      "performance": [
+        "flush CPU ms: median 0.126 p99 0.738 max 18.851; link {'running': True, 'pid': 27220, 'put': 4200, 'dropped': 0, 'frames': 200, 'kib': 560, 'pending': 0, 'pending_peak': 26, 'blocked': 0, 'sliced': 1, 'flush_us_p50': 121, 'flush_us_p99': 733, 'flush_us_max': 18844}"
+      ],
+      "failures": [
+        "FAILED tests/test_kalshi_arena_feed.py::test_a_flush_of_a_busy_market_costs_well_under_half_a_millisecond"
+      ]
+    },
+    {
+      "local_log": "timing-3-patch.log",
+      "sha256": "4a5733a8addaf01543b2d1fbf4d44a18ac5c44986da9a15f20a3340a4460efad",
+      "summary": [
+        "2 failed in 11.89s"
+      ],
+      "performance": [
+        "flush CPU ms: median 0.128 p99 0.693 max 17.509; link {'running': True, 'pid': 27223, 'put': 4200, 'dropped': 0, 'frames': 200, 'kib': 560, 'pending': 0, 'pending_peak': 26, 'blocked': 0, 'sliced': 1, 'flush_us_p50': 124, 'flush_us_p99': 687, 'flush_us_max': 17503}"
+      ],
+      "failures": [
+        "FAILED tests/test_kalshi_arena_feed.py::test_a_flush_of_a_busy_market_costs_well_under_half_a_millisecond",
+        "FAILED tests/test_kalshi_arena_feed_backlog.py::test_production_depth_and_delayed_steps_keep_up[700-0.3]"
+      ]
+    },
+    {
+      "local_log": "timing-4-baseline.log",
+      "sha256": "72f63b9088f01144f8305777ee359c24eca85cb19456b3a94cc8645cbb541be5",
+      "summary": [
+        "1 failed, 1 passed in 11.66s"
+      ],
+      "performance": [
+        "flush CPU ms: median 0.132 p99 0.592 max 17.842; link {'running': True, 'pid': 27226, 'put': 4200, 'dropped': 0, 'frames': 200, 'kib': 560, 'pending': 0, 'pending_peak': 26, 'blocked': 0, 'sliced': 1, 'flush_us_p50': 127, 'flush_us_p99': 586, 'flush_us_max': 17835}"
+      ],
+      "failures": [
+        "FAILED tests/test_kalshi_arena_feed.py::test_a_flush_of_a_busy_market_costs_well_under_half_a_millisecond"
+      ]
+    }
+  ],
+  "source_verified_serial_comparison": [
+    {
+      "sequence": 1,
+      "label": "baseline",
+      "source": "/workspace/nightcrawler-storage-baseline/src/nightcrawler/speeddesk_live.py",
+      "started_utc_epoch": 1792368900.4400003,
+      "elapsed_s": 12.264,
+      "exit_code": 0,
+      "log": "timing-1-baseline.log"
+    },
+    {
+      "sequence": 2,
+      "label": "patch",
+      "source": "/workspace/nightcrawler-daily/src/nightcrawler/speeddesk_live.py",
+      "started_utc_epoch": 1792368913.0201623,
+      "elapsed_s": 12.578,
+      "exit_code": 1,
+      "log": "timing-2-patch.log"
+    },
+    {
+      "sequence": 3,
+      "label": "patch",
+      "source": "/workspace/nightcrawler-daily/src/nightcrawler/speeddesk_live.py",
+      "started_utc_epoch": 1792368925.8536794,
+      "elapsed_s": 12.46,
+      "exit_code": 1,
+      "log": "timing-3-patch.log"
+    },
+    {
+      "sequence": 4,
+      "label": "baseline",
+      "source": "/workspace/nightcrawler-storage-baseline/src/nightcrawler/speeddesk_live.py",
+      "started_utc_epoch": 1792368938.5806975,
+      "elapsed_s": 12.105,
+      "exit_code": 1,
+      "log": "timing-4-baseline.log"
+    }
+  ],
+  "limits": "Both full suites failed. Baseline reproduces busy-flush failure; baseline backlog failure not reproduced. No threshold relaxed or failed check waived. Source and production release remain blocked.",
+  "final_full_suite": {
+    "passed": 6332,
+    "failed": 2,
+    "skipped": 14,
+    "duration_s": 341.59,
+    "local_log": "pytest-full-science.log",
+    "sha256": "d400833a032b2ab0c5424ab2e2f29cdd3d1d1b38913f92d40cc9e8bac508da8d",
+    "failures": [
+      "FAILED tests/test_kalshi_arena_feed.py::test_a_flush_of_a_busy_market_costs_well_under_half_a_millisecond",
+      "FAILED tests/test_kalshi_arena_feed_backlog.py::test_production_depth_and_delayed_steps_keep_up[700-0.3]"
+    ],
+    "performance": [
+      "flush CPU ms: median 0.127 p99 0.896 max 1.693; link {'running': True, 'pid': 27769, 'put': 4200, 'dropped': 0, 'frames': 200, 'kib': 560, 'pending': 0, 'pending_peak': 21, 'blocked': 0, 'sliced': 0, 'flush_us_p50': 122, 'flush_us_p99': 891, 'flush_us_max': 1688}"
+    ],
+    "backlog_pending": 10660,
+    "backlog_required_less_than": 1500,
+    "drop_count": 0,
+    "gate": "FAILED; no source push, PR, merge or deployment"
+  },
+  "dependency_versions": {
+    "numpy": "2.5.4",
+    "pandas": "3.0.6",
+    "scipy": "1.18.1",
+    "pytest": "9.1.1",
+    "mypy": "2.4.0",
+    "ruff": "0.17.1"
+  },
+  "local_unpublished_candidate_commit": "0f7eba1f26c09ea9895f8ee84381b2d164a25ed2",
+  "applicable_patch_sha256": "6887a85254a286aee3997f7f4f750ed6f10bcdbefcd2dbda4f65fb2a7904434e",
+  "metadata_helper_note": "First metadata collection used system Python without pytest metadata and wrote nothing; corrected to the test venv."
+}

@@ -1,0 +1,252 @@
+{
+  "scope": "SYNTHETIC REGRESSIONS ONLY; no historical bars or returns",
+  "generatedAtUTC": "2026-10-14T18:54:09.285Z",
+  "runtime": "v24.19.0",
+  "passed": 58,
+  "total": 58,
+  "failures": [],
+  "tests": [
+    {
+      "name": "saved prototype original 65 checks pass unchanged",
+      "passed": true
+    },
+    {
+      "name": "saved feature original 26 checks pass unchanged",
+      "passed": true
+    },
+    {
+      "name": "calendar derivative preserves all original 65 checks",
+      "passed": true
+    },
+    {
+      "name": "calendarStatus=undefined remains unresolved",
+      "passed": true
+    },
+    {
+      "name": "calendarStatus=null remains unresolved",
+      "passed": true
+    },
+    {
+      "name": "calendarStatus=UNVERIFIED remains unresolved",
+      "passed": true
+    },
+    {
+      "name": "calendarStatus=TYPO remains unresolved",
+      "passed": true
+    },
+    {
+      "name": "previousCalendarStatus=undefined remains unresolved",
+      "passed": true
+    },
+    {
+      "name": "previousCalendarStatus=null remains unresolved",
+      "passed": true
+    },
+    {
+      "name": "previousCalendarStatus=UNVERIFIED remains unresolved",
+      "passed": true
+    },
+    {
+      "name": "previousCalendarStatus=TYPO remains unresolved",
+      "passed": true
+    },
+    {
+      "name": "unknown prior remains unresolved even if current explicitly excluded",
+      "passed": true
+    },
+    {
+      "name": "verified closure is a planned exclusion",
+      "passed": true
+    },
+    {
+      "name": "versioned patch changes only version and calendar check",
+      "passed": true
+    },
+    {
+      "name": "engine VM has no network, process, module loader or broker",
+      "passed": true
+    },
+    {
+      "name": "all 43 civil dates and 31 cash sessions incl warmup retained",
+      "passed": true
+    },
+    {
+      "name": "calendar omission cannot vanish from denominator",
+      "passed": true
+    },
+    {
+      "name": "duplicate calendar dates rejected",
+      "passed": true
+    },
+    {
+      "name": "calendar outside frozen period rejected",
+      "passed": true
+    },
+    {
+      "name": "calendar status unknown rejected",
+      "passed": true
+    },
+    {
+      "name": "calendar source per date required",
+      "passed": true
+    },
+    {
+      "name": "preceding session cannot silently substitute an earlier day",
+      "passed": true
+    },
+    {
+      "name": "clock must be cash open in New York",
+      "passed": true
+    },
+    {
+      "name": "partial-minute cash open rejected",
+      "passed": true
+    },
+    {
+      "name": "weekend cannot be promoted to regular session",
+      "passed": true
+    },
+    {
+      "name": "actual contract mapping accepts matching test evidence",
+      "passed": true
+    },
+    {
+      "name": "contract mapping rejects canonicalContract",
+      "passed": true
+    },
+    {
+      "name": "contract mapping rejects expirationMonth",
+      "passed": true
+    },
+    {
+      "name": "contract mapping rejects minPriceIncrement",
+      "passed": true
+    },
+    {
+      "name": "contract mapping rejects adjusted",
+      "passed": true
+    },
+    {
+      "name": "contract mapping rejects pointValueUSD",
+      "passed": true
+    },
+    {
+      "name": "contract mapping rejects providerSymbol",
+      "passed": true
+    },
+    {
+      "name": "bars never shift or fill missing minutes",
+      "passed": true
+    },
+    {
+      "name": "duplicate bars rejected",
+      "passed": true
+    },
+    {
+      "name": "out of order bars rejected",
+      "passed": true
+    },
+    {
+      "name": "wrong instrument bars rejected",
+      "passed": true
+    },
+    {
+      "name": "wrong precision bars rejected",
+      "passed": true
+    },
+    {
+      "name": "malformed OHLC bars rejected",
+      "passed": true
+    },
+    {
+      "name": "negative volume bars rejected",
+      "passed": true
+    },
+    {
+      "name": "overnight bars rejected",
+      "passed": true
+    },
+    {
+      "name": "closed session bars rejected",
+      "passed": true
+    },
+    {
+      "name": "holdout bars rejected",
+      "passed": true
+    },
+    {
+      "name": "full calendar creates 30 development session denominators per scenario",
+      "passed": true
+    },
+    {
+      "name": "missing complete session retains day and invalidates whole-campaign total",
+      "passed": true
+    },
+    {
+      "name": "missing warmup blocks first development session",
+      "passed": true
+    },
+    {
+      "name": "shortened prior session is excluded, never replaced",
+      "passed": true
+    },
+    {
+      "name": "unresolved days retain closed losing trades without treating as full coverage",
+      "passed": true
+    },
+    {
+      "name": "nine scenarios preserve losing session and adverse friction",
+      "passed": true
+    },
+    {
+      "name": "valid hash chain can load test bundle",
+      "passed": true
+    },
+    {
+      "name": "wrong artifact hash blocks",
+      "passed": true
+    },
+    {
+      "name": "unverified mapping flags cannot run",
+      "passed": true
+    },
+    {
+      "name": "raw provenance cannot be absent",
+      "passed": true
+    },
+    {
+      "name": "raw holdout range rejected before reading artifact",
+      "passed": true
+    },
+    {
+      "name": "holdout partition rejected before bars read",
+      "passed": true
+    },
+    {
+      "name": "actual cost assertions need hashed evidence",
+      "passed": true
+    },
+    {
+      "name": "CLI missing dataset explicitly blocked with no PnL",
+      "passed": true
+    },
+    {
+      "name": "rejected supplied bundle does not claim holdout was unopened",
+      "passed": true
+    },
+    {
+      "name": "output cannot overwrite a previous receipt",
+      "passed": true
+    }
+  ],
+  "sourceHashes": {
+    "originalCombined": "7008b3c3da5f087f7371740d6ceb98725b56585e45cbd31a89f903c1a3ee141f",
+    "originalEngine": "c33084666c94fd4256cdc0b26421e88f9c992ccd344adf78ec8cf95b069b1b2e",
+    "originalTests": "42aaeb83912761a23ab5898b6dd987f95020b32322ba276db794ea1dbdb3e0b9",
+    "feature": "b51750e013f6a72fac10e59b3a5530b0468d09f4eab81cd7fddcf02c525d289c",
+    "derivative": "00befa923a4eaf0b32013999ca4cc9c1819ac942e2afceeedb8d713f00141c52"
+  },
+  "historicalTradesTested": 0,
+  "paperTradingStarted": false,
+  "liveExecutionEnabled": false
+}

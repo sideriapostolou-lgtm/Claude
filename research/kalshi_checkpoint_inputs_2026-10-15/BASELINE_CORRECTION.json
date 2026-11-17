@@ -1,0 +1,8 @@
+{
+  "superseded_result_sha256": "de951825dd7d84ce171b099262e646769a69b9f7f302b56234b33dc0e12550ef",
+  "corrections": [
+    "1day report Window conversions100, not200; raw/SUMMARY unchanged",
+    "KV/mirror lengths match; baseline cross-store content equality not asserted"
+  ],
+  "measurements_changed": false
+}

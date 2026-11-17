@@ -1,0 +1,28 @@
+{
+  "service": {
+    "id": "f84d3b52-002f-44cb-931e-bc9e3e097e97",
+    "name": "bot"
+  },
+  "environment": {
+    "id": "17f7b0e0-104c-4903-9484-0106748b3cdb",
+    "name": "production"
+  },
+  "metrics": [
+    {
+      "measurement": "DISK_USAGE_GB",
+      "current": 4.99613696,
+      "average": 4.995920610622952,
+      "min": 4.995538944,
+      "max": 4.996235264,
+      "sampleCount": 61
+    },
+    {
+      "measurement": "MEMORY_USAGE_GB",
+      "current": 1.636794368,
+      "average": 1.651022764065573,
+      "min": 1.6366592,
+      "max": 1.669873664,
+      "sampleCount": 61
+    }
+  ]
+}

@@ -1,0 +1,19 @@
+{
+  "passed": 13,
+  "checks": [
+    "strict1000boundary",
+    "strict3000boundary",
+    "nestedunionnonadditive",
+    "wrongdeploymentexcluded",
+    "overflowunknown",
+    "ordinalmismatchunknown",
+    "invalidorderingunknown",
+    "acceptedaftercallseparate",
+    "deltamismatchunknown",
+    "nestedcopyexcluded",
+    "malformedpayloadunknown",
+    "readeridentityseparation",
+    "exactduplicateexcluded"
+  ],
+  "synthetic_only": true
+}

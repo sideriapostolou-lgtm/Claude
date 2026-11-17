@@ -1,0 +1,78 @@
+{
+ "data": [
+  {
+   "id": "solana_8ZCmwpW3MtC5UpNcZf7U4HMvRNTo71syU11BDiAFpump",
+   "type": "token",
+   "attributes": {
+    "address": "8ZCmwpW3MtC5UpNcZf7U4HMvRNTo71syU11BDiAFpump",
+    "name": "Gary the Cat",
+    "symbol": "Gary",
+    "decimals": 6,
+    "image_url": "https://assets.geckoterminal.com/ti0a2ik1ddk0z7lvyyvuehzze44y",
+    "coingecko_coin_id": null,
+    "total_supply": "994092212949025.0",
+    "normalized_total_supply": "994092212.949025",
+    "price_usd": "0.0007164769698",
+    "fdv_usd": "712244.176474127",
+    "total_reserve_in_usd": "37803.383883382807061160214137",
+    "volume_usd": {
+     "h24": "972218.92195391"
+    },
+    "market_cap_usd": null,
+    "launchpad_details": {
+     "graduation_percentage": 100.0,
+     "completed": true,
+     "completed_at": "2026-10-08T13:28:26.000Z",
+     "migrated_destination_pool_address": "2uZuTQEjcXcR1ESwMdGTpqEwM5PCekEwrSNVRPc1EhS1"
+    }
+   },
+   "relationships": {
+    "top_pools": {
+     "data": [
+      {
+       "id": "solana_2uZuTQEjcXcR1ESwMdGTpqEwM5PCekEwrSNVRPc1EhS1",
+       "type": "pool"
+      }
+     ]
+    }
+   }
+  },
+  {
+   "id": "solana_DoVAVzViX8Bjy3r15nwikSaSbzE6dV4ovd28aWpJpump",
+   "type": "token",
+   "attributes": {
+    "address": "DoVAVzViX8Bjy3r15nwikSaSbzE6dV4ovd28aWpJpump",
+    "name": "Higgspad",
+    "symbol": "HIGGS",
+    "decimals": 6,
+    "image_url": "https://coin-images.coingecko.com/coins/images/102179118/large/laq3fsorn4t00ragoegzybag9chg.?1791211263",
+    "coingecko_coin_id": "higgspad",
+    "total_supply": "968200549683171.0",
+    "normalized_total_supply": "968200549.683171",
+    "price_usd": "0.0008795969709",
+    "fdv_usd": "851626.27071467",
+    "total_reserve_in_usd": "133442.851842961319955267438802",
+    "volume_usd": {
+     "h24": "1427175.24244305"
+    },
+    "market_cap_usd": "851626.271041817",
+    "launchpad_details": {
+     "graduation_percentage": 100.0,
+     "completed": true,
+     "completed_at": "2026-10-04T12:36:16.000Z",
+     "migrated_destination_pool_address": "BFrSZakeqNzVtM3EFhroo4eRhagmmWN8BRntiQKFH6Ru"
+    }
+   },
+   "relationships": {
+    "top_pools": {
+     "data": [
+      {
+       "id": "solana_DQyGMAGx8nB6ykixotLNFC6eVVQjrMqz7AkRyinNkEm1",
+       "type": "pool"
+      }
+     ]
+    }
+   }
+  }
+ ]
+}

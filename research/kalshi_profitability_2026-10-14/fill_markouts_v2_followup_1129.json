@@ -1,0 +1,2442 @@
+{
+  "schema": 1,
+  "source": "Railway deployment runtime logs",
+  "commit": "176916071029c13e73cd5ae41fbc8413532dce71",
+  "deployment": "80d6a42a-48da-4ae2-bcea-1f73c396ad93",
+  "observation_query": {
+    "start_utc": "2026-10-14T18:20:00Z",
+    "last_receipt_utc": "2026-10-14T18:29:04.136592666Z",
+    "limit": 250,
+    "returned_rows": 34,
+    "coverage": "partial current window; no full-window/day or profitable-strategy claim"
+  },
+  "results": {
+    "fills": 6,
+    "terminal_horizons": 18,
+    "measured": 9,
+    "full_depth": 9,
+    "gaps": 9,
+    "gap_reasons": {
+      "book_stale": 3,
+      "venue_feed_gap": 1,
+      "book_before_horizon": 5
+    },
+    "positive_isolated_quotes": 2,
+    "negative_isolated_quotes": 7,
+    "per_fill_terminal_horizons": [
+      {
+        "fill_id": "0725d53e-d201-af8d-73d3-f7945a2ed491",
+        "horizons": [
+          1,
+          5,
+          30
+        ]
+      },
+      {
+        "fill_id": "0725d53c-6b01-a629-fc3c-97653516cc59",
+        "horizons": [
+          1,
+          5,
+          30
+        ]
+      },
+      {
+        "fill_id": "0725d539-0189-89ac-03f8-fd4f2387ee5f",
+        "horizons": [
+          1,
+          5,
+          30
+        ]
+      },
+      {
+        "fill_id": "0725d508-4461-a518-f37e-9194692f7ba4",
+        "horizons": [
+          1,
+          5,
+          30
+        ]
+      },
+      {
+        "fill_id": "0725d508-4461-9a24-fed0-b3633c11ebfc",
+        "horizons": [
+          1,
+          5,
+          30
+        ]
+      },
+      {
+        "fill_id": "0725d502-3371-8b4e-c4e6-a4b398a2efb9",
+        "horizons": [
+          1,
+          5,
+          30
+        ]
+      }
+    ],
+    "not_realized_pnl": true,
+    "not_joint_inventory_liquidation": true
+  },
+  "health": {
+    "environment": {
+      "id": "17f7b0e0-104c-4903-9484-0106748b3cdb",
+      "name": "production"
+    },
+    "services": [
+      {
+        "serviceId": "f84d3b52-002f-44cb-931e-bc9e3e097e97",
+        "serviceName": "bot",
+        "state": "online",
+        "statusText": "Online",
+        "activeDeployments": [
+          {
+            "id": "80d6a42a-48da-4ae2-bcea-1f73c396ad93",
+            "status": "SUCCESS",
+            "createdAt": "2026-10-14T18:18:23.279Z",
+            "statusUpdatedAt": "2026-10-14T18:20:43.182Z"
+          }
+        ],
+        "replicaStatus": {
+          "running": 1,
+          "crashed": 0,
+          "total": 1
+        },
+        "cronJob": null,
+        "issues": {
+          "warningCount": 0,
+          "criticalCount": 0
+        },
+        "recentFailures": 0,
+        "recentFailedDeployments": [],
+        "hasIssues": false,
+        "isCronJob": false,
+        "hasVolume": true
+      },
+      {
+        "serviceId": "736b1c8a-8311-4ee0-9043-d05f508cd821",
+        "serviceName": "kalshi-recorder",
+        "state": "online",
+        "statusText": "Online",
+        "activeDeployments": [
+          {
+            "id": "8453f919-b891-4aa7-8478-6fcf6b9c24ee",
+            "status": "SUCCESS",
+            "createdAt": "2026-10-14T16:36:40.384Z",
+            "statusUpdatedAt": "2026-10-14T16:38:15.302Z"
+          }
+        ],
+        "replicaStatus": {
+          "running": 1,
+          "crashed": 0,
+          "total": 1
+        },
+        "cronJob": null,
+        "issues": {
+          "warningCount": 0,
+          "criticalCount": 0
+        },
+        "recentFailures": 0,
+        "recentFailedDeployments": [],
+        "hasIssues": false,
+        "isCronJob": false,
+        "hasVolume": true
+      }
+    ],
+    "pendingWork": [
+      {
+        "id": "patch:9a84e13c-3caf-4a85-b5f5-d9a2fcb8a021",
+        "kind": "EnvironmentPatch",
+        "status": "staged",
+        "changes": [],
+        "startedAt": "2026-10-12T16:21:53.480Z",
+        "workflowId": "commitChanges/17f7b0e0-104c-4903-9484-0106748b3cdb/9a84e13c-3caf-4a85-b5f5-d9a2fcb8a021"
+      }
+    ],
+    "summary": {
+      "totalServices": 2,
+      "servicesWithIssues": 0,
+      "totalFailures": 0
+    }
+  },
+  "error_queries": {
+    "traceback_through_utc": "2026-10-14T18:29:30Z",
+    "tracebacks": 0,
+    "actual_error_rows": []
+  },
+  "observations": [
+    {
+      "timestamp": "2026-10-14T18:20:42.014703687Z",
+      "event": "speeddesk_fill_markout_status",
+      "record": {
+        "at": 1792002041.8310366,
+        "venue": "kalshi",
+        "enabled": true,
+        "mode": "diagnostic",
+        "fill_source": "real",
+        "session_id": "8e1348d43e4e2d63de14",
+        "protocol_version": 2,
+        "basis": "fills_batch_return",
+        "liquidity_scope": "isolated_fill_not_joint_inventory_liquidation",
+        "session_only": true,
+        "earlier_pending_unknown": true,
+        "restored_pending": false,
+        "started_at": 1792002041.830995,
+        "horizons_s": [
+          1,
+          5,
+          30
+        ],
+        "sampling_method": "first_post_horizon_websocket_update",
+        "max_age_s": 0.5,
+        "max_levels_per_side": 512,
+        "max_measurements_per_book": 8,
+        "pending_fills": 0,
+        "max_pending": 1024,
+        "dedup_entries": 0,
+        "dedup_capacity": 8192,
+        "counts": {},
+        "gap_reasons": {},
+        "not_realized_pnl": true,
+        "exit_latency_not_simulated": true,
+        "error": null,
+        "own_depth_policy": "all_original_bot_order_sizes_in_window"
+      }
+    },
+    {
+      "timestamp": "2026-10-14T18:20:45.353767776Z",
+      "event": "speeddesk_fill_markout_status",
+      "record": {
+        "at": 1792002044.9246075,
+        "venue": "kalshi",
+        "enabled": true,
+        "mode": "diagnostic",
+        "fill_source": "real",
+        "session_id": "8e1348d43e4e2d63de14",
+        "protocol_version": 2,
+        "basis": "fills_batch_return",
+        "liquidity_scope": "isolated_fill_not_joint_inventory_liquidation",
+        "session_only": true,
+        "earlier_pending_unknown": true,
+        "restored_pending": false,
+        "started_at": 1792002041.830995,
+        "horizons_s": [
+          1,
+          5,
+          30
+        ],
+        "sampling_method": "first_post_horizon_websocket_update",
+        "max_age_s": 0.5,
+        "max_levels_per_side": 512,
+        "max_measurements_per_book": 8,
+        "pending_fills": 0,
+        "max_pending": 1024,
+        "dedup_entries": 0,
+        "dedup_capacity": 8192,
+        "counts": {},
+        "gap_reasons": {},
+        "not_realized_pnl": true,
+        "exit_latency_not_simulated": true,
+        "error": null,
+        "own_depth_policy": "all_original_bot_order_sizes_in_window"
+      }
+    },
+    {
+      "timestamp": "2026-10-14T18:21:51.531080628Z",
+      "event": "speeddesk_fill_markout_status",
+      "record": {
+        "at": 1792002110.958381,
+        "venue": "kalshi",
+        "enabled": true,
+        "mode": "diagnostic",
+        "fill_source": "real",
+        "session_id": "8e1348d43e4e2d63de14",
+        "protocol_version": 2,
+        "basis": "fills_batch_return",
+        "liquidity_scope": "isolated_fill_not_joint_inventory_liquidation",
+        "session_only": true,
+        "earlier_pending_unknown": true,
+        "restored_pending": false,
+        "started_at": 1792002041.830995,
+        "horizons_s": [
+          1,
+          5,
+          30
+        ],
+        "sampling_method": "first_post_horizon_websocket_update",
+        "max_age_s": 0.5,
+        "max_levels_per_side": 512,
+        "max_measurements_per_book": 8,
+        "pending_fills": 0,
+        "max_pending": 1024,
+        "dedup_entries": 0,
+        "dedup_capacity": 8192,
+        "counts": {},
+        "gap_reasons": {},
+        "not_realized_pnl": true,
+        "exit_latency_not_simulated": true,
+        "error": null,
+        "own_depth_policy": "all_original_bot_order_sizes_in_window"
+      }
+    },
+    {
+      "timestamp": "2026-10-14T18:21:58.183320108Z",
+      "event": "speeddesk_fill_observed",
+      "record": {
+        "at": 1792002117.096657,
+        "venue": "kalshi",
+        "protocol_version": 2,
+        "max_levels_per_side": 512,
+        "mode": "diagnostic",
+        "fill_source": "real",
+        "session_id": "8e1348d43e4e2d63de14",
+        "fill_id": "0725d53e-d201-af8d-73d3-f7945a2ed491",
+        "order_id": "01a13ba6-3a00-7ddf-845d-b15cf6fcfb21",
+        "window": "KXBTC15M-26OCT141430-30",
+        "side": "down",
+        "entry_price": 0.58,
+        "entry_size": 5,
+        "entry_fee_usd": 0,
+        "actual_fill_at": 1792002112.545424,
+        "fills_batch_returned_at": 1792002117.096657,
+        "detection_delay_s": 4.5512330532073975,
+        "detection_delay_kind": "venue_fill_to_complete_paginated_batch_return",
+        "horizon_basis": "fills_batch_return",
+        "window_end": 1792002600,
+        "fee_coefficient": 0.07,
+        "fee_precision": 0.0001,
+        "fee_verified": true,
+        "is_taker": false,
+        "horizons_s": [
+          1,
+          5,
+          30
+        ],
+        "session_only": true
+      }
+    },
+    {
+      "timestamp": "2026-10-14T18:22:01.207023630Z",
+      "event": "speeddesk_fill_markout",
+      "record": {
+        "at": 1792002118.169394,
+        "venue": "kalshi",
+        "protocol_version": 2,
+        "max_levels_per_side": 512,
+        "mode": "diagnostic",
+        "fill_source": "real",
+        "session_id": "8e1348d43e4e2d63de14",
+        "fill_id": "0725d53e-d201-af8d-73d3-f7945a2ed491",
+        "order_id": "01a13ba6-3a00-7ddf-845d-b15cf6fcfb21",
+        "window": "KXBTC15M-26OCT141430-30",
+        "side": "down",
+        "entry_price": 0.58,
+        "entry_size": 5,
+        "entry_fee_usd": 0,
+        "actual_fill_at": 1792002112.545424,
+        "fills_batch_returned_at": 1792002117.096657,
+        "detection_delay_s": 4.5512330532073975,
+        "detection_delay_kind": "venue_fill_to_complete_paginated_batch_return",
+        "horizon_basis": "fills_batch_return",
+        "window_end": 1792002600,
+        "fee_coefficient": 0.07,
+        "fee_precision": 0.0001,
+        "fee_verified": true,
+        "is_taker": false,
+        "horizons_s": [
+          1,
+          5,
+          30
+        ],
+        "session_only": true,
+        "horizon_s": 1,
+        "target_at": 1792002118.096657,
+        "elapsed_s": 1.0727367750369012,
+        "sampling_method": "first_post_horizon_websocket_update",
+        "fee_model": "sell_formula_plus_per_0.01_contract_rounding_upper_bound",
+        "reason": null,
+        "filled_size": 5,
+        "unfilled_size": 0,
+        "gross_proceeds_usd": 3.05,
+        "allocated_entry_fee_usd": 0,
+        "exit_fee_bound_usd": 0.133265,
+        "partial_hypothetical_net_usd": 0.016735,
+        "hypothetical_net_usd": 0.016735,
+        "consumed_depth": [
+          {
+            "price": 0.61,
+            "size": 5
+          }
+        ],
+        "execution_assumption": "instantaneous_visible_bid_depth_no_order_sent",
+        "own_depth_policy": "all_original_bot_order_sizes_in_window",
+        "external_depth_is_conservative_lower_bound": true,
+        "liquidity_scope": "isolated_fill_not_joint_inventory_liquidation",
+        "own_bids_subtracted": true,
+        "complete_depth": true,
+        "own_bid_sizes_excluded": [
+          {
+            "price": 0.62,
+            "size": 5
+          },
+          {
+            "price": 0.59,
+            "size": 15
+          },
+          {
+            "price": 0.58,
+            "size": 35
+          },
+          {
+            "price": 0.57,
+            "size": 5
+          },
+          {
+            "price": 0.56,
+            "size": 10
+          },
+          {
+            "price": 0.55,
+            "size": 10
+          },
+          {
+            "price": 0.54,
+            "size": 5
+          },
+          {
+            "price": 0.5,
+            "size": 5
+          },
+          {
+            "price": 0.49,
+            "size": 5
+          },
+          {
+            "price": 0.48,
+            "size": 5
+          }
+        ],
+        "book_received_at": 1792002118.1665792,
+        "book_bid_levels": 151,
+        "book_ask_levels": 128,
+        "own_bid_levels": 10,
+        "book_exchange_at": 1792002117.845,
+        "book_source": "websocket",
+        "book_receive_age_s": 0.002814769744873047,
+        "book_source_age_s": 0.32439398765563965
+      }
+    },
+    {
+      "timestamp": "2026-10-14T18:22:07.443760461Z",
+      "event": "speeddesk_fill_markout_gap",
+      "record": {
+        "at": 1792002122.0968926,
+        "venue": "kalshi",
+        "protocol_version": 2,
+        "max_levels_per_side": 512,
+        "mode": "diagnostic",
+        "fill_source": "real",
+        "session_id": "8e1348d43e4e2d63de14",
+        "fill_id": "0725d53e-d201-af8d-73d3-f7945a2ed491",
+        "order_id": "01a13ba6-3a00-7ddf-845d-b15cf6fcfb21",
+        "window": "KXBTC15M-26OCT141430-30",
+        "side": "down",
+        "entry_price": 0.58,
+        "entry_size": 5,
+        "entry_fee_usd": 0,
+        "actual_fill_at": 1792002112.545424,
+        "fills_batch_returned_at": 1792002117.096657,
+        "detection_delay_s": 4.5512330532073975,
+        "detection_delay_kind": "venue_fill_to_complete_paginated_batch_return",
+        "horizon_basis": "fills_batch_return",
+        "window_end": 1792002600,
+        "fee_coefficient": 0.07,
+        "fee_precision": 0.0001,
+        "fee_verified": true,
+        "is_taker": false,
+        "horizons_s": [
+          1,
+          5,
+          30
+        ],
+        "session_only": true,
+        "horizon_s": 5,
+        "target_at": 1792002122.096657,
+        "elapsed_s": 5.0002352274023,
+        "sampling_method": "first_post_horizon_websocket_update",
+        "fee_model": "sell_formula_plus_per_0.01_contract_rounding_upper_bound",
+        "reason": "book_stale",
+        "filled_size": null,
+        "unfilled_size": null,
+        "gross_proceeds_usd": null,
+        "allocated_entry_fee_usd": null,
+        "exit_fee_bound_usd": null,
+        "partial_hypothetical_net_usd": null,
+        "hypothetical_net_usd": null,
+        "consumed_depth": [],
+        "execution_assumption": "instantaneous_visible_bid_depth_no_order_sent",
+        "own_depth_policy": "all_original_bot_order_sizes_in_window",
+        "external_depth_is_conservative_lower_bound": true,
+        "liquidity_scope": "isolated_fill_not_joint_inventory_liquidation",
+        "book_received_at": 1792002122.0966415,
+        "book_bid_levels": 155,
+        "book_ask_levels": 124,
+        "own_bid_levels": 10,
+        "book_exchange_at": 1792002121.526,
+        "book_source": "websocket",
+        "book_receive_age_s": 0.0002510547637939453,
+        "book_source_age_s": 0.5708925724029541
+      }
+    },
+    {
+      "timestamp": "2026-10-14T18:22:09.067514310Z",
+      "event": "speeddesk_fill_markout_gap",
+      "record": {
+        "at": 1792002128.5668428,
+        "venue": "kalshi",
+        "protocol_version": 2,
+        "max_levels_per_side": 512,
+        "mode": "diagnostic",
+        "fill_source": "real",
+        "session_id": "8e1348d43e4e2d63de14",
+        "fill_id": "0725d53e-d201-af8d-73d3-f7945a2ed491",
+        "order_id": "01a13ba6-3a00-7ddf-845d-b15cf6fcfb21",
+        "window": "KXBTC15M-26OCT141430-30",
+        "side": "down",
+        "entry_price": 0.58,
+        "entry_size": 5,
+        "entry_fee_usd": 0,
+        "actual_fill_at": 1792002112.545424,
+        "fills_batch_returned_at": 1792002117.096657,
+        "detection_delay_s": 4.5512330532073975,
+        "detection_delay_kind": "venue_fill_to_complete_paginated_batch_return",
+        "horizon_basis": "fills_batch_return",
+        "window_end": 1792002600,
+        "fee_coefficient": 0.07,
+        "fee_precision": 0.0001,
+        "fee_verified": true,
+        "is_taker": false,
+        "horizons_s": [
+          1,
+          5,
+          30
+        ],
+        "session_only": true,
+        "horizon_s": 30,
+        "target_at": 1792002147.096657,
+        "elapsed_s": 11.470185470301658,
+        "sampling_method": "first_post_horizon_websocket_update",
+        "fee_model": "sell_formula_plus_per_0.01_contract_rounding_upper_bound",
+        "reason": "venue_feed_gap",
+        "filled_size": null,
+        "unfilled_size": null,
+        "gross_proceeds_usd": null,
+        "allocated_entry_fee_usd": null,
+        "exit_fee_bound_usd": null,
+        "partial_hypothetical_net_usd": null,
+        "hypothetical_net_usd": null,
+        "consumed_depth": [],
+        "execution_assumption": "instantaneous_visible_bid_depth_no_order_sent",
+        "own_depth_policy": "all_original_bot_order_sizes_in_window",
+        "external_depth_is_conservative_lower_bound": true,
+        "liquidity_scope": "isolated_fill_not_joint_inventory_liquidation"
+      }
+    },
+    {
+      "timestamp": "2026-10-14T18:22:35.753604581Z",
+      "event": "speeddesk_fill_observed",
+      "record": {
+        "at": 1792002152.6329715,
+        "venue": "kalshi",
+        "protocol_version": 2,
+        "max_levels_per_side": 512,
+        "mode": "diagnostic",
+        "fill_source": "real",
+        "session_id": "8e1348d43e4e2d63de14",
+        "fill_id": "0725d53c-6b01-a629-fc3c-97653516cc59",
+        "order_id": "01a13ba6-b700-752f-a20d-e38cbaddfde1",
+        "window": "KXBTC15M-26OCT141430-30",
+        "side": "down",
+        "entry_price": 0.49,
+        "entry_size": 3,
+        "entry_fee_usd": 0,
+        "actual_fill_at": 1792002144.47466,
+        "fills_batch_returned_at": 1792002152.6329715,
+        "detection_delay_s": 8.158311605453491,
+        "detection_delay_kind": "venue_fill_to_complete_paginated_batch_return",
+        "horizon_basis": "fills_batch_return",
+        "window_end": 1792002600,
+        "fee_coefficient": 0.07,
+        "fee_precision": 0.0001,
+        "fee_verified": true,
+        "is_taker": false,
+        "horizons_s": [
+          1,
+          5,
+          30
+        ],
+        "session_only": true
+      }
+    },
+    {
+      "timestamp": "2026-10-14T18:22:35.754036688Z",
+      "event": "speeddesk_fill_markout_gap",
+      "record": {
+        "at": 1792002154.0021095,
+        "venue": "kalshi",
+        "protocol_version": 2,
+        "max_levels_per_side": 512,
+        "mode": "diagnostic",
+        "fill_source": "real",
+        "session_id": "8e1348d43e4e2d63de14",
+        "fill_id": "0725d53c-6b01-a629-fc3c-97653516cc59",
+        "order_id": "01a13ba6-b700-752f-a20d-e38cbaddfde1",
+        "window": "KXBTC15M-26OCT141430-30",
+        "side": "down",
+        "entry_price": 0.49,
+        "entry_size": 3,
+        "entry_fee_usd": 0,
+        "actual_fill_at": 1792002144.47466,
+        "fills_batch_returned_at": 1792002152.6329715,
+        "detection_delay_s": 8.158311605453491,
+        "detection_delay_kind": "venue_fill_to_complete_paginated_batch_return",
+        "horizon_basis": "fills_batch_return",
+        "window_end": 1792002600,
+        "fee_coefficient": 0.07,
+        "fee_precision": 0.0001,
+        "fee_verified": true,
+        "is_taker": false,
+        "horizons_s": [
+          1,
+          5,
+          30
+        ],
+        "session_only": true,
+        "horizon_s": 1,
+        "target_at": 1792002153.6329715,
+        "elapsed_s": 1.3691376657225192,
+        "sampling_method": "first_post_horizon_websocket_update",
+        "fee_model": "sell_formula_plus_per_0.01_contract_rounding_upper_bound",
+        "reason": "book_stale",
+        "filled_size": null,
+        "unfilled_size": null,
+        "gross_proceeds_usd": null,
+        "allocated_entry_fee_usd": null,
+        "exit_fee_bound_usd": null,
+        "partial_hypothetical_net_usd": null,
+        "hypothetical_net_usd": null,
+        "consumed_depth": [],
+        "execution_assumption": "instantaneous_visible_bid_depth_no_order_sent",
+        "own_depth_policy": "all_original_bot_order_sizes_in_window",
+        "external_depth_is_conservative_lower_bound": true,
+        "liquidity_scope": "isolated_fill_not_joint_inventory_liquidation",
+        "book_received_at": 1792002154.0005443,
+        "book_bid_levels": 147,
+        "book_ask_levels": 132,
+        "own_bid_levels": 11,
+        "book_exchange_at": 1792002153.186,
+        "book_source": "websocket",
+        "book_receive_age_s": 0.0015652179718017578,
+        "book_source_age_s": 0.8161094188690186
+      }
+    },
+    {
+      "timestamp": "2026-10-14T18:22:45.232032626Z",
+      "event": "speeddesk_fill_markout",
+      "record": {
+        "at": 1792002157.8651366,
+        "venue": "kalshi",
+        "protocol_version": 2,
+        "max_levels_per_side": 512,
+        "mode": "diagnostic",
+        "fill_source": "real",
+        "session_id": "8e1348d43e4e2d63de14",
+        "fill_id": "0725d53c-6b01-a629-fc3c-97653516cc59",
+        "order_id": "01a13ba6-b700-752f-a20d-e38cbaddfde1",
+        "window": "KXBTC15M-26OCT141430-30",
+        "side": "down",
+        "entry_price": 0.49,
+        "entry_size": 3,
+        "entry_fee_usd": 0,
+        "actual_fill_at": 1792002144.47466,
+        "fills_batch_returned_at": 1792002152.6329715,
+        "detection_delay_s": 8.158311605453491,
+        "detection_delay_kind": "venue_fill_to_complete_paginated_batch_return",
+        "horizon_basis": "fills_batch_return",
+        "window_end": 1792002600,
+        "fee_coefficient": 0.07,
+        "fee_precision": 0.0001,
+        "fee_verified": true,
+        "is_taker": false,
+        "horizons_s": [
+          1,
+          5,
+          30
+        ],
+        "session_only": true,
+        "horizon_s": 5,
+        "target_at": 1792002157.6329715,
+        "elapsed_s": 5.232164954766631,
+        "sampling_method": "first_post_horizon_websocket_update",
+        "fee_model": "sell_formula_plus_per_0.01_contract_rounding_upper_bound",
+        "reason": null,
+        "filled_size": 3,
+        "unfilled_size": 0,
+        "gross_proceeds_usd": 1.77,
+        "allocated_entry_fee_usd": 0,
+        "exit_fee_bound_usd": 0.080799,
+        "partial_hypothetical_net_usd": 0.219201,
+        "hypothetical_net_usd": 0.219201,
+        "consumed_depth": [
+          {
+            "price": 0.59,
+            "size": 3
+          }
+        ],
+        "execution_assumption": "instantaneous_visible_bid_depth_no_order_sent",
+        "own_depth_policy": "all_original_bot_order_sizes_in_window",
+        "external_depth_is_conservative_lower_bound": true,
+        "liquidity_scope": "isolated_fill_not_joint_inventory_liquidation",
+        "own_bids_subtracted": true,
+        "complete_depth": true,
+        "own_bid_sizes_excluded": [
+          {
+            "price": 0.62,
+            "size": 5
+          },
+          {
+            "price": 0.59,
+            "size": 15
+          },
+          {
+            "price": 0.58,
+            "size": 35
+          },
+          {
+            "price": 0.57,
+            "size": 5
+          },
+          {
+            "price": 0.56,
+            "size": 10
+          },
+          {
+            "price": 0.55,
+            "size": 10
+          },
+          {
+            "price": 0.54,
+            "size": 8
+          },
+          {
+            "price": 0.5,
+            "size": 5
+          },
+          {
+            "price": 0.49,
+            "size": 8
+          },
+          {
+            "price": 0.48,
+            "size": 5
+          },
+          {
+            "price": 0.46,
+            "size": 3
+          }
+        ],
+        "book_received_at": 1792002157.864597,
+        "book_bid_levels": 149,
+        "book_ask_levels": 130,
+        "own_bid_levels": 11,
+        "book_exchange_at": 1792002157.61,
+        "book_source": "websocket",
+        "book_receive_age_s": 0.0005395412445068359,
+        "book_source_age_s": 0.25513672828674316
+      }
+    },
+    {
+      "timestamp": "2026-10-14T18:22:55.210645636Z",
+      "event": "speeddesk_fill_markout_status",
+      "record": {
+        "at": 1792002174.8619838,
+        "venue": "kalshi",
+        "enabled": true,
+        "mode": "diagnostic",
+        "fill_source": "real",
+        "session_id": "8e1348d43e4e2d63de14",
+        "protocol_version": 2,
+        "basis": "fills_batch_return",
+        "liquidity_scope": "isolated_fill_not_joint_inventory_liquidation",
+        "session_only": true,
+        "earlier_pending_unknown": true,
+        "restored_pending": false,
+        "started_at": 1792002041.830995,
+        "horizons_s": [
+          1,
+          5,
+          30
+        ],
+        "sampling_method": "first_post_horizon_websocket_update",
+        "max_age_s": 0.5,
+        "max_levels_per_side": 512,
+        "max_measurements_per_book": 8,
+        "pending_fills": 1,
+        "max_pending": 1024,
+        "dedup_entries": 2,
+        "dedup_capacity": 8192,
+        "counts": {
+          "observed_fills": 2,
+          "measured_horizons": 2,
+          "full_depth_horizons": 2,
+          "gap_horizons": 3
+        },
+        "gap_reasons": {
+          "book_stale": 2,
+          "venue_feed_gap": 1
+        },
+        "not_realized_pnl": true,
+        "exit_latency_not_simulated": true,
+        "error": null,
+        "own_depth_policy": "all_original_bot_order_sizes_in_window"
+      }
+    },
+    {
+      "timestamp": "2026-10-14T18:23:03.577860584Z",
+      "event": "speeddesk_fill_markout_gap",
+      "record": {
+        "at": 1792002182.6330686,
+        "venue": "kalshi",
+        "protocol_version": 2,
+        "max_levels_per_side": 512,
+        "mode": "diagnostic",
+        "fill_source": "real",
+        "session_id": "8e1348d43e4e2d63de14",
+        "fill_id": "0725d53c-6b01-a629-fc3c-97653516cc59",
+        "order_id": "01a13ba6-b700-752f-a20d-e38cbaddfde1",
+        "window": "KXBTC15M-26OCT141430-30",
+        "side": "down",
+        "entry_price": 0.49,
+        "entry_size": 3,
+        "entry_fee_usd": 0,
+        "actual_fill_at": 1792002144.47466,
+        "fills_batch_returned_at": 1792002152.6329715,
+        "detection_delay_s": 8.158311605453491,
+        "detection_delay_kind": "venue_fill_to_complete_paginated_batch_return",
+        "horizon_basis": "fills_batch_return",
+        "window_end": 1792002600,
+        "fee_coefficient": 0.07,
+        "fee_precision": 0.0001,
+        "fee_verified": true,
+        "is_taker": false,
+        "horizons_s": [
+          1,
+          5,
+          30
+        ],
+        "session_only": true,
+        "horizon_s": 30,
+        "target_at": 1792002182.6329715,
+        "elapsed_s": 30.000096771866083,
+        "sampling_method": "first_post_horizon_websocket_update",
+        "fee_model": "sell_formula_plus_per_0.01_contract_rounding_upper_bound",
+        "reason": "book_before_horizon",
+        "filled_size": null,
+        "unfilled_size": null,
+        "gross_proceeds_usd": null,
+        "allocated_entry_fee_usd": null,
+        "exit_fee_bound_usd": null,
+        "partial_hypothetical_net_usd": null,
+        "hypothetical_net_usd": null,
+        "consumed_depth": [],
+        "execution_assumption": "instantaneous_visible_bid_depth_no_order_sent",
+        "own_depth_policy": "all_original_bot_order_sizes_in_window",
+        "external_depth_is_conservative_lower_bound": true,
+        "liquidity_scope": "isolated_fill_not_joint_inventory_liquidation",
+        "book_received_at": 1792002182.6329339,
+        "book_bid_levels": 147,
+        "book_ask_levels": 132,
+        "own_bid_levels": 11,
+        "book_exchange_at": 1792002182.264,
+        "book_source": "websocket",
+        "book_receive_age_s": 0.0001347064971923828,
+        "book_source_age_s": 0.36906862258911133
+      }
+    },
+    {
+      "timestamp": "2026-10-14T18:23:29.271654245Z",
+      "event": "speeddesk_fill_observed",
+      "record": {
+        "at": 1792002207.4600189,
+        "venue": "kalshi",
+        "protocol_version": 2,
+        "max_levels_per_side": 512,
+        "mode": "diagnostic",
+        "fill_source": "real",
+        "session_id": "8e1348d43e4e2d63de14",
+        "fill_id": "0725d539-0189-89ac-03f8-fd4f2387ee5f",
+        "order_id": "01a13ba7-a548-75ea-ad4d-401eb8764ee3",
+        "window": "KXBTC15M-26OCT141430-30",
+        "side": "up",
+        "entry_price": 0.49,
+        "entry_size": 4,
+        "entry_fee_usd": 0,
+        "actual_fill_at": 1792002206.710876,
+        "fills_batch_returned_at": 1792002207.4600189,
+        "detection_delay_s": 0.7491428852081299,
+        "detection_delay_kind": "venue_fill_to_complete_paginated_batch_return",
+        "horizon_basis": "fills_batch_return",
+        "window_end": 1792002600,
+        "fee_coefficient": 0.07,
+        "fee_precision": 0.0001,
+        "fee_verified": true,
+        "is_taker": false,
+        "horizons_s": [
+          1,
+          5,
+          30
+        ],
+        "session_only": true
+      }
+    },
+    {
+      "timestamp": "2026-10-14T18:23:29.272054792Z",
+      "event": "speeddesk_fill_markout",
+      "record": {
+        "at": 1792002208.609731,
+        "venue": "kalshi",
+        "protocol_version": 2,
+        "max_levels_per_side": 512,
+        "mode": "diagnostic",
+        "fill_source": "real",
+        "session_id": "8e1348d43e4e2d63de14",
+        "fill_id": "0725d539-0189-89ac-03f8-fd4f2387ee5f",
+        "order_id": "01a13ba7-a548-75ea-ad4d-401eb8764ee3",
+        "window": "KXBTC15M-26OCT141430-30",
+        "side": "up",
+        "entry_price": 0.49,
+        "entry_size": 4,
+        "entry_fee_usd": 0,
+        "actual_fill_at": 1792002206.710876,
+        "fills_batch_returned_at": 1792002207.4600189,
+        "detection_delay_s": 0.7491428852081299,
+        "detection_delay_kind": "venue_fill_to_complete_paginated_batch_return",
+        "horizon_basis": "fills_batch_return",
+        "window_end": 1792002600,
+        "fee_coefficient": 0.07,
+        "fee_precision": 0.0001,
+        "fee_verified": true,
+        "is_taker": false,
+        "horizons_s": [
+          1,
+          5,
+          30
+        ],
+        "session_only": true,
+        "horizon_s": 1,
+        "target_at": 1792002208.4600189,
+        "elapsed_s": 1.1497121290303767,
+        "sampling_method": "first_post_horizon_websocket_update",
+        "fee_model": "sell_formula_plus_per_0.01_contract_rounding_upper_bound",
+        "reason": null,
+        "filled_size": 4,
+        "unfilled_size": 0,
+        "gross_proceeds_usd": 1.84,
+        "allocated_entry_fee_usd": 0,
+        "exit_fee_bound_usd": 0.109552,
+        "partial_hypothetical_net_usd": -0.229552,
+        "hypothetical_net_usd": -0.229552,
+        "consumed_depth": [
+          {
+            "price": 0.46,
+            "size": 4
+          }
+        ],
+        "execution_assumption": "instantaneous_visible_bid_depth_no_order_sent",
+        "own_depth_policy": "all_original_bot_order_sizes_in_window",
+        "external_depth_is_conservative_lower_bound": true,
+        "liquidity_scope": "isolated_fill_not_joint_inventory_liquidation",
+        "own_bids_subtracted": true,
+        "complete_depth": true,
+        "own_bid_sizes_excluded": [
+          {
+            "price": 0.51,
+            "size": 3
+          },
+          {
+            "price": 0.49,
+            "size": 4
+          },
+          {
+            "price": 0.44,
+            "size": 5
+          },
+          {
+            "price": 0.43,
+            "size": 10
+          },
+          {
+            "price": 0.41,
+            "size": 5
+          },
+          {
+            "price": 0.4,
+            "size": 10
+          },
+          {
+            "price": 0.38,
+            "size": 5
+          },
+          {
+            "price": 0.37,
+            "size": 8
+          },
+          {
+            "price": 0.35,
+            "size": 5
+          },
+          {
+            "price": 0.33,
+            "size": 5
+          },
+          {
+            "price": 0.31,
+            "size": 10
+          }
+        ],
+        "book_received_at": 1792002208.609635,
+        "book_bid_levels": 136,
+        "book_ask_levels": 143,
+        "own_bid_levels": 11,
+        "book_exchange_at": 1792002208.392,
+        "book_source": "websocket",
+        "book_receive_age_s": 0.00009584426879882812,
+        "book_source_age_s": 0.21773099899291992
+      }
+    },
+    {
+      "timestamp": "2026-10-14T18:23:33.862434209Z",
+      "event": "speeddesk_fill_markout",
+      "record": {
+        "at": 1792002212.4659877,
+        "venue": "kalshi",
+        "protocol_version": 2,
+        "max_levels_per_side": 512,
+        "mode": "diagnostic",
+        "fill_source": "real",
+        "session_id": "8e1348d43e4e2d63de14",
+        "fill_id": "0725d539-0189-89ac-03f8-fd4f2387ee5f",
+        "order_id": "01a13ba7-a548-75ea-ad4d-401eb8764ee3",
+        "window": "KXBTC15M-26OCT141430-30",
+        "side": "up",
+        "entry_price": 0.49,
+        "entry_size": 4,
+        "entry_fee_usd": 0,
+        "actual_fill_at": 1792002206.710876,
+        "fills_batch_returned_at": 1792002207.4600189,
+        "detection_delay_s": 0.7491428852081299,
+        "detection_delay_kind": "venue_fill_to_complete_paginated_batch_return",
+        "horizon_basis": "fills_batch_return",
+        "window_end": 1792002600,
+        "fee_coefficient": 0.07,
+        "fee_precision": 0.0001,
+        "fee_verified": true,
+        "is_taker": false,
+        "horizons_s": [
+          1,
+          5,
+          30
+        ],
+        "session_only": true,
+        "horizon_s": 5,
+        "target_at": 1792002212.4600189,
+        "elapsed_s": 5.0059686177410185,
+        "sampling_method": "first_post_horizon_websocket_update",
+        "fee_model": "sell_formula_plus_per_0.01_contract_rounding_upper_bound",
+        "reason": null,
+        "filled_size": 4,
+        "unfilled_size": 0,
+        "gross_proceeds_usd": 1.76,
+        "allocated_entry_fee_usd": 0,
+        "exit_fee_bound_usd": 0.108992,
+        "partial_hypothetical_net_usd": -0.308992,
+        "hypothetical_net_usd": -0.308992,
+        "consumed_depth": [
+          {
+            "price": 0.44,
+            "size": 4
+          }
+        ],
+        "execution_assumption": "instantaneous_visible_bid_depth_no_order_sent",
+        "own_depth_policy": "all_original_bot_order_sizes_in_window",
+        "external_depth_is_conservative_lower_bound": true,
+        "liquidity_scope": "isolated_fill_not_joint_inventory_liquidation",
+        "own_bids_subtracted": true,
+        "complete_depth": true,
+        "own_bid_sizes_excluded": [
+          {
+            "price": 0.51,
+            "size": 3
+          },
+          {
+            "price": 0.49,
+            "size": 4
+          },
+          {
+            "price": 0.44,
+            "size": 5
+          },
+          {
+            "price": 0.43,
+            "size": 10
+          },
+          {
+            "price": 0.41,
+            "size": 5
+          },
+          {
+            "price": 0.4,
+            "size": 10
+          },
+          {
+            "price": 0.38,
+            "size": 5
+          },
+          {
+            "price": 0.37,
+            "size": 8
+          },
+          {
+            "price": 0.35,
+            "size": 5
+          },
+          {
+            "price": 0.33,
+            "size": 5
+          },
+          {
+            "price": 0.31,
+            "size": 10
+          }
+        ],
+        "book_received_at": 1792002212.4659424,
+        "book_bid_levels": 134,
+        "book_ask_levels": 145,
+        "own_bid_levels": 11,
+        "book_exchange_at": 1792002212.434,
+        "book_source": "websocket",
+        "book_receive_age_s": 0.000045299530029296875,
+        "book_source_age_s": 0.031987667083740234
+      }
+    },
+    {
+      "timestamp": "2026-10-14T18:23:57.692837271Z",
+      "event": "speeddesk_fill_observed",
+      "record": {
+        "at": 1792002237.2333486,
+        "venue": "kalshi",
+        "protocol_version": 2,
+        "max_levels_per_side": 512,
+        "mode": "diagnostic",
+        "fill_source": "real",
+        "session_id": "8e1348d43e4e2d63de14",
+        "fill_id": "0725d508-4461-a518-f37e-9194692f7ba4",
+        "order_id": "01a13ba8-0ec0-7abe-900e-8195f9b2ee80",
+        "window": "KXBTC15M-26OCT141430-30",
+        "side": "up",
+        "entry_price": 0.38,
+        "entry_size": 3.87,
+        "entry_fee_usd": 0,
+        "actual_fill_at": 1792002233.793443,
+        "fills_batch_returned_at": 1792002237.2333486,
+        "detection_delay_s": 3.4399056434631348,
+        "detection_delay_kind": "venue_fill_to_complete_paginated_batch_return",
+        "horizon_basis": "fills_batch_return",
+        "window_end": 1792002600,
+        "fee_coefficient": 0.07,
+        "fee_precision": 0.0001,
+        "fee_verified": true,
+        "is_taker": false,
+        "horizons_s": [
+          1,
+          5,
+          30
+        ],
+        "session_only": true
+      }
+    },
+    {
+      "timestamp": "2026-10-14T18:23:57.693273137Z",
+      "event": "speeddesk_fill_observed",
+      "record": {
+        "at": 1792002237.2333486,
+        "venue": "kalshi",
+        "protocol_version": 2,
+        "max_levels_per_side": 512,
+        "mode": "diagnostic",
+        "fill_source": "real",
+        "session_id": "8e1348d43e4e2d63de14",
+        "fill_id": "0725d508-4461-9a24-fed0-b3633c11ebfc",
+        "order_id": "01a13ba8-0ec0-7abe-900e-8195f9b2ee80",
+        "window": "KXBTC15M-26OCT141430-30",
+        "side": "up",
+        "entry_price": 0.38,
+        "entry_size": 0.13,
+        "entry_fee_usd": 0,
+        "actual_fill_at": 1792002233.709238,
+        "fills_batch_returned_at": 1792002237.2333486,
+        "detection_delay_s": 3.5241105556488037,
+        "detection_delay_kind": "venue_fill_to_complete_paginated_batch_return",
+        "horizon_basis": "fills_batch_return",
+        "window_end": 1792002600,
+        "fee_coefficient": 0.07,
+        "fee_precision": 0.0001,
+        "fee_verified": true,
+        "is_taker": false,
+        "horizons_s": [
+          1,
+          5,
+          30
+        ],
+        "session_only": true
+      }
+    },
+    {
+      "timestamp": "2026-10-14T18:23:57.803760772Z",
+      "event": "speeddesk_fill_markout_status",
+      "record": {
+        "at": 1792002237.69382,
+        "venue": "kalshi",
+        "enabled": true,
+        "mode": "diagnostic",
+        "fill_source": "real",
+        "session_id": "8e1348d43e4e2d63de14",
+        "protocol_version": 2,
+        "basis": "fills_batch_return",
+        "liquidity_scope": "isolated_fill_not_joint_inventory_liquidation",
+        "session_only": true,
+        "earlier_pending_unknown": true,
+        "restored_pending": false,
+        "started_at": 1792002041.830995,
+        "horizons_s": [
+          1,
+          5,
+          30
+        ],
+        "sampling_method": "first_post_horizon_websocket_update",
+        "max_age_s": 0.5,
+        "max_levels_per_side": 512,
+        "max_measurements_per_book": 8,
+        "pending_fills": 3,
+        "max_pending": 1024,
+        "dedup_entries": 5,
+        "dedup_capacity": 8192,
+        "counts": {
+          "observed_fills": 5,
+          "measured_horizons": 4,
+          "full_depth_horizons": 4,
+          "gap_horizons": 4
+        },
+        "gap_reasons": {
+          "book_stale": 2,
+          "venue_feed_gap": 1,
+          "book_before_horizon": 1
+        },
+        "not_realized_pnl": true,
+        "exit_latency_not_simulated": true,
+        "error": null,
+        "own_depth_policy": "all_original_bot_order_sizes_in_window"
+      }
+    },
+    {
+      "timestamp": "2026-10-14T18:23:59.231949079Z",
+      "event": "speeddesk_fill_markout",
+      "record": {
+        "at": 1792002237.8291097,
+        "venue": "kalshi",
+        "protocol_version": 2,
+        "max_levels_per_side": 512,
+        "mode": "diagnostic",
+        "fill_source": "real",
+        "session_id": "8e1348d43e4e2d63de14",
+        "fill_id": "0725d539-0189-89ac-03f8-fd4f2387ee5f",
+        "order_id": "01a13ba7-a548-75ea-ad4d-401eb8764ee3",
+        "window": "KXBTC15M-26OCT141430-30",
+        "side": "up",
+        "entry_price": 0.49,
+        "entry_size": 4,
+        "entry_fee_usd": 0,
+        "actual_fill_at": 1792002206.710876,
+        "fills_batch_returned_at": 1792002207.4600189,
+        "detection_delay_s": 0.7491428852081299,
+        "detection_delay_kind": "venue_fill_to_complete_paginated_batch_return",
+        "horizon_basis": "fills_batch_return",
+        "window_end": 1792002600,
+        "fee_coefficient": 0.07,
+        "fee_precision": 0.0001,
+        "fee_verified": true,
+        "is_taker": false,
+        "horizons_s": [
+          1,
+          5,
+          30
+        ],
+        "session_only": true,
+        "horizon_s": 30,
+        "target_at": 1792002237.4600189,
+        "elapsed_s": 30.369090835098177,
+        "sampling_method": "first_post_horizon_websocket_update",
+        "fee_model": "sell_formula_plus_per_0.01_contract_rounding_upper_bound",
+        "reason": null,
+        "filled_size": 4,
+        "unfilled_size": 0,
+        "gross_proceeds_usd": 1,
+        "allocated_entry_fee_usd": 0,
+        "exit_fee_bound_usd": 0.0925,
+        "partial_hypothetical_net_usd": -1.0525,
+        "hypothetical_net_usd": -1.0525,
+        "consumed_depth": [
+          {
+            "price": 0.25,
+            "size": 4
+          }
+        ],
+        "execution_assumption": "instantaneous_visible_bid_depth_no_order_sent",
+        "own_depth_policy": "all_original_bot_order_sizes_in_window",
+        "external_depth_is_conservative_lower_bound": true,
+        "liquidity_scope": "isolated_fill_not_joint_inventory_liquidation",
+        "own_bids_subtracted": true,
+        "complete_depth": true,
+        "own_bid_sizes_excluded": [
+          {
+            "price": 0.51,
+            "size": 3
+          },
+          {
+            "price": 0.49,
+            "size": 4
+          },
+          {
+            "price": 0.44,
+            "size": 5
+          },
+          {
+            "price": 0.43,
+            "size": 10
+          },
+          {
+            "price": 0.41,
+            "size": 5
+          },
+          {
+            "price": 0.4,
+            "size": 10
+          },
+          {
+            "price": 0.38,
+            "size": 9
+          },
+          {
+            "price": 0.37,
+            "size": 8
+          },
+          {
+            "price": 0.35,
+            "size": 5
+          },
+          {
+            "price": 0.33,
+            "size": 5
+          },
+          {
+            "price": 0.31,
+            "size": 10
+          }
+        ],
+        "book_received_at": 1792002237.8290238,
+        "book_bid_levels": 115,
+        "book_ask_levels": 164,
+        "own_bid_levels": 11,
+        "book_exchange_at": 1792002237.386,
+        "book_source": "websocket",
+        "book_receive_age_s": 0.0000858306884765625,
+        "book_source_age_s": 0.44310975074768066
+      }
+    },
+    {
+      "timestamp": "2026-10-14T18:23:59.231957709Z",
+      "event": "speeddesk_fill_markout",
+      "record": {
+        "at": 1792002238.2334578,
+        "venue": "kalshi",
+        "protocol_version": 2,
+        "max_levels_per_side": 512,
+        "mode": "diagnostic",
+        "fill_source": "real",
+        "session_id": "8e1348d43e4e2d63de14",
+        "fill_id": "0725d508-4461-9a24-fed0-b3633c11ebfc",
+        "order_id": "01a13ba8-0ec0-7abe-900e-8195f9b2ee80",
+        "window": "KXBTC15M-26OCT141430-30",
+        "side": "up",
+        "entry_price": 0.38,
+        "entry_size": 0.13,
+        "entry_fee_usd": 0,
+        "actual_fill_at": 1792002233.709238,
+        "fills_batch_returned_at": 1792002237.2333486,
+        "detection_delay_s": 3.5241105556488037,
+        "detection_delay_kind": "venue_fill_to_complete_paginated_batch_return",
+        "horizon_basis": "fills_batch_return",
+        "window_end": 1792002600,
+        "fee_coefficient": 0.07,
+        "fee_precision": 0.0001,
+        "fee_verified": true,
+        "is_taker": false,
+        "horizons_s": [
+          1,
+          5,
+          30
+        ],
+        "session_only": true,
+        "horizon_s": 1,
+        "target_at": 1792002238.2333486,
+        "elapsed_s": 1.0001091337762773,
+        "sampling_method": "first_post_horizon_websocket_update",
+        "fee_model": "sell_formula_plus_per_0.01_contract_rounding_upper_bound",
+        "reason": null,
+        "filled_size": 0.13,
+        "unfilled_size": 0,
+        "gross_proceeds_usd": 0.0312,
+        "allocated_entry_fee_usd": 0,
+        "exit_fee_bound_usd": 0.00295984,
+        "partial_hypothetical_net_usd": -0.02115984,
+        "hypothetical_net_usd": -0.02115984,
+        "consumed_depth": [
+          {
+            "price": 0.24,
+            "size": 0.13
+          }
+        ],
+        "execution_assumption": "instantaneous_visible_bid_depth_no_order_sent",
+        "own_depth_policy": "all_original_bot_order_sizes_in_window",
+        "external_depth_is_conservative_lower_bound": true,
+        "liquidity_scope": "isolated_fill_not_joint_inventory_liquidation",
+        "own_bids_subtracted": true,
+        "complete_depth": true,
+        "own_bid_sizes_excluded": [
+          {
+            "price": 0.51,
+            "size": 3
+          },
+          {
+            "price": 0.49,
+            "size": 4
+          },
+          {
+            "price": 0.44,
+            "size": 5
+          },
+          {
+            "price": 0.43,
+            "size": 10
+          },
+          {
+            "price": 0.41,
+            "size": 5
+          },
+          {
+            "price": 0.4,
+            "size": 10
+          },
+          {
+            "price": 0.38,
+            "size": 9
+          },
+          {
+            "price": 0.37,
+            "size": 8
+          },
+          {
+            "price": 0.35,
+            "size": 5
+          },
+          {
+            "price": 0.33,
+            "size": 5
+          },
+          {
+            "price": 0.31,
+            "size": 10
+          }
+        ],
+        "book_received_at": 1792002238.233436,
+        "book_bid_levels": 114,
+        "book_ask_levels": 165,
+        "own_bid_levels": 11,
+        "book_exchange_at": 1792002238.093,
+        "book_source": "websocket",
+        "book_receive_age_s": 0.000021696090698242188,
+        "book_source_age_s": 0.1404578685760498
+      }
+    },
+    {
+      "timestamp": "2026-10-14T18:23:59.232246526Z",
+      "event": "speeddesk_fill_markout",
+      "record": {
+        "at": 1792002238.2334578,
+        "venue": "kalshi",
+        "protocol_version": 2,
+        "max_levels_per_side": 512,
+        "mode": "diagnostic",
+        "fill_source": "real",
+        "session_id": "8e1348d43e4e2d63de14",
+        "fill_id": "0725d508-4461-a518-f37e-9194692f7ba4",
+        "order_id": "01a13ba8-0ec0-7abe-900e-8195f9b2ee80",
+        "window": "KXBTC15M-26OCT141430-30",
+        "side": "up",
+        "entry_price": 0.38,
+        "entry_size": 3.87,
+        "entry_fee_usd": 0,
+        "actual_fill_at": 1792002233.793443,
+        "fills_batch_returned_at": 1792002237.2333486,
+        "detection_delay_s": 3.4399056434631348,
+        "detection_delay_kind": "venue_fill_to_complete_paginated_batch_return",
+        "horizon_basis": "fills_batch_return",
+        "window_end": 1792002600,
+        "fee_coefficient": 0.07,
+        "fee_precision": 0.0001,
+        "fee_verified": true,
+        "is_taker": false,
+        "horizons_s": [
+          1,
+          5,
+          30
+        ],
+        "session_only": true,
+        "horizon_s": 1,
+        "target_at": 1792002238.2333486,
+        "elapsed_s": 1.0001091337762773,
+        "sampling_method": "first_post_horizon_websocket_update",
+        "fee_model": "sell_formula_plus_per_0.01_contract_rounding_upper_bound",
+        "reason": null,
+        "filled_size": 3.87,
+        "unfilled_size": 0,
+        "gross_proceeds_usd": 0.9288,
+        "allocated_entry_fee_usd": 0,
+        "exit_fee_bound_usd": 0.08811216,
+        "partial_hypothetical_net_usd": -0.62991216,
+        "hypothetical_net_usd": -0.62991216,
+        "consumed_depth": [
+          {
+            "price": 0.24,
+            "size": 3.87
+          }
+        ],
+        "execution_assumption": "instantaneous_visible_bid_depth_no_order_sent",
+        "own_depth_policy": "all_original_bot_order_sizes_in_window",
+        "external_depth_is_conservative_lower_bound": true,
+        "liquidity_scope": "isolated_fill_not_joint_inventory_liquidation",
+        "own_bids_subtracted": true,
+        "complete_depth": true,
+        "own_bid_sizes_excluded": [
+          {
+            "price": 0.51,
+            "size": 3
+          },
+          {
+            "price": 0.49,
+            "size": 4
+          },
+          {
+            "price": 0.44,
+            "size": 5
+          },
+          {
+            "price": 0.43,
+            "size": 10
+          },
+          {
+            "price": 0.41,
+            "size": 5
+          },
+          {
+            "price": 0.4,
+            "size": 10
+          },
+          {
+            "price": 0.38,
+            "size": 9
+          },
+          {
+            "price": 0.37,
+            "size": 8
+          },
+          {
+            "price": 0.35,
+            "size": 5
+          },
+          {
+            "price": 0.33,
+            "size": 5
+          },
+          {
+            "price": 0.31,
+            "size": 10
+          }
+        ],
+        "book_received_at": 1792002238.233436,
+        "book_bid_levels": 114,
+        "book_ask_levels": 165,
+        "own_bid_levels": 11,
+        "book_exchange_at": 1792002238.093,
+        "book_source": "websocket",
+        "book_receive_age_s": 0.000021696090698242188,
+        "book_source_age_s": 0.1404578685760498
+      }
+    },
+    {
+      "timestamp": "2026-10-14T18:24:03.042271428Z",
+      "event": "speeddesk_fill_markout",
+      "record": {
+        "at": 1792002242.2336123,
+        "venue": "kalshi",
+        "protocol_version": 2,
+        "max_levels_per_side": 512,
+        "mode": "diagnostic",
+        "fill_source": "real",
+        "session_id": "8e1348d43e4e2d63de14",
+        "fill_id": "0725d508-4461-9a24-fed0-b3633c11ebfc",
+        "order_id": "01a13ba8-0ec0-7abe-900e-8195f9b2ee80",
+        "window": "KXBTC15M-26OCT141430-30",
+        "side": "up",
+        "entry_price": 0.38,
+        "entry_size": 0.13,
+        "entry_fee_usd": 0,
+        "actual_fill_at": 1792002233.709238,
+        "fills_batch_returned_at": 1792002237.2333486,
+        "detection_delay_s": 3.5241105556488037,
+        "detection_delay_kind": "venue_fill_to_complete_paginated_batch_return",
+        "horizon_basis": "fills_batch_return",
+        "window_end": 1792002600,
+        "fee_coefficient": 0.07,
+        "fee_precision": 0.0001,
+        "fee_verified": true,
+        "is_taker": false,
+        "horizons_s": [
+          1,
+          5,
+          30
+        ],
+        "session_only": true,
+        "horizon_s": 5,
+        "target_at": 1792002242.2333486,
+        "elapsed_s": 5.000263621099293,
+        "sampling_method": "first_post_horizon_websocket_update",
+        "fee_model": "sell_formula_plus_per_0.01_contract_rounding_upper_bound",
+        "reason": null,
+        "filled_size": 0.13,
+        "unfilled_size": 0,
+        "gross_proceeds_usd": 0.026,
+        "allocated_entry_fee_usd": 0,
+        "exit_fee_bound_usd": 0.002756,
+        "partial_hypothetical_net_usd": -0.026156,
+        "hypothetical_net_usd": -0.026156,
+        "consumed_depth": [
+          {
+            "price": 0.2,
+            "size": 0.13
+          }
+        ],
+        "execution_assumption": "instantaneous_visible_bid_depth_no_order_sent",
+        "own_depth_policy": "all_original_bot_order_sizes_in_window",
+        "external_depth_is_conservative_lower_bound": true,
+        "liquidity_scope": "isolated_fill_not_joint_inventory_liquidation",
+        "own_bids_subtracted": true,
+        "complete_depth": true,
+        "own_bid_sizes_excluded": [
+          {
+            "price": 0.51,
+            "size": 3
+          },
+          {
+            "price": 0.49,
+            "size": 4
+          },
+          {
+            "price": 0.44,
+            "size": 5
+          },
+          {
+            "price": 0.43,
+            "size": 10
+          },
+          {
+            "price": 0.41,
+            "size": 5
+          },
+          {
+            "price": 0.4,
+            "size": 10
+          },
+          {
+            "price": 0.38,
+            "size": 9
+          },
+          {
+            "price": 0.37,
+            "size": 8
+          },
+          {
+            "price": 0.35,
+            "size": 5
+          },
+          {
+            "price": 0.33,
+            "size": 5
+          },
+          {
+            "price": 0.31,
+            "size": 10
+          }
+        ],
+        "book_received_at": 1792002242.233596,
+        "book_bid_levels": 110,
+        "book_ask_levels": 169,
+        "own_bid_levels": 11,
+        "book_exchange_at": 1792002241.94,
+        "book_source": "websocket",
+        "book_receive_age_s": 0.00001621246337890625,
+        "book_source_age_s": 0.2936122417449951
+      }
+    },
+    {
+      "timestamp": "2026-10-14T18:24:03.042328668Z",
+      "event": "speeddesk_fill_markout",
+      "record": {
+        "at": 1792002242.2336123,
+        "venue": "kalshi",
+        "protocol_version": 2,
+        "max_levels_per_side": 512,
+        "mode": "diagnostic",
+        "fill_source": "real",
+        "session_id": "8e1348d43e4e2d63de14",
+        "fill_id": "0725d508-4461-a518-f37e-9194692f7ba4",
+        "order_id": "01a13ba8-0ec0-7abe-900e-8195f9b2ee80",
+        "window": "KXBTC15M-26OCT141430-30",
+        "side": "up",
+        "entry_price": 0.38,
+        "entry_size": 3.87,
+        "entry_fee_usd": 0,
+        "actual_fill_at": 1792002233.793443,
+        "fills_batch_returned_at": 1792002237.2333486,
+        "detection_delay_s": 3.4399056434631348,
+        "detection_delay_kind": "venue_fill_to_complete_paginated_batch_return",
+        "horizon_basis": "fills_batch_return",
+        "window_end": 1792002600,
+        "fee_coefficient": 0.07,
+        "fee_precision": 0.0001,
+        "fee_verified": true,
+        "is_taker": false,
+        "horizons_s": [
+          1,
+          5,
+          30
+        ],
+        "session_only": true,
+        "horizon_s": 5,
+        "target_at": 1792002242.2333486,
+        "elapsed_s": 5.000263621099293,
+        "sampling_method": "first_post_horizon_websocket_update",
+        "fee_model": "sell_formula_plus_per_0.01_contract_rounding_upper_bound",
+        "reason": null,
+        "filled_size": 3.87,
+        "unfilled_size": 0,
+        "gross_proceeds_usd": 0.774,
+        "allocated_entry_fee_usd": 0,
+        "exit_fee_bound_usd": 0.082044,
+        "partial_hypothetical_net_usd": -0.778644,
+        "hypothetical_net_usd": -0.778644,
+        "consumed_depth": [
+          {
+            "price": 0.2,
+            "size": 3.87
+          }
+        ],
+        "execution_assumption": "instantaneous_visible_bid_depth_no_order_sent",
+        "own_depth_policy": "all_original_bot_order_sizes_in_window",
+        "external_depth_is_conservative_lower_bound": true,
+        "liquidity_scope": "isolated_fill_not_joint_inventory_liquidation",
+        "own_bids_subtracted": true,
+        "complete_depth": true,
+        "own_bid_sizes_excluded": [
+          {
+            "price": 0.51,
+            "size": 3
+          },
+          {
+            "price": 0.49,
+            "size": 4
+          },
+          {
+            "price": 0.44,
+            "size": 5
+          },
+          {
+            "price": 0.43,
+            "size": 10
+          },
+          {
+            "price": 0.41,
+            "size": 5
+          },
+          {
+            "price": 0.4,
+            "size": 10
+          },
+          {
+            "price": 0.38,
+            "size": 9
+          },
+          {
+            "price": 0.37,
+            "size": 8
+          },
+          {
+            "price": 0.35,
+            "size": 5
+          },
+          {
+            "price": 0.33,
+            "size": 5
+          },
+          {
+            "price": 0.31,
+            "size": 10
+          }
+        ],
+        "book_received_at": 1792002242.233596,
+        "book_bid_levels": 110,
+        "book_ask_levels": 169,
+        "own_bid_levels": 11,
+        "book_exchange_at": 1792002241.94,
+        "book_source": "websocket",
+        "book_receive_age_s": 0.00001621246337890625,
+        "book_source_age_s": 0.2936122417449951
+      }
+    },
+    {
+      "timestamp": "2026-10-14T18:24:35.834909275Z",
+      "event": "speeddesk_fill_markout_gap",
+      "record": {
+        "at": 1792002267.2334063,
+        "venue": "kalshi",
+        "protocol_version": 2,
+        "max_levels_per_side": 512,
+        "mode": "diagnostic",
+        "fill_source": "real",
+        "session_id": "8e1348d43e4e2d63de14",
+        "fill_id": "0725d508-4461-9a24-fed0-b3633c11ebfc",
+        "order_id": "01a13ba8-0ec0-7abe-900e-8195f9b2ee80",
+        "window": "KXBTC15M-26OCT141430-30",
+        "side": "up",
+        "entry_price": 0.38,
+        "entry_size": 0.13,
+        "entry_fee_usd": 0,
+        "actual_fill_at": 1792002233.709238,
+        "fills_batch_returned_at": 1792002237.2333486,
+        "detection_delay_s": 3.5241105556488037,
+        "detection_delay_kind": "venue_fill_to_complete_paginated_batch_return",
+        "horizon_basis": "fills_batch_return",
+        "window_end": 1792002600,
+        "fee_coefficient": 0.07,
+        "fee_precision": 0.0001,
+        "fee_verified": true,
+        "is_taker": false,
+        "horizons_s": [
+          1,
+          5,
+          30
+        ],
+        "session_only": true,
+        "horizon_s": 30,
+        "target_at": 1792002267.2333486,
+        "elapsed_s": 30.000057463068515,
+        "sampling_method": "first_post_horizon_websocket_update",
+        "fee_model": "sell_formula_plus_per_0.01_contract_rounding_upper_bound",
+        "reason": "book_before_horizon",
+        "filled_size": null,
+        "unfilled_size": null,
+        "gross_proceeds_usd": null,
+        "allocated_entry_fee_usd": null,
+        "exit_fee_bound_usd": null,
+        "partial_hypothetical_net_usd": null,
+        "hypothetical_net_usd": null,
+        "consumed_depth": [],
+        "execution_assumption": "instantaneous_visible_bid_depth_no_order_sent",
+        "own_depth_policy": "all_original_bot_order_sizes_in_window",
+        "external_depth_is_conservative_lower_bound": true,
+        "liquidity_scope": "isolated_fill_not_joint_inventory_liquidation",
+        "book_received_at": 1792002267.2333446,
+        "book_bid_levels": 105,
+        "book_ask_levels": 174,
+        "own_bid_levels": 11,
+        "book_exchange_at": 1792002267.215,
+        "book_source": "websocket",
+        "book_receive_age_s": 0.00006175041198730469,
+        "book_source_age_s": 0.018406391143798828
+      }
+    },
+    {
+      "timestamp": "2026-10-14T18:24:35.834912625Z",
+      "event": "speeddesk_fill_markout_gap",
+      "record": {
+        "at": 1792002267.2334063,
+        "venue": "kalshi",
+        "protocol_version": 2,
+        "max_levels_per_side": 512,
+        "mode": "diagnostic",
+        "fill_source": "real",
+        "session_id": "8e1348d43e4e2d63de14",
+        "fill_id": "0725d508-4461-a518-f37e-9194692f7ba4",
+        "order_id": "01a13ba8-0ec0-7abe-900e-8195f9b2ee80",
+        "window": "KXBTC15M-26OCT141430-30",
+        "side": "up",
+        "entry_price": 0.38,
+        "entry_size": 3.87,
+        "entry_fee_usd": 0,
+        "actual_fill_at": 1792002233.793443,
+        "fills_batch_returned_at": 1792002237.2333486,
+        "detection_delay_s": 3.4399056434631348,
+        "detection_delay_kind": "venue_fill_to_complete_paginated_batch_return",
+        "horizon_basis": "fills_batch_return",
+        "window_end": 1792002600,
+        "fee_coefficient": 0.07,
+        "fee_precision": 0.0001,
+        "fee_verified": true,
+        "is_taker": false,
+        "horizons_s": [
+          1,
+          5,
+          30
+        ],
+        "session_only": true,
+        "horizon_s": 30,
+        "target_at": 1792002267.2333486,
+        "elapsed_s": 30.000057463068515,
+        "sampling_method": "first_post_horizon_websocket_update",
+        "fee_model": "sell_formula_plus_per_0.01_contract_rounding_upper_bound",
+        "reason": "book_before_horizon",
+        "filled_size": null,
+        "unfilled_size": null,
+        "gross_proceeds_usd": null,
+        "allocated_entry_fee_usd": null,
+        "exit_fee_bound_usd": null,
+        "partial_hypothetical_net_usd": null,
+        "hypothetical_net_usd": null,
+        "consumed_depth": [],
+        "execution_assumption": "instantaneous_visible_bid_depth_no_order_sent",
+        "own_depth_policy": "all_original_bot_order_sizes_in_window",
+        "external_depth_is_conservative_lower_bound": true,
+        "liquidity_scope": "isolated_fill_not_joint_inventory_liquidation",
+        "book_received_at": 1792002267.2333446,
+        "book_bid_levels": 105,
+        "book_ask_levels": 174,
+        "own_bid_levels": 11,
+        "book_exchange_at": 1792002267.215,
+        "book_source": "websocket",
+        "book_receive_age_s": 0.00006175041198730469,
+        "book_source_age_s": 0.018406391143798828
+      }
+    },
+    {
+      "timestamp": "2026-10-14T18:24:58.032685926Z",
+      "event": "speeddesk_fill_markout_status",
+      "record": {
+        "at": 1792002297.7447164,
+        "venue": "kalshi",
+        "enabled": true,
+        "mode": "diagnostic",
+        "fill_source": "real",
+        "session_id": "8e1348d43e4e2d63de14",
+        "protocol_version": 2,
+        "basis": "fills_batch_return",
+        "liquidity_scope": "isolated_fill_not_joint_inventory_liquidation",
+        "session_only": true,
+        "earlier_pending_unknown": true,
+        "restored_pending": false,
+        "started_at": 1792002041.830995,
+        "horizons_s": [
+          1,
+          5,
+          30
+        ],
+        "sampling_method": "first_post_horizon_websocket_update",
+        "max_age_s": 0.5,
+        "max_levels_per_side": 512,
+        "max_measurements_per_book": 8,
+        "pending_fills": 0,
+        "max_pending": 1024,
+        "dedup_entries": 5,
+        "dedup_capacity": 8192,
+        "counts": {
+          "observed_fills": 5,
+          "measured_horizons": 9,
+          "full_depth_horizons": 9,
+          "gap_horizons": 6
+        },
+        "gap_reasons": {
+          "book_stale": 2,
+          "venue_feed_gap": 1,
+          "book_before_horizon": 3
+        },
+        "not_realized_pnl": true,
+        "exit_latency_not_simulated": true,
+        "error": null,
+        "own_depth_policy": "all_original_bot_order_sizes_in_window"
+      }
+    },
+    {
+      "timestamp": "2026-10-14T18:25:57.978688165Z",
+      "event": "speeddesk_fill_markout_status",
+      "record": {
+        "at": 1792002357.78642,
+        "venue": "kalshi",
+        "enabled": true,
+        "mode": "diagnostic",
+        "fill_source": "real",
+        "session_id": "8e1348d43e4e2d63de14",
+        "protocol_version": 2,
+        "basis": "fills_batch_return",
+        "liquidity_scope": "isolated_fill_not_joint_inventory_liquidation",
+        "session_only": true,
+        "earlier_pending_unknown": true,
+        "restored_pending": false,
+        "started_at": 1792002041.830995,
+        "horizons_s": [
+          1,
+          5,
+          30
+        ],
+        "sampling_method": "first_post_horizon_websocket_update",
+        "max_age_s": 0.5,
+        "max_levels_per_side": 512,
+        "max_measurements_per_book": 8,
+        "pending_fills": 0,
+        "max_pending": 1024,
+        "dedup_entries": 5,
+        "dedup_capacity": 8192,
+        "counts": {
+          "observed_fills": 5,
+          "measured_horizons": 9,
+          "full_depth_horizons": 9,
+          "gap_horizons": 6
+        },
+        "gap_reasons": {
+          "book_stale": 2,
+          "venue_feed_gap": 1,
+          "book_before_horizon": 3
+        },
+        "not_realized_pnl": true,
+        "exit_latency_not_simulated": true,
+        "error": null,
+        "own_depth_policy": "all_original_bot_order_sizes_in_window"
+      }
+    },
+    {
+      "timestamp": "2026-10-14T18:26:06.311194568Z",
+      "event": "speeddesk_fill_observed",
+      "record": {
+        "at": 1792002364.6879814,
+        "venue": "kalshi",
+        "protocol_version": 2,
+        "max_levels_per_side": 512,
+        "mode": "diagnostic",
+        "fill_source": "real",
+        "session_id": "8e1348d43e4e2d63de14",
+        "fill_id": "0725d502-3371-8b4e-c4e6-a4b398a2efb9",
+        "order_id": "01a13baa-0e78-7df0-9e03-69249a1925b6",
+        "window": "KXBTC15M-26OCT141430-30",
+        "side": "down",
+        "entry_price": 0.927,
+        "entry_size": 5,
+        "entry_fee_usd": 0.0237,
+        "actual_fill_at": 1792002363.13374,
+        "fills_batch_returned_at": 1792002364.6879814,
+        "detection_delay_s": 1.554241418838501,
+        "detection_delay_kind": "venue_fill_to_complete_paginated_batch_return",
+        "horizon_basis": "fills_batch_return",
+        "window_end": 1792002600,
+        "fee_coefficient": 0.07,
+        "fee_precision": 0.0001,
+        "fee_verified": true,
+        "is_taker": true,
+        "horizons_s": [
+          1,
+          5,
+          30
+        ],
+        "session_only": true
+      }
+    },
+    {
+      "timestamp": "2026-10-14T18:26:06.311197808Z",
+      "event": "speeddesk_fill_markout_gap",
+      "record": {
+        "at": 1792002365.6881003,
+        "venue": "kalshi",
+        "protocol_version": 2,
+        "max_levels_per_side": 512,
+        "mode": "diagnostic",
+        "fill_source": "real",
+        "session_id": "8e1348d43e4e2d63de14",
+        "fill_id": "0725d502-3371-8b4e-c4e6-a4b398a2efb9",
+        "order_id": "01a13baa-0e78-7df0-9e03-69249a1925b6",
+        "window": "KXBTC15M-26OCT141430-30",
+        "side": "down",
+        "entry_price": 0.927,
+        "entry_size": 5,
+        "entry_fee_usd": 0.0237,
+        "actual_fill_at": 1792002363.13374,
+        "fills_batch_returned_at": 1792002364.6879814,
+        "detection_delay_s": 1.554241418838501,
+        "detection_delay_kind": "venue_fill_to_complete_paginated_batch_return",
+        "horizon_basis": "fills_batch_return",
+        "window_end": 1792002600,
+        "fee_coefficient": 0.07,
+        "fee_precision": 0.0001,
+        "fee_verified": true,
+        "is_taker": true,
+        "horizons_s": [
+          1,
+          5,
+          30
+        ],
+        "session_only": true,
+        "horizon_s": 1,
+        "target_at": 1792002365.6879814,
+        "elapsed_s": 1.0001189359463751,
+        "sampling_method": "first_post_horizon_websocket_update",
+        "fee_model": "sell_formula_plus_per_0.01_contract_rounding_upper_bound",
+        "reason": "book_before_horizon",
+        "filled_size": null,
+        "unfilled_size": null,
+        "gross_proceeds_usd": null,
+        "allocated_entry_fee_usd": null,
+        "exit_fee_bound_usd": null,
+        "partial_hypothetical_net_usd": null,
+        "hypothetical_net_usd": null,
+        "consumed_depth": [],
+        "execution_assumption": "instantaneous_visible_bid_depth_no_order_sent",
+        "own_depth_policy": "all_original_bot_order_sizes_in_window",
+        "external_depth_is_conservative_lower_bound": true,
+        "liquidity_scope": "isolated_fill_not_joint_inventory_liquidation",
+        "book_received_at": 1792002365.6879733,
+        "book_bid_levels": 209,
+        "book_ask_levels": 61,
+        "own_bid_levels": 15,
+        "book_exchange_at": 1792002365.362,
+        "book_source": "websocket",
+        "book_receive_age_s": 0.0001270771026611328,
+        "book_source_age_s": 0.32610034942626953
+      }
+    },
+    {
+      "timestamp": "2026-10-14T18:26:10.905095765Z",
+      "event": "speeddesk_fill_markout_gap",
+      "record": {
+        "at": 1792002369.688091,
+        "venue": "kalshi",
+        "protocol_version": 2,
+        "max_levels_per_side": 512,
+        "mode": "diagnostic",
+        "fill_source": "real",
+        "session_id": "8e1348d43e4e2d63de14",
+        "fill_id": "0725d502-3371-8b4e-c4e6-a4b398a2efb9",
+        "order_id": "01a13baa-0e78-7df0-9e03-69249a1925b6",
+        "window": "KXBTC15M-26OCT141430-30",
+        "side": "down",
+        "entry_price": 0.927,
+        "entry_size": 5,
+        "entry_fee_usd": 0.0237,
+        "actual_fill_at": 1792002363.13374,
+        "fills_batch_returned_at": 1792002364.6879814,
+        "detection_delay_s": 1.554241418838501,
+        "detection_delay_kind": "venue_fill_to_complete_paginated_batch_return",
+        "horizon_basis": "fills_batch_return",
+        "window_end": 1792002600,
+        "fee_coefficient": 0.07,
+        "fee_precision": 0.0001,
+        "fee_verified": true,
+        "is_taker": true,
+        "horizons_s": [
+          1,
+          5,
+          30
+        ],
+        "session_only": true,
+        "horizon_s": 5,
+        "target_at": 1792002369.6879814,
+        "elapsed_s": 5.000109855085611,
+        "sampling_method": "first_post_horizon_websocket_update",
+        "fee_model": "sell_formula_plus_per_0.01_contract_rounding_upper_bound",
+        "reason": "book_stale",
+        "filled_size": null,
+        "unfilled_size": null,
+        "gross_proceeds_usd": null,
+        "allocated_entry_fee_usd": null,
+        "exit_fee_bound_usd": null,
+        "partial_hypothetical_net_usd": null,
+        "hypothetical_net_usd": null,
+        "consumed_depth": [],
+        "execution_assumption": "instantaneous_visible_bid_depth_no_order_sent",
+        "own_depth_policy": "all_original_bot_order_sizes_in_window",
+        "external_depth_is_conservative_lower_bound": true,
+        "liquidity_scope": "isolated_fill_not_joint_inventory_liquidation",
+        "book_received_at": 1792002369.687121,
+        "book_bid_levels": 196,
+        "book_ask_levels": 76,
+        "own_bid_levels": 15,
+        "book_exchange_at": 1792002369.035,
+        "book_source": "websocket",
+        "book_receive_age_s": 0.0009701251983642578,
+        "book_source_age_s": 0.6530909538269043
+      }
+    },
+    {
+      "timestamp": "2026-10-14T18:26:40.944251321Z",
+      "event": "speeddesk_fill_markout_gap",
+      "record": {
+        "at": 1792002394.6883492,
+        "venue": "kalshi",
+        "protocol_version": 2,
+        "max_levels_per_side": 512,
+        "mode": "diagnostic",
+        "fill_source": "real",
+        "session_id": "8e1348d43e4e2d63de14",
+        "fill_id": "0725d502-3371-8b4e-c4e6-a4b398a2efb9",
+        "order_id": "01a13baa-0e78-7df0-9e03-69249a1925b6",
+        "window": "KXBTC15M-26OCT141430-30",
+        "side": "down",
+        "entry_price": 0.927,
+        "entry_size": 5,
+        "entry_fee_usd": 0.0237,
+        "actual_fill_at": 1792002363.13374,
+        "fills_batch_returned_at": 1792002364.6879814,
+        "detection_delay_s": 1.554241418838501,
+        "detection_delay_kind": "venue_fill_to_complete_paginated_batch_return",
+        "horizon_basis": "fills_batch_return",
+        "window_end": 1792002600,
+        "fee_coefficient": 0.07,
+        "fee_precision": 0.0001,
+        "fee_verified": true,
+        "is_taker": true,
+        "horizons_s": [
+          1,
+          5,
+          30
+        ],
+        "session_only": true,
+        "horizon_s": 30,
+        "target_at": 1792002394.6879814,
+        "elapsed_s": 30.000368000008166,
+        "sampling_method": "first_post_horizon_websocket_update",
+        "fee_model": "sell_formula_plus_per_0.01_contract_rounding_upper_bound",
+        "reason": "book_before_horizon",
+        "filled_size": null,
+        "unfilled_size": null,
+        "gross_proceeds_usd": null,
+        "allocated_entry_fee_usd": null,
+        "exit_fee_bound_usd": null,
+        "partial_hypothetical_net_usd": null,
+        "hypothetical_net_usd": null,
+        "consumed_depth": [],
+        "execution_assumption": "instantaneous_visible_bid_depth_no_order_sent",
+        "own_depth_policy": "all_original_bot_order_sizes_in_window",
+        "external_depth_is_conservative_lower_bound": true,
+        "liquidity_scope": "isolated_fill_not_joint_inventory_liquidation",
+        "book_received_at": 1792002394.6831338,
+        "book_bid_levels": 179,
+        "book_ask_levels": 82,
+        "own_bid_levels": 15,
+        "book_exchange_at": 1792002394.643,
+        "book_source": "websocket",
+        "book_receive_age_s": 0.00521540641784668,
+        "book_source_age_s": 0.0453493595123291
+      }
+    },
+    {
+      "timestamp": "2026-10-14T18:27:04.000213352Z",
+      "event": "speeddesk_fill_markout_status",
+      "record": {
+        "at": 1792002418.3871293,
+        "venue": "kalshi",
+        "enabled": true,
+        "mode": "diagnostic",
+        "fill_source": "real",
+        "session_id": "8e1348d43e4e2d63de14",
+        "protocol_version": 2,
+        "basis": "fills_batch_return",
+        "liquidity_scope": "isolated_fill_not_joint_inventory_liquidation",
+        "session_only": true,
+        "earlier_pending_unknown": true,
+        "restored_pending": false,
+        "started_at": 1792002041.830995,
+        "horizons_s": [
+          1,
+          5,
+          30
+        ],
+        "sampling_method": "first_post_horizon_websocket_update",
+        "max_age_s": 0.5,
+        "max_levels_per_side": 512,
+        "max_measurements_per_book": 8,
+        "pending_fills": 0,
+        "max_pending": 1024,
+        "dedup_entries": 6,
+        "dedup_capacity": 8192,
+        "counts": {
+          "observed_fills": 6,
+          "measured_horizons": 9,
+          "full_depth_horizons": 9,
+          "gap_horizons": 9
+        },
+        "gap_reasons": {
+          "book_stale": 3,
+          "venue_feed_gap": 1,
+          "book_before_horizon": 5
+        },
+        "not_realized_pnl": true,
+        "exit_latency_not_simulated": true,
+        "error": null,
+        "own_depth_policy": "all_original_bot_order_sizes_in_window"
+      }
+    },
+    {
+      "timestamp": "2026-10-14T18:28:04.071933294Z",
+      "event": "speeddesk_fill_markout_status",
+      "record": {
+        "at": 1792002478.8407652,
+        "venue": "kalshi",
+        "enabled": true,
+        "mode": "diagnostic",
+        "fill_source": "real",
+        "session_id": "8e1348d43e4e2d63de14",
+        "protocol_version": 2,
+        "basis": "fills_batch_return",
+        "liquidity_scope": "isolated_fill_not_joint_inventory_liquidation",
+        "session_only": true,
+        "earlier_pending_unknown": true,
+        "restored_pending": false,
+        "started_at": 1792002041.830995,
+        "horizons_s": [
+          1,
+          5,
+          30
+        ],
+        "sampling_method": "first_post_horizon_websocket_update",
+        "max_age_s": 0.5,
+        "max_levels_per_side": 512,
+        "max_measurements_per_book": 8,
+        "pending_fills": 0,
+        "max_pending": 1024,
+        "dedup_entries": 6,
+        "dedup_capacity": 8192,
+        "counts": {
+          "observed_fills": 6,
+          "measured_horizons": 9,
+          "full_depth_horizons": 9,
+          "gap_horizons": 9
+        },
+        "gap_reasons": {
+          "book_stale": 3,
+          "venue_feed_gap": 1,
+          "book_before_horizon": 5
+        },
+        "not_realized_pnl": true,
+        "exit_latency_not_simulated": true,
+        "error": null,
+        "own_depth_policy": "all_original_bot_order_sizes_in_window"
+      }
+    },
+    {
+      "timestamp": "2026-10-14T18:29:04.136592666Z",
+      "event": "speeddesk_fill_markout_status",
+      "record": {
+        "at": 1792002541.4828115,
+        "venue": "kalshi",
+        "enabled": true,
+        "mode": "diagnostic",
+        "fill_source": "real",
+        "session_id": "8e1348d43e4e2d63de14",
+        "protocol_version": 2,
+        "basis": "fills_batch_return",
+        "liquidity_scope": "isolated_fill_not_joint_inventory_liquidation",
+        "session_only": true,
+        "earlier_pending_unknown": true,
+        "restored_pending": false,
+        "started_at": 1792002041.830995,
+        "horizons_s": [
+          1,
+          5,
+          30
+        ],
+        "sampling_method": "first_post_horizon_websocket_update",
+        "max_age_s": 0.5,
+        "max_levels_per_side": 512,
+        "max_measurements_per_book": 8,
+        "pending_fills": 0,
+        "max_pending": 1024,
+        "dedup_entries": 6,
+        "dedup_capacity": 8192,
+        "counts": {
+          "observed_fills": 6,
+          "measured_horizons": 9,
+          "full_depth_horizons": 9,
+          "gap_horizons": 9
+        },
+        "gap_reasons": {
+          "book_stale": 3,
+          "venue_feed_gap": 1,
+          "book_before_horizon": 5
+        },
+        "not_realized_pnl": true,
+        "exit_latency_not_simulated": true,
+        "error": null,
+        "own_depth_policy": "all_original_bot_order_sizes_in_window"
+      }
+    }
+  ],
+  "latest_status": {
+    "timestamp": "2026-10-14T18:29:04.139046206Z",
+    "as_of": 1792002541.4828885,
+    "mode": "live",
+    "reason": "Kalshi account data stale",
+    "waiting": "Kalshi account data stale",
+    "trading_now": false,
+    "cash_usd": 39.4194,
+    "cash_at": 1792002541.482433,
+    "open_cost_usd": 14.5087,
+    "open_risk_usd": 1.5086999999999993,
+    "reserved_usd": 0,
+    "at_risk_usd": 1.5086999999999993,
+    "caps": {
+      "window_usd": 10,
+      "open_usd": 20,
+      "day_stop_usd": 6,
+      "clip": 5,
+      "total_stop_usd": 10
+    },
+    "total_halted": false,
+    "day_stop_latched": false,
+    "integrity_error": null,
+    "total": {
+      "pnl_usd": -8.813300000000005,
+      "fees_usd": 2.0001,
+      "locked_usd": 4.482598351648345,
+      "directional_usd": -13.29589835164835
+    },
+    "today": {
+      "pnl_usd": 1.1287999999999985,
+      "fees_usd": 0.42998,
+      "locked_usd": 4.73915897435897,
+      "directional_usd": -3.610358974358972
+    }
+  }
+}

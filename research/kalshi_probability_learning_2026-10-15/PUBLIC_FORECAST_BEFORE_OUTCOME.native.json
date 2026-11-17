@@ -1,0 +1,29 @@
+{
+  "request": {
+    "repository_full_name": "sideriapostolou-lgtm/Claude",
+    "path": "research/kalshi_probability_learning_2026-10-15/CAPTURE_SLOT_KALSHI_PROBABILITY_LEARNING_FORECAST.native.json",
+    "ref": "2c9198f"
+  },
+  "before": {
+    "current_time": "2026-10-15 19:37:18 UTC"
+  },
+  "after": {
+    "current_time": "2026-10-15 19:37:18 UTC"
+  },
+  "result": {
+    "content": [
+      {
+        "type": "text",
+        "text": "Action completed."
+      }
+    ],
+    "structuredContent": {
+      "content": "{\n  \"request\": {\n    \"projectId\": \"75750847-85c0-41a3-a2a7-b7f2201a51e9\",\n    \"environmentId\": \"17f7b0e0-104c-4903-9484-0106748b3cdb\",\n    \"deploymentId\": \"2e88601d-c9c7-474f-add8-72c0a13c1a4b\",\n    \"startDate\": \"2026-10-15T19:30:00Z\",\n    \"endDate\": \"2026-10-15T19:35:30Z\",\n    \"filter\": \"\\\"kalshi_probability_learning_forecast\\\"\",\n    \"limit\": 500\n  },\n  \"before\": {\n    \"current_time\": \"2026-10-15 19:35:41 UTC\"\n  },\n  \"after\": {\n    \"current_time\": \"2026-10-15 19:35:42 UTC\"\n  },\n  \"result\": {\n    \"content\": [\n      {\n        \"type\": \"text\",\n        \"text\": \"**Deployment 2e88601d-c9c7-474f-add8-72c0a13c1a4b** [SUCCESS]\\nservice: f84d3b52-002f-44cb-931e-bc9e3e097e97, env: 17f7b0e0-104c-4903-9484-0106748b3cdb\\n\\n### Deploy logs (1)\\n2026-10-15T19:35:00.011166115Z info 2026-10-15T19:35:00Z INFO nightcrawler.kalshi_probability_learning: kalshi_probability_learning_forecast {\\\"at\\\":1792092900.0042238,\\\"mode\\\":\\\"observe_only\\\",\\\"live_application\\\":false,\\\"profitability_proven\\\":false,\\\"protocol\\\":\\\"kalshi-probability-calibration-v2-h300-g5-b10-prior20\\\",\\\"source_fingerprint\\\":\\\"e79897062a3ebbd61fe5dc70617f02c44bb7d29c9dbf51e23940459686653c7c\\\",\\\"window\\\":\\\"KXBTC15M-26OCT151545-45\\\",\\\"p\\\":0.07826700568018541,\\\"q\\\":0.07826700568018541,\\\"bin\\\":0,\\\"n\\\":0,\\\"wins\\\":0,\\\"spot\\\":82315.0,\\\"sigma\\\":4.49518576540474e-05,\\\"bitcoin_at\\\":1792092899.119448,\\\"opening\\\":82439.21,\\\"venue_start_price\\\":82439.21,\\\"batch_at\\\":1792092899.6431456,\\\"terms\\\":[1792092600.0,1792093500.0,82439.21,82439.21,0.07,0.0,0.01,0.01,\\\"kalshi\\\",\\\"kalshi\\\"]}\"\n      }\n    ],\n    \"structuredContent\": {\n      \"scope\": \"deployment\",\n      \"deploymentId\": \"2e88601d-c9c7-474f-add8-72c0a13c1a4b\",\n      \"serviceId\": \"f84d3b52-002f-44cb-931e-bc9e3e097e97\",\n      \"environmentId\": \"17f7b0e0-104c-4903-9484-0106748b3cdb\",\n      \"status\": \"SUCCESS\",\n      \"deploy\": [\n        {\n          \"timestamp\": \"2026-10-15T19:35:00.011166115Z\",\n          \"severity\": \"info\",\n          \"message\": \"2026-10-15T19:35:00Z INFO nightcrawler.kalshi_probability_learning: kalshi_probability_learning_forecast {\\\"at\\\":1792092900.0042238,\\\"mode\\\":\\\"observe_only\\\",\\\"live_application\\\":false,\\\"profitability_proven\\\":false,\\\"protocol\\\":\\\"kalshi-probability-calibration-v2-h300-g5-b10-prior20\\\",\\\"source_fingerprint\\\":\\\"e79897062a3ebbd61fe5dc70617f02c44bb7d29c9dbf51e23940459686653c7c\\\",\\\"window\\\":\\\"KXBTC15M-26OCT151545-45\\\",\\\"p\\\":0.07826700568018541,\\\"q\\\":0.07826700568018541,\\\"bin\\\":0,\\\"n\\\":0,\\\"wins\\\":0,\\\"spot\\\":82315.0,\\\"sigma\\\":4.49518576540474e-05,\\\"bitcoin_at\\\":1792092899.119448,\\\"opening\\\":82439.21,\\\"venue_start_price\\\":82439.21,\\\"batch_at\\\":1792092899.6431456,\\\"terms\\\":[1792092600.0,1792093500.0,82439.21,82439.21,0.07,0.0,0.01,0.01,\\\"kalshi\\\",\\\"kalshi\\\"]}\",\n          \"attributes\": [\n            {\n              \"key\": \"level\",\n              \"value\": \"\\\"info\\\"\"\n            }\n          ]\n        }\n      ]\n    },\n    \"isError\": false\n  }\n}\n",
+      "encoding": "utf-8",
+      "sha": "99ee0074ede390a6c9d66a9a78bd769880d2adfb",
+      "display_url": "https://github.com/sideriapostolou-lgtm/Claude/blob/2c9198f/research/kalshi_probability_learning_2026-10-15/CAPTURE_SLOT_KALSHI_PROBABILITY_LEARNING_FORECAST.native.json",
+      "display_title": "CAPTURE_SLOT_KALSHI_PROBABILITY_LEARNING_FORECAST.native.json"
+    },
+    "isError": false
+  }
+}

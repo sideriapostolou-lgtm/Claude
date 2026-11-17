@@ -1,0 +1,126 @@
+[
+  {
+    "timestamp": "2026-10-15T18:21:02.523103001Z",
+    "payload": {
+      "at": 1792088458.095138,
+      "venue": "kalshi",
+      "client_order_id": "nc-speed-963e5c013bb64cbbad5b573fc17b2abc",
+      "order_id": "01a140ca-5f98-765a-8631-c0c8852d1aac",
+      "window": "KXBTC15M-26OCT151430-30",
+      "reason": "Bitcoin feed stale",
+      "state": "not resting on Kalshi (404); reservation retained until reconciled",
+      "timing": {
+        "decision_to_ack_ms": 187.4,
+        "send_to_ack_ms": 187.4
+      }
+    }
+  },
+  {
+    "timestamp": "2026-10-15T18:21:07.594727243Z",
+    "payload": {
+      "at": 1792088467.0375316,
+      "venue": {
+        "ts_ms": 1792088466983,
+        "sent_ms": 1792088466551.2,
+        "acked_ms": 1792088467037.5,
+        "offset_ms": 188.6,
+        "rtt_ms": 486.3
+      },
+      "client_order_id": "nc-speed-2f5f66a6c89e4ae9a3422a172648a83c",
+      "order_id": "01a140cb-d698-764e-9b0a-38057795aba6",
+      "window": "KXBTC15M-26OCT151430-30",
+      "reason": "reprice",
+      "state": "requested; reservation retained until fills reconcile",
+      "reduced_by": "1.00",
+      "timing": {
+        "decision_to_ack_ms": 486.4,
+        "send_to_ack_ms": 486.3
+      }
+    }
+  },
+  {
+    "timestamp": "2026-10-15T18:21:19.503669187Z",
+    "payload": {
+      "at": 1792088478.4703188,
+      "venue": {
+        "ts_ms": 1792088477771,
+        "sent_ms": 1792088477755.5,
+        "acked_ms": 1792088478470.3,
+        "offset_ms": -341.9,
+        "rtt_ms": 714.8
+      },
+      "client_order_id": "nc-speed-45c3191df6bc4178939c46c7243df1cd",
+      "order_id": "01a140cb-ee08-76df-95f9-9e6a1ec323a5",
+      "window": "KXBTC15M-26OCT151430-30",
+      "reason": "reprice",
+      "state": "requested; reservation retained until fills reconcile",
+      "reduced_by": "1.00",
+      "timing": {
+        "decision_to_ack_ms": 714.8,
+        "send_to_ack_ms": 714.8
+      }
+    }
+  },
+  {
+    "timestamp": "2026-10-15T18:21:21.331117961Z",
+    "payload": {
+      "at": 1792088480.2608454,
+      "venue": {
+        "ts_ms": 1792088480192,
+        "sent_ms": 1792088480135.2,
+        "acked_ms": 1792088480260.8,
+        "offset_ms": -6.0,
+        "rtt_ms": 125.6
+      },
+      "client_order_id": "nc-speed-818f3bb5c6ec4615ba9aaeeb42949d3e",
+      "order_id": "01a140cc-1518-737f-8ec3-86a7a742e345",
+      "window": "KXBTC15M-26OCT151430-30",
+      "reason": "Kalshi book stale",
+      "state": "requested; reservation retained until fills reconcile",
+      "reduced_by": "1.00",
+      "timing": {
+        "decision_to_ack_ms": 125.6,
+        "send_to_ack_ms": 125.6
+      }
+    }
+  },
+  {
+    "timestamp": "2026-10-15T18:21:24.753019467Z",
+    "payload": {
+      "at": 1792088484.1853426,
+      "venue": {
+        "ts_ms": 1792088483592,
+        "sent_ms": 1792088483558.7,
+        "acked_ms": 1792088484185.3,
+        "offset_ms": -280.0,
+        "rtt_ms": 626.6
+      },
+      "client_order_id": "nc-speed-b66cad1f748b40ad851fa89e4d9ed62b",
+      "order_id": "01a140cc-1ce8-7f60-8ead-09987f9b8e6c",
+      "window": "KXBTC15M-26OCT151430-30",
+      "reason": "reprice",
+      "state": "requested; reservation retained until fills reconcile",
+      "reduced_by": "1.00",
+      "timing": {
+        "decision_to_ack_ms": 626.6,
+        "send_to_ack_ms": 626.6
+      }
+    }
+  },
+  {
+    "timestamp": "2026-10-15T18:21:29.426745782Z",
+    "payload": {
+      "at": 1792088488.8458204,
+      "venue": "kalshi",
+      "client_order_id": "nc-speed-790debbfa651437a8be896ac541d8db5",
+      "order_id": "01a140cc-2c88-7a95-a1f2-9534a62e05d3",
+      "window": "KXBTC15M-26OCT151430-30",
+      "reason": "reprice",
+      "state": "not resting on Kalshi (404); reservation retained until reconciled",
+      "timing": {
+        "decision_to_ack_ms": 524.8,
+        "send_to_ack_ms": 524.8
+      }
+    }
+  }
+]

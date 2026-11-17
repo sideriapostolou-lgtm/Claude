@@ -1,0 +1,42 @@
+{
+  "task": "EXEC-DELAY-001 checkpoint baseline profile",
+  "recorded_at_utc": "2026-10-15T22:14:30Z",
+  "pacific": "3:14 PM PDT October15",
+  "base_remote": "eda3264714d789599c4f45e25c8a6ee358981cb8",
+  "base_tree": "c11957009aa127a18edd2b301cfff67db30058de",
+  "local_equivalent": "f77e1ad460c74a2eb5167ff1e243cca9cf94b329",
+  "source": "0c30491e0bd101250ee443912e1352f38718af45",
+  "worktree": "/workspace/nightcrawler-practice-checkpoint",
+  "role": "Sol bounded profiling; Astra independent architecture/resource/output review; root integrates/releases",
+  "resources": {
+    "max_run_s": 60,
+    "max_rss_mib": 256,
+    "max_temp_disk_mib": 100,
+    "network": false,
+    "credential_access": false
+  },
+  "fixtures": [
+    "1day",
+    "7days",
+    "31days",
+    "bounded older report"
+  ],
+  "measurements": [
+    "original hashes",
+    "full checkpoint and report wall/threadCPU/distributions",
+    "asdict/window/settlement conversion counts",
+    "serialized output bytes",
+    "RSS/allocation peak",
+    "transaction counts/history receipts"
+  ],
+  "must_preserve": [
+    "all existing save triggers/order",
+    "reports and correction receipts",
+    "independent clock calls and close/day boundaries",
+    "all histories, fees, losses, practice/real separation",
+    "real journal and FULL/atomic boundaries",
+    "V1/strict V2 restore and archives/source identity"
+  ],
+  "scope": "Initially no repo source/test edits. If material root may authorize narrow practice-report input conversion reuse in speeddesk.py with tests. No persistent cache/cadence/schema/durability/model/risk/rule/cap/stop/resume/variable/Polymarket changes. New source fingerprint requires distinct epoch; no alias/reset/relabel.",
+  "gate": "Actual profile first; do not assert production cause/speed/profit from synthetic fixtures. Positive result must materially save cost beyond noise without dropping output or financial proof."
+}

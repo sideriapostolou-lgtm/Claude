@@ -1,0 +1,437 @@
+{
+  "before_outer": "2026-10-16T07:33:21.316526563Z",
+  "after_outer": "2026-10-16T07:41:06.400271921Z",
+  "before_payload_at": 1792136000.6526937,
+  "after_payload_at": 1792136466.008717,
+  "checks": {
+    "financial:mode": true,
+    "financial:configured_mode": true,
+    "financial:status": true,
+    "financial:reason": true,
+    "financial:trading_now": true,
+    "financial:authenticated": true,
+    "financial:fee_precision_verified": true,
+    "financial:fee_precision_usd": true,
+    "financial:cash_usd": true,
+    "financial:reserved_usd": true,
+    "financial:open_risk_usd": true,
+    "financial:open_cost_usd": true,
+    "financial:at_risk_usd": true,
+    "financial:open_orders": true,
+    "financial:positions": true,
+    "financial:total_halted": true,
+    "financial:day_stop_latched": true,
+    "financial:real_orders_available": true,
+    "financial:integrity_error": true,
+    "financial:pair_protection": true,
+    "financial:integrity_reset": true,
+    "financial:cleanup_pending": true,
+    "financial:caps": true,
+    "today:day": true,
+    "today:windows": true,
+    "today:fills": true,
+    "today:settled_windows": true,
+    "today:fees_usd": true,
+    "today:locked_usd": true,
+    "today:directional_usd": true,
+    "today:pnl_usd": true,
+    "today:worst_usd": true,
+    "today:take_attempts": true,
+    "today:take_fills": true,
+    "today:maker_orders": true,
+    "today:maker_fills": true,
+    "today:locks": true,
+    "today:lock_fills": true,
+    "today:take_fill_rate": true,
+    "today:maker_fill_rate": true,
+    "today:avg_latency_ms": true,
+    "today:latency_definition": true,
+    "total:day": true,
+    "total:windows": true,
+    "total:fills": true,
+    "total:latency": true,
+    "total:scorecard": true,
+    "total:settled_windows": true,
+    "total:fees_usd": true,
+    "total:locked_usd": true,
+    "total:directional_usd": true,
+    "total:pnl_usd": true,
+    "total:worst_usd": true,
+    "total:take_attempts": true,
+    "total:take_fills": true,
+    "total:maker_orders": true,
+    "total:maker_fills": true,
+    "total:locks": true,
+    "total:lock_fills": true,
+    "total:take_fill_rate": true,
+    "total:maker_fill_rate": true,
+    "total:avg_latency_ms": true,
+    "total:latency_definition": true,
+    "ladder:rung": true,
+    "ladder:limits": true,
+    "ladder:configured_max_window_usd": true,
+    "ladder:enabled": true,
+    "ladder:top_rung": true,
+    "ladder:change_pending": true,
+    "ladder:recheck_pending": true,
+    "ladder:effective_from": true,
+    "ladder:pending_limits": true,
+    "ladder:rung_started_at": true,
+    "ladder:start_pnl_usd": true,
+    "ladder:last_change": true,
+    "queue:enabled": true,
+    "queue:error": true,
+    "queue:zero_starts": true,
+    "epoch:archived": true,
+    "epoch:legacy_sha256": true,
+    "epoch:active_ordinal": true,
+    "epoch:current_source_fingerprint": true,
+    "epoch:retained_active": true,
+    "control:speeddesk_live_resume": true,
+    "control:speeddesk_live_integrity_reset": true,
+    "control:speeddesk_live_day_reset": true,
+    "expected_cash": true,
+    "expected_daily_stop": true,
+    "expected_day_pnl": true,
+    "expected_total_pnl": true
+  },
+  "checks_passed": 90,
+  "checks_total": 90,
+  "financial_fields": {
+    "mode": "paper",
+    "configured_mode": "live",
+    "status": "PRACTICE",
+    "reason": "Daily loss stop; no new risk until 00:00 UTC or the owner's day reset",
+    "trading_now": false,
+    "authenticated": true,
+    "fee_precision_verified": true,
+    "fee_precision_usd": 0.0001,
+    "cash_usd": 25.1219,
+    "reserved_usd": 0,
+    "open_risk_usd": 0,
+    "open_cost_usd": 0,
+    "at_risk_usd": 0.0,
+    "open_orders": 0,
+    "positions": 0,
+    "total_halted": false,
+    "day_stop_latched": true,
+    "real_orders_available": false,
+    "integrity_error": null,
+    "pair_protection": {
+      "protected_windows": [],
+      "total_windows": 102
+    },
+    "integrity_reset": null,
+    "cleanup_pending": false,
+    "caps": {
+      "window_usd": 10.0,
+      "open_usd": 20.0,
+      "day_stop_usd": 6.0,
+      "clip": 5.0,
+      "total_stop_usd": 10.0
+    }
+  },
+  "counts": {
+    "today": {
+      "day": "2026-10-16",
+      "windows": 23,
+      "fills": 86,
+      "settled_windows": 24,
+      "fees_usd": 0.2797,
+      "locked_usd": 0.7515832167832175,
+      "directional_usd": -5.879283216783216,
+      "pnl_usd": -5.127699999999999,
+      "worst_usd": -2.8509,
+      "take_attempts": 0,
+      "take_fills": 0,
+      "maker_orders": 1124,
+      "maker_fills": 69,
+      "locks": 15,
+      "lock_fills": 13,
+      "take_fill_rate": null,
+      "maker_fill_rate": 0.06138790035587188,
+      "avg_latency_ms": 4637.066988095845,
+      "latency_definition": "durable real decision to venue fill timestamp; maker includes resting time"
+    },
+    "total": {
+      "day": null,
+      "windows": 203,
+      "fills": 912,
+      "latency": null,
+      "scorecard": null,
+      "settled_windows": 219,
+      "fees_usd": 3.39642,
+      "locked_usd": 4.431532337662325,
+      "directional_usd": -29.05103233766233,
+      "pnl_usd": -24.61950000000001,
+      "worst_usd": -2.9791999999999987,
+      "take_attempts": 39,
+      "take_fills": 17,
+      "maker_orders": 8125,
+      "maker_fills": 656,
+      "locks": 157,
+      "lock_fills": 124,
+      "take_fill_rate": 0.4358974358974359,
+      "maker_fill_rate": 0.08073846153846154,
+      "avg_latency_ms": 3919.943953179694,
+      "latency_definition": "durable real decision to venue fill timestamp; maker includes resting time"
+    }
+  },
+  "queue": {
+    "mode": "diagnostic",
+    "version": 1,
+    "session_id": "5d3b81b927f647c8884fac58c85736c1",
+    "enabled": true,
+    "in_flight": false,
+    "buffered": 0,
+    "max_buffered": 64,
+    "cadence_s": 1.0,
+    "counts": {
+      "no_candidate": 56
+    },
+    "last": null,
+    "registry_size": 0,
+    "registry_limit": 32,
+    "coverage": "new_owned_ordinary_rest_acks_only; no_history_or_recovered_order_backfill",
+    "publication": "next_existing_checkpoint",
+    "financial_authority": false,
+    "error": null
+  },
+  "epoch": {
+    "ordinal": 2,
+    "archive_count": 2,
+    "metadata_exact": true,
+    "full_bodies_verified": false
+  },
+  "controls": {
+    "speeddesk_live_resume": [
+      {
+        "outer": "2026-10-16T07:39:58.362595129Z",
+        "state": "ignored; this value was already used"
+      }
+    ],
+    "speeddesk_live_integrity_reset": [
+      {
+        "outer": "2026-10-16T07:39:58.362598429Z",
+        "state": "ignored; this value was already used"
+      }
+    ],
+    "speeddesk_live_day_reset": [
+      {
+        "outer": "2026-10-16T07:39:58.362601299Z",
+        "state": "ignored; this value was already used"
+      }
+    ]
+  },
+  "sources": {
+    "PRE_DEPLOY_STATUS_NATIVE.json": {
+      "sha256": "007c9bbb6e15cae12259871075d32ac78a4d8f8f433d18d77065a69426ae53b1",
+      "request": {
+        "projectId": "75750847-85c0-41a3-a2a7-b7f2201a51e9",
+        "deploymentId": "39d26485-3c73-4af7-b0e6-6a7e161636d2",
+        "startDate": "2026-10-16T07:31:00Z",
+        "endDate": "2026-10-16T07:35:00Z",
+        "filter": "\"nightcrawler.speeddesk: speeddesk_live_status\"",
+        "limit": 5,
+        "types": [
+          "deploy"
+        ]
+      },
+      "returned_rows": 3,
+      "matched_rows": 3,
+      "other": [],
+      "retrieved_before": {
+        "current_time": "2026-10-16 07:34:00 UTC"
+      },
+      "retrieved_after": {
+        "current_time": "2026-10-16 07:34:00 UTC"
+      },
+      "scope": "deployment",
+      "deployment_metadata": "39d26485-3c73-4af7-b0e6-6a7e161636d2"
+    },
+    "POST_DEPLOY_STATUS_WARM_NATIVE.json": {
+      "sha256": "0dd6ff22bf3144b0dfe8ce45b4bdefbace05e1c1c27630a644f39a6bbdbb3267",
+      "request": {
+        "projectId": "75750847-85c0-41a3-a2a7-b7f2201a51e9",
+        "deploymentId": "3e6e1589-0247-4eaa-b11c-e6117a72fa0b",
+        "startDate": "2026-10-16T07:40:00Z",
+        "endDate": "2026-10-16T07:41:28Z",
+        "filter": "\"nightcrawler.speeddesk: speeddesk_live_status\"",
+        "limit": 10,
+        "types": [
+          "deploy"
+        ]
+      },
+      "returned_rows": 2,
+      "matched_rows": 2,
+      "other": [],
+      "retrieved_before": {
+        "current_time": "2026-10-16 07:41:28 UTC"
+      },
+      "retrieved_after": {
+        "current_time": "2026-10-16 07:41:28 UTC"
+      },
+      "scope": "deployment",
+      "deployment_metadata": "3e6e1589-0247-4eaa-b11c-e6117a72fa0b"
+    },
+    "PRE_EPOCH_BROAD_NATIVE.json": {
+      "sha256": "b7334e59c90d6138e0978ca781913fe188eb8d60f4600b76c9c5d10483eb50f0",
+      "request": {
+        "projectId": "75750847-85c0-41a3-a2a7-b7f2201a51e9",
+        "deploymentId": "39d26485-3c73-4af7-b0e6-6a7e161636d2",
+        "startDate": "2026-10-16T06:54:00Z",
+        "endDate": "2026-10-16T07:30:00Z",
+        "filter": "kalshi_probability_epoch_status",
+        "limit": 5,
+        "types": [
+          "deploy"
+        ]
+      },
+      "returned_rows": 1,
+      "matched_rows": 1,
+      "other": [],
+      "retrieved_before": {
+        "current_time": "2026-10-16 07:28:02 UTC"
+      },
+      "retrieved_after": {
+        "current_time": "2026-10-16 07:28:04 UTC"
+      },
+      "scope": "deployment",
+      "deployment_metadata": "39d26485-3c73-4af7-b0e6-6a7e161636d2"
+    },
+    "POST_EPOCH_NATIVE.json": {
+      "sha256": "71f3c28f45b44c04981449c1e7b87565ed23947833457c1adb90790a34bffca9",
+      "request": {
+        "projectId": "75750847-85c0-41a3-a2a7-b7f2201a51e9",
+        "deploymentId": "3e6e1589-0247-4eaa-b11c-e6117a72fa0b",
+        "startDate": "2026-10-16T07:38:00Z",
+        "endDate": "2026-10-16T07:40:08Z",
+        "filter": "kalshi_probability_epoch_status",
+        "limit": 5,
+        "types": [
+          "deploy"
+        ]
+      },
+      "returned_rows": 1,
+      "matched_rows": 1,
+      "other": [],
+      "retrieved_before": {
+        "current_time": "2026-10-16 07:40:08 UTC"
+      },
+      "retrieved_after": {
+        "current_time": "2026-10-16 07:40:10 UTC"
+      },
+      "scope": "deployment",
+      "deployment_metadata": "3e6e1589-0247-4eaa-b11c-e6117a72fa0b"
+    },
+    "POST_RESUME_WARM_NATIVE.json": {
+      "sha256": "17087267fe085c2ac67ed9d0858f1d4dbbecf6d90cad9aadf73ec98ec5c447b6",
+      "request": {
+        "projectId": "75750847-85c0-41a3-a2a7-b7f2201a51e9",
+        "deploymentId": "3e6e1589-0247-4eaa-b11c-e6117a72fa0b",
+        "startDate": "2026-10-16T07:38:00Z",
+        "endDate": "2026-10-16T07:40:08Z",
+        "filter": "speeddesk_live_resume",
+        "limit": 5,
+        "types": [
+          "deploy"
+        ]
+      },
+      "returned_rows": 3,
+      "matched_rows": 1,
+      "other": [
+        {
+          "at": "2026-10-16T07:39:59.106465270Z",
+          "reason": "other header"
+        },
+        {
+          "at": "2026-10-16T07:40:05.121092789Z",
+          "reason": "other header"
+        }
+      ],
+      "retrieved_before": {
+        "current_time": "2026-10-16 07:40:08 UTC"
+      },
+      "retrieved_after": {
+        "current_time": "2026-10-16 07:40:10 UTC"
+      },
+      "scope": "deployment",
+      "deployment_metadata": "3e6e1589-0247-4eaa-b11c-e6117a72fa0b"
+    },
+    "POST_INTEGRITY_RESET_WARM_NATIVE.json": {
+      "sha256": "2c6de55831320d73a1fb29c253929b6432dc4ebbea16143602785ddb499bfe37",
+      "request": {
+        "projectId": "75750847-85c0-41a3-a2a7-b7f2201a51e9",
+        "deploymentId": "3e6e1589-0247-4eaa-b11c-e6117a72fa0b",
+        "startDate": "2026-10-16T07:38:00Z",
+        "endDate": "2026-10-16T07:40:08Z",
+        "filter": "speeddesk_live_integrity_reset",
+        "limit": 5,
+        "types": [
+          "deploy"
+        ]
+      },
+      "returned_rows": 3,
+      "matched_rows": 1,
+      "other": [
+        {
+          "at": "2026-10-16T07:39:59.106465270Z",
+          "reason": "other header"
+        },
+        {
+          "at": "2026-10-16T07:40:05.121092789Z",
+          "reason": "other header"
+        }
+      ],
+      "retrieved_before": {
+        "current_time": "2026-10-16 07:40:08 UTC"
+      },
+      "retrieved_after": {
+        "current_time": "2026-10-16 07:40:09 UTC"
+      },
+      "scope": "deployment",
+      "deployment_metadata": "3e6e1589-0247-4eaa-b11c-e6117a72fa0b"
+    },
+    "POST_DAY_RESET_WARM_NATIVE.json": {
+      "sha256": "d64eaeea57dff7f2b06c2f1eefae610ae050ed44d4554ed6d0ace2939ba5c2ab",
+      "request": {
+        "projectId": "75750847-85c0-41a3-a2a7-b7f2201a51e9",
+        "deploymentId": "3e6e1589-0247-4eaa-b11c-e6117a72fa0b",
+        "startDate": "2026-10-16T07:38:00Z",
+        "endDate": "2026-10-16T07:40:08Z",
+        "filter": "speeddesk_live_day_reset",
+        "limit": 5,
+        "types": [
+          "deploy"
+        ]
+      },
+      "returned_rows": 3,
+      "matched_rows": 1,
+      "other": [
+        {
+          "at": "2026-10-16T07:39:59.106465270Z",
+          "reason": "other header"
+        },
+        {
+          "at": "2026-10-16T07:40:05.121092789Z",
+          "reason": "other header"
+        }
+      ],
+      "retrieved_before": {
+        "current_time": "2026-10-16 07:40:08 UTC"
+      },
+      "retrieved_after": {
+        "current_time": "2026-10-16 07:40:10 UTC"
+      },
+      "scope": "deployment",
+      "deployment_metadata": "3e6e1589-0247-4eaa-b11c-e6117a72fa0b"
+    }
+  },
+  "limits": [
+    "Selected original returned snapshots and control receipts only; no ledger/full-body retention or continuous interval certificate.",
+    "Query limits and returned rows retained; no claim of completeness from less than platform maximum.",
+    "Queue started zero: no populated queue or request execution coverage.",
+    "Pending pre-restart forecast body scoring not checked here.",
+    "Native deployment metadata alone does not bind every row to source; exact deployment/source binding is root release evidence."
+  ]
+}

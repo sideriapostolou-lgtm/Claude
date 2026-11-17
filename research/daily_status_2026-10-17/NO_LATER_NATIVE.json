@@ -1,0 +1,21 @@
+{
+  "request": {
+    "projectId": "75750847-85c0-41a3-a2a7-b7f2201a51e9",
+    "deploymentId": "43f14443-2d07-4985-b879-3a2515fb8d2c",
+    "startDate": "2026-10-17T09:00:00Z",
+    "endDate": "2026-10-17T15:18:00Z",
+    "filter": "speeddesk_live_status",
+    "limit": 100,
+    "types": [
+      "deploy"
+    ]
+  },
+  "response": {
+    "scope": "deployment",
+    "deploymentId": "43f14443-2d07-4985-b879-3a2515fb8d2c",
+    "serviceId": "f84d3b52-002f-44cb-931e-bc9e3e097e97",
+    "environmentId": "17f7b0e0-104c-4903-9484-0106748b3cdb",
+    "status": "SUCCESS",
+    "deploy": []
+  }
+}

@@ -1,0 +1,180 @@
+{
+  "verdict": "Qualified independent acceptance of exact source/test patch for integration, subject to root full checks and deployment/runtime verification; no blocking code finding",
+  "patch_sha256": "475dc5aa1177815292b91d16bebb2a093692b1e38b0169578ed66fb3ac040b78",
+  "source_sha256": "eb9146263a881ba2ef6645c03585ca78c7bc0e1d9f03cb5177028d483e403ef4",
+  "test_sha256": "3eb15e8f138cbe47ef99b5b6fa76ac6ce6db4751bcba7e76b1d0d5585e13ca30",
+  "independent_tests": {
+    "command": "PYTHONPATH=src:tests /workspace/shared/nightcrawler-venv/bin/python -m pytest -q tests/test_speeddesk_checkpoint_settlements.py tests/test_speeddesk_runtime.py tests/test_speeddesk_practice_sync.py tests/test_speeddesk_atomic_json.py tests/test_speeddesk_history_hotpath.py tests/test_speeddesk_scorecard.py tests/test_speeddesk_scorecard_grouping.py tests/test_speeddesk_scorecard_grouping_independent.py tests/test_speeddesk_live_mirror.py tests/test_speeddesk_live_saves.py tests/test_kalshi_probability_epochs.py tests/test_kalshi_probability_learning.py",
+    "cwd": "/workspace/nightcrawler-practice-checkpoint",
+    "passed": 268,
+    "failed": 0,
+    "elapsed_s": 5.13,
+    "exit_code": 0
+  },
+  "matrix_checks": {
+    "checks": {
+      "zero": {
+        "wall_medians_ms": {
+          "baseline": 1.752094,
+          "candidate": 1.84051
+        },
+        "percent_change": 5.046304593246709,
+        "full_byte_pairs_verified": 9
+      },
+      "one": {
+        "wall_medians_ms": {
+          "baseline": 1.942091,
+          "candidate": 1.835621
+        },
+        "percent_change": -5.482235384438738,
+        "full_byte_pairs_verified": 9
+      },
+      "1day": {
+        "wall_medians_ms": {
+          "baseline": 4.730555,
+          "candidate": 4.711168
+        },
+        "percent_change": -0.4098250628097544,
+        "full_byte_pairs_verified": 9
+      },
+      "fixed7days": {
+        "wall_medians_ms": {
+          "baseline": 10.267955,
+          "candidate": 9.418969
+        },
+        "percent_change": -8.26830659074762,
+        "full_byte_pairs_verified": 9
+      },
+      "7days": {
+        "wall_medians_ms": {
+          "baseline": 49.416842,
+          "candidate": 42.245809
+        },
+        "percent_change": -14.511313774360568,
+        "full_byte_pairs_verified": 9
+      },
+      "31days": {
+        "wall_medians_ms": {
+          "baseline": 618.279938,
+          "candidate": 502.983763
+        },
+        "percent_change": -18.647891984488098,
+        "full_byte_pairs_verified": 9
+      },
+      "older35days": {
+        "wall_medians_ms": {
+          "baseline": 261.091925,
+          "candidate": 212.406919
+        },
+        "percent_change": -18.646691581901663,
+        "full_byte_pairs_verified": 9
+      }
+    },
+    "zero_extension": {
+      "wall_ms": {
+        "paired_median_ratio": 0.9873702734231427,
+        "pairs_gt_1_05": 2,
+        "pooled_p95_ms": {
+          "baseline": 2.093165,
+          "candidate": 2.348005
+        },
+        "pooled_p95_growth_percent": 12.174864380017825
+      },
+      "thread_cpu_ms": {
+        "paired_median_ratio": 0.9909062182932835,
+        "pairs_gt_1_05": 2,
+        "pooled_p95_ms": {
+          "baseline": 2.07748,
+          "candidate": 2.338047
+        },
+        "pooled_p95_growth_percent": 12.542455282361331
+      }
+    },
+    "raw_children_verified": 78,
+    "full_output_byte_pairs": 72,
+    "input_claim": "Input sizes equal and fixture code shared; raw pre-checkpoint input hashes not recorded. First/correction/steady persisted full bytes equal.",
+    "source_test_hashes": {
+      "src/nightcrawler/speeddesk.py": "eb9146263a881ba2ef6645c03585ca78c7bc0e1d9f03cb5177028d483e403ef4",
+      "tests/test_speeddesk_checkpoint_settlements.py": "3eb15e8f138cbe47ef99b5b6fa76ac6ce6db4751bcba7e76b1d0d5585e13ca30"
+    },
+    "limits": {
+      "main_max_elapsed_s": 10.822223800991196,
+      "main_max_sampled_RSS_kib": 81356,
+      "main_max_sampled_disk_bytes": 15345281,
+      "extension_max_elapsed_s": 0.4708428500016453,
+      "extension_max_sampled_RSS_kib": 50460,
+      "extension_max_sampled_disk_bytes": 7126740
+    }
+  },
+  "initial_zero_gate": "FAILED retained, not relabeled pass; 2/3 paired process ratios >5%, pooled median +5.0463%",
+  "zero_extension_interpretation": "One preregistered order-balanced 20-child extension primary paired-median gate passes; no repeatable >5% central checkpoint slowdown shown across larger sample. 2/10 adverse pairs and worse pooled p95 remain disclosed; no no-tail-regression claim.",
+  "memory": "31day traced peak7970917\u21929490613 bytes +19.1%; observed fullprocessRSS lower. Original10%gate is RSS, not traced allocations; extra allocation is real and disclosed.",
+  "evidence_hashes": {
+    "candidate/matrix_manifest.json": "9ce8d1dd2bd2b3304bcdb44d0ad786aafafff39775f5acae8dc596f62ec565f9",
+    "candidate/SUMMARY.json": "7d56c31d8bd0d68ee942d454677b5749deb477ed2bf162d69fa5e366f0a571ab",
+    "candidate/ZERO_EXTENSION_PLAN.json": "26e421ff7927d87f74fb274f5918c872d77c82ca9db9e7b4452566ce4bf36e86",
+    "candidate/ZERO_EXTENSION_MANIFEST.json": "70642bdf383aa64d8f41790c5aa6313cc24560905f915265a18761b94fafa062",
+    "candidate/ZERO_EXTENSION_SUMMARY.json": "e127e5eebe74a5ec34e2bfcabd4abb765b3def330991ff06deddf6fec87b463b",
+    "candidate/COMPLETE.patch": "475dc5aa1177815292b91d16bebb2a093692b1e38b0169578ed66fb3ac040b78",
+    "candidate/ASTRA_INDEPENDENT_MATRIX_CALC.json": "95b4754b8614f8456c80b34e6ecbf501f7ca8b1fea651615619f53cc1ee24f40"
+  },
+  "pending": [
+    "Root full pytest/mypy/Ruff/secret scan and exact sourcefreeze recheck",
+    "Actual latest old-source epoch/history preservation before release",
+    "Exact deployment and restart/history/runtime performance evidence"
+  ],
+  "not_claimed": [
+    "Every original regression gate passed",
+    "Every latency percentile improved",
+    "Reduced production feed delays",
+    "Improved accuracy, profitability or permission to resume trading"
+  ],
+  "reviewer_source_edits": false,
+  "reviewer_production_calls": false,
+  "extra_benchmark_reruns": false,
+  "all_main_tail_comparisons": {
+    "zero": {
+      "baseline_wall_p95_ms": 2.190869,
+      "candidate_wall_p95_ms": 2.430811,
+      "wall_percent_change": 10.95190994988744,
+      "cpu_percent_change": 15.449213765601243
+    },
+    "one": {
+      "baseline_wall_p95_ms": 2.108384,
+      "candidate_wall_p95_ms": 2.230824,
+      "wall_percent_change": 5.807291271419257,
+      "cpu_percent_change": 5.729899067516175
+    },
+    "1day": {
+      "baseline_wall_p95_ms": 6.457942,
+      "candidate_wall_p95_ms": 6.707691,
+      "wall_percent_change": 3.867315624698997,
+      "cpu_percent_change": 3.655489748158769
+    },
+    "fixed7days": {
+      "baseline_wall_p95_ms": 12.362925,
+      "candidate_wall_p95_ms": 9.957231,
+      "wall_percent_change": -19.45893872202573,
+      "cpu_percent_change": -19.183880399254637
+    },
+    "7days": {
+      "baseline_wall_p95_ms": 50.882647,
+      "candidate_wall_p95_ms": 62.7624,
+      "wall_percent_change": 23.347356516259854,
+      "cpu_percent_change": 23.30933460397182
+    },
+    "31days": {
+      "baseline_wall_p95_ms": 664.684968,
+      "candidate_wall_p95_ms": 555.656841,
+      "wall_percent_change": -16.402977688522068,
+      "cpu_percent_change": -16.401024556284195
+    },
+    "older35days": {
+      "baseline_wall_p95_ms": 280.662388,
+      "candidate_wall_p95_ms": 225.58522,
+      "wall_percent_change": -19.62399322277555,
+      "cpu_percent_change": -19.63770161602977
+    }
+  },
+  "actual_practice_size": "unknown; separate real195settlement count must not be substituted"
+}

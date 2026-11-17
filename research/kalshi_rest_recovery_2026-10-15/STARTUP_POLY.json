@@ -1,0 +1,34 @@
+{
+  "original_file_sha256": "3f13ef7f0a60ad9db31067af1220574b72b699bad0091ed0e918a3154f83e219",
+  "original_file_bytes": 1577,
+  "request": {
+    "projectId": "75750847-85c0-41a3-a2a7-b7f2201a51e9",
+    "deploymentId": "1c01ffe7-e231-40c6-a026-ac63fec01227",
+    "startDate": "2026-10-15T20:47:20Z",
+    "endDate": "2026-10-15T20:49:44Z",
+    "filter": "polydesk_started",
+    "limit": 8
+  },
+  "before": {
+    "current_time": "2026-10-15 20:49:44 UTC"
+  },
+  "after": {
+    "current_time": "2026-10-15 20:49:45 UTC"
+  },
+  "native_result_count": 1,
+  "limit": 8,
+  "original_rows": [
+    {
+      "timestamp": "2026-10-15T20:49:01.558010540Z",
+      "severity": "info",
+      "message": "2026-10-15T20:49:00Z INFO nightcrawler.polydesk: polydesk_started theta=0.97 hours=1 ticket_usd=20 poll_s=90 (LIVE: 10 contract(s) per order)",
+      "attributes": [
+        {
+          "key": "level",
+          "value": "\"info\""
+        }
+      ]
+    }
+  ],
+  "excluded_nested_or_other_events": []
+}

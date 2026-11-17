@@ -1,0 +1,405 @@
+{
+ "hypothesis": "X6",
+ "version": "x6-v1",
+ "stage": "debug",
+ "split": "final_train",
+ "utc": "2026-10-09 03:32:20",
+ "provisional": false,
+ "debug_only": true,
+ "prereg_sha256": "6f28eb52bb607e1f31a5bdacb78c97ca88a71e0c0a57434e8c933f239530d7ef",
+ "rerun_reason": null,
+ "coverage": {
+  "split": "final_train",
+  "bounds_utc": [
+   "2026-10-07 19:37:30",
+   "2026-10-08 08:06:47"
+  ],
+  "debug_only": true,
+  "graduates_in_split": 644,
+  "tradeable": 450,
+  "usable": 450,
+  "excluded": {
+   "mayhem": 129,
+   "not_sol_quoted": 65
+  },
+  "created_inexact": 0,
+  "has_create0": 44,
+  "chain_hours_scanned_frac": 1.0,
+  "days": [
+   {
+    "day": "2026-10-07",
+    "hours_in_split": 5,
+    "curve_hours": 5,
+    "b2_hours": 5,
+    "b2_hours_midrun": 0,
+    "coins_created": 294,
+    "tradeable": 196,
+    "usable": 196,
+    "usable_frac": 1.0,
+    "partial": false
+   },
+   {
+    "day": "2026-10-08",
+    "hours_in_split": 9,
+    "curve_hours": 9,
+    "b2_hours": 9,
+    "b2_hours_midrun": 0,
+    "coins_created": 350,
+    "tradeable": 254,
+    "usable": 254,
+    "usable_frac": 1.0,
+    "partial": false
+   }
+  ],
+  "days_expected": 0.52,
+  "days_full": 2,
+  "curve_span_utc": [
+   "2026-10-01 21:00:00",
+   "2026-10-09 00:00:00"
+  ],
+  "b2_span_utc": [
+   "2026-10-07 19:00:00",
+   "2026-10-08 19:00:00"
+  ],
+  "completeness_source": "raw_chunks",
+  "parquet_snapshot_utc": "2026-10-09 02:53:25",
+  "b2_hours_needed": 24,
+  "b2_hours_done": 24,
+  "b2_hours_midrun": [],
+  "sol_usd": {
+   "series_utc": [
+    "2026-09-15 00:00:00",
+    "2026-10-08 23:59:00"
+   ],
+   "constant_fallback": false,
+   "lookahead_coins": 0,
+   "stale_coins": 0
+  },
+  "power": {
+   "entry_bar_coins": {
+    "need": 40,
+    "have_usable_coins": 450,
+    "ok": true
+   },
+   "x1_r0_trades_5_seeds": {
+    "need": 200,
+    "max_possible": 2250,
+    "ok": true
+   },
+   "g1_flagged_coins_val": {
+    "need": 200,
+    "max_possible": 450,
+    "ok": true
+   }
+  },
+  "underpowered": false,
+  "complete": true,
+  "notes": [],
+  "from_flow": true
+ },
+ "n_coins": 450,
+ "span_days": 0.5203240740740741,
+ "separation": {
+  "n_obs": 171,
+  "n_coins": 96,
+  "need": {
+   "coins_per_group": 30,
+   "diff": 0.05,
+   "horizon_bars": 30
+  },
+  "per_K": {
+   "5": {
+    "n": 96,
+    "n_TAKEOVER": 6,
+    "n_REPLACE": 5,
+    "n_DIES": 38,
+    "n_MIDDLE": 52,
+    "n_momentum": 30
+   },
+   "10": {
+    "n": 75,
+    "n_TAKEOVER": 4,
+    "n_REPLACE": 4,
+    "n_DIES": 31,
+    "n_MIDDLE": 40,
+    "n_momentum": 31
+   }
+  },
+  "passed": [],
+  "decision": "HIDDEN (debug split: no outcome statistics)",
+  "trial": {
+   "config": "X6-sep|c1c758fe52ab",
+   "new_trial": false,
+   "n_trials_total": 2575,
+   "hypothesis_configs": 0,
+   "over_variant_limit": false,
+   "family_val_looks": 0
+  }
+ },
+ "event_counts": {
+  "coins": 450,
+  "universe_funnel": {
+   "instant": 277,
+   "in_universe": 173
+  },
+  "j_b_bar": {
+   "5": 155,
+   "6": 290,
+   "7": 5
+  },
+  "baseline_bars": {
+   "3": 40,
+   "4": 128,
+   "5": 5
+  },
+  "boost_nonagent_buy_sol_per_min": {
+   "p10": 1.094615095833333,
+   "p25": 8.3937466125,
+   "p50": 23.9515142725,
+   "p75": 61.56153474749999,
+   "p90": 136.19305466540015
+  },
+  "boost_nonagent_buyers_per_min": {
+   "p10": 4.0,
+   "p25": 19.25,
+   "p50": 62.5,
+   "p75": 152.0,
+   "p90": 224.2000000000001
+  },
+  "per_K": {
+   "5": {
+    "decisions": 173,
+    "alive": 96,
+    "TAKEOVER_CONSTANT": 6,
+    "TAKEOVER_REPLACE": 5,
+    "DIES": 38,
+    "MIDDLE": 52,
+    "momentum": 30,
+    "past_age_max": 0,
+    "conds": {
+     "rate_CONSTANT": 21,
+     "rate_REPLACE": 16,
+     "size": 126,
+     "absorb": 41,
+     "breadth": 22,
+     "dispersed": 99,
+     "alive": 96
+    },
+    "decision_age_min": {
+     "p10": 11.166666666666666,
+     "p50": 11.6,
+     "p90": 12.08
+    },
+    "ratio_r_P_over_r_org_B": {
+     "p10": 0.20008535124485757,
+     "p25": 0.36309344050432085,
+     "p50": 0.6048709793298461,
+     "p75": 0.8698955994107704,
+     "p90": 1.4861128310457214
+    }
+   },
+   "10": {
+    "decisions": 173,
+    "alive": 75,
+    "TAKEOVER_CONSTANT": 4,
+    "TAKEOVER_REPLACE": 4,
+    "DIES": 31,
+    "MIDDLE": 40,
+    "momentum": 31,
+    "past_age_max": 0,
+    "conds": {
+     "rate_CONSTANT": 13,
+     "rate_REPLACE": 8,
+     "size": 122,
+     "absorb": 41,
+     "breadth": 19,
+     "dispersed": 116,
+     "alive": 75
+    },
+    "decision_age_min": {
+     "p10": 16.166666666666668,
+     "p50": 16.6,
+     "p90": 17.08
+    },
+    "ratio_r_P_over_r_org_B": {
+     "p10": 0.1615702722631397,
+     "p25": 0.3021066580555457,
+     "p50": 0.567281532390568,
+     "p75": 0.866265414341544,
+     "p90": 1.3908416518127107
+    }
+   }
+  }
+ },
+ "configs": {
+  "K5|hold30": {
+   "config": "K5|hold30",
+   "params_hash": "74de9b84483c",
+   "hypothesis": "X6",
+   "n": 6,
+   "n_coins": 6,
+   "decision_age_min": {
+    "p10": 11.341666666666667,
+    "p50": 11.833333333333334,
+    "p90": 11.983333333333334
+   },
+   "decision_ratio": {
+    "p10": 1.0779749337267686,
+    "p50": 1.2381294403521577,
+    "p90": 1.8748566783160405
+   },
+   "decision_nb_P": {
+    "p10": 48.1,
+    "p50": 157.4,
+    "p90": 262.2
+   },
+   "decision_r_P": {
+    "p10": 32.02043315,
+    "p50": 83.19429179999999,
+    "p90": 282.967368
+   },
+   "n_placebo": 120,
+   "n_controls": {
+    "momentum": 113,
+    "unmatched": 120
+   },
+   "horizon_exits": 0,
+   "trial": {
+    "config": "X6|74de9b84483c|cfg:a06543feac6c",
+    "new_trial": false,
+    "n_trials_total": 2575
+   },
+   "returns": "hidden on the debug split (never choose parameters on FINAL data)"
+  },
+  "K5|fade60": {
+   "config": "K5|fade60",
+   "params_hash": "3c55d93e31a2",
+   "hypothesis": "X6",
+   "n": 6,
+   "n_coins": 6,
+   "decision_age_min": {
+    "p10": 11.341666666666667,
+    "p50": 11.833333333333334,
+    "p90": 11.983333333333334
+   },
+   "decision_ratio": {
+    "p10": 1.0779749337267686,
+    "p50": 1.2381294403521577,
+    "p90": 1.8748566783160405
+   },
+   "decision_nb_P": {
+    "p10": 48.1,
+    "p50": 157.4,
+    "p90": 262.2
+   },
+   "decision_r_P": {
+    "p10": 32.02043315,
+    "p50": 83.19429179999999,
+    "p90": 282.967368
+   },
+   "n_placebo": 120,
+   "n_controls": {
+    "momentum": 113,
+    "unmatched": 120
+   },
+   "horizon_exits": 0,
+   "trial": {
+    "config": "X6|3c55d93e31a2|cfg:a06543feac6c",
+    "new_trial": false,
+    "n_trials_total": 2575
+   },
+   "returns": "hidden on the debug split (never choose parameters on FINAL data)"
+  },
+  "K10|hold30": {
+   "config": "K10|hold30",
+   "params_hash": "e54fc120a251",
+   "hypothesis": "X6",
+   "n": 4,
+   "n_coins": 4,
+   "decision_age_min": {
+    "p10": 16.436666666666667,
+    "p50": 16.708333333333336,
+    "p90": 17.003333333333334
+   },
+   "decision_ratio": {
+    "p10": 1.2767527221631545,
+    "p50": 1.6596478212049992,
+    "p90": 9.374523479562088
+   },
+   "decision_nb_P": {
+    "p10": 56.30000000000001,
+    "p50": 197.85,
+    "p90": 231.32000000000002
+   },
+   "decision_r_P": {
+    "p10": 40.644090259,
+    "p50": 163.7680934,
+    "p90": 360.41325199000005
+   },
+   "n_placebo": 80,
+   "n_controls": {
+    "momentum": 65,
+    "unmatched": 80
+   },
+   "horizon_exits": 0,
+   "trial": {
+    "config": "X6|e54fc120a251|cfg:a06543feac6c",
+    "new_trial": false,
+    "n_trials_total": 2575
+   },
+   "returns": "hidden on the debug split (never choose parameters on FINAL data)"
+  },
+  "K10|fade60": {
+   "config": "K10|fade60",
+   "params_hash": "9d3cef64fd5e",
+   "hypothesis": "X6",
+   "n": 4,
+   "n_coins": 4,
+   "decision_age_min": {
+    "p10": 16.436666666666667,
+    "p50": 16.708333333333336,
+    "p90": 17.003333333333334
+   },
+   "decision_ratio": {
+    "p10": 1.2767527221631545,
+    "p50": 1.6596478212049992,
+    "p90": 9.374523479562088
+   },
+   "decision_nb_P": {
+    "p10": 56.30000000000001,
+    "p50": 197.85,
+    "p90": 231.32000000000002
+   },
+   "decision_r_P": {
+    "p10": 40.644090259,
+    "p50": 163.7680934,
+    "p90": 360.41325199000005
+   },
+   "n_placebo": 80,
+   "n_controls": {
+    "momentum": 65,
+    "unmatched": 80
+   },
+   "horizon_exits": 0,
+   "trial": {
+    "config": "X6|9d3cef64fd5e|cfg:a06543feac6c",
+    "new_trial": false,
+    "n_trials_total": 2575
+   },
+   "returns": "hidden on the debug split (never choose parameters on FINAL data)"
+  }
+ },
+ "n_trials_total": 2575,
+ "entries_per_day": {
+  "K5|hold30": 11.531275024468368,
+  "K5|fade60": 11.531275024468368,
+  "K10|hold30": 7.687516682978912,
+  "K10|fade60": 7.687516682978912
+ },
+ "decision": {
+  "verdict": "DEBUG",
+  "note": "mechanics and counts only; returns hidden"
+ },
+ "runtime_s": 6.2,
+ "overall": "PENDING (no official TRAIN run)"
+}

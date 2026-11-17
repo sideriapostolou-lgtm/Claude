@@ -1,0 +1,88 @@
+{
+  "observed_at_utc": "2026-10-19 00:19:08 UTC",
+  "log_request": {
+    "deploymentId": "43f14443-2d07-4985-b879-3a2515fb8d2c",
+    "startDate": "2026-10-18T23:55:00Z",
+    "endDate": "2026-10-19T00:18:45Z",
+    "filter": "\"speeddesk_live_status\" OR \"polydesk_started\" OR \"companion_halted\" OR \"No space left\"",
+    "limit": 100
+  },
+  "status": {
+    "content": [
+      {
+        "type": "text",
+        "text": "Environment **production** (17f7b0e0-104c-4903-9484-0106748b3cdb): 1 services, 0 with issues, 0 recent failures.\n- **bot**: Online\n\nPending work (1) — not live yet:\n- patch:9a84e13c-3caf-4a85-b5f5-d9a2fcb8a021 [staged] 0 changes, started 2026-10-12T16:21:53.480Z · workflow commitChanges/17f7b0e0-104c-4903-9484-0106748b3cdb/9a84e13c-3caf-4a85-b5f5-d9a2fcb8a021"
+      }
+    ],
+    "structuredContent": {
+      "environment": {
+        "id": "17f7b0e0-104c-4903-9484-0106748b3cdb",
+        "name": "production"
+      },
+      "services": [
+        {
+          "serviceId": "f84d3b52-002f-44cb-931e-bc9e3e097e97",
+          "serviceName": "bot",
+          "state": "online",
+          "statusText": "Online",
+          "activeDeployments": [
+            {
+              "id": "43f14443-2d07-4985-b879-3a2515fb8d2c",
+              "status": "SUCCESS",
+              "createdAt": "2026-10-16T23:49:24.905Z",
+              "statusUpdatedAt": "2026-10-16T23:50:35.236Z"
+            }
+          ],
+          "replicaStatus": {
+            "running": 1,
+            "crashed": 0,
+            "total": 1
+          },
+          "cronJob": null,
+          "issues": {
+            "warningCount": 0,
+            "criticalCount": 0
+          },
+          "recentFailures": 0,
+          "recentFailedDeployments": [],
+          "hasIssues": false,
+          "isCronJob": false,
+          "hasVolume": true
+        }
+      ],
+      "pendingWork": [
+        {
+          "id": "patch:9a84e13c-3caf-4a85-b5f5-d9a2fcb8a021",
+          "kind": "EnvironmentPatch",
+          "status": "staged",
+          "changes": [],
+          "startedAt": "2026-10-12T16:21:53.480Z",
+          "workflowId": "commitChanges/17f7b0e0-104c-4903-9484-0106748b3cdb/9a84e13c-3caf-4a85-b5f5-d9a2fcb8a021"
+        }
+      ],
+      "summary": {
+        "totalServices": 1,
+        "servicesWithIssues": 0,
+        "totalFailures": 0
+      }
+    },
+    "isError": false
+  },
+  "logs": {
+    "content": [
+      {
+        "type": "text",
+        "text": "**Deployment 43f14443-2d07-4985-b879-3a2515fb8d2c** [SUCCESS]\nservice: f84d3b52-002f-44cb-931e-bc9e3e097e97, env: 17f7b0e0-104c-4903-9484-0106748b3cdb\n\n### Deploy logs (0)\n(no deploy logs in range)"
+      }
+    ],
+    "structuredContent": {
+      "scope": "deployment",
+      "deploymentId": "43f14443-2d07-4985-b879-3a2515fb8d2c",
+      "serviceId": "f84d3b52-002f-44cb-931e-bc9e3e097e97",
+      "environmentId": "17f7b0e0-104c-4903-9484-0106748b3cdb",
+      "status": "SUCCESS",
+      "deploy": []
+    },
+    "isError": false
+  }
+}

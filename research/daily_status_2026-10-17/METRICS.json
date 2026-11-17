@@ -1,0 +1,77 @@
+{
+  "request_window_hours": 1,
+  "observed_during_inspection_started_at_utc": "2026-10-17T15:16:02Z",
+  "exact_sample_timestamps": "not supplied by tool",
+  "bot": {
+    "service": {
+      "id": "f84d3b52-002f-44cb-931e-bc9e3e097e97",
+      "name": "bot"
+    },
+    "environment": {
+      "id": "17f7b0e0-104c-4903-9484-0106748b3cdb",
+      "name": "production"
+    },
+    "metrics": [
+      {
+        "measurement": "DISK_USAGE_GB",
+        "current": 5.011144704,
+        "average": 5.009627035278689,
+        "min": 5.007982592,
+        "max": 5.011144704,
+        "sampleCount": 61
+      },
+      {
+        "measurement": "MEMORY_USAGE_GB",
+        "current": 4.552237056,
+        "average": 4.671668022557377,
+        "min": 4.552122368,
+        "max": 4.714950656,
+        "sampleCount": 61
+      },
+      {
+        "measurement": "MEMORY_LIMIT_GB",
+        "current": 8,
+        "average": 8,
+        "min": 8,
+        "max": 8,
+        "sampleCount": 61
+      }
+    ]
+  },
+  "recorder": {
+    "service": {
+      "id": "736b1c8a-8311-4ee0-9043-d05f508cd821",
+      "name": "kalshi-recorder"
+    },
+    "environment": {
+      "id": "17f7b0e0-104c-4903-9484-0106748b3cdb",
+      "name": "production"
+    },
+    "metrics": [
+      {
+        "measurement": "DISK_USAGE_GB",
+        "current": 1.323114496,
+        "average": 1.316599304393443,
+        "min": 1.310769152,
+        "max": 1.323114496,
+        "sampleCount": 61
+      },
+      {
+        "measurement": "MEMORY_USAGE_GB",
+        "current": 0.999727104,
+        "average": 0.999777061770492,
+        "min": 0.999411712,
+        "max": 0.99999744,
+        "sampleCount": 61
+      },
+      {
+        "measurement": "MEMORY_LIMIT_GB",
+        "current": 0.99999744,
+        "average": 0.9999974400000009,
+        "min": 0.99999744,
+        "max": 0.99999744,
+        "sampleCount": 61
+      }
+    ]
+  }
+}

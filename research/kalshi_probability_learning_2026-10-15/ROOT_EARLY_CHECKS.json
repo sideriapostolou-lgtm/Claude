@@ -1,0 +1,23 @@
+{
+  "recorded_at_utc": "2026-10-15T18:59:08.264863+00:00",
+  "status": "Interim checks on source still under implementation; not release acceptance.",
+  "attempts": [
+    {
+      "command": "pytest -q tests/test_kalshi_probability_learning_page.py tests/test_kalshi_online_learning_page.py tests/test_kalshi_arena_page.py",
+      "result": "First:67passed/1existingpanelcontractassertionfailed because producer now adds separate optional learning_probability key. Expectedfieldcontract updated explicitly, othermoney/fixturefields retained.",
+      "exit_code": 1
+    },
+    {
+      "command": "PYTHONPATH=src pytest -q same3files",
+      "result": "68passed in1.16s after optionalfieldassertion update; further oneV2exclusiontest added afterward, requires finalrerun.",
+      "exit_code": 0
+    },
+    {
+      "command": "ruff check pagestate.py and3page-related files",
+      "result": "All checks passed on root interim changes.",
+      "exit_code": 0
+    }
+  ],
+  "source_interpreter": "/workspace/shared/nightcrawler-venv/bin/python; explicit PYTHONPATH=src resolved imports to the newworktree.",
+  "limitations": "No full-suite/deployment/profit claim; constructor/rawfirstseq/afterforecastannotations under review."
+}

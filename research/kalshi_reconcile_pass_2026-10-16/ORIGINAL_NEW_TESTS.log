@@ -1,0 +1,70 @@
+FF........                                                               [100%]
+=================================== FAILURES ===================================
+_ test_finalized_history_has_bounded_active_queries_even_during_integrity_fallback[False] _
+
+tmp_path = PosixPath('/workspace/private-handoffs/claude-2026-10-15/profit-next-2026-10-16/sol/original-tmp/test_finalized_history_has_bou0')
+integrity = False
+
+    @pytest.mark.parametrize('integrity', [False, True])
+    def test_finalized_history_has_bounded_active_queries_even_during_integrity_fallback(tmp_path: Path, integrity):
+        desk, account, _clock = make_desk(tmp_path)
+        try:
+            asyncio.run(desk.step())
+            add_history(desk, account, 7)
+            desk.final_outcomes.update({key: row.up_wins for key,row in desk.book.settled.items()})
+            if integrity:
+                # Existing history fallback fixture: a settled record has reopened under an integrity stop.
+                old = next(key for key in desk.intents if key.startswith('nc-speed-old'))
+                desk.intents[old].terminal = False
+                desk.book.integrity_error = 'fill_after_terminal_confirmation'
+            original, calls = desk._active, []
+            def counted():
+                calls.append(1)
+                return original()
+            desk._active = counted
+            before = (desk.book.realized_pnl, dict(desk.book.day_pnl), dict(desk.book.fills),
+                      desk.book.integrity_error, list(account.creates))
+            reconcile(desk)
+            assert not desk.last_sync_report['checks']
+>           assert len(calls) <= 16  # baseline rebuilt membership once for each of672 finalized windows
+            ^^^^^^^^^^^^^^^^^^^^^^^
+E           assert 680 <= 16
+E            +  where 680 = len([1, 1, 1, 1, 1, 1, ...])
+
+tests/test_speeddesk_live_settlement_pass.py:82: AssertionError
+_ test_finalized_history_has_bounded_active_queries_even_during_integrity_fallback[True] _
+
+tmp_path = PosixPath('/workspace/private-handoffs/claude-2026-10-15/profit-next-2026-10-16/sol/original-tmp/test_finalized_history_has_bou1')
+integrity = True
+
+    @pytest.mark.parametrize('integrity', [False, True])
+    def test_finalized_history_has_bounded_active_queries_even_during_integrity_fallback(tmp_path: Path, integrity):
+        desk, account, _clock = make_desk(tmp_path)
+        try:
+            asyncio.run(desk.step())
+            add_history(desk, account, 7)
+            desk.final_outcomes.update({key: row.up_wins for key,row in desk.book.settled.items()})
+            if integrity:
+                # Existing history fallback fixture: a settled record has reopened under an integrity stop.
+                old = next(key for key in desk.intents if key.startswith('nc-speed-old'))
+                desk.intents[old].terminal = False
+                desk.book.integrity_error = 'fill_after_terminal_confirmation'
+            original, calls = desk._active, []
+            def counted():
+                calls.append(1)
+                return original()
+            desk._active = counted
+            before = (desk.book.realized_pnl, dict(desk.book.day_pnl), dict(desk.book.fills),
+                      desk.book.integrity_error, list(account.creates))
+            reconcile(desk)
+            assert not desk.last_sync_report['checks']
+>           assert len(calls) <= 16  # baseline rebuilt membership once for each of672 finalized windows
+            ^^^^^^^^^^^^^^^^^^^^^^^
+E           assert 679 <= 16
+E            +  where 679 = len([1, 1, 1, 1, 1, 1, ...])
+
+tests/test_speeddesk_live_settlement_pass.py:82: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_speeddesk_live_settlement_pass.py::test_finalized_history_has_bounded_active_queries_even_during_integrity_fallback[False]
+FAILED tests/test_speeddesk_live_settlement_pass.py::test_finalized_history_has_bounded_active_queries_even_during_integrity_fallback[True]
+2 failed, 8 passed in 0.99s

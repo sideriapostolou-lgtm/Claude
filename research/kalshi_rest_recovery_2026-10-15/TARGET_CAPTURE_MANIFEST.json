@@ -1,0 +1,131 @@
+{
+  "bounds": "fixed21:00\u201321:17UTC",
+  "source": "b7b7192e5d463e57417d05acb3b168744941b9fc",
+  "deployment": "1c01ffe7-e231-40c6-a026-ac63fec01227",
+  "raw_native_file_sha256": "211a39ef48bd337b1acede43b5e29daed9b72ed297b55aba0d2a7553d70d7f92",
+  "raw_native_file_bytes": 2014455,
+  "groups": {
+    "learning": {
+      "request": {
+        "projectId": "75750847-85c0-41a3-a2a7-b7f2201a51e9",
+        "deploymentId": "1c01ffe7-e231-40c6-a026-ac63fec01227",
+        "startDate": "2026-10-15T21:00:00Z",
+        "endDate": "2026-10-15T21:17:00Z",
+        "limit": 500,
+        "filter": "\"INFO nightcrawler.kalshi_probability_learning: kalshi_probability_learning_status \" OR \"INFO nightcrawler.kalshi_online_learning: kalshi_online_learning_status \""
+      },
+      "before": {
+        "current_time": "2026-10-15 21:21:32 UTC"
+      },
+      "after": {
+        "current_time": "2026-10-15 21:21:33 UTC"
+      },
+      "native_count": 16,
+      "limit": 500,
+      "saturated": false,
+      "isError": false,
+      "anchored_count": 16,
+      "event_counts": {
+        "kalshi_online_learning_status": 8,
+        "kalshi_probability_learning_status": 8
+      }
+    },
+    "tracebacks": {
+      "request": {
+        "projectId": "75750847-85c0-41a3-a2a7-b7f2201a51e9",
+        "deploymentId": "1c01ffe7-e231-40c6-a026-ac63fec01227",
+        "startDate": "2026-10-15T21:00:00Z",
+        "endDate": "2026-10-15T21:17:00Z",
+        "limit": 500,
+        "filter": "\"Traceback\""
+      },
+      "before": {
+        "current_time": "2026-10-15 21:21:32 UTC"
+      },
+      "after": {
+        "current_time": "2026-10-15 21:21:33 UTC"
+      },
+      "native_count": 0,
+      "limit": 500,
+      "saturated": false,
+      "isError": false,
+      "anchored_count": 0,
+      "event_counts": {}
+    },
+    "twins": {
+      "request": {
+        "projectId": "75750847-85c0-41a3-a2a7-b7f2201a51e9",
+        "deploymentId": "1c01ffe7-e231-40c6-a026-ac63fec01227",
+        "startDate": "2026-10-15T21:00:00Z",
+        "endDate": "2026-10-15T21:17:00Z",
+        "limit": 500,
+        "filter": "\"INFO nightcrawler.speeddesk: speeddesk_twin_settlement \""
+      },
+      "before": {
+        "current_time": "2026-10-15 21:21:32 UTC"
+      },
+      "after": {
+        "current_time": "2026-10-15 21:21:33 UTC"
+      },
+      "native_count": 2,
+      "limit": 500,
+      "saturated": false,
+      "isError": false,
+      "anchored_count": 2,
+      "event_counts": {
+        "speeddesk_twin_settlement": 2
+      }
+    },
+    "feeds": {
+      "request": {
+        "projectId": "75750847-85c0-41a3-a2a7-b7f2201a51e9",
+        "deploymentId": "1c01ffe7-e231-40c6-a026-ac63fec01227",
+        "startDate": "2026-10-15T21:00:00Z",
+        "endDate": "2026-10-15T21:17:00Z",
+        "limit": 500,
+        "filter": "\"speeddesk_feed_kalshi_book_failed\" OR \"speeddesk_feed_kalshi_trade_gap\" OR \"speeddesk_feed_kalshi_ws_timing\" OR \"speeddesk_feed_kalshi_ws_gap\""
+      },
+      "before": {
+        "current_time": "2026-10-15 21:21:32 UTC"
+      },
+      "after": {
+        "current_time": "2026-10-15 21:21:33 UTC"
+      },
+      "native_count": 108,
+      "limit": 500,
+      "saturated": false,
+      "isError": false,
+      "anchored_count": 108,
+      "event_counts": {
+        "speeddesk_feed_kalshi_trade_gap": 1,
+        "speeddesk_feed_kalshi_ws_gap": 34,
+        "speeddesk_feed_kalshi_ws_timing": 73
+      }
+    },
+    "statuses": {
+      "request": {
+        "projectId": "75750847-85c0-41a3-a2a7-b7f2201a51e9",
+        "deploymentId": "1c01ffe7-e231-40c6-a026-ac63fec01227",
+        "startDate": "2026-10-15T21:00:00Z",
+        "endDate": "2026-10-15T21:17:00Z",
+        "limit": 500,
+        "filter": "\"INFO nightcrawler.speeddesk: speeddesk_live_status \""
+      },
+      "before": {
+        "current_time": "2026-10-15 21:21:32 UTC"
+      },
+      "after": {
+        "current_time": "2026-10-15 21:21:33 UTC"
+      },
+      "native_count": 17,
+      "limit": 500,
+      "saturated": false,
+      "isError": false,
+      "anchored_count": 17,
+      "event_counts": {
+        "speeddesk_live_status": 17
+      }
+    }
+  },
+  "transfer_limitations": "Prior worker PTY transfer truncated17252B then hung; originals preserved as failed transfers, not used for conclusions. Root fetched same fixed bounds and saved five full parseable wrappers with explicit byte-counted raw stdin."
+}

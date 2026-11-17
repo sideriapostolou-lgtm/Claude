@@ -1,0 +1,74 @@
+{
+  "status": "accepted bounded supplementary absence check",
+  "original_capture_audit": {
+    "path": "/workspace/probability-capture-independent.json",
+    "sha256": "afbe94309cacc87df53484d874e7b9d3509f4cd3587cbf08137638306afd2ff3",
+    "unchanged": true,
+    "original_capture_query_count": 25
+  },
+  "bridge": {
+    "deployment": "2e88601d-c9c7-474f-add8-72c0a13c1a4b",
+    "start_utc": "2026-10-15T19:26:26Z",
+    "end_utc": "2026-10-15T19:30:00Z",
+    "anchored_original_fills": 0,
+    "anchored_original_settlements": 0,
+    "raw_fill_matches": 7,
+    "raw_settlement_matches": 0,
+    "nested_or_nonmatching_fill_rows_excluded": 7
+  },
+  "queries": [
+    {
+      "file": "FINANCIAL_BRIDGE_FILL.native.json",
+      "request": {
+        "projectId": "75750847-85c0-41a3-a2a7-b7f2201a51e9",
+        "environmentId": "17f7b0e0-104c-4903-9484-0106748b3cdb",
+        "deploymentId": "2e88601d-c9c7-474f-add8-72c0a13c1a4b",
+        "startDate": "2026-10-15T19:26:26Z",
+        "endDate": "2026-10-15T19:30:00Z",
+        "limit": 500,
+        "filter": "\"speeddesk_live_fill\""
+      },
+      "returned": 7,
+      "selected": 0,
+      "nonmatching_excluded": 7,
+      "retrieved_before": {
+        "current_time": "2026-10-15 19:52:23 UTC"
+      },
+      "retrieved_after": {
+        "current_time": "2026-10-15 19:52:24 UTC"
+      },
+      "isError": false
+    },
+    {
+      "file": "FINANCIAL_BRIDGE_SETTLEMENT.native.json",
+      "request": {
+        "projectId": "75750847-85c0-41a3-a2a7-b7f2201a51e9",
+        "environmentId": "17f7b0e0-104c-4903-9484-0106748b3cdb",
+        "deploymentId": "2e88601d-c9c7-474f-add8-72c0a13c1a4b",
+        "startDate": "2026-10-15T19:26:26Z",
+        "endDate": "2026-10-15T19:30:00Z",
+        "limit": 500,
+        "filter": "\"speeddesk_live_settlement\""
+      },
+      "returned": 0,
+      "selected": 0,
+      "nonmatching_excluded": 0,
+      "retrieved_before": {
+        "current_time": "2026-10-15 19:52:23 UTC"
+      },
+      "retrieved_after": {
+        "current_time": "2026-10-15 19:52:24 UTC"
+      },
+      "isError": false
+    }
+  ],
+  "native_sha256": {
+    "FINANCIAL_BRIDGE_FILL.native.json": "8d1bf9ae27728d8cf6939f73a8aafbfac64142a432ab0df8fd908b6bfd6a192b",
+    "FINANCIAL_BRIDGE_SETTLEMENT.native.json": "ea0866859f6d1396a0f9946e0e62c22eadc0f18deeb7f2ece9bc6fef578c74cc"
+  },
+  "limits": [
+    "Separate two-query supplement closes the previously unqueried bridge in filtered original-log evidence; it does not extend or substitute the fixed target capture, alter its25query count, or rewrite the earlier audit.",
+    "No matching original fills or settlements were returned within explicit deployment/time bounds; seven returned fill matches were excluded by anchored original-event parsing. Queries reported no errors and remained below500rows.",
+    "Bounded filtered log absence is not exhaustive account-ledger, feed, or durable-volume certification. No production queries or source edits performed by this independent reviewer."
+  ]
+}

@@ -1,0 +1,45 @@
+{
+  "request": {
+    "projectId": "75750847-85c0-41a3-a2a7-b7f2201a51e9",
+    "deploymentId": "1c01ffe7-e231-40c6-a026-ac63fec01227",
+    "startDate": "2026-10-15T20:48:00Z",
+    "endDate": "2026-10-15T20:51:00Z",
+    "filter": "\"learn_paused\"",
+    "limit": 10
+  },
+  "before": {
+    "current_time": "2026-10-15 21:35:04 UTC"
+  },
+  "result": {
+    "content": [
+      {
+        "type": "text",
+        "text": "**Deployment 1c01ffe7-e231-40c6-a026-ac63fec01227** [REMOVED]\nservice: f84d3b52-002f-44cb-931e-bc9e3e097e97, env: 17f7b0e0-104c-4903-9484-0106748b3cdb\n\n### Deploy logs (1)\n2026-10-15T20:49:02.608802566Z error 2026-10-15T20:49:02Z WARNING nightcrawler.learn.recorder: learn_paused reason=low_disk free_mb=735"
+      }
+    ],
+    "structuredContent": {
+      "scope": "deployment",
+      "deploymentId": "1c01ffe7-e231-40c6-a026-ac63fec01227",
+      "serviceId": "f84d3b52-002f-44cb-931e-bc9e3e097e97",
+      "environmentId": "17f7b0e0-104c-4903-9484-0106748b3cdb",
+      "status": "REMOVED",
+      "deploy": [
+        {
+          "timestamp": "2026-10-15T20:49:02.608802566Z",
+          "severity": "error",
+          "message": "2026-10-15T20:49:02Z WARNING nightcrawler.learn.recorder: learn_paused reason=low_disk free_mb=735",
+          "attributes": [
+            {
+              "key": "level",
+              "value": "\"error\""
+            }
+          ]
+        }
+      ]
+    },
+    "isError": false
+  },
+  "after": {
+    "current_time": "2026-10-15 21:35:05 UTC"
+  }
+}

@@ -1,0 +1,43 @@
+{
+  "reviewed_at_utc": "2026-10-15T18:23:06.251348+00:00",
+  "reviewer": "/root/input_cause_review",
+  "decision": "CONFIRMED evidence-interpretation error; prior numerical account-age claims withdrawn",
+  "scope": "Read-only source and saved-original/derived-evidence inspection; no new production query, source change or restart-complete claim",
+  "source_sha256": "2471adff4eca63ee6abba73031da75793ae5e1b3cb0468e30e1e2d6b9934efd5",
+  "source_semantics": {
+    "panel_as_of": "src/nightcrawler/speeddesk_live.py:2603 returns as_of=self.clock() at panel construction, NOT self.account_at.",
+    "payload_at": "src/nightcrawler/speeddesk_live.py:625-627 _record subsequently assigns at=self.clock().",
+    "account_readiness": "src/nightcrawler/speeddesk_live.py:1159-1166 _waiting_reason checks startup_done, actual account_at present and age in[0,3] seconds, and active uncertain/cancel_requested intents. account_at is not exposed in panel.",
+    "cash_at": "src/nightcrawler/speeddesk_live.py:1798-1803 assigns cash_at at local completion/application of balance read, then separately assigns account_at only if all reconciliation checks passed. Panel exposes cash_at at2606.",
+    "interpretation": "payload.at minus as_of measures elapsed local wall-clock time from panel as_of sampling to event recording. It is not account age. payload.at minus cash_at measures local balance observation/application age, not exchange balance creation/network arrival age."
+  },
+  "supersession": {
+    "preserved_original_review": "/workspace/input-cause-final-capture-review-supplement.json",
+    "preserved_review_sha256": "2a378db774a07245af8a9af4e96fbaff74358f8626137b4b7b0692ab6a619ebe",
+    "withdrawn_field": "separate_post_tail_status.account_age_at_payload_s=0.027209758758544922",
+    "withdrawn_text": "Fresh account/cash ages describe payload17:47:05",
+    "corrected_account_age_s": null,
+    "corrected_panel_as_of_to_record_s": 0.027209758758544922,
+    "cash_observation_age_at_record_s": 0.02868819236755371,
+    "retained_point_readiness": "Original17:47:13.711 payload trading_now=true, waiting empty, authenticated/live supports successful account-freshness gate at panel evaluation; exact account_at/account age unpublished. No continuous/current readiness guarantee.",
+    "also_affected_public_derivatives": [
+      "research/kalshi_input_causes_2026-10-15/RELEASE_CAPTURE.md:34",
+      "research/kalshi_input_causes_2026-10-15/CAPTURE_FINDINGS.json:385",
+      "docs/WORKLOG.md prior17:50UTC account/cash-age wording",
+      "any earlier derivative computing account age as payload.at-as_of"
+    ]
+  },
+  "current_cold_status": {
+    "timestamp": "2026-10-15T18:21:02.526347173Z",
+    "trading_now": false,
+    "waiting": "Kalshi account data stale",
+    "authenticated": true,
+    "panel_as_of_to_record_s": 0.043738603591918945,
+    "cash_observation_age_at_record_s": 0.0561370849609375,
+    "actual_account_age_s": null,
+    "interpretation": "Stale-account flag with small as_of delta is expected: current panel timestamp says nothing about prior account read. Do not call this row ready.",
+    "audit_path": "/workspace/nightcrawler-live-correction/research/kalshi_execution_fix_2026-10-15/STARTUP_AUDIT.json",
+    "audit_sha256": "29002e94b5b5af46f2a8415a5fd612f232993cb2b7b7bb88e640c7e283587af6"
+  },
+  "next": "Root corrects derivative labels/claims while retaining originals; independent full restart/delta reconciliation awaits remaining saved production originals. This note supersedes only the invalid account-age interpretation, not raw timestamps, cash age, financial totals or cold-status flag."
+}

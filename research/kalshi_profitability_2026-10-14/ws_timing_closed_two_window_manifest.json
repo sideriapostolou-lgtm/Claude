@@ -1,0 +1,198 @@
+{
+  "archive": "/workspace/shared/ws-timing-closed-two-window-evidence.zip",
+  "bytes": 6137454,
+  "sha256": "f2db3efcd718c061ab6f0190de4c95a95adac7d5a76461f5989f36c483265842",
+  "members": [
+    {
+      "original_path": "/workspace/shared/ws-timing-production-closed-complete.json",
+      "member": "ws-timing-production-closed-complete.json",
+      "bytes": 10266692,
+      "sha256": "fd12946730ac7847d4436caa99d6de94f3e86d370e226d03c97ecde43fb915ba"
+    },
+    {
+      "original_path": "/workspace/shared/ws-timing-production-closed-derived.json",
+      "member": "ws-timing-production-closed-derived.json",
+      "bytes": 8542999,
+      "sha256": "25681370641c5685b9ab9e13dc49f00c4f4d6aebd036a265808694b8f68d30b1"
+    },
+    {
+      "original_path": "/workspace/shared/ws-timing-production-closed-manifest.json",
+      "member": "ws-timing-production-closed-manifest.json",
+      "bytes": 3645,
+      "sha256": "076df19910f9c116d700a075c12f85a7705d75d996237eab600154fe374e7298"
+    },
+    {
+      "original_path": "/workspace/shared/ws-timing-production-closed-summary.json",
+      "member": "ws-timing-production-closed-summary.json",
+      "bytes": 5522,
+      "sha256": "02aca5c99c956f724069514f091a5087ceec09f78aaff7a9975dcc140a51b3be"
+    },
+    {
+      "original_path": "/workspace/shared/ws-timing-production-final-financial-originals.json",
+      "member": "ws-timing-production-final-financial-originals.json",
+      "bytes": 410380,
+      "sha256": "074154ed7a93ec4e910cd26e40bfc6c45e0fe3b40bb988899d59219258aa8a91"
+    },
+    {
+      "original_path": "/workspace/shared/ws-timing-production-last-real-status.json",
+      "member": "ws-timing-production-last-real-status.json",
+      "bytes": 182216,
+      "sha256": "37532d790d64439190529bf942e2900109971fff9da59b35c4efd119aa53c1cd"
+    },
+    {
+      "original_path": "/workspace/shared/ws-timing-production-parser.py",
+      "member": "ws-timing-production-parser.py",
+      "bytes": 9836,
+      "sha256": "f9480a95bfd761900d08207ffe5ad83b2f83dfe7264fc74bafda65a3ec7cd075"
+    },
+    {
+      "original_path": "/workspace/shared/ws-timing-production-plan.json",
+      "member": "ws-timing-production-plan.json",
+      "bytes": 6112,
+      "sha256": "e9a0481e4ea6cd1f87bc021b998c7ab25c965bbdda562f730b09d5630a0fd811"
+    },
+    {
+      "original_path": "/workspace/shared/ws-timing-production-finalize.py",
+      "member": "ws-timing-production-finalize.py",
+      "bytes": 3920,
+      "sha256": "c2e735f44d2cde005d03ceb138b433db7e32eed228bcc60f9ea600ec70cf81fa"
+    },
+    {
+      "original_path": "/workspace/shared/ws-timing-first-window-audit-input.json",
+      "member": "ws-timing-first-window-audit-input.json",
+      "bytes": 6382726,
+      "sha256": "caff0e9d21822dac935bf69790f15668efbb21af40fbd527a84c288224326353"
+    },
+    {
+      "original_path": "/workspace/shared/ws-timing-first-window-audit.py",
+      "member": "ws-timing-first-window-audit.py",
+      "bytes": 15154,
+      "sha256": "76cef5dedc2272dbe83f9f083d530698cef6e2e96732a031f00286e52d0c0658"
+    },
+    {
+      "original_path": "/workspace/shared/ws-timing-first-window-audit.json",
+      "member": "ws-timing-first-window-audit.json",
+      "bytes": 509375,
+      "sha256": "7a66ba4516bd7bdba4709f6eca959fcd71e361a123857951f2980f83b0b8ba50"
+    },
+    {
+      "original_path": "/workspace/shared/ws-timing-first-window-audit-report.md",
+      "member": "ws-timing-first-window-audit-report.md",
+      "bytes": 12406,
+      "sha256": "87be334e6cd49e523250cc4a4fef29c83f3662495e235826af5bd6b973c73e97"
+    },
+    {
+      "original_path": "/workspace/shared/ws-timing-two-window-audit-input.json",
+      "member": "ws-timing-two-window-audit-input.json",
+      "bytes": 10266692,
+      "sha256": "fd12946730ac7847d4436caa99d6de94f3e86d370e226d03c97ecde43fb915ba"
+    },
+    {
+      "original_path": "/workspace/shared/ws-timing-two-window-audit.py",
+      "member": "ws-timing-two-window-audit.py",
+      "bytes": 20760,
+      "sha256": "fc66b0775f10f50e6a015f46460d77aa7437a6392f5de896cdb92638a224c1c8"
+    },
+    {
+      "original_path": "/workspace/shared/ws-timing-two-window-audit.json",
+      "member": "ws-timing-two-window-audit.json",
+      "bytes": 1061800,
+      "sha256": "634f77f3abe4d234b3399821feac46d9a5abef52f4e5141e6bdb8e8d72b067d9"
+    },
+    {
+      "original_path": "/workspace/shared/ws-timing-two-window-audit.md",
+      "member": "ws-timing-two-window-audit.md",
+      "bytes": 12636,
+      "sha256": "9e5146f073b1162ababdb6f3b654c37312a6d52b0b40859213228b7ae9c22b94"
+    },
+    {
+      "original_path": "/workspace/shared/ws-timing-midcapture-health.json",
+      "member": "ws-timing-midcapture-health.json",
+      "bytes": 3439,
+      "sha256": "a37e2e22cf7056263e2c3deddfb74921373358d619a6f5be233fde16acee99c1"
+    },
+    {
+      "original_path": "/workspace/shared/ws-timing-production-query-0001.json",
+      "member": "ws-timing-production-query-0001.json",
+      "bytes": 693526,
+      "sha256": "f78772d1ec140905afa23ab68ef71ed41ae68b3f8f9b79e5492ecb12419d523d"
+    },
+    {
+      "original_path": "/workspace/shared/ws-timing-production-query-0002.json",
+      "member": "ws-timing-production-query-0002.json",
+      "bytes": 593751,
+      "sha256": "5bd56cfe48710ff7a5a88c974ece1a60db96407ba28a7b9df69f34f5f9bd8312"
+    },
+    {
+      "original_path": "/workspace/shared/ws-timing-production-query-0003.json",
+      "member": "ws-timing-production-query-0003.json",
+      "bytes": 957685,
+      "sha256": "3c99513d26b1af8dd2f455029b2b68a0f7f51bc745cc29d760891630360fa05c"
+    },
+    {
+      "original_path": "/workspace/shared/ws-timing-production-query-0004.json",
+      "member": "ws-timing-production-query-0004.json",
+      "bytes": 826382,
+      "sha256": "e88d11c3a0f9b8cd803f778f8370f20546b6fbc6c09d250987534e0125ddb417"
+    },
+    {
+      "original_path": "/workspace/shared/ws-timing-production-query-0005.json",
+      "member": "ws-timing-production-query-0005.json",
+      "bytes": 813089,
+      "sha256": "2931a750445e62ca8867a466028fe92e2d86edb0fba6f88b9fe54efda7ecced8"
+    },
+    {
+      "original_path": "/workspace/shared/ws-timing-production-query-0006.json",
+      "member": "ws-timing-production-query-0006.json",
+      "bytes": 784937,
+      "sha256": "dabe68bfee3d48167723ea4a26169157235ccacb0920aab42832eb1aee80356d"
+    },
+    {
+      "original_path": "/workspace/shared/ws-timing-production-query-0007.json",
+      "member": "ws-timing-production-query-0007.json",
+      "bytes": 769899,
+      "sha256": "d92c081446aef213401ae52d0848fc22fdbab5eaa6b6d80125e0609416825f94"
+    },
+    {
+      "original_path": "/workspace/shared/ws-timing-production-query-0008.json",
+      "member": "ws-timing-production-query-0008.json",
+      "bytes": 923411,
+      "sha256": "50e227af0970f7e7b4bb2a8ee2eb152bebe3c08090baa2f4786cc1b42ecc52fb"
+    },
+    {
+      "original_path": "/workspace/shared/ws-timing-production-query-0009.json",
+      "member": "ws-timing-production-query-0009.json",
+      "bytes": 793489,
+      "sha256": "539e0759f6e0f6fbb978f4340a1f75653987d44c04f2444ce25ab10b715fac06"
+    },
+    {
+      "original_path": "/workspace/shared/ws-timing-production-query-0010.json",
+      "member": "ws-timing-production-query-0010.json",
+      "bytes": 786931,
+      "sha256": "116493af4d70396285d4ddcdb5c8542ea0be2063bf81c06a880600a303115702"
+    },
+    {
+      "original_path": "/workspace/shared/ws-timing-production-query-0011.json",
+      "member": "ws-timing-production-query-0011.json",
+      "bytes": 792388,
+      "sha256": "57db0da82045dde56ad6831dbd5ae21a64d1db297fdb927144fceb4e19e111f6"
+    },
+    {
+      "original_path": "/workspace/shared/ws-timing-production-query-0012.json",
+      "member": "ws-timing-production-query-0012.json",
+      "bytes": 772483,
+      "sha256": "7be9de574b1573c19e81edc4f095ee9e68c0918532d4cdd8c2017ff917099817"
+    },
+    {
+      "original_path": "/workspace/shared/ws-timing-production-query-0013.json",
+      "member": "ws-timing-production-query-0013.json",
+      "bytes": 728503,
+      "sha256": "b16f68a6b57b7d069195799d326df88d852f7f3e61bdfbd5f4557723bb7f07b9"
+    }
+  ],
+  "source_commit": "10f7f9d88a9acd51aba041345d569cd9972c4b6c",
+  "deploymentId": "86dabbf2-bedb-4686-b6ed-857955e0b521",
+  "capture_closed_utc": "2026-10-15T04:47:18.296358+00:00",
+  "checks": "CRC, exact member set, source bytes and hashes verified; no production mutation",
+  "limits": "Two fixed windows plus restart partial and publication tail; filtered logs, unknown shared producers/overflow retained; financial loss is not erased; no profitability/complete market coverage claim."
+}

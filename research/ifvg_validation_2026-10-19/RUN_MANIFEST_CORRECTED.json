@@ -1,0 +1,45 @@
+{
+  "study_kind": "OWNER_SWEEP_IFVG_ROOT_SAMPLE_EXPLORATORY_v1",
+  "frozen_at_utc": "2026-10-19T22:05:00.843782+00:00",
+  "frozen_at_pacific": "2026-10-19T15:05:00.843782-07:00",
+  "data_sha256": "6dc53ce719b935022c668f36bd2532887a6548b83a7b28d6ac5df0b4f79ee83b",
+  "early_dates": [
+    "2026-10-02",
+    "2026-10-05",
+    "2026-10-06",
+    "2026-10-07",
+    "2026-10-08"
+  ],
+  "later_dates": [
+    "2026-10-09",
+    "2026-10-12",
+    "2026-10-13",
+    "2026-10-14",
+    "2026-10-15",
+    "2026-10-16"
+  ],
+  "actual_contract_verified": false,
+  "actual_costs_verified": false,
+  "live_execution_enabled": false,
+  "source_sha256": {
+    "simulator.py": "69caef01eb392211342524b2fc3bc695f5cb31eab9d6d64763a4fc4503c2615b",
+    "run_study.py": "e71008ad7604de1464eb63519457644254596cc16e80c0d76ad86fbb1fe35b0c",
+    "EVALUATION.md": "f43925d6a91017094b1acd10885c413eb2e43c61a77e2e7d22f92f32e8097dcf",
+    "../ifvg_intake_2026-10-19/V1_RULES.md": "59e43db6904ce48ff0da9e0c4e144a11e160c9c577c86339963c9e1b51aa6d18"
+  },
+  "pre_replay_checks": {
+    "pytest_passed": 108,
+    "pytest_subtests_passed": 72,
+    "ruff": "passed",
+    "standalone_mypy_sources": 2,
+    "independent_review": "INDEPENDENT_REVIEW.json",
+    "header_correction_independent_probes": 12
+  },
+  "limitations": [
+    "Public root-symbol sample; individual contract, adjustment and roll mapping unverified",
+    "No prior strategy return or OHLC price inspection; metadata only; bytes not physically held out",
+    "No changes to existing TJR/Family A TEST or production"
+  ],
+  "previous_failed_manifest_sha256": "686c2829c57dabdf68d6c43a67a823616c82e3f29af0dc24d358d49b34516774",
+  "correction": "Require exact CSV header; initial failure preserved; no rule/cost/date/data/simulator changes"
+}

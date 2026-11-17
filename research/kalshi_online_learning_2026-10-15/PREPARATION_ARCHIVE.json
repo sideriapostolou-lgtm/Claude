@@ -1,0 +1,307 @@
+{
+  "created_utc": "2026-10-15T13:45:46.767429+00:00",
+  "archive": {
+    "file": "PREPARATION.zip",
+    "members": 69,
+    "bytes": 320965,
+    "sha256": "c14cdba6627c0d416659e4059aba0e30b1ffc652858a121afa26d59f4219dba9"
+  },
+  "scope": "Exact frozen implementation/test/review/source snapshots, checks including failures/corrections, raw synthetic benchmarks and source baseline, bounded TJR receipt/ref typo, and pretest production health. No deployment or forward learning result asserted by preparation.",
+  "omissions": {
+    "generated_python_bytecode_only": [
+      "__pycache__/baseline_kalshi_arena.cpython-312.pyc"
+    ]
+  },
+  "verification": {
+    "crc": "pass",
+    "exact_member_names": "pass",
+    "all_member_and_current_source_bytes": "pass",
+    "all_member_sha256": "pass",
+    "bounded_private_credential_pattern_scan": "zero flags; not every possible format"
+  },
+  "sources": {
+    "kalshi-online-learning-20261015/HANDOFF.md": {
+      "bytes": 7338,
+      "sha256": "ee56d2b9c5f84897494a02a80450d0633015da1c9dcd60d65359b17b4e445564"
+    },
+    "kalshi-online-learning-20261015/V1_REJECTED.json": {
+      "bytes": 351,
+      "sha256": "e5406b439d3bf9f2b094fb36fc34e08093f978e3b8dd15894324076d14a7b782"
+    },
+    "kalshi-online-learning-20261015/baseline_kalshi_arena.py": {
+      "bytes": 114939,
+      "sha256": "3928746a2415addd6588ffbf70fceca8b25bc34fac79daffd9c864d474dcce0d"
+    },
+    "kalshi-online-learning-20261015/benchmark-final.log": {
+      "bytes": 2169,
+      "sha256": "e2eededed5d2c2c8fd7ee10815d8412e3814f2aa434c7ce8e77c69d9148a1e8d"
+    },
+    "kalshi-online-learning-20261015/benchmark-history-final.log": {
+      "bytes": 889,
+      "sha256": "6df4f9e744824681b38a598dadf86feffb51e21157373a7c2ae25678d08910bc"
+    },
+    "kalshi-online-learning-20261015/benchmark-history-pre-terms-isolation.json": {
+      "bytes": 16951,
+      "sha256": "7ea04a397bb8c28b3120380db440c78bb6f914bea2229be001fe5a307ce47518"
+    },
+    "kalshi-online-learning-20261015/benchmark-history-v1.json": {
+      "bytes": 16918,
+      "sha256": "d01a135b15545161942591cbac38508b7db17f56d95389dbd0d601896031dc1a"
+    },
+    "kalshi-online-learning-20261015/benchmark-history-v2.log": {
+      "bytes": 889,
+      "sha256": "2b25afebcb231617ac3a1caf19c38abaf7b65ea189864194f9f7450318de2d0a"
+    },
+    "kalshi-online-learning-20261015/benchmark-history.json": {
+      "bytes": 16967,
+      "sha256": "0cdd6206011ed8f04c55c2b3f1e62164a65561c9ad74b826461d87fa722a18fd"
+    },
+    "kalshi-online-learning-20261015/benchmark-history.log": {
+      "bytes": 882,
+      "sha256": "2bab0604bd4e6d0825b8d570b5d6ee9984227497a1291fc05ead54d28db3c7f0"
+    },
+    "kalshi-online-learning-20261015/benchmark-pre-restore-review.json": {
+      "bytes": 2187,
+      "sha256": "3187e98eae6e05a4bfa3da74033783fbfc8c74f82cf54c3bba531ac92e3ed19e"
+    },
+    "kalshi-online-learning-20261015/benchmark-state-final.log": {
+      "bytes": 2161,
+      "sha256": "d30992273b81fec7550e52e7364945d57c298e0db9e5b789cc824519e04840ca"
+    },
+    "kalshi-online-learning-20261015/benchmark.json": {
+      "bytes": 2161,
+      "sha256": "d30992273b81fec7550e52e7364945d57c298e0db9e5b789cc824519e04840ca"
+    },
+    "kalshi-online-learning-20261015/benchmark.log": {
+      "bytes": 2172,
+      "sha256": "6e1975a245c5264e3e2a09e7b15016fcbbb99a3093a9af2a9576dab5474e6aaa"
+    },
+    "kalshi-online-learning-20261015/benchmark.py": {
+      "bytes": 3344,
+      "sha256": "9f59b94d0410410a46e2c6479a4972f013c2b61093734d6fad6f03b164af7e82"
+    },
+    "kalshi-online-learning-20261015/benchmark_history.py": {
+      "bytes": 3267,
+      "sha256": "6647708189538ba681e143a0b229f0e984aad44af4779c6e4eda3b0ef9432242"
+    },
+    "kalshi-online-learning-20261015/frozen/src/nightcrawler/kalshi_arena.py": {
+      "bytes": 116382,
+      "sha256": "ced52a76c54534fb991c99859cae3f75c7bca475b3a3aab7ee19879f0faddf60"
+    },
+    "kalshi-online-learning-20261015/frozen/src/nightcrawler/kalshi_online_learning.py": {
+      "bytes": 20292,
+      "sha256": "a9c2f9bb51695d27d94b8907b035cd2a6e3a133870da3429c8db18c471919976"
+    },
+    "kalshi-online-learning-20261015/frozen/tests/test_kalshi_online_learning.py": {
+      "bytes": 12842,
+      "sha256": "2809bb9150cf0ff45c181ab9b549e0a99df253471064318e9e1f3c35bec91ab4"
+    },
+    "kalshi-online-learning-20261015/frozen/tests/test_kalshi_online_learning_arena.py": {
+      "bytes": 6787,
+      "sha256": "6f1c77f0893094d8503f52165253664d764fa76c1dbe2932942876c75e0bc12d"
+    },
+    "kalshi-online-learning-20261015/frozen-integrated/src/nightcrawler/kalshi_arena.py": {
+      "bytes": 116382,
+      "sha256": "ced52a76c54534fb991c99859cae3f75c7bca475b3a3aab7ee19879f0faddf60"
+    },
+    "kalshi-online-learning-20261015/frozen-integrated/src/nightcrawler/kalshi_online_learning.py": {
+      "bytes": 21545,
+      "sha256": "16a14ff7d8bb933d4eb8e4251d0fdcf943c81e6f8c6f8f1720ced3d5e14f5fa8"
+    },
+    "kalshi-online-learning-20261015/frozen-integrated/src/nightcrawler/pagestate.py": {
+      "bytes": 230195,
+      "sha256": "a708bf1cdd378528530a34b98876bd666f8f7b771757b9fe228d173e421b4041"
+    },
+    "kalshi-online-learning-20261015/frozen-integrated/tests/test_kalshi_arena_page.py": {
+      "bytes": 23212,
+      "sha256": "2ae3a0d3ea145f9f7e1025ff0f9afbc9ddeefe5d0d6879482f934fef7ee5fa8b"
+    },
+    "kalshi-online-learning-20261015/frozen-integrated/tests/test_kalshi_online_learning.py": {
+      "bytes": 14020,
+      "sha256": "832cb1a10bac3fda05b3f0a30bb08975912303bbd5e9c024e52faab2811b0985"
+    },
+    "kalshi-online-learning-20261015/frozen-integrated/tests/test_kalshi_online_learning_arena.py": {
+      "bytes": 7583,
+      "sha256": "4e8190d126cd1a689d63d9e4d14d5335c34e1156e1076aa60591b0717563083c"
+    },
+    "kalshi-online-learning-20261015/frozen-integrated/tests/test_kalshi_online_learning_page.py": {
+      "bytes": 5677,
+      "sha256": "26f3cd4f90898fb3615d41685dc1f2230f4847a52fed1895e6859dc2f2324962"
+    },
+    "kalshi-online-learning-20261015/frozen-v2/src/nightcrawler/kalshi_arena.py": {
+      "bytes": 116382,
+      "sha256": "ced52a76c54534fb991c99859cae3f75c7bca475b3a3aab7ee19879f0faddf60"
+    },
+    "kalshi-online-learning-20261015/frozen-v2/src/nightcrawler/kalshi_online_learning.py": {
+      "bytes": 21545,
+      "sha256": "16a14ff7d8bb933d4eb8e4251d0fdcf943c81e6f8c6f8f1720ced3d5e14f5fa8"
+    },
+    "kalshi-online-learning-20261015/frozen-v2/tests/test_kalshi_online_learning.py": {
+      "bytes": 14020,
+      "sha256": "832cb1a10bac3fda05b3f0a30bb08975912303bbd5e9c024e52faab2811b0985"
+    },
+    "kalshi-online-learning-20261015/frozen-v2/tests/test_kalshi_online_learning_arena.py": {
+      "bytes": 7583,
+      "sha256": "4e8190d126cd1a689d63d9e4d14d5335c34e1156e1076aa60591b0717563083c"
+    },
+    "kalshi-online-learning-20261015/full-checks-final.json": {
+      "bytes": 3010,
+      "sha256": "0947ef3cc289d24008c26a30c1c3ab96b7cc66ed4425e8cd1578ddf38426844d"
+    },
+    "kalshi-online-learning-20261015/full-checks-progress.json": {
+      "bytes": 2103,
+      "sha256": "2974eb5255b91cbd1e09b8246a4c755cdf72622304a1aa73206f205b3863b05f"
+    },
+    "kalshi-online-learning-20261015/full-diff-check.log": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "kalshi-online-learning-20261015/full-mypy.log": {
+      "bytes": 45,
+      "sha256": "5525ee69f7acc60739d39ebd40e8c0169c4d79d0b48708365b122aee5ada2f48"
+    },
+    "kalshi-online-learning-20261015/full-pytest.log": {
+      "bytes": 7928,
+      "sha256": "7ab0e63bf4d7a96dd359be3d403be2d80e88925745d5a8e44500e9816dc72547"
+    },
+    "kalshi-online-learning-20261015/full-ruff.log": {
+      "bytes": 19,
+      "sha256": "82b3e6a6c090a57601d22943bd23fca9218d1031dbe5a7b754092f9a156b4f18"
+    },
+    "kalshi-online-learning-20261015/implementation-frozen-manifest.json": {
+      "bytes": 3025,
+      "sha256": "2cb268a50d8eeb3155fcd9cc94a185681dd1afa50c5a13d0ef88dbdee415bb16"
+    },
+    "kalshi-online-learning-20261015/implementation-frozen-v2-manifest.json": {
+      "bytes": 5014,
+      "sha256": "8e7b43dfb97b4bdb1b40a81e1324963629e40017b17916797664bf4ca32a3f2c"
+    },
+    "kalshi-online-learning-20261015/implementation-frozen-v2.patch": {
+      "bytes": 51211,
+      "sha256": "e9cfbb08159b180b875d5cd2bd63a79b3ae8f8a529821290023b15a85fa1831f"
+    },
+    "kalshi-online-learning-20261015/implementation-frozen.patch": {
+      "bytes": 47921,
+      "sha256": "ff14e57f23f38ae9c46290089b7ac8bf826d066dd13af3d9f51dacc6c642e856"
+    },
+    "kalshi-online-learning-20261015/independent-final-review.json": {
+      "bytes": 4905,
+      "sha256": "69700f1c080f42ea492a213b86a204c949eafc7451c21a3137eba4c1a418fd8f"
+    },
+    "kalshi-online-learning-20261015/integrated-seven-files-freeze.json": {
+      "bytes": 1271,
+      "sha256": "090809000f84b80be887cf4f00a213cf2fd2abde10298120adf5eef02f42f0e7"
+    },
+    "kalshi-online-learning-20261015/mypy-final-current.log": {
+      "bytes": 43,
+      "sha256": "f9b031e5c45aa702cd4fef028d465551cb20a2c4698e0913c7b00766b20ac4d8"
+    },
+    "kalshi-online-learning-20261015/mypy-final.log": {
+      "bytes": 43,
+      "sha256": "f9b031e5c45aa702cd4fef028d465551cb20a2c4698e0913c7b00766b20ac4d8"
+    },
+    "kalshi-online-learning-20261015/mypy-freeze-v2.log": {
+      "bytes": 43,
+      "sha256": "f9b031e5c45aa702cd4fef028d465551cb20a2c4698e0913c7b00766b20ac4d8"
+    },
+    "kalshi-online-learning-20261015/mypy-freeze.log": {
+      "bytes": 43,
+      "sha256": "f9b031e5c45aa702cd4fef028d465551cb20a2c4698e0913c7b00766b20ac4d8"
+    },
+    "kalshi-online-learning-20261015/mypy-v2.log": {
+      "bytes": 43,
+      "sha256": "f9b031e5c45aa702cd4fef028d465551cb20a2c4698e0913c7b00766b20ac4d8"
+    },
+    "kalshi-online-learning-20261015/mypy.log": {
+      "bytes": 43,
+      "sha256": "f9b031e5c45aa702cd4fef028d465551cb20a2c4698e0913c7b00766b20ac4d8"
+    },
+    "kalshi-online-learning-20261015/pretest-arena-status.json": {
+      "bytes": 3620,
+      "sha256": "786ffbed6416851c3cb6465ed6c69ae5c99a02e6a51b99eef6c96171a94fd179"
+    },
+    "kalshi-online-learning-20261015/pretest-deployments.json": {
+      "bytes": 7182,
+      "sha256": "dd54c18852b4c6470f68593b8b52da54444ee17d8d4059e3da5415319a86968a"
+    },
+    "kalshi-online-learning-20261015/pretest-health.json": {
+      "bytes": 3197,
+      "sha256": "8688dd443872996858b5d53af5eb12ff15e7f9fcbd0dd26187bc17b07c85885c"
+    },
+    "kalshi-online-learning-20261015/root-initial-check-attempts.json": {
+      "bytes": 1458,
+      "sha256": "419761ff63056ee848952c68bf6293b486c4a71cf369eccf166b4ee0f793f32d"
+    },
+    "kalshi-online-learning-20261015/root-three-files-freeze.json": {
+      "bytes": 326,
+      "sha256": "7754c1528d175e2965e8caad9bdce47a23a16eefc7640d0525eb0126efc43d22"
+    },
+    "kalshi-online-learning-20261015/ruff-final-current.log": {
+      "bytes": 19,
+      "sha256": "82b3e6a6c090a57601d22943bd23fca9218d1031dbe5a7b754092f9a156b4f18"
+    },
+    "kalshi-online-learning-20261015/ruff-final.log": {
+      "bytes": 882,
+      "sha256": "81641910d9395c74c84fed62c49f0d207023a594dcfbede93c57619153c6bef7"
+    },
+    "kalshi-online-learning-20261015/ruff-freeze-v2.log": {
+      "bytes": 19,
+      "sha256": "82b3e6a6c090a57601d22943bd23fca9218d1031dbe5a7b754092f9a156b4f18"
+    },
+    "kalshi-online-learning-20261015/ruff-freeze.log": {
+      "bytes": 19,
+      "sha256": "82b3e6a6c090a57601d22943bd23fca9218d1031dbe5a7b754092f9a156b4f18"
+    },
+    "kalshi-online-learning-20261015/ruff-v2.log": {
+      "bytes": 19,
+      "sha256": "82b3e6a6c090a57601d22943bd23fca9218d1031dbe5a7b754092f9a156b4f18"
+    },
+    "kalshi-online-learning-20261015/ruff.log": {
+      "bytes": 19,
+      "sha256": "82b3e6a6c090a57601d22943bd23fca9218d1031dbe5a7b754092f9a156b4f18"
+    },
+    "kalshi-online-learning-20261015/run_full_checks.py": {
+      "bytes": 2488,
+      "sha256": "4fcd560b2215262a89f840e145aae2aea59f523450c6705be70ee420f39ef8fc"
+    },
+    "kalshi-online-learning-20261015/targeted-tests-final-current.log": {
+      "bytes": 458,
+      "sha256": "27cb2bcbaba6a408ef36a1de23fa2036f49158d8d7c6a29c6cbc59dfffe12988"
+    },
+    "kalshi-online-learning-20261015/targeted-tests-final.log": {
+      "bytes": 458,
+      "sha256": "f6032f0c6f98305f3824c3e52f8d828c8dde26456d4a70fccb59bec418b0005b"
+    },
+    "kalshi-online-learning-20261015/targeted-tests-freeze-v2.log": {
+      "bytes": 458,
+      "sha256": "95a3508dd1ef0a376133171e82ac57cbb857074205e7f85f8fa866389a7f1235"
+    },
+    "kalshi-online-learning-20261015/targeted-tests-freeze.log": {
+      "bytes": 458,
+      "sha256": "83b8b5446083cb3e7c8fb7771d4104f0482646989fa781c17672a141ac6189a9"
+    },
+    "kalshi-online-learning-20261015/targeted-tests-v2.log": {
+      "bytes": 458,
+      "sha256": "3b3bd60b270a3a323976ea7eaa3952266b1b87855214508a41e8e80ff415bc2b"
+    },
+    "kalshi-online-learning-20261015/targeted-tests.log": {
+      "bytes": 458,
+      "sha256": "d96b7a05e7434c6d0f499b0e849d41b9c2a53115adff1f0f48514eaec9a0d104"
+    },
+    "kalshi-online-learning-20261015/tjr-queue-followup.json": {
+      "bytes": 3655,
+      "sha256": "dc16296453086e0985c75e60e22c0a3eeee324fe60ca3d72330db77f2f156560"
+    },
+    "kalshi-online-learning-20261015/wrong-ref-attempts.json": {
+      "bytes": 2815,
+      "sha256": "92e027432576657a45dbb9913463ed2ba191a5b68d3a1f91e9f9d8eef57382b6"
+    }
+  },
+  "limits": [
+    "Full 5673passed/14existing skips; no historical/forward profitability result.",
+    "Only latest V2/integrated seven-file bundle accepted; preserved V1 was rejected locally.",
+    "Benchmark quiet synthetic no-I/O; reported40380bytes fixture is not maximum runtime-byte proof.",
+    "Retained learner receipts/labels bounded64, admitted32; not full training-tape certification.",
+    "TJR still blocked; no Page/test/data-access duplication or trading authority from its reminder."
+  ]
+}

@@ -1,0 +1,7 @@
+Early checks exist as exact tool receipts in agent transcript, before request for filesystem logs.
+1. Default python focused pytest: exit1, No module named pytest.
+2. Shared venv chronology+arena:32passed0.59s; subsequent Ruff exit1 I001,S110x2. Mypy not run due &&.
+3. Ruff --fix arena:1fixed; mypy launched execsession45971; result pending retrieval.
+4. Newdiagnostic initial:28passed2failed(panel CPU timing differs).
+5. Newdiagnostic after fakeCPU:30passed0.40s; Ruff exit1 I001 testimport.
+6. Newtestsadded Ruff--fix:1importfixed,RUF059 unusedview exit1; fixedunused.

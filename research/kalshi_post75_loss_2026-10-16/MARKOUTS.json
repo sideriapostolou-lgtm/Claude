@@ -1,0 +1,257 @@
+{
+  "query": {
+    "name": "MARKOUTS",
+    "startDate": "2026-10-16T22:00:00Z",
+    "endDate": "2026-10-16T22:16:00Z",
+    "filter": "\"nightcrawler.speeddesk: speeddesk_fill_markout\" OR \"nightcrawler.speeddesk: speeddesk_fill_markout_gap\""
+  },
+  "scope": "deployment",
+  "deploymentId": "7582010e-5681-41bb-964b-951e8b3c6767",
+  "serviceId": "f84d3b52-002f-44cb-931e-bc9e3e097e97",
+  "environmentId": "17f7b0e0-104c-4903-9484-0106748b3cdb",
+  "status": "SUCCESS",
+  "deploy": [
+    {
+      "timestamp": "2026-10-16T22:00:22.658164664Z",
+      "severity": "info",
+      "message": "2026-10-16T22:00:22Z INFO nightcrawler.speeddesk: speeddesk_fill_markout_gap {\"at\":1792188021.279358,\"venue\":\"kalshi\",\"protocol_version\":2,\"max_levels_per_side\":512,\"mode\":\"diagnostic\",\"fill_source\":\"real\",\"session_id\":\"d662c43be91b227de32c\",\"fill_id\":\"07245c51-5c29-b660-fad1-06f6072738d9\",\"order_id\":\"01a146ba-e968-7f1a-89b4-ce8f169f2eed\",\"window\":\"KXBTC15M-26OCT161815-15\",\"side\":\"down\",\"entry_price\":0.49,\"entry_size\":1.0,\"entry_fee_usd\":0.0,\"actual_fill_at\":1792188018.717831,\"fills_batch_returned_at\":1792188020.1574254,\"detection_delay_s\":1.4395945072174072,\"detection_delay_kind\":\"venue_fill_to_complete_paginated_batch_return\",\"horizon_basis\":\"fills_batch_return\",\"window_end\":1792188900.0,\"fee_coefficient\":0.07,\"fee_precision\":0.0001,\"fee_verified\":true,\"is_taker\":false,\"horizons_s\":[1,5,30],\"session_only\":true,\"horizon_s\":1,\"target_at\":1792188021.1574254,\"elapsed_s\":1.1219324436970055,\"sampling_method\":\"first_post_horizon_websocket_update\",\"fee_model\":\"sell_formula_plus_per_0.01_contract_rounding_upper_bound\",\"reason\":\"book_stale\",\"filled_size\":null,\"unfilled_size\":null,\"gross_proceeds_usd\":null,\"allocated_entry_fee_usd\":null,\"exit_fee_bound_usd\":null,\"partial_hypothetical_net_usd\":null,\"hypothetical_net_usd\":null,\"consumed_depth\":[],\"execution_assumption\":\"instantaneous_visible_bid_depth_no_order_sent\",\"own_depth_policy\":\"all_original_bot_order_sizes_in_window\",\"external_depth_is_conservative_lower_bound\":true,\"liquidity_scope\":\"isolated_fill_not_joint_inventory_liquidation\",\"book_received_at\":1792188021.2790487,\"book_bid_levels\":136,\"book_ask_levels\":143,\"own_bid_levels\":1,\"book_exchange_at\":1792188019.115,\"book_source\":\"websocket\",\"book_receive_age_s\":0.00030922889709472656,\"book_source_age_s\":2.164357900619507}",
+      "attributes": [
+        {
+          "key": "level",
+          "value": "\"info\""
+        }
+      ]
+    },
+    {
+      "timestamp": "2026-10-16T22:00:26.207546945Z",
+      "severity": "info",
+      "message": "2026-10-16T22:00:26Z INFO nightcrawler.speeddesk: speeddesk_fill_markout_gap {\"at\":1792188025.6726148,\"venue\":\"kalshi\",\"protocol_version\":2,\"max_levels_per_side\":512,\"mode\":\"diagnostic\",\"fill_source\":\"real\",\"session_id\":\"d662c43be91b227de32c\",\"fill_id\":\"07245c51-5c29-b660-fad1-06f6072738d9\",\"order_id\":\"01a146ba-e968-7f1a-89b4-ce8f169f2eed\",\"window\":\"KXBTC15M-26OCT161815-15\",\"side\":\"down\",\"entry_price\":0.49,\"entry_size\":1.0,\"entry_fee_usd\":0.0,\"actual_fill_at\":1792188018.717831,\"fills_batch_returned_at\":1792188020.1574254,\"detection_delay_s\":1.4395945072174072,\"detection_delay_kind\":\"venue_fill_to_complete_paginated_batch_return\",\"horizon_basis\":\"fills_batch_return\",\"window_end\":1792188900.0,\"fee_coefficient\":0.07,\"fee_precision\":0.0001,\"fee_verified\":true,\"is_taker\":false,\"horizons_s\":[1,5,30],\"session_only\":true,\"horizon_s\":5,\"target_at\":1792188025.1574254,\"elapsed_s\":5.515189594589174,\"sampling_method\":\"first_post_horizon_websocket_update\",\"fee_model\":\"sell_formula_plus_per_0.01_contract_rounding_upper_bound\",\"reason\":\"observation_late\",\"filled_size\":null,\"unfilled_size\":null,\"gross_proceeds_usd\":null,\"allocated_entry_fee_usd\":null,\"exit_fee_bound_usd\":null,\"partial_hypothetical_net_usd\":null,\"hypothetical_net_usd\":null,\"consumed_depth\":[],\"execution_assumption\":\"instantaneous_visible_bid_depth_no_order_sent\",\"own_depth_policy\":\"all_original_bot_order_sizes_in_window\",\"external_depth_is_conservative_lower_bound\":true,\"liquidity_scope\":\"isolated_fill_not_joint_inventory_liquidation\",\"book_received_at\":1792188025.6717887,\"book_bid_levels\":139,\"book_ask_levels\":140,\"own_bid_levels\":1,\"book_exchange_at\":1792188025.02,\"book_source\":\"websocket\",\"book_receive_age_s\":0.0008261203765869141,\"book_source_age_s\":0.6526148319244385}",
+      "attributes": [
+        {
+          "key": "level",
+          "value": "\"info\""
+        }
+      ]
+    },
+    {
+      "timestamp": "2026-10-16T22:00:41.774833361Z",
+      "severity": "info",
+      "message": "2026-10-16T22:00:41Z INFO nightcrawler.speeddesk: speeddesk_fill_markout_status {\"at\":1792188041.0967245,\"venue\":\"kalshi\",\"enabled\":true,\"mode\":\"diagnostic\",\"fill_source\":\"real\",\"session_id\":\"d662c43be91b227de32c\",\"protocol_version\":2,\"basis\":\"fills_batch_return\",\"liquidity_scope\":\"isolated_fill_not_joint_inventory_liquidation\",\"session_only\":true,\"earlier_pending_unknown\":true,\"restored_pending\":false,\"started_at\":1792182969.4687977,\"horizons_s\":[1,5,30],\"sampling_method\":\"first_post_horizon_websocket_update\",\"max_age_s\":0.5,\"max_levels_per_side\":512,\"max_measurements_per_book\":8,\"pending_fills\":1,\"max_pending\":1024,\"dedup_entries\":11,\"dedup_capacity\":8192,\"counts\":{\"observed_fills\":11,\"gap_horizons\":28,\"measured_horizons\":4,\"full_depth_horizons\":4},\"gap_reasons\":{\"book_stale\":8,\"venue_feed_gap\":18,\"book_before_horizon\":1,\"observation_late\":1},\"not_realized_pnl\":true,\"exit_latency_not_simulated\":true,\"error\":null,\"own_depth_policy\":\"all_original_bot_order_sizes_in_window\"}",
+      "attributes": [
+        {
+          "key": "level",
+          "value": "\"info\""
+        }
+      ]
+    },
+    {
+      "timestamp": "2026-10-16T22:00:51.844231722Z",
+      "severity": "info",
+      "message": "2026-10-16T22:00:51Z INFO nightcrawler.speeddesk: speeddesk_fill_markout_gap {\"at\":1792188050.4893456,\"venue\":\"kalshi\",\"protocol_version\":2,\"max_levels_per_side\":512,\"mode\":\"diagnostic\",\"fill_source\":\"real\",\"session_id\":\"d662c43be91b227de32c\",\"fill_id\":\"07245c51-5c29-b660-fad1-06f6072738d9\",\"order_id\":\"01a146ba-e968-7f1a-89b4-ce8f169f2eed\",\"window\":\"KXBTC15M-26OCT161815-15\",\"side\":\"down\",\"entry_price\":0.49,\"entry_size\":1.0,\"entry_fee_usd\":0.0,\"actual_fill_at\":1792188018.717831,\"fills_batch_returned_at\":1792188020.1574254,\"detection_delay_s\":1.4395945072174072,\"detection_delay_kind\":\"venue_fill_to_complete_paginated_batch_return\",\"horizon_basis\":\"fills_batch_return\",\"window_end\":1792188900.0,\"fee_coefficient\":0.07,\"fee_precision\":0.0001,\"fee_verified\":true,\"is_taker\":false,\"horizons_s\":[1,5,30],\"session_only\":true,\"horizon_s\":30,\"target_at\":1792188050.1574254,\"elapsed_s\":30.33192006358877,\"sampling_method\":\"first_post_horizon_websocket_update\",\"fee_model\":\"sell_formula_plus_per_0.01_contract_rounding_upper_bound\",\"reason\":\"book_stale\",\"filled_size\":null,\"unfilled_size\":null,\"gross_proceeds_usd\":null,\"allocated_entry_fee_usd\":null,\"exit_fee_bound_usd\":null,\"partial_hypothetical_net_usd\":null,\"hypothetical_net_usd\":null,\"consumed_depth\":[],\"execution_assumption\":\"instantaneous_visible_bid_depth_no_order_sent\",\"own_depth_policy\":\"all_original_bot_order_sizes_in_window\",\"external_depth_is_conservative_lower_bound\":true,\"liquidity_scope\":\"isolated_fill_not_joint_inventory_liquidation\",\"book_received_at\":1792188050.4886475,\"book_bid_levels\":131,\"book_ask_levels\":148,\"own_bid_levels\":1,\"book_exchange_at\":1792188048.877,\"book_source\":\"websocket\",\"book_receive_age_s\":0.000698089599609375,\"book_source_age_s\":1.6123454570770264}",
+      "attributes": [
+        {
+          "key": "level",
+          "value": "\"info\""
+        }
+      ]
+    },
+    {
+      "timestamp": "2026-10-16T22:01:41.975587559Z",
+      "severity": "info",
+      "message": "2026-10-16T22:01:41Z INFO nightcrawler.speeddesk: speeddesk_fill_markout_status {\"at\":1792188101.1940987,\"venue\":\"kalshi\",\"enabled\":true,\"mode\":\"diagnostic\",\"fill_source\":\"real\",\"session_id\":\"d662c43be91b227de32c\",\"protocol_version\":2,\"basis\":\"fills_batch_return\",\"liquidity_scope\":\"isolated_fill_not_joint_inventory_liquidation\",\"session_only\":true,\"earlier_pending_unknown\":true,\"restored_pending\":false,\"started_at\":1792182969.4687977,\"horizons_s\":[1,5,30],\"sampling_method\":\"first_post_horizon_websocket_update\",\"max_age_s\":0.5,\"max_levels_per_side\":512,\"max_measurements_per_book\":8,\"pending_fills\":0,\"max_pending\":1024,\"dedup_entries\":11,\"dedup_capacity\":8192,\"counts\":{\"observed_fills\":11,\"gap_horizons\":29,\"measured_horizons\":4,\"full_depth_horizons\":4},\"gap_reasons\":{\"book_stale\":9,\"venue_feed_gap\":18,\"book_before_horizon\":1,\"observation_late\":1},\"not_realized_pnl\":true,\"exit_latency_not_simulated\":true,\"error\":null,\"own_depth_policy\":\"all_original_bot_order_sizes_in_window\"}",
+      "attributes": [
+        {
+          "key": "level",
+          "value": "\"info\""
+        }
+      ]
+    },
+    {
+      "timestamp": "2026-10-16T22:02:41.783130755Z",
+      "severity": "info",
+      "message": "2026-10-16T22:02:41Z INFO nightcrawler.speeddesk: speeddesk_fill_markout_status {\"at\":1792188161.2606494,\"venue\":\"kalshi\",\"enabled\":true,\"mode\":\"diagnostic\",\"fill_source\":\"real\",\"session_id\":\"d662c43be91b227de32c\",\"protocol_version\":2,\"basis\":\"fills_batch_return\",\"liquidity_scope\":\"isolated_fill_not_joint_inventory_liquidation\",\"session_only\":true,\"earlier_pending_unknown\":true,\"restored_pending\":false,\"started_at\":1792182969.4687977,\"horizons_s\":[1,5,30],\"sampling_method\":\"first_post_horizon_websocket_update\",\"max_age_s\":0.5,\"max_levels_per_side\":512,\"max_measurements_per_book\":8,\"pending_fills\":0,\"max_pending\":1024,\"dedup_entries\":11,\"dedup_capacity\":8192,\"counts\":{\"observed_fills\":11,\"gap_horizons\":29,\"measured_horizons\":4,\"full_depth_horizons\":4},\"gap_reasons\":{\"book_stale\":9,\"venue_feed_gap\":18,\"book_before_horizon\":1,\"observation_late\":1},\"not_realized_pnl\":true,\"exit_latency_not_simulated\":true,\"error\":null,\"own_depth_policy\":\"all_original_bot_order_sizes_in_window\"}",
+      "attributes": [
+        {
+          "key": "level",
+          "value": "\"info\""
+        }
+      ]
+    },
+    {
+      "timestamp": "2026-10-16T22:03:42.106704555Z",
+      "severity": "info",
+      "message": "2026-10-16T22:03:41Z INFO nightcrawler.speeddesk: speeddesk_fill_markout_status {\"at\":1792188221.3108609,\"venue\":\"kalshi\",\"enabled\":true,\"mode\":\"diagnostic\",\"fill_source\":\"real\",\"session_id\":\"d662c43be91b227de32c\",\"protocol_version\":2,\"basis\":\"fills_batch_return\",\"liquidity_scope\":\"isolated_fill_not_joint_inventory_liquidation\",\"session_only\":true,\"earlier_pending_unknown\":true,\"restored_pending\":false,\"started_at\":1792182969.4687977,\"horizons_s\":[1,5,30],\"sampling_method\":\"first_post_horizon_websocket_update\",\"max_age_s\":0.5,\"max_levels_per_side\":512,\"max_measurements_per_book\":8,\"pending_fills\":0,\"max_pending\":1024,\"dedup_entries\":11,\"dedup_capacity\":8192,\"counts\":{\"observed_fills\":11,\"gap_horizons\":29,\"measured_horizons\":4,\"full_depth_horizons\":4},\"gap_reasons\":{\"book_stale\":9,\"venue_feed_gap\":18,\"book_before_horizon\":1,\"observation_late\":1},\"not_realized_pnl\":true,\"exit_latency_not_simulated\":true,\"error\":null,\"own_depth_policy\":\"all_original_bot_order_sizes_in_window\"}",
+      "attributes": [
+        {
+          "key": "level",
+          "value": "\"info\""
+        }
+      ]
+    },
+    {
+      "timestamp": "2026-10-16T22:04:41.673258069Z",
+      "severity": "info",
+      "message": "2026-10-16T22:04:41Z INFO nightcrawler.speeddesk: speeddesk_fill_markout_status {\"at\":1792188281.373872,\"venue\":\"kalshi\",\"enabled\":true,\"mode\":\"diagnostic\",\"fill_source\":\"real\",\"session_id\":\"d662c43be91b227de32c\",\"protocol_version\":2,\"basis\":\"fills_batch_return\",\"liquidity_scope\":\"isolated_fill_not_joint_inventory_liquidation\",\"session_only\":true,\"earlier_pending_unknown\":true,\"restored_pending\":false,\"started_at\":1792182969.4687977,\"horizons_s\":[1,5,30],\"sampling_method\":\"first_post_horizon_websocket_update\",\"max_age_s\":0.5,\"max_levels_per_side\":512,\"max_measurements_per_book\":8,\"pending_fills\":0,\"max_pending\":1024,\"dedup_entries\":11,\"dedup_capacity\":8192,\"counts\":{\"observed_fills\":11,\"gap_horizons\":29,\"measured_horizons\":4,\"full_depth_horizons\":4},\"gap_reasons\":{\"book_stale\":9,\"venue_feed_gap\":18,\"book_before_horizon\":1,\"observation_late\":1},\"not_realized_pnl\":true,\"exit_latency_not_simulated\":true,\"error\":null,\"own_depth_policy\":\"all_original_bot_order_sizes_in_window\"}",
+      "attributes": [
+        {
+          "key": "level",
+          "value": "\"info\""
+        }
+      ]
+    },
+    {
+      "timestamp": "2026-10-16T22:05:41.692263507Z",
+      "severity": "info",
+      "message": "2026-10-16T22:05:41Z INFO nightcrawler.speeddesk: speeddesk_fill_markout_status {\"at\":1792188341.5145264,\"venue\":\"kalshi\",\"enabled\":true,\"mode\":\"diagnostic\",\"fill_source\":\"real\",\"session_id\":\"d662c43be91b227de32c\",\"protocol_version\":2,\"basis\":\"fills_batch_return\",\"liquidity_scope\":\"isolated_fill_not_joint_inventory_liquidation\",\"session_only\":true,\"earlier_pending_unknown\":true,\"restored_pending\":false,\"started_at\":1792182969.4687977,\"horizons_s\":[1,5,30],\"sampling_method\":\"first_post_horizon_websocket_update\",\"max_age_s\":0.5,\"max_levels_per_side\":512,\"max_measurements_per_book\":8,\"pending_fills\":0,\"max_pending\":1024,\"dedup_entries\":11,\"dedup_capacity\":8192,\"counts\":{\"observed_fills\":11,\"gap_horizons\":29,\"measured_horizons\":4,\"full_depth_horizons\":4},\"gap_reasons\":{\"book_stale\":9,\"venue_feed_gap\":18,\"book_before_horizon\":1,\"observation_late\":1},\"not_realized_pnl\":true,\"exit_latency_not_simulated\":true,\"error\":null,\"own_depth_policy\":\"all_original_bot_order_sizes_in_window\"}",
+      "attributes": [
+        {
+          "key": "level",
+          "value": "\"info\""
+        }
+      ]
+    },
+    {
+      "timestamp": "2026-10-16T22:06:42.108244778Z",
+      "severity": "info",
+      "message": "2026-10-16T22:06:42Z INFO nightcrawler.speeddesk: speeddesk_fill_markout_status {\"at\":1792188401.5819132,\"venue\":\"kalshi\",\"enabled\":true,\"mode\":\"diagnostic\",\"fill_source\":\"real\",\"session_id\":\"d662c43be91b227de32c\",\"protocol_version\":2,\"basis\":\"fills_batch_return\",\"liquidity_scope\":\"isolated_fill_not_joint_inventory_liquidation\",\"session_only\":true,\"earlier_pending_unknown\":true,\"restored_pending\":false,\"started_at\":1792182969.4687977,\"horizons_s\":[1,5,30],\"sampling_method\":\"first_post_horizon_websocket_update\",\"max_age_s\":0.5,\"max_levels_per_side\":512,\"max_measurements_per_book\":8,\"pending_fills\":0,\"max_pending\":1024,\"dedup_entries\":11,\"dedup_capacity\":8192,\"counts\":{\"observed_fills\":11,\"gap_horizons\":29,\"measured_horizons\":4,\"full_depth_horizons\":4},\"gap_reasons\":{\"book_stale\":9,\"venue_feed_gap\":18,\"book_before_horizon\":1,\"observation_late\":1},\"not_realized_pnl\":true,\"exit_latency_not_simulated\":true,\"error\":null,\"own_depth_policy\":\"all_original_bot_order_sizes_in_window\"}",
+      "attributes": [
+        {
+          "key": "level",
+          "value": "\"info\""
+        }
+      ]
+    },
+    {
+      "timestamp": "2026-10-16T22:07:42.047081473Z",
+      "severity": "info",
+      "message": "2026-10-16T22:07:42Z INFO nightcrawler.speeddesk: speeddesk_fill_markout_status {\"at\":1792188461.7413726,\"venue\":\"kalshi\",\"enabled\":true,\"mode\":\"diagnostic\",\"fill_source\":\"real\",\"session_id\":\"d662c43be91b227de32c\",\"protocol_version\":2,\"basis\":\"fills_batch_return\",\"liquidity_scope\":\"isolated_fill_not_joint_inventory_liquidation\",\"session_only\":true,\"earlier_pending_unknown\":true,\"restored_pending\":false,\"started_at\":1792182969.4687977,\"horizons_s\":[1,5,30],\"sampling_method\":\"first_post_horizon_websocket_update\",\"max_age_s\":0.5,\"max_levels_per_side\":512,\"max_measurements_per_book\":8,\"pending_fills\":0,\"max_pending\":1024,\"dedup_entries\":11,\"dedup_capacity\":8192,\"counts\":{\"observed_fills\":11,\"gap_horizons\":29,\"measured_horizons\":4,\"full_depth_horizons\":4},\"gap_reasons\":{\"book_stale\":9,\"venue_feed_gap\":18,\"book_before_horizon\":1,\"observation_late\":1},\"not_realized_pnl\":true,\"exit_latency_not_simulated\":true,\"error\":null,\"own_depth_policy\":\"all_original_bot_order_sizes_in_window\"}",
+      "attributes": [
+        {
+          "key": "level",
+          "value": "\"info\""
+        }
+      ]
+    },
+    {
+      "timestamp": "2026-10-16T22:08:42.561164164Z",
+      "severity": "info",
+      "message": "2026-10-16T22:08:42Z INFO nightcrawler.speeddesk: speeddesk_fill_markout_status {\"at\":1792188522.199855,\"venue\":\"kalshi\",\"enabled\":true,\"mode\":\"diagnostic\",\"fill_source\":\"real\",\"session_id\":\"d662c43be91b227de32c\",\"protocol_version\":2,\"basis\":\"fills_batch_return\",\"liquidity_scope\":\"isolated_fill_not_joint_inventory_liquidation\",\"session_only\":true,\"earlier_pending_unknown\":true,\"restored_pending\":false,\"started_at\":1792182969.4687977,\"horizons_s\":[1,5,30],\"sampling_method\":\"first_post_horizon_websocket_update\",\"max_age_s\":0.5,\"max_levels_per_side\":512,\"max_measurements_per_book\":8,\"pending_fills\":0,\"max_pending\":1024,\"dedup_entries\":11,\"dedup_capacity\":8192,\"counts\":{\"observed_fills\":11,\"gap_horizons\":29,\"measured_horizons\":4,\"full_depth_horizons\":4},\"gap_reasons\":{\"book_stale\":9,\"venue_feed_gap\":18,\"book_before_horizon\":1,\"observation_late\":1},\"not_realized_pnl\":true,\"exit_latency_not_simulated\":true,\"error\":null,\"own_depth_policy\":\"all_original_bot_order_sizes_in_window\"}",
+      "attributes": [
+        {
+          "key": "level",
+          "value": "\"info\""
+        }
+      ]
+    },
+    {
+      "timestamp": "2026-10-16T22:09:42.585382760Z",
+      "severity": "info",
+      "message": "2026-10-16T22:09:42Z INFO nightcrawler.speeddesk: speeddesk_fill_markout_status {\"at\":1792188582.2511244,\"venue\":\"kalshi\",\"enabled\":true,\"mode\":\"diagnostic\",\"fill_source\":\"real\",\"session_id\":\"d662c43be91b227de32c\",\"protocol_version\":2,\"basis\":\"fills_batch_return\",\"liquidity_scope\":\"isolated_fill_not_joint_inventory_liquidation\",\"session_only\":true,\"earlier_pending_unknown\":true,\"restored_pending\":false,\"started_at\":1792182969.4687977,\"horizons_s\":[1,5,30],\"sampling_method\":\"first_post_horizon_websocket_update\",\"max_age_s\":0.5,\"max_levels_per_side\":512,\"max_measurements_per_book\":8,\"pending_fills\":0,\"max_pending\":1024,\"dedup_entries\":11,\"dedup_capacity\":8192,\"counts\":{\"observed_fills\":11,\"gap_horizons\":29,\"measured_horizons\":4,\"full_depth_horizons\":4},\"gap_reasons\":{\"book_stale\":9,\"venue_feed_gap\":18,\"book_before_horizon\":1,\"observation_late\":1},\"not_realized_pnl\":true,\"exit_latency_not_simulated\":true,\"error\":null,\"own_depth_policy\":\"all_original_bot_order_sizes_in_window\"}",
+      "attributes": [
+        {
+          "key": "level",
+          "value": "\"info\""
+        }
+      ]
+    },
+    {
+      "timestamp": "2026-10-16T22:10:43.357111980Z",
+      "severity": "info",
+      "message": "2026-10-16T22:10:43Z INFO nightcrawler.speeddesk: speeddesk_fill_markout_status {\"at\":1792188642.9756558,\"venue\":\"kalshi\",\"enabled\":true,\"mode\":\"diagnostic\",\"fill_source\":\"real\",\"session_id\":\"d662c43be91b227de32c\",\"protocol_version\":2,\"basis\":\"fills_batch_return\",\"liquidity_scope\":\"isolated_fill_not_joint_inventory_liquidation\",\"session_only\":true,\"earlier_pending_unknown\":true,\"restored_pending\":false,\"started_at\":1792182969.4687977,\"horizons_s\":[1,5,30],\"sampling_method\":\"first_post_horizon_websocket_update\",\"max_age_s\":0.5,\"max_levels_per_side\":512,\"max_measurements_per_book\":8,\"pending_fills\":0,\"max_pending\":1024,\"dedup_entries\":11,\"dedup_capacity\":8192,\"counts\":{\"observed_fills\":11,\"gap_horizons\":29,\"measured_horizons\":4,\"full_depth_horizons\":4},\"gap_reasons\":{\"book_stale\":9,\"venue_feed_gap\":18,\"book_before_horizon\":1,\"observation_late\":1},\"not_realized_pnl\":true,\"exit_latency_not_simulated\":true,\"error\":null,\"own_depth_policy\":\"all_original_bot_order_sizes_in_window\"}",
+      "attributes": [
+        {
+          "key": "level",
+          "value": "\"info\""
+        }
+      ]
+    },
+    {
+      "timestamp": "2026-10-16T22:11:03.267633951Z",
+      "severity": "info",
+      "message": "2026-10-16T22:11:03Z INFO nightcrawler.speeddesk: speeddesk_fill_markout_gap {\"at\":1792188661.9348636,\"venue\":\"kalshi\",\"protocol_version\":2,\"max_levels_per_side\":512,\"mode\":\"diagnostic\",\"fill_source\":\"real\",\"session_id\":\"d662c43be91b227de32c\",\"fill_id\":\"07245dd6-5da1-8e19-c170-ac14a4749756\",\"order_id\":\"01a146c4-b920-7fc3-9f24-98335442a6c1\",\"window\":\"KXBTC15M-26OCT161815-15\",\"side\":\"up\",\"entry_price\":0.927,\"entry_size\":1.0,\"entry_fee_usd\":0.0048,\"actual_fill_at\":1792188660.359377,\"fills_batch_returned_at\":1792188660.901433,\"detection_delay_s\":0.5420560836791992,\"detection_delay_kind\":\"venue_fill_to_complete_paginated_batch_return\",\"horizon_basis\":\"fills_batch_return\",\"window_end\":1792188900.0,\"fee_coefficient\":0.07,\"fee_precision\":0.0001,\"fee_verified\":true,\"is_taker\":true,\"horizons_s\":[1,5,30],\"session_only\":true,\"horizon_s\":1,\"target_at\":1792188661.901433,\"elapsed_s\":1.033430472947657,\"sampling_method\":\"first_post_horizon_websocket_update\",\"fee_model\":\"sell_formula_plus_per_0.01_contract_rounding_upper_bound\",\"reason\":\"book_stale\",\"filled_size\":null,\"unfilled_size\":null,\"gross_proceeds_usd\":null,\"allocated_entry_fee_usd\":null,\"exit_fee_bound_usd\":null,\"partial_hypothetical_net_usd\":null,\"hypothetical_net_usd\":null,\"consumed_depth\":[],\"execution_assumption\":\"instantaneous_visible_bid_depth_no_order_sent\",\"own_depth_policy\":\"all_original_bot_order_sizes_in_window\",\"external_depth_is_conservative_lower_bound\":true,\"liquidity_scope\":\"isolated_fill_not_joint_inventory_liquidation\",\"book_received_at\":1792188661.9346983,\"book_bid_levels\":193,\"book_ask_levels\":57,\"own_bid_levels\":4,\"book_exchange_at\":1792188659.748,\"book_source\":\"websocket\",\"book_receive_age_s\":0.0001652240753173828,\"book_source_age_s\":2.186863660812378}",
+      "attributes": [
+        {
+          "key": "level",
+          "value": "\"info\""
+        }
+      ]
+    },
+    {
+      "timestamp": "2026-10-16T22:11:05.955722608Z",
+      "severity": "info",
+      "message": "2026-10-16T22:11:05Z INFO nightcrawler.speeddesk: speeddesk_fill_markout_gap {\"at\":1792188665.370414,\"venue\":\"kalshi\",\"protocol_version\":2,\"max_levels_per_side\":512,\"mode\":\"diagnostic\",\"fill_source\":\"real\",\"session_id\":\"d662c43be91b227de32c\",\"fill_id\":\"07245dd6-5da1-8e19-c170-ac14a4749756\",\"order_id\":\"01a146c4-b920-7fc3-9f24-98335442a6c1\",\"window\":\"KXBTC15M-26OCT161815-15\",\"side\":\"up\",\"entry_price\":0.927,\"entry_size\":1.0,\"entry_fee_usd\":0.0048,\"actual_fill_at\":1792188660.359377,\"fills_batch_returned_at\":1792188660.901433,\"detection_delay_s\":0.5420560836791992,\"detection_delay_kind\":\"venue_fill_to_complete_paginated_batch_return\",\"horizon_basis\":\"fills_batch_return\",\"window_end\":1792188900.0,\"fee_coefficient\":0.07,\"fee_precision\":0.0001,\"fee_verified\":true,\"is_taker\":true,\"horizons_s\":[1,5,30],\"session_only\":true,\"horizon_s\":5,\"target_at\":1792188665.901433,\"elapsed_s\":4.468981557060033,\"sampling_method\":\"first_post_horizon_websocket_update\",\"fee_model\":\"sell_formula_plus_per_0.01_contract_rounding_upper_bound\",\"reason\":\"venue_feed_gap\",\"filled_size\":null,\"unfilled_size\":null,\"gross_proceeds_usd\":null,\"allocated_entry_fee_usd\":null,\"exit_fee_bound_usd\":null,\"partial_hypothetical_net_usd\":null,\"hypothetical_net_usd\":null,\"consumed_depth\":[],\"execution_assumption\":\"instantaneous_visible_bid_depth_no_order_sent\",\"own_depth_policy\":\"all_original_bot_order_sizes_in_window\",\"external_depth_is_conservative_lower_bound\":true,\"liquidity_scope\":\"isolated_fill_not_joint_inventory_liquidation\"}",
+      "attributes": [
+        {
+          "key": "level",
+          "value": "\"info\""
+        }
+      ]
+    },
+    {
+      "timestamp": "2026-10-16T22:11:05.955732638Z",
+      "severity": "info",
+      "message": "2026-10-16T22:11:05Z INFO nightcrawler.speeddesk: speeddesk_fill_markout_gap {\"at\":1792188665.370414,\"venue\":\"kalshi\",\"protocol_version\":2,\"max_levels_per_side\":512,\"mode\":\"diagnostic\",\"fill_source\":\"real\",\"session_id\":\"d662c43be91b227de32c\",\"fill_id\":\"07245dd6-5da1-8e19-c170-ac14a4749756\",\"order_id\":\"01a146c4-b920-7fc3-9f24-98335442a6c1\",\"window\":\"KXBTC15M-26OCT161815-15\",\"side\":\"up\",\"entry_price\":0.927,\"entry_size\":1.0,\"entry_fee_usd\":0.0048,\"actual_fill_at\":1792188660.359377,\"fills_batch_returned_at\":1792188660.901433,\"detection_delay_s\":0.5420560836791992,\"detection_delay_kind\":\"venue_fill_to_complete_paginated_batch_return\",\"horizon_basis\":\"fills_batch_return\",\"window_end\":1792188900.0,\"fee_coefficient\":0.07,\"fee_precision\":0.0001,\"fee_verified\":true,\"is_taker\":true,\"horizons_s\":[1,5,30],\"session_only\":true,\"horizon_s\":30,\"target_at\":1792188690.901433,\"elapsed_s\":4.468981557060033,\"sampling_method\":\"first_post_horizon_websocket_update\",\"fee_model\":\"sell_formula_plus_per_0.01_contract_rounding_upper_bound\",\"reason\":\"venue_feed_gap\",\"filled_size\":null,\"unfilled_size\":null,\"gross_proceeds_usd\":null,\"allocated_entry_fee_usd\":null,\"exit_fee_bound_usd\":null,\"partial_hypothetical_net_usd\":null,\"hypothetical_net_usd\":null,\"consumed_depth\":[],\"execution_assumption\":\"instantaneous_visible_bid_depth_no_order_sent\",\"own_depth_policy\":\"all_original_bot_order_sizes_in_window\",\"external_depth_is_conservative_lower_bound\":true,\"liquidity_scope\":\"isolated_fill_not_joint_inventory_liquidation\"}",
+      "attributes": [
+        {
+          "key": "level",
+          "value": "\"info\""
+        }
+      ]
+    },
+    {
+      "timestamp": "2026-10-16T22:11:43.302683327Z",
+      "severity": "info",
+      "message": "2026-10-16T22:11:43Z INFO nightcrawler.speeddesk: speeddesk_fill_markout_status {\"at\":1792188703.0365348,\"venue\":\"kalshi\",\"enabled\":true,\"mode\":\"diagnostic\",\"fill_source\":\"real\",\"session_id\":\"d662c43be91b227de32c\",\"protocol_version\":2,\"basis\":\"fills_batch_return\",\"liquidity_scope\":\"isolated_fill_not_joint_inventory_liquidation\",\"session_only\":true,\"earlier_pending_unknown\":true,\"restored_pending\":false,\"started_at\":1792182969.4687977,\"horizons_s\":[1,5,30],\"sampling_method\":\"first_post_horizon_websocket_update\",\"max_age_s\":0.5,\"max_levels_per_side\":512,\"max_measurements_per_book\":8,\"pending_fills\":0,\"max_pending\":1024,\"dedup_entries\":12,\"dedup_capacity\":8192,\"counts\":{\"observed_fills\":12,\"gap_horizons\":32,\"measured_horizons\":4,\"full_depth_horizons\":4},\"gap_reasons\":{\"book_stale\":10,\"venue_feed_gap\":20,\"book_before_horizon\":1,\"observation_late\":1},\"not_realized_pnl\":true,\"exit_latency_not_simulated\":true,\"error\":null,\"own_depth_policy\":\"all_original_bot_order_sizes_in_window\"}",
+      "attributes": [
+        {
+          "key": "level",
+          "value": "\"info\""
+        }
+      ]
+    },
+    {
+      "timestamp": "2026-10-16T22:12:43.764802960Z",
+      "severity": "info",
+      "message": "2026-10-16T22:12:43Z INFO nightcrawler.speeddesk: speeddesk_fill_markout_status {\"at\":1792188763.470744,\"venue\":\"kalshi\",\"enabled\":true,\"mode\":\"diagnostic\",\"fill_source\":\"real\",\"session_id\":\"d662c43be91b227de32c\",\"protocol_version\":2,\"basis\":\"fills_batch_return\",\"liquidity_scope\":\"isolated_fill_not_joint_inventory_liquidation\",\"session_only\":true,\"earlier_pending_unknown\":true,\"restored_pending\":false,\"started_at\":1792182969.4687977,\"horizons_s\":[1,5,30],\"sampling_method\":\"first_post_horizon_websocket_update\",\"max_age_s\":0.5,\"max_levels_per_side\":512,\"max_measurements_per_book\":8,\"pending_fills\":0,\"max_pending\":1024,\"dedup_entries\":12,\"dedup_capacity\":8192,\"counts\":{\"observed_fills\":12,\"gap_horizons\":32,\"measured_horizons\":4,\"full_depth_horizons\":4},\"gap_reasons\":{\"book_stale\":10,\"venue_feed_gap\":20,\"book_before_horizon\":1,\"observation_late\":1},\"not_realized_pnl\":true,\"exit_latency_not_simulated\":true,\"error\":null,\"own_depth_policy\":\"all_original_bot_order_sizes_in_window\"}",
+      "attributes": [
+        {
+          "key": "level",
+          "value": "\"info\""
+        }
+      ]
+    },
+    {
+      "timestamp": "2026-10-16T22:13:43.924353646Z",
+      "severity": "info",
+      "message": "2026-10-16T22:13:43Z INFO nightcrawler.speeddesk: speeddesk_fill_markout_status {\"at\":1792188823.5458007,\"venue\":\"kalshi\",\"enabled\":true,\"mode\":\"diagnostic\",\"fill_source\":\"real\",\"session_id\":\"d662c43be91b227de32c\",\"protocol_version\":2,\"basis\":\"fills_batch_return\",\"liquidity_scope\":\"isolated_fill_not_joint_inventory_liquidation\",\"session_only\":true,\"earlier_pending_unknown\":true,\"restored_pending\":false,\"started_at\":1792182969.4687977,\"horizons_s\":[1,5,30],\"sampling_method\":\"first_post_horizon_websocket_update\",\"max_age_s\":0.5,\"max_levels_per_side\":512,\"max_measurements_per_book\":8,\"pending_fills\":0,\"max_pending\":1024,\"dedup_entries\":12,\"dedup_capacity\":8192,\"counts\":{\"observed_fills\":12,\"gap_horizons\":32,\"measured_horizons\":4,\"full_depth_horizons\":4},\"gap_reasons\":{\"book_stale\":10,\"venue_feed_gap\":20,\"book_before_horizon\":1,\"observation_late\":1},\"not_realized_pnl\":true,\"exit_latency_not_simulated\":true,\"error\":null,\"own_depth_policy\":\"all_original_bot_order_sizes_in_window\"}",
+      "attributes": [
+        {
+          "key": "level",
+          "value": "\"info\""
+        }
+      ]
+    },
+    {
+      "timestamp": "2026-10-16T22:14:53.324297032Z",
+      "severity": "info",
+      "message": "2026-10-16T22:14:43Z INFO nightcrawler.speeddesk: speeddesk_fill_markout_status {\"at\":1792188883.713115,\"venue\":\"kalshi\",\"enabled\":true,\"mode\":\"diagnostic\",\"fill_source\":\"real\",\"session_id\":\"d662c43be91b227de32c\",\"protocol_version\":2,\"basis\":\"fills_batch_return\",\"liquidity_scope\":\"isolated_fill_not_joint_inventory_liquidation\",\"session_only\":true,\"earlier_pending_unknown\":true,\"restored_pending\":false,\"started_at\":1792182969.4687977,\"horizons_s\":[1,5,30],\"sampling_method\":\"first_post_horizon_websocket_update\",\"max_age_s\":0.5,\"max_levels_per_side\":512,\"max_measurements_per_book\":8,\"pending_fills\":0,\"max_pending\":1024,\"dedup_entries\":12,\"dedup_capacity\":8192,\"counts\":{\"observed_fills\":12,\"gap_horizons\":32,\"measured_horizons\":4,\"full_depth_horizons\":4},\"gap_reasons\":{\"book_stale\":10,\"venue_feed_gap\":20,\"book_before_horizon\":1,\"observation_late\":1},\"not_realized_pnl\":true,\"exit_latency_not_simulated\":true,\"error\":null,\"own_depth_policy\":\"all_original_bot_order_sizes_in_window\"}",
+      "attributes": [
+        {
+          "key": "level",
+          "value": "\"info\""
+        }
+      ]
+    },
+    {
+      "timestamp": "2026-10-16T22:15:44.065902597Z",
+      "severity": "info",
+      "message": "2026-10-16T22:15:44Z INFO nightcrawler.speeddesk: speeddesk_fill_markout_status {\"at\":1792188943.7784553,\"venue\":\"kalshi\",\"enabled\":true,\"mode\":\"diagnostic\",\"fill_source\":\"real\",\"session_id\":\"d662c43be91b227de32c\",\"protocol_version\":2,\"basis\":\"fills_batch_return\",\"liquidity_scope\":\"isolated_fill_not_joint_inventory_liquidation\",\"session_only\":true,\"earlier_pending_unknown\":true,\"restored_pending\":false,\"started_at\":1792182969.4687977,\"horizons_s\":[1,5,30],\"sampling_method\":\"first_post_horizon_websocket_update\",\"max_age_s\":0.5,\"max_levels_per_side\":512,\"max_measurements_per_book\":8,\"pending_fills\":0,\"max_pending\":1024,\"dedup_entries\":12,\"dedup_capacity\":8192,\"counts\":{\"observed_fills\":12,\"gap_horizons\":32,\"measured_horizons\":4,\"full_depth_horizons\":4},\"gap_reasons\":{\"book_stale\":10,\"venue_feed_gap\":20,\"book_before_horizon\":1,\"observation_late\":1},\"not_realized_pnl\":true,\"exit_latency_not_simulated\":true,\"error\":null,\"own_depth_policy\":\"all_original_bot_order_sizes_in_window\"}",
+      "attributes": [
+        {
+          "key": "level",
+          "value": "\"info\""
+        }
+      ]
+    }
+  ]
+}

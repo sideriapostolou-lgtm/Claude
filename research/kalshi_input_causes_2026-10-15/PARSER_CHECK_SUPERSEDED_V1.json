@@ -1,0 +1,5 @@
+{
+  "checks": 9,
+  "passed": true,
+  "scope": "Exact event logger/prefix, parent/nested text rejection, duplicate-line/wrong event/level rejection, error or text-only tool result stays missing, original timestamp preserved. Synthetic parser checks; not trading/profit evidence."
+}

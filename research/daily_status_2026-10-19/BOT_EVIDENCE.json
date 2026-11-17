@@ -1,0 +1,598 @@
+{
+  "inspected_at_utc": "2026-10-19 15:25:05 UTC",
+  "base_commit": "a186a5d80709137df77bb2edfc12123876705ac2",
+  "platform": {
+    "environment": {
+      "id": "17f7b0e0-104c-4903-9484-0106748b3cdb",
+      "name": "production"
+    },
+    "services": [
+      {
+        "serviceId": "f84d3b52-002f-44cb-931e-bc9e3e097e97",
+        "serviceName": "bot",
+        "state": "online",
+        "statusText": "Online",
+        "activeDeployments": [
+          {
+            "id": "43f14443-2d07-4985-b879-3a2515fb8d2c",
+            "status": "SUCCESS",
+            "createdAt": "2026-10-16T23:49:24.905Z",
+            "statusUpdatedAt": "2026-10-16T23:50:35.236Z"
+          }
+        ],
+        "replicaStatus": {
+          "running": 1,
+          "crashed": 0,
+          "total": 1
+        },
+        "cronJob": null,
+        "issues": {
+          "warningCount": 0,
+          "criticalCount": 0
+        },
+        "recentFailures": 0,
+        "recentFailedDeployments": [],
+        "hasIssues": false,
+        "isCronJob": false,
+        "hasVolume": true
+      },
+      {
+        "serviceId": "736b1c8a-8311-4ee0-9043-d05f508cd821",
+        "serviceName": "kalshi-recorder",
+        "state": "online",
+        "statusText": "Online",
+        "activeDeployments": [
+          {
+            "id": "8453f919-b891-4aa7-8478-6fcf6b9c24ee",
+            "status": "SUCCESS",
+            "createdAt": "2026-10-14T16:36:40.384Z",
+            "statusUpdatedAt": "2026-10-14T16:38:15.302Z"
+          }
+        ],
+        "replicaStatus": {
+          "running": 1,
+          "crashed": 0,
+          "total": 1
+        },
+        "cronJob": null,
+        "issues": {
+          "warningCount": 0,
+          "criticalCount": 0
+        },
+        "recentFailures": 0,
+        "recentFailedDeployments": [],
+        "hasIssues": false,
+        "isCronJob": false,
+        "hasVolume": true
+      }
+    ],
+    "pendingWork": [
+      {
+        "id": "patch:9a84e13c-3caf-4a85-b5f5-d9a2fcb8a021",
+        "kind": "EnvironmentPatch",
+        "status": "staged",
+        "changes": [],
+        "startedAt": "2026-10-12T16:21:53.480Z",
+        "workflowId": "commitChanges/17f7b0e0-104c-4903-9484-0106748b3cdb/9a84e13c-3caf-4a85-b5f5-d9a2fcb8a021"
+      }
+    ],
+    "summary": {
+      "totalServices": 2,
+      "servicesWithIssues": 0,
+      "totalFailures": 0
+    }
+  },
+  "bot_deployments": [
+    {
+      "id": "43f14443-2d07-4985-b879-3a2515fb8d2c",
+      "status": "SUCCESS",
+      "createdAt": "2026-10-16T23:49:24.905Z",
+      "updatedAt": "2026-10-16T23:50:35.236Z",
+      "serviceId": "f84d3b52-002f-44cb-931e-bc9e3e097e97",
+      "environmentId": "17f7b0e0-104c-4903-9484-0106748b3cdb",
+      "url": null,
+      "snapshotId": "b39e1fa6-b26f-4301-ae40-52989a5e2dd4",
+      "canRollback": true,
+      "canRedeploy": true,
+      "regions": [
+        "us-east4-eqdc4a"
+      ],
+      "meta": {
+        "reason": "deploy",
+        "commitMessage": "Merge pull request #76 from sideriapostolou-lgtm/codex/kalshi-reduction-only-20261016\n\nfix: contain unpaired Kalshi entries (touches real money)",
+        "commitHash": "f370c3c252927f659472ee160eb92fac2458ee51",
+        "branch": "claude/nightcrawler-memecoin-bot-Gwnb1S"
+      }
+    }
+  ],
+  "bot_metrics": {
+    "service": {
+      "id": "f84d3b52-002f-44cb-931e-bc9e3e097e97",
+      "name": "bot"
+    },
+    "environment": {
+      "id": "17f7b0e0-104c-4903-9484-0106748b3cdb",
+      "name": "production"
+    },
+    "metrics": [
+      {
+        "measurement": "DISK_USAGE_GB",
+        "current": 4.996161536,
+        "average": 4.914273363934421,
+        "min": 0,
+        "max": 4.99625984,
+        "sampleCount": 61
+      },
+      {
+        "measurement": "MEMORY_USAGE_GB",
+        "current": 1.024937984,
+        "average": 1.0082721657704916,
+        "min": 0,
+        "max": 1.027633152,
+        "sampleCount": 61
+      },
+      {
+        "measurement": "MEMORY_LIMIT_GB",
+        "current": 8,
+        "average": 7.868852459016393,
+        "min": 0,
+        "max": 8,
+        "sampleCount": 61
+      }
+    ]
+  },
+  "bot_metrics_retrieved_at_utc": "2026-10-19T15:23:53Z",
+  "recent_log_query": {
+    "scope": "deployment",
+    "deploymentId": "43f14443-2d07-4985-b879-3a2515fb8d2c",
+    "serviceId": "f84d3b52-002f-44cb-931e-bc9e3e097e97",
+    "environmentId": "17f7b0e0-104c-4903-9484-0106748b3cdb",
+    "status": "SUCCESS",
+    "deploy": []
+  },
+  "queries": {
+    "DAY_REAL": {
+      "request": {
+        "projectId": "75750847-85c0-41a3-a2a7-b7f2201a51e9",
+        "environmentId": "17f7b0e0-104c-4903-9484-0106748b3cdb",
+        "serviceId": "f84d3b52-002f-44cb-931e-bc9e3e097e97",
+        "deploymentId": "43f14443-2d07-4985-b879-3a2515fb8d2c",
+        "startDate": "2026-10-18T00:00:00Z",
+        "endDate": "2026-10-19T00:00:00Z",
+        "filter": "\"nightcrawler.speeddesk: speeddesk_live_fill\" OR \"nightcrawler.speeddesk: speeddesk_live_settlement\"",
+        "limit": 150
+      },
+      "retrieved_at": "2026-10-19 15:24:13 UTC",
+      "response": {
+        "scope": "deployment",
+        "deploymentId": "43f14443-2d07-4985-b879-3a2515fb8d2c",
+        "serviceId": "f84d3b52-002f-44cb-931e-bc9e3e097e97",
+        "environmentId": "17f7b0e0-104c-4903-9484-0106748b3cdb",
+        "status": "SUCCESS",
+        "deploy": []
+      }
+    },
+    "DAY_PRACTICE": {
+      "request": {
+        "projectId": "75750847-85c0-41a3-a2a7-b7f2201a51e9",
+        "environmentId": "17f7b0e0-104c-4903-9484-0106748b3cdb",
+        "serviceId": "f84d3b52-002f-44cb-931e-bc9e3e097e97",
+        "deploymentId": "43f14443-2d07-4985-b879-3a2515fb8d2c",
+        "startDate": "2026-10-18T00:00:00Z",
+        "endDate": "2026-10-19T00:00:00Z",
+        "filter": "\"nightcrawler.speeddesk: speeddesk_twin \" AND \"speeddesk_fill\" OR \"nightcrawler.speeddesk: speeddesk_twin_settlement\"",
+        "limit": 150
+      },
+      "retrieved_at": "2026-10-19 15:24:13 UTC",
+      "response": {
+        "scope": "deployment",
+        "deploymentId": "43f14443-2d07-4985-b879-3a2515fb8d2c",
+        "serviceId": "f84d3b52-002f-44cb-931e-bc9e3e097e97",
+        "environmentId": "17f7b0e0-104c-4903-9484-0106748b3cdb",
+        "status": "SUCCESS",
+        "deploy": []
+      }
+    },
+    "DAY_OPERATIONAL": {
+      "request": {
+        "projectId": "75750847-85c0-41a3-a2a7-b7f2201a51e9",
+        "environmentId": "17f7b0e0-104c-4903-9484-0106748b3cdb",
+        "serviceId": "f84d3b52-002f-44cb-931e-bc9e3e097e97",
+        "deploymentId": "43f14443-2d07-4985-b879-3a2515fb8d2c",
+        "startDate": "2026-10-18T00:00:00Z",
+        "endDate": "2026-10-19T00:00:00Z",
+        "filter": "\"nightcrawler.speeddesk: speeddesk_live_order\" OR \"nightcrawler.speeddesk: speeddesk_live_take\" OR \"nightcrawler.speeddesk: speeddesk_live_lock\" OR \"nightcrawler.speeddesk: speeddesk_live_cancel\" OR \"speeddesk_live_scorecard\"",
+        "limit": 100
+      },
+      "retrieved_at": "2026-10-19 15:24:13 UTC",
+      "response": {
+        "scope": "deployment",
+        "deploymentId": "43f14443-2d07-4985-b879-3a2515fb8d2c",
+        "serviceId": "f84d3b52-002f-44cb-931e-bc9e3e097e97",
+        "environmentId": "17f7b0e0-104c-4903-9484-0106748b3cdb",
+        "status": "SUCCESS",
+        "deploy": []
+      }
+    },
+    "NO_LATER_NATIVE": {
+      "request": {
+        "projectId": "75750847-85c0-41a3-a2a7-b7f2201a51e9",
+        "environmentId": "17f7b0e0-104c-4903-9484-0106748b3cdb",
+        "serviceId": "f84d3b52-002f-44cb-931e-bc9e3e097e97",
+        "deploymentId": "43f14443-2d07-4985-b879-3a2515fb8d2c",
+        "startDate": "2026-10-17T09:00:00Z",
+        "endDate": "2026-10-19T15:23:00Z",
+        "filter": "\"nightcrawler.speeddesk: speeddesk_live_status\"",
+        "limit": 20
+      },
+      "retrieved_at": "2026-10-19 15:24:14 UTC",
+      "response": {
+        "scope": "deployment",
+        "deploymentId": "43f14443-2d07-4985-b879-3a2515fb8d2c",
+        "serviceId": "f84d3b52-002f-44cb-931e-bc9e3e097e97",
+        "environmentId": "17f7b0e0-104c-4903-9484-0106748b3cdb",
+        "status": "SUCCESS",
+        "deploy": []
+      }
+    },
+    "LAST_NATIVE": {
+      "request": {
+        "projectId": "75750847-85c0-41a3-a2a7-b7f2201a51e9",
+        "environmentId": "17f7b0e0-104c-4903-9484-0106748b3cdb",
+        "serviceId": "f84d3b52-002f-44cb-931e-bc9e3e097e97",
+        "deploymentId": "43f14443-2d07-4985-b879-3a2515fb8d2c",
+        "startDate": "2026-10-17T08:58:00Z",
+        "endDate": "2026-10-17T08:59:00Z",
+        "filter": "\"nightcrawler.speeddesk: speeddesk_live_status\"",
+        "limit": 5
+      },
+      "retrieved_at": "2026-10-19 15:24:13 UTC",
+      "response": {
+        "scope": "deployment",
+        "deploymentId": "43f14443-2d07-4985-b879-3a2515fb8d2c",
+        "serviceId": "f84d3b52-002f-44cb-931e-bc9e3e097e97",
+        "environmentId": "17f7b0e0-104c-4903-9484-0106748b3cdb",
+        "status": "SUCCESS",
+        "deploy": [
+          {
+            "timestamp": "2026-10-17T08:58:56.596190840Z",
+            "severity": "error",
+            "message": "2026-10-17T08:58:56Z ERROR nightcrawler.speeddesk: speeddesk_live_status mode=paper reason=companion_halted error=OSError",
+            "attributes": [
+              {
+                "key": "level",
+                "value": "\"error\""
+              }
+            ]
+          },
+          {
+            "timestamp": "2026-10-17T08:58:57.084912957Z",
+            "severity": "error",
+            "message": "2026-10-17T08:58:57Z ERROR nightcrawler.speeddesk: speeddesk_live_status mode=paper reason=cleanup_unconfirmed error=OSError",
+            "attributes": [
+              {
+                "key": "level",
+                "value": "\"error\""
+              }
+            ]
+          }
+        ]
+      },
+      "selected_full_native": {
+        "source_timestamp": "2026-10-17T08:58:44.461427718Z",
+        "source_message_sha256": "4d7fecfde69cf7f3b81835b909cbc420db8ef265440f0445eeb045d3a2109c46",
+        "projection": {
+          "at": 1792227524.2227714,
+          "venue": "kalshi",
+          "mode": "live",
+          "configured_mode": "live",
+          "status": "REAL MONEY (Kalshi)",
+          "reason": "REDUCTION ONLY: only hedging confirmed unpaired inventory; no new first legs",
+          "trading_now": false,
+          "waiting": "REDUCTION ONLY: only hedging confirmed unpaired inventory; no new first legs",
+          "as_of": 1792227524.1766346,
+          "authenticated": true,
+          "fee_precision_verified": true,
+          "fee_precision_usd": 0.0001,
+          "cash_usd": 47.0925,
+          "cash_total_usd": 47.0925,
+          "cash_at": 1792227524.111333,
+          "reserved_usd": 0,
+          "open_risk_usd": 0,
+          "open_cost_usd": 0,
+          "at_risk_usd": 0.0,
+          "open_orders": 0,
+          "positions": 0,
+          "total_halted": false,
+          "day_stop_latched": false,
+          "integrity_error": null,
+          "cleanup_pending": false,
+          "caps": {
+            "window_usd": 20.0,
+            "open_usd": 40.0,
+            "day_stop_usd": 12.0,
+            "clip": 5.0,
+            "total_stop_usd": 10.0
+          },
+          "ladder": {
+            "enabled": true,
+            "rung": 0,
+            "ladder_rung": 0,
+            "max_window_usd": 20.0,
+            "configured_max_window_usd": 50000.0,
+            "top_rung": 0,
+            "limits": {
+              "window_usd": 20.0,
+              "open_usd": 40.0,
+              "day_stop_usd": 12.0,
+              "clip": 5.0,
+              "total_stop_usd": 10.0
+            },
+            "change_pending": false,
+            "recheck_pending": false,
+            "effective_from": null,
+            "pending_limits": null,
+            "rung_started_at": 1792169717.0078099,
+            "start_pnl_usd": -22.058099999999992,
+            "promotion": {
+              "ready": false,
+              "blocked": [
+                "at_ceiling",
+                "windows",
+                "gain",
+                "stops"
+              ],
+              "rung": 0,
+              "next_rung": null,
+              "next_limits": null,
+              "windows": 26,
+              "windows_needed": 96,
+              "gain_usd": -5.590800000000005,
+              "at_risk_usd": 0.0,
+              "gain_counted_usd": -5.590800000000005,
+              "gain_needed_usd": 21.415881957089695,
+              "sigma_usd": 2.1,
+              "sd_usd": 0.6935901929925081,
+              "room_usd": -17.648899999999998,
+              "room_needed_usd": null,
+              "available_cash_usd": 47.0925,
+              "cash_needed_usd": null,
+              "last_stop_at": 1792157069.7834923,
+              "quiet_from": 1792243469.7834923,
+              "recheck": false
+            },
+            "demotion": {
+              "due": false,
+              "rung": 0,
+              "peak_pnl_usd": -22.058099999999992,
+              "total_pnl_usd": -27.648899999999998,
+              "giveback_usd": 5.590800000000005,
+              "giveback_limit_usd": 12.0,
+              "line_usd": null,
+              "at_floor": true
+            },
+            "last_change": null
+          },
+          "total": {
+            "day": null,
+            "windows": 236,
+            "fills": 975,
+            "latency": null,
+            "scorecard": null,
+            "settled_windows": 256,
+            "fees_usd": 3.6160200000000002,
+            "locked_usd": 8.634932337662326,
+            "directional_usd": -36.28383233766233,
+            "pnl_usd": -27.64890000000001,
+            "worst_usd": -2.9791999999999987,
+            "take_attempts": 44,
+            "take_fills": 22,
+            "maker_orders": 9953,
+            "maker_fills": 707,
+            "locks": 162,
+            "lock_fills": 129,
+            "take_fill_rate": 0.5,
+            "maker_fill_rate": 0.07103385913794835,
+            "avg_latency_ms": 3908.173788572855,
+            "latency_definition": "durable real decision to venue fill timestamp; maker includes resting time"
+          },
+          "pair_execution": {
+            "version": 2,
+            "policy": "reduction_only",
+            "status": "REDUCTION ONLY",
+            "starter": "disabled",
+            "automatic_resume": false,
+            "expires_at": null,
+            "early_completion": "ordinary_limits",
+            "maker": "pair_cap_fallback",
+            "practice_comparable": false,
+            "practice_gap": "real orders only hedge confirmed inventory; practice retains legacy entries"
+          },
+          "last_reported_day": "2026-10-17",
+          "last_partial_day_scorecard": {
+            "day": "2026-10-17",
+            "status": "partial",
+            "day_complete": false,
+            "eligible_windows": 36,
+            "complete_windows": 26,
+            "gap_windows": 10
+          },
+          "available_historical_day_keys": [
+            "2026-10-12",
+            "2026-10-13",
+            "2026-10-14",
+            "2026-10-15",
+            "2026-10-16"
+          ]
+        },
+        "selection_note": "Selected noncredential financial/status fields; original full status retained privately, control internals and unrelated data not republished."
+      }
+    },
+    "INCIDENT": {
+      "request": {
+        "projectId": "75750847-85c0-41a3-a2a7-b7f2201a51e9",
+        "environmentId": "17f7b0e0-104c-4903-9484-0106748b3cdb",
+        "serviceId": "f84d3b52-002f-44cb-931e-bc9e3e097e97",
+        "deploymentId": "43f14443-2d07-4985-b879-3a2515fb8d2c",
+        "startDate": "2026-10-17T08:58:40Z",
+        "endDate": "2026-10-17T08:59:15Z",
+        "filter": "\"companion_halted\" OR \"cleanup_unconfirmed\" OR \"No space left\" OR \"polydesk\" OR \"speeddesk_stopped\" OR \"kalshi_arena_stopped\"",
+        "limit": 100
+      },
+      "retrieved_at": "2026-10-19 15:24:51 UTC",
+      "response": {
+        "scope": "deployment",
+        "deploymentId": "43f14443-2d07-4985-b879-3a2515fb8d2c",
+        "serviceId": "f84d3b52-002f-44cb-931e-bc9e3e097e97",
+        "environmentId": "17f7b0e0-104c-4903-9484-0106748b3cdb",
+        "status": "SUCCESS",
+        "deploy": [
+          {
+            "timestamp": "2026-10-17T08:58:56.596190840Z",
+            "severity": "error",
+            "message": "2026-10-17T08:58:56Z ERROR nightcrawler.speeddesk: speeddesk_live_status mode=paper reason=companion_halted error=OSError",
+            "attributes": [
+              {
+                "key": "level",
+                "value": "\"error\""
+              }
+            ]
+          },
+          {
+            "timestamp": "2026-10-17T08:58:57.084912957Z",
+            "severity": "error",
+            "message": "2026-10-17T08:58:57Z ERROR nightcrawler.speeddesk: speeddesk_live_status mode=paper reason=cleanup_unconfirmed error=OSError",
+            "attributes": [
+              {
+                "key": "level",
+                "value": "\"error\""
+              }
+            ]
+          },
+          {
+            "timestamp": "2026-10-17T08:59:00.713676319Z",
+            "severity": "error",
+            "message": "Exception in thread polydesk:",
+            "attributes": [
+              {
+                "key": "level",
+                "value": "\"error\""
+              }
+            ]
+          },
+          {
+            "timestamp": "2026-10-17T08:59:00.713685939Z",
+            "severity": "error",
+            "message": "  File \"/usr/local/lib/python3.12/site-packages/nightcrawler/polydesk.py\", line 1181, in _loop",
+            "attributes": [
+              {
+                "key": "level",
+                "value": "\"error\""
+              }
+            ]
+          },
+          {
+            "timestamp": "2026-10-17T08:59:00.713694449Z",
+            "severity": "error",
+            "message": "  File \"/usr/local/lib/python3.12/site-packages/nightcrawler/polydesk.py\", line 1239, in poll",
+            "attributes": [
+              {
+                "key": "level",
+                "value": "\"error\""
+              }
+            ]
+          },
+          {
+            "timestamp": "2026-10-17T08:59:00.713726908Z",
+            "severity": "error",
+            "message": "  File \"/usr/local/lib/python3.12/site-packages/nightcrawler/polydesk.py\", line 1194, in _save",
+            "attributes": [
+              {
+                "key": "level",
+                "value": "\"error\""
+              }
+            ]
+          },
+          {
+            "timestamp": "2026-10-17T08:59:00.713735068Z",
+            "severity": "error",
+            "message": "  File \"/usr/local/lib/python3.12/site-packages/nightcrawler/polydesk.py\", line 995, in save_state",
+            "attributes": [
+              {
+                "key": "level",
+                "value": "\"error\""
+              }
+            ]
+          },
+          {
+            "timestamp": "2026-10-17T08:59:00.713947297Z",
+            "severity": "error",
+            "message": "OSError: [Errno 28] No space left on device",
+            "attributes": [
+              {
+                "key": "level",
+                "value": "\"error\""
+              }
+            ]
+          },
+          {
+            "timestamp": "2026-10-17T08:59:00.713973047Z",
+            "severity": "error",
+            "message": "  File \"/usr/local/lib/python3.12/site-packages/nightcrawler/polydesk.py\", line 1185, in _loop",
+            "attributes": [
+              {
+                "key": "level",
+                "value": "\"error\""
+              }
+            ]
+          },
+          {
+            "timestamp": "2026-10-17T08:59:00.714705491Z",
+            "severity": "error",
+            "message": "  File \"/usr/local/lib/python3.12/site-packages/nightcrawler/polydesk.py\", line 1194, in _save",
+            "attributes": [
+              {
+                "key": "level",
+                "value": "\"error\""
+              }
+            ]
+          },
+          {
+            "timestamp": "2026-10-17T08:59:00.714719611Z",
+            "severity": "error",
+            "message": "  File \"/usr/local/lib/python3.12/site-packages/nightcrawler/polydesk.py\", line 995, in save_state",
+            "attributes": [
+              {
+                "key": "level",
+                "value": "\"error\""
+              }
+            ]
+          },
+          {
+            "timestamp": "2026-10-17T08:59:00.714731821Z",
+            "severity": "error",
+            "message": "OSError: [Errno 28] No space left on device",
+            "attributes": [
+              {
+                "key": "level",
+                "value": "\"error\""
+              }
+            ]
+          },
+          {
+            "timestamp": "2026-10-17T08:59:03.896322917Z",
+            "severity": "info",
+            "message": "2026-10-17T08:59:03Z INFO nightcrawler.kalshi_arena: kalshi_arena_stopped windows=181 void=137",
+            "attributes": [
+              {
+                "key": "level",
+                "value": "\"info\""
+              }
+            ]
+          }
+        ]
+      }
+    }
+  },
+  "recent_log_query_note": "Early bounded query ended15:24UTC, slightly later than retrieval15:23UTC; no future coverage claimed. NO_LATER_NATIVE is the controlling query ending15:23UTC."
+}

@@ -1,0 +1,17 @@
+{
+  "command": [
+    "/workspace/shared/nightcrawler-venv/bin/ruff",
+    "check",
+    "src/nightcrawler/kalshi_probability_learning.py",
+    "src/nightcrawler/kalshi_arena.py",
+    "src/nightcrawler/pagestate.py",
+    "tests/test_kalshi_probability_learning.py",
+    "tests/test_kalshi_probability_arena.py",
+    "tests/test_kalshi_probability_learning_page.py",
+    "tests/test_kalshi_arena_page.py"
+  ],
+  "start_utc": "2026-10-15T19:03:36.812305+00:00",
+  "end_utc": "2026-10-15T19:03:36.818933+00:00",
+  "elapsed_s": 0.006629484996665269,
+  "exit_code": 0
+}

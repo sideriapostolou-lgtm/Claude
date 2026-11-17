@@ -1,0 +1,30 @@
+"""Private offline checks of recurrence extraction. Fakes are not market evidence."""
+import copy,importlib.machinery,importlib.util,json,tempfile
+from pathlib import Path
+p=Path(__file__).with_name('pr66_recurrence.py.txt')
+loader=importlib.machinery.SourceFileLoader('recurrence',str(p));spec=importlib.util.spec_from_loader(loader.name,loader);m=importlib.util.module_from_spec(spec);loader.exec_module(m)
+base={'reader':{'kind':'speeddesk','instance':1,'process':1},'session':1,'event':'gap','kind':'orderbook_delta','receipt':{'ordinal':4,'status':'known','accepted_monotonic':10,'accepted_wall':1792100700,'received_monotonic':11,'residence_ms':1000},'connection':{'received':4},'recv_call_mono':11,'recv_return_mono':11,'apply_mono':11,'apply_wall':1792100701,'recv_wait_ms':0,'return_to_apply_ms':0}
+checks=[]
+def run(payloads,deploy=m.DEPLOY,raws=None):
+    rows=raws if raws is not None else [{'timestamp':'2026-10-15T21:45:01Z','message':'2026-10-15T21:45:01Z INFO nightcrawler.speeddesk_kalshi_ws: speeddesk_feed_kalshi_ws_timing '+json.dumps(x)} for x in payloads]
+    w={'request':{'deploymentId':deploy,'startDate':'2026-10-15T21:45:00Z','endDate':'2026-10-15T22:02:00Z','limit':500},'result':{'structuredContent':{'deploy':rows}}}
+    with tempfile.TemporaryDirectory() as td:
+        f=Path(td)/'x.json';f.write_text(json.dumps(w));return m.analyze([f],m.utc('2026-10-15T21:45:00Z'),m.utc('2026-10-15T22:00:00Z'),m.utc('2026-10-15T22:02:00Z'))
+def count(d):return d['groups']['target/main/gap']
+p=copy.deepcopy(base);assert count(run([p]))['over_1000']==0;checks.append('strict1000boundary')
+p.update(recv_call_mono=13,recv_return_mono=13,apply_mono=13);p['receipt'].update(received_monotonic=13,residence_ms=3000)
+assert count(run([p]))['over_1000']==1 and count(run([p]))['over_3000']==0;checks.append('strict3000boundary')
+p['recv_call_mono']=p['recv_return_mono']=p['apply_mono']=14;p['receipt'].update(received_monotonic=14,residence_ms=4000)
+p['local_work']={'spans':[{'name':'practice_checkpoint','span_id':1,'parent_id':None,'start_mono':10,'end_mono':14},{'name':'practice_ledger','span_id':2,'parent_id':1,'start_mono':11,'end_mono':13}]}
+d=run([p]);assert d['originals'][0]['shown_checkpoint_family_pre_call_union_lower_bound_ms']==4000;assert count(d)['over_3000']==1;checks.append('nestedunionnonadditive')
+assert run([p],'wrong')['input_problems'] and count(run([p],'wrong'))['logged_rows']==0;checks.append('wrongdeploymentexcluded')
+p=copy.deepcopy(base);p['receipt']['status']='overflow';p['receipt']['accepted_monotonic']=None;assert count(run([p]))['unknown']=={'receipt_overflow':1};checks.append('overflowunknown')
+p=copy.deepcopy(base);p['receipt']['ordinal']=3;assert count(run([p]))['unknown']=={'unmatched_receipt_ordinal':1};checks.append('ordinalmismatchunknown')
+p=copy.deepcopy(base);p['receipt']['accepted_monotonic']=12;assert count(run([p]))['unknown']=={'inconsistent_order':1};checks.append('invalidorderingunknown')
+p=copy.deepcopy(base);p['recv_call_mono']=9;p['recv_wait_ms']=2000;assert count(run([p]))['accepted_after_call']==1;checks.append('acceptedaftercallseparate')
+p=copy.deepcopy(base);p['receipt']['residence_ms']=1002;assert count(run([p]))['unknown']=={'inconsistent_reported_delta':1};checks.append('deltamismatchunknown')
+r=[{'timestamp':'2026-10-15T21:45:01Z','message':'2026-10-15T21:45:01Z INFO nightcrawler.speeddesk: speeddesk_live_status '+json.dumps({'nested':'INFO nightcrawler.speeddesk_kalshi_ws: speeddesk_feed_kalshi_ws_timing '+json.dumps(base)})}];assert run([],raws=r)['excluded']['non_original_prefix']==1;checks.append('nestedcopyexcluded')
+r=[{'timestamp':'2026-10-15T21:45:01Z','message':'2026-10-15T21:45:01Z INFO nightcrawler.speeddesk_kalshi_ws: speeddesk_feed_kalshi_ws_timing []'}];assert run([],raws=r)['unknown_counts_all_populations']['non_object_payload']==1;checks.append('malformedpayloadunknown')
+p=copy.deepcopy(base);p['reader']['instance']=2;d=run([p]);assert count(d)['logged_rows']==0 and any('/other:' in k for k in d['groups']);checks.append('readeridentityseparation')
+assert count(run([base,base]))['logged_rows']==1;checks.append('exactduplicateexcluded')
+print(json.dumps({'passed':len(checks),'checks':checks,'synthetic_only':True},indent=2))

@@ -1,0 +1,143 @@
+{
+  "checked_at_utc": "2026-10-19T00:29:31Z",
+  "checked_at_pacific": "2026-10-18 17:29:31 PDT",
+  "requests": {
+    "logs": {
+      "deployment_id": "43f14443-2d07-4985-b879-3a2515fb8d2c",
+      "start": "2026-10-19T00:18:45Z",
+      "end": "2026-10-19T00:30:00Z",
+      "filter": "\"kalshi_live_status\" OR \"companion_halted\" OR \"polydesk_started\" OR \"No space left\" OR \"cleanup_unconfirmed\"",
+      "limit": 100
+    },
+    "metrics": {
+      "hours_back": 1,
+      "sampling_seconds": 60
+    }
+  },
+  "results": [
+    {
+      "status": "fulfilled",
+      "value": {
+        "content": [
+          {
+            "type": "text",
+            "text": "Environment **production** (17f7b0e0-104c-4903-9484-0106748b3cdb): 1 services, 0 with issues, 0 recent failures.\n- **bot**: Online\n\nPending work (1) — not live yet:\n- patch:9a84e13c-3caf-4a85-b5f5-d9a2fcb8a021 [staged] 0 changes, started 2026-10-12T16:21:53.480Z · workflow commitChanges/17f7b0e0-104c-4903-9484-0106748b3cdb/9a84e13c-3caf-4a85-b5f5-d9a2fcb8a021"
+          }
+        ],
+        "structuredContent": {
+          "environment": {
+            "id": "17f7b0e0-104c-4903-9484-0106748b3cdb",
+            "name": "production"
+          },
+          "services": [
+            {
+              "serviceId": "f84d3b52-002f-44cb-931e-bc9e3e097e97",
+              "serviceName": "bot",
+              "state": "online",
+              "statusText": "Online",
+              "activeDeployments": [
+                {
+                  "id": "43f14443-2d07-4985-b879-3a2515fb8d2c",
+                  "status": "SUCCESS",
+                  "createdAt": "2026-10-16T23:49:24.905Z",
+                  "statusUpdatedAt": "2026-10-16T23:50:35.236Z"
+                }
+              ],
+              "replicaStatus": {
+                "running": 1,
+                "crashed": 0,
+                "total": 1
+              },
+              "cronJob": null,
+              "issues": {
+                "warningCount": 0,
+                "criticalCount": 0
+              },
+              "recentFailures": 0,
+              "recentFailedDeployments": [],
+              "hasIssues": false,
+              "isCronJob": false,
+              "hasVolume": true
+            }
+          ],
+          "pendingWork": [
+            {
+              "id": "patch:9a84e13c-3caf-4a85-b5f5-d9a2fcb8a021",
+              "kind": "EnvironmentPatch",
+              "status": "staged",
+              "changes": [],
+              "startedAt": "2026-10-12T16:21:53.480Z",
+              "workflowId": "commitChanges/17f7b0e0-104c-4903-9484-0106748b3cdb/9a84e13c-3caf-4a85-b5f5-d9a2fcb8a021"
+            }
+          ],
+          "summary": {
+            "totalServices": 1,
+            "servicesWithIssues": 0,
+            "totalFailures": 0
+          }
+        },
+        "isError": false
+      }
+    },
+    {
+      "status": "fulfilled",
+      "value": {
+        "content": [
+          {
+            "type": "text",
+            "text": "**Deployment 43f14443-2d07-4985-b879-3a2515fb8d2c** [SUCCESS]\nservice: f84d3b52-002f-44cb-931e-bc9e3e097e97, env: 17f7b0e0-104c-4903-9484-0106748b3cdb\n\n### Deploy logs (0)\n(no deploy logs in range)"
+          }
+        ],
+        "structuredContent": {
+          "scope": "deployment",
+          "deploymentId": "43f14443-2d07-4985-b879-3a2515fb8d2c",
+          "serviceId": "f84d3b52-002f-44cb-931e-bc9e3e097e97",
+          "environmentId": "17f7b0e0-104c-4903-9484-0106748b3cdb",
+          "status": "SUCCESS",
+          "deploy": []
+        },
+        "isError": false
+      }
+    },
+    {
+      "status": "fulfilled",
+      "value": {
+        "content": [
+          {
+            "type": "text",
+            "text": "Metrics for **bot** in **production** (last 1h):\n\n**DISK_USAGE_GB** (61 samples):\n  current: 4.9962  avg: 4.9961  min: 4.9957  max: 4.9963\n**MEMORY_USAGE_GB** (61 samples):\n  current: 1.5955  avg: 1.6319  min: 1.5955  max: 1.6489"
+          }
+        ],
+        "structuredContent": {
+          "service": {
+            "id": "f84d3b52-002f-44cb-931e-bc9e3e097e97",
+            "name": "bot"
+          },
+          "environment": {
+            "id": "17f7b0e0-104c-4903-9484-0106748b3cdb",
+            "name": "production"
+          },
+          "metrics": [
+            {
+              "measurement": "DISK_USAGE_GB",
+              "current": 4.996153344,
+              "average": 4.9961152713442605,
+              "min": 4.995694592,
+              "max": 4.996251648,
+              "sampleCount": 61
+            },
+            {
+              "measurement": "MEMORY_USAGE_GB",
+              "current": 1.595451392,
+              "average": 1.6319144204590164,
+              "min": 1.595451392,
+              "max": 1.648934912,
+              "sampleCount": 61
+            }
+          ]
+        },
+        "isError": false
+      }
+    }
+  ]
+}

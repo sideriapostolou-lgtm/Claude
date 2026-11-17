@@ -1,0 +1,39 @@
+{
+  "source_sha256": "eb9146263a881ba2ef6645c03585ca78c7bc0e1d9f03cb5177028d483e403ef4",
+  "test_sha256": "3eb15e8f138cbe47ef99b5b6fa76ac6ce6db4751bcba7e76b1d0d5585e13ca30",
+  "checkpoint_try_body_exact_original_AST": true,
+  "summary_exact_original_AST_except_conversion_call": true,
+  "embedded_test_baseline_methods_exact_original_AST": true,
+  "source_changes": [
+    "src/nightcrawler/speeddesk.py"
+  ],
+  "unchanged_original_methods": [
+    "record",
+    "decisions",
+    "on_tick",
+    "on_book",
+    "on_trade",
+    "on_windows",
+    "on_status",
+    "daily_reports",
+    "panel",
+    "live_snapshot",
+    "_live_sigma",
+    "_refresh_live_windows",
+    "_refresh_live_snapshot",
+    "live_panel",
+    "_live_call",
+    "_run_live",
+    "step",
+    "_coverage_windows",
+    "_settlements",
+    "run",
+    "_close_arena",
+    "close"
+  ],
+  "new_methods": [
+    "_settlement_report_row"
+  ],
+  "test_execution": "none during active matrix; root reports69focused plus Ruff2/mypy1 pass, not independently rerun",
+  "review": "semantic source acceptance pending completed matrix/full checks; no blocking defect found in this frozen source"
+}

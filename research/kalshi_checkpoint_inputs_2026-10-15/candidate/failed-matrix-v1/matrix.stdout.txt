@@ -1,0 +1,8 @@
+zero-timing-baseline-1 0 0.418
+zero-timing-candidate-1 0 0.408
+zero-timing-baseline-2 0 0.429
+zero-timing-candidate-2 0 0.37
+zero-timing-baseline-3 0 0.437
+zero-timing-candidate-3 0 0.407
+one-timing-baseline-1 1 0.395
+FAILED STOP; originals retained

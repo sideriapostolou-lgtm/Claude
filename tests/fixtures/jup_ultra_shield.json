@@ -1,0 +1,12 @@
+{
+ "warnings": {
+  "DoVAVzViX8Bjy3r15nwikSaSbzE6dV4ovd28aWpJpump": [
+   {
+    "type": "NOT_VERIFIED",
+    "message": "This token is not verified, make sure the mint address is correct before trading",
+    "severity": "info"
+   }
+  ],
+  "So11111111111111111111111111111111111111112": []
+ }
+}

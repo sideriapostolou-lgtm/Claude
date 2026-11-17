@@ -1,0 +1,17 @@
+from pathlib import Path
+import subprocess,json,hashlib,datetime,time,os,sys
+r=Path('/workspace/nightcrawler-probability-learning')
+d=Path('/workspace/kalshi-probability-checks');d.mkdir(exist_ok=True)
+files=['src/nightcrawler/kalshi_probability_learning.py','src/nightcrawler/kalshi_arena.py','src/nightcrawler/pagestate.py','tests/test_kalshi_probability_learning.py','tests/test_kalshi_probability_arena.py','tests/test_kalshi_probability_learning_page.py','tests/test_kalshi_arena_page.py']
+def freeze():return {f:hashlib.sha256((r/f).read_bytes()).hexdigest() for f in files}
+start=freeze();(d/'ROOT_FREEZE_BEFORE.json').write_text(json.dumps({'at_utc':datetime.datetime.now(datetime.timezone.utc).isoformat(),'files':start},indent=2)+'\n')
+checks=[('ROOT_RUFF_FINAL',['/workspace/shared/nightcrawler-venv/bin/ruff','check',*files]),('ROOT_MYPY_FINAL',[sys.executable,'-m','mypy','src/nightcrawler']),('ROOT_FULL_PYTEST_FINAL',[sys.executable,'-m','pytest','-q'])]
+receipts=[]
+for label,cmd in checks:
+ before=datetime.datetime.now(datetime.timezone.utc).isoformat();t=time.monotonic();print(label+' started',flush=True)
+ with (d/(label+'.log')).open('w') as output:result=subprocess.run(cmd,cwd=r,stdout=output,stderr=subprocess.STDOUT)
+ receipt={'command':cmd,'start_utc':before,'end_utc':datetime.datetime.now(datetime.timezone.utc).isoformat(),'elapsed_s':time.monotonic()-t,'exit_code':result.returncode};receipts.append(receipt);(d/(label+'.json')).write_text(json.dumps(receipt,indent=2)+'\n');print(json.dumps(receipt),flush=True)
+ if result.returncode:break
+end=freeze();(d/'ROOT_FREEZE_AFTER.json').write_text(json.dumps({'at_utc':datetime.datetime.now(datetime.timezone.utc).isoformat(),'files':end,'identical_to_before':end==start},indent=2)+'\n')
+assert end==start,'Source changed during required checks'
+if len(receipts)!=len(checks) or any(v['exit_code'] for v in receipts):sys.exit(1)

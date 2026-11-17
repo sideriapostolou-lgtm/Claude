@@ -1,0 +1,264 @@
+{
+  "saved_at_utc": "2026-10-15T05:37:41.935352+00:00",
+  "archive": "mirror-postrelease-closed-evidence.zip",
+  "archive_bytes": 8797425,
+  "archive_sha256": "be187899557374ce75b599ccbb4e5d6bc09045a096eb3980a1053024aab2340f",
+  "crc_ok": true,
+  "all_member_bytes_equal_originals": true,
+  "credential_pattern_findings": 0,
+  "scope": "Closed fixed-window evidence; not complete raw venue/ledger exports or a profitability claim.",
+  "members": [
+    {
+      "member": "mirror-postrelease-query-0001.json",
+      "original_path": "/workspace/shared/mirror-postrelease-query-0001.json",
+      "bytes": 1287251,
+      "sha256": "379789b6476f0d2861310b8f00a378b222d87a501cc980dfb7707da9a872b03d"
+    },
+    {
+      "member": "mirror-postrelease-query-0002.json",
+      "original_path": "/workspace/shared/mirror-postrelease-query-0002.json",
+      "bytes": 987963,
+      "sha256": "6de1800c7aa6856bee1f21e51a2946c565c1d34ba4d3aa391b808de6ce4bde2d"
+    },
+    {
+      "member": "mirror-postrelease-query-0003.json",
+      "original_path": "/workspace/shared/mirror-postrelease-query-0003.json",
+      "bytes": 924838,
+      "sha256": "2e41b172458937f5472a515c4328c13f020aab1e37a669942273d9baccdc81c3"
+    },
+    {
+      "member": "mirror-postrelease-query-0004.json",
+      "original_path": "/workspace/shared/mirror-postrelease-query-0004.json",
+      "bytes": 554083,
+      "sha256": "005739cd4c3de8977afd644354225ee2da6ce9c01da6bfc154875f12c28773aa"
+    },
+    {
+      "member": "mirror-postrelease-query-0005.json",
+      "original_path": "/workspace/shared/mirror-postrelease-query-0005.json",
+      "bytes": 999368,
+      "sha256": "81f9d2586d53393abe53c95a49d7b17bb2c2336e43f0da24279ca1ee9f0fbd25"
+    },
+    {
+      "member": "mirror-postrelease-query-0006.json",
+      "original_path": "/workspace/shared/mirror-postrelease-query-0006.json",
+      "bytes": 1064393,
+      "sha256": "26dd87a7ac0144a72ef22032e3eeae76d91dc67d2ebc02cb9c40a939e21851a8"
+    },
+    {
+      "member": "mirror-postrelease-query-0007.json",
+      "original_path": "/workspace/shared/mirror-postrelease-query-0007.json",
+      "bytes": 805131,
+      "sha256": "cceec1057c52b62922e2371bb2bcd4fd0fd1af9eb91324b13572e58f1bfbb650"
+    },
+    {
+      "member": "mirror-postrelease-query-0008.json",
+      "original_path": "/workspace/shared/mirror-postrelease-query-0008.json",
+      "bytes": 778788,
+      "sha256": "041b2211ac886a88b3ecde14de95fe771cd067add83cd8379ce2b7362220374f"
+    },
+    {
+      "member": "mirror-postrelease-query-0009.json",
+      "original_path": "/workspace/shared/mirror-postrelease-query-0009.json",
+      "bytes": 779737,
+      "sha256": "0b6502fa7e63ae26782116a7777a9c3b41ea7b050da2f506418432560d848827"
+    },
+    {
+      "member": "mirror-postrelease-query-0010.json",
+      "original_path": "/workspace/shared/mirror-postrelease-query-0010.json",
+      "bytes": 1290504,
+      "sha256": "1dd9343942dfab22c98b8ff640228df285f580affb7c9d9ea83bf7cefc792bf7"
+    },
+    {
+      "member": "mirror-postrelease-query-0011.json",
+      "original_path": "/workspace/shared/mirror-postrelease-query-0011.json",
+      "bytes": 815873,
+      "sha256": "771101bdbc394a8de8622d9e50f9136b7aaf6d4636a3ee7b5a670c509576931a"
+    },
+    {
+      "member": "mirror-postrelease-query-0012.json",
+      "original_path": "/workspace/shared/mirror-postrelease-query-0012.json",
+      "bytes": 815480,
+      "sha256": "bd216e674328065c7d0e3dc80588a6e846a9fcd260c9ea4302260a1516bd3afe"
+    },
+    {
+      "member": "mirror-postrelease-query-0013.json",
+      "original_path": "/workspace/shared/mirror-postrelease-query-0013.json",
+      "bytes": 925892,
+      "sha256": "ffbaadce34c8f32475e2d1d10c460942ae73dae0b1db3947460bf972335b0fd5"
+    },
+    {
+      "member": "mirror-postrelease-query-0014.json",
+      "original_path": "/workspace/shared/mirror-postrelease-query-0014.json",
+      "bytes": 775085,
+      "sha256": "85215542054b34cb8a502a61ebc452e170da6a526368cdea167b8e5fcb291d74"
+    },
+    {
+      "member": "mirror-postrelease-query-0015.json",
+      "original_path": "/workspace/shared/mirror-postrelease-query-0015.json",
+      "bytes": 811544,
+      "sha256": "5d18bdd20bcae6a9132337e7cc87fb986762826ae36d4d25efddfe5294663c0c"
+    },
+    {
+      "member": "mirror-postrelease-parser.py",
+      "original_path": "/workspace/shared/mirror-postrelease-parser.py",
+      "bytes": 11870,
+      "sha256": "afca92c54604ca707284d661277b78f3fedc3164332646aceca41dc54401607e"
+    },
+    {
+      "member": "mirror-postrelease-refresh.py",
+      "original_path": "/workspace/shared/mirror-postrelease-refresh.py",
+      "bytes": 2980,
+      "sha256": "6a6277a638ce88b857c75af77f542a575517ef02f55aeed29a5a4c9b068f56aa"
+    },
+    {
+      "member": "mirror-postrelease-finalize.py",
+      "original_path": "/workspace/shared/mirror-postrelease-finalize.py",
+      "bytes": 4031,
+      "sha256": "1d75a63929c99e0f38ea2a8cd3a611a63b914a3b762e7ee14303121e7cf0cd96"
+    },
+    {
+      "member": "mirror-postrelease-plan.json",
+      "original_path": "/workspace/shared/mirror-postrelease-plan.json",
+      "bytes": 6797,
+      "sha256": "c50626f0678968da109b678fe1b7d56d606ab4a398de6dd62ea500ec8a8472b3"
+    },
+    {
+      "member": "mirror-postrelease-handoff.py",
+      "original_path": "/workspace/shared/mirror-postrelease-handoff.py",
+      "bytes": 6095,
+      "sha256": "e269612a703a7c3742f574c3e83283bc05ded1756d0318d27901ec0a04c3b8a1"
+    },
+    {
+      "member": "mirror-postrelease-closed-derived.json",
+      "original_path": "/workspace/shared/mirror-postrelease-closed-derived.json",
+      "bytes": 12563952,
+      "sha256": "3cd34efc17210f1d8919a4ca04204ab1874f846353a6917c769cf00bbe7a38f7"
+    },
+    {
+      "member": "mirror-postrelease-closed-summary.json",
+      "original_path": "/workspace/shared/mirror-postrelease-closed-summary.json",
+      "bytes": 8902,
+      "sha256": "297c0a0a7b36b50baaedbcaa8ed355ad6306fec39494159d1836c34156b44a17"
+    },
+    {
+      "member": "mirror-postrelease-last-real-status.json",
+      "original_path": "/workspace/shared/mirror-postrelease-last-real-status.json",
+      "bytes": 182801,
+      "sha256": "3c148523d2875e053e3513fe6b94669e1ead48e4819528610db3bee4b8b6f4a4"
+    },
+    {
+      "member": "mirror-postrelease-final-financial-originals.json",
+      "original_path": "/workspace/shared/mirror-postrelease-final-financial-originals.json",
+      "bytes": 1368102,
+      "sha256": "48c3e79a03d5f3ed1dc03a41f759d67ce8a697cd04562ece606c03ecae45c9c9"
+    },
+    {
+      "member": "mirror-postrelease-preparation-checks.json",
+      "original_path": "/workspace/shared/mirror-postrelease-preparation-checks.json",
+      "bytes": 4138,
+      "sha256": "e06d016320970dba2b3f9e1b6645d68950db0a69d58a2dabbb59e0b02e8b4a76"
+    },
+    {
+      "member": "mirror-postrelease-closed-complete.json",
+      "original_path": "/workspace/shared/mirror-postrelease-closed-complete.json",
+      "bytes": 13672459,
+      "sha256": "800d9bc39e3d4247312c75c2f64c41b046294f4db98b5a899b29b7eb659a9401"
+    },
+    {
+      "member": "mirror-postrelease-closed-manifest.json",
+      "original_path": "/workspace/shared/mirror-postrelease-closed-manifest.json",
+      "bytes": 5042,
+      "sha256": "167588e6a8cb645c9ca7513ab10d38fa43f553499ad042b05ec4a1eeeac0d553"
+    },
+    {
+      "member": "mirror-postrelease-midcapture-health.json",
+      "original_path": "/workspace/shared/mirror-postrelease-midcapture-health.json",
+      "bytes": 5538,
+      "sha256": "9e9921f30b6bd56c5b19067c9408147174743b13b415e749c84010b1ef219d71"
+    },
+    {
+      "member": "mirror-postrelease-resource-context.json",
+      "original_path": "/workspace/shared/mirror-postrelease-resource-context.json",
+      "bytes": 1736,
+      "sha256": "f3f8ae5a391469355ce14ce4df5acbc60a418c9890a53a3227bfb2821f8ceb26"
+    },
+    {
+      "member": "mirror-recorder-0500-manifest-query.json",
+      "original_path": "/workspace/shared/mirror-recorder-0500-manifest-query.json",
+      "bytes": 9726,
+      "sha256": "0a310acfdce1cd0f7e2498852f30f351ea81d7f43ebcdab2e57728b402af2048"
+    },
+    {
+      "member": "live-mirror-restart-audit.json",
+      "original_path": "/workspace/shared/live-mirror-restart-audit.json",
+      "bytes": 20425,
+      "sha256": "394a5866634bccba67a53cfdfd5dc0a7b514ea724a1a3356334d1080f30dd404"
+    },
+    {
+      "member": "live-mirror-restart-audit.md",
+      "original_path": "/workspace/shared/live-mirror-restart-audit.md",
+      "bytes": 8620,
+      "sha256": "42b8562db00e78ba2582410b3615466a3e24a176c6ee2a75565beca1385ac42f"
+    },
+    {
+      "member": "mirror-capture-root-verification.json",
+      "original_path": "/workspace/shared/mirror-capture-root-verification.json",
+      "bytes": 1422,
+      "sha256": "ec95f57543a1bd80164caba62339b4c4fd6f4b80470afb339b6e38c20263cae3"
+    },
+    {
+      "member": "mirror-postrelease-first-window-audit-input.json",
+      "original_path": "/workspace/shared/mirror-postrelease-first-window-audit-input.json",
+      "bytes": 9516134,
+      "sha256": "06514819e7bf71cc53a0b3b9f9cd56f9a38799581b628a6f2d68172d71a072e8"
+    },
+    {
+      "member": "mirror-postrelease-first-window-audit-parser.py",
+      "original_path": "/workspace/shared/mirror-postrelease-first-window-audit-parser.py",
+      "bytes": 30557,
+      "sha256": "9935bdb43b75ea696596dac518a95af85ed5ba365d43adc1d8cee96419b4fc54"
+    },
+    {
+      "member": "mirror-postrelease-first-window-audit.json",
+      "original_path": "/workspace/shared/mirror-postrelease-first-window-audit.json",
+      "bytes": 849874,
+      "sha256": "b7b91189af5b5e65452615cffdc9b89eb516db8ea176071265619a4dce907fda"
+    },
+    {
+      "member": "mirror-postrelease-first-window-audit.md",
+      "original_path": "/workspace/shared/mirror-postrelease-first-window-audit.md",
+      "bytes": 7570,
+      "sha256": "c057bb779fb5358889f0ba7c4441ba21993bf210eb2dac293671df92a5a29821"
+    },
+    {
+      "member": "mirror-postrelease-two-window-audit-input.json",
+      "original_path": "/workspace/shared/mirror-postrelease-two-window-audit-input.json",
+      "bytes": 13672459,
+      "sha256": "800d9bc39e3d4247312c75c2f64c41b046294f4db98b5a899b29b7eb659a9401"
+    },
+    {
+      "member": "mirror-postrelease-two-window-audit.py",
+      "original_path": "/workspace/shared/mirror-postrelease-two-window-audit.py",
+      "bytes": 33603,
+      "sha256": "a5d9abeced50d9782479b7f896317366c7af9bf637b5b6248fce97736f794bc3"
+    },
+    {
+      "member": "mirror-postrelease-two-window-audit.json",
+      "original_path": "/workspace/shared/mirror-postrelease-two-window-audit.json",
+      "bytes": 2813044,
+      "sha256": "ae22e1bee4ab0f8387fb88c0ec16833c06b4df13f39f90ad6bfbd351841c4b72"
+    },
+    {
+      "member": "mirror-postrelease-two-window-audit.md",
+      "original_path": "/workspace/shared/mirror-postrelease-two-window-audit.md",
+      "bytes": 14051,
+      "sha256": "4660b215d47b444c54cdfa2e2ba9f5faf6878f8ca0716c537b21b5f2cfbe31a2"
+    },
+    {
+      "member": "package-mirror-postrelease.py",
+      "original_path": "/workspace/shared/package-mirror-postrelease.py",
+      "bytes": 3187,
+      "sha256": "37a72a2a372fa3ce427e9ee4f2c8d0dada857d647a0c9e4ad389eb3b12e39411"
+    }
+  ]
+}

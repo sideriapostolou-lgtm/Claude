@@ -1,0 +1,234 @@
+{
+  "created_utc": "2026-10-15T12:52:27.576616+00:00",
+  "archive": {
+    "file": "cancel-postrelease-20261015.zip",
+    "members": 44,
+    "bytes": 971282,
+    "uncompressed_bytes": 7860253,
+    "sha256": "23d8e4a39d0f8821ab2a7bb51ad6a558a691073f428dd1c623602c7cc44c6994"
+  },
+  "scope": "Every exact file recursively within cancel-postrelease-20261015, including originals, failed/predata collector versions, first/final audits, independent final review, timing reports, assignment and stopped markers; no other workspace/home/env files. Archive/manifest are adjacent, not inside source directory.",
+  "omissions": [],
+  "secret_pattern_scan": {
+    "files": 44,
+    "categories": [
+      "private_key",
+      "provider_token",
+      "credential_assignment",
+      "bearer_value"
+    ],
+    "flags": [],
+    "limitation": "Bounded recognized-pattern scan; not proof every possible secret format is recognizable"
+  },
+  "verification": {
+    "crc": "pass",
+    "exact_member_names": "pass",
+    "every_member_byte_equality": "pass",
+    "every_member_sha256": "pass",
+    "every_current_source_byte_equality": "pass"
+  },
+  "audit_final_flags": {
+    "query_errors": 0,
+    "unresolved_caps": 0,
+    "conflicting_receipts": 0,
+    "ack_errors": 0,
+    "fill_join_errors": 0,
+    "unexpected_rows": 0,
+    "unrecognized_original_signatures": 0,
+    "expected_event_families_per_batch": 9,
+    "actual_query_files": 18,
+    "source_completeness_certified": false
+  },
+  "collector_completion": {
+    "first_batch_marker": true,
+    "second_batch_marker": true,
+    "stopped_marker": true,
+    "note": "Batch/stopped markers show bounded execution ended; they do not certify complete venue/source tape."
+  },
+  "limitations": [
+    "Fixed windows12:15\u201312:30/12:30\u201312:45UTC; query publication tail12:47UTC unchanged; collector stopped12:47:23.654UTC after fetching past bounds.",
+    "Settlement arithmetic agreement and no surfaced query/join errors do not certify complete venue/source tape.",
+    "Mainreader freshness remains unresolved: known delays and overflow-unknown receipts; sampled diagnostics, nested spans non-additive.",
+    "Cancellation request/404 receipts are not confirmed terminal order states.",
+    "Startup/next partial/practice excluded; no alternative policy or causal before/after profitability inference.",
+    "Root startup/restart account verification and supplemental monitors are separate evidence, not additional queries by this collector."
+  ],
+  "sources": {
+    "cancel-postrelease-20261015/ASSIGNMENT.json": {
+      "bytes": 1775,
+      "sha256": "d4fc56c93e56d0a9ae96ad3225956910ece8ae06a1b591cb1d9560843224a8e9"
+    },
+    "cancel-postrelease-20261015/ASSIGNMENT_ACTIVE_PRE_CLOSE.json": {
+      "bytes": 1668,
+      "sha256": "a1e039fb6dc543c61d1dfdb739025d89467ce6ef0319a29bc81253202b5fdd83"
+    },
+    "cancel-postrelease-20261015/COLLECTOR_INTEGRITY_RESTART.json": {
+      "bytes": 220,
+      "sha256": "67f9857fff93973e177a9bbfc6555aae44f009495fb6fb1a009bf85a7b4e2905"
+    },
+    "cancel-postrelease-20261015/COLLECTOR_STOPPED.json": {
+      "bytes": 149,
+      "sha256": "880acd0f4b10ed1bf1152db7a2fcaae3d20d17f98ac5d858fed33ace0814f892"
+    },
+    "cancel-postrelease-20261015/FINAL_REPORT.md": {
+      "bytes": 7450,
+      "sha256": "b57ff0967546cb127150d8e2a4064fe98ee01c11731409c27b44b6d6e654d9d8"
+    },
+    "cancel-postrelease-20261015/FIRST_WINDOW.md": {
+      "bytes": 3347,
+      "sha256": "fb0a8043b4b70a780d799d5b0ebcb469531ac767b6af84f399d70909cb7d3de9"
+    },
+    "cancel-postrelease-20261015/OFFLINE_EDIT_NOTE.json": {
+      "bytes": 654,
+      "sha256": "fc03c0f1ee4a50adfb2fbfb9847f17138528ce1f3185631c8d544872a3206cdb"
+    },
+    "cancel-postrelease-20261015/ROOT_RELEASE_CONFIRMATION.json": {
+      "bytes": 950,
+      "sha256": "70bc3157e17fca56214c7113768b8d2fb27586ba28ba7f70caea674fc1d74978"
+    },
+    "cancel-postrelease-20261015/audit.json": {
+      "bytes": 1556849,
+      "sha256": "da420949d6cae77d054268e378d78e0de8ac1c1423fe7b5c275fdfae4de61a06"
+    },
+    "cancel-postrelease-20261015/audit.py": {
+      "bytes": 9975,
+      "sha256": "066efd3a8d480dcd9e2e598da69aea25f275ee689d2547641b0cb0244144fc1c"
+    },
+    "cancel-postrelease-20261015/collector-loaded-original.js": {
+      "bytes": 2452,
+      "sha256": "5947f8e1475fa99ba38939becdcffd502899da395495371819535583bfcba38b"
+    },
+    "cancel-postrelease-20261015/collector-pre-integrity-review.js": {
+      "bytes": 2452,
+      "sha256": "5947f8e1475fa99ba38939becdcffd502899da395495371819535583bfcba38b"
+    },
+    "cancel-postrelease-20261015/collector.js": {
+      "bytes": 2812,
+      "sha256": "90f36a6894202dac6a4164df2157ee90d71375c941ceb55d2a45f985bc917de4"
+    },
+    "cancel-postrelease-20261015/final-audit-summary.json": {
+      "bytes": 6181,
+      "sha256": "3f5b8c9d8eba18c57c1e36a565f20e8a8d1f6b34328500467c82cb897e9d1b60"
+    },
+    "cancel-postrelease-20261015/final-audit.json": {
+      "bytes": 1556849,
+      "sha256": "da420949d6cae77d054268e378d78e0de8ac1c1423fe7b5c275fdfae4de61a06"
+    },
+    "cancel-postrelease-20261015/final-timing-summary.json": {
+      "bytes": 87288,
+      "sha256": "64443fb1dc815213e7a8cedf6222fceeab97dcad90227dcbdd6f3c7b0d3a68ef"
+    },
+    "cancel-postrelease-20261015/first-audit-summary.json": {
+      "bytes": 5077,
+      "sha256": "cb3e779049e61bd425ec8b5adb731cbecc594b3a8c6f5eb481b47084ff5020e8"
+    },
+    "cancel-postrelease-20261015/first-audit.json": {
+      "bytes": 917311,
+      "sha256": "2d2f06f57f7c6626def1dcdb60383e12ec1b481feab9f2f89747fbe53cefcddc"
+    },
+    "cancel-postrelease-20261015/first-queries-complete.json": {
+      "bytes": 201,
+      "sha256": "02660fa55d0f07cd22f7b661d40b22dd3f3030cf2881200731686e6e42b9b21d"
+    },
+    "cancel-postrelease-20261015/first-timing-summary.json": {
+      "bytes": 48226,
+      "sha256": "7a2814b3aea93524d3d9c835cb91f575f3a7974251bf2315191235de3a9d1a87"
+    },
+    "cancel-postrelease-20261015/independent-final-review.json": {
+      "bytes": 17201,
+      "sha256": "fec22d3d232c37aa830eb00e4aea2ba2868c8231fa3f0c34f81872a4df01d0d7"
+    },
+    "cancel-postrelease-20261015/independent-first-review.json": {
+      "bytes": 7833,
+      "sha256": "d808c2bb7455afcfa24864182fad7d2f770974e3f2ead48274234e07d6f199c3"
+    },
+    "cancel-postrelease-20261015/package.py": {
+      "bytes": 4281,
+      "sha256": "ac898245df70e033fae946dd8f4ad1cbdf11061fa06228bb39b290b00981b83b"
+    },
+    "cancel-postrelease-20261015/queries/first-cancel.json": {
+      "bytes": 144167,
+      "sha256": "7595f461a48c63cb38807b196ed6a0d8f69c3895c03af0480105671956feed3a"
+    },
+    "cancel-postrelease-20261015/queries/first-feed-gap.json": {
+      "bytes": 45680,
+      "sha256": "13d48d8679d827a4c48c3f3c105f276dbe136d891b142d82f4aab5718ad91c07"
+    },
+    "cancel-postrelease-20261015/queries/first-feed-timing.json": {
+      "bytes": 308925,
+      "sha256": "6c1f1629febf86cf0596cd964574502f117c3518d4521d6e36cf06af4f76e111"
+    },
+    "cancel-postrelease-20261015/queries/first-fill.json": {
+      "bytes": 13298,
+      "sha256": "7a59b73346aa7c2c9812170995a28ba09892ee1374040e272eb27a8772cfbccb"
+    },
+    "cancel-postrelease-20261015/queries/first-order.json": {
+      "bytes": 348189,
+      "sha256": "24105f294b3ba02a68829b1d80f7e3bcc82b115c7cf687c21cf5d1c1a428b3e6"
+    },
+    "cancel-postrelease-20261015/queries/first-reconcile.json": {
+      "bytes": 843881,
+      "sha256": "31f82dfe392b8a9f5df9d0a37a36feb1355f29b2199c02c96be0af6109605e5f"
+    },
+    "cancel-postrelease-20261015/queries/first-reject.json": {
+      "bytes": 3288,
+      "sha256": "f5a836c116d0bf7c055677f98da0a938e2df8d55ca9dc2c3a1266b8eeeeeadcb"
+    },
+    "cancel-postrelease-20261015/queries/first-settlement.json": {
+      "bytes": 3858,
+      "sha256": "99cb4692cf3413a29d6073b120b4aed898521c2344bf951abf3b469cd50bd7a2"
+    },
+    "cancel-postrelease-20261015/queries/first-timing.json": {
+      "bytes": 5713,
+      "sha256": "4273dab7b694c39182ffbf19ae39dcc6d46c45add86dc888a53053a172c8d979"
+    },
+    "cancel-postrelease-20261015/queries/second-cancel.json": {
+      "bytes": 171898,
+      "sha256": "f2c8ea92bc77b5df78e31a591df8d4a66076e69f20ef8d4e02dfc115622ef44e"
+    },
+    "cancel-postrelease-20261015/queries/second-feed-gap.json": {
+      "bytes": 49624,
+      "sha256": "1770a87a814306588f0355ef0ac211c1648f32bdceecde85d2d729af1ddfc304"
+    },
+    "cancel-postrelease-20261015/queries/second-feed-timing.json": {
+      "bytes": 417834,
+      "sha256": "983da586d543108d8b2be709e36209658fbb8f2c73c6b782b97be234ad78bae9"
+    },
+    "cancel-postrelease-20261015/queries/second-fill.json": {
+      "bytes": 4351,
+      "sha256": "472bc955fc2f1857a372a2e9947fcbd9f8bdc2427edf586b7e17f5bc72719c58"
+    },
+    "cancel-postrelease-20261015/queries/second-order.json": {
+      "bytes": 395977,
+      "sha256": "778c79b272ef091ea241ae5f31921897f6bb6d9b6985105d2492083bfeeea69a"
+    },
+    "cancel-postrelease-20261015/queries/second-reconcile.json": {
+      "bytes": 629016,
+      "sha256": "83c951fabc992e5ef4322160d476ed6302bf7ba3ff91fdc7c7bd19584918ea22"
+    },
+    "cancel-postrelease-20261015/queries/second-reject.json": {
+      "bytes": 1019,
+      "sha256": "1f42df52ef8591b06bf18ea0a5d33d8f95bc956eb0e21ea7582ca8fe2cf6c85e"
+    },
+    "cancel-postrelease-20261015/queries/second-settlement.json": {
+      "bytes": 3792,
+      "sha256": "7f9dc03b50f5056c7db032f7a5b835cc6de6729f4ea62525fc3f0e2ede53b930"
+    },
+    "cancel-postrelease-20261015/queries/second-timing.json": {
+      "bytes": 7591,
+      "sha256": "c0517f386d1864a7227ec052f6e37b6f1da27e2dc1690a93933fa59263aca7be"
+    },
+    "cancel-postrelease-20261015/second-queries-complete.json": {
+      "bytes": 202,
+      "sha256": "f6470ef74d3db8d67f3e49142339bb3b977839a7ca3aee00ef0ebc4fb4ea3239"
+    },
+    "cancel-postrelease-20261015/timing-audit.json": {
+      "bytes": 215953,
+      "sha256": "c1b03774b9ec5479080651d8a4a19feaa9d24c3463da500305715da543de5aed"
+    },
+    "cancel-postrelease-20261015/timing_audit.py": {
+      "bytes": 4796,
+      "sha256": "a3a70f9a896837d48dbe711e99cfd9fb02cf88b9e1d1a1f6c2a80be64ba61149"
+    }
+  }
+}

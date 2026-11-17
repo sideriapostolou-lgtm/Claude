@@ -1,0 +1,43 @@
+from pathlib import Path
+import json,hashlib,gzip,statistics,math
+p=Path('/workspace/private-handoffs/claude-2026-10-15/checkpoint-profile/candidate');root=Path('/workspace/nightcrawler-practice-checkpoint')
+def sha(p):return hashlib.sha256(p.read_bytes()).hexdigest()
+m=json.load(open(p/'matrix_manifest.json'));e=json.load(open(p/'ZERO_EXTENSION_MANIFEST.json'));summary=json.load(open(p/'SUMMARY.json'));es=json.load(open(p/'ZERO_EXTENSION_SUMMARY.json'));data=[];edata=[]
+for manifest,dest in [(m,data),(e,edata)]:
+ for row in manifest['runs']:
+  assert row['exit_code']==0
+  for k in ['stdout','stderr']:assert sha(p/row[k])==row[k+'_sha256']
+  d=json.load(open(p/row['stdout']));assert d['runtime_forbidden_attempts']==0 and d['status']=='passed';dest.append((row,d))
+assert len(data)==58 and len(edata)==20
+assert m['source_hashes']==m['source_hashes_after'];assert all(sha(root/k)==v for k,v in m['source_hashes'].items())
+assert sha(p/'profile_pair.py')==m['harness_sha256'];assert sha(p/'ZERO_EXTENSION_PLAN.json')==e['plan_sha256'];assert sha(p/'zero_extension_profile.py')==e['fixed_hashes'][3]
+checks={}
+for fixture in summary['fixtures']:
+ rows=[(r,d) for r,d in data if r['fixture']==fixture];first=rows[0][1]
+ assert all(d['input_bytes']==first['input_bytes'] and d['output_phases']==first['output_phases'] for r,d in rows)
+ vals={v:[t['wall_ms'] for r,d in rows if r['mode']=='timing' and r['variant']==v for t in d['operations']['checkpoint']['samples']] for v in ['baseline','candidate']}
+ med={v:statistics.median(x) for v,x in vals.items()};pct=(med['candidate']/med['baseline']-1)*100
+ for v in med:assert med[v]==summary['fixtures'][fixture]['variants'][v]['operations']['checkpoint']['wall_ms']['median']
+ for phase in ['first','correction','steady']:
+  for kind in ['kv','mirror','receipts']:
+   a=gzip.decompress((p/f'{fixture}-timing-baseline-1.{phase}.{kind}.gz').read_bytes());b=gzip.decompress((p/f'{fixture}-timing-candidate-1.{phase}.{kind}.gz').read_bytes());assert a==b
+ checks[fixture]={'wall_medians_ms':med,'percent_change':pct,'full_byte_pairs_verified':9}
+ for mode in ['timing','count','allocation']:
+  ab=[d for r,d in rows if r['mode']==mode and r['variant']=='baseline'];cd=[d for r,d in rows if r['mode']==mode and r['variant']=='candidate']
+  for a,b in zip(ab,cd):assert all(a['operations'][op]['clock_calls']==b['operations'][op]['clock_calls'] for op in a['operations'])
+ for r,d in rows:
+  if r['mode']=='count':
+   c=d['operations']['checkpoint'];n=len(c['samples']);got=c['calls'].get('speeddesk.asdict:Settlement',0)/n;expected=d['counts']['settlements'] if r['variant']=='candidate' else 2*(d['days']+1)*d['counts']['settlements'];assert got==expected
+for r,d in edata:assert d['output_phases']==edata[0][1]['output_phases'];assert d['operations']['checkpoint']['clock_calls']==edata[0][1]['operations']['checkpoint']['clock_calls']
+for phase in ['first','correction','steady']:
+ for kind in ['kv','mirror','receipts']:assert gzip.decompress((p/f'zero-extension-baseline-1.{phase}.{kind}.gz').read_bytes())==gzip.decompress((p/f'zero-extension-candidate-1.{phase}.{kind}.gz').read_bytes())
+extension={}
+for metric in ['wall_ms','thread_cpu_ms']:
+ ratios=[]
+ for a,b in zip(edata[::2],edata[1::2]):
+  pair={r['variant']:statistics.median(t[metric] for t in d['operations']['checkpoint']['samples']) for r,d in [a,b]};ratios.append(pair['candidate']/pair['baseline'])
+ assert ratios==es['paired'][metric]['ratios'];extension[metric]={'paired_median_ratio':statistics.median(ratios),'pairs_gt_1_05':sum(r>1.05 for r in ratios)}
+ pool={v:[t[metric] for r,d in edata if r['variant']==v for t in d['operations']['checkpoint']['samples']] for v in ['baseline','candidate']}
+ tail={v:sorted(vs)[math.ceil(.95*len(vs))-1] for v,vs in pool.items()};extension[metric]['pooled_p95_ms']=tail;extension[metric]['pooled_p95_growth_percent']=(tail['candidate']/tail['baseline']-1)*100
+result={'checks':checks,'zero_extension':extension,'raw_children_verified':len(data)+len(edata),'full_output_byte_pairs':72,'input_claim':'Input sizes equal and fixture code shared; raw pre-checkpoint input hashes not recorded. First/correction/steady persisted full bytes equal.','source_test_hashes':{k:v for k,v in m['source_hashes'].items() if k in ['src/nightcrawler/speeddesk.py','tests/test_speeddesk_checkpoint_settlements.py']},'limits':{'main_max_elapsed_s':max(r['elapsed_s'] for r,d in data),'main_max_sampled_RSS_kib':max(r['rss_peak_sampled_kib'] for r,d in data),'main_max_sampled_disk_bytes':max(r['experiment_disk_peak_sampled_bytes'] for r,d in data),'extension_max_elapsed_s':max(r['elapsed_s'] for r,d in edata),'extension_max_sampled_RSS_kib':max(r['max_RSS_kib'] for r,d in edata),'extension_max_sampled_disk_bytes':max(r['max_disk_bytes'] for r,d in edata)}}
+(p/'ASTRA_INDEPENDENT_MATRIX_CALC.json').write_text(json.dumps(result,indent=2)+'\n');print(json.dumps(result,indent=2))

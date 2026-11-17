@@ -1,0 +1,22 @@
+{
+  "observed_at_utc": "2026-10-15T19:30:17.934564+00:00",
+  "market_count": 1,
+  "cursor_present": false,
+  "markets": [
+    {
+      "ticker": "KXBTC15M-26OCT151530-30",
+      "event_ticker": "KXBTC15M-26OCT151530",
+      "open_time": "2026-10-15T19:15:00Z",
+      "close_time": "2026-10-15T19:30:00Z",
+      "expiration_time": "2026-10-22T19:30:00Z",
+      "status": "closed",
+      "floor_strike": 82380.63,
+      "functional_strike": null,
+      "rules_primary": "If the simple average of the sixty seconds of CF Benchmarks' BRTI before 3:30 PM EDT on Oct 15, 2026 is at least the simple average of the sixty seconds of CF Benchmarks' BRTI before 3:15 PM EDT on October 15, 2026, then the market resolves to Yes.",
+      "rules_secondary": "Not all cryptocurrency price data is the same. While checking a source like Google or Coinbase may help guide your decision, the price used to determine this market is based on CF Benchmarks' corresponding Real Time Index (RTI). At the last minute before expiration, 60 RTI prices are collected. The official and final value is the average of these prices, rounded to the nearest 2 decimal places.",
+      "settlement_timer_seconds": 1,
+      "result": "",
+      "yes_sub_title": "Target Price: $82,380.63"
+    }
+  ]
+}

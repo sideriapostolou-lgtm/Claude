@@ -1,0 +1,39 @@
+# secrets
+.env
+.env.*
+!.env.example
+
+# runtime data (data/samples/ stays tracked: backtest inputs)
+data/*.db
+data/*.db-wal
+data/*.db-shm
+data/dataset/
+data/KILL
+data/*.jsonl
+data/*.tmp
+# the bot's own wallet key (BOT_WALLET_MODE=generated): never in version control
+data/wallet/
+**/bot-keypair.json
+**/.bot-keypair.json.*.tmp
+
+# python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+*.egg-info/
+dist/
+build/
+.venv/
+venv/
+
+# os/editor
+.DS_Store
+
+# Claude Code workflow worktrees (temporary isolated checkouts)
+.claude/worktrees/
+art/cast3d/node_modules
+research/lab6/data/cache/

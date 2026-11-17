@@ -1,0 +1,232 @@
+{
+  "captured_at": "2026-10-16T17:01:31Z",
+  "display_time": "October 16, 2026, 10:01 AM PDT",
+  "scope": "Read-only operating handoff; no Codex production or financial changes.",
+  "source_review": {
+    "app": "b3ca7b76670de8a32a0cdcf9301666c6a89a6641",
+    "addendum_commit": "8e97efc7c376beada15ac523c2369b87a1aba90e",
+    "addendum_blob": "fb3f3637bc5a2fa7887b24a3b593a7b0dab80585",
+    "recorder_source": "a0782b743a31369fe25ddf6d2eea96df8511cd8d",
+    "recorder_file_blob": "e7ab5cc20087d34f179997801a51c9c1a0579d68"
+  },
+  "external_restart": {
+    "deployment_id": "5903792c-4ff7-4e5b-9556-645a8c47a1ee",
+    "commit": "7d2844c7fd9f7ea5d01110e9b15a8a12748a3fe0",
+    "status": "SUCCESS",
+    "status_updated_at": "2026-10-16T16:53:59.338Z",
+    "app_equivalent_to_pr73": true,
+    "compare_changed_paths": [
+      "docs/COORDINATION.md",
+      "docs/WORKLOG.md",
+      "research/town_team_workflow_2026-10-16/RELEASE.json"
+    ],
+    "actor_and_authority": "Attributed to Claude addendum and WORKLOG; Codex independently read the resulting deployment and native caps, did not execute the action."
+  },
+  "native_status": [
+    {
+      "timestamp": "2026-10-16T16:55:24.563851243Z",
+      "mode": "live",
+      "configured_mode": "live",
+      "authenticated": true,
+      "trading_now": false,
+      "reason": "Kalshi account data stale",
+      "cash_usd": 52.6833,
+      "cash_total_usd": 52.6833,
+      "cash_at": 1792169724.0823622,
+      "shard_funding": {
+        "source": "GET /portfolio/subaccounts/balances",
+        "subaccount_number": 0,
+        "at": 1792169724.0823622,
+        "error": null,
+        "balances": [
+          {
+            "exchange_index": 0,
+            "balance_usd": 0
+          },
+          {
+            "exchange_index": 1,
+            "balance_usd": 0
+          },
+          {
+            "exchange_index": 2,
+            "balance_usd": 52.6833
+          }
+        ],
+        "external_resting_orders": 0,
+        "external_resting_unknown": false,
+        "refusal": null
+      },
+      "caps": {
+        "window_usd": 20,
+        "open_usd": 40,
+        "day_stop_usd": 12,
+        "clip": 5,
+        "total_stop_usd": 10
+      },
+      "reserved_usd": 0,
+      "open_risk_usd": 0,
+      "open_cost_usd": 4.15,
+      "open_orders": 0,
+      "positions": 0,
+      "day_stop_latched": false,
+      "total_halted": false,
+      "integrity_error": null,
+      "today": {
+        "day": "2026-10-16",
+        "pnl_usd": -3.4162999999999992,
+        "fees_usd": 0.3583,
+        "windows": 30,
+        "fills": 101
+      },
+      "total": {
+        "pnl_usd": -22.908100000000008
+      },
+      "coverage": "partial"
+    },
+    {
+      "timestamp": "2026-10-16T16:56:26.524802730Z",
+      "mode": "live",
+      "configured_mode": "live",
+      "authenticated": true,
+      "trading_now": false,
+      "reason": "Kalshi account data stale",
+      "cash_usd": 52.6833,
+      "cash_total_usd": 52.6833,
+      "cash_at": 1792169786.1249826,
+      "shard_funding": {
+        "source": "GET /portfolio/subaccounts/balances",
+        "subaccount_number": 0,
+        "at": 1792169786.1249826,
+        "error": null,
+        "balances": [
+          {
+            "exchange_index": 0,
+            "balance_usd": 0
+          },
+          {
+            "exchange_index": 1,
+            "balance_usd": 0
+          },
+          {
+            "exchange_index": 2,
+            "balance_usd": 52.6833
+          }
+        ],
+        "external_resting_orders": 0,
+        "external_resting_unknown": false,
+        "refusal": null
+      },
+      "caps": {
+        "window_usd": 20,
+        "open_usd": 40,
+        "day_stop_usd": 12,
+        "clip": 5,
+        "total_stop_usd": 10
+      },
+      "reserved_usd": 0,
+      "open_risk_usd": 0,
+      "open_cost_usd": 4.15,
+      "open_orders": 0,
+      "positions": 0,
+      "day_stop_latched": false,
+      "total_halted": false,
+      "integrity_error": null,
+      "today": {
+        "day": "2026-10-16",
+        "pnl_usd": -3.4162999999999992,
+        "fees_usd": 0.3583,
+        "windows": 30,
+        "fills": 101
+      },
+      "total": {
+        "pnl_usd": -22.908100000000008
+      },
+      "coverage": "partial"
+    }
+  ],
+  "queries": {
+    "deployment_id": "5903792c-4ff7-4e5b-9556-645a8c47a1ee",
+    "start": "2026-10-16T16:53:00Z",
+    "requested_end": "2026-10-16T17:01:30Z",
+    "note": "Requested end may extend beyond query time; only actual returned timestamps establish observations.",
+    "limit_per_filter": 10,
+    "status_returned": 2,
+    "traceback_returned": 0,
+    "polydesk_startup": [
+      {
+        "timestamp": "2026-10-16T16:53:55.905287900Z",
+        "message": "2026-10-16T16:53:54Z INFO nightcrawler.polydesk: polydesk_started theta=0.97 hours=1 ticket_usd=20 poll_s=90 (LIVE: 10 contract(s) per order)"
+      }
+    ]
+  },
+  "services": [
+    {
+      "serviceId": "f84d3b52-002f-44cb-931e-bc9e3e097e97",
+      "serviceName": "bot",
+      "state": "online",
+      "statusText": "Online",
+      "activeDeployments": [
+        {
+          "id": "5903792c-4ff7-4e5b-9556-645a8c47a1ee",
+          "status": "SUCCESS",
+          "createdAt": "2026-10-16T16:52:54.276Z",
+          "statusUpdatedAt": "2026-10-16T16:53:59.338Z"
+        }
+      ],
+      "replicaStatus": {
+        "running": 1,
+        "crashed": 0,
+        "total": 1
+      },
+      "cronJob": null,
+      "issues": {
+        "warningCount": 0,
+        "criticalCount": 0
+      },
+      "recentFailures": 0,
+      "recentFailedDeployments": [],
+      "hasIssues": false,
+      "isCronJob": false,
+      "hasVolume": true
+    },
+    {
+      "serviceId": "736b1c8a-8311-4ee0-9043-d05f508cd821",
+      "serviceName": "kalshi-recorder",
+      "state": "online",
+      "statusText": "Online",
+      "activeDeployments": [
+        {
+          "id": "8453f919-b891-4aa7-8478-6fcf6b9c24ee",
+          "status": "SUCCESS",
+          "createdAt": "2026-10-14T16:36:40.384Z",
+          "statusUpdatedAt": "2026-10-14T16:38:15.302Z"
+        }
+      ],
+      "replicaStatus": {
+        "running": 1,
+        "crashed": 0,
+        "total": 1
+      },
+      "cronJob": null,
+      "issues": {
+        "warningCount": 0,
+        "criticalCount": 0
+      },
+      "recentFailures": 0,
+      "recentFailedDeployments": [],
+      "hasIssues": false,
+      "isCronJob": false,
+      "hasVolume": true
+    }
+  ],
+  "limitations": [
+    "Both current services online is platform evidence only.",
+    "Current wait on account-stale data does not prove continuous trading.",
+    "Cash is not profit; open cost is distinct from directional risk.",
+    "Native today/cumulative fields do not reconcile the addendum's distinct UTC versus reset figure.",
+    "No raw-volume completeness, measured cost or profitable strategy verified.",
+    "Full operating handoff remains in progress; private recovery inventory stays private.",
+    "PR73 deployed but owner rejected product clarity; proposed town workflow has not been implemented.",
+    "Historical PR47 bounded deployment/follow-up complete; broader EXEC/recorder/handoff open; TJR last."
+  ]
+}

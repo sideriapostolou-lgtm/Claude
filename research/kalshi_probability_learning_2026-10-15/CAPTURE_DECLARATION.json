@@ -1,0 +1,41 @@
+{
+  "declared_at_utc": "2026-10-15T19:28:19.590277+00:00",
+  "declared_at_pacific": "2026-10-15T12:28:19.590277-07:00",
+  "source_commit": "8c8681a032a6181c49915ba88ba38d0818dc69d3",
+  "candidate": "4cf0734e7a85a0ac962b3a75825af62a5e714525",
+  "deployment_id": "2e88601d-c9c7-474f-add8-72c0a13c1a4b",
+  "deployment_success_at_utc": "2026-10-15T19:22:21.502Z",
+  "readiness_original_timestamp": "2026-10-15T19:26:26.283880736Z",
+  "root_verified_before_start_margin_s": 100.409723,
+  "series": "KXBTC15M",
+  "target_selection": "First eligible full 900-second window after exact deployment/startup and root ready status verification, identified by exact start/end; actual ticker must come from original forecast/unknown or verified metadata, not a guessed name.",
+  "start_utc": "2026-10-15T19:30:00+00:00",
+  "end_utc": "2026-10-15T19:45:00+00:00",
+  "tail_end_utc": "2026-10-15T19:47:00+00:00",
+  "start": 1792092600.0,
+  "end": 1792093500.0,
+  "tail_end": 1792093620.0,
+  "due_start": 1792092900.0,
+  "due_end": 1792092905.0,
+  "slot_read_end_utc": "2026-10-15T19:35:30+00:00",
+  "learner_protocol": "kalshi-probability-calibration-v2-h300-g5-b10-prior20",
+  "learner_fingerprint": "e79897062a3ebbd61fe5dc70617f02c44bb7d29c9dbf51e23940459686653c7c",
+  "v1_fingerprint": "b6112b7ef8955b20af734157c1e7f5ec533bf98f70e034558f06670578c391f2",
+  "frozen_while_capture": [
+    "source",
+    "model",
+    "caps",
+    "stops",
+    "resume budgets",
+    "variables"
+  ],
+  "expected_not_guaranteed": "One original qualified forecast before outcome and official-label score; if excluded/error/missing report actual reason and a bounded next step, never silently switch windows. First q=p when prior count is zero; one outcome cannot show improved calibration/profitability.",
+  "capture_end_is_finite": true,
+  "log_query_limit": 500,
+  "no_manual_orders_or_measurement_trades": true,
+  "limitations": [
+    "Local accepted Bitcoin is Coinbase, settlement is Kalshi BRTI; basis risk remains.",
+    "Filtered original logs are not full feed continuity or raw durable volume certification.",
+    "Broader EXEC and TJR unfinished; this is a new probability estimand, not repair of V1 data-quality exclusions."
+  ]
+}

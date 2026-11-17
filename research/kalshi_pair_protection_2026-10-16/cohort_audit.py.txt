@@ -1,0 +1,128 @@
+"""Descriptive prior-live receipt audit; no alternative fills, tuning or strategy P&L."""
+import collections
+import datetime as dt
+import hashlib
+import json
+import re
+from decimal import Decimal as D
+from pathlib import Path
+
+BASE = Path(__file__).resolve().parent
+NATIVE = BASE / 'native'
+FILES = ['old_settlements', 'current_settlements', 'old_fills_splitA', 'old_fills_splitB',
+         'current_fills', 'old_orders_00', 'old_orders_01A', 'old_orders_01B',
+         'old_orders_02', 'current_orders_exact']
+PATTERN = re.compile(r': (speeddesk_[a-z_]+) (\{.*\})$', re.S)
+
+
+def main():
+    events = collections.defaultdict(list)
+    queries = []
+    duplicate_rows = 0
+    excluded = collections.Counter()
+    seen = set()
+    for name in FILES:
+        path = NATIVE / (name + '.json')
+        wrapper = json.loads(path.read_text())
+        result = wrapper['result']
+        rows = result['structuredContent']['deploy']
+        assert not result.get('isError') and len(rows) < wrapper['request']['limit']
+        queries.append({'name': name, 'sha256': hashlib.sha256(path.read_bytes()).hexdigest(),
+                        'request': wrapper['request'], 'rows': len(rows),
+                        'status': result['structuredContent']['status'],
+                        'before': wrapper['before'], 'after': wrapper['after']})
+        for row in rows:
+            key = (row['timestamp'], row['message'])
+            if key in seen:
+                duplicate_rows += 1
+                continue
+            seen.add(key)
+            match = PATTERN.search(row['message'])
+            if not match:
+                excluded['unprefixed_or_malformed_original'] += 1
+                continue
+            if match[1] not in ('speeddesk_live_order', 'speeddesk_live_fill', 'speeddesk_live_settlement'):
+                excluded[match[1]] += 1
+                continue
+            payload = json.loads(match[2], parse_float=D, parse_int=D)
+            events[match[1]].append({'platform_timestamp': row['timestamp'], 'payload': payload})
+    fills = {}
+    for row in events['speeddesk_live_fill']:
+        p = row['payload']
+        if p['fill_id'] in fills:
+            assert fills[p['fill_id']]['payload'] == p
+        fills[p['fill_id']] = row
+    intents = {}
+    for row in events['speeddesk_live_order']:
+        p = row['payload']
+        if p.get('state', '').startswith('durable intent'):
+            cid = p['client_order_id']
+            assert cid not in intents or intents[cid]['payload'] == p
+            intents[cid] = row
+    settlements = {}
+    for row in events['speeddesk_live_settlement']:
+        p = row['payload']
+        assert p['window'] not in settlements
+        settlements[p['window']] = row
+    markets = []
+    for slug, row in sorted(settlements.items(), key=lambda item: item[1]['payload']['at']):
+        s = row['payload']
+        these = sorted((x for x in fills.values() if x['payload']['window'] == slug),
+                       key=lambda r: (r['platform_timestamp'], r['payload']['fill_id']))
+        quantity = {'up': D(0), 'down': D(0)}
+        cost = D(0)
+        fees = D(0)
+        first = None
+        later_fills = []
+        for fr in these:
+            f = fr['payload']
+            quantity[f['side']] += f['size']
+            cost += f['size'] * f['price']
+            fees += f['fee_usd']
+            if first is not None:
+                later_fills.append({'fill_id': f['fill_id'], 'client_order_id': f['client_order_id'],
+                                    'platform_timestamp': fr['platform_timestamp'], 'side': f['side'],
+                                    'size': f['size'], 'price': f['price'],
+                                    'intent': intents.get(f['client_order_id'])})
+            payout = min(quantity.values())
+            if first is None and payout > D('1e-9') and quantity['up'] == quantity['down'] and payout-cost-fees > D('1e-9'):
+                first = {'basis': 'returned fill log publication-order prefix, not exact controller or physical venue inventory',
+                         'platform_timestamp': fr['platform_timestamp'], 'fill_id': f['fill_id'],
+                         'quantities': dict(quantity), 'cost': cost, 'fees': fees,
+                         'inventory_only_outcome_floor': payout-cost-fees,
+                         'pending_reservations_and_cancel_races_not_included': True}
+        quantities_match = quantity == {'up': s['up_shares'], 'down': s['down_shares']}
+        amounts_match = abs(cost-s['cost_usd']) < D('1e-9') and abs(fees-s['fee_usd']) < D('1e-9')
+        arithmetic = s['payout_usd'] - s['cost_usd'] - s['fee_usd']
+        assert abs(arithmetic-s['pnl_usd']) < D('1e-9')
+        markets.append({'window': slug, 'settlement': s, 'observed_fill_receipts': len(these),
+                        'observed_quantities': quantity, 'observed_cost': cost, 'observed_fees': fees,
+                        'fill_totals_match_settlement': quantities_match and amounts_match,
+                        'first_positive_equal_logged_prefix': first, 'actual_later_fills': later_fills})
+    total_pnl = sum((x['settlement']['pnl_usd'] for x in markets), D(0))
+    output = {'cohort': 'All returned settled live windows ending00:15–03:45UTC October16 (Oct15 5:15–8:45PM PDT), including incomplete restart windows.',
+              'scope': 'Fixed before analysis; descriptive past-production evidence only, not heldout or candidate P&L.',
+              'queries': queries, 'distinct_returned_rows': len(seen), 'duplicate_exact_rows': duplicate_rows,
+              'events': {k: len(v) for k,v in events.items()}, 'excluded_original_rows': dict(excluded), 'markets': markets,
+              'summary': {'settled_markets': len(markets), 'actual_reported_pnl_usd': total_pnl,
+                          'positive': sum(x['settlement']['pnl_usd'] > 0 for x in markets),
+                          'negative': sum(x['settlement']['pnl_usd'] < 0 for x in markets),
+                          'fees_usd': sum((x['settlement']['fee_usd'] for x in markets), D(0)),
+                          'full_fill_total_match': sum(x['fill_totals_match_settlement'] for x in markets),
+                          'positive_equal_logged_prefix': sum(x['first_positive_equal_logged_prefix'] is not None for x in markets)},
+              'limits': ['Rows are filtered native log returns; no full account or continuous-coverage certificate.',
+                         'Removed deployment status is preserved; transport failures and saturated parent queries are separate retained attempts, replaced by unsaturated leaves.',
+                         'A positive prefix can be transient within a batch; platform publication is not the authoritative per-fill controller observation clock.',
+                         'New decisions, old resting orders, unseen reservations and cancellation races cannot be merged into a hypothetical executable result.',
+                         'Later real winning fills demonstrate upside that a restriction can forgo; their removal is not a valid counterfactual backtest.',
+                         'No parameter fit, sealed TEST, alternative fill simulation or profitability gate.']}
+    (BASE/'COHORT.json').write_text(json.dumps(output, indent=2, default=str)+'\n')
+    print(json.dumps(output['summary'], default=str))
+    for x in markets:
+        q = x['first_positive_equal_logged_prefix']
+        print(x['window'], str(x['settlement']['pnl_usd']), x['fill_totals_match_settlement'],
+              'first_prefix_floor', str(q['inventory_only_outcome_floor']) if q else None, 'later_real_fills',len(x['actual_later_fills']))
+
+
+if __name__ == '__main__':
+    main()

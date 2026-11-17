@@ -1,0 +1,60 @@
+{
+  "name": "ce25",
+  "retrieved_at": "2026-10-13T18:57:39.329841+00:00",
+  "url": "https://data-api.polymarket.com/trades?user=0xce25e214d5cfe4f459cf67f08df581885aae7fdc&limit=500&offset=0&takerOnly=false",
+  "status": 200,
+  "sha256": "355d141269edddbd73c2cea441de1a8037726a70c6e8b9f930dd2d2c5fcb0566",
+  "n": 500,
+  "min_timestamp": 1791908883,
+  "max_timestamp": 1791917386,
+  "buy_count": 500,
+  "sell_count": 0,
+  "price_median": 0.48,
+  "size_median": 12.0,
+  "buy_outcomes": {
+    "Down": 237,
+    "Up": 263
+  },
+  "titles": [
+    [
+      "Bitcoin Up or Down - October 13, 2:30PM-2:45PM ET",
+      49
+    ],
+    [
+      "Bitcoin Up or Down - October 13, 2:00PM-2:15PM ET",
+      26
+    ],
+    [
+      "Bitcoin Up or Down - October 13, 1:30PM-1:35PM ET",
+      23
+    ],
+    [
+      "Bitcoin Up or Down - October 13, 2:45PM-2:50PM ET",
+      22
+    ],
+    [
+      "Bitcoin Up or Down - October 13, 1:45PM-2:00PM ET",
+      20
+    ],
+    [
+      "Ethereum Up or Down - October 13, 2:15PM-2:30PM ET",
+      19
+    ],
+    [
+      "Bitcoin Up or Down - October 13, 12:30PM-12:45PM ET",
+      19
+    ],
+    [
+      "Bitcoin Up or Down - October 13, 12:45PM-1:00PM ET",
+      15
+    ],
+    [
+      "Solana Up or Down - October 13, 2:30PM-2:45PM ET",
+      14
+    ],
+    [
+      "XRP Up or Down - October 13, 2:15PM-2:30PM ET",
+      12
+    ]
+  ]
+}

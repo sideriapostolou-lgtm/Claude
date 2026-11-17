@@ -1,0 +1,84 @@
+{
+  "base": "8aa66a7d85ef57e5ea8e3953b393af207c6cbb87",
+  "patch_sha256": "c8c2289cee038a32613ede4b9f28c30e38a2a5199ab277ed62078cdcc6579be2",
+  "files": [
+    {
+      "path": "src/nightcrawler/speeddesk_kalshi.py",
+      "bytes": 20948,
+      "sha256": "8d43d0d65245bf95437fa6c86e608ee402f22f48b57ca11b8415b8db34343753",
+      "git_blob": "85d8e88568e23cf8956e56ac1840e05ef5d9a7b1"
+    },
+    {
+      "path": "src/nightcrawler/speeddesk_live.py",
+      "bytes": 187855,
+      "sha256": "df878fd524505db099f01c2929b05022b8895fea74cc0507ccca2ec4dd1e165b",
+      "git_blob": "f9794b06a6ad4107ed098629accfcb7e7d303f06"
+    },
+    {
+      "path": "src/nightcrawler/speeddesk_live_cash.py",
+      "bytes": 6134,
+      "sha256": "bd41b30d71164a42663e063342ec1341d5fa835593f7093db115c6fc096dc005",
+      "git_blob": "5b073aa06daa041265397defe83e167d342826e7"
+    },
+    {
+      "path": "src/nightcrawler/speeddesk_live_model.py",
+      "bytes": 67881,
+      "sha256": "8198ae62c73decf91d002234d77951a8c71315d2cd5097a155d684ebb6393abe",
+      "git_blob": "7c4fc891172b4b735363749c787c683dab10900d"
+    },
+    {
+      "path": "src/nightcrawler/speeddesk_model.py",
+      "bytes": 71782,
+      "sha256": "500731e8c84b86537f95340afb04318214fc297fc61918334a2b3bf1bd7ccf8f",
+      "git_blob": "b7f4df851ac299b49ab4392aac6bc823a195ad61"
+    },
+    {
+      "path": "tests/test_speeddesk_live.py",
+      "bytes": 61100,
+      "sha256": "0813115e620084aeda2cf6828647bdbcb729d6a8af886832e0b42e46e2c244e2",
+      "git_blob": "d38551af75be48c26782c7ccd156da8533bdc0c6"
+    },
+    {
+      "path": "tests/test_speeddesk_live_cash.py",
+      "bytes": 14898,
+      "sha256": "57e3db6e0e553ec7e87c520020ec31b9835b4bc5083f22af2828883844ea8b7c",
+      "git_blob": "1fbc93a5eb38f4470f4eb89cd472829dcc631428"
+    },
+    {
+      "path": "tests/test_speeddesk_live_desk_property.py",
+      "bytes": 25178,
+      "sha256": "2560fbf7bdb80a6bb436596e093570194d471784c8344ad172e31749747a9bfd",
+      "git_blob": "4fb9fe5649ed1ab8ba4ace89309b00619b05b5de"
+    },
+    {
+      "path": "tests/test_speeddesk_live_killpoints.py",
+      "bytes": 10442,
+      "sha256": "3b6d0ebb9d2908714e6ca436aa2f5bdff886ca27d81012df65fd947cc50628d9",
+      "git_blob": "64b4cf5c3cd6a5d2db462f0c3305c90a39fa22d6"
+    },
+    {
+      "path": "tests/test_speeddesk_live_reads.py",
+      "bytes": 8630,
+      "sha256": "d7440c377c7c395acca67b179b7fb2d856ebf2f9a001550b2f1577918fcf375a",
+      "git_blob": "4b1d0a96dbc882134ba89a6fc8d421ae72faa69d"
+    },
+    {
+      "path": "tests/test_speeddesk_live_safety.py",
+      "bytes": 20752,
+      "sha256": "50c05f9e91830195311758ae72a72e6c2c65267b46567e1deed7ae57a44d7dac",
+      "git_blob": "2962a224bb375df088299f2fc69835db6c2cae45"
+    },
+    {
+      "path": "tests/test_speeddesk_lock_send_freshness.py",
+      "bytes": 8478,
+      "sha256": "e0d84e0b304fa9971d139bb778e1c195cc12263cb46aed237d19ad2db7d12b81",
+      "git_blob": "dbcc1a36bb10ee7eca6019653b5a93186d05da51"
+    },
+    {
+      "path": "tests/test_speeddesk_readtrace.py",
+      "bytes": 11182,
+      "sha256": "961cd431a2e41c82f6b4bf81d787f6292e2889e6f5070494a96fbbf7a803c14a",
+      "git_blob": "149272f2cbf9ca5a21a5c0a2388bd59853c6a8eb"
+    }
+  ]
+}

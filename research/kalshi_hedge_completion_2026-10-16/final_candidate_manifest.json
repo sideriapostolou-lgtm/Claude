@@ -1,0 +1,17 @@
+{
+  "base": "530f8a6",
+  "patch_sha256": "3dcfe32a07a90bd708ae14f5404cae9660ffac39e27b3d2f9f1c3065ff9b6e29",
+  "files": {
+    "src/nightcrawler/speeddesk_live.py": "65c18358c0cd2ae8a3592bcc8d2280c51a5b4a26f61a2929a11968851a91f674",
+    "src/nightcrawler/speeddesk_live_model.py": "3da6deec395aca24956e3c8754954cff4c1c86d0e89b488a50b54e1247831173",
+    "src/nightcrawler/speeddesk_live_completion.py": "e19d9448e7c15ccea8e0f13d075a910fb8a6e884de1f491eb9272d4b26e664f4",
+    "src/nightcrawler/pagestate.py": "fbc12e3f1f722c759f85d0ee361e33281baff1fdb78a4885d8d4a9235d4eb151",
+    "tests/test_speeddesk_live.py": "b8627e241afea51a5cbab9aaca568de178e7f667b3138c3ec901add6afca9644",
+    "tests/test_speeddesk_live_pull.py": "1f092183ceb64cd2108fd444648a3ccf3b2cbe229c442fbd778efab25c9d69fb",
+    "tests/test_speeddesk_live_completion.py": "38a4a987a613af3585f9cca75d1d43ba41756a0b416bce5fb1f4172aa62d92bc",
+    "tests/test_kalshi_pair_comparison_page.py": "b9f08fbee47a8f3f32182015332dbc3f6668caef71849b545e53511b974b6b9a",
+    "tests/test_speeddesk_live_balancing.py": "182af066d8f285527b94af79fbbfbae8e58e233e489fea507310dfc427eeaf72",
+    "tests/test_speeddesk_live_crash.py": "16b9950c26aca5060c7ccac4e92eca4d029f00dd356a3b4933fd9cbd528fe61d",
+    "research/kalshi_hedge_completion_2026-10-16/benchmark_helpers.py": "f9e57bc802888800ca2c82936885878ad58d85349401e88db7f4168865c2d473"
+  }
+}

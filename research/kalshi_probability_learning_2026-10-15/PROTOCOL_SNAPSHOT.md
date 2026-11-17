@@ -1,0 +1,30 @@
+# Prospective probability-only learner: V2
+
+Frozen design October 15, 2026, 11:53 AM Pacific. Status: implementation and independent checks pending. This new observer answers whether the existing conditional fair-value probabilities calibrate to official outcomes. It does not repair or certify upstream feed continuity, reproduce executable trades, establish P&L, or change live decisions.
+
+## Why a separate observer
+
+V1 requires the simulator's book/trade/maker continuity. Source review shows quiet-trade expiry and metadata/transport changes can permanently exclude a V1 window even with fresh Bitcoin and valid probability inputs. The recorded production gap's exact producer cause remains unknown. Preserve V1 source, protocol, fingerprint, saved history and every unknown; never reinterpret those exclusions as good samples. Concrete feed races and FIFO timestamp defects remain separate execution work.
+
+## Frozen sampling and input rules
+
+- Protocol: `kalshi-probability-calibration-v2-h300-g5-b10-prior20`. New module, log prefix, `learning_probability` state/panel key and source identity. Start with zero new counts; no V1 migration, backfill, historical replay or future-label selection.
+- Only verified Kalshi KXBTC15M 900-second windows discovered by the existing metadata path before they start. Require a positive finite venue strike equal to the model opening at forecast; a missing strike may be completed before forecast, never replaced or inferred from Coinbase. Pin all settlement/fee/window terms; changes exclude, including after forecast.
+- One first eligible attempt at elapsed 300 through 305 seconds inclusive, fixed before seeing the outcome. Startup-inside, late-first-pass, malformed terms, stale/future/nonfinite Bitcoin, missing/nonfinite/negative sigma, source/clock/integrity errors and known/invalid/early/conflicting labels remain explicit exclusions. Do not wait inside the slot for more favorable inputs after a failed attempt.
+- At forecast require current accepted Bitcoin price and its original timestamp, age 0–3 seconds, a qualified existing sigma, and a fresh complete parent batch with finite producer time and nonnegative age at most 3 seconds. No new public feed, key, network call or model API. The existing sigma uses a gap-aware hour with at least 1,500 adjacent returns; this is a qualified estimate, not proof of a complete hour.
+- Preserve raw batch sequence/drop integrity. A missing/corrupt raw stream can hide metadata or labels and excludes a started unforecast window. Preserve the original observed time when a drop precedes discovery, not an untimed sticky simulator warning. Current batch freshness must still pass at the fixed slot.
+- Maker, order-book ladder and REST trading-tape availability are not inputs to this conditional probability question. Do not call a simulator gap false or claim continuous Bitcoin coverage. Those simulator-only gaps must not rewrite this observer's quality history. Fresh current inputs are required; continuity is not asserted. Current socket connectivity is not itself a probability input when the last accepted Bitcoin observation still passes the strict freshness test.
+
+## Prediction, labels and persistence
+
+Use unchanged `fair_up` with verified venue strike and settlement-average convention. Its baseline is a model estimate using Coinbase ticks against a Kalshi BRTI-settled outcome; that price-basis difference remains a limitation, not a verified true probability. Freeze baseline p and shadow q from ten bins with prior weight20: q=(prior_wins+20*p)/(prior_count+20), with only previously scored official outcomes. Freeze all inputs, terms, bin, counts, protocol and source fingerprint in the receipt. Score baseline and shadow Brier loss before updating a bin. A score is probability evidence, never money or trading P&L.
+
+Only raw strict boolean final labels from the existing official Kalshi settlement path, with arrival at/after end and within the existing two-hour timeout. Never score a future-known, invalid, early, conflicting or missing outcome as zero or reinterpret raw truthiness. Deduplicate/out-of-order labels and restart without hindsight. Already frozen unscored forecasts may survive restart with an annotation; an admitted unforecast window restarted after start is unknown.
+
+Use separate bounded state (32 pending, 64 recent receipts/labels, 4,096 input records maximum), complete fail-closed validation and an identity hashing the new module and every shared dependency. Restore mismatch disables only this observer and preserves valid old counts. Missing new key in old arena state means a new observer, not migration. Malformed optional state must not reset V1 or the arena. Keep existing save/fsync cadence and parent/wire/live paths unchanged; optional exceptions, logging failures and malformed state cannot affect trading or resident decisions.
+
+## Evidence before completion
+
+Run fakes covering quiet-maker exclusion vs qualified probability prediction, actual missing/stale inputs and raw corruption, exact slot boundaries, prestart/drop chronology, terms/strike changes, raw labels, score-before-train, identity/restart/retention, optional exceptions and unchanged V1/resident decisions. Measure bounded child CPU/state growth. Full pytest, mypy and Ruff on changed Python files must pass, with independent exact review.
+
+Release only during existing safe minutes under standing approval. Verify exact deployment, normal Polymarket startup, retained real cash/losses/caps/used controls and both services; no variables or money settings change. Before the next eligible full window starts, freeze a finite read-only capture with exact source/window bounds. Completion of this observer requires a real original pre-outcome forecast and official-label score with matching identity and arithmetic, or explicit recorded failure/next step. One score cannot establish improved calibration, a profitable strategy, all-gap repair or permission to apply it live. No automatic promotion path exists.

@@ -1,0 +1,5 @@
+# Original evidence whitespace
+
+The application, tests, documentation and executable research scripts pass the scoped Git whitespace check. An initial all-path staged check also inspected original unified patch files and failed-test stdout. It reported the standard single-space blank context records in patches and an original indented blank failure line in stdout. Those original evidence bytes are preserved unchanged, including their verified archive hashes. This is not an application/source whitespace defect, a waived test, or a reason to trim historical evidence. The all-path check's findings and the later scoped pass are distinguished here.
+
+The first source branch push occurred after this evidence-only whitespace report; no production branch merge or deployment occurred from that push. All application checks and exact source review were already green. Source release still uses the ordinary safe-minute, exact-source/deployment and prospective evidence gates. This note changes no source or financial authority.

@@ -1,0 +1,110 @@
+"""Predeclared local CPU screens. No production, network or disk checkpoints."""
+import ast,copy,hashlib,importlib.util,json,math,statistics,subprocess,sys,tempfile,time,types
+from dataclasses import astuple,replace
+from pathlib import Path
+from unittest.mock import patch
+ROOT=Path('/workspace/nightcrawler-probability-epochs');sys.path[:0]=[str(ROOT/'src')]
+OUT=Path('/workspace/private-handoffs/claude-2026-10-15/kalshi-recovery-review')
+from nightcrawler import kalshi_probability_learning as probability,kalshi_probability_epochs as epochs,kalshi_arena as candidate
+from nightcrawler.speeddesk_model import Window
+FILES=['kalshi_probability_epochs.py','kalshi_probability_learning.py','kalshi_arena.py','pagestate.py']
+def hashes():return {f:hashlib.sha256((ROOT/'src/nightcrawler'/f).read_bytes()).hexdigest() for f in FILES}
+def summary(values):
+    ordered=sorted(values)
+    return {'n':len(values),'mean':statistics.mean(values),'p95':ordered[math.ceil(.95*len(ordered))-1],'max':max(values),'raw':values}
+def measure(fn,n=20):
+    values=[]
+    for _ in range(n):
+        start=time.thread_time_ns();fn();values.append((time.thread_time_ns()-start)/1e6)
+    return summary(values)
+def window(start,index):
+    return Window(('KXBTC15M-'+str(index)).ljust(128,'X'),start,start+900,100,venue_start_price=100,fee_rounding='kalshi',venue='kalshi')
+def fill(learner,base):
+    def advance(at,windows):
+        learner.batch(('batch',(learner.batch_seq or 0)+1,at,0,0,[]),at);learner.batch_complete()
+        learner.advance(windows,100,.001,at,at)
+    for index in range(64):
+        w=window(base+1000+1800*index,base+index)
+        learner.discover([w],w.start-10);advance(w.start+300,[w])
+        learner.labels_received([(w.slug,bool(index%2))],w.end);advance(w.end,[w])
+    starts=base+1000+1800*64
+    pending=[window(starts+i/8,base+100+i) for i in range(32)]
+    learner.discover(pending,starts-10);advance(starts+304,pending)
+    assert len(learner.pending)==32 and len(learner.recent)==len(learner.labels)==64
+    assert learner.counts['forecasts']==96 and learner.counts['scored']==64
+
+def make(source,now):
+    with patch.object(probability,'fingerprint',return_value=source):
+        active=probability.ProbabilityLearning(now);return epochs.ProbabilityEpochs(active,now)
+def saved(host):
+    old,envelope=host.checkpoint()
+    return {epochs.LEGACY:old,epochs.EPOCHS:envelope,'learning_probability_epoch_schema':epochs.SCHEMA}
+
+def maxhost():
+    with patch.object(probability,'fingerprint',return_value='a'*64):old=probability.ProbabilityLearning(0)
+    fill(old,0);state={epochs.LEGACY:old.state()}
+    actual_source=probability.fingerprint()
+    for epoch in range(1,5):
+        base=epoch*200000
+        host=make(actual_source if epoch==4 else str(epoch)*64,base)
+        host.restore(state,base)
+        assert host.error is None
+        fill(host.active,base)
+        state=saved(host)
+    assert state[epochs.LEGACY]['counts']['scored']==64
+    assert len(state[epochs.EPOCHS]['archived'])==4
+    return host,state
+
+base_code=subprocess.check_output(['git','show','72a4ddcc1a49f72f1d90973a9904c5312c9f59fd:src/nightcrawler/kalshi_arena.py'],cwd=ROOT,text=True)
+baseline=types.ModuleType('nightcrawler._epoch_review_baseline');baseline.__package__='nightcrawler';sys.modules[baseline.__name__]=baseline
+exec(compile(base_code,'baseline_arena_b7b7192','exec'),baseline.__dict__)
+def trial(module,path):
+    clock=[900.];view=module.WireView();writes=[]
+    def sink(path,data,durable=False):writes.append((Path(path).name,durable))
+    with patch.object(module,'_write',sink),patch('os.urandom',lambda n:b'x'*n):
+        town=module.KalshiArena(module.ArenaConfig(path,population=12),lambda:view,clock=lambda:clock[0],cpu=lambda:0.)
+        windows=[window(1000,1),window(1900,2)]
+        town.receive(('batch',1,900.,0,0,[('w',[astuple(w) for w in windows]),('m',100,900.,.001)]),view);town.step(900.)
+        clock[0]=1100.;town.receive(('batch',2,1100.,0,0,[('m',100,1100.,.001)]),view);town.step(1100.)
+        before=time.thread_time_ns()
+        for i in range(100):
+            now=1100.1+i/10;clock[0]=now
+            town.receive(('batch',i+3,now,0,0,[('m',100,now,.001)]),view);town.step(now)
+        elapsed=(time.thread_time_ns()-before)/1e6/100
+    return elapsed,writes
+
+before=hashes()
+with patch('logging.Logger.info',lambda *a,**k:None),tempfile.TemporaryDirectory(dir=OUT) as temp:
+    host,state=maxhost();directory=Path(temp)
+    records=[*state[epochs.EPOCHS]['archived'],state[epochs.EPOCHS]['active']]
+    sizes=[len(json.dumps(r['state'],allow_nan=False).encode()) for r in records]
+    sizes.append(len(json.dumps(state[epochs.LEGACY],allow_nan=False).encode()))
+    joint_size=len(epochs.encoded(state));lineage_size=len(epochs.encoded(host.panel()))
+    now=host.active.last_at
+    arena=candidate.KalshiArena(candidate.ArenaConfig(directory/'panel',population=12),lambda:candidate.WireView(),clock=lambda:now,cpu=lambda:0.)
+    arena.learning_probability=host.active;arena._probability_epochs=host
+    panel_size=len(json.dumps(arena.panel(now),allow_nan=False,separators=(',',':')).encode())
+    checkpoint_times=measure(lambda:json.dumps(saved(host),allow_nan=False,separators=(',',':')))
+    baseline_times=measure(lambda:json.dumps(host.active.state(),allow_nan=False,separators=(',',':')))
+    panel_times=measure(lambda:json.dumps(arena.panel(now),allow_nan=False,separators=(',',':')))
+    def restore():
+        current=probability.ProbabilityLearning(now+1);new=epochs.ProbabilityEpochs(current,now+1);new.restore(state,now+1)
+        assert new.error is None and new.active.counts['scored']==64
+    restore_times=measure(restore,10)
+    hot=[]
+    for i in range(20):
+        readings={};writes={}
+        for name,module in ([('base',baseline),('candidate',candidate)] if i%2==0 else [('candidate',candidate),('base',baseline)]):
+            readings[name],writes[name]=trial(module,directory/f'{name}-{i}')
+        assert writes['base']==writes['candidate'],'save sequence/durability changed'
+        hot.append(readings['candidate']-readings['base'])
+    output={'source_sha256':before,'source_unchanged':hashes()==before,'fixture':{'epochs':5,'archived':4,'each':{'scored':64,'pending_forecasts':32,'recent':64,'labels':64,'slug_chars':128},'duplicated_legacy_scored':64},
+            'bytes':{'states_including_duplicated_legacy':sizes,'joint_optional':joint_size,'lineage_panel':lineage_size,'full_arena_panel':panel_size},
+            'cpu_ms':{'checkpoint_and_json':checkpoint_times,'one_learner_state_and_json':baseline_times,'full_panel_and_json':panel_times,'startup_restore':restore_times,'steady_frame_extra':summary(hot)},
+            'gates':{'per_state_262144':max(sizes)<=262144,'joint_2MiB':joint_size<=2*1024*1024,'full_panel_256KiB':panel_size<=256*1024,
+                'checkpoint_p95_100ms':checkpoint_times['p95']<=100,'checkpoint_max_250ms':checkpoint_times['max']<=250,'extra_frame_mean_1ms':statistics.mean(hot)<=1,'save_sequence_and_durability_equal':True},
+            'limits':['Synthetic local child CPU, no production contention/fsync/log-backpressure guarantee.','No profitability result. Epoch source hashes injected only for historical fixture identity.','Maximum counts/slug length populated; fixed byte hard limit independently enforced, not an assertion all mathematical float encodings maximize bytes.','Pre-host binary downgrade is unsupported; A-B-A means epoch-aware hosts.']}
+assert output['source_unchanged'],'source changed during measurement; rerun final stable bytes'
+(OUT/'epoch_resource_v3_resume.json').write_text(json.dumps(output,indent=2)+'\n')
+print(json.dumps({'bytes':output['bytes'],'gates':output['gates'],'cpu_summary':{k:{kk:vv for kk,vv in v.items() if kk!='raw'} for k,v in output['cpu_ms'].items()}},indent=2))
+assert all(output['gates'].values()),'predeclared resource screen failed'

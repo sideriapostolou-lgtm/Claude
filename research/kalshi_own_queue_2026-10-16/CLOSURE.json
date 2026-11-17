@@ -1,0 +1,227 @@
+{
+  "checked_at": {
+    "current_time": "2026-10-16 07:08:38 UTC"
+  },
+  "source": {
+    "pr": 70,
+    "merged_at": "2026-10-16T06:54:03Z",
+    "merge_commit_sha": "5b2fb163ac701042dcf93a5b14c61e7cd1bddef1",
+    "candidate_sha": "5bf7ecf5621910226367251ea408ecb23569f3c1",
+    "tested_tree": "57bfe4d9a21d0c5bea7f71a96c225914c83e562f",
+    "precall_clock": {
+      "current_time": "2026-10-16 06:54:02 UTC"
+    },
+    "correction": "Earlier11:54:02PDT merged wording was the pre-call clock; actual GitHub merged_at is11:54:03PDT."
+  },
+  "evidence_commit": "ed0dde5c87da9337d15ee5eeb168bacabc8eed0f",
+  "deployment_selection": [
+    {
+      "id": "0ecedbf1-c7c2-4289-8e10-00f5ee26d82d",
+      "status": "SKIPPED",
+      "createdAt": "2026-10-16T07:06:58.563Z",
+      "updatedAt": "2026-10-16T07:06:58.563Z",
+      "meta": {
+        "commitMessage": "docs: verify PR70 restart, preserve losses and queue the natural-order comparison",
+        "commitHash": "ed0dde5c87da9337d15ee5eeb168bacabc8eed0f",
+        "branch": "claude/nightcrawler-memecoin-bot-Gwnb1S"
+      },
+      "regions": [],
+      "serviceId": "f84d3b52-002f-44cb-931e-bc9e3e097e97"
+    },
+    {
+      "id": "39d26485-3c73-4af7-b0e6-6a7e161636d2",
+      "status": "SUCCESS",
+      "createdAt": "2026-10-16T06:54:05.471Z",
+      "updatedAt": "2026-10-16T06:55:02.591Z",
+      "meta": {
+        "reason": "deploy",
+        "commitMessage": "feat: observe own Kalshi queue without changing financial decisions (#70)\n\nLIVE ON MERGE: touches real money — observe own Kalshi maker queue",
+        "commitHash": "5b2fb163ac701042dcf93a5b14c61e7cd1bddef1",
+        "branch": "claude/nightcrawler-memecoin-bot-Gwnb1S"
+      },
+      "regions": [
+        "us-east4-eqdc4a"
+      ],
+      "serviceId": "f84d3b52-002f-44cb-931e-bc9e3e097e97"
+    }
+  ],
+  "readbacks": [
+    {
+      "path": "research/kalshi_own_queue_2026-10-16/CAPTURE_DECLARATION.md",
+      "sha": "3f5fdf8d89144c3eb48933af22ee96e8804f71e5",
+      "chars": 3778
+    },
+    {
+      "path": "research/kalshi_own_queue_2026-10-16/PORTABLE_CHECK.json",
+      "sha": "d90de1bcc5f790a539e3dfbf9fd6c4a7f225f60b",
+      "chars": 1031
+    },
+    {
+      "path": "research/kalshi_own_queue_2026-10-16/REPRODUCE.py.txt",
+      "sha": "f6ab4c7c94d511e7b9adda385fcbf419acd53a71",
+      "chars": 5149
+    },
+    {
+      "path": "research/kalshi_own_queue_2026-10-16/RESTART_REVIEW.md",
+      "sha": "3b53ecff12e16fe43c3c87232aeb19835fbfdfc8",
+      "chars": 8296
+    },
+    {
+      "path": "research/kalshi_own_queue_2026-10-16/RUNTIME_EVIDENCE_01.b64.txt",
+      "sha": "cfa21b29965bfcf818d7e36d4fdac37be1111e38",
+      "chars": 40001
+    },
+    {
+      "path": "research/kalshi_own_queue_2026-10-16/RUNTIME_EVIDENCE_02.b64.txt",
+      "sha": "9e3e7d6803459835617e246bced608f1956bd6de",
+      "chars": 40001
+    },
+    {
+      "path": "research/kalshi_own_queue_2026-10-16/RUNTIME_EVIDENCE_03.b64.txt",
+      "sha": "4140c161ab1b3912cbb253a1e99abb58ba7dbe60",
+      "chars": 40001
+    },
+    {
+      "path": "research/kalshi_own_queue_2026-10-16/RUNTIME_EVIDENCE_04.b64.txt",
+      "sha": "57192800d9f5e2a0524c0f27a6641201123f3083",
+      "chars": 40001
+    },
+    {
+      "path": "research/kalshi_own_queue_2026-10-16/RUNTIME_EVIDENCE_05.b64.txt",
+      "sha": "a6bc86bcecb5b814d4533a73f86e9192c854b5c5",
+      "chars": 40001
+    },
+    {
+      "path": "research/kalshi_own_queue_2026-10-16/RUNTIME_EVIDENCE_06.b64.txt",
+      "sha": "a2dfe5186844b1da62f91dd14784a239840cbc96",
+      "chars": 14701
+    },
+    {
+      "path": "research/kalshi_own_queue_2026-10-16/RUNTIME_MANIFEST.json",
+      "sha": "de15be3218561dc190bf06631683275b96526762",
+      "chars": 17014
+    },
+    {
+      "path": "research/kalshi_own_queue_2026-10-16/REPORT.md",
+      "sha": "7c2f10aa28b8273a697b4c5430266be6b5f188c6",
+      "chars": 13702
+    },
+    {
+      "path": "docs/COORDINATION.md",
+      "sha": "e968e528db88117387dfb82c6a78d11518740145",
+      "chars": 223147
+    },
+    {
+      "path": "docs/WORKLOG.md",
+      "sha": "0b532e2577d623b114334e6ef3f05cfccdf9b823",
+      "chars": 536094
+    },
+    {
+      "path": "src/nightcrawler/speeddesk_kalshi_client.py",
+      "sha": "8765bbe57bcb27349fef0d6c8ed71e2bf7a4c620",
+      "chars": 28572
+    },
+    {
+      "path": "src/nightcrawler/speeddesk_live.py",
+      "sha": "11dda7c71dddae4b30115609d74a87a03305c38e",
+      "chars": 182973
+    },
+    {
+      "path": "src/nightcrawler/speeddesk_live_queue.py",
+      "sha": "1fe650ff239cec0b56e4b09a9c39604c29e331f0",
+      "chars": 11963
+    },
+    {
+      "path": "tests/test_speeddesk_live_queue.py",
+      "sha": "4a6d1ad209253ac8f2be9b8fc80cd0a3d64b4d0f",
+      "chars": 13785
+    },
+    {
+      "path": "tests/test_speeddesk_queue_reader.py",
+      "sha": "961e916af0a0c8736cf70a512980457b8c9f388e",
+      "chars": 7853
+    }
+  ],
+  "health": {
+    "environment": {
+      "id": "17f7b0e0-104c-4903-9484-0106748b3cdb",
+      "name": "production"
+    },
+    "services": [
+      {
+        "serviceId": "f84d3b52-002f-44cb-931e-bc9e3e097e97",
+        "serviceName": "bot",
+        "state": "online",
+        "statusText": "Online",
+        "activeDeployments": [
+          {
+            "id": "39d26485-3c73-4af7-b0e6-6a7e161636d2",
+            "status": "SUCCESS",
+            "createdAt": "2026-10-16T06:54:05.471Z",
+            "statusUpdatedAt": "2026-10-16T06:55:02.590Z"
+          }
+        ],
+        "replicaStatus": {
+          "running": 1,
+          "crashed": 0,
+          "total": 1
+        },
+        "cronJob": null,
+        "issues": {
+          "warningCount": 0,
+          "criticalCount": 0
+        },
+        "recentFailures": 0,
+        "recentFailedDeployments": [],
+        "hasIssues": false,
+        "isCronJob": false,
+        "hasVolume": true
+      },
+      {
+        "serviceId": "736b1c8a-8311-4ee0-9043-d05f508cd821",
+        "serviceName": "kalshi-recorder",
+        "state": "online",
+        "statusText": "Online",
+        "activeDeployments": [
+          {
+            "id": "8453f919-b891-4aa7-8478-6fcf6b9c24ee",
+            "status": "SUCCESS",
+            "createdAt": "2026-10-14T16:36:40.384Z",
+            "statusUpdatedAt": "2026-10-14T16:38:15.302Z"
+          }
+        ],
+        "replicaStatus": {
+          "running": 1,
+          "crashed": 0,
+          "total": 1
+        },
+        "cronJob": null,
+        "issues": {
+          "warningCount": 0,
+          "criticalCount": 0
+        },
+        "recentFailures": 0,
+        "recentFailedDeployments": [],
+        "hasIssues": false,
+        "isCronJob": false,
+        "hasVolume": true
+      }
+    ],
+    "pendingWork": [
+      {
+        "id": "patch:9a84e13c-3caf-4a85-b5f5-d9a2fcb8a021",
+        "kind": "EnvironmentPatch",
+        "status": "staged",
+        "changes": [],
+        "startedAt": "2026-10-12T16:21:53.480Z",
+        "workflowId": "commitChanges/17f7b0e0-104c-4903-9484-0106748b3cdb/9a84e13c-3caf-4a85-b5f5-d9a2fcb8a021"
+      }
+    ],
+    "summary": {
+      "totalServices": 2,
+      "servicesWithIssues": 0,
+      "totalFailures": 0
+    }
+  },
+  "scope": "post-evidence-publication metadata only; no variable/financial/order/volume action; populated queue and profitability remain open"
+}

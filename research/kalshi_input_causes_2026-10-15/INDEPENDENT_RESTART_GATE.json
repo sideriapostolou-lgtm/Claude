@@ -1,0 +1,450 @@
+{
+  "reviewed_at_utc": "2026-10-15T17:28:32.891554+00:00",
+  "review_completed_before_window": true,
+  "decision": "Saved original restart readings and selected67fields/controls reconcile; prospective capture gate passed with184s completed-verification margin.",
+  "before": "2026-10-15T17:18:07.746118528Z",
+  "after_ready": "2026-10-15T17:24:57.754848013Z",
+  "selected_fields": [
+    {
+      "path": "configured_mode",
+      "value": "live",
+      "equal": true
+    },
+    {
+      "path": "cash_usd",
+      "value": 30.4704,
+      "equal": true
+    },
+    {
+      "path": "reserved_usd",
+      "value": 0.0,
+      "equal": true
+    },
+    {
+      "path": "open_risk_usd",
+      "value": 0.33,
+      "equal": true
+    },
+    {
+      "path": "open_cost_usd",
+      "value": 0.33,
+      "equal": true
+    },
+    {
+      "path": "at_risk_usd",
+      "value": 0.33,
+      "equal": true
+    },
+    {
+      "path": "open_orders",
+      "value": 0,
+      "equal": true
+    },
+    {
+      "path": "positions",
+      "value": 1,
+      "equal": true
+    },
+    {
+      "path": "day_stop_latched",
+      "value": false,
+      "equal": true
+    },
+    {
+      "path": "integrity_error",
+      "value": null,
+      "equal": true
+    },
+    {
+      "path": "integrity_reset",
+      "value": null,
+      "equal": true
+    },
+    {
+      "path": "cleanup_pending",
+      "value": false,
+      "equal": true
+    },
+    {
+      "path": "fee_precision_verified",
+      "value": true,
+      "equal": true
+    },
+    {
+      "path": "fee_precision_usd",
+      "value": 0.0001,
+      "equal": true
+    },
+    {
+      "path": "caps.window_usd",
+      "value": 10.0,
+      "equal": true
+    },
+    {
+      "path": "caps.open_usd",
+      "value": 20.0,
+      "equal": true
+    },
+    {
+      "path": "caps.day_stop_usd",
+      "value": 6.0,
+      "equal": true
+    },
+    {
+      "path": "caps.clip",
+      "value": 5.0,
+      "equal": true
+    },
+    {
+      "path": "caps.total_stop_usd",
+      "value": 10.0,
+      "equal": true
+    },
+    {
+      "path": "today.day",
+      "value": "2026-10-15",
+      "equal": true
+    },
+    {
+      "path": "today.windows",
+      "value": 54,
+      "equal": true
+    },
+    {
+      "path": "today.fills",
+      "value": 271,
+      "equal": true
+    },
+    {
+      "path": "today.settled_windows",
+      "value": 54,
+      "equal": true
+    },
+    {
+      "path": "today.fees_usd",
+      "value": 0.8367,
+      "equal": true
+    },
+    {
+      "path": "today.locked_usd",
+      "value": 4.571950769230758,
+      "equal": true
+    },
+    {
+      "path": "today.directional_usd",
+      "value": -9.065850769230767,
+      "equal": true
+    },
+    {
+      "path": "today.pnl_usd",
+      "value": -4.493900000000008,
+      "equal": true
+    },
+    {
+      "path": "today.worst_usd",
+      "value": -2.7667,
+      "equal": true
+    },
+    {
+      "path": "today.take_attempts",
+      "value": 0,
+      "equal": true
+    },
+    {
+      "path": "today.take_fills",
+      "value": 0,
+      "equal": true
+    },
+    {
+      "path": "today.maker_orders",
+      "value": 3203,
+      "equal": true
+    },
+    {
+      "path": "today.maker_fills",
+      "value": 197,
+      "equal": true
+    },
+    {
+      "path": "today.locks",
+      "value": 54,
+      "equal": true
+    },
+    {
+      "path": "today.lock_fills",
+      "value": 36,
+      "equal": true
+    },
+    {
+      "path": "total.day",
+      "value": null,
+      "equal": true
+    },
+    {
+      "path": "total.windows",
+      "value": 165,
+      "equal": true
+    },
+    {
+      "path": "total.fills",
+      "value": 795,
+      "equal": true
+    },
+    {
+      "path": "total.settled_windows",
+      "value": 178,
+      "equal": true
+    },
+    {
+      "path": "total.fees_usd",
+      "value": 3.10792,
+      "equal": true
+    },
+    {
+      "path": "total.locked_usd",
+      "value": 3.7507491208791066,
+      "equal": true
+    },
+    {
+      "path": "total.directional_usd",
+      "value": -22.691749120879116,
+      "equal": true
+    },
+    {
+      "path": "total.pnl_usd",
+      "value": -18.94100000000001,
+      "equal": true
+    },
+    {
+      "path": "total.worst_usd",
+      "value": -2.9791999999999987,
+      "equal": true
+    },
+    {
+      "path": "total.take_attempts",
+      "value": 39,
+      "equal": true
+    },
+    {
+      "path": "total.take_fills",
+      "value": 17,
+      "equal": true
+    },
+    {
+      "path": "total.maker_orders",
+      "value": 6622,
+      "equal": true
+    },
+    {
+      "path": "total.maker_fills",
+      "value": 560,
+      "equal": true
+    },
+    {
+      "path": "total.locks",
+      "value": 135,
+      "equal": true
+    },
+    {
+      "path": "total.lock_fills",
+      "value": 108,
+      "equal": true
+    },
+    {
+      "path": "ladder.enabled",
+      "value": true,
+      "equal": true
+    },
+    {
+      "path": "ladder.rung",
+      "value": 0,
+      "equal": true
+    },
+    {
+      "path": "ladder.ladder_rung",
+      "value": 0,
+      "equal": true
+    },
+    {
+      "path": "ladder.max_window_usd",
+      "value": 20.0,
+      "equal": true
+    },
+    {
+      "path": "ladder.configured_max_window_usd",
+      "value": 50000.0,
+      "equal": true
+    },
+    {
+      "path": "ladder.top_rung",
+      "value": 2,
+      "equal": true
+    },
+    {
+      "path": "ladder.change_pending",
+      "value": false,
+      "equal": true
+    },
+    {
+      "path": "ladder.recheck_pending",
+      "value": false,
+      "equal": true
+    },
+    {
+      "path": "ladder.effective_from",
+      "value": null,
+      "equal": true
+    },
+    {
+      "path": "ladder.pending_limits",
+      "value": null,
+      "equal": true
+    },
+    {
+      "path": "ladder.rung_started_at",
+      "value": 1791923645.5061624,
+      "equal": true
+    },
+    {
+      "path": "ladder.start_pnl_usd",
+      "value": -3.7461000000000073,
+      "equal": true
+    },
+    {
+      "path": "ladder.last_change",
+      "value": null,
+      "equal": true
+    },
+    {
+      "path": "ladder.limits.window_usd",
+      "value": 10.0,
+      "equal": true
+    },
+    {
+      "path": "ladder.limits.open_usd",
+      "value": 20.0,
+      "equal": true
+    },
+    {
+      "path": "ladder.limits.day_stop_usd",
+      "value": 6.0,
+      "equal": true
+    },
+    {
+      "path": "ladder.limits.clip",
+      "value": 5.0,
+      "equal": true
+    },
+    {
+      "path": "ladder.limits.total_stop_usd",
+      "value": 10.0,
+      "equal": true
+    }
+  ],
+  "extra_total_halted_check": {
+    "before": false,
+    "after": false
+  },
+  "readiness": {
+    "mode": "live",
+    "configured_mode": "live",
+    "authenticated": true,
+    "trading_now": true,
+    "waiting": "",
+    "reason": "balancing_only",
+    "cash_usd": 30.4704,
+    "open_risk_usd": 0.33,
+    "open_orders": 0,
+    "positions": 1
+  },
+  "controls": {
+    "resume": {
+      "raw_rows": 5,
+      "original_rows": [
+        {
+          "timestamp": "2026-10-15T17:23:50.424690371Z",
+          "payload": {
+            "at": 1792085029.9433737,
+            "venue": "kalshi",
+            "state": "ignored; this value was already used",
+            "total_pnl_usd": -18.941000000000013,
+            "counted_from_usd": null,
+            "total_halted": false
+          }
+        }
+      ],
+      "excluded_nested_or_other": 4
+    },
+    "day_reset": {
+      "raw_rows": 5,
+      "original_rows": [
+        {
+          "timestamp": "2026-10-15T17:23:50.424697261Z",
+          "payload": {
+            "at": 1792085029.943387,
+            "venue": "kalshi",
+            "state": "ignored; this value was already used"
+          }
+        }
+      ],
+      "excluded_nested_or_other": 4
+    },
+    "integrity": {
+      "raw_rows": 5,
+      "original_rows": [
+        {
+          "timestamp": "2026-10-15T17:23:50.424693851Z",
+          "payload": {
+            "at": 1792085029.9433825,
+            "venue": "kalshi",
+            "code": null,
+            "state": "ignored; this value was already used"
+          }
+        }
+      ],
+      "excluded_nested_or_other": 4
+    }
+  },
+  "platform": "bot c64e8199 SUCCESS active; recorder8453 unchanged; bothonline",
+  "learning": "enabled observe_only, sourcefingerprint matches; no predictive/profit claim",
+  "source_merge": "ff05beb654095ce91fefe24adfb2a94eea22be39",
+  "source_sha256": "091ea297b1fed8973be3c78e74184e6ea71fa8f36e808e67449f433c88d19a0e",
+  "app_test_build_trees": {
+    "src": "64ab7a80c10981db52d7ddb3935080dba6fb7903",
+    "tests": "da42f4ad2935baf564a8cbb1129a608bdaa74d33",
+    "Dockerfile": "a76dc75e2a3f985c1385b226d1fa314082cfa969",
+    "pyproject.toml": "ad94cd44427c5a1568d656952f7e9ec67ef8c639",
+    "railway.json": "44934d9e77c22063020f2d956237949145491616"
+  },
+  "gate": {
+    "verified": "2026-10-15T17:26:56+00:00",
+    "declared": "2026-10-15T17:26:57.355762+00:00",
+    "start": "2026-10-15T17:30:00+00:00",
+    "end": "2026-10-15T17:45:00+00:00",
+    "tail_end": "2026-10-15T17:47:00+00:00",
+    "margin_s": 184.0,
+    "first_eligible_quarterhour": true
+  },
+  "original_hashes": {
+    "RESTART_READY_AUDIT.json": "35505db0029ca0c04e051bd5ad9c3aedc18812d12dd969895f872b3baef5d1bd",
+    "CAPTURE_DECLARATION.json": "d8fb192eaba52325c76ef1560229f97b6013ae6d68052eabcd03ffac4fa02261",
+    "RELEASE_SOURCE.json": "497847cc8fb10621769e022ccb99438daba9b2686495d48b310e54c3bf964a3d",
+    "ready_platform.selected.json": "9bbb7e2b9823100811c76dc48261db637ebf0d77c85f4bfc421ea67c7dfd2262",
+    "release_before_status.native.json": "5e0f0362de4bb02d1692fa6a6b098ec95c24111db4501ef39fd8d09f06a5e219",
+    "ready_live.native.json": "47e1ce000be2eaaa499830b74f9aed58ac14e0112430400e6cb3d2c328449b62",
+    "ready_resume.native.json": "42c5443d578d54d4eb28ed9ba1b8f5108b07410e347e6693609714f394e21bd1",
+    "ready_day_reset.native.json": "2ec3efdbf08aaf7f91da90664dd5144e1b296d0909dcc790249b538ababcea63",
+    "ready_integrity.native.json": "3334ef424661ffcf249a0e73b4de6d20ea04b29d7fd20e53f07cc5c178e58d73",
+    "ready_platform_health.native.json": "f384824ff071e5a536e0acd5e92df2af582fe8892f1f3b94fe46f31fbee22ef6",
+    "startup_polydesk.native.json": "070d0c6d16370f219c2deb2b31ad3e690d3f4f0eb5eafaf7f18481826df98161",
+    "startup_learning_retry.native.json": "4192da94289f97f34a68f25ac040967672d012fcb6935db3c1cb348927bcc339",
+    "ready_hardening.native.json": "dba236070ac304bcc5a4f08520a922080a7a64898fdd5e927167c2118d06c7c8"
+  },
+  "limits": [
+    "Saved connector originals and local Git objects only; no network/production mutations.",
+    "67selectedfields plus totalhalted are not full native ledger/volume/controlstate export.",
+    "Cold initial17:23:57 row excluded as unready; fresh17:24:57 row used.",
+    "Root verificationcompletion timestamp supported by saved before/afterplatform receipt; reviewer did not independently issue platform query.",
+    "No future source coverage, profitability or input-cause claim."
+  ]
+}

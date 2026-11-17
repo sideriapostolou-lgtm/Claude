@@ -1,0 +1,100 @@
+{
+  "scope": "Local synthetic helper timings only; hot indexes; no venue, network or ledger I/O",
+  "source_sha256": {
+    "speeddesk_live.py": "65c18358c0cd2ae8a3592bcc8d2280c51a5b4a26f61a2929a11968851a91f674",
+    "speeddesk_live_model.py": "3da6deec395aca24956e3c8754954cff4c1c86d0e89b488a50b54e1247831173",
+    "speeddesk_live_completion.py": "e19d9448e7c15ccea8e0f13d075a910fb8a6e884de1f491eb9272d4b26e664f4"
+  },
+  "cases": [
+    {
+      "retained_terminal_orders": 0,
+      "current_terminal_orders": 0,
+      "book_levels": 999,
+      "clip": 5,
+      "starter_search": {
+        "runs": 40,
+        "median_ms": 0.018855,
+        "p95_ms": 0.022753,
+        "max_ms": 0.048801
+      },
+      "starter_no_fit_99_ticks": {
+        "runs": 40,
+        "median_ms": 0.277197,
+        "p95_ms": 0.305039,
+        "max_ms": 0.326759
+      },
+      "external_depth": {
+        "runs": 40,
+        "median_ms": 1.075841,
+        "p95_ms": 1.102966,
+        "max_ms": 1.109659
+      },
+      "maker_fallback": {
+        "runs": 40,
+        "median_ms": 0.7884595,
+        "p95_ms": 0.859162,
+        "max_ms": 0.873799
+      }
+    },
+    {
+      "retained_terminal_orders": 10000,
+      "current_terminal_orders": 100,
+      "book_levels": 999,
+      "clip": 5,
+      "starter_search": {
+        "runs": 40,
+        "median_ms": 0.019036,
+        "p95_ms": 0.020928,
+        "max_ms": 0.022793
+      },
+      "starter_no_fit_99_ticks": {
+        "runs": 40,
+        "median_ms": 0.281219,
+        "p95_ms": 0.304308,
+        "max_ms": 0.30613
+      },
+      "external_depth": {
+        "runs": 40,
+        "median_ms": 1.128564,
+        "p95_ms": 1.157929,
+        "max_ms": 1.433592
+      },
+      "maker_fallback": {
+        "runs": 40,
+        "median_ms": 4.405524,
+        "p95_ms": 4.727524,
+        "max_ms": 4.830736
+      }
+    },
+    {
+      "retained_terminal_orders": 50000,
+      "current_terminal_orders": 500,
+      "book_levels": 999,
+      "clip": 5,
+      "starter_search": {
+        "runs": 40,
+        "median_ms": 0.0186445,
+        "p95_ms": 0.020708,
+        "max_ms": 0.038502
+      },
+      "starter_no_fit_99_ticks": {
+        "runs": 40,
+        "median_ms": 0.2775125,
+        "p95_ms": 0.298607,
+        "max_ms": 0.305721
+      },
+      "external_depth": {
+        "runs": 40,
+        "median_ms": 1.3219745,
+        "p95_ms": 1.367029,
+        "max_ms": 1.582751
+      },
+      "maker_fallback": {
+        "runs": 40,
+        "median_ms": 21.0702225,
+        "p95_ms": 21.696951,
+        "max_ms": 21.895883
+      }
+    }
+  ]
+}

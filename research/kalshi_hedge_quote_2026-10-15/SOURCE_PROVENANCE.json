@@ -1,0 +1,30 @@
+{
+  "ref": "0818f9c10bf6952a563be3a7bd20c30b94e00e7d",
+  "source": "Connected GitHub git-tree response, fetched read-only",
+  "files": [
+    {
+      "path": "src/nightcrawler/speeddesk_live.py",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "23fce9699d4633decdf543e8f13e5c9dcfe874a9",
+      "size": 169092,
+      "url": "https://api.github.com/repos/sideriapostolou-lgtm/Claude/git/blobs/23fce9699d4633decdf543e8f13e5c9dcfe874a9"
+    },
+    {
+      "path": "src/nightcrawler/speeddesk_live_model.py",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "16ee55a7738600250ccd7cab908d72f8d9f4784a",
+      "size": 65603,
+      "url": "https://api.github.com/repos/sideriapostolou-lgtm/Claude/git/blobs/16ee55a7738600250ccd7cab908d72f8d9f4784a"
+    },
+    {
+      "path": "src/nightcrawler/speeddesk_model.py",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "3dd92d74c5b6b284e578008b1625ed14cc2bba55",
+      "size": 71397,
+      "url": "https://api.github.com/repos/sideriapostolou-lgtm/Claude/git/blobs/3dd92d74c5b6b284e578008b1625ed14cc2bba55"
+    }
+  ]
+}

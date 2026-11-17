@@ -1,0 +1,243 @@
+{
+  "request": {
+    "projectId": "75750847-85c0-41a3-a2a7-b7f2201a51e9",
+    "serviceId": "f84d3b52-002f-44cb-931e-bc9e3e097e97",
+    "environmentId": "17f7b0e0-104c-4903-9484-0106748b3cdb",
+    "startDate": "2026-10-16T00:00:00Z",
+    "endDate": "2026-10-17T00:00:00Z",
+    "filter": "\"nightcrawler.speeddesk: speeddesk_twin \" AND \"speeddesk_fill\"",
+    "limit": 100,
+    "types": [
+      "deploy"
+    ]
+  },
+  "response": {
+    "scope": "service",
+    "deploymentId": "96c1c9f4-4a6d-45df-bf1c-400eca03dd8d",
+    "serviceId": "f84d3b52-002f-44cb-931e-bc9e3e097e97",
+    "environmentId": "17f7b0e0-104c-4903-9484-0106748b3cdb",
+    "status": "SKIPPED",
+    "deploy": [
+      {
+        "timestamp": "2026-10-16T01:32:39.671230692Z",
+        "severity": "info",
+        "message": "2026-10-16T01:32:39Z INFO nightcrawler.speeddesk: speeddesk_twin {\"at\":1792114358.3326232,\"venue\":\"kalshi\",\"event\":\"speeddesk_fill\",\"window\":\"KXBTC15M-26OCT152145-45\",\"side\":\"down\",\"price\":0.21,\"size\":3.0,\"fair\":0.2453629605321206,\"edge\":0.035362960532120596,\"latency_ms\":2018.9602375030518,\"bitcoin_price\":82169.25,\"bitcoin_staleness_s\":0.6811871528625488,\"reason\":\"\",\"order_id\":9142,\"fee_usd\":0.0,\"kind\":\"rest\"}",
+        "attributes": [
+          {
+            "key": "level",
+            "value": "\"info\""
+          }
+        ]
+      },
+      {
+        "timestamp": "2026-10-16T01:49:07.455598079Z",
+        "severity": "info",
+        "message": "2026-10-16T01:49:07Z INFO nightcrawler.speeddesk: speeddesk_twin {\"at\":1792115347.0562878,\"venue\":\"kalshi\",\"event\":\"speeddesk_fill\",\"window\":\"KXBTC15M-26OCT152200-00\",\"side\":\"down\",\"price\":0.57,\"size\":5.0,\"fair\":0.6049305487940266,\"edge\":0.03493054879402668,\"latency_ms\":12095.75629234314,\"bitcoin_price\":82044.66,\"bitcoin_staleness_s\":0.327622652053833,\"reason\":\"\",\"order_id\":9176,\"fee_usd\":0.0,\"kind\":\"rest\"}",
+        "attributes": [
+          {
+            "key": "level",
+            "value": "\"info\""
+          }
+        ]
+      },
+      {
+        "timestamp": "2026-10-16T02:00:30.407398799Z",
+        "severity": "info",
+        "message": "2026-10-16T02:00:30Z INFO nightcrawler.speeddesk: speeddesk_twin {\"at\":1792116029.7385094,\"venue\":\"kalshi\",\"event\":\"speeddesk_fill\",\"window\":\"KXBTC15M-26OCT152215-15\",\"side\":\"down\",\"price\":0.51,\"size\":5.0,\"fair\":0.5469714267218728,\"edge\":0.03697142672187281,\"latency_ms\":5168.051719665527,\"bitcoin_price\":81980.62,\"bitcoin_staleness_s\":0.17516040802001953,\"reason\":\"\",\"order_id\":9220,\"fee_usd\":0.0,\"kind\":\"rest\"}",
+        "attributes": [
+          {
+            "key": "level",
+            "value": "\"info\""
+          }
+        ]
+      },
+      {
+        "timestamp": "2026-10-16T02:06:28.994232823Z",
+        "severity": "info",
+        "message": "2026-10-16T02:06:28Z INFO nightcrawler.speeddesk: speeddesk_twin {\"at\":1792116388.2183251,\"venue\":\"kalshi\",\"event\":\"speeddesk_fill\",\"window\":\"KXBTC15M-26OCT152215-15\",\"side\":\"up\",\"price\":0.37,\"size\":2.0,\"fair\":0.4040663130843338,\"edge\":0.03406631308433378,\"latency_ms\":7742.256879806519,\"bitcoin_price\":81966.4,\"bitcoin_staleness_s\":0.17122220993041992,\"reason\":\"\",\"order_id\":9261,\"fee_usd\":0.0,\"kind\":\"rest\"}",
+        "attributes": [
+          {
+            "key": "level",
+            "value": "\"info\""
+          }
+        ]
+      },
+      {
+        "timestamp": "2026-10-16T02:09:34.607070581Z",
+        "severity": "info",
+        "message": "2026-10-16T02:09:34Z INFO nightcrawler.speeddesk: speeddesk_twin {\"at\":1792116573.964744,\"venue\":\"kalshi\",\"event\":\"speeddesk_fill\",\"window\":\"KXBTC15M-26OCT152215-15\",\"side\":\"up\",\"price\":0.22,\"size\":1.0,\"fair\":0.25337803591658514,\"edge\":0.03337803591658514,\"latency_ms\":16393.81432533264,\"bitcoin_price\":81951.11,\"bitcoin_staleness_s\":0.5874969959259033,\"reason\":\"\",\"order_id\":9265,\"fee_usd\":0.0,\"kind\":\"rest\"}",
+        "attributes": [
+          {
+            "key": "level",
+            "value": "\"info\""
+          }
+        ]
+      },
+      {
+        "timestamp": "2026-10-16T02:24:03.405079227Z",
+        "severity": "info",
+        "message": "2026-10-16T02:24:03Z INFO nightcrawler.speeddesk: speeddesk_twin {\"at\":1792117443.1483886,\"venue\":\"kalshi\",\"event\":\"speeddesk_fill\",\"window\":\"KXBTC15M-26OCT152230-30\",\"side\":\"down\",\"price\":0.57,\"size\":3.0,\"fair\":0.6096586125269965,\"edge\":0.03965861252699654,\"latency_ms\":11485.166549682617,\"bitcoin_price\":82036.92,\"bitcoin_staleness_s\":0.12281370162963867,\"reason\":\"\",\"order_id\":9309,\"fee_usd\":0.0,\"kind\":\"rest\"}",
+        "attributes": [
+          {
+            "key": "level",
+            "value": "\"info\""
+          }
+        ]
+      },
+      {
+        "timestamp": "2026-10-16T02:46:32.206390828Z",
+        "severity": "info",
+        "message": "2026-10-16T02:46:23Z INFO nightcrawler.speeddesk: speeddesk_twin {\"at\":1792118783.5692124,\"venue\":\"kalshi\",\"event\":\"speeddesk_fill\",\"window\":\"KXBTC15M-26OCT152300-00\",\"side\":\"up\",\"price\":0.24,\"size\":5.0,\"fair\":0.275904974390742,\"edge\":0.03590497439074203,\"latency_ms\":19543.317556381226,\"bitcoin_price\":82039.1,\"bitcoin_staleness_s\":0.1733243465423584,\"reason\":\"\",\"order_id\":9341,\"fee_usd\":0.0,\"kind\":\"rest\"}",
+        "attributes": [
+          {
+            "key": "level",
+            "value": "\"info\""
+          }
+        ]
+      },
+      {
+        "timestamp": "2026-10-16T03:16:42.819218919Z",
+        "severity": "info",
+        "message": "2026-10-16T03:16:42Z INFO nightcrawler.speeddesk: speeddesk_twin {\"at\":1792120602.3190823,\"venue\":\"kalshi\",\"event\":\"speeddesk_fill\",\"window\":\"KXBTC15M-26OCT152330-30\",\"side\":\"up\",\"price\":0.68,\"size\":3.0,\"fair\":0.7195274268253575,\"edge\":0.03952742682535748,\"latency_ms\":5235.160827636719,\"bitcoin_price\":82091.02,\"bitcoin_staleness_s\":0.034902334213256836,\"reason\":\"\",\"order_id\":9367,\"fee_usd\":0.0,\"kind\":\"rest\"}",
+        "attributes": [
+          {
+            "key": "level",
+            "value": "\"info\""
+          }
+        ]
+      },
+      {
+        "timestamp": "2026-10-16T03:49:59.185403387Z",
+        "severity": "info",
+        "message": "2026-10-16T03:49:59Z INFO nightcrawler.speeddesk: speeddesk_twin {\"at\":1792122597.8556325,\"venue\":\"kalshi\",\"event\":\"speeddesk_fill\",\"window\":\"KXBTC15M-26OCT160000-00\",\"side\":\"up\",\"price\":0.96,\"size\":1.0,\"fair\":0.9946067908205214,\"edge\":0.03460679082052143,\"latency_ms\":9482.548236846924,\"bitcoin_price\":81999.43,\"bitcoin_staleness_s\":0.2755734920501709,\"reason\":\"\",\"order_id\":9463,\"fee_usd\":0.0,\"kind\":\"rest\"}",
+        "attributes": [
+          {
+            "key": "level",
+            "value": "\"info\""
+          }
+        ]
+      },
+      {
+        "timestamp": "2026-10-16T04:00:14.119114603Z",
+        "severity": "info",
+        "message": "2026-10-16T04:00:13Z INFO nightcrawler.speeddesk: speeddesk_twin {\"at\":1792123213.7579389,\"venue\":\"kalshi\",\"event\":\"speeddesk_fill\",\"window\":\"KXBTC15M-26OCT160015-15\",\"side\":\"up\",\"price\":0.4,\"size\":1.0,\"fair\":0.4374978551893761,\"edge\":0.037497855189376095,\"latency_ms\":1522.4623680114746,\"bitcoin_price\":81988.0,\"bitcoin_staleness_s\":0.08402276039123535,\"reason\":\"\",\"order_id\":9465,\"fee_usd\":0.0,\"kind\":\"rest\"}",
+        "attributes": [
+          {
+            "key": "level",
+            "value": "\"info\""
+          }
+        ]
+      },
+      {
+        "timestamp": "2026-10-16T04:17:15.031621390Z",
+        "severity": "info",
+        "message": "2026-10-16T04:17:14Z INFO nightcrawler.speeddesk: speeddesk_twin {\"at\":1792124234.627941,\"venue\":\"kalshi\",\"event\":\"speeddesk_fill\",\"window\":\"KXBTC15M-26OCT160030-30\",\"side\":\"down\",\"price\":0.56,\"size\":1.0,\"fair\":0.5934074161970773,\"edge\":0.03340741619707721,\"latency_ms\":1618.9680099487305,\"bitcoin_price\":81919.94,\"bitcoin_staleness_s\":0.17933893203735352,\"reason\":\"\",\"order_id\":9490,\"fee_usd\":0.0,\"kind\":\"rest\"}",
+        "attributes": [
+          {
+            "key": "level",
+            "value": "\"info\""
+          }
+        ]
+      },
+      {
+        "timestamp": "2026-10-16T04:32:11.958238123Z",
+        "severity": "info",
+        "message": "2026-10-16T04:32:11Z INFO nightcrawler.speeddesk: speeddesk_twin {\"at\":1792125130.8325205,\"venue\":\"kalshi\",\"event\":\"speeddesk_fill\",\"window\":\"KXBTC15M-26OCT160045-45\",\"side\":\"down\",\"price\":0.36,\"size\":1.0,\"fair\":0.3991624124522577,\"edge\":0.03916241245225771,\"latency_ms\":3858.6814403533936,\"bitcoin_price\":82039.66,\"bitcoin_staleness_s\":0.36061859130859375,\"reason\":\"\",\"order_id\":9507,\"fee_usd\":0.0,\"kind\":\"rest\"}",
+        "attributes": [
+          {
+            "key": "level",
+            "value": "\"info\""
+          }
+        ]
+      },
+      {
+        "timestamp": "2026-10-16T17:15:27.538148705Z",
+        "severity": "info",
+        "message": "2026-10-16T17:15:27Z INFO nightcrawler.speeddesk: speeddesk_twin {\"at\":1792170927.3078506,\"venue\":\"kalshi\",\"event\":\"speeddesk_fill\",\"window\":\"KXBTC15M-26OCT161330-30\",\"side\":\"down\",\"price\":0.59,\"size\":5.0,\"fair\":0.6287200274905211,\"edge\":0.03872002749052117,\"latency_ms\":1423.332929611206,\"bitcoin_price\":80979.37,\"bitcoin_staleness_s\":0.3921816349029541,\"reason\":\"\",\"order_id\":10519,\"fee_usd\":0.0,\"kind\":\"rest\"}",
+        "attributes": [
+          {
+            "key": "level",
+            "value": "\"info\""
+          }
+        ]
+      },
+      {
+        "timestamp": "2026-10-16T20:02:53.915090745Z",
+        "severity": "info",
+        "message": "2026-10-16T20:02:53Z INFO nightcrawler.speeddesk: speeddesk_twin {\"at\":1792180973.4009888,\"venue\":\"kalshi\",\"event\":\"speeddesk_fill\",\"window\":\"KXBTC15M-26OCT161615-15\",\"side\":\"up\",\"price\":0.47,\"size\":1.0,\"fair\":0.5022531755394057,\"edge\":0.032253175539405765,\"latency_ms\":11234.771251678467,\"bitcoin_price\":81478.77,\"bitcoin_staleness_s\":0.4593677520751953,\"reason\":\"\",\"order_id\":11159,\"fee_usd\":0.0,\"kind\":\"rest\"}",
+        "attributes": [
+          {
+            "key": "level",
+            "value": "\"info\""
+          }
+        ]
+      },
+      {
+        "timestamp": "2026-10-16T20:30:24.884091068Z",
+        "severity": "info",
+        "message": "2026-10-16T20:30:24Z INFO nightcrawler.speeddesk: speeddesk_twin {\"at\":1792182624.0320475,\"venue\":\"kalshi\",\"event\":\"speeddesk_fill\",\"window\":\"KXBTC15M-26OCT161645-45\",\"side\":\"down\",\"price\":0.33,\"size\":1.0,\"fair\":0.366624549400688,\"edge\":0.03662454940068799,\"latency_ms\":5094.372987747192,\"bitcoin_price\":81566.15,\"bitcoin_staleness_s\":0.37717342376708984,\"reason\":\"\",\"order_id\":11182,\"fee_usd\":0.0,\"kind\":\"rest\"}",
+        "attributes": [
+          {
+            "key": "level",
+            "value": "\"info\""
+          }
+        ]
+      },
+      {
+        "timestamp": "2026-10-16T21:35:14.810903533Z",
+        "severity": "info",
+        "message": "2026-10-16T21:35:14Z INFO nightcrawler.speeddesk: speeddesk_twin {\"at\":1792186513.9975157,\"venue\":\"kalshi\",\"event\":\"speeddesk_fill\",\"window\":\"KXBTC15M-26OCT161745-45\",\"side\":\"up\",\"price\":0.51,\"size\":1.0,\"fair\":0.5356843248312207,\"edge\":0.008191324831220738,\"latency_ms\":335.18123626708984,\"bitcoin_price\":81619.36,\"bitcoin_staleness_s\":0.06961274147033691,\"reason\":\"\",\"order_id\":11309,\"fee_usd\":0.0175,\"kind\":\"take\"}",
+        "attributes": [
+          {
+            "key": "level",
+            "value": "\"info\""
+          }
+        ]
+      },
+      {
+        "timestamp": "2026-10-16T21:47:54.668735953Z",
+        "severity": "info",
+        "message": "2026-10-16T21:47:54Z INFO nightcrawler.speeddesk: speeddesk_twin {\"at\":1792187274.119926,\"venue\":\"kalshi\",\"event\":\"speeddesk_fill\",\"window\":\"KXBTC15M-26OCT161800-00\",\"side\":\"up\",\"price\":0.49,\"size\":1.0,\"fair\":0.49626837566838805,\"edge\":-0.011224624331611942,\"latency_ms\":282.53984451293945,\"bitcoin_price\":81585.93,\"bitcoin_staleness_s\":0.10296106338500977,\"reason\":\"\",\"order_id\":11323,\"fee_usd\":0.0175,\"kind\":\"take\"}",
+        "attributes": [
+          {
+            "key": "level",
+            "value": "\"info\""
+          }
+        ]
+      },
+      {
+        "timestamp": "2026-10-16T22:51:24.129280130Z",
+        "severity": "info",
+        "message": "2026-10-16T22:51:24Z INFO nightcrawler.speeddesk: speeddesk_twin {\"at\":1792191082.7643404,\"venue\":\"kalshi\",\"event\":\"speeddesk_fill\",\"window\":\"KXBTC15M-26OCT161900-00\",\"side\":\"up\",\"price\":0.66,\"size\":1.0,\"fair\":0.657067844713981,\"edge\":-0.018640155286018978,\"latency_ms\":295.4373359680176,\"bitcoin_price\":81680.48,\"bitcoin_staleness_s\":0.2515244483947754,\"reason\":\"\",\"order_id\":11477,\"fee_usd\":0.0158,\"kind\":\"take\"}",
+        "attributes": [
+          {
+            "key": "level",
+            "value": "\"info\""
+          }
+        ]
+      },
+      {
+        "timestamp": "2026-10-16T23:40:33.950354922Z",
+        "severity": "info",
+        "message": "2026-10-16T23:40:33Z INFO nightcrawler.speeddesk: speeddesk_twin {\"at\":1792194033.712957,\"venue\":\"kalshi\",\"event\":\"speeddesk_fill\",\"window\":\"KXBTC15M-26OCT161945-45\",\"side\":\"up\",\"price\":0.31,\"size\":1.0,\"fair\":0.35724017607697,\"edge\":0.04724017607697001,\"latency_ms\":204324.82862472534,\"bitcoin_price\":81541.87,\"bitcoin_staleness_s\":0.2855198383331299,\"reason\":\"\",\"order_id\":11569,\"fee_usd\":0.0,\"kind\":\"rest\"}",
+        "attributes": [
+          {
+            "key": "level",
+            "value": "\"info\""
+          }
+        ]
+      },
+      {
+        "timestamp": "2026-10-16T23:45:38.867111961Z",
+        "severity": "info",
+        "message": "2026-10-16T23:45:38Z INFO nightcrawler.speeddesk: speeddesk_twin {\"at\":1792194338.0139203,\"venue\":\"kalshi\",\"event\":\"speeddesk_fill\",\"window\":\"KXBTC15M-26OCT162000-00\",\"side\":\"down\",\"price\":0.41,\"size\":1.0,\"fair\":0.4613644109195053,\"edge\":0.05136441091950533,\"latency_ms\":5249.869585037231,\"bitcoin_price\":81522.25,\"bitcoin_staleness_s\":0.23888540267944336,\"reason\":\"\",\"order_id\":11575,\"fee_usd\":0.0,\"kind\":\"rest\"}",
+        "attributes": [
+          {
+            "key": "level",
+            "value": "\"info\""
+          }
+        ]
+      }
+    ]
+  }
+}

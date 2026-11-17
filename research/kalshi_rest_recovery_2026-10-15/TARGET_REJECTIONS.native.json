@@ -1,0 +1,89 @@
+{
+  "request": {
+    "projectId": "75750847-85c0-41a3-a2a7-b7f2201a51e9",
+    "deploymentId": "1c01ffe7-e231-40c6-a026-ac63fec01227",
+    "startDate": "2026-10-15T21:00:00Z",
+    "endDate": "2026-10-15T21:17:00Z",
+    "filter": "\"INFO nightcrawler.speeddesk: speeddesk_live_reject \" OR \"INFO nightcrawler.speeddesk: speeddesk_live_timing \"",
+    "limit": 500
+  },
+  "before": {
+    "current_time": "2026-10-15 21:22:50 UTC"
+  },
+  "result": {
+    "content": [
+      {
+        "type": "text",
+        "text": "**Deployment 1c01ffe7-e231-40c6-a026-ac63fec01227** [SUCCESS]\nservice: f84d3b52-002f-44cb-931e-bc9e3e097e97, env: 17f7b0e0-104c-4903-9484-0106748b3cdb\n\n### Deploy logs (5)\n2026-10-15T21:00:14.720449089Z info 2026-10-15T21:00:14Z INFO nightcrawler.speeddesk: speeddesk_live_timing {\"at\":1792098013.7335646,\"venue\":\"kalshi\",\"client_order_id\":\"nc-speed-dd21543bcaa643c6b3d5f87f557b1a60\",\"timing\":{\"metric\":\"decision_to_ack\",\"scope\":\"real_kalshi\",\"at\":1792098013.361297,\"value_ms\":null,\"status\":\"error\"}}\n2026-10-15T21:04:38.755078343Z info 2026-10-15T21:04:38Z INFO nightcrawler.speeddesk: speeddesk_live_timing {\"at\":1792098278.5070267,\"venue\":\"kalshi\",\"client_order_id\":\"nc-speed-c3357b3c4d5446148b23c51c0534c5bc\",\"timing\":{\"metric\":\"decision_to_ack\",\"scope\":\"real_kalshi\",\"at\":1792098278.3503697,\"value_ms\":null,\"status\":\"error\"}}\n2026-10-15T21:04:38.755085303Z info 2026-10-15T21:04:38Z INFO nightcrawler.speeddesk: speeddesk_live_reject {\"at\":1792098278.509033,\"venue\":\"kalshi\",\"client_order_id\":\"nc-speed-c3357b3c4d5446148b23c51c0534c5bc\",\"window\":\"KXBTC15M-26OCT151715-15\",\"reason\":\"Kalshi refused this one order; still trading\",\"error\":\"KalshiClientError\",\"operation\":\"create_order\",\"detail\":\"request rejected\",\"status\":400,\"code\":\"invalid_order\"}\n2026-10-15T21:04:40.201023397Z info 2026-10-15T21:04:40Z INFO nightcrawler.speeddesk: speeddesk_live_timing {\"at\":1792098279.945233,\"venue\":\"kalshi\",\"client_order_id\":\"nc-speed-6805b3640c8f46bbafdc926bf1501e9e\",\"timing\":{\"metric\":\"decision_to_ack\",\"scope\":\"real_kalshi\",\"at\":1792098279.8321767,\"value_ms\":null,\"status\":\"error\"}}\n2026-10-15T21:04:40.201030137Z info 2026-10-15T21:04:40Z INFO nightcrawler.speeddesk: speeddesk_live_reject {\"at\":1792098279.9534204,\"venue\":\"kalshi\",\"client_order_id\":\"nc-speed-6805b3640c8f46bbafdc926bf1501e9e\",\"window\":\"KXBTC15M-26OCT151715-15\",\"reason\":\"Kalshi refused this one order; still trading\",\"error\":\"KalshiClientError\",\"operation\":\"create_order\",\"detail\":\"request rejected\",\"status\":400,\"code\":\"invalid_order\"}"
+      }
+    ],
+    "structuredContent": {
+      "scope": "deployment",
+      "deploymentId": "1c01ffe7-e231-40c6-a026-ac63fec01227",
+      "serviceId": "f84d3b52-002f-44cb-931e-bc9e3e097e97",
+      "environmentId": "17f7b0e0-104c-4903-9484-0106748b3cdb",
+      "status": "SUCCESS",
+      "deploy": [
+        {
+          "timestamp": "2026-10-15T21:00:14.720449089Z",
+          "severity": "info",
+          "message": "2026-10-15T21:00:14Z INFO nightcrawler.speeddesk: speeddesk_live_timing {\"at\":1792098013.7335646,\"venue\":\"kalshi\",\"client_order_id\":\"nc-speed-dd21543bcaa643c6b3d5f87f557b1a60\",\"timing\":{\"metric\":\"decision_to_ack\",\"scope\":\"real_kalshi\",\"at\":1792098013.361297,\"value_ms\":null,\"status\":\"error\"}}",
+          "attributes": [
+            {
+              "key": "level",
+              "value": "\"info\""
+            }
+          ]
+        },
+        {
+          "timestamp": "2026-10-15T21:04:38.755078343Z",
+          "severity": "info",
+          "message": "2026-10-15T21:04:38Z INFO nightcrawler.speeddesk: speeddesk_live_timing {\"at\":1792098278.5070267,\"venue\":\"kalshi\",\"client_order_id\":\"nc-speed-c3357b3c4d5446148b23c51c0534c5bc\",\"timing\":{\"metric\":\"decision_to_ack\",\"scope\":\"real_kalshi\",\"at\":1792098278.3503697,\"value_ms\":null,\"status\":\"error\"}}",
+          "attributes": [
+            {
+              "key": "level",
+              "value": "\"info\""
+            }
+          ]
+        },
+        {
+          "timestamp": "2026-10-15T21:04:38.755085303Z",
+          "severity": "info",
+          "message": "2026-10-15T21:04:38Z INFO nightcrawler.speeddesk: speeddesk_live_reject {\"at\":1792098278.509033,\"venue\":\"kalshi\",\"client_order_id\":\"nc-speed-c3357b3c4d5446148b23c51c0534c5bc\",\"window\":\"KXBTC15M-26OCT151715-15\",\"reason\":\"Kalshi refused this one order; still trading\",\"error\":\"KalshiClientError\",\"operation\":\"create_order\",\"detail\":\"request rejected\",\"status\":400,\"code\":\"invalid_order\"}",
+          "attributes": [
+            {
+              "key": "level",
+              "value": "\"info\""
+            }
+          ]
+        },
+        {
+          "timestamp": "2026-10-15T21:04:40.201023397Z",
+          "severity": "info",
+          "message": "2026-10-15T21:04:40Z INFO nightcrawler.speeddesk: speeddesk_live_timing {\"at\":1792098279.945233,\"venue\":\"kalshi\",\"client_order_id\":\"nc-speed-6805b3640c8f46bbafdc926bf1501e9e\",\"timing\":{\"metric\":\"decision_to_ack\",\"scope\":\"real_kalshi\",\"at\":1792098279.8321767,\"value_ms\":null,\"status\":\"error\"}}",
+          "attributes": [
+            {
+              "key": "level",
+              "value": "\"info\""
+            }
+          ]
+        },
+        {
+          "timestamp": "2026-10-15T21:04:40.201030137Z",
+          "severity": "info",
+          "message": "2026-10-15T21:04:40Z INFO nightcrawler.speeddesk: speeddesk_live_reject {\"at\":1792098279.9534204,\"venue\":\"kalshi\",\"client_order_id\":\"nc-speed-6805b3640c8f46bbafdc926bf1501e9e\",\"window\":\"KXBTC15M-26OCT151715-15\",\"reason\":\"Kalshi refused this one order; still trading\",\"error\":\"KalshiClientError\",\"operation\":\"create_order\",\"detail\":\"request rejected\",\"status\":400,\"code\":\"invalid_order\"}",
+          "attributes": [
+            {
+              "key": "level",
+              "value": "\"info\""
+            }
+          ]
+        }
+      ]
+    },
+    "isError": false
+  },
+  "after": {
+    "current_time": "2026-10-15 21:22:51 UTC"
+  }
+}

@@ -1,0 +1,311 @@
+{
+  "expected_source": "0520f7468174d6a37f0ee7dfe64284b1a6921439",
+  "expected_deployment": "d32c256b-618d-4927-b44a-f182d569977b",
+  "source_identity_is_root_verified_not_proved_by_this_script": true,
+  "bounds_utc": {
+    "start": "2026-10-16T00:15:00+00:00",
+    "end": "2026-10-16T00:30:00+00:00",
+    "tail_end": "2026-10-16T00:32:00+00:00"
+  },
+  "inputs_sha256": {
+    "CAPTURE_ws_timing.native.json": "ba4907fe37a722f4bbb40cf8a637e02c8d3e5340fcbc39ff607c0f5ba5e02cc2",
+    "CAPTURE_ws_gap.native.json": "4334be8e1645e09994c4bab7de1c9d1c3e04325e43c5bee0ae05fb8b1ab8b822",
+    "CAPTURE_ws_unavailable.native.json": "f406f6b14ba0aacc76c44af14175218519e955421d65000d011e6a0acf5089c5"
+  },
+  "queries": [
+    {
+      "input": "CAPTURE_ws_timing.native.json",
+      "request": {
+        "projectId": "75750847-85c0-41a3-a2a7-b7f2201a51e9",
+        "deploymentId": "d32c256b-618d-4927-b44a-f182d569977b",
+        "startDate": "2026-10-16T00:15:00Z",
+        "endDate": "2026-10-16T00:32:00Z",
+        "filter": "\"INFO nightcrawler.speeddesk_kalshi_ws: speeddesk_feed_kalshi_ws_timing \"",
+        "limit": 500,
+        "types": [
+          "deploy"
+        ]
+      },
+      "before": {
+        "current_time": "2026-10-16 00:32:10 UTC"
+      },
+      "after": {
+        "current_time": "2026-10-16 00:32:10 UTC"
+      },
+      "count": 61,
+      "saturated": false,
+      "isError": false,
+      "deployment_matches": true
+    },
+    {
+      "input": "CAPTURE_ws_gap.native.json",
+      "request": {
+        "projectId": "75750847-85c0-41a3-a2a7-b7f2201a51e9",
+        "deploymentId": "d32c256b-618d-4927-b44a-f182d569977b",
+        "startDate": "2026-10-16T00:15:00Z",
+        "endDate": "2026-10-16T00:32:00Z",
+        "filter": "\"WARNING nightcrawler.speeddesk_kalshi_ws: speeddesk_feed_kalshi_ws_gap \"",
+        "limit": 500,
+        "types": [
+          "deploy"
+        ]
+      },
+      "before": {
+        "current_time": "2026-10-16 00:32:10 UTC"
+      },
+      "after": {
+        "current_time": "2026-10-16 00:32:10 UTC"
+      },
+      "count": 33,
+      "saturated": false,
+      "isError": false,
+      "deployment_matches": true
+    },
+    {
+      "input": "CAPTURE_ws_unavailable.native.json",
+      "request": {
+        "projectId": "75750847-85c0-41a3-a2a7-b7f2201a51e9",
+        "deploymentId": "d32c256b-618d-4927-b44a-f182d569977b",
+        "startDate": "2026-10-16T00:15:00Z",
+        "endDate": "2026-10-16T00:32:00Z",
+        "filter": "\"INFO nightcrawler.speeddesk_kalshi_ws: speeddesk_feed_kalshi_ws_timing_unavailable\"",
+        "limit": 500,
+        "types": [
+          "deploy"
+        ]
+      },
+      "before": {
+        "current_time": "2026-10-16 00:32:10 UTC"
+      },
+      "after": {
+        "current_time": "2026-10-16 00:32:10 UTC"
+      },
+      "count": 0,
+      "saturated": false,
+      "isError": false,
+      "deployment_matches": true
+    }
+  ],
+  "event_counts": {
+    "speeddesk_feed_kalshi_ws_timing": 61,
+    "speeddesk_feed_kalshi_ws_gap": 33
+  },
+  "unknown_counts_all_populations": {
+    "receipt_overflow": 29
+  },
+  "input_problems": [],
+  "conflicts": [],
+  "excluded": {},
+  "groups": {
+    "target/main/gap": {
+      "logged_rows": 19,
+      "observed_sessions": [
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12,
+        13,
+        14,
+        15,
+        16,
+        17,
+        18,
+        19,
+        20,
+        21,
+        22,
+        23
+      ],
+      "valid_known": 0,
+      "unknown": {
+        "receipt_overflow": 19
+      },
+      "accepted_after_call": 0,
+      "over_1000": 0,
+      "over_3000": 0,
+      "over_1000_with_shown_checkpoint_overlap": 0,
+      "max_accepted_to_recv_call_ms": null
+    },
+    "target/main/status": {
+      "logged_rows": 28,
+      "observed_sessions": [
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12,
+        13,
+        14,
+        15,
+        16,
+        17,
+        18,
+        19,
+        20,
+        21,
+        22,
+        23,
+        24
+      ],
+      "valid_known": 26,
+      "unknown": {
+        "receipt_overflow": 2
+      },
+      "accepted_after_call": 22,
+      "over_1000": 0,
+      "over_3000": 0,
+      "over_1000_with_shown_checkpoint_overlap": 0,
+      "max_accepted_to_recv_call_ms": 765.5313475988805
+    },
+    "target/other:{\"instance\":2,\"kind\":\"derived_market_reader\",\"process\":1}/gap": {
+      "logged_rows": 5,
+      "observed_sessions": [
+        10,
+        11,
+        12,
+        13,
+        14
+      ],
+      "valid_known": 1,
+      "unknown": {
+        "receipt_overflow": 4
+      },
+      "accepted_after_call": 0,
+      "over_1000": 1,
+      "over_3000": 1,
+      "over_1000_with_shown_checkpoint_overlap": 0,
+      "max_accepted_to_recv_call_ms": 4336.015744134784
+    },
+    "target/other:{\"instance\":2,\"kind\":\"derived_market_reader\",\"process\":1}/status": {
+      "logged_rows": 5,
+      "observed_sessions": [
+        10,
+        11,
+        12,
+        13,
+        14
+      ],
+      "valid_known": 2,
+      "unknown": {
+        "receipt_overflow": 3
+      },
+      "accepted_after_call": 2,
+      "over_1000": 0,
+      "over_3000": 0,
+      "over_1000_with_shown_checkpoint_overlap": 0,
+      "max_accepted_to_recv_call_ms": -12.735323049128056
+    },
+    "target/unknown_reader/gap": {
+      "logged_rows": 0,
+      "observed_sessions": [],
+      "valid_known": 0,
+      "unknown": {},
+      "accepted_after_call": 0,
+      "over_1000": 0,
+      "over_3000": 0,
+      "over_1000_with_shown_checkpoint_overlap": 0,
+      "max_accepted_to_recv_call_ms": null
+    },
+    "target/unknown_reader/status": {
+      "logged_rows": 0,
+      "observed_sessions": [],
+      "valid_known": 0,
+      "unknown": {},
+      "accepted_after_call": 0,
+      "over_1000": 0,
+      "over_3000": 0,
+      "over_1000_with_shown_checkpoint_overlap": 0,
+      "max_accepted_to_recv_call_ms": null
+    },
+    "tail/main/gap": {
+      "logged_rows": 1,
+      "observed_sessions": [
+        25
+      ],
+      "valid_known": 0,
+      "unknown": {
+        "receipt_overflow": 1
+      },
+      "accepted_after_call": 0,
+      "over_1000": 0,
+      "over_3000": 0,
+      "over_1000_with_shown_checkpoint_overlap": 0,
+      "max_accepted_to_recv_call_ms": null
+    },
+    "tail/main/status": {
+      "logged_rows": 3,
+      "observed_sessions": [
+        25,
+        26
+      ],
+      "valid_known": 3,
+      "unknown": {},
+      "accepted_after_call": 2,
+      "over_1000": 0,
+      "over_3000": 0,
+      "over_1000_with_shown_checkpoint_overlap": 0,
+      "max_accepted_to_recv_call_ms": 370.9676908329129
+    },
+    "tail/other:{\"instance\":2,\"kind\":\"derived_market_reader\",\"process\":1}/gap": {
+      "logged_rows": 0,
+      "observed_sessions": [],
+      "valid_known": 0,
+      "unknown": {},
+      "accepted_after_call": 0,
+      "over_1000": 0,
+      "over_3000": 0,
+      "over_1000_with_shown_checkpoint_overlap": 0,
+      "max_accepted_to_recv_call_ms": null
+    },
+    "tail/other:{\"instance\":2,\"kind\":\"derived_market_reader\",\"process\":1}/status": {
+      "logged_rows": 0,
+      "observed_sessions": [],
+      "valid_known": 0,
+      "unknown": {},
+      "accepted_after_call": 0,
+      "over_1000": 0,
+      "over_3000": 0,
+      "over_1000_with_shown_checkpoint_overlap": 0,
+      "max_accepted_to_recv_call_ms": null
+    },
+    "tail/unknown_reader/gap": {
+      "logged_rows": 0,
+      "observed_sessions": [],
+      "valid_known": 0,
+      "unknown": {},
+      "accepted_after_call": 0,
+      "over_1000": 0,
+      "over_3000": 0,
+      "over_1000_with_shown_checkpoint_overlap": 0,
+      "max_accepted_to_recv_call_ms": null
+    },
+    "tail/unknown_reader/status": {
+      "logged_rows": 0,
+      "observed_sessions": [],
+      "valid_known": 0,
+      "unknown": {},
+      "accepted_after_call": 0,
+      "over_1000": 0,
+      "over_3000": 0,
+      "over_1000_with_shown_checkpoint_overlap": 0,
+      "max_accepted_to_recv_call_ms": null
+    }
+  },
+  "coverage_certified": false,
+  "limits": [
+    "Finite error-triggered/minute-status logged samples, not all-stream rates.",
+    "Saturated parents may be replaced by complete split leaves; original attempts retained for root review.",
+    "Zero recurrence means unobserved, never eliminated.",
+    "Nested wall/CPU spans and full-bin/slow coverage populations are not additive.",
+    "Shown checkpoint-family unions are lower bounds; no CPU or unique causal/profit claim.",
+    "Query completeness and actual retrieval after tail require separate root verification."
+  ]
+}

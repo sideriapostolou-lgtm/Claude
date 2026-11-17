@@ -1,0 +1,142 @@
+{
+  "date_utc": "2026-10-19",
+  "base_sha": "ae8632a6dee2a6c0d3655a4d27b3e7b801389358",
+  "scope": "offline_stdlib_metadata_helper_and_synthetic_tests_only",
+  "independent_review": {
+    "receipt": "research/storage_recovery_2026-10-19/INDEPENDENT_REVIEW.json",
+    "verdict": "No blocking finding remains for publishing the offline helper; no production execution or recovery certificate.",
+    "reported_combined_suite": "62 passed in 0.44s",
+    "reported_independent_suite": "16 passed in 0.16s",
+    "reported_independent_ruff": "All checks passed!"
+  },
+  "owned_files": [
+    "research/storage_recovery_2026-10-19/inventory_metadata.py",
+    "research/storage_recovery_2026-10-19/test_inventory_metadata.py",
+    "research/storage_recovery_2026-10-19/INVENTORY_VALIDATION.json"
+  ],
+  "frozen_review_input_sha256": {
+    "inventory_metadata.py": "e02812647346b2532a9cc0b8eb0287d9f08fdf7d2fbd6c7459bd72e388c4abad",
+    "test_inventory_metadata.py": "744456379c8e6a5cbcd4f4ae0509a6c4f492943e44bdc04c64f663b68c7e29b1"
+  },
+  "second_review_input_sha256": {
+    "inventory_metadata.py": "7af8b66a9cf53e1fecc0f54204db084f76fbcc26f2d9ababa2c6d1cf864bc8d0",
+    "test_inventory_metadata.py": "ab3c58dbbfe4a1d5c25f1608e8e61f97bdb601cb61feb053cfe785e40cf047e6"
+  },
+  "initial_review_input_sha256": {
+    "inventory_metadata.py": "2de43af3df1a76dedfddf80b10016644556fb42cb5888a2383df447ae59c3e7a",
+    "test_inventory_metadata.py": "10a025d1e78fec942ca7426d678cb0584ccb3fa546f7cb492698ac9493319d68"
+  },
+  "checks_in_order": [
+    {
+      "command": "python -m pytest -q research/storage_recovery_2026-10-19/test_inventory_metadata.py",
+      "exit_code": 1,
+      "output": "No module named pytest",
+      "resolution": "Used the existing /workspace/nightcrawler-daily/.venv/bin/python; no package installation."
+    },
+    {
+      "command": "ruff check research/storage_recovery_2026-10-19/inventory_metadata.py research/storage_recovery_2026-10-19/test_inventory_metadata.py",
+      "exit_code": 1,
+      "output": "UP035: Import Callable from collections.abc instead of typing; 1 error",
+      "resolution": "Changed the import."
+    },
+    {
+      "command": "/workspace/nightcrawler-daily/.venv/bin/python -m pytest -q research/storage_recovery_2026-10-19/test_inventory_metadata.py",
+      "exit_code": 1,
+      "output": "17 failed, 20 passed in 0.60s",
+      "failure": "Mount parsing passed bytearray directly to os.fsdecode: TypeError: expected str, bytes or os.PathLike object, not bytearray. The 17 failing tests reached this parser path.",
+      "resolution": "Convert the already bounded bytearray to bytes before fsdecode."
+    },
+    {
+      "command": "/workspace/nightcrawler-daily/.venv/bin/python -m pytest -q research/storage_recovery_2026-10-19/test_inventory_metadata.py",
+      "exit_code": 0,
+      "output": "37 passed in 0.15s",
+      "version_note": "Before smaller default limits and corrected fixed financial sample paths."
+    },
+    {
+      "command": "ruff check research/storage_recovery_2026-10-19/inventory_metadata.py research/storage_recovery_2026-10-19/test_inventory_metadata.py",
+      "exit_code": 0,
+      "output": "All checks passed!"
+    },
+    {
+      "command": "/workspace/nightcrawler-daily/.venv/bin/python -m pytest -q research/storage_recovery_2026-10-19/test_inventory_metadata.py",
+      "exit_code": 0,
+      "output": "37 passed in 0.21s",
+      "version_note": "Initial review input hashes above; actual financial sample paths pinned."
+    },
+    {
+      "command": "ruff check research/storage_recovery_2026-10-19/inventory_metadata.py research/storage_recovery_2026-10-19/test_inventory_metadata.py",
+      "exit_code": 0,
+      "output": "All checks passed!",
+      "version_note": "Initial review input hashes above."
+    },
+    {
+      "command": "/workspace/nightcrawler-daily/.venv/bin/python -m pytest -q research/storage_recovery_2026-10-19/test_inventory_metadata.py",
+      "exit_code": 0,
+      "output": "42 passed in 0.17s",
+      "version_note": "Added mount identity and exact-root CLI admission checks and corrected concurrent aggregate label."
+    },
+    {
+      "command": "ruff check research/storage_recovery_2026-10-19/inventory_metadata.py research/storage_recovery_2026-10-19/test_inventory_metadata.py",
+      "exit_code": 1,
+      "output": "SIM102: Use a single if statement instead of nested if statements; 1 error",
+      "resolution": "Combined the containing-mount selection predicates."
+    },
+    {
+      "command": "/workspace/nightcrawler-daily/.venv/bin/python -m pytest -q research/storage_recovery_2026-10-19/test_inventory_metadata.py",
+      "exit_code": 0,
+      "output": "42 passed in 0.13s",
+      "version_note": "Second review input hashes above."
+    },
+    {
+      "command": "ruff check research/storage_recovery_2026-10-19/inventory_metadata.py research/storage_recovery_2026-10-19/test_inventory_metadata.py",
+      "exit_code": 0,
+      "output": "All checks passed!",
+      "version_note": "Second review input hashes above."
+    },
+    {
+      "command": "/workspace/nightcrawler-daily/.venv/bin/python -m pytest -q research/storage_recovery_2026-10-19/test_inventory_metadata.py",
+      "exit_code": 0,
+      "output": "46 passed in 0.19s",
+      "version_note": "Final frozen review input hashes above. Reject ambiguous longest containing mountpoint identities; four focused cases added."
+    },
+    {
+      "command": "ruff check research/storage_recovery_2026-10-19/inventory_metadata.py research/storage_recovery_2026-10-19/test_inventory_metadata.py",
+      "exit_code": 0,
+      "output": "All checks passed!",
+      "version_note": "Final frozen review input hashes above."
+    }
+  ],
+  "covered_cases": [
+    "No data-file opens: instrument os.open and require directory flags except for fixture mount metadata",
+    "JSON schema, UTC timestamps, filesystem metadata and all six fixed financial sample paths",
+    "Root and parent symlinks rejected before filesystem probe",
+    "Child symlink and FIFO exclusion",
+    "Same-device nested mount exclusion with escaped space; cross-device exclusion mocked",
+    "Longest containing mount identity summary excludes source/options; exact root mount passes; parent-only, missing or mismatching mount refuses CLI enumeration",
+    "Ambiguous longest containing mountpoint records refuse enumeration for same/different devices or API parent-only mounts; unique deeper exact root supersedes ambiguous shorter ancestors",
+    "Entry cap covers files, directories and symlinks; independent directory, depth, error and row caps",
+    "Cooperative elapsed budget via fake monotonic clock",
+    "Root replacement before open; child replacement before and after open",
+    "Hardlink inode deduplication and bounded top20 metadata",
+    "Mount metadata absent, symlink, oversize, empty, truncated or malformed fails closed",
+    "Every limit rejects zero, negative and invalid types; elapsed limit rejects NaN and infinity",
+    "CLI entrypoint uses only the default root (inventory call mocked; /data never inspected)"
+  ],
+  "not_performed": [
+    "No remote calls, authentication, credential reads or production access",
+    "No /data inventory execution or production file-content reads",
+    "No SQLite or application imports; synthetic database filenames contain fixture bytes only",
+    "No application tests, full suite, application mypy, package installs, source release, commit or push"
+  ],
+  "limitations": [
+    "Independent review is separate; aggregate-label, missing mount-identity and stacked-mount ambiguity issues were corrected. The final source/test hashes above match the independent receipt, whose publication verdict does not authorize production execution or certify recovery.",
+    "Cooperative elapsed checks cannot interrupt a blocked kernel operation and are not a hard timeout.",
+    "Mount metadata is a bounded snapshot; a concurrently added same-device mount can escape snapshot exclusions. No namespace lock or openat2 RESOLVE_NO_XDEV guarantee is provided. Mount namespace immutability and Railway volume ID are not proved.",
+    "Filesystem entries may change during scanning. Descriptor identity checks catch tested substitutions but do not create a consistent volume snapshot.",
+    "Output lists observed unique regular-file sums, not atomic filesystem values, disk usage totals or a whole-volume certificate. Concurrent changes mean these sums are not guaranteed lower bounds. Directory overhead and other filesystem allocation are excluded.",
+    "Hardlinked inode totals go to their first observed path/group; later aliases do not add bytes. Inode reuse during concurrent changes is not excluded.",
+    "Fixed financial samples are collected only if encountered within traversal bounds; missing samples mean not observed, not absent.",
+    "Output filenames and metadata may be private and require review before sharing. No file contents, hashes, account fields or credentials are included.",
+    "Production filesystem, current financial state, account exposure, restart safety and profitable trading remain unverified."
+  ]
+}

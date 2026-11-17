@@ -1,0 +1,176 @@
+"""Independent saved-original fixed-window and separate supplement audit; no network."""
+from __future__ import annotations
+import hashlib,json,math,re
+from pathlib import Path
+from statistics import NormalDist
+import probability_restart_review as e
+from probability_slot_review import clock
+from nightcrawler.speeddesk_model import fair_up
+from nightcrawler.kalshi_probability_learning import fingerprint
+
+OUT=Path('/workspace/probability-capture-independent.json')
+def close(a,b):return math.isclose(a,b,abs_tol=1e-10,rel_tol=0)
+def main():
+ d=e.read('CAPTURE_DECLARATION.json');plan=e.read('CAPTURE_QUERY_PLAN.json')
+ assert e.used['CAPTURE_DECLARATION.json']==plan['declaration_sha256']
+ assert e.iso(plan['frozen_at_utc'])<d['start'] and e.iso(d['declared_at_utc'])<d['start']
+ events={};queries=[];dedup={};overlap=0
+ for phase in plan['phases']:
+  events[phase['name']]={}
+  for event in plan['events']:
+   name='CAPTURE_'+phase['name'].upper()+'_'+event.upper()+'.native.json'
+   rows,q=e.native(name,event);w=e.read(name);req=w['request'];queries.append(q)
+   assert req['deploymentId']==d['deployment_id']==w['result']['structuredContent']['deploymentId']
+   assert e.iso(req['startDate'])==e.iso(phase['start_utc'])==d['start']
+   assert e.iso(req['endDate'])==e.iso(phase['end_utc'])
+   assert req['limit']==500 and req['filter']=='"'+event+'"'
+   assert clock(w['before'])>=e.iso(req['endDate'])
+   for raw in w['result']['structuredContent']['deploy']:
+    assert e.iso(req['startDate'])<=e.iso(raw['timestamp'])<=e.iso(req['endDate'])
+    match=e.PATTERN.fullmatch(raw['message'])
+    if match and match['event']==event:
+     key=(raw['timestamp'],raw['message'])
+     overlap+=key in dedup;dedup[key]=event
+   events[phase['name']][event]=rows
+ progress=e.read('CAPTURE_PROGRESS_1.native.json');rows,q=e.native('CAPTURE_PROGRESS_1.native.json');queries.append(q)
+ assert progress['request']['deploymentId']==d['deployment_id']
+ assert clock(progress['before'])>=e.iso(progress['request']['endDate'])
+ for raw in progress['result']['structuredContent']['deploy']:
+  match=e.PATTERN.fullmatch(raw['message'])
+  if match and match['event'].startswith('kalshi_probability_learning_'):
+   key=(raw['timestamp'],raw['message']);overlap+=key in dedup;dedup[key]=match['event']
+ final=events['final'];slot=events['slot'];fs=final['kalshi_probability_learning_forecast'];ss=final['kalshi_probability_learning_scored']
+ assert len(fs)==len(ss)==1 and fs==slot['kalshi_probability_learning_forecast']
+ f=fs[0]['payload'];s=ss[0]['payload'];target=f['window']
+ assert type(s['outcome']) is bool and s['outcome'] is False and s['status']=='scored'
+ for row in (f,s):
+  assert row['protocol']==d['learner_protocol'] and row['source_fingerprint']==d['learner_fingerprint']==fingerprint()
+  assert row['mode']=='observe_only' and row['live_application'] is False and row['profitability_proven'] is False
+  assert row['window']==target
+ assert set(s['forecast'])==set(f)-{'mode','live_application','profitability_proven','window'}
+ assert all(f[k]==v for k,v in s['forecast'].items())
+ assert s['post_gaps']==[] and s['at']==s['scored_at']
+ assert d['end']<=s['at']<=d['tail_end'] and e.iso(fs[0]['timestamp'])<d['end']<e.iso(ss[0]['timestamp'])
+ assert 300<=f['at']-d['start']<=305
+ assert 0<=f['at']-f['bitcoin_at']<=3 and 0<=f['at']-f['batch_at']<=3
+ assert f['terms'][:4]==[d['start'],d['end'],f['opening'],f['opening']]
+ assert f['opening']==f['venue_start_price']>0 and f['sigma']>0 and f['spot']>0
+ rem=d['end']-f['at'];z=math.log(f['spot']/f['opening'])/(f['sigma']*math.sqrt(rem-39.5))
+ independent_p=NormalDist().cdf(z)
+ assert close(independent_p,f['p']) and fair_up(f['spot'],f['opening'],f['sigma'],rem,settles_on_average=True)==f['p']
+ assert f['bin']==min(9,int(10*f['p']))==0 and f['n']==f['wins']==0
+ assert (f['wins']+20*f['p'])/(f['n']+20)==f['q']==f['p']
+ brier=(f['p']-int(s['outcome']))**2
+ assert brier==(f['q']-int(s['outcome']))**2
+ req=e.read('PUBLIC_SETTLEMENT.request.json');market=e.read('PUBLIC_SETTLEMENT.body')['market']
+ assert req['body_sha256']==e.used['PUBLIC_SETTLEMENT.body'] and req['http_status']==200 and req['error_type'] is None
+ assert req['request']['authentication']=='none' and req['request']['method']=='GET'
+ assert req['request']['url'].endswith('/markets/'+target)
+ assert market['ticker']==target and market['status']=='finalized' and market['result']=='no'
+ assert e.iso(market['open_time'])==d['start'] and e.iso(market['close_time'])==d['end']
+ assert market['floor_strike']==f['opening'] and float(market['expiration_value'])<f['opening']
+ assert d['end']<=e.iso(market['settlement_ts'])<=s['at']<e.iso(req['before_utc'])
+ assert not final['kalshi_probability_learning_unknown']
+ assert not final['kalshi_online_learning_forecast'] and not final['kalshi_online_learning_scored']
+ assert len(final['kalshi_online_learning_unknown'])==1
+ v1=final['kalshi_online_learning_unknown'][0]
+ assert v1==slot['kalshi_online_learning_unknown'][0] and v1['payload']['window']==target and v1['payload']['reason']=='pregap'
+ assert v1['payload']['source_fingerprint']==d['v1_fingerprint']
+ statuses=final['kalshi_probability_learning_status'];last_v2=max(statuses,key=lambda x:x['payload']['at'])
+ assert last_v2['payload']['at']<s['at'] and last_v2['payload']['learning']['scored']==0
+ fills=final['speeddesk_live_fill'];settles=final['speeddesk_live_settlement']
+ assert len(fills)==3 and len(set(x['payload']['fill_id'] for x in fills))==3 and len(settles)==2
+ tf=[x for x in fills if x['payload']['window']==target];tails=[x for x in fills if x['payload']['window']!=target]
+ ts=next(x for x in settles if x['payload']['window']==target);prior=next(x for x in settles if x['payload']['window']!=target)
+ assert len(tf)==2 and len(tails)==1
+ assert sorted((x['payload']['side'],x['payload']['price'],x['payload']['size']) for x in tf)==[('down',.73,1.),('up',.26,1.)]
+ assert all(x['payload']['fee_usd']==0 and x['payload']['is_taker'] is False for x in fills)
+ assert all(d['start']<=x['payload']['at']<=d['tail_end'] for x in fills+settles)
+ t=ts['payload'];tail=tails[0]['payload'];pr=prior['payload']
+ cost=sum(x['payload']['price']*x['payload']['size']+x['payload']['fee_usd'] for x in tf)
+ assert cost==t['cost_usd']==.99 and t['up_wins'] is False and t['fee_usd']==0
+ assert t['up_shares']==t['down_shares']==t['paired_credit_usd']==t['payout_usd']==1
+ assert t['net_payout_usd']==t['direction_usd']==0 and close(t['pnl_usd'],.01) and t['locked_usd']==t['pnl_usd']
+ assert close(pr['pnl_usd'],-.3434) and pr['paired_credit_usd']==1 and pr['net_payout_usd']==0
+ assert tail['side']=='down' and tail['price']==.45 and tail['size']==1 and tail['at']>d['end']
+ assert all(x['payload']['at']<f['at'] for x in tf) # pair locked before forecast
+ live=max(final['speeddesk_live_status'],key=lambda x:x['payload']['at']);a=live['payload']
+ before,_=e.native('AFTER_STATUS_READY_5.native.json','speeddesk_live_status')
+ b=next(x['payload'] for x in before if x['timestamp']==d['readiness_original_timestamp'])
+ cash_expected=b['cash_usd']-cost+t['paired_credit_usd']-tail['price']*tail['size']+sum(x['payload']['net_payout_usd'] for x in settles)
+ pnl_expected=b['total']['pnl_usd']+sum(x['payload']['pnl_usd'] for x in settles)
+ assert close(cash_expected,a['cash_usd']) and close(pnl_expected,a['total']['pnl_usd'])
+ for scope in ('today','total'):
+  assert a[scope]['fills']-b[scope]['fills']==3
+  assert close(a[scope]['fees_usd'],b[scope]['fees_usd'])
+  assert a[scope]['settled_windows']-b[scope]['settled_windows']==2
+ for k in ('caps','total_halted','day_stop_latched'):
+  assert a[k]==b[k]
+ assert a['mode']==a['configured_mode']=='live' and a['authenticated'] and a['trading_now'] and a['waiting']==''
+ assert not a['cleanup_pending'] and a['integrity_error'] is None and a['open_orders']==0 and a['positions']==1
+ assert a['open_risk_usd']==a['open_cost_usd']==.45 and a['reserved_usd']==0
+ supplement={};sq=[]
+ for name,event in [('POST_CAPTURE_PROBABILITY_STATUS.native.json','kalshi_probability_learning_status'),('POST_CAPTURE_CURRENT_STATUS.native.json','speeddesk_live_status')]:
+  rows,q=e.native(name,event);sq.append(q);w=e.read(name)
+  assert w['request']['deploymentId']==d['deployment_id'] and e.iso(w['request']['startDate'])==d['tail_end']
+  assert clock(w['before'])>=e.iso(w['request']['endDate'])
+  assert all(d['tail_end']<=e.iso(x['timestamp'])<=e.iso(w['request']['endDate']) for x in rows)
+  supplement[event]=max(rows,key=lambda x:x['payload']['at'])
+ sup=supplement['kalshi_probability_learning_status']['payload'];sl=sup['learning']
+ assert sup['protocol']==d['learner_protocol'] and sup['source_fingerprint']==d['learner_fingerprint']
+ assert sl['forecasts']==sl['scored']==sl['unknown']==sl['exclusions']['startup_inside']==1 and sl['pending']==0 and sl['error'] is None
+ assert sl['brier_baseline']==sl['brier_shadow']==brier
+ sa=supplement['speeddesk_live_status']['payload']
+ for k in ('caps','total_halted','day_stop_latched','cash_usd','open_risk_usd','open_cost_usd','open_orders','positions'):
+  assert sa[k]==a[k]
+ assert sa['mode']=='live' and sa['authenticated'] and sa['trading_now'] and not sa['waiting']
+ assert sa['total']['pnl_usd']==a['total']['pnl_usd']
+ health=e.read('FINAL_HEALTH.native.json');hs=health['result']['structuredContent']['services']
+ assert not health['result'].get('isError') and len(hs)==2 and all(x['state']=='online' and not x['hasIssues'] and x['replicaStatus']['running']==1 for x in hs)
+ ancillary=[]
+ for name in ('FINAL_TRACEBACK.native.json','FINAL_SPEEDDESK_HALTED.native.json','RECORDER_WARNING.native.json','RECORDER_ERROR.native.json'):
+  w=e.read(name);r=w['result'];raw=r['structuredContent']['deploy']
+  assert not r.get('isError') and len(raw)<w['request']['limit']
+  assert not any(x['severity'].lower()=='error' for x in raw)
+  if name!='RECORDER_ERROR.native.json':assert not raw
+  ancillary.append({'file':name,'request':w['request'],'rows':len(raw),'error_severity_rows':0})
+ rec=e.read('RECORDER_ERROR.native.json')['result']['structuredContent']['deploy'][0]
+ assert rec['severity']=='info'
+ rp=json.loads(rec['message'].split('kalshi_recorder_evidence ',1)[1]);rb=e.read('RECORDER_BOUNDED_CHECK.json')
+ assert rp==rb['latest_returned_evidence']['payload'] and rp['coverage_certified'] is False
+ scalar=['at','as_of','cash_at','cash_usd','open_cost_usd','open_risk_usd','reserved_usd','open_orders','positions','mode','authenticated','trading_now','waiting','total_halted','day_stop_latched','caps']
+ project=lambda r:{'timestamp':r['timestamp'],'fields':{k:r['payload'][k] for k in scalar},'cumulative_pnl':r['payload']['total']['pnl_usd']}
+ out={'status':'accepted bounded original forecast/official-label score, with separate post-capture aggregate status corroboration',
+ 'source_commit':d['source_commit'],'deployment':d['deployment_id'],'target':target,
+ 'fixed_window':{'start':d['start'],'end':d['end'],'tail_end':d['tail_end'],'declaration_margin_s':d['start']-e.iso(d['declared_at_utc']),
+ 'query_count':len(queries),'unique_anchored_originals':len(dedup),'duplicate_overlap_copies_removed':overlap,'queried_at_closed_bounds':True},
+ 'forecast_original':fs[0],'score_original':ss[0],
+ 'input_and_arithmetic':{'elapsed_s':f['at']-d['start'],'bitcoin_age_s':f['at']-f['bitcoin_at'],'batch_age_s':f['at']-f['batch_at'],
+ 'independent_normal_cdf_p':independent_p,'reported_p':f['p'],'prior_n':f['n'],'prior_wins':f['wins'],'bin':f['bin'],'prior20_q':f['q'],
+ 'frozen_payload_identical':True,'baseline_brier':brier,'shadow_brier':brier,'score_seconds_after_end':s['at']-d['end'],
+ 'source_score_before_update_lines':'src/nightcrawler/kalshi_probability_learning.py:276-283',
+ 'training_limit':'Source adds one bin0 count and zero wins after scoring. Runtime aggregate count/Brier observed in separate supplement; no raw bin array/checkpoint or restart-after-score durability receipt.'},
+ 'public_final':{'request':req,'market':{k:market[k] for k in ['ticker','status','result','floor_strike','expiration_value','settlement_ts','open_time','close_time']},
+ 'interpretation':'Independent public finalized result corroborates strict false label; public read happened after native score and is not proof of exact parent label delivery time.'},
+ 'v1_original_exclusion':v1,'latest_in_capture_v2_status':last_v2,
+ 'trading_cohorts':{'target_fills':tf,'target_settlement':ts,'prior_partial_settlement':prior,'next_window_tail_fills':tails,
+ 'target_pnl':t['pnl_usd'],'target_directional_pnl':t['direction_usd'],'prior_partial_pnl':pr['pnl_usd'],
+ 'interpretation':'Target pair filled and locked before observer forecast; its one-cent gain cannot be attributed to the observe-only probability forecast.'},
+ 'financial_consistency':{'ready_cash':b['cash_usd'],'expected_final_cash':cash_expected,'observed_final_cash':a['cash_usd'],
+ 'ready_cumulative_pnl':b['total']['pnl_usd'],'expected_final_cumulative_pnl':pnl_expected,'observed_final_cumulative_pnl':a['total']['pnl_usd'],
+ 'cash_delta':a['cash_usd']-b['cash_usd'],'cumulative_pnl_delta':a['total']['pnl_usd']-b['total']['pnl_usd'],
+ 'cash_explanation':'Ready cash minus target cost0.99 plus target paired credit1 minus tail open cost0.45; both settlement net payouts0. Prior paired credit was already recognized before ready status.',
+ 'ledger_limit':'Consistent with captured originals and final count deltas, not a complete cash ledger certificate. Financial capture begins19:30 after ready19:26:26; no separate financial query covers that intervening interval.'},
+ 'last_in_capture_live':project(live),'separate_supplement':{'outside_frozen_capture':True,'queries':sq,'probability_status':supplement['kalshi_probability_learning_status'],'live_status':project(supplement['speeddesk_live_status'])},
+ 'time_interpretation':{'as_of':'panel generation time, not account timestamp','last_in_capture_cash_age_s':a['at']-a['cash_at'],'supplement_cash_age_s':sa['at']-sa['cash_at'],'account_age_verified':False},
+ 'health':{'services':[{k:x[k] for k in ('serviceName','state','replicaStatus','hasIssues','activeDeployments')} for x in hs],'checks':ancillary,
+ 'recorder_latest_report_timestamp':rec['timestamp'],'recorder_report':rp,'recorder_limits':'Report precedes target window and explicitly does not certify coverage; configured retention bytes are not physical disk capacity/free space.'},
+ 'queries':queries,'native_sha256':e.used,
+ 'limits':['One prospective sample establishes operational forecast/score path, not calibrated accuracy, improvement or profitability. First q equals p because prior count is zero.',
+ 'V1 legitimately excluded this window for pregap; its valid-sample rules/history/source unchanged. Conditional V2 sample does not repair execution gaps or identify upstream runtime gap cause.',
+ 'Current frozen input ages and reviewed qualification rules checked; complete raw sequence history and sigma tape not exported. Coinbase/BRTI basis risk remains.',
+ 'Filtered bounded native originals are not exhaustive runtime/feed/account coverage or raw durable-volume proof; no sealed TEST, production query, source edit or window alteration by independent reviewer.',
+ 'Separate19:47–19:50:25 status supplement confirms aggregate one-score/Brier publication without altering fixed19:30–19:47 capture. No observed raw bin checkpoint or postscore restart durability.']}
+ OUT.write_text(json.dumps(out,indent=2)+'\n')
+ print(json.dumps({'receipt':str(OUT),'sha256':hashlib.sha256(OUT.read_bytes()).hexdigest(),'queries':len(queries),'brier':brier,'cash':a['cash_usd'],'pnl':a['total']['pnl_usd'],'target_pnl':t['pnl_usd'],'separate_supplement_verified':True}))
+if __name__=='__main__':main()

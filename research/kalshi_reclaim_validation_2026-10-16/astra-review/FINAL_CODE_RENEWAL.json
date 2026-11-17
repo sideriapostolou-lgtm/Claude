@@ -1,0 +1,126 @@
+{
+  "timestamp_utc": "2026-10-16T02:06:40.553026+00:00",
+  "status": "APPROVED_RENEWED_TEST_AND_COLLECTOR_BYTES",
+  "sha256": {
+    "root-data/fetch_data.py": "9cf50ddba2ab5c86d30971f6f30801149d92f4cd429f33ee1527eb732c23024f",
+    "root-data/test_fetch_data.py": "453cb9f0e9a7a4e23fc6703155b155230225baa7ff44bfca66a4e869a5f542ce",
+    "sol-replay/replay.py": "4bb43b0848b3fd3ad2eba73d90f9786f5ef4119ca4e60887d98dc3ab32be93da",
+    "sol-replay/test_replay.py": "6bfec48f5941eb929d3a8ff2dfd0806adfe225a18cf41388997874a47a493143",
+    "RELEASE_METADATA.json": "697a426dab1a9155fc696c71654149869c711fe85b02101cce2eb0966fa9750d"
+  },
+  "unchanged_during_checks": true,
+  "checks": [
+    {
+      "command": [
+        "<python>",
+        "-m",
+        "unittest",
+        "test_replay"
+      ],
+      "exit_code": 0,
+      "stdout": "",
+      "stderr": "...........................................\n----------------------------------------------------------------------\nRan 43 tests in 0.029s\n\nOK\n"
+    },
+    {
+      "command": [
+        "<python>",
+        "-m",
+        "unittest",
+        "test_fetch_data"
+      ],
+      "exit_code": 0,
+      "stdout": "",
+      "stderr": "...................\n----------------------------------------------------------------------\nRan 19 tests in 0.014s\n\nOK\n"
+    },
+    {
+      "command": [
+        "<python>",
+        "<experiment>/astra-review/test_independent_runner.py"
+      ],
+      "exit_code": 0,
+      "stdout": "",
+      "stderr": "..\n----------------------------------------------------------------------\nRan 2 tests in 0.034s\n\nOK\n"
+    }
+  ],
+  "release_metadata_matches_prior_inventory": true,
+  "scope": "Core implementation unchanged; test helper Decimal names, optional narrowing/assertions, explicit replace fixture keywords and intentional float rejection typeignore inspected. Collector now uses copied experiment-local release metadata with identical digest. No strategy rule/price/clock/partition change.",
+  "earlier_typecheck_failure": "Root reported19type-onlytest errors before correction; preserved as a failed check, not silently waived.",
+  "gate": "Complete required-path manifest still must be checked/published/read back before confirmation.",
+  "datasets_read_by_reviewer": [],
+  "confirmation_outcomes_seen": false,
+  "reviewer_test_format_renewal": {
+    "timestamp_utc": "2026-10-16T02:07:21.085683+00:00",
+    "sha256": {
+      "astra-review/test_independent_replay.py": "1181da327a53a6b6a1f5228ea5b20184db5af4e6b1a5cbfd8b0c13f434049b49",
+      "astra-review/test_independent_runner.py": "743ddd5b51277b10e59c91bc063197e9115ac564b865fb9c7fd6c47b3854fc03"
+    },
+    "checks": [
+      {
+        "command": [
+          "<python>",
+          "<experiment>/astra-review/test_independent_replay.py"
+        ],
+        "exit_code": 0,
+        "stdout": "",
+        "stderr": "............\n----------------------------------------------------------------------\nRan 12 tests in 0.003s\n\nOK\n"
+      },
+      {
+        "command": [
+          "<python>",
+          "<experiment>/astra-review/test_independent_runner.py"
+        ],
+        "exit_code": 0,
+        "stdout": "",
+        "stderr": "..\n----------------------------------------------------------------------\nRan 2 tests in 0.034s\n\nOK\n"
+      },
+      {
+        "command": [
+          "<python>",
+          "-m",
+          "ruff",
+          "check",
+          "--isolated",
+          "--select",
+          "E4,E7,E9,F,I",
+          "<experiment>/astra-review/test_independent_replay.py",
+          "<experiment>/astra-review/test_independent_runner.py"
+        ],
+        "exit_code": 0,
+        "stdout": "All checks passed!\n",
+        "stderr": ""
+      },
+      {
+        "command": [
+          "<python>",
+          "-m",
+          "ruff",
+          "format",
+          "--isolated",
+          "--check",
+          "<experiment>/astra-review/test_independent_replay.py",
+          "<experiment>/astra-review/test_independent_runner.py"
+        ],
+        "exit_code": 0,
+        "stdout": "2 files already formatted\n",
+        "stderr": ""
+      },
+      {
+        "command": [
+          "<python>",
+          "-m",
+          "mypy",
+          "--follow-imports=silent",
+          "<experiment>/astra-review/test_independent_replay.py",
+          "<experiment>/astra-review/test_independent_runner.py"
+        ],
+        "exit_code": 0,
+        "stdout": "Success: no issues found in 2 source files\n",
+        "stderr": ""
+      }
+    ],
+    "change_scope": "Import organization and formatting only; fixture values/assertions/behavior unchanged.14ownfake tests pass.",
+    "initial_lint_failure": "Initial Ruff found14format/import findings, fixed3automatically and11by formatting; final lint/format passes.",
+    "mypy_scope": "Default body checking with --follow-imports=silent; not claimed --check-untyped-defs for these2reviewer files.",
+    "path_redaction": "Experiment paths replaced with <experiment>; original check files retained privately."
+  }
+}

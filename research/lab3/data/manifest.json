@@ -1,0 +1,310 @@
+{
+ "BONK": {
+  "1d": {
+   "fetched_at": "2026-10-09T00:00:00+00:00",
+   "first_utc": "2023-12-14T00:00:00+00:00",
+   "gaps": 0,
+   "jupiter_symbol": "Bonk",
+   "last_utc": "2026-10-09T00:00:00+00:00",
+   "rows": 1031,
+   "seconds": 11.4
+  }
+ },
+ "BTC": {
+  "1d": {
+   "fetched_at": "2026-10-09T00:00:00+00:00",
+   "first_utc": "2015-07-20T00:00:00+00:00",
+   "gaps": 0,
+   "jupiter_symbol": "cbBTC",
+   "last_utc": "2026-10-09T00:00:00+00:00",
+   "rows": 4100,
+   "seconds": 10.8
+  }
+ },
+ "DRIFT": {
+  "1d": {
+   "fetched_at": "2026-10-09T00:00:00+00:00",
+   "first_utc": "2024-05-17T00:00:00+00:00",
+   "gaps": 0,
+   "jupiter_symbol": "DRIFT",
+   "last_utc": "2026-10-09T00:00:00+00:00",
+   "rows": 876,
+   "seconds": 10.5
+  }
+ },
+ "ETH": {
+  "1d": {
+   "fetched_at": "2026-10-09T00:00:00+00:00",
+   "first_utc": "2016-05-18T00:00:00+00:00",
+   "gaps": 2,
+   "jupiter_symbol": "wETH",
+   "last_utc": "2026-10-09T00:00:00+00:00",
+   "rows": 3795,
+   "seconds": 13.0
+  }
+ },
+ "FARTCOIN": {
+  "1d": {
+   "fetched_at": "2026-10-09T00:00:00+00:00",
+   "first_utc": "2025-06-12T00:00:00+00:00",
+   "gaps": 0,
+   "jupiter_symbol": "Fartcoin",
+   "last_utc": "2026-10-09T00:00:00+00:00",
+   "rows": 485,
+   "seconds": 11.8
+  }
+ },
+ "GRASS": {
+  "1d": {
+   "fetched_at": "2026-10-09T00:00:00+00:00",
+   "first_utc": "2026-08-26T00:00:00+00:00",
+   "gaps": 0,
+   "jupiter_symbol": "GRASS",
+   "last_utc": "2026-10-09T00:00:00+00:00",
+   "rows": 45,
+   "seconds": 10.2
+  }
+ },
+ "HNT": {
+  "1d": {
+   "fetched_at": "2026-10-09T00:00:00+00:00",
+   "first_utc": "2023-07-12T00:00:00+00:00",
+   "gaps": 0,
+   "jupiter_symbol": "HNT",
+   "last_utc": "2026-10-09T00:00:00+00:00",
+   "rows": 1186,
+   "seconds": 10.9
+  }
+ },
+ "HONEY": {
+  "1d": {
+   "fetched_at": "2026-10-09T00:00:00+00:00",
+   "first_utc": "2024-01-17T00:00:00+00:00",
+   "gaps": 3,
+   "jupiter_symbol": "HONEY",
+   "last_utc": "2026-10-09T00:00:00+00:00",
+   "rows": 994,
+   "seconds": 10.3
+  }
+ },
+ "IO": {
+  "1d": {
+   "fetched_at": "2026-10-09T00:00:00+00:00",
+   "first_utc": "2024-10-09T00:00:00+00:00",
+   "gaps": 0,
+   "jupiter_symbol": "IO",
+   "last_utc": "2026-10-09T00:00:00+00:00",
+   "rows": 731,
+   "seconds": 10.5
+  }
+ },
+ "JTO": {
+  "1d": {
+   "fetched_at": "2026-10-09T00:00:00+00:00",
+   "first_utc": "2023-12-07T00:00:00+00:00",
+   "gaps": 0,
+   "jupiter_symbol": "JTO",
+   "last_utc": "2026-10-09T00:00:00+00:00",
+   "rows": 1038,
+   "seconds": 10.3
+  }
+ },
+ "JUP": {
+  "1d": {
+   "fetched_at": "2026-10-09T00:00:00+00:00",
+   "first_utc": "2022-06-23T00:00:00+00:00",
+   "gaps": 0,
+   "jupiter_symbol": "JUP",
+   "last_utc": "2023-09-06T00:00:00+00:00",
+   "rows": 441,
+   "seconds": 11.2
+  }
+ },
+ "KMNO": {
+  "1d": {
+   "fetched_at": "2026-10-09T00:00:00+00:00",
+   "first_utc": "2025-09-11T00:00:00+00:00",
+   "gaps": 0,
+   "jupiter_symbol": "KMNO",
+   "last_utc": "2026-10-09T00:00:00+00:00",
+   "rows": 394,
+   "seconds": 10.4
+  }
+ },
+ "ME": {
+  "1d": {
+   "fetched_at": "2026-10-09T00:00:00+00:00",
+   "first_utc": "2024-12-10T00:00:00+00:00",
+   "gaps": 0,
+   "jupiter_symbol": "ME",
+   "last_utc": "2026-10-09T00:00:00+00:00",
+   "rows": 669,
+   "seconds": 10.4
+  }
+ },
+ "MNDE": {
+  "1d": {
+   "fetched_at": "2026-10-09T00:00:00+00:00",
+   "first_utc": "2022-11-03T00:00:00+00:00",
+   "gaps": 0,
+   "jupiter_symbol": "MNDE",
+   "last_utc": "2026-10-09T00:00:00+00:00",
+   "rows": 1437,
+   "seconds": 10.9
+  }
+ },
+ "MOODENG": {
+  "1d": {
+   "fetched_at": "2026-10-09T00:00:00+00:00",
+   "first_utc": "2024-12-04T00:00:00+00:00",
+   "gaps": 0,
+   "jupiter_symbol": "MOODENG",
+   "last_utc": "2026-10-09T00:00:00+00:00",
+   "rows": 675,
+   "seconds": 10.5
+  }
+ },
+ "ORCA": {
+  "1d": {
+   "fetched_at": "2026-10-09T00:00:00+00:00",
+   "first_utc": "2022-02-01T00:00:00+00:00",
+   "gaps": 0,
+   "jupiter_symbol": "ORCA",
+   "last_utc": "2026-10-09T00:00:00+00:00",
+   "rows": 1712,
+   "seconds": 10.6
+  }
+ },
+ "PENGU": {
+  "1d": {
+   "fetched_at": "2026-10-09T00:00:00+00:00",
+   "first_utc": "2025-02-13T00:00:00+00:00",
+   "gaps": 0,
+   "jupiter_symbol": "PENGU",
+   "last_utc": "2026-10-09T00:00:00+00:00",
+   "rows": 604,
+   "seconds": 10.9
+  }
+ },
+ "PNUT": {
+  "1d": {
+   "fetched_at": "2026-10-09T00:00:00+00:00",
+   "first_utc": "2025-01-14T00:00:00+00:00",
+   "gaps": 0,
+   "jupiter_symbol": "Pnut",
+   "last_utc": "2026-10-09T00:00:00+00:00",
+   "rows": 634,
+   "seconds": 10.7
+  }
+ },
+ "POPCAT": {
+  "1d": {
+   "fetched_at": "2026-10-09T00:00:00+00:00",
+   "first_utc": "2025-02-13T00:00:00+00:00",
+   "gaps": 0,
+   "jupiter_symbol": "POPCAT",
+   "last_utc": "2026-10-09T00:00:00+00:00",
+   "rows": 604,
+   "seconds": 10.8
+  }
+ },
+ "PYTH": {
+  "1d": {
+   "fetched_at": "2026-10-09T00:00:00+00:00",
+   "first_utc": "2025-02-20T00:00:00+00:00",
+   "gaps": 0,
+   "jupiter_symbol": "PYTH",
+   "last_utc": "2026-10-09T00:00:00+00:00",
+   "rows": 597,
+   "seconds": 10.6
+  }
+ },
+ "RAY": {
+  "1d": {
+   "fetched_at": "2026-10-09T00:00:00+00:00",
+   "first_utc": "2026-01-14T00:00:00+00:00",
+   "gaps": 0,
+   "jupiter_symbol": "RAY",
+   "last_utc": "2026-10-09T00:00:00+00:00",
+   "rows": 269,
+   "seconds": 10.7
+  }
+ },
+ "RENDER": {
+  "1d": {
+   "fetched_at": "2026-10-09T00:00:00+00:00",
+   "first_utc": "2024-02-15T00:00:00+00:00",
+   "gaps": 0,
+   "jupiter_symbol": "RENDER",
+   "last_utc": "2026-10-09T00:00:00+00:00",
+   "rows": 968,
+   "seconds": 10.7
+  }
+ },
+ "SHDW": {
+  "1d": {
+   "fetched_at": "2026-10-09T00:00:00+00:00",
+   "first_utc": "2024-04-10T00:00:00+00:00",
+   "gaps": 0,
+   "jupiter_symbol": "SHDW",
+   "last_utc": "2026-10-09T00:00:00+00:00",
+   "rows": 913,
+   "seconds": 10.7
+  }
+ },
+ "SOL": {
+  "1d": {
+   "fetched_at": "2026-10-09T00:00:00+00:00",
+   "first_utc": "2021-06-17T00:00:00+00:00",
+   "gaps": 0,
+   "jupiter_symbol": "SOL",
+   "last_utc": "2026-10-09T00:00:00+00:00",
+   "rows": 1941,
+   "seconds": 11.3
+  }
+ },
+ "TNSR": {
+  "1d": {
+   "fetched_at": "2026-10-09T00:00:00+00:00",
+   "first_utc": "2024-04-08T00:00:00+00:00",
+   "gaps": 0,
+   "jupiter_symbol": "TNSR",
+   "last_utc": "2026-10-09T00:00:00+00:00",
+   "rows": 915,
+   "seconds": 11.3
+  }
+ },
+ "TRUMP": {
+  "1d": {
+   "fetched_at": "2026-10-09T00:00:00+00:00",
+   "first_utc": "2025-01-21T00:00:00+00:00",
+   "gaps": 0,
+   "jupiter_symbol": "TRUMP",
+   "last_utc": "2026-10-09T00:00:00+00:00",
+   "rows": 627,
+   "seconds": 10.1
+  }
+ },
+ "W": {
+  "1d": {
+   "fetched_at": "2026-10-09T00:00:00+00:00",
+   "first_utc": "2025-07-02T00:00:00+00:00",
+   "gaps": 0,
+   "jupiter_symbol": "W",
+   "last_utc": "2026-10-09T00:00:00+00:00",
+   "rows": 465,
+   "seconds": 10.4
+  }
+ },
+ "WIF": {
+  "1d": {
+   "fetched_at": "2026-10-09T00:00:00+00:00",
+   "first_utc": "2024-11-13T00:00:00+00:00",
+   "gaps": 0,
+   "jupiter_symbol": "$WIF",
+   "last_utc": "2026-10-09T00:00:00+00:00",
+   "rows": 696,
+   "seconds": 11.4
+  }
+ }
+}

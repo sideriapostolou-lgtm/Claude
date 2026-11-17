@@ -1,0 +1,95 @@
+"""Offline fake-account, local-disk timing; not network latency or execution benefit."""
+import asyncio
+import gc
+import hashlib
+import json
+import logging
+import math
+import statistics
+import tempfile
+import time
+import tracemalloc
+from pathlib import Path
+import sys
+
+ROOT = Path('/workspace/nightcrawler-maker-parity')
+sys.path[:0] = [str(ROOT / 'src'), str(ROOT / 'tests')]
+from test_speeddesk_live import TICKER, make_desk, fill_order
+from test_speeddesk_twin_trace import event, order
+from nightcrawler.speeddesk_twin_trace import TwinTrace, validated_rows
+
+logging.disable(logging.CRITICAL)
+OUT = Path(__file__).with_name('ROOT_OVERHEAD.json')
+samples = {}
+storage = {}
+
+def summary(values):
+    values = sorted(values)
+    return {'n': len(values), 'median': statistics.median(values),
+            'p95': values[math.ceil(.95 * len(values)) - 1], 'max': max(values)}
+
+def once(path, enabled, scenario):
+    desk, account, clock = make_desk(path)
+    if not enabled:
+        desk.twin_trace = None
+    try:
+        async def work():
+            await desk.step()
+            intent = next(iter(desk.intents.values()))
+            if scenario == 'cancel':
+                await desk._cancel(intent, 'reprice')
+            elif scenario == 'partial_fill':
+                fill_order(account, clock, 0, side='up', price=.4, size=1)
+                account.account_positions = [{'ticker': TICKER, 'position_fp': '1.00'}]
+                await desk._reconcile()
+            else:
+                await desk.step()
+            desk.checkpoint()
+        cpu = time.process_time_ns()
+        wall = time.perf_counter_ns()
+        asyncio.run(work())
+        elapsed = (time.perf_counter_ns() - wall) / 1e6
+        cpu_elapsed = (time.process_time_ns() - cpu) / 1e6
+        rows = [dict(r.payload) for r in desk.ledger.iter_receipts()
+                if r.kind == 'speeddesk_twin_trace']
+        bytes_ = sum(len(json.dumps(r, allow_nan=False, separators=(',', ':')).encode()) for r in rows)
+        return elapsed, cpu_elapsed, len(rows), bytes_
+    finally:
+        desk.close()
+
+with tempfile.TemporaryDirectory(prefix='twin-trace-offline-') as tmp:
+    for scenario in ('quiet', 'cancel', 'partial_fill'):
+        buckets = {False: [], True: []}
+        for trial in range(32):
+            for enabled in ((False, True) if trial % 2 == 0 else (True, False)):
+                result = once(Path(tmp) / f'{scenario}-{trial}-{enabled}', enabled, scenario)
+                buckets[enabled].append(result)
+        samples[scenario] = {str(k): {'wall_ms': summary([r[0] for r in v]),
+                                     'cpu_ms': summary([r[1] for r in v])} for k, v in buckets.items()}
+        storage[scenario] = {str(k): {'rows': sorted(set(r[2] for r in v)),
+                                     'payload_bytes': summary([r[3] for r in v])} for k, v in buckets.items()}
+
+gc.collect()
+tracemalloc.start()
+trace = TwinTrace('resource-check')
+cpu = time.process_time_ns()
+wall = time.perf_counter_ns()
+for key in range(1, 10001):
+    trace.event(event('speeddesk_cancel', key), None)
+wall_ms = (time.perf_counter_ns() - wall) / 1e6
+cpu_ms = (time.process_time_ns() - cpu) / 1e6
+current, peak = tracemalloc.get_traced_memory()
+tracemalloc.stop()
+rows = validated_rows(trace.drain())
+report = {'scope': '32 interleaved enabled/disabled offline fake-account local-disk runs per scenario; no network; timings include identical existing work and fsync; cannot infer production latency or dollars saved',
+          'samples': samples, 'storage': storage,
+          'pressure_10000_cancel_events_with_tracemalloc': {
+              'wall_ms': wall_ms, 'cpu_ms': cpu_ms,
+              'current_bytes': current, 'peak_bytes': peak,
+              'pending_rows_before_drain': len(rows), 'terminal_cached': len(trace.terminal),
+              'pending_dropped': trace.pending_dropped, 'terminal_evicted': trace.terminal_evicted,
+              'serialized_payload_bytes': sum(len(json.dumps(r, separators=(',', ':'), allow_nan=False).encode()) for r in rows)},
+          'source_sha256': {str(p.relative_to(ROOT)): hashlib.sha256(p.read_bytes()).hexdigest()
+                            for p in (ROOT/'src/nightcrawler/speeddesk_live.py', ROOT/'src/nightcrawler/speeddesk_twin_trace.py', ROOT/'tests/test_speeddesk_twin_trace.py')}}
+OUT.write_text(json.dumps(report, indent=2) + '\n')
+print(json.dumps(report, indent=2))

@@ -1,0 +1,116 @@
+{
+  "recorded_at_utc": "2026-10-15T18:07:23.933396+00:00",
+  "selection": "Retrospectiveknownlosingwindow; notrandomheldout sampleorstrategyvalidation.",
+  "window": "KXBTC15M-26OCT151330-30",
+  "original_fills": [
+    {
+      "timestamp": "2026-10-15T17:15:19.831828360Z",
+      "payload": {
+        "at": 1792084516.009128,
+        "venue": "kalshi",
+        "fill_id": "072442b1-ea39-8d5d-65f9-2cdda2fe5d76",
+        "order_id": "01a1408f-98b8-7037-985c-4ef61d162e4e",
+        "client_order_id": "nc-speed-d56826b0f4eb4c0faebc5230a4916043",
+        "window": "KXBTC15M-26OCT151330-30",
+        "side": "down",
+        "price": 0.33,
+        "size": 1.0,
+        "fee_usd": 0.0,
+        "is_taker": false
+      }
+    },
+    {
+      "timestamp": "2026-10-15T17:26:02.254198591Z",
+      "payload": {
+        "at": 1792085161.200965,
+        "venue": "kalshi",
+        "fill_id": "072442fc-a489-bdc1-6efc-ad87f49d4f85",
+        "order_id": "01a14099-7428-70ea-b15b-89baef9f3307",
+        "client_order_id": "nc-speed-1e0bbc2f6852458ca82c53c1a4029848",
+        "window": "KXBTC15M-26OCT151330-30",
+        "side": "up",
+        "price": 0.964,
+        "size": 1.0,
+        "fee_usd": 0.0025,
+        "is_taker": true
+      }
+    }
+  ],
+  "original_orders": [
+    {
+      "timestamp": "2026-10-15T17:26:01.482043366Z",
+      "payload": {
+        "at": 1792085161.0571156,
+        "venue": "kalshi",
+        "client_order_id": "nc-speed-1e0bbc2f6852458ca82c53c1a4029848",
+        "window": "KXBTC15M-26OCT151330-30",
+        "side": "up",
+        "kind": "lock",
+        "price": 0.97,
+        "size": 1.0,
+        "state": "durable intent; completing a half-filled pair"
+      }
+    },
+    {
+      "timestamp": "2026-10-15T17:26:01.482045966Z",
+      "payload": {
+        "at": 1792085161.3885326,
+        "venue": {
+          "ts_ms": 1792085161200,
+          "sent_ms": 1792085161066.9,
+          "acked_ms": 1792085161388.5,
+          "offset_ms": -27.7,
+          "rtt_ms": 321.6
+        },
+        "client_order_id": "nc-speed-1e0bbc2f6852458ca82c53c1a4029848",
+        "order_id": "01a14099-7428-70ea-b15b-89baef9f3307",
+        "window": "KXBTC15M-26OCT151330-30",
+        "state": "accepted; waiting for real fills",
+        "timing": null,
+        "stages": {
+          "save_ms": null,
+          "decision_to_send_ms": 9.856907650828362,
+          "send_to_ack_ms": 321.6094430536032
+        }
+      }
+    }
+  ],
+  "original_settlement": {
+    "timestamp": "2026-10-15T17:30:04.857030090Z",
+    "message": "2026-10-15T17:30:04Z INFO nightcrawler.speeddesk: speeddesk_live_settlement {\"at\":1792085401.86544,\"venue\":\"kalshi\",\"window\":\"KXBTC15M-26OCT151330-30\",\"settlement_id\":\"kalshi:KXBTC15M-26OCT151330-30\",\"up_wins\":true,\"up_shares\":1.0,\"down_shares\":1.0,\"cost_usd\":1.294,\"fee_usd\":0.0025,\"paired_credit_usd\":1.0,\"net_payout_usd\":0.0,\"payout_usd\":1.0,\"locked_usd\":-0.29649999999999993,\"direction_usd\":-5.551115123125783e-17,\"pnl_usd\":-0.2965,\"observed_at\":1792085404.5845292,\"time_source\":\"venue settled_time\"}",
+    "payload": {
+      "at": 1792085401.86544,
+      "venue": "kalshi",
+      "window": "KXBTC15M-26OCT151330-30",
+      "settlement_id": "kalshi:KXBTC15M-26OCT151330-30",
+      "up_wins": true,
+      "up_shares": 1.0,
+      "down_shares": 1.0,
+      "cost_usd": 1.294,
+      "fee_usd": 0.0025,
+      "paired_credit_usd": 1.0,
+      "net_payout_usd": 0.0,
+      "payout_usd": 1.0,
+      "locked_usd": -0.29649999999999993,
+      "direction_usd": -5.551115123125783e-17,
+      "pnl_usd": -0.2965,
+      "observed_at": 1792085404.5845292,
+      "time_source": "venue settled_time"
+    }
+  },
+  "arithmetic": {
+    "cost_usd": "1.2940",
+    "fee_usd": "0.0025",
+    "gross_payout_usd": "1",
+    "pnl_usd": "-0.2965",
+    "reconciles_to_settlement": true
+  },
+  "explanation": "OriginalmakerDown1@.33 lostdirectionally; intendedlateUphedgefilled.964with.0025fee. Eachpairthenreturned1against1.2965allincost.",
+  "static_first_fill_only_under_known_outcome": {
+    "pnl_usd": "-.33",
+    "hedge_improvement_usd": "0.0335",
+    "limitation": "Arithmeticcomparison ofthesealreadyobservedfills only, notanalternativepolicybacktest orcounterfactualorderflow."
+  },
+  "bug_attribution": "Thisorderdecision-to-send9.8569ms/send-to-ack321.6094ms; observedlossdoesnotestablishstaleaccount/cashcausedit. Guardfixisindependentlyreproducedcorrectnessdefect,notpromisedsavedprofit.",
+  "coverage": "Starteroriginalreadfrompriorrunninge641deployment,hedgeoriginalfromc64; no cappedreads butfinitefilteredlogsnotwholevenueledgercertification."
+}

@@ -1,0 +1,14 @@
+{
+  "source_commit": "66561e4ee43c962292347693e98ea00986f5db35",
+  "source_tree": "aa42757a2e561415af5490b086adb1de2bb16b28",
+  "candidate_commit": "7d2c6106adafdd45ad07c367135753d95df4c76c",
+  "deployment": "99bf5b9e-72b2-4912-a7cb-8a3db414133b",
+  "declaration_commit": "1eff6461f229fbe142b5c763c4e449e270be0f69",
+  "git_blob_ids": {
+    "src/nightcrawler/speeddesk_live.py": "45ce0312ac41785063b631161d47a909be890595",
+    "src/nightcrawler/speeddesk_twin_trace.py": "49fb937c268047440f84764ec4a9761eb9fc7a02",
+    "tests/test_speeddesk_twin_trace.py": "b8310020b3be7902f3263c5eb54ecad479540021"
+  },
+  "post_tail_selected_identity": "native/POST_TAIL_IDENTITY_SELECTED.json",
+  "limits": "Source/tree exact review and code readbacks were performed by root. Reported financial/history retention is not a full underlying ledger-byte certificate."
+}

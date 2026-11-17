@@ -1,0 +1,88 @@
+{
+  "original_file_sha256": "03d5e42d3eb5ce01de0a2a338da2728792bb5b571c008dee830b2fa6d859122a",
+  "original_file_bytes": 2096993,
+  "request": {
+    "projectId": "75750847-85c0-41a3-a2a7-b7f2201a51e9",
+    "serviceId": "f84d3b52-002f-44cb-931e-bc9e3e097e97",
+    "environmentId": "17f7b0e0-104c-4903-9484-0106748b3cdb",
+    "startDate": "2026-10-15T20:45:51Z",
+    "endDate": "2026-10-15T20:55:00Z",
+    "filter": "\"speeddesk_live_fill\" OR \"speeddesk_live_settlement\" OR \"speeddesk_live_cancel\" OR \"speeddesk_live_order\"",
+    "limit": 200
+  },
+  "before": {
+    "current_time": "2026-10-15 20:56:23 UTC"
+  },
+  "after": {
+    "current_time": "2026-10-15 20:56:24 UTC"
+  },
+  "native_result_count": 16,
+  "limit": 200,
+  "original_rows": [],
+  "excluded_nested_or_other_events": [
+    {
+      "timestamp": "2026-10-15T20:45:51.062302610Z",
+      "event": "speeddesk_live_status"
+    },
+    {
+      "timestamp": "2026-10-15T20:46:26.588656638Z",
+      "event": "speeddesk_status"
+    },
+    {
+      "timestamp": "2026-10-15T20:46:47.375590460Z",
+      "event": "speeddesk_live_status"
+    },
+    {
+      "timestamp": "2026-10-15T20:47:26.263856750Z",
+      "event": "speeddesk_status"
+    },
+    {
+      "timestamp": "2026-10-15T20:47:48.031429470Z",
+      "event": "speeddesk_live_status"
+    },
+    {
+      "timestamp": "2026-10-15T20:48:26.430615808Z",
+      "event": "speeddesk_status"
+    },
+    {
+      "timestamp": "2026-10-15T20:50:10.491914975Z",
+      "event": "speeddesk_status"
+    },
+    {
+      "timestamp": "2026-10-15T20:50:17.299398949Z",
+      "event": "speeddesk_live_status"
+    },
+    {
+      "timestamp": "2026-10-15T20:51:10.800980801Z",
+      "event": "speeddesk_status"
+    },
+    {
+      "timestamp": "2026-10-15T20:51:17.027286402Z",
+      "event": "speeddesk_live_status"
+    },
+    {
+      "timestamp": "2026-10-15T20:52:10.476216359Z",
+      "event": "speeddesk_status"
+    },
+    {
+      "timestamp": "2026-10-15T20:52:17.020814018Z",
+      "event": "speeddesk_live_status"
+    },
+    {
+      "timestamp": "2026-10-15T20:53:10.451281579Z",
+      "event": "speeddesk_status"
+    },
+    {
+      "timestamp": "2026-10-15T20:53:17.685449582Z",
+      "event": "speeddesk_live_status"
+    },
+    {
+      "timestamp": "2026-10-15T20:54:10.562956971Z",
+      "event": "speeddesk_status"
+    },
+    {
+      "timestamp": "2026-10-15T20:54:18.514262585Z",
+      "event": "speeddesk_live_status"
+    }
+  ]
+}

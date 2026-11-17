@@ -1,0 +1,45 @@
+{
+  "reviewer_role": "GPT-6 Astra independent architecture/acceptance",
+  "verdict": "Accept bounded baseline as evidence to build and test a narrow settlement-only candidate; no candidate correctness/savings/release acceptance",
+  "harness_sha256": "8e24b69dcf884bd8b63d2f0983fc84566e909384c5e236d06f29aea601404bd8",
+  "reviewed_artifact_hashes": {
+    "RESULT.md": "09d66e6a6c35884989c0b5d44dc771b7cbcc4a10d012aa4468aa2e155cf152fc",
+    "SUMMARY.json": "b7c2e45b8f70c6cc93ff9024edce98afc012198a6bc6b79ccc67e97cc3382c44",
+    "matrix_manifest.json": "1552cbf76f6e4002b99442bb7310e0e0aeef3f59f18f1aacc833926629778981",
+    "SHA256SUMS.json": "d8ea79b7168e3de6cb1ab583f5cd5b232fdddeadda0fef2c50fc83e8f5d28c35",
+    "run_matrix.py": "08e62f1a009c548f0c2fba101c338f98989178654fa93a984179e72093206657",
+    "summarize_baseline.py": "ef34bf6d829bc6aa4714e4f71bfd3b4a4ba30b04f51af4310afedea799733dd7"
+  },
+  "verified": {
+    "all_listed_checksums_match": true,
+    "corrected_children": 20,
+    "all_children_exit_zero": true,
+    "runtime_forbidden_attempts_zero": true,
+    "cross_process_mirror_and_receipt_tail_hashes_agree": true,
+    "settlement_conversion_formula_agrees": true,
+    "clean_checkpoint_medians_recomputed": true,
+    "only_before_after_change": "docs/COORDINATION.md",
+    "supervisor_exit": 1,
+    "supervisor_failure_qualified_not_waived": true
+  },
+  "report_findings": [
+    {
+      "severity": "minor",
+      "finding": "RESULT 1day report Window conversions says 200; raw and SUMMARY prove 100. Sent correction to Sol."
+    },
+    {
+      "severity": "minor",
+      "finding": "KV and mirror recorded byte lengths match; harness does not assert full cross-store byte/hash equality. Sent wording correction to Sol."
+    }
+  ],
+  "limits": [
+    "No optimization implemented or measured",
+    "No production causality/profitability inference",
+    "No crash/boundary/alias/candidate output equivalence proved",
+    "Inert live companion and sparse daily universe",
+    "Counting/allocation instrumentation is not clean timing"
+  ],
+  "source_candidate_edits": false,
+  "production_calls": false,
+  "profile_rerun": false
+}

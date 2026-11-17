@@ -1,0 +1,89 @@
+{
+  "checked_at": "2026-10-15T22:04:11Z",
+  "pacific": "2026-10-15 3:04:11 PM PDT",
+  "kind": "explicit deployment derivative; creator/contact fields and duplicated native text omitted",
+  "deployments": [
+    {
+      "id": "b65db380-397c-4e5c-a18e-0988c090ac06",
+      "status": "SKIPPED",
+      "createdAt": "2026-10-15T21:42:46.027Z",
+      "updatedAt": "2026-10-15T21:42:46.027Z",
+      "commit": "be70bcb2335b5372ac37ac5162e3c36877848bc9",
+      "reason": null
+    },
+    {
+      "id": "b1d8a947-1cf3-4be4-8791-456529e57b69",
+      "status": "SKIPPED",
+      "createdAt": "2026-10-15T21:36:27.958Z",
+      "updatedAt": "2026-10-15T21:36:27.958Z",
+      "commit": "ed47d21f24408675ca8da0747fca9985e76aebaa",
+      "reason": null
+    },
+    {
+      "id": "66e6e7e4-30d9-4628-a234-f2a8e97dad19",
+      "status": "SUCCESS",
+      "createdAt": "2026-10-15T21:32:19.644Z",
+      "updatedAt": "2026-10-15T21:33:37.737Z",
+      "commit": "0c30491e0bd101250ee443912e1352f38718af45",
+      "reason": "deploy"
+    },
+    {
+      "id": "7521bc84-5cee-4bf0-85f2-3b9b6b68396f",
+      "status": "SKIPPED",
+      "createdAt": "2026-10-15T21:24:37.645Z",
+      "updatedAt": "2026-10-15T21:24:37.645Z",
+      "commit": "04aee72b65786b5c7a3c3e20d71aa992b41db5ff",
+      "reason": null
+    },
+    {
+      "id": "af461f8c-cf45-4e10-9617-3ffcac5b5c07",
+      "status": "SKIPPED",
+      "createdAt": "2026-10-15T20:55:42.580Z",
+      "updatedAt": "2026-10-15T20:55:42.580Z",
+      "commit": "08208179cf0b4a621de8b700af279a49fe4cc525",
+      "reason": null
+    },
+    {
+      "id": "1c01ffe7-e231-40c6-a026-ac63fec01227",
+      "status": "REMOVED",
+      "createdAt": "2026-10-15T20:47:23.393Z",
+      "updatedAt": "2026-10-15T21:33:41.954Z",
+      "commit": "b7b7192e5d463e57417d05acb3b168744941b9fc",
+      "reason": "deploy"
+    },
+    {
+      "id": "bff14eb0-5eaf-4974-840a-4de7d87266bb",
+      "status": "SKIPPED",
+      "createdAt": "2026-10-15T20:32:44.153Z",
+      "updatedAt": "2026-10-15T20:32:44.153Z",
+      "commit": "51c565681b294163a18c755a02bc8ed51b1e831a",
+      "reason": null
+    },
+    {
+      "id": "346d2917-2874-4541-9f85-4124ba531d32",
+      "status": "SKIPPED",
+      "createdAt": "2026-10-15T20:20:26.497Z",
+      "updatedAt": "2026-10-15T20:20:26.497Z",
+      "commit": "18d45ba635026480a9409b6c1b98c257a89341ff",
+      "reason": null
+    },
+    {
+      "id": "3c3dc5c1-eafc-44e8-ad3c-21e2f07c1dbd",
+      "status": "SKIPPED",
+      "createdAt": "2026-10-15T19:57:34.587Z",
+      "updatedAt": "2026-10-15T19:57:34.587Z",
+      "commit": "5d19e7a888233fb4e96b90e1e7268d46bd97a87e",
+      "reason": null
+    },
+    {
+      "id": "3a0dfb75-cdec-41bb-917e-9614c8ec2849",
+      "status": "SKIPPED",
+      "createdAt": "2026-10-15T19:36:50.967Z",
+      "updatedAt": "2026-10-15T19:36:50.967Z",
+      "commit": "2c9198fb69efd8ef9761d2fecf31d8dfc5a0b147",
+      "reason": null
+    }
+  ],
+  "running_source": "0c30491e0bd101250ee443912e1352f38718af45",
+  "running_deployment": "66e6e7e4-30d9-4628-a234-f2a8e97dad19"
+}

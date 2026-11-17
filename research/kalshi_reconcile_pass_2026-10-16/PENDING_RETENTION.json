@@ -1,0 +1,35 @@
+{
+  "before_native_timestamp": "2026-10-16T07:35:00.097934762Z",
+  "after_native_timestamp": "2026-10-16T07:45:16.795026389Z",
+  "window": "KXBTC15M-26OCT160345-45",
+  "unchanged_frozen_fields": [
+    "at",
+    "batch_at",
+    "bin",
+    "bitcoin_at",
+    "n",
+    "opening",
+    "p",
+    "protocol",
+    "q",
+    "sigma",
+    "source_fingerprint",
+    "spot",
+    "terms",
+    "venue_start_price",
+    "wins"
+  ],
+  "all_frozen_fields_equal": true,
+  "post_gaps": [
+    "child_restart_gap"
+  ],
+  "outcome": false,
+  "status": "scored",
+  "before_local_forecast_at": 1792136100.0950105,
+  "after_scored_at": 1792136716.7626383,
+  "source_sha256": {
+    "PRE_PENDING_FORECAST_NATIVE.json": "b05e58eb27ad0c51a8cdbe7067e789658c53ec8df050a48f12c9d82a8ad8cb2a",
+    "POST_PENDING_SCORE_LATER_NATIVE.json": "b5d7c2f48a53dc0c53d2d1f2b35faf7f9ab16889430f320ba044e5235368595d"
+  },
+  "scope": "All15fields of one pending forecast retained/scored; not every archived body, uninterrupted coverage, a trade or profit."
+}

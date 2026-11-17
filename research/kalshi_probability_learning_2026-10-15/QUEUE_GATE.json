@@ -1,0 +1,38 @@
+{
+  "checked_at_utc": "2026-10-15T19:40:29.433455+00:00",
+  "checked_at_pacific": "2026-10-15T12:40:29.436618-07:00",
+  "branch_head": "2c9198fb69efd8ef9761d2fecf31d8dfc5a0b147",
+  "pr47_current_metadata": {
+    "mergeCommit": {
+      "oid": "e8db34ee34d95411ac7f695f704ceb82ef8e32d5"
+    },
+    "mergedAt": "2026-10-14T16:21:49Z",
+    "state": "MERGED",
+    "url": "https://github.com/sideriapostolou-lgtm/Claude/pull/47"
+  },
+  "prior_exact_deployment_followup_record": "../kalshi_execution_fix_2026-10-15/QUEUE_GATE.json",
+  "pr47_separately_complete": true,
+  "current_EXEC": "OPEN; PR64 observer release and prospective sample separate from upstream execution gaps or profitable strategy evidence.",
+  "TJR_MNQ_001": "Still queued/blocked and unfinished; prior offline reprioritization supplies no missing data.",
+  "historical_trades": 0,
+  "historical_pnl": null,
+  "holdout": "unopened",
+  "paper_trading_started": false,
+  "live_execution_enabled": false,
+  "missing": [
+    "Authentic MNQ December2025 contract development minute bars with mapping, license, timezone and bar convention.",
+    "Verified account commission, spread/slippage and funding/evaluation costs."
+  ],
+  "saved_sources_tests": "Previously saved complete Page source/prototype and65synthetic reproduction retained; no rebuild, newPage-read claim, repeateddata probe/tests or duplicate research.",
+  "automation_changed": false,
+  "routine_unchanged_notification": "suppressed",
+  "production_action_from_queue_check": false,
+  "next_step": "Resume saved historical validation only when authentic development data/costs are supplied and applicable queue/priority gates satisfied; paper start/evidence still required before done.",
+  "latest_connected_github_check_utc": "2026-10-15T19:43:06.131099+00:00",
+  "latest_connected_blobs": {
+    "docs/COORDINATION.md": "eca0e8d7f7e63df8626657516b8bb60baa129d87",
+    "AGENTS.md": "389266a51ccba3d21072371fd680bc8e4aff2af9",
+    "docs/WORKLOG.md": "4ec63839e1d041bbf14a5b9f4643dccb36309e85"
+  },
+  "current_branch_head_utc_check": "2c9198fb69efd8ef9761d2fecf31d8dfc5a0b147"
+}

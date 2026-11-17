@@ -1,0 +1,29 @@
+{
+  "content": [
+    {
+      "type": "text",
+      "text": "**Deployment 1c01ffe7-e231-40c6-a026-ac63fec01227** [REMOVED]\nservice: f84d3b52-002f-44cb-931e-bc9e3e097e97, env: 17f7b0e0-104c-4903-9484-0106748b3cdb\n\n### Deploy logs (1)\n2026-10-15T21:30:08.116696396Z info 2026-10-15T21:30:08Z INFO nightcrawler.speeddesk: speeddesk_live_settlement {\"at\":1792099806.812783,\"venue\":\"kalshi\",\"window\":\"KXBTC15M-26OCT151730-30\",\"settlement_id\":\"kalshi:KXBTC15M-26OCT151730-30\",\"up_wins\":true,\"up_shares\":0.0,\"down_shares\":1.0,\"cost_usd\":0.48,\"fee_usd\":0.0,\"paired_credit_usd\":0.0,\"net_payout_usd\":0.0,\"payout_usd\":0.0,\"locked_usd\":0.0,\"direction_usd\":-0.48,\"pnl_usd\":-0.48,\"observed_at\":1792099807.9493282,\"time_source\":\"venue settled_time\"}"
+    }
+  ],
+  "structuredContent": {
+    "scope": "deployment",
+    "deploymentId": "1c01ffe7-e231-40c6-a026-ac63fec01227",
+    "serviceId": "f84d3b52-002f-44cb-931e-bc9e3e097e97",
+    "environmentId": "17f7b0e0-104c-4903-9484-0106748b3cdb",
+    "status": "REMOVED",
+    "deploy": [
+      {
+        "timestamp": "2026-10-15T21:30:08.116696396Z",
+        "severity": "info",
+        "message": "2026-10-15T21:30:08Z INFO nightcrawler.speeddesk: speeddesk_live_settlement {\"at\":1792099806.812783,\"venue\":\"kalshi\",\"window\":\"KXBTC15M-26OCT151730-30\",\"settlement_id\":\"kalshi:KXBTC15M-26OCT151730-30\",\"up_wins\":true,\"up_shares\":0.0,\"down_shares\":1.0,\"cost_usd\":0.48,\"fee_usd\":0.0,\"paired_credit_usd\":0.0,\"net_payout_usd\":0.0,\"payout_usd\":0.0,\"locked_usd\":0.0,\"direction_usd\":-0.48,\"pnl_usd\":-0.48,\"observed_at\":1792099807.9493282,\"time_source\":\"venue settled_time\"}",
+        "attributes": [
+          {
+            "key": "level",
+            "value": "\"info\""
+          }
+        ]
+      }
+    ]
+  },
+  "isError": false
+}

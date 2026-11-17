@@ -1,0 +1,86 @@
+{
+  "archive": "live_mirror_release_evidence.zip",
+  "bytes": 185738,
+  "sha256": "8c458ff1c3c775384ef5ac468d77dfd9542f39ab1a061f98047954fa24f4005d",
+  "members": [
+    {
+      "original_path": "/workspace/shared/live-mirror-release-plan.json",
+      "member": "live-mirror-release-plan.json",
+      "bytes": 2009,
+      "sha256": "52a8c76507bf37a02f5aff761afbfd7485dd4f6274f7cd574c7d16f966d45f50"
+    },
+    {
+      "original_path": "/workspace/shared/live-mirror-deployment-success.json",
+      "member": "live-mirror-deployment-success.json",
+      "bytes": 1430,
+      "sha256": "1817ff2717cfacf97eb36aec4f2337dffae939fb94ce7357118a7d9d0e6f6a0f"
+    },
+    {
+      "original_path": "/workspace/shared/live-mirror-pre-release-health.json",
+      "member": "live-mirror-pre-release-health.json",
+      "bytes": 3266,
+      "sha256": "0c4f28c0c80dce1ee63eac6270bf8b88119518af6fa4d63e419d18f6e6081677"
+    },
+    {
+      "original_path": "/workspace/shared/live-mirror-old-status-before-build.json",
+      "member": "live-mirror-old-status-before-build.json",
+      "bytes": 580817,
+      "sha256": "95a25c335d65da5746f52befb330564a1e3ff6e9dc3e5ad28685a96305f2becb"
+    },
+    {
+      "original_path": "/workspace/shared/live-mirror-startup-initial.json",
+      "member": "live-mirror-startup-initial.json",
+      "bytes": 814,
+      "sha256": "22548247aaf853b4534f9d3ed1a7819fe7577a19ef9f3e006d7fae5f8dac5074"
+    },
+    {
+      "original_path": "/workspace/shared/live-mirror-release-query-0.json",
+      "member": "live-mirror-release-query-0.json",
+      "bytes": 1232,
+      "sha256": "866f85d69b7391435044eefa93a918504aa65759865ac4d98a03ddde39d5f9c3"
+    },
+    {
+      "original_path": "/workspace/shared/live-mirror-release-query-1.json",
+      "member": "live-mirror-release-query-1.json",
+      "bytes": 285405,
+      "sha256": "07ef94cd78b07c1b4837ba8cc88b164ab20c94b6d5f005bd6afccdb4a3cb64e9"
+    },
+    {
+      "original_path": "/workspace/shared/live-mirror-release-query-2.json",
+      "member": "live-mirror-release-query-2.json",
+      "bytes": 2068,
+      "sha256": "1bd6ac9f87c702a9186896485eac4b13179d18faf9df69bbd94de99d14bfaf83"
+    },
+    {
+      "original_path": "/workspace/shared/live-mirror-startup-speeddesk.json",
+      "member": "live-mirror-startup-speeddesk.json",
+      "bytes": 408571,
+      "sha256": "caa743ed8f7a207db76b7ad16005372578d794d4247efdecd33ad18ac7bf09d8"
+    },
+    {
+      "original_path": "/workspace/shared/live-mirror-restart-audit.py",
+      "member": "live-mirror-restart-audit.py",
+      "bytes": 7590,
+      "sha256": "db06b812d04601b792bf2703f378e03cbfbf21059e207ff6c47a48ca1ff1a282"
+    },
+    {
+      "original_path": "/workspace/shared/live-mirror-restart-audit.json",
+      "member": "live-mirror-restart-audit.json",
+      "bytes": 20425,
+      "sha256": "394a5866634bccba67a53cfdfd5dc0a7b514ea724a1a3356334d1080f30dd404"
+    },
+    {
+      "original_path": "/workspace/shared/live-mirror-restart-audit.md",
+      "member": "live-mirror-restart-audit.md",
+      "bytes": 8620,
+      "sha256": "42b8562db00e78ba2582410b3615466a3e24a176c6ee2a75565beca1385ac42f"
+    },
+    {
+      "original_path": "/workspace/shared/live-mirror-review-bundle.json",
+      "member": "live-mirror-review-bundle.json",
+      "bytes": 531,
+      "sha256": "9396811dc813ad33947679c41d36d63300a2cb5258d0984e871ea50fa4d56eec"
+    }
+  ],
+  "verification": "CRC/exact members/source bytes/hashes pass; filtered logs and selected-field/code audit, no raw ledger or cash export"
+}

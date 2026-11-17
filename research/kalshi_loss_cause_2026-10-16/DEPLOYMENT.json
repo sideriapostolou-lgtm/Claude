@@ -1,0 +1,16 @@
+{
+  "observed_at_utc": "2026-10-16T19:18:58Z",
+  "deployment": {
+    "id": "a717faa1-3c47-4a62-9b74-277da85b0fc6",
+    "status": "SUCCESS",
+    "createdAt": "2026-10-16T18:49:10.352Z",
+    "updatedAt": "2026-10-16T18:50:25.620Z",
+    "meta": {
+      "reason": "deploy",
+      "commitMessage": "Merge pull request #74 from sideriapostolou-lgtm/codex/town-money-workflow-20261016\n\nfix: load Kalshi town money independently and clarify desk workflow",
+      "commitHash": "e72f4b8b86dc812ab333a45d54151ae44f8c713f",
+      "branch": "claude/nightcrawler-memecoin-bot-Gwnb1S"
+    }
+  },
+  "limitation": "Source identity for current deployment; mixed earlier-source day receipts are not per-event attributed to this commit."
+}

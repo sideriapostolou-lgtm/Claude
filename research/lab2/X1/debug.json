@@ -1,0 +1,285 @@
+{
+ "hypothesis": "X1",
+ "version": "x1-v1",
+ "stage": "debug",
+ "split": "final_train",
+ "utc": "2026-10-09 04:25:05",
+ "provisional": false,
+ "debug_only": true,
+ "prereg_sha256": "e86be45299958f53f0fd160fd6a0e0327d64c8f11d0407a071f0823c3d32234d",
+ "rerun_reason": null,
+ "coverage": {
+  "split": "final_train",
+  "bounds_utc": [
+   "2026-10-07 19:37:30",
+   "2026-10-08 08:06:47"
+  ],
+  "debug_only": true,
+  "graduates_in_split": 644,
+  "tradeable": 450,
+  "usable": 450,
+  "excluded": {
+   "mayhem": 129,
+   "not_sol_quoted": 65
+  },
+  "created_inexact": 0,
+  "has_create0": 44,
+  "chain_hours_scanned_frac": 1.0,
+  "days": [
+   {
+    "day": "2026-10-07",
+    "hours_in_split": 5,
+    "curve_hours": 5,
+    "b2_hours": 5,
+    "b2_hours_midrun": 0,
+    "coins_created": 294,
+    "tradeable": 196,
+    "usable": 196,
+    "usable_frac": 1.0,
+    "partial": false
+   },
+   {
+    "day": "2026-10-08",
+    "hours_in_split": 9,
+    "curve_hours": 9,
+    "b2_hours": 9,
+    "b2_hours_midrun": 0,
+    "coins_created": 350,
+    "tradeable": 254,
+    "usable": 254,
+    "usable_frac": 1.0,
+    "partial": false
+   }
+  ],
+  "days_expected": 0.52,
+  "days_full": 2,
+  "curve_span_utc": [
+   "2026-09-30 17:00:00",
+   "2026-10-09 02:00:00"
+  ],
+  "b2_span_utc": [
+   "2026-10-07 19:00:00",
+   "2026-10-08 19:00:00"
+  ],
+  "completeness_source": "raw_chunks",
+  "parquet_snapshot_utc": "2026-10-09 03:57:17",
+  "b2_hours_needed": 24,
+  "b2_hours_done": 24,
+  "b2_hours_midrun": [],
+  "sol_usd": {
+   "series_utc": [
+    "2026-09-15 00:00:00",
+    "2026-10-08 23:59:00"
+   ],
+   "constant_fallback": false,
+   "lookahead_coins": 0,
+   "stale_coins": 0
+  },
+  "power": {
+   "entry_bar_coins": {
+    "need": 40,
+    "have_usable_coins": 450,
+    "ok": true
+   },
+   "x1_r0_trades_5_seeds": {
+    "need": 200,
+    "max_possible": 2250,
+    "ok": true
+   },
+   "g1_flagged_coins_val": {
+    "need": 200,
+    "max_possible": 450,
+    "ok": true
+   }
+  },
+  "underpowered": false,
+  "complete": true,
+  "notes": [],
+  "from_flow": true
+ },
+ "n_coins": 450,
+ "span_days": 0.5203240740740741,
+ "history_splits": [
+  "final_train"
+ ],
+ "registry": {
+  "history_coins": 450,
+  "eligible_coins": 145,
+  "labelled_coins": 145,
+  "by_split": {
+   "final_train": 450
+  },
+  "wallets": 552,
+  "entries": 613,
+  "wallets_ge3_entries": 10,
+  "wallets_ge6_entries": 1,
+  "max_entries_one_wallet": 6,
+  "history_start_utc": "2026-10-07 19:37:30"
+ },
+ "gate": {
+  "n_eligible": 145,
+  "n_obs": 5,
+  "holder_split": {
+   "known": 5,
+   "unknown": 140
+  },
+  "n_warmup_obs": 5,
+  "need": {
+   "obs": 200,
+   "rho": 0.1,
+   "p_one_sided": 0.01,
+   "block_ci90_low": "> 0"
+  },
+  "decision": "HIDDEN (debug split: no outcome statistics)",
+  "trial": {
+   "config": "X1-persist|65da3e6d2712",
+   "new_trial": false,
+   "n_trials_total": 2575,
+   "hypothesis_configs": 0,
+   "over_variant_limit": false,
+   "family_val_looks": 0
+  }
+ },
+ "event_counts": {
+  "coins": 450,
+  "class_at_decision": {
+   "FACTORY": 183,
+   "OTHER": 233,
+   "OPERATOR": 34
+  },
+  "eligible": 145,
+  "eligible_with_holder": 136,
+  "holders_per_eligible_coin": 4.227586206896552,
+  "eligible_with_known_holder": {
+   "n3": 5,
+   "n6": 0
+  }
+ },
+ "configs": {
+  "th0|n3": {
+   "config": "th0|n3",
+   "params_hash": "2018a09100d0",
+   "hypothesis": "X1",
+   "n": 0,
+   "n_coins": 0,
+   "n_leads": 0,
+   "n_placebo": 0,
+   "n_control": 0,
+   "n_warmup": 0,
+   "horizon_exits": 0,
+   "trial": {
+    "config": "X1|2018a09100d0|cfg:a06543feac6c",
+    "new_trial": false,
+    "n_trials_total": 2575
+   },
+   "returns": "hidden on the debug split (never choose parameters on FINAL data)",
+   "label_dependent_counts": [
+    "n",
+    "n_coins",
+    "n_leads",
+    "n_placebo",
+    "n_control",
+    "n_warmup",
+    "horizon_exits",
+    "entries_per_day"
+   ]
+  },
+  "th0|n6": {
+   "config": "th0|n6",
+   "params_hash": "e5e8197a6212",
+   "hypothesis": "X1",
+   "n": 0,
+   "n_coins": 0,
+   "n_leads": 0,
+   "n_placebo": 0,
+   "n_control": 0,
+   "n_warmup": 0,
+   "horizon_exits": 0,
+   "trial": {
+    "config": "X1|e5e8197a6212|cfg:a06543feac6c",
+    "new_trial": false,
+    "n_trials_total": 2575
+   },
+   "returns": "hidden on the debug split (never choose parameters on FINAL data)",
+   "label_dependent_counts": [
+    "n",
+    "n_coins",
+    "n_leads",
+    "n_placebo",
+    "n_control",
+    "n_warmup",
+    "horizon_exits",
+    "entries_per_day"
+   ]
+  },
+  "th0.1|n3": {
+   "config": "th0.1|n3",
+   "params_hash": "eeb3d76b8dbc",
+   "hypothesis": "X1",
+   "n": 0,
+   "n_coins": 0,
+   "n_leads": 0,
+   "n_placebo": 0,
+   "n_control": 0,
+   "n_warmup": 0,
+   "horizon_exits": 0,
+   "trial": {
+    "config": "X1|eeb3d76b8dbc|cfg:a06543feac6c",
+    "new_trial": false,
+    "n_trials_total": 2575
+   },
+   "returns": "hidden on the debug split (never choose parameters on FINAL data)",
+   "label_dependent_counts": [
+    "n",
+    "n_coins",
+    "n_leads",
+    "n_placebo",
+    "n_control",
+    "n_warmup",
+    "horizon_exits",
+    "entries_per_day"
+   ]
+  },
+  "th0.1|n6": {
+   "config": "th0.1|n6",
+   "params_hash": "67f7b4677cf7",
+   "hypothesis": "X1",
+   "n": 0,
+   "n_coins": 0,
+   "n_leads": 0,
+   "n_placebo": 0,
+   "n_control": 0,
+   "n_warmup": 0,
+   "horizon_exits": 0,
+   "trial": {
+    "config": "X1|67f7b4677cf7|cfg:a06543feac6c",
+    "new_trial": false,
+    "n_trials_total": 2575
+   },
+   "returns": "hidden on the debug split (never choose parameters on FINAL data)",
+   "label_dependent_counts": [
+    "n",
+    "n_coins",
+    "n_leads",
+    "n_placebo",
+    "n_control",
+    "n_warmup",
+    "horizon_exits",
+    "entries_per_day"
+   ]
+  }
+ },
+ "entries_per_day": {
+  "th0|n3": 0.0,
+  "th0|n6": 0.0,
+  "th0.1|n3": 0.0,
+  "th0.1|n6": 0.0
+ },
+ "decision": {
+  "verdict": "DEBUG",
+  "note": "mechanics only; returns hidden"
+ },
+ "runtime_s": 4.5,
+ "n_trials_total": 2575,
+ "overall": "PENDING (no official TRAIN run)"
+}

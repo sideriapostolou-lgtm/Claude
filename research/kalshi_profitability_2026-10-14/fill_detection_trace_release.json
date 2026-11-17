@@ -1,0 +1,920 @@
+{
+  "checked_at_pacific": "2026-10-14 12:07 PM PDT",
+  "pr": 51,
+  "commit": "567ba32d53d434d23d10fbec4627330ff83a5bbd",
+  "deployment_id": "4f84d690-5ecb-4357-8284-b0244bddd80b",
+  "deployment_success_utc": "2026-10-14T19:04:20.509Z",
+  "deployment_success_pacific": "2026-10-14 12:04:20 PM PDT",
+  "polydesk_start": [
+    {
+      "timestamp": "2026-10-14T19:04:16.127771687Z",
+      "event": "polydesk_started",
+      "text": "theta=0.97 hours=1 ticket_usd=20 poll_s=90 (LIVE: 10 contract(s) per order)"
+    }
+  ],
+  "validation": {
+    "pytest_passed": 5398,
+    "pytest_skipped": 14,
+    "pytest_seconds": 302.11,
+    "mypy_files": 124,
+    "changed_python_ruff": "passed",
+    "targeted_checks": 100,
+    "independent_checks": 38
+  },
+  "financial_before": {
+    "log_timestamp_utc": "2026-10-14T19:03:22.760197399Z",
+    "as_of": 1792004602.472416,
+    "mode": "live",
+    "configured_mode": "live",
+    "reason": "imbalance",
+    "cash_usd": 36.3735,
+    "open_cost_usd": 6.07,
+    "open_risk_usd": 1.0700000000000003,
+    "reserved_usd": 0.69,
+    "total_halted": false,
+    "day_stop_latched": false,
+    "integrity_error": null,
+    "caps": {
+      "window_usd": 10,
+      "open_usd": 20,
+      "day_stop_usd": 6,
+      "clip": 5,
+      "total_stop_usd": 10
+    },
+    "fill_count": 442,
+    "total_fees_usd": 2.056,
+    "total_settled_pnl_usd": -12.297900000000006,
+    "utc_day_settled_pnl_usd": -2.3558000000000017
+  },
+  "financial_after": {
+    "log_timestamp_utc": "2026-10-14T19:04:31.292404236Z",
+    "as_of": 1792004670.889668,
+    "mode": "live",
+    "configured_mode": "live",
+    "reason": "imbalance",
+    "cash_usd": 36.3735,
+    "open_cost_usd": 6.07,
+    "open_risk_usd": 1.0700000000000003,
+    "reserved_usd": 0,
+    "total_halted": false,
+    "day_stop_latched": false,
+    "integrity_error": null,
+    "caps": {
+      "window_usd": 10,
+      "open_usd": 20,
+      "day_stop_usd": 6,
+      "clip": 5,
+      "total_stop_usd": 10
+    },
+    "fill_count": 442,
+    "total_fees_usd": 2.056,
+    "total_settled_pnl_usd": -12.297900000000006,
+    "utc_day_settled_pnl_usd": -2.3558000000000017
+  },
+  "shutdown_cancels": [
+    {
+      "timestamp": "2026-10-14T19:03:55.426370776Z",
+      "at": 1792004634.739857,
+      "venue": {
+        "ts_ms": 1792004634674,
+        "sent_ms": 1792004634656.6,
+        "acked_ms": 1792004634739.8,
+        "offset_ms": -24.2,
+        "rtt_ms": 83.3
+      },
+      "client_order_id": "nc-speed-3a450bd732d74ddea9d550e88df336a0",
+      "order_id": "01a13bcc-adc0-7c8e-b1b0-35e5c1e83398",
+      "window": "KXBTC15M-26OCT141515-15",
+      "reason": "shutdown",
+      "state": "requested; reservation retained until fills reconcile",
+      "reduced_by": "1.00",
+      "timing": {
+        "decision_to_ack_ms": 83.3,
+        "send_to_ack_ms": 83.2
+      }
+    }
+  ],
+  "resume_status": "ignored; this value was already used",
+  "error_check": {
+    "first_log": "2026-10-14T19:04:14.988081894Z",
+    "last_log": "2026-10-14T19:05:54.194972436Z",
+    "rows": 121,
+    "requested_limit": 500,
+    "matched_application_error_or_traceback": 0
+  },
+  "traces": [
+    {
+      "timestamp": "2026-10-14T19:04:54.963949897Z",
+      "at": 1792004691.3325355,
+      "venue": "kalshi",
+      "mode": "diagnostic",
+      "version": 1,
+      "cycle": 10,
+      "started_at": 1792004688.21152,
+      "full": false,
+      "retry_remaining_s": 0,
+      "previous_fills_returned_at": 1792004686.4218516,
+      "marks_ms": {
+        "fills_wrapper_returned": 652.675
+      },
+      "new_fills": [],
+      "new_fills_omitted": 0,
+      "reads_omitted": 0,
+      "elapsed_ms": 3121.015,
+      "failed": false,
+      "reads": [
+        {
+          "read": "list_orders",
+          "marks_ms": {
+            "submitted": 0.107,
+            "worker_started": 180.477,
+            "worker_completed": 221.258,
+            "coroutine_resumed": 293.489,
+            "wrapper_returned": 293.554
+          },
+          "rows": 44,
+          "pages": 1,
+          "bytes": 34913,
+          "cancel_calls": 2,
+          "cancel_ms": 0.098,
+          "cancel_spans": [],
+          "cancel_spans_omitted": 0
+        },
+        {
+          "read": "fills",
+          "marks_ms": {
+            "submitted": 293.789,
+            "worker_started": 294.019,
+            "worker_completed": 342.492,
+            "coroutine_resumed": 652.607,
+            "wrapper_returned": 652.669
+          },
+          "rows": 6,
+          "pages": 1,
+          "bytes": 3086,
+          "cancel_calls": 1,
+          "cancel_ms": 0.046,
+          "cancel_spans": [],
+          "cancel_spans_omitted": 0
+        },
+        {
+          "read": "list_orders",
+          "marks_ms": {
+            "submitted": 653.092,
+            "worker_started": 965.464,
+            "worker_completed": 1060.087,
+            "coroutine_resumed": 2341.99,
+            "wrapper_returned": 2342.063
+          },
+          "rows": 44,
+          "pages": 1,
+          "bytes": 34913,
+          "cancel_calls": 2,
+          "cancel_ms": 0.102,
+          "cancel_spans": [],
+          "cancel_spans_omitted": 0
+        },
+        {
+          "read": "positions",
+          "marks_ms": {
+            "submitted": 2342.549,
+            "worker_started": 2529.603,
+            "worker_completed": 2819.798,
+            "coroutine_resumed": 3057.606,
+            "wrapper_returned": 3057.692
+          },
+          "rows": 3,
+          "pages": 1,
+          "bytes": 1404,
+          "cancel_calls": 2,
+          "cancel_ms": 0.12,
+          "cancel_spans": [],
+          "cancel_spans_omitted": 0
+        },
+        {
+          "read": "balance",
+          "marks_ms": {
+            "submitted": 3058.911,
+            "worker_started": 3062.606,
+            "worker_completed": 3100.9,
+            "coroutine_resumed": 3120.764,
+            "wrapper_returned": 3120.839
+          },
+          "rows": null,
+          "pages": null,
+          "bytes": null,
+          "cancel_calls": 1,
+          "cancel_ms": 0.057,
+          "cancel_spans": [],
+          "cancel_spans_omitted": 0
+        }
+      ],
+      "counts": {
+        "cycles": 10,
+        "reported": 1,
+        "quiet": 9,
+        "suppressed": 0
+      },
+      "clock_basis": "monotonic_offsets_from_started_at",
+      "worker_complete_basis": "entire_client_callback_not_http_arrival",
+      "not_realized_pnl": true,
+      "max_reports_per_60s": 12
+    },
+    {
+      "timestamp": "2026-10-14T19:04:54.964185675Z",
+      "at": 1792004694.7194963,
+      "venue": "kalshi",
+      "mode": "diagnostic",
+      "version": 1,
+      "cycle": 11,
+      "started_at": 1792004691.3432248,
+      "full": false,
+      "retry_remaining_s": 0,
+      "previous_fills_returned_at": 1792004688.8641956,
+      "marks_ms": {
+        "fills_wrapper_returned": 136.323
+      },
+      "new_fills": [],
+      "new_fills_omitted": 0,
+      "reads_omitted": 0,
+      "elapsed_ms": 3376.272,
+      "failed": false,
+      "reads": [
+        {
+          "read": "list_orders",
+          "marks_ms": {
+            "submitted": 0.107,
+            "worker_started": 15.179,
+            "worker_completed": 69.289,
+            "coroutine_resumed": 85.75,
+            "wrapper_returned": 85.811
+          },
+          "rows": 44,
+          "pages": 1,
+          "bytes": 34913,
+          "cancel_calls": 2,
+          "cancel_ms": 0.093,
+          "cancel_spans": [],
+          "cancel_spans_omitted": 0
+        },
+        {
+          "read": "fills",
+          "marks_ms": {
+            "submitted": 86.046,
+            "worker_started": 86.846,
+            "worker_completed": 128.754,
+            "coroutine_resumed": 136.255,
+            "wrapper_returned": 136.318
+          },
+          "rows": 6,
+          "pages": 1,
+          "bytes": 3086,
+          "cancel_calls": 1,
+          "cancel_ms": 0.047,
+          "cancel_spans": [],
+          "cancel_spans_omitted": 0
+        },
+        {
+          "read": "list_orders",
+          "marks_ms": {
+            "submitted": 136.819,
+            "worker_started": 137.018,
+            "worker_completed": 410.556,
+            "coroutine_resumed": 1438.435,
+            "wrapper_returned": 1438.559
+          },
+          "rows": 44,
+          "pages": 1,
+          "bytes": 34913,
+          "cancel_calls": 2,
+          "cancel_ms": 0.105,
+          "cancel_spans": [],
+          "cancel_spans_omitted": 0
+        },
+        {
+          "read": "positions",
+          "marks_ms": {
+            "submitted": 1439.062,
+            "worker_started": 1790.061,
+            "worker_completed": 1855.443,
+            "coroutine_resumed": 2539.665,
+            "wrapper_returned": 2539.781
+          },
+          "rows": 3,
+          "pages": 1,
+          "bytes": 1404,
+          "cancel_calls": 2,
+          "cancel_ms": 0.121,
+          "cancel_spans": [],
+          "cancel_spans_omitted": 0
+        },
+        {
+          "read": "balance",
+          "marks_ms": {
+            "submitted": 2540.827,
+            "worker_started": 3082.127,
+            "worker_completed": 3196.503,
+            "coroutine_resumed": 3376.005,
+            "wrapper_returned": 3376.076
+          },
+          "rows": null,
+          "pages": null,
+          "bytes": null,
+          "cancel_calls": 2,
+          "cancel_ms": 0.11,
+          "cancel_spans": [],
+          "cancel_spans_omitted": 0
+        }
+      ],
+      "counts": {
+        "cycles": 11,
+        "reported": 2,
+        "quiet": 9,
+        "suppressed": 0
+      },
+      "clock_basis": "monotonic_offsets_from_started_at",
+      "worker_complete_basis": "entire_client_callback_not_http_arrival",
+      "not_realized_pnl": true,
+      "max_reports_per_60s": 12
+    },
+    {
+      "timestamp": "2026-10-14T19:05:03.905830292Z",
+      "at": 1792004699.2620835,
+      "venue": "kalshi",
+      "mode": "diagnostic",
+      "version": 1,
+      "cycle": 12,
+      "started_at": 1792004695.276031,
+      "full": false,
+      "retry_remaining_s": 0,
+      "previous_fills_returned_at": 1792004691.479548,
+      "marks_ms": {
+        "fills_wrapper_returned": 3736.997
+      },
+      "new_fills": [],
+      "new_fills_omitted": 0,
+      "reads_omitted": 0,
+      "elapsed_ms": 3986.053,
+      "failed": false,
+      "reads": [
+        {
+          "read": "list_orders",
+          "marks_ms": {
+            "submitted": 0.128,
+            "worker_started": 475.905,
+            "worker_completed": 585.599,
+            "coroutine_resumed": 3061.713,
+            "wrapper_returned": 3061.782
+          },
+          "rows": 44,
+          "pages": 1,
+          "bytes": 34913,
+          "cancel_calls": 2,
+          "cancel_ms": 0.101,
+          "cancel_spans": [],
+          "cancel_spans_omitted": 0
+        },
+        {
+          "read": "fills",
+          "marks_ms": {
+            "submitted": 3062.139,
+            "worker_started": 3286.697,
+            "worker_completed": 3336.511,
+            "coroutine_resumed": 3736.913,
+            "wrapper_returned": 3736.991
+          },
+          "rows": 6,
+          "pages": 1,
+          "bytes": 3086,
+          "cancel_calls": 2,
+          "cancel_ms": 0.108,
+          "cancel_spans": [],
+          "cancel_spans_omitted": 0
+        },
+        {
+          "read": "list_orders",
+          "marks_ms": {
+            "submitted": 3737.435,
+            "worker_started": 3774.393,
+            "worker_completed": 3827.263,
+            "coroutine_resumed": 3835.594,
+            "wrapper_returned": 3835.647
+          },
+          "rows": 44,
+          "pages": 1,
+          "bytes": 34913,
+          "cancel_calls": 2,
+          "cancel_ms": 0.092,
+          "cancel_spans": [],
+          "cancel_spans_omitted": 0
+        },
+        {
+          "read": "positions",
+          "marks_ms": {
+            "submitted": 3836.123,
+            "worker_started": 3836.472,
+            "worker_completed": 3881.715,
+            "coroutine_resumed": 3884.595,
+            "wrapper_returned": 3884.675
+          },
+          "rows": 3,
+          "pages": 1,
+          "bytes": 1404,
+          "cancel_calls": 1,
+          "cancel_ms": 0.061,
+          "cancel_spans": [],
+          "cancel_spans_omitted": 0
+        },
+        {
+          "read": "balance",
+          "marks_ms": {
+            "submitted": 3886.045,
+            "worker_started": 3893.228,
+            "worker_completed": 3937.141,
+            "coroutine_resumed": 3985.767,
+            "wrapper_returned": 3985.836
+          },
+          "rows": null,
+          "pages": null,
+          "bytes": null,
+          "cancel_calls": 1,
+          "cancel_ms": 0.051,
+          "cancel_spans": [],
+          "cancel_spans_omitted": 0
+        }
+      ],
+      "counts": {
+        "cycles": 12,
+        "reported": 3,
+        "quiet": 9,
+        "suppressed": 0
+      },
+      "clock_basis": "monotonic_offsets_from_started_at",
+      "worker_complete_basis": "entire_client_callback_not_http_arrival",
+      "not_realized_pnl": true,
+      "max_reports_per_60s": 12
+    },
+    {
+      "timestamp": "2026-10-14T19:05:03.906314927Z",
+      "at": 1792004703.8198965,
+      "venue": "kalshi",
+      "mode": "diagnostic",
+      "version": 1,
+      "cycle": 14,
+      "started_at": 1792004700.6791263,
+      "full": false,
+      "retry_remaining_s": 0,
+      "previous_fills_returned_at": 1792004699.437577,
+      "marks_ms": {
+        "fills_wrapper_returned": 2296.806
+      },
+      "new_fills": [],
+      "new_fills_omitted": 0,
+      "reads_omitted": 0,
+      "elapsed_ms": 3140.771,
+      "failed": false,
+      "reads": [
+        {
+          "read": "list_orders",
+          "marks_ms": {
+            "submitted": 0.102,
+            "worker_started": 202.096,
+            "worker_completed": 299.526,
+            "coroutine_resumed": 1671.338,
+            "wrapper_returned": 1671.425
+          },
+          "rows": 44,
+          "pages": 1,
+          "bytes": 34913,
+          "cancel_calls": 2,
+          "cancel_ms": 0.125,
+          "cancel_spans": [],
+          "cancel_spans_omitted": 0
+        },
+        {
+          "read": "fills",
+          "marks_ms": {
+            "submitted": 1671.68,
+            "worker_started": 1899.568,
+            "worker_completed": 1945.159,
+            "coroutine_resumed": 2296.738,
+            "wrapper_returned": 2296.8
+          },
+          "rows": 6,
+          "pages": 1,
+          "bytes": 3086,
+          "cancel_calls": 2,
+          "cancel_ms": 0.095,
+          "cancel_spans": [],
+          "cancel_spans_omitted": 0
+        },
+        {
+          "read": "list_orders",
+          "marks_ms": {
+            "submitted": 2297.2,
+            "worker_started": 2314.52,
+            "worker_completed": 2363.265,
+            "coroutine_resumed": 2372.293,
+            "wrapper_returned": 2372.358
+          },
+          "rows": 44,
+          "pages": 1,
+          "bytes": 34913,
+          "cancel_calls": 1,
+          "cancel_ms": 0.049,
+          "cancel_spans": [],
+          "cancel_spans_omitted": 0
+        },
+        {
+          "read": "positions",
+          "marks_ms": {
+            "submitted": 2372.858,
+            "worker_started": 2384.777,
+            "worker_completed": 2444.173,
+            "coroutine_resumed": 2681.581,
+            "wrapper_returned": 2681.68
+          },
+          "rows": 3,
+          "pages": 1,
+          "bytes": 1404,
+          "cancel_calls": 2,
+          "cancel_ms": 0.114,
+          "cancel_spans": [],
+          "cancel_spans_omitted": 0
+        },
+        {
+          "read": "balance",
+          "marks_ms": {
+            "submitted": 2682.752,
+            "worker_started": 2787.504,
+            "worker_completed": 2878.738,
+            "coroutine_resumed": 3140.379,
+            "wrapper_returned": 3140.472
+          },
+          "rows": null,
+          "pages": null,
+          "bytes": null,
+          "cancel_calls": 2,
+          "cancel_ms": 0.118,
+          "cancel_spans": [],
+          "cancel_spans_omitted": 0
+        }
+      ],
+      "counts": {
+        "cycles": 14,
+        "reported": 4,
+        "quiet": 10,
+        "suppressed": 0
+      },
+      "clock_basis": "monotonic_offsets_from_started_at",
+      "worker_complete_basis": "entire_client_callback_not_http_arrival",
+      "not_realized_pnl": true,
+      "max_reports_per_60s": 12
+    },
+    {
+      "timestamp": "2026-10-14T19:05:09.228579133Z",
+      "at": 1792004707.8750439,
+      "venue": "kalshi",
+      "mode": "diagnostic",
+      "version": 1,
+      "cycle": 15,
+      "started_at": 1792004704.004682,
+      "full": false,
+      "retry_remaining_s": 0,
+      "previous_fills_returned_at": 1792004702.9759326,
+      "marks_ms": {
+        "fills_wrapper_returned": 3126.6
+      },
+      "new_fills": [],
+      "new_fills_omitted": 0,
+      "reads_omitted": 0,
+      "elapsed_ms": 3870.362,
+      "failed": false,
+      "reads": [
+        {
+          "read": "list_orders",
+          "marks_ms": {
+            "submitted": 0.129,
+            "worker_started": 150.41,
+            "worker_completed": 252.51,
+            "coroutine_resumed": 1505.422,
+            "wrapper_returned": 1505.486
+          },
+          "rows": 44,
+          "pages": 1,
+          "bytes": 34913,
+          "cancel_calls": 2,
+          "cancel_ms": 0.097,
+          "cancel_spans": [],
+          "cancel_spans_omitted": 0
+        },
+        {
+          "read": "fills",
+          "marks_ms": {
+            "submitted": 1505.725,
+            "worker_started": 1769.844,
+            "worker_completed": 1840.837,
+            "coroutine_resumed": 3126.524,
+            "wrapper_returned": 3126.593
+          },
+          "rows": 6,
+          "pages": 1,
+          "bytes": 3086,
+          "cancel_calls": 2,
+          "cancel_ms": 0.103,
+          "cancel_spans": [],
+          "cancel_spans_omitted": 0
+        },
+        {
+          "read": "list_orders",
+          "marks_ms": {
+            "submitted": 3126.984,
+            "worker_started": 3193.649,
+            "worker_completed": 3279.726,
+            "coroutine_resumed": 3728.176,
+            "wrapper_returned": 3728.252
+          },
+          "rows": 44,
+          "pages": 1,
+          "bytes": 34913,
+          "cancel_calls": 2,
+          "cancel_ms": 0.101,
+          "cancel_spans": [],
+          "cancel_spans_omitted": 0
+        },
+        {
+          "read": "positions",
+          "marks_ms": {
+            "submitted": 3728.74,
+            "worker_started": 3760.874,
+            "worker_completed": 3802.983,
+            "coroutine_resumed": 3806.944,
+            "wrapper_returned": 3807.006
+          },
+          "rows": 3,
+          "pages": 1,
+          "bytes": 1404,
+          "cancel_calls": 2,
+          "cancel_ms": 0.097,
+          "cancel_spans": [],
+          "cancel_spans_omitted": 0
+        },
+        {
+          "read": "balance",
+          "marks_ms": {
+            "submitted": 3807.973,
+            "worker_started": 3808.419,
+            "worker_completed": 3844.719,
+            "coroutine_resumed": 3870.122,
+            "wrapper_returned": 3870.188
+          },
+          "rows": null,
+          "pages": null,
+          "bytes": null,
+          "cancel_calls": 1,
+          "cancel_ms": 0.047,
+          "cancel_spans": [],
+          "cancel_spans_omitted": 0
+        }
+      ],
+      "counts": {
+        "cycles": 15,
+        "reported": 5,
+        "quiet": 10,
+        "suppressed": 0
+      },
+      "clock_basis": "monotonic_offsets_from_started_at",
+      "worker_complete_basis": "entire_client_callback_not_http_arrival",
+      "not_realized_pnl": true,
+      "max_reports_per_60s": 12
+    },
+    {
+      "timestamp": "2026-10-14T19:05:34.170796214Z",
+      "at": 1792004733.801674,
+      "venue": "kalshi",
+      "mode": "diagnostic",
+      "version": 1,
+      "cycle": 28,
+      "started_at": 1792004730.7125087,
+      "full": true,
+      "retry_remaining_s": 0,
+      "previous_fills_returned_at": 1792004728.908418,
+      "marks_ms": {
+        "fills_wrapper_returned": 635.138
+      },
+      "new_fills": [],
+      "new_fills_omitted": 0,
+      "reads_omitted": 0,
+      "elapsed_ms": 3089.166,
+      "failed": false,
+      "reads": [
+        {
+          "read": "list_orders",
+          "marks_ms": {
+            "submitted": 0.025,
+            "worker_started": 74.861,
+            "worker_completed": 412.64,
+            "coroutine_resumed": 416.431,
+            "wrapper_returned": 416.482
+          },
+          "rows": 2657,
+          "pages": 3,
+          "bytes": 2103689,
+          "cancel_calls": 7,
+          "cancel_ms": 0.293,
+          "cancel_spans": [],
+          "cancel_spans_omitted": 0
+        },
+        {
+          "read": "fills",
+          "marks_ms": {
+            "submitted": 429.299,
+            "worker_started": 429.528,
+            "worker_completed": 514.719,
+            "coroutine_resumed": 635.063,
+            "wrapper_returned": 635.132
+          },
+          "rows": 447,
+          "pages": 1,
+          "bytes": 228065,
+          "cancel_calls": 2,
+          "cancel_ms": 0.101,
+          "cancel_spans": [],
+          "cancel_spans_omitted": 0
+        },
+        {
+          "read": "list_orders",
+          "marks_ms": {
+            "submitted": 638.725,
+            "worker_started": 737.337,
+            "worker_completed": 1422.308,
+            "coroutine_resumed": 1828.119,
+            "wrapper_returned": 1828.227
+          },
+          "rows": 2657,
+          "pages": 3,
+          "bytes": 2103689,
+          "cancel_calls": 3,
+          "cancel_ms": 0.179,
+          "cancel_spans": [],
+          "cancel_spans_omitted": 0
+        },
+        {
+          "read": "positions",
+          "marks_ms": {
+            "submitted": 1852.35,
+            "worker_started": 1916.961,
+            "worker_completed": 1992.47,
+            "coroutine_resumed": 2677.856,
+            "wrapper_returned": 2677.928
+          },
+          "rows": 3,
+          "pages": 1,
+          "bytes": 1404,
+          "cancel_calls": 2,
+          "cancel_ms": 0.096,
+          "cancel_spans": [],
+          "cancel_spans_omitted": 0
+        },
+        {
+          "read": "balance",
+          "marks_ms": {
+            "submitted": 2679.212,
+            "worker_started": 2695.786,
+            "worker_completed": 2738.412,
+            "coroutine_resumed": 3084.443,
+            "wrapper_returned": 3084.537
+          },
+          "rows": null,
+          "pages": null,
+          "bytes": null,
+          "cancel_calls": 1,
+          "cancel_ms": 0.064,
+          "cancel_spans": [],
+          "cancel_spans_omitted": 0
+        }
+      ],
+      "counts": {
+        "cycles": 28,
+        "reported": 6,
+        "quiet": 22,
+        "suppressed": 0
+      },
+      "clock_basis": "monotonic_offsets_from_started_at",
+      "worker_complete_basis": "entire_client_callback_not_http_arrival",
+      "not_realized_pnl": true,
+      "max_reports_per_60s": 12
+    }
+  ],
+  "cycle12_decomposition": [
+    {
+      "read": "list_orders",
+      "worker_queue_ms": 475.777,
+      "whole_callback_ms": 109.69400000000007,
+      "worker_complete_to_coroutine_ms": 2476.114,
+      "cancellation_ms_overlaps_other_intervals": 0.101
+    },
+    {
+      "read": "fills",
+      "worker_queue_ms": 224.558,
+      "whole_callback_ms": 49.81399999999985,
+      "worker_complete_to_coroutine_ms": 400.40200000000004,
+      "cancellation_ms_overlaps_other_intervals": 0.108
+    },
+    {
+      "read": "list_orders",
+      "worker_queue_ms": 36.958000000000084,
+      "whole_callback_ms": 52.86999999999989,
+      "worker_complete_to_coroutine_ms": 8.331000000000131,
+      "cancellation_ms_overlaps_other_intervals": 0.092
+    },
+    {
+      "read": "positions",
+      "worker_queue_ms": 0.34900000000016007,
+      "whole_callback_ms": 45.24299999999994,
+      "worker_complete_to_coroutine_ms": 2.8799999999996544,
+      "cancellation_ms_overlaps_other_intervals": 0.061
+    },
+    {
+      "read": "balance",
+      "worker_queue_ms": 7.182999999999993,
+      "whole_callback_ms": 43.91300000000001,
+      "worker_complete_to_coroutine_ms": 48.62599999999975,
+      "cancellation_ms_overlaps_other_intervals": 0.051
+    }
+  ],
+  "health": [
+    {
+      "name": "bot",
+      "state": "online",
+      "replicas": {
+        "running": 1,
+        "crashed": 0,
+        "total": 1
+      },
+      "has_issues": false,
+      "active": [
+        {
+          "id": "4f84d690-5ecb-4357-8284-b0244bddd80b",
+          "status": "SUCCESS",
+          "createdAt": "2026-10-14T19:02:52.124Z",
+          "statusUpdatedAt": "2026-10-14T19:04:20.508Z"
+        }
+      ]
+    },
+    {
+      "name": "kalshi-recorder",
+      "state": "online",
+      "replicas": {
+        "running": 1,
+        "crashed": 0,
+        "total": 1
+      },
+      "has_issues": false,
+      "active": [
+        {
+          "id": "8453f919-b891-4aa7-8478-6fcf6b9c24ee",
+          "status": "SUCCESS",
+          "createdAt": "2026-10-14T16:36:40.384Z",
+          "statusUpdatedAt": "2026-10-14T16:38:15.302Z"
+        }
+      ]
+    }
+  ],
+  "recorder": {
+    "log_timestamp": "2026-10-14T19:00:01.184795665Z",
+    "commit": "a0782b743a31369fe25ddf6d2eea96df8511cd8d",
+    "storage": {
+      "cap_bytes": 4831838208,
+      "deleted_segments": 0,
+      "level": 0,
+      "used_bytes": 262044156
+    },
+    "gaps": {
+      "by_cause": {
+        "spot_reconnected": 6
+      },
+      "by_lane": {
+        "spot": 6
+      },
+      "open_ended_records": 0,
+      "records": 6
+    },
+    "coverage_certified": false,
+    "per_venue_spot_ticks_verified": false,
+    "segment_hashes_reverified": false,
+    "trade_receive_lag_s": {
+      "p50": 3.702,
+      "p95": 7.314,
+      "p99": 9.093
+    }
+  },
+  "limitations": [
+    "Initial traces include slow no-fill cycles; not a complete fill cohort.",
+    "Worker callback is all client processing/pages, not raw HTTP latency.",
+    "Cancellation spans overlap read timing; do not add them twice.",
+    "Only actual trace rows establish receipt coverage; generated counters do not.",
+    "The local-delay observation does not identify the blocking callback or prove it caused all losses.",
+    "Recorder metadata does not certify raw/per-venue coverage; sealed outcomes remain unread."
+  ]
+}

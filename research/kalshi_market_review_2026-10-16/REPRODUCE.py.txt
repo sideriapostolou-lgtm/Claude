@@ -1,0 +1,45 @@
+"""Offline verification of this bounded evidence; sends no requests and places no orders."""
+from pathlib import Path
+import base64, contextlib, hashlib, io, json, lzma, runpy, tempfile
+
+P=Path(__file__).resolve().parent
+sha=lambda b:hashlib.sha256(b).hexdigest()
+m=json.loads((P/'RUNTIME_MANIFEST.json').read_text())
+parts=[]
+for part in m['parts']:
+    b=(P/part['path']).read_bytes()
+    assert sha(b)==part['sha256'] and len(b)==part['bytes']
+    parts.append(b.decode().strip())
+packed=base64.b64decode(''.join(parts),validate=True)
+assert sha(packed)==m['archive_sha256']
+raw=lzma.decompress(packed)
+assert sha(raw)==m['unpacked_sha256']
+data=json.loads(raw)
+expected={x['path']:x for x in m['files']}
+assert len(data['files'])==len(expected)
+with tempfile.TemporaryDirectory(prefix='kalshi-market-evidence-') as directory:
+    root=Path(directory)
+    for item in data['files']:
+        name=item['path']; relative=Path(name)
+        assert not relative.is_absolute() and '..' not in relative.parts
+        b=item['text'].encode(); e=expected[name]
+        assert sha(b)==e['sha256'] and len(b)==e['bytes']
+        target=root/relative;target.parent.mkdir(parents=True,exist_ok=True);target.write_bytes(b)
+    for script,analysis in [('astra/money_audit.py','astra/MONEY_ANALYSIS.json'),
+                            ('sol/summarize_snapshot.py','sol/SNAPSHOT_SUMMARY.json'),
+                            ('other/analyze.py','other/ANALYSIS.json')]:
+        before=(root/analysis).read_bytes()
+        with contextlib.redirect_stdout(io.StringIO()):runpy.run_path(str(root/script),run_name='__main__')
+        assert (root/analysis).read_bytes()==before,analysis
+    final=json.loads((root/'final_status.json').read_text())['result']['structuredContent']['deploy']
+    assert len(final)==3
+    for row in final:
+        p=json.loads(row['message'].split('nightcrawler.speeddesk: speeddesk_live_status ',1)[1])
+        assert p['day_stop_latched'] and not p['trading_now'] and p['mode']=='paper'
+        assert p['cash_usd']==25.1219 and abs(p['total']['pnl_usd']+24.6195)<1e-9
+        assert abs(p['today']['pnl_usd']+5.1277)<1e-9
+        assert all(p[k]==0 for k in ('open_risk_usd','open_cost_usd','reserved_usd','positions','open_orders'))
+        assert p['caps']==dict(window_usd=10.,open_usd=20.,day_stop_usd=6.,clip=5.,total_stop_usd=10.)
+    print(json.dumps({'originals_verified':len(expected),'financial_audit_checks':114,
+                      'analyses_byte_identical':3,'final_status_samples_verified':len(final),
+                      'network_or_trading_calls':0,'profitability_established':False}))

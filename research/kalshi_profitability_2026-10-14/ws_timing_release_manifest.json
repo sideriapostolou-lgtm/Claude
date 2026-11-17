@@ -1,0 +1,35 @@
+{
+  "archive_sha256": "a3a56f294bb408e9b5459f4b058a0279c7a67320f8bcefd4ae21a18df4c22e1d",
+  "members": [
+    {
+      "member": "ws-timing-deployment-success.json",
+      "bytes": 1408,
+      "sha256": "cdbbd114805cc1f60504c875e24c7bce7fe46941f88cc35c5e5eee79cb3ea7a2"
+    },
+    {
+      "member": "ws-timing-before-release-status.json",
+      "bytes": 206889,
+      "sha256": "a496f3d757c41ab0a456353d6c749d307d95616d1c4104f96cb70b9eeb19e15e"
+    },
+    {
+      "member": "ws-timing-final-old-status.json",
+      "bytes": 513463,
+      "sha256": "c15a2ee9e189e4662a3aae2b40b36e3a5479260f495b92867e44cc412164eb62"
+    },
+    {
+      "member": "ws-timing-startup-logs.json",
+      "bytes": 911,
+      "sha256": "7853c77979517c42475ec0532ed03b30a850af57ee5631be9b8128a2ae66fee2"
+    },
+    {
+      "member": "ws-timing-startup-logs2.json",
+      "bytes": 265874,
+      "sha256": "1e7cad89235efb6e7a8cb3dc196bd7d6300abba263587d681ad46fdceb58a7e4"
+    },
+    {
+      "member": "ws-timing-restart-comparison.json",
+      "bytes": 2796,
+      "sha256": "6b602da863d374d6d0cf7e834eea490a1ea6f36ceb0002f186d0eb74aae18fb1"
+    }
+  ]
+}

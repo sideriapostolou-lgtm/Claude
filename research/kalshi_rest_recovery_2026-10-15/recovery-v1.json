@@ -1,0 +1,21 @@
+{
+  "head": "279d80990252be48c829386a6d2c189b6f3ccde5",
+  "files": {
+    "src/nightcrawler/speeddesk_kalshi.py": {
+      "sha256": "7946b64f9f1441ea8b02b1d17f5b2d400d7c8e7a65897eed8974373dac3ae9b9",
+      "bytes": 20805
+    },
+    "src/nightcrawler/speeddesk_kalshi_ws.py": {
+      "sha256": "100a44027e12a807b5c2aeef6b3063ff7b7947be4d4a3580cf5191c505a9869d",
+      "bytes": 24303
+    },
+    "tests/test_speeddesk_kalshi_rest_recovery.py": {
+      "sha256": "9c1afa36c42d8fa65ecb1103ee3a6a12a7e182c57552b0b2bec6f90e9eb211b1",
+      "bytes": 11989
+    }
+  },
+  "patch_sha256": "9d34e7543886204e5dc029b1093e2bb7f554e851fbb3e6585d8cbb07d75e7cd0",
+  "patch_bytes": 16915,
+  "new_test_cases": 54,
+  "source_base": "572c6bfe1089b4ca155305d9ee9c787ac59ab967"
+}

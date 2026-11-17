@@ -1,0 +1,83 @@
+{
+  "source": "e72f4b8b86dc812ab333a45d54151ae44f8c713f",
+  "deployment": "a717faa1-3c47-4a62-9b74-277da85b0fc6",
+  "scope": "Selected native status before PR75, not complete account ledger or cohort",
+  "observation": {
+    "timestamp": "2026-10-16T20:30:46.774968166Z",
+    "data": {
+      "at": 1792182646.5663047,
+      "mode": "live",
+      "configured_mode": "live",
+      "status": "REAL MONEY (Kalshi)",
+      "reason": "balancing_only",
+      "trading_now": true,
+      "waiting": "",
+      "as_of": 1792182646.5292683,
+      "authenticated": true,
+      "cash_usd": 46.9699,
+      "cash_at": 1792182645.8849092,
+      "reserved_usd": 0.6,
+      "open_risk_usd": 0.33,
+      "open_cost_usd": 0.33,
+      "at_risk_usd": 0.33,
+      "open_orders": 1,
+      "positions": 1,
+      "total_halted": false,
+      "day_stop_latched": false,
+      "integrity_error": null,
+      "caps": {
+        "window_usd": 20,
+        "open_usd": 40,
+        "day_stop_usd": 12,
+        "clip": 5,
+        "total_stop_usd": 10
+      },
+      "pair_protection": {
+        "protected_windows": [],
+        "total_windows": 114
+      },
+      "today": {
+        "day": "2026-10-16",
+        "windows": 45,
+        "fills": 126,
+        "settled_windows": 47,
+        "fees_usd": 0.4089,
+        "locked_usd": 5.162383216783218,
+        "directional_usd": -13.112083216783219,
+        "pnl_usd": -7.949700000000001,
+        "worst_usd": -2.8509,
+        "take_attempts": 0,
+        "take_fills": 0,
+        "maker_orders": 2537,
+        "maker_fills": 103,
+        "locks": 19,
+        "lock_fills": 17,
+        "take_fill_rate": null,
+        "maker_fill_rate": 0.04059913283405597,
+        "avg_latency_ms": 3977.9297299341324,
+        "latency_definition": "durable real decision to venue fill timestamp; maker includes resting time"
+      },
+      "total": {
+        "day": null,
+        "windows": 225,
+        "fills": 952,
+        "settled_windows": 242,
+        "fees_usd": 3.52562,
+        "locked_usd": 8.842332337662326,
+        "directional_usd": -36.28383233766233,
+        "pnl_usd": -27.44150000000001,
+        "worst_usd": -2.9791999999999987,
+        "take_attempts": 39,
+        "take_fills": 17,
+        "maker_orders": 9538,
+        "maker_fills": 690,
+        "locks": 161,
+        "lock_fills": 128,
+        "take_fill_rate": 0.4358974358974359,
+        "maker_fill_rate": 0.07234221010694065,
+        "avg_latency_ms": 3862.835352829017,
+        "latency_definition": "durable real decision to venue fill timestamp; maker includes resting time"
+      }
+    }
+  }
+}

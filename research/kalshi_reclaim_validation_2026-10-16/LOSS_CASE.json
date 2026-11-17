@@ -1,0 +1,17 @@
+{
+  "ticker": "KXBTC15M-26OCT111800-00",
+  "entry_ms": 1791755522295,
+  "entry_price": "0.45",
+  "entry_fee": "0.0174",
+  "official_result": "no",
+  "market_open_utc": "2026-10-11T21:45:00Z",
+  "market_close_utc": "2026-10-11T22:00:00Z",
+  "strike": 83441.34,
+  "max_observed_yes_bid_after_entry_before_close": "0.62",
+  "peak_bid_receipt_ms": 1791755695315,
+  "target_exit_attempts": 0,
+  "net_loss": "-0.4674",
+  "interpretation": "Selected reclaim condition did not predict a winning Up settlement. No observed target70c before expiry; fixedboth70andholdcontrolsretainloss. This does not test another fittedexit or establish broadwrong-directionrate.",
+  "sample_rows_after_entry_inclusive": 466,
+  "sample_rows_strictly_after_entry": 465
+}

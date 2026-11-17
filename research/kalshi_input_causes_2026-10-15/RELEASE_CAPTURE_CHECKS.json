@@ -1,0 +1,22 @@
+{
+  "checked_at_utc": "2026-10-15T17:51:48.907798+00:00",
+  "docs_only_changed": [
+    "docs/COORDINATION.md",
+    "docs/KALSHI_ONLINE_LEARNING.md",
+    "docs/WORKLOG.md"
+  ],
+  "original_doc_lines_and_headings_preserved": true,
+  "declaration_queryplan_hashes_unchanged": true,
+  "frozen_source_test_hashes_unchanged": true,
+  "preparation_archive_unchanged": true,
+  "all_selected_json_parsed": true,
+  "bounded_privacy_scan_patterns": [
+    "actualprivatekeyblocks",
+    "knowncredentialprefixes",
+    "bearercredentials",
+    "privateattachmentnames/ID"
+  ],
+  "bounded_privacy_failures": [],
+  "identifier_limit": "Source/deployment/window/order/fill/instance IDs and SHA hashes are expected nonsensitive evidence, not credential values. This boundedscan is not a universal secretproof.",
+  "app_tests": "No new app/source/test change after accepted full5744/14,mypy128/Ruff5; no unnecessary rerun for documentation/originalevidence."
+}

@@ -1,0 +1,170 @@
+{
+  "url": "https://docs.kalshi.com/openapi.yaml",
+  "before": "2026-10-16T03:03:24.784198+00:00",
+  "after": "2026-10-16T03:03:26.045520+00:00",
+  "status": 200,
+  "raw_sha256": "a33d05aaa5deab319674407d543b5c0027d41adbf2c4f8a11dab708a0debd35a",
+  "raw_bytes": 375273,
+  "paths": {
+    "/portfolio/orders/queue_positions": {
+      "get": {
+        "operationId": "GetOrderQueuePositions",
+        "summary": "Get Queue Positions for Orders",
+        "description": " Endpoint for getting queue positions for all resting orders. Queue position represents the number of contracts that need to be matched before an order receives a partial or full match, determined using price-time priority.",
+        "tags": [
+          "orders"
+        ],
+        "security": [
+          {
+            "kalshiAccessKey": [],
+            "kalshiAccessSignature": [],
+            "kalshiAccessTimestamp": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "market_tickers",
+            "in": "query",
+            "description": "Comma-separated list of market tickers to filter by",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "event_ticker",
+            "in": "query",
+            "description": "Event ticker to filter by",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/SubaccountQueryDefaultPrimary"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Queue positions retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GetOrderQueuePositionsResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequestError"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      }
+    },
+    "/portfolio/orders/{order_id}/queue_position": {
+      "get": {
+        "operationId": "GetOrderQueuePosition",
+        "summary": "Get Order Queue Position",
+        "description": " Endpoint for getting an order's queue position in the order book. This represents the amount of orders that need to be matched before this order receives a partial or full match. Queue position is determined using a price-time priority.",
+        "tags": [
+          "orders"
+        ],
+        "security": [
+          {
+            "kalshiAccessKey": [],
+            "kalshiAccessSignature": [],
+            "kalshiAccessTimestamp": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/OrderIdPath"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Queue position retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GetOrderQueuePositionResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFoundError"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      }
+    }
+  },
+  "schemas": {
+    "FixedPointCount": {
+      "type": "string",
+      "description": "Fixed-point contract count string (2 decimals, e.g., \"10.00\"; referred to as \"fp\" in field names). Requests accept 0-2 decimal places (e.g., \"10\", \"10.0\", \"10.00\"); responses always emit 2 decimals. Fractional contract values (e.g., \"2.50\") are supported; the minimum granularity is 0.01 contracts.",
+      "example": "10.00"
+    },
+    "GetOrderQueuePositionResponse": {
+      "type": "object",
+      "required": [
+        "queue_position_fp"
+      ],
+      "properties": {
+        "queue_position_fp": {
+          "$ref": "#/components/schemas/FixedPointCount",
+          "description": "The number of preceding shares before the order in the queue."
+        }
+      }
+    },
+    "GetOrderQueuePositionsResponse": {
+      "type": "object",
+      "required": [
+        "queue_positions"
+      ],
+      "properties": {
+        "queue_positions": {
+          "type": "array",
+          "description": "Queue positions for all matching orders",
+          "items": {
+            "$ref": "#/components/schemas/OrderQueuePosition"
+          }
+        }
+      }
+    },
+    "OrderQueuePosition": {
+      "type": "object",
+      "required": [
+        "order_id",
+        "market_ticker",
+        "queue_position_fp"
+      ],
+      "properties": {
+        "order_id": {
+          "type": "string",
+          "description": "The order ID"
+        },
+        "market_ticker": {
+          "type": "string",
+          "description": "The market ticker"
+        },
+        "queue_position_fp": {
+          "$ref": "#/components/schemas/FixedPointCount",
+          "description": "The number of preceding shares before the order in the queue."
+        }
+      }
+    }
+  },
+  "scope": "Public documentation only; no authenticated account read or deployed implementation verified",
+  "local_parser_note": "Task venv lacks PyYAML; system Python existing PyYAML6.0.3 parsed this public document. No package installed."
+}

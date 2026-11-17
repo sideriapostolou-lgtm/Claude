@@ -1,0 +1,9 @@
+{
+ "source_sha256":"a3b6edd704ed3f858a232b1edcc8495d2cfd39aa80b9823d9d3a24fe5ea06819",
+ "decision":"v4 source review reopened: observation-only failure recovery blocker",
+ "reproduction":"Admit window1000-1900. Diagnostic-only logger raises at successful forecast1300. Restore healthy logger; score official outcome1900.",
+ "actual_result":{"learner_forecasts":1,"learner_scored":1,"later_diagnostic_disposition":"scored","later_diagnostic_observation":"late_first_pass","later_diagnostic_pending_forecast_none":false},
+ "cause":"Slot emitted marker is committed only after logging returns. A failed logging attempt leaves slot eligible for future score receipt, which gets mislabeled as late first pass. A logging handler that writes then raises additionally allows duplicate slot output.",
+ "required":"Commit slot attempt before diagnostic side effects and prevent later score from being presented as first slot observation; regression for raising before and after log append, including more than one simultaneous forecast.",
+ "behavior":"No learner/practice decision change was observed; issue concerns observation attribution and at-most-once output."
+}

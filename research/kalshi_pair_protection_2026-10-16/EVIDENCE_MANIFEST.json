@@ -1,0 +1,236 @@
+{
+  "encoding": "Concatenate ordered parts, verify hashes, base64 decode, lzma decompress; JSON files[].utf8 are original UTF-8 bytes.",
+  "files": [
+    {
+      "name": "native/current_fills.json",
+      "sha256": "492f85647150e7f2024ed0cec51d9f9ad9b9100c3e43a46def75fa03466d5a30"
+    },
+    {
+      "name": "native/current_orders.json",
+      "sha256": "2fbfa50fe243ee539a89917b9c8359274eca0c86a1adba14804ca5a5183d2d9a"
+    },
+    {
+      "name": "native/current_orders_exact.json",
+      "sha256": "9390c788e222e2d8ea96bd9def966390a3ceb210e2d63a17c0d693eb905af3fd"
+    },
+    {
+      "name": "native/current_settlements.json",
+      "sha256": "31861421893dc4fcea1eb3338579b0c46a234dcd63cbc7085c74ba377c4cf185"
+    },
+    {
+      "name": "native/initial_financial.json",
+      "sha256": "70f97df4812f209ae99fb1fbd7d736ecaf8e67c762bddbeb3fc29f930cfc6663"
+    },
+    {
+      "name": "native/old_fills.json",
+      "sha256": "804d18fa5a695982682d64a7356c070aeba5b05c96f043c28c479a66ca805d21"
+    },
+    {
+      "name": "native/old_fills_splitA.json",
+      "sha256": "26fb457d66b46b906411915415afd9ffc928c2da0b96d3e329bf11cd0a9541f9"
+    },
+    {
+      "name": "native/old_fills_splitB.json",
+      "sha256": "c73c2e427dd96bbd9fe009c5bd3c64b2e1cf3bb9676da9642b0c258f2e5c3e20"
+    },
+    {
+      "name": "native/old_orders.json",
+      "sha256": "4f160147eb6151daad042bdb6a7110c697bcac9563d134ff265bf4fe15dd2099"
+    },
+    {
+      "name": "native/old_orders_00.json",
+      "sha256": "bb52bae31afe7a3073ef537f5580433815f90f1ec17419d4ae4a72f5b2c3ea5c"
+    },
+    {
+      "name": "native/old_orders_01.json",
+      "sha256": "62c081b26e74ab5fab6dbec30ecf3e598b2b081e5d7fe1862d96430774f2af9e"
+    },
+    {
+      "name": "native/old_orders_01A.json",
+      "sha256": "af74c56e5d0c1c26414b9945acef59a6900dac382512a88dd15ba2f2cbd662f2"
+    },
+    {
+      "name": "native/old_orders_01B.json",
+      "sha256": "5b0102d7a3c895a5864cd4d57ff5dbd27afd74840db10278df8b13bdeec69360"
+    },
+    {
+      "name": "native/old_orders_02.json",
+      "sha256": "914c9155770486f493c3ea158e6d245a35eb8631475d01a9bff7db09f13bee08"
+    },
+    {
+      "name": "native/old_orders_exact.json",
+      "sha256": "8a009ae93687a16da12b48f830cdd920ba79c386f50a504fcc2acd27ed1e0a2d"
+    },
+    {
+      "name": "native/old_settlements.json",
+      "sha256": "c54916b2f991c36bf020e749ccad2619fdf2baf8daa50cbb1a25650c77204116"
+    },
+    {
+      "name": "native/pre_epoch.json",
+      "sha256": "8ab1f4e182b4ff03444878d0f49cb800fa621eb9c46cdd82255ed22da0d11eb2"
+    },
+    {
+      "name": "native/pre_financial.json",
+      "sha256": "a0821700ea1ccf33f66a6fcea38cbb6d30ebaf424b345eb86803ab4286fd38f6"
+    },
+    {
+      "name": "native/pre_learning.json",
+      "sha256": "25f51604bb5bb74959e2d3aac96be5764dd6ebd62659dfb800c88dc528e9545c"
+    },
+    {
+      "name": "COHORT.json",
+      "sha256": "8049fe4d891cf2d4741ae2cde76ed117da792eae2947842f603d6d7248b62a6b"
+    },
+    {
+      "name": "cohort_audit.py",
+      "sha256": "9bdc029725cccca30d39591554bf39ec86e004d8ee23992db6ca37d2eb6d666f"
+    },
+    {
+      "name": "sol/BASELINE_RESULT.json",
+      "sha256": "5284e5cbb3167cb773774ea64ced45db3d820fbe8e9b9c05ba2981a4f3f14ece"
+    },
+    {
+      "name": "sol/INITIAL_REPORT.md",
+      "sha256": "0fb2a7fb82de2421569d01da33969466c42cabcb9556cdc0a2e3a87c928060af"
+    },
+    {
+      "name": "sol/IMPLEMENTATION_HANDOFF.md",
+      "sha256": "5d207eaa1401ae5df515e56113481b609f1ec4936d933fbfdc76999b69f4eb62"
+    },
+    {
+      "name": "sol/PATCH_RECEIPT.json",
+      "sha256": "8f9539eb0b90e5defbff689cf3abe18a09e36d965fc882180ecd9040fc868aea"
+    },
+    {
+      "name": "sol/FROZEN_PATCH.diff",
+      "sha256": "edaad1806ae064aa081019531bfc0d1084c8026510d86ce81b3f064d721ffc8e"
+    },
+    {
+      "name": "sol/FIRST_FROZEN_PATCH.diff",
+      "sha256": "23a459ed7a9ef5b32b62309f9a263de26bd7b9a6894de96fcc3f42aef76cbe6a"
+    },
+    {
+      "name": "sol/FIRST_PATCH_RECEIPT.json",
+      "sha256": "af0167202a2592f69d63037b2f550d7f58b9e9235045e479c41aea2d46d322d3"
+    },
+    {
+      "name": "sol/SPEED2_FIXTURE_PROPOSED.patch",
+      "sha256": "3272576706a842889cbc66a298316b4980471f29f78c3071ed18ff91879a4115"
+    },
+    {
+      "name": "astra/ARCHITECTURE_REVIEW.md",
+      "sha256": "3c79b2059323529e3a3848f3806c0cb053d6f59d5905329a085055b2bd7b7585"
+    },
+    {
+      "name": "astra/EXACT_PATCH_REVIEW.md",
+      "sha256": "a86faedd6921b1cc3b7d1e971579fa378f5c178f40041d27eccd9a5d959b5d13"
+    },
+    {
+      "name": "astra/COHORT_INDEPENDENT.json",
+      "sha256": "81cbbed28638110f0d843bbccadb1732ec8f6a2e449b5af760ce76cc26ae1163"
+    },
+    {
+      "name": "astra/audit_cohort_independent.py",
+      "sha256": "5f94e7a232c578ef99b30d4e7b7736495c370a772b1a14864dfff5a745f745a4"
+    },
+    {
+      "name": "astra/test_independent_pair_protection.py",
+      "sha256": "97dcd854ec55be695566698fb0062d07b535dd164332cdb7ded7d959b3983789"
+    },
+    {
+      "name": "FULL_PYTEST_FIRST_FAILURE.log",
+      "sha256": "d3889891ad4cc965093166f5437b09e5924b17cee29a36062fd51456a10e72dd"
+    },
+    {
+      "name": "MYPY.log",
+      "sha256": "5367630f76544670703a5514e62b641f6cd932249892372c781fc34b627fde27"
+    }
+  ],
+  "parts": [
+    {
+      "name": "EVIDENCE_00.b64.txt",
+      "bytes": 28000,
+      "sha256": "62e361b70a3480c87c1b460d53f83746b5241fc393c36e45c0ff15e0fc316f54"
+    },
+    {
+      "name": "EVIDENCE_01.b64.txt",
+      "bytes": 28000,
+      "sha256": "7285d9c194507bb71579768315be2b6dea7fbfdc53f1667f6d377e1002f96e7a"
+    },
+    {
+      "name": "EVIDENCE_02.b64.txt",
+      "bytes": 28000,
+      "sha256": "e9c0c931dc55fb3da50176e29fe06324e8c3aca6e69f26efcb8b5ac53bb0b389"
+    },
+    {
+      "name": "EVIDENCE_03.b64.txt",
+      "bytes": 28000,
+      "sha256": "b52ffe24ec1d19c01a6a28b8d5161ceef257fb6a24fc7fd577df9f2a7f6741a7"
+    },
+    {
+      "name": "EVIDENCE_04.b64.txt",
+      "bytes": 28000,
+      "sha256": "1de6869ef44fda87f849a881dfe2491b0d6a15e8dbafd1169872fa3e116df6d0"
+    },
+    {
+      "name": "EVIDENCE_05.b64.txt",
+      "bytes": 28000,
+      "sha256": "933d1f8d392329577d261f819a8536b9c4cda5eceeebf9d8a08d0ca5578d9baf"
+    },
+    {
+      "name": "EVIDENCE_06.b64.txt",
+      "bytes": 28000,
+      "sha256": "ad6fb1042e57a141e75f9ad2f5a1a16fbf169b8878c3df45149d1f2afd232255"
+    },
+    {
+      "name": "EVIDENCE_07.b64.txt",
+      "bytes": 28000,
+      "sha256": "25679347b700778c1e17359c2504993d3c58803b8573bdca53d7aeb9732b8fec"
+    },
+    {
+      "name": "EVIDENCE_08.b64.txt",
+      "bytes": 28000,
+      "sha256": "fb4af95cdb7fcffde83d14d22e9163007d1bc541f4780fc13d458fea9bd006ba"
+    },
+    {
+      "name": "EVIDENCE_09.b64.txt",
+      "bytes": 28000,
+      "sha256": "1417f767454e3940d87bc69bc797b96cf82b317faa8c3774acec0ad348aa5602"
+    },
+    {
+      "name": "EVIDENCE_10.b64.txt",
+      "bytes": 28000,
+      "sha256": "2c9e1a05e98b87d48387a256cc2119b55efe3750db02bd11d6761ff4940fd884"
+    },
+    {
+      "name": "EVIDENCE_11.b64.txt",
+      "bytes": 28000,
+      "sha256": "ce4eaf596192b2ef22b4e55be5d452a157384e328b89dd168599baccf914873b"
+    },
+    {
+      "name": "EVIDENCE_12.b64.txt",
+      "bytes": 28000,
+      "sha256": "2c9231e3cb461a5064115774d58e6c59850c845d1013d51588cd3468c47899ed"
+    },
+    {
+      "name": "EVIDENCE_13.b64.txt",
+      "bytes": 28000,
+      "sha256": "72c3eed66d0a44cf29edef15cf9c2b2652e40d0ddfbb49de089a04474777cdc0"
+    },
+    {
+      "name": "EVIDENCE_14.b64.txt",
+      "bytes": 26060,
+      "sha256": "3e2df1f006e8b0ae8595efcb9439807b2e40cfa6fa206cad1023b15f4abe3c2d"
+    }
+  ],
+  "combined_base64_sha256": "870fb6d5ba991bc4290e526b7c070edf664e9fcbd780bdec7c8a33b56e29c3b7",
+  "payload_sha256": "5ebac5c4e6a95e006e6dc4f9bc0e56f071501896ddf02f26b5e087897bb4e4c8",
+  "roundtrip": "Every original byte matched after decode.",
+  "privacy_scan": {
+    "pattern_findings": 0,
+    "actual_secret_values_read": false,
+    "private_operating_handoff_included": false
+  },
+  "scope": "Explicit past-production attempts, analysis, source review and first failure. Final full-suite and post-release evidence recorded separately.",
+  "reproduce": "Unpack safe relative paths, then python cohort_audit.py; standard library only. Independent fake script needs exact source/tests on PYTHONPATH, no real keys."
+}

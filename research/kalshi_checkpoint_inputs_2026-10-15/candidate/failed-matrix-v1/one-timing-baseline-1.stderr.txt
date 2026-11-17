@@ -1,0 +1,8 @@
+Traceback (most recent call last):
+  File "/workspace/private-handoffs/claude-2026-10-15/checkpoint-profile/candidate/profile_pair.py", line 255, in <module>
+    try: main()
+         ^^^^^^
+  File "/workspace/private-handoffs/claude-2026-10-15/checkpoint-profile/candidate/profile_pair.py", line 159, in main
+    result['input_bytes']=len(encoded(inputstate)); del inputstate
+    ~~~~~~^^^^^^^^^^^^^^^
+TypeError: 'Settlement' object does not support item assignment

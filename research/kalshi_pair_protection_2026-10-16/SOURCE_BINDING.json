@@ -1,0 +1,78 @@
+{
+  "running_source": "66d122b58000bdea98c95368bee5df912a9666bf",
+  "tested_tree": "21768bc1d087655cbc40dcecf7cf942ef825f3e8",
+  "candidate": "41a82f2d60daae091c821327962598b69e9790a9",
+  "deployment": "2af8d2be-77f7-4738-ab67-33c37c09b86b",
+  "readback_at": {
+    "current_time": "2026-10-16 04:33:28 UTC"
+  },
+  "readbacks": [
+    {
+      "status": "fulfilled",
+      "value": {
+        "path": "src/nightcrawler/speeddesk_live.py",
+        "blob_sha": "7e4a4f897f0a260f996837ce4e7880c8d0933557",
+        "sha256": "870158bafe8ef55c50c34262be24aa19b30e1916e0b15a34e978e926bfd3b4f2",
+        "exact_tested_content_matches": true
+      }
+    },
+    {
+      "status": "fulfilled",
+      "value": {
+        "path": "src/nightcrawler/speeddesk_live_model.py",
+        "blob_sha": "4edcfb85180d50242b1aa09215a7a8b16bd95e9d",
+        "sha256": "38f2a455a68b5d0f2a311e692d223286c043d0c2f8cdedd2d16344b66f54ba42",
+        "exact_tested_content_matches": true
+      }
+    },
+    {
+      "status": "fulfilled",
+      "value": {
+        "path": "tests/test_speeddesk_pair_protection.py",
+        "blob_sha": "1b0390cbaf8ea2ea46a34215f7f62bbcb308b5d5",
+        "sha256": "e6dee0cde3cdd807a23e01ccc25f49acde8ca4aa6810d68a42bd65dfe507f6eb",
+        "exact_tested_content_matches": true
+      }
+    },
+    {
+      "status": "fulfilled",
+      "value": {
+        "path": "tests/test_speeddesk_live_balancing.py",
+        "blob_sha": "76cf21175d8b820d3768247bd3fce6ecb9c610a6",
+        "sha256": "fcc681aba10a2a1a430f4de974f90e44a2120d6894e92590bfeddb65075be30b",
+        "exact_tested_content_matches": true
+      }
+    },
+    {
+      "status": "fulfilled",
+      "value": {
+        "path": "tests/test_speeddesk_live_pull.py",
+        "blob_sha": "5751e76330b72fe315cb5d6674ecd8977de0f0e6",
+        "sha256": "2dc23854509ca6a2cad20c71c538208abf71b53222132a9f4b1fdfc37934d80b",
+        "exact_tested_content_matches": true
+      }
+    },
+    {
+      "status": "fulfilled",
+      "value": {
+        "path": "tests/test_speeddesk_live_crash.py",
+        "blob_sha": "d5742009dc758345c8aa6985daae2bcf8bb7d90b",
+        "sha256": "1b7c83510741f282ef51d9d24c09b04c8baffacbfd6daa5103afc87517cc2335",
+        "exact_tested_content_matches": true
+      }
+    },
+    {
+      "status": "fulfilled",
+      "value": {
+        "path": "tests/test_speeddesk_speed2_risk_integration.py",
+        "blob_sha": "f47eab73209a446e653b3e55ce51e649300b7f9d",
+        "sha256": "ba8aba142e045e883ea9117abeb8b049b883c5abc532d90b8ae79712bb15e328",
+        "exact_tested_content_matches": true
+      }
+    }
+  ],
+  "source_metadata": "native/tail_deployments.json",
+  "health": "native/tail_health.json",
+  "declaration_commit": "c2788090aac2d220f2c39191e8247f3814fac104",
+  "code_changed_after_checks": false
+}

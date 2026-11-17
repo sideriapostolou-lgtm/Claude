@@ -1,0 +1,84 @@
+{
+  "checked_at_utc": "2026-10-15T05:17:00Z",
+  "checked_at_pacific": "2026-10-14 10:17 PM PDT",
+  "timestamp_precision": "Minute-level task record; GitHub blob identities are exact.",
+  "branch_head": "a165f34fb8992192a33befcd6a5e8e4a09bc9dd3",
+  "github_files": [
+    {
+      "path": "AGENTS.md",
+      "blob_sha": "389266a51ccba3d21072371fd680bc8e4aff2af9",
+      "error": false
+    },
+    {
+      "path": "docs/COORDINATION.md",
+      "blob_sha": "9c3e7c18aa4e8a17af48bc1cdd42f600061b5dbf",
+      "error": false
+    },
+    {
+      "path": "docs/WORKLOG.md",
+      "blob_sha": "e7e0068f1249358f8728a5ced1ed2e81af3aae90",
+      "error": false
+    },
+    {
+      "path": "research/kalshi_profitability_2026-10-14/PR47_DEPLOYMENT.md",
+      "blob_sha": "33c13fb39f85c958e322b8afbcaecfc052d6531b",
+      "error": false
+    },
+    {
+      "path": "research/tjr_validation_2026-10-14/HISTORICAL_STATUS.json",
+      "blob_sha": "e079d3c762ced81b2262a5261ab164f291e3d5ac",
+      "error": false
+    }
+  ],
+  "gate": {
+    "pr47_exact_deployment_restart_evidence_recorded_complete": true,
+    "pr47_evidence": {
+      "merge": "e8db34ee34d95411ac7f695f704ceb82ef8e32d5",
+      "deployment": "f707494f-1b45-4610-9488-def9796b5923",
+      "success_utc": "2026-10-14T16:24:05.418Z"
+    },
+    "current_execution_work_complete": false,
+    "reason": "PR58 partial correction deployed and restart audited, but fixed full-window evidence/freshness attribution remains active. A new numbers-only timing candidate is isolated locally.",
+    "earlier_explicit_offline_reprioritization_recorded": true,
+    "new_reprioritization_or_production_authority_from_reminder": false
+  },
+  "historical_status": {
+    "status": "BLOCKED",
+    "reason": "VERIFIED_ACTUAL_MNQZ2025_DATA_BUNDLE_MISSING",
+    "generatedAtUTC": "2026-10-14T18:55:39.000Z",
+    "protocol": {
+      "version": "TJR_DEVELOPMENT_RUNNER_v1",
+      "sourceVersion": "TJR_BC23_MNQZ25_SWEEP_BOS_v0.1.1_calendar",
+      "contract": "MNQZ2025",
+      "warmup": "2025-09-19",
+      "start": "2025-09-22",
+      "end": "2025-10-31",
+      "partition": "DEVELOPMENT",
+      "holdout": [
+        "2025-11-03",
+        "2025-12-12"
+      ],
+      "liveExecutionEnabled": false,
+      "priceUnit": "INTEGER_TICKS",
+      "tickSize": 0.25,
+      "tickUSD": 0.5,
+      "assumedBarAvailability": "INTERVAL_CLOSE",
+      "observedLatency": false
+    },
+    "historicalTradesTested": 0,
+    "historicalPnlUSD": null,
+    "holdoutOpened": false,
+    "holdoutExposureStatus": "NOT_ACCESSED_NO_INPUT",
+    "holdoutReplayed": false,
+    "paperTradingStarted": false,
+    "liveExecutionEnabled": false,
+    "performanceClaimAllowed": false
+  },
+  "page_check": {
+    "performed": false,
+    "reason": "Authentic MNQ data/cost blocker and active execution-first work remain unresolved. Prior complete saved Page source and tests retained; no new claim that Pages are currently unchanged or fully reread in this bounded check."
+  },
+  "decision": "Leave TJR-MNQ-001 queued/blocked and unfinished, automation unchanged, no routine unchanged notification. Continue active Kalshi task without interference.",
+  "next": "Authorized actual MNQZ2025 development minute OHLCV Sep19–Oct31 with contract mapping/license/timestamps/bar convention and verified account/execution/platform/data costs; then reuse saved frozen development implementation. Paper start needs its own verified runtime/feed evidence; live stays disabled.",
+  "scope": "This queue check only reads current GitHub records and adds dated docs evidence. No source, deployment, variable, money-limit, stop/resume, funding or order action is authorized by it; no duplicate research/backtest or holdout access."
+}

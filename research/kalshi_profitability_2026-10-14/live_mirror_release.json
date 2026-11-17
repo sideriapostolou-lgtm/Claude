@@ -1,0 +1,90 @@
+{
+  "task": "EXEC-DELAY-001",
+  "pr": 58,
+  "merge_commit": "1e8d0be07b280292fa873a2f5da9b22dd02f28c3",
+  "merged_at_utc": "2026-10-15T04:47:47Z",
+  "merged_at_pacific": "2026-10-14 21:47:47 PDT",
+  "deployment_id": "fc0a73e9-f052-435a-94b2-ce7b1272f36e",
+  "deployment_status": "SUCCESS",
+  "status_updated_at_utc": "2026-10-15T04:48:49.546Z",
+  "regions": [
+    "us-east4-eqdc4a"
+  ],
+  "reviewed_four_file_bundle": "0faa0c5d9a1fd07c4824f51b323ec5a4d068837d6d0fdf64fb4ea6cee7eccac2",
+  "polydesk_live_startup_log_utc": "2026-10-15T04:48:47.144689549Z",
+  "speeddesk_started_log_utc": "2026-10-15T04:49:28.288229652Z",
+  "first_new_live_status_log_utc": "2026-10-15T04:49:34.104644899Z",
+  "first_new_status_trading_ready": false,
+  "first_new_status_reason": "Kalshi account data stale",
+  "health": "Both services online1/1, no reportedissues/failures in point-in-time query; empty oldstagedpatch not applied",
+  "bounded_startup_traceback_query": "No returned traceback in original queried startup intervals through04:49:50Z, not continuous/global proof.",
+  "restart_audit": "LIVE_MIRROR_RESTART_AUDIT.md",
+  "restart_limits": [
+    "Cash pair-credit explanation is consistent with application logs and pinned source, not a raw venue cash export.",
+    "No raw ledger read or independent on-disk hash-chain audit was performed. Restore and persistence conclusions are bounded by observed receipts and code ordering.",
+    "First new status is account-data-stale and does not prove trading readiness.",
+    "Historical PnL is not the anchored consumed stop budget; reset/resume anchors or token values are not exported.",
+    "Session diagnostics reset across restart and cannot be differenced as persistent financial counters."
+  ],
+  "full_pytest": {
+    "passed": 5564,
+    "skipped_existing": 14,
+    "elapsed_s": 300.09,
+    "exit": 0
+  },
+  "mypy_source_files": 127,
+  "ruff_changed_python_files": 4,
+  "independent_targeted_tests": 123,
+  "prechange_capture_closed_utc": "2026-10-15T04:47:18.296358+00:00",
+  "prechange_two_window_results": {
+    "windows_utc": [
+      [
+        "2026-10-15T04:15:00Z",
+        "2026-10-15T04:30:00Z"
+      ],
+      [
+        "2026-10-15T04:30:00Z",
+        "2026-10-15T04:45:00Z"
+      ]
+    ],
+    "pnl_usd": [
+      -2.45,
+      -1.85
+    ],
+    "locked_usd": 0,
+    "directional_usd": -4.3,
+    "fees_usd": 0,
+    "not_profitability_evidence": true
+  },
+  "postchange_fixed_capture": {
+    "source_commit": "1e8d0be07b280292fa873a2f5da9b22dd02f28c3",
+    "deployment_id": "fc0a73e9-f052-435a-94b2-ce7b1272f36e",
+    "restart_partial_start_utc": "2026-10-15T04:49:27Z",
+    "windows_utc": [
+      [
+        "2026-10-15T05:00:00Z",
+        "2026-10-15T05:15:00Z"
+      ],
+      [
+        "2026-10-15T05:15:00Z",
+        "2026-10-15T05:30:00Z"
+      ]
+    ],
+    "publication_tail_end_utc": "2026-10-15T05:32:00Z",
+    "windows_pacific": [
+      "October14 10:00\u201310:15 PM PDT",
+      "October14 10:15\u201310:30 PM PDT"
+    ],
+    "publication_tail_pacific": "October14 10:32 PM PDT",
+    "status": "Assigned before results, ongoing; no source release during capture. No successful financial/freshness result claimed."
+  },
+  "state": "Partial correction deployed/restart audited; EXEC remains open; comparison unstarted.",
+  "no_change": [
+    "Railway variables",
+    "money limits",
+    "stop or resume budgets",
+    "trading rules",
+    "Polymarket code"
+  ],
+  "source_no_change_after_review": true
+}

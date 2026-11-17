@@ -1,0 +1,22 @@
+{
+  "at": {
+    "current_time": "2026-10-15 20:47:19 UTC"
+  },
+  "result": {
+    "content": [
+      {
+        "type": "text",
+        "text": "Action completed."
+      }
+    ],
+    "structuredContent": {
+      "sha": "b7b7192e5d463e57417d05acb3b168744941b9fc",
+      "merged": true,
+      "message": "Pull Request successfully merged"
+    },
+    "isError": false
+  },
+  "after": {
+    "current_time": "2026-10-15 20:47:22 UTC"
+  }
+}
