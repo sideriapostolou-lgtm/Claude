@@ -1,0 +1,123 @@
+{
+  "request": {
+    "projectId": "75750847-85c0-41a3-a2a7-b7f2201a51e9",
+    "environmentId": "17f7b0e0-104c-4903-9484-0106748b3cdb",
+    "deploymentId": "2e88601d-c9c7-474f-add8-72c0a13c1a4b",
+    "startDate": "2026-10-15T19:30:00Z",
+    "endDate": "2026-10-15T19:47:00Z",
+    "filter": "\"kalshi_online_learning_status\"",
+    "limit": 500
+  },
+  "before": {
+    "current_time": "2026-10-15 19:47:09 UTC"
+  },
+  "after": {
+    "current_time": "2026-10-15 19:47:10 UTC"
+  },
+  "result": {
+    "content": [
+      {
+        "type": "text",
+        "text": "**Deployment 2e88601d-c9c7-474f-add8-72c0a13c1a4b** [SUCCESS]\nservice: f84d3b52-002f-44cb-931e-bc9e3e097e97, env: 17f7b0e0-104c-4903-9484-0106748b3cdb\n\n### Deploy logs (8)\n2026-10-15T19:30:06.675160605Z info 2026-10-15T19:30:06Z INFO nightcrawler.kalshi_online_learning: kalshi_online_learning_status {\"at\":1792092606.6495197,\"mode\":\"observe_only\",\"live_application\":false,\"profitability_proven\":false,\"protocol\":\"kalshi-online-calibration-v1-h300-g5-b10-prior20\",\"source_fingerprint\":\"b6112b7ef8955b20af734157c1e7f5ec533bf98f70e034558f06670578c391f2\",\"learning\":{\"mode\":\"observe_only\",\"enabled\":true,\"live_application\":false,\"profitability_proven\":false,\"protocol\":\"kalshi-online-calibration-v1-h300-g5-b10-prior20\",\"source_fingerprint\":\"b6112b7ef8955b20af734157c1e7f5ec533bf98f70e034558f06670578c391f2\",\"history_protocol\":\"kalshi-online-calibration-v1-h300-g5-b10-prior20\",\"history_source_fingerprint\":\"b6112b7ef8955b20af734157c1e7f5ec533bf98f70e034558f06670578c391f2\",\"forecast_horizon_s\":300,\"grace_s\":5,\"bins\":10,\"pending\":0,\"forecasts\":0,\"scored\":0,\"unknown\":23,\"brier_baseline\":null,\"brier_shadow\":null,\"error\":null,\"coverage\":\"quiet observations; full data coverage not certified\",\"exclusions\":{\"startup_inside\":2,\"late\":0,\"invalid\":0,\"pregap\":21,\"terms_changed\":0,\"missing_label\":0,\"outcome_known\":0,\"invalid_label\":0,\"capacity\":0}}}\n2026-10-15T19:31:15.670850638Z info 2026-10-15T19:31:15Z INFO nightcrawler.kalshi_online_learning: kalshi_online_learning_status {\"at\":1792092675.6505578,\"mode\":\"observe_only\",\"live_application\":false,\"profitability_proven\":false,\"protocol\":\"kalshi-online-calibration-v1-h300-g5-b10-prior20\",\"source_fingerprint\":\"b6112b7ef8955b20af734157c1e7f5ec533bf98f70e034558f06670578c391f2\",\"learning\":{\"mode\":\"observe_only\",\"enabled\":true,\"live_application\":false,\"profitability_proven\":false,\"protocol\":\"kalshi-online-calibration-v1-h300-g5-b10-prior20\",\"source_fingerprint\":\"b6112b7ef8955b20af734157c1e7f5ec533bf98f70e034558f06670578c391f2\",\"history_protocol\":\"kalshi-online-calibration-v1-h300-g5-b10-prior20\",\"history_source_fingerprint\":\"b6112b7ef8955b20af734157c1e7f5ec533bf98f70e034558f06670578c391f2\",\"forecast_horizon_s\":300,\"grace_s\":5,\"bins\":10,\"pending\":0,\"forecasts\":0,\"scored\":0,\"unknown\":23,\"brier_baseline\":null,\"brier_shadow\":null,\"error\":null,\"coverage\":\"quiet observations; full data coverage not certified\",\"exclusions\":{\"startup_inside\":2,\"late\":0,\"invalid\":0,\"pregap\":21,\"terms_changed\":0,\"missing_label\":0,\"outcome_known\":0,\"invalid_label\":0,\"capacity\":0}}}\n2026-10-15T19:33:23.304564198Z info 2026-10-15T19:33:23Z INFO nightcrawler.kalshi_online_learning: kalshi_online_learning_status {\"at\":1792092803.2930682,\"mode\":\"observe_only\",\"live_application\":false,\"profitability_proven\":false,\"protocol\":\"kalshi-online-calibration-v1-h300-g5-b10-prior20\",\"source_fingerprint\":\"b6112b7ef8955b20af734157c1e7f5ec533bf98f70e034558f06670578c391f2\",\"learning\":{\"mode\":\"observe_only\",\"enabled\":true,\"live_application\":false,\"profitability_proven\":false,\"protocol\":\"kalshi-online-calibration-v1-h300-g5-b10-prior20\",\"source_fingerprint\":\"b6112b7ef8955b20af734157c1e7f5ec533bf98f70e034558f06670578c391f2\",\"history_protocol\":\"kalshi-online-calibration-v1-h300-g5-b10-prior20\",\"history_source_fingerprint\":\"b6112b7ef8955b20af734157c1e7f5ec533bf98f70e034558f06670578c391f2\",\"forecast_horizon_s\":300,\"grace_s\":5,\"bins\":10,\"pending\":0,\"forecasts\":0,\"scored\":0,\"unknown\":23,\"brier_baseline\":null,\"brier_shadow\":null,\"error\":null,\"coverage\":\"quiet observations; full data coverage not certified\",\"exclusions\":{\"startup_inside\":2,\"late\":0,\"invalid\":0,\"pregap\":21,\"terms_changed\":0,\"missing_label\":0,\"outcome_known\":0,\"invalid_label\":0,\"capacity\":0}}}\n2026-10-15T19:34:58.115033901Z info 2026-10-15T19:34:58Z INFO nightcrawler.kalshi_online_learning: kalshi_online_learning_status {\"at\":1792092898.1076272,\"mode\":\"observe_only\",\"live_application\":false,\"profitability_proven\":false,\"protocol\":\"kalshi-online-calibration-v1-h300-g5-b10-prior20\",\"source_fingerprint\":\"b6112b7ef8955b20af734157c1e7f5ec533bf98f70e034558f06670578c391f2\",\"learning\":{\"mode\":\"observe_only\",\"enabled\":true,\"live_application\":false,\"profitability_proven\":false,\"protocol\":\"kalshi-online-calibration-v1-h300-g5-b10-prior20\",\"source_fingerprint\":\"b6112b7ef8955b20af734157c1e7f5ec533bf98f70e034558f06670578c391f2\",\"history_protocol\":\"kalshi-online-calibration-v1-h300-g5-b10-prior20\",\"history_source_fingerprint\":\"b6112b7ef8955b20af734157c1e7f5ec533bf98f70e034558f06670578c391f2\",\"forecast_horizon_s\":300,\"grace_s\":5,\"bins\":10,\"pending\":0,\"forecasts\":0,\"scored\":0,\"unknown\":23,\"brier_baseline\":null,\"brier_shadow\":null,\"error\":null,\"coverage\":\"quiet observations; full data coverage not certified\",\"exclusions\":{\"startup_inside\":2,\"late\":0,\"invalid\":0,\"pregap\":21,\"terms_changed\":0,\"missing_label\":0,\"outcome_known\":0,\"invalid_label\":0,\"capacity\":0}}}\n2026-10-15T19:36:44.282988217Z info 2026-10-15T19:36:44Z INFO nightcrawler.kalshi_online_learning: kalshi_online_learning_status {\"at\":1792093004.2667532,\"mode\":\"observe_only\",\"live_application\":false,\"profitability_proven\":false,\"protocol\":\"kalshi-online-calibration-v1-h300-g5-b10-prior20\",\"source_fingerprint\":\"b6112b7ef8955b20af734157c1e7f5ec533bf98f70e034558f06670578c391f2\",\"learning\":{\"mode\":\"observe_only\",\"enabled\":true,\"live_application\":false,\"profitability_proven\":false,\"protocol\":\"kalshi-online-calibration-v1-h300-g5-b10-prior20\",\"source_fingerprint\":\"b6112b7ef8955b20af734157c1e7f5ec533bf98f70e034558f06670578c391f2\",\"history_protocol\":\"kalshi-online-calibration-v1-h300-g5-b10-prior20\",\"history_source_fingerprint\":\"b6112b7ef8955b20af734157c1e7f5ec533bf98f70e034558f06670578c391f2\",\"forecast_horizon_s\":300,\"grace_s\":5,\"bins\":10,\"pending\":0,\"forecasts\":0,\"scored\":0,\"unknown\":24,\"brier_baseline\":null,\"brier_shadow\":null,\"error\":null,\"coverage\":\"quiet observations; full data coverage not certified\",\"exclusions\":{\"startup_inside\":2,\"late\":0,\"invalid\":0,\"pregap\":22,\"terms_changed\":0,\"missing_label\":0,\"outcome_known\":0,\"invalid_label\":0,\"capacity\":0}}}\n2026-10-15T19:39:59.636641017Z info 2026-10-15T19:39:56Z INFO nightcrawler.kalshi_online_learning: kalshi_online_learning_status {\"at\":1792093196.7179618,\"mode\":\"observe_only\",\"live_application\":false,\"profitability_proven\":false,\"protocol\":\"kalshi-online-calibration-v1-h300-g5-b10-prior20\",\"source_fingerprint\":\"b6112b7ef8955b20af734157c1e7f5ec533bf98f70e034558f06670578c391f2\",\"learning\":{\"mode\":\"observe_only\",\"enabled\":true,\"live_application\":false,\"profitability_proven\":false,\"protocol\":\"kalshi-online-calibration-v1-h300-g5-b10-prior20\",\"source_fingerprint\":\"b6112b7ef8955b20af734157c1e7f5ec533bf98f70e034558f06670578c391f2\",\"history_protocol\":\"kalshi-online-calibration-v1-h300-g5-b10-prior20\",\"history_source_fingerprint\":\"b6112b7ef8955b20af734157c1e7f5ec533bf98f70e034558f06670578c391f2\",\"forecast_horizon_s\":300,\"grace_s\":5,\"bins\":10,\"pending\":0,\"forecasts\":0,\"scored\":0,\"unknown\":24,\"brier_baseline\":null,\"brier_shadow\":null,\"error\":null,\"coverage\":\"quiet observations; full data coverage not certified\",\"exclusions\":{\"startup_inside\":2,\"late\":0,\"invalid\":0,\"pregap\":22,\"terms_changed\":0,\"missing_label\":0,\"outcome_known\":0,\"invalid_label\":0,\"capacity\":0}}}\n2026-10-15T19:42:24.008251449Z info 2026-10-15T19:42:23Z INFO nightcrawler.kalshi_online_learning: kalshi_online_learning_status {\"at\":1792093343.986185,\"mode\":\"observe_only\",\"live_application\":false,\"profitability_proven\":false,\"protocol\":\"kalshi-online-calibration-v1-h300-g5-b10-prior20\",\"source_fingerprint\":\"b6112b7ef8955b20af734157c1e7f5ec533bf98f70e034558f06670578c391f2\",\"learning\":{\"mode\":\"observe_only\",\"enabled\":true,\"live_application\":false,\"profitability_proven\":false,\"protocol\":\"kalshi-online-calibration-v1-h300-g5-b10-prior20\",\"source_fingerprint\":\"b6112b7ef8955b20af734157c1e7f5ec533bf98f70e034558f06670578c391f2\",\"history_protocol\":\"kalshi-online-calibration-v1-h300-g5-b10-prior20\",\"history_source_fingerprint\":\"b6112b7ef8955b20af734157c1e7f5ec533bf98f70e034558f06670578c391f2\",\"forecast_horizon_s\":300,\"grace_s\":5,\"bins\":10,\"pending\":0,\"forecasts\":0,\"scored\":0,\"unknown\":24,\"brier_baseline\":null,\"brier_shadow\":null,\"error\":null,\"coverage\":\"quiet observations; full data coverage not certified\",\"exclusions\":{\"startup_inside\":2,\"late\":0,\"invalid\":0,\"pregap\":22,\"terms_changed\":0,\"missing_label\":0,\"outcome_known\":0,\"invalid_label\":0,\"capacity\":0}}}\n2026-10-15T19:45:12.749943481Z info 2026-10-15T19:45:12Z INFO nightcrawler.kalshi_online_learning: kalshi_online_learning_status {\"at\":1792093512.7396295,\"mode\":\"observe_only\",\"live_application\":false,\"profitability_proven\":false,\"protocol\":\"kalshi-online-calibration-v1-h300-g5-b10-prior20\",\"source_fingerprint\":\"b6112b7ef8955b20af734157c1e7f5ec533bf98f70e034558f06670578c391f2\",\"learning\":{\"mode\":\"observe_only\",\"enabled\":true,\"live_application\":false,\"profitability_proven\":false,\"protocol\":\"kalshi-online-calibration-v1-h300-g5-b10-prior20\",\"source_fingerprint\":\"b6112b7ef8955b20af734157c1e7f5ec533bf98f70e034558f06670578c391f2\",\"history_protocol\":\"kalshi-online-calibration-v1-h300-g5-b10-prior20\",\"history_source_fingerprint\":\"b6112b7ef8955b20af734157c1e7f5ec533bf98f70e034558f06670578c391f2\",\"forecast_horizon_s\":300,\"grace_s\":5,\"bins\":10,\"pending\":0,\"forecasts\":0,\"scored\":0,\"unknown\":24,\"brier_baseline\":null,\"brier_shadow\":null,\"error\":null,\"coverage\":\"quiet observations; full data coverage not certified\",\"exclusions\":{\"startup_inside\":2,\"late\":0,\"invalid\":0,\"pregap\":22,\"terms_changed\":0,\"missing_label\":0,\"outcome_known\":0,\"invalid_label\":0,\"capacity\":0}}}"
+      }
+    ],
+    "structuredContent": {
+      "scope": "deployment",
+      "deploymentId": "2e88601d-c9c7-474f-add8-72c0a13c1a4b",
+      "serviceId": "f84d3b52-002f-44cb-931e-bc9e3e097e97",
+      "environmentId": "17f7b0e0-104c-4903-9484-0106748b3cdb",
+      "status": "SUCCESS",
+      "deploy": [
+        {
+          "timestamp": "2026-10-15T19:30:06.675160605Z",
+          "severity": "info",
+          "message": "2026-10-15T19:30:06Z INFO nightcrawler.kalshi_online_learning: kalshi_online_learning_status {\"at\":1792092606.6495197,\"mode\":\"observe_only\",\"live_application\":false,\"profitability_proven\":false,\"protocol\":\"kalshi-online-calibration-v1-h300-g5-b10-prior20\",\"source_fingerprint\":\"b6112b7ef8955b20af734157c1e7f5ec533bf98f70e034558f06670578c391f2\",\"learning\":{\"mode\":\"observe_only\",\"enabled\":true,\"live_application\":false,\"profitability_proven\":false,\"protocol\":\"kalshi-online-calibration-v1-h300-g5-b10-prior20\",\"source_fingerprint\":\"b6112b7ef8955b20af734157c1e7f5ec533bf98f70e034558f06670578c391f2\",\"history_protocol\":\"kalshi-online-calibration-v1-h300-g5-b10-prior20\",\"history_source_fingerprint\":\"b6112b7ef8955b20af734157c1e7f5ec533bf98f70e034558f06670578c391f2\",\"forecast_horizon_s\":300,\"grace_s\":5,\"bins\":10,\"pending\":0,\"forecasts\":0,\"scored\":0,\"unknown\":23,\"brier_baseline\":null,\"brier_shadow\":null,\"error\":null,\"coverage\":\"quiet observations; full data coverage not certified\",\"exclusions\":{\"startup_inside\":2,\"late\":0,\"invalid\":0,\"pregap\":21,\"terms_changed\":0,\"missing_label\":0,\"outcome_known\":0,\"invalid_label\":0,\"capacity\":0}}}",
+          "attributes": [
+            {
+              "key": "level",
+              "value": "\"info\""
+            }
+          ]
+        },
+        {
+          "timestamp": "2026-10-15T19:31:15.670850638Z",
+          "severity": "info",
+          "message": "2026-10-15T19:31:15Z INFO nightcrawler.kalshi_online_learning: kalshi_online_learning_status {\"at\":1792092675.6505578,\"mode\":\"observe_only\",\"live_application\":false,\"profitability_proven\":false,\"protocol\":\"kalshi-online-calibration-v1-h300-g5-b10-prior20\",\"source_fingerprint\":\"b6112b7ef8955b20af734157c1e7f5ec533bf98f70e034558f06670578c391f2\",\"learning\":{\"mode\":\"observe_only\",\"enabled\":true,\"live_application\":false,\"profitability_proven\":false,\"protocol\":\"kalshi-online-calibration-v1-h300-g5-b10-prior20\",\"source_fingerprint\":\"b6112b7ef8955b20af734157c1e7f5ec533bf98f70e034558f06670578c391f2\",\"history_protocol\":\"kalshi-online-calibration-v1-h300-g5-b10-prior20\",\"history_source_fingerprint\":\"b6112b7ef8955b20af734157c1e7f5ec533bf98f70e034558f06670578c391f2\",\"forecast_horizon_s\":300,\"grace_s\":5,\"bins\":10,\"pending\":0,\"forecasts\":0,\"scored\":0,\"unknown\":23,\"brier_baseline\":null,\"brier_shadow\":null,\"error\":null,\"coverage\":\"quiet observations; full data coverage not certified\",\"exclusions\":{\"startup_inside\":2,\"late\":0,\"invalid\":0,\"pregap\":21,\"terms_changed\":0,\"missing_label\":0,\"outcome_known\":0,\"invalid_label\":0,\"capacity\":0}}}",
+          "attributes": [
+            {
+              "key": "level",
+              "value": "\"info\""
+            }
+          ]
+        },
+        {
+          "timestamp": "2026-10-15T19:33:23.304564198Z",
+          "severity": "info",
+          "message": "2026-10-15T19:33:23Z INFO nightcrawler.kalshi_online_learning: kalshi_online_learning_status {\"at\":1792092803.2930682,\"mode\":\"observe_only\",\"live_application\":false,\"profitability_proven\":false,\"protocol\":\"kalshi-online-calibration-v1-h300-g5-b10-prior20\",\"source_fingerprint\":\"b6112b7ef8955b20af734157c1e7f5ec533bf98f70e034558f06670578c391f2\",\"learning\":{\"mode\":\"observe_only\",\"enabled\":true,\"live_application\":false,\"profitability_proven\":false,\"protocol\":\"kalshi-online-calibration-v1-h300-g5-b10-prior20\",\"source_fingerprint\":\"b6112b7ef8955b20af734157c1e7f5ec533bf98f70e034558f06670578c391f2\",\"history_protocol\":\"kalshi-online-calibration-v1-h300-g5-b10-prior20\",\"history_source_fingerprint\":\"b6112b7ef8955b20af734157c1e7f5ec533bf98f70e034558f06670578c391f2\",\"forecast_horizon_s\":300,\"grace_s\":5,\"bins\":10,\"pending\":0,\"forecasts\":0,\"scored\":0,\"unknown\":23,\"brier_baseline\":null,\"brier_shadow\":null,\"error\":null,\"coverage\":\"quiet observations; full data coverage not certified\",\"exclusions\":{\"startup_inside\":2,\"late\":0,\"invalid\":0,\"pregap\":21,\"terms_changed\":0,\"missing_label\":0,\"outcome_known\":0,\"invalid_label\":0,\"capacity\":0}}}",
+          "attributes": [
+            {
+              "key": "level",
+              "value": "\"info\""
+            }
+          ]
+        },
+        {
+          "timestamp": "2026-10-15T19:34:58.115033901Z",
+          "severity": "info",
+          "message": "2026-10-15T19:34:58Z INFO nightcrawler.kalshi_online_learning: kalshi_online_learning_status {\"at\":1792092898.1076272,\"mode\":\"observe_only\",\"live_application\":false,\"profitability_proven\":false,\"protocol\":\"kalshi-online-calibration-v1-h300-g5-b10-prior20\",\"source_fingerprint\":\"b6112b7ef8955b20af734157c1e7f5ec533bf98f70e034558f06670578c391f2\",\"learning\":{\"mode\":\"observe_only\",\"enabled\":true,\"live_application\":false,\"profitability_proven\":false,\"protocol\":\"kalshi-online-calibration-v1-h300-g5-b10-prior20\",\"source_fingerprint\":\"b6112b7ef8955b20af734157c1e7f5ec533bf98f70e034558f06670578c391f2\",\"history_protocol\":\"kalshi-online-calibration-v1-h300-g5-b10-prior20\",\"history_source_fingerprint\":\"b6112b7ef8955b20af734157c1e7f5ec533bf98f70e034558f06670578c391f2\",\"forecast_horizon_s\":300,\"grace_s\":5,\"bins\":10,\"pending\":0,\"forecasts\":0,\"scored\":0,\"unknown\":23,\"brier_baseline\":null,\"brier_shadow\":null,\"error\":null,\"coverage\":\"quiet observations; full data coverage not certified\",\"exclusions\":{\"startup_inside\":2,\"late\":0,\"invalid\":0,\"pregap\":21,\"terms_changed\":0,\"missing_label\":0,\"outcome_known\":0,\"invalid_label\":0,\"capacity\":0}}}",
+          "attributes": [
+            {
+              "key": "level",
+              "value": "\"info\""
+            }
+          ]
+        },
+        {
+          "timestamp": "2026-10-15T19:36:44.282988217Z",
+          "severity": "info",
+          "message": "2026-10-15T19:36:44Z INFO nightcrawler.kalshi_online_learning: kalshi_online_learning_status {\"at\":1792093004.2667532,\"mode\":\"observe_only\",\"live_application\":false,\"profitability_proven\":false,\"protocol\":\"kalshi-online-calibration-v1-h300-g5-b10-prior20\",\"source_fingerprint\":\"b6112b7ef8955b20af734157c1e7f5ec533bf98f70e034558f06670578c391f2\",\"learning\":{\"mode\":\"observe_only\",\"enabled\":true,\"live_application\":false,\"profitability_proven\":false,\"protocol\":\"kalshi-online-calibration-v1-h300-g5-b10-prior20\",\"source_fingerprint\":\"b6112b7ef8955b20af734157c1e7f5ec533bf98f70e034558f06670578c391f2\",\"history_protocol\":\"kalshi-online-calibration-v1-h300-g5-b10-prior20\",\"history_source_fingerprint\":\"b6112b7ef8955b20af734157c1e7f5ec533bf98f70e034558f06670578c391f2\",\"forecast_horizon_s\":300,\"grace_s\":5,\"bins\":10,\"pending\":0,\"forecasts\":0,\"scored\":0,\"unknown\":24,\"brier_baseline\":null,\"brier_shadow\":null,\"error\":null,\"coverage\":\"quiet observations; full data coverage not certified\",\"exclusions\":{\"startup_inside\":2,\"late\":0,\"invalid\":0,\"pregap\":22,\"terms_changed\":0,\"missing_label\":0,\"outcome_known\":0,\"invalid_label\":0,\"capacity\":0}}}",
+          "attributes": [
+            {
+              "key": "level",
+              "value": "\"info\""
+            }
+          ]
+        },
+        {
+          "timestamp": "2026-10-15T19:39:59.636641017Z",
+          "severity": "info",
+          "message": "2026-10-15T19:39:56Z INFO nightcrawler.kalshi_online_learning: kalshi_online_learning_status {\"at\":1792093196.7179618,\"mode\":\"observe_only\",\"live_application\":false,\"profitability_proven\":false,\"protocol\":\"kalshi-online-calibration-v1-h300-g5-b10-prior20\",\"source_fingerprint\":\"b6112b7ef8955b20af734157c1e7f5ec533bf98f70e034558f06670578c391f2\",\"learning\":{\"mode\":\"observe_only\",\"enabled\":true,\"live_application\":false,\"profitability_proven\":false,\"protocol\":\"kalshi-online-calibration-v1-h300-g5-b10-prior20\",\"source_fingerprint\":\"b6112b7ef8955b20af734157c1e7f5ec533bf98f70e034558f06670578c391f2\",\"history_protocol\":\"kalshi-online-calibration-v1-h300-g5-b10-prior20\",\"history_source_fingerprint\":\"b6112b7ef8955b20af734157c1e7f5ec533bf98f70e034558f06670578c391f2\",\"forecast_horizon_s\":300,\"grace_s\":5,\"bins\":10,\"pending\":0,\"forecasts\":0,\"scored\":0,\"unknown\":24,\"brier_baseline\":null,\"brier_shadow\":null,\"error\":null,\"coverage\":\"quiet observations; full data coverage not certified\",\"exclusions\":{\"startup_inside\":2,\"late\":0,\"invalid\":0,\"pregap\":22,\"terms_changed\":0,\"missing_label\":0,\"outcome_known\":0,\"invalid_label\":0,\"capacity\":0}}}",
+          "attributes": [
+            {
+              "key": "level",
+              "value": "\"info\""
+            }
+          ]
+        },
+        {
+          "timestamp": "2026-10-15T19:42:24.008251449Z",
+          "severity": "info",
+          "message": "2026-10-15T19:42:23Z INFO nightcrawler.kalshi_online_learning: kalshi_online_learning_status {\"at\":1792093343.986185,\"mode\":\"observe_only\",\"live_application\":false,\"profitability_proven\":false,\"protocol\":\"kalshi-online-calibration-v1-h300-g5-b10-prior20\",\"source_fingerprint\":\"b6112b7ef8955b20af734157c1e7f5ec533bf98f70e034558f06670578c391f2\",\"learning\":{\"mode\":\"observe_only\",\"enabled\":true,\"live_application\":false,\"profitability_proven\":false,\"protocol\":\"kalshi-online-calibration-v1-h300-g5-b10-prior20\",\"source_fingerprint\":\"b6112b7ef8955b20af734157c1e7f5ec533bf98f70e034558f06670578c391f2\",\"history_protocol\":\"kalshi-online-calibration-v1-h300-g5-b10-prior20\",\"history_source_fingerprint\":\"b6112b7ef8955b20af734157c1e7f5ec533bf98f70e034558f06670578c391f2\",\"forecast_horizon_s\":300,\"grace_s\":5,\"bins\":10,\"pending\":0,\"forecasts\":0,\"scored\":0,\"unknown\":24,\"brier_baseline\":null,\"brier_shadow\":null,\"error\":null,\"coverage\":\"quiet observations; full data coverage not certified\",\"exclusions\":{\"startup_inside\":2,\"late\":0,\"invalid\":0,\"pregap\":22,\"terms_changed\":0,\"missing_label\":0,\"outcome_known\":0,\"invalid_label\":0,\"capacity\":0}}}",
+          "attributes": [
+            {
+              "key": "level",
+              "value": "\"info\""
+            }
+          ]
+        },
+        {
+          "timestamp": "2026-10-15T19:45:12.749943481Z",
+          "severity": "info",
+          "message": "2026-10-15T19:45:12Z INFO nightcrawler.kalshi_online_learning: kalshi_online_learning_status {\"at\":1792093512.7396295,\"mode\":\"observe_only\",\"live_application\":false,\"profitability_proven\":false,\"protocol\":\"kalshi-online-calibration-v1-h300-g5-b10-prior20\",\"source_fingerprint\":\"b6112b7ef8955b20af734157c1e7f5ec533bf98f70e034558f06670578c391f2\",\"learning\":{\"mode\":\"observe_only\",\"enabled\":true,\"live_application\":false,\"profitability_proven\":false,\"protocol\":\"kalshi-online-calibration-v1-h300-g5-b10-prior20\",\"source_fingerprint\":\"b6112b7ef8955b20af734157c1e7f5ec533bf98f70e034558f06670578c391f2\",\"history_protocol\":\"kalshi-online-calibration-v1-h300-g5-b10-prior20\",\"history_source_fingerprint\":\"b6112b7ef8955b20af734157c1e7f5ec533bf98f70e034558f06670578c391f2\",\"forecast_horizon_s\":300,\"grace_s\":5,\"bins\":10,\"pending\":0,\"forecasts\":0,\"scored\":0,\"unknown\":24,\"brier_baseline\":null,\"brier_shadow\":null,\"error\":null,\"coverage\":\"quiet observations; full data coverage not certified\",\"exclusions\":{\"startup_inside\":2,\"late\":0,\"invalid\":0,\"pregap\":22,\"terms_changed\":0,\"missing_label\":0,\"outcome_known\":0,\"invalid_label\":0,\"capacity\":0}}}",
+          "attributes": [
+            {
+              "key": "level",
+              "value": "\"info\""
+            }
+          ]
+        }
+      ]
+    },
+    "isError": false
+  }
+}

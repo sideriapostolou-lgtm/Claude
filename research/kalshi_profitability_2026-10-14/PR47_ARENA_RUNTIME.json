@@ -1,0 +1,59 @@
+{
+  "deployment": "f707494f-1b45-4610-9488-def9796b5923",
+  "commit": "e8db34ee34d95411ac7f695f704ceb82ef8e32d5",
+  "limitation": "Bounded process counters. Late events before a window opens can already invalidate it; only explicit settlement evidence can confirm a valid window.",
+  "samples": [
+    {
+      "timestamp": "2026-10-14T16:25:09.373477841Z",
+      "message": "2026-10-14T16:25:09Z INFO nightcrawler.kalshi_arena: kalshi_arena_status residents=12 windows=0 void=69 void_feed=60 received=104740 dropped=0 late=136 coalesced=98962 pass_p99_ms=2.966 pass_max_ms=3.935 duty_pct=1.23 lag_s=1.04 errors=0 live_flush_us_p99=13189 live_flush_us_max=230297"
+    },
+    {
+      "timestamp": "2026-10-14T16:29:08.909072705Z",
+      "message": "2026-10-14T16:29:08Z INFO nightcrawler.kalshi_arena: kalshi_arena_feed pid=24 put=577241 dropped=0 frames=2316 kib=82359 pending=8 pending_peak=12636 blocked=0 sliced=653 flush_us_p50=1402 flush_us_p99=19287 flush_us_max=252140"
+    },
+    {
+      "timestamp": "2026-10-14T16:30:06.689108514Z",
+      "message": "2026-10-14T16:30:01Z INFO nightcrawler.kalshi_arena: kalshi_arena_status residents=12 windows=0 void=69 void_feed=60 received=588941 dropped=0 late=53649 coalesced=537683 pass_p99_ms=1.519 pass_max_ms=2.93 duty_pct=0.74 lag_s=1.53 errors=0 live_flush_us_p99=13052 live_flush_us_max=252140"
+    },
+    {
+      "timestamp": "2026-10-14T16:31:11.875639612Z",
+      "message": "2026-10-14T16:31:11Z INFO nightcrawler.kalshi_arena: kalshi_arena_status residents=12 windows=0 void=69 void_feed=60 received=712790 dropped=0 late=53649 coalesced=549886 pass_p99_ms=115.33 pass_max_ms=129.492 duty_pct=17.59 lag_s=1.01 errors=0 live_flush_us_p99=18230 live_flush_us_max=23975"
+    },
+    {
+      "timestamp": "2026-10-14T16:32:18.903821428Z",
+      "message": "2026-10-14T16:32:18Z INFO nightcrawler.kalshi_arena: kalshi_arena_status residents=12 windows=0 void=69 void_feed=60 received=811632 dropped=0 late=53649 coalesced=566004 pass_p99_ms=113.645 pass_max_ms=131.707 duty_pct=14.02 lag_s=1.24 errors=0 live_flush_us_p99=16218 live_flush_us_max=167356"
+    },
+    {
+      "timestamp": "2026-10-14T16:33:38.829240511Z",
+      "message": "2026-10-14T16:33:35Z INFO nightcrawler.kalshi_arena: kalshi_arena_status residents=12 windows=0 void=69 void_feed=60 received=931646 dropped=0 late=53649 coalesced=574424 pass_p99_ms=117.924 pass_max_ms=131.492 duty_pct=16.71 lag_s=1.39 errors=0 live_flush_us_p99=15306 live_flush_us_max=239906"
+    },
+    {
+      "timestamp": "2026-10-14T16:34:08.966451322Z",
+      "message": "2026-10-14T16:34:08Z INFO nightcrawler.kalshi_arena: kalshi_arena_feed pid=24 put=990757 dropped=0 frames=5141 kib=141470 pending=1020 pending_peak=8224 blocked=0 sliced=1043 flush_us_p50=1495 flush_us_p99=18194 flush_us_max=239906"
+    },
+    {
+      "timestamp": "2026-10-14T16:34:48.784508768Z",
+      "message": "2026-10-14T16:34:45Z INFO nightcrawler.kalshi_arena: kalshi_arena_status residents=12 windows=0 void=69 void_feed=60 received=1051126 dropped=0 late=53649 coalesced=574424 pass_p99_ms=115.156 pass_max_ms=128.779 duty_pct=18.96 lag_s=1.11 errors=0 live_flush_us_p99=19050 live_flush_us_max=22588"
+    },
+    {
+      "timestamp": "2026-10-14T16:36:58.166360309Z",
+      "message": "2026-10-14T16:36:58Z INFO nightcrawler.kalshi_arena: kalshi_arena_status residents=12 windows=0 void=69 void_feed=60 received=1227204 dropped=0 late=53649 coalesced=574424 pass_p99_ms=101.954 pass_max_ms=126.468 duty_pct=15.19 lag_s=1.21 errors=0 live_flush_us_p99=16085 live_flush_us_max=44643"
+    },
+    {
+      "timestamp": "2026-10-14T16:38:02.381639074Z",
+      "message": "2026-10-14T16:38:02Z INFO nightcrawler.kalshi_arena: kalshi_arena_status residents=12 windows=0 void=69 void_feed=60 received=1322608 dropped=0 late=53649 coalesced=574424 pass_p99_ms=112.291 pass_max_ms=142.365 duty_pct=17.38 lag_s=1.13 errors=0 live_flush_us_p99=15045 live_flush_us_max=20604"
+    },
+    {
+      "timestamp": "2026-10-14T16:39:09.594384734Z",
+      "message": "2026-10-14T16:39:09Z INFO nightcrawler.kalshi_arena: kalshi_arena_feed pid=24 put=1443575 dropped=0 frames=7948 kib=206507 pending=754 pending_peak=5928 blocked=0 sliced=1444 flush_us_p50=1283 flush_us_p99=15045 flush_us_max=20249"
+    },
+    {
+      "timestamp": "2026-10-14T16:39:26.059864129Z",
+      "message": "2026-10-14T16:39:26Z INFO nightcrawler.kalshi_arena: kalshi_arena_status residents=12 windows=0 void=69 void_feed=60 received=1468034 dropped=0 late=53649 coalesced=574424 pass_p99_ms=116.198 pass_max_ms=133.391 duty_pct=18.99 lag_s=1.52 errors=0 live_flush_us_p99=14927 live_flush_us_max=20064"
+    },
+    {
+      "timestamp": "2026-10-14T16:40:49.832656973Z",
+      "message": "2026-10-14T16:40:47Z INFO nightcrawler.kalshi_arena: kalshi_arena_status residents=12 windows=0 void=69 void_feed=60 received=1586420 dropped=0 late=53649 coalesced=574424 pass_p99_ms=92.894 pass_max_ms=122.156 duty_pct=15.14 lag_s=1.02 errors=0 live_flush_us_p99=17844 live_flush_us_max=201873"
+    }
+  ]
+}

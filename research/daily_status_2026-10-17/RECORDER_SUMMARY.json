@@ -1,0 +1,102 @@
+{
+  "summary": {
+    "count": 24,
+    "minutes": 1440,
+    "fresh": 1440,
+    "btc": 1440,
+    "tape": 1440,
+    "gaps": 19,
+    "open": 0,
+    "byCause": {
+      "spot_reconnected": 19
+    },
+    "byLane": {
+      "spot": 19
+    },
+    "storageFrom": {
+      "cap_bytes": 4831838208,
+      "deleted_segments": 0,
+      "level": 0,
+      "used_bytes": 640914364
+    },
+    "storageTo": {
+      "cap_bytes": 4831838208,
+      "deleted_segments": 0,
+      "level": 0,
+      "used_bytes": 957132596
+    },
+    "growth": 316218232,
+    "last24hGrowth": 292979608,
+    "flags": [
+      "{\"cert\":false,\"hash\":false,\"verified\":false,\"read_only\":true,\"order\":false,\"rows\":false}"
+    ],
+    "sessions": [
+      "6196abf087e64f069778dfb2addee131"
+    ],
+    "commits": [
+      "a0782b743a31369fe25ddf6d2eea96df8511cd8d"
+    ],
+    "all429Null": false,
+    "errorsNull": true
+  },
+  "status": {
+    "environment": {
+      "id": "17f7b0e0-104c-4903-9484-0106748b3cdb",
+      "name": "production"
+    },
+    "services": [
+      {
+        "serviceId": "736b1c8a-8311-4ee0-9043-d05f508cd821",
+        "serviceName": "kalshi-recorder",
+        "state": "online",
+        "statusText": "Online",
+        "activeDeployments": [
+          {
+            "id": "8453f919-b891-4aa7-8478-6fcf6b9c24ee",
+            "status": "SUCCESS",
+            "createdAt": "2026-10-14T16:36:40.384Z",
+            "statusUpdatedAt": "2026-10-14T16:38:15.302Z"
+          }
+        ],
+        "replicaStatus": {
+          "running": 1,
+          "crashed": 0,
+          "total": 1
+        },
+        "cronJob": null,
+        "issues": {
+          "warningCount": 0,
+          "criticalCount": 0
+        },
+        "recentFailures": 0,
+        "recentFailedDeployments": [],
+        "hasIssues": false,
+        "isCronJob": false,
+        "hasVolume": true
+      }
+    ],
+    "pendingWork": [
+      {
+        "id": "patch:9a84e13c-3caf-4a85-b5f5-d9a2fcb8a021",
+        "kind": "EnvironmentPatch",
+        "status": "staged",
+        "changes": [],
+        "startedAt": "2026-10-12T16:21:53.480Z",
+        "workflowId": "commitChanges/17f7b0e0-104c-4903-9484-0106748b3cdb/9a84e13c-3caf-4a85-b5f5-d9a2fcb8a021"
+      }
+    ],
+    "summary": {
+      "totalServices": 1,
+      "servicesWithIssues": 0,
+      "totalFailures": 0
+    }
+  },
+  "warningQuery": {
+    "scope": "deployment",
+    "deploymentId": "8453f919-b891-4aa7-8478-6fcf6b9c24ee",
+    "serviceId": "736b1c8a-8311-4ee0-9043-d05f508cd821",
+    "environmentId": "17f7b0e0-104c-4903-9484-0106748b3cdb",
+    "status": "SUCCESS",
+    "deploy": []
+  }
+}

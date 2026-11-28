@@ -1,0 +1,38 @@
+{
+  "base": "3ce8a0b92f53916768a3e1c09cac700281d3c1cd",
+  "candidate_sha256": "a3b6edd704ed3f858a232b1edcc8495d2cfd39aa80b9823d9d3a24fe5ea06819",
+  "results": [
+    {
+      "scenario": "normal",
+      "checkpoints": 10,
+      "writes": 18,
+      "forecasts": 1,
+      "scored": 1,
+      "unknown": 1
+    },
+    {
+      "scenario": "observer_failed",
+      "checkpoints": 10,
+      "writes": 18,
+      "forecasts": 1,
+      "scored": 1,
+      "unknown": 1
+    },
+    {
+      "scenario": "observer_disabled",
+      "checkpoints": 10,
+      "writes": 18,
+      "forecasts": 1,
+      "scored": 1,
+      "unknown": 1
+    }
+  ],
+  "checks": [
+    "actual base vs candidate state",
+    "panels",
+    "learner complete state",
+    "exact serialized write bytes and fsync flags/order",
+    "number of clock reads"
+  ],
+  "limitations": "synthetic bounded sequence, no production/network/real order calls"
+}

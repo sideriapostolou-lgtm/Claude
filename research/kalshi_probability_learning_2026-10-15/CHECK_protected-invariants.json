@@ -1,0 +1,51 @@
+{
+  "protected_source": {
+    "src/nightcrawler/kalshi_online_learning.py": {
+      "exact": true,
+      "sha256": "16a14ff7d8bb933d4eb8e4251d0fdcf943c81e6f8c6f8f1720ced3d5e14f5fa8"
+    },
+    "src/nightcrawler/speeddesk_model.py": {
+      "exact": true,
+      "sha256": "50ba3b4f78c6efd031fdcd8bb1cb1a59ea2988973c341b9ad275345d70de7429"
+    },
+    "src/nightcrawler/speeddesk.py": {
+      "exact": true,
+      "sha256": "79a8ad7fc10879035297e2af4d87af1bff758b4f89c2adae3464fe812235477d"
+    },
+    "src/nightcrawler/speeddesk_feeds.py": {
+      "exact": true,
+      "sha256": "4a942d649af275cc6ad7b467462236e66c9a629cab0920e1a1adb3c24982dffd"
+    },
+    "src/nightcrawler/speeddesk_venues.py": {
+      "exact": true,
+      "sha256": "54f0c2eaea909621f24734d8cd73cdd46f2ea711d885269b6892c564bc9dff51"
+    },
+    "src/nightcrawler/speeddesk_kalshi.py": {
+      "exact": true,
+      "sha256": "53727b3d3f2ec6790469d53d8fb330f7501ad1838c558c887ea95c54840d8f82"
+    },
+    "src/nightcrawler/speeddesk_kalshi_ws.py": {
+      "exact": true,
+      "sha256": "d76e9dfa6a026f796f11503642a373a5a0f2799da8dabadf078c565591f82112"
+    },
+    "src/nightcrawler/speeddesk_live.py": {
+      "exact": true,
+      "sha256": "2471adff4eca63ee6abba73031da75793ae5e1b3cb0468e30e1e2d6b9934efd5"
+    },
+    "src/nightcrawler/speeddesk_live_model.py": {
+      "exact": true,
+      "sha256": "689207e3a681b591f64a43f03a359d2dc0dbe424cbc2f74809669866ffab36de"
+    },
+    "src/nightcrawler/config.py": {
+      "exact": true,
+      "sha256": "b0cf19e2601925d65431cc5943b2fce0aaab3edd741dfc19520865f7ebf9f6da"
+    },
+    "src/nightcrawler/polydesk.py": {
+      "exact": true,
+      "sha256": "aafda9a8716ec5a4cd53568ab64f497e433d9e81b39d0933bc95d74579a4acb5"
+    }
+  },
+  "arena_changed_definitions": [
+    "KalshiArena"
+  ]
+}

@@ -1,0 +1,64 @@
+{
+  "baseline": "13bf55bdd1b594ab340630e0755affdf97c6fdf5",
+  "inputs": {
+    "windows_per_desk": 400,
+    "closed_per_desk": 173,
+    "unresolved_expired_per_desk": 226,
+    "active_windows": 1,
+    "desks": [
+      "original",
+      "live_twin"
+    ],
+    "yes_levels": 111,
+    "no_levels": 168,
+    "updates_per_pass": 150,
+    "callbacks_per_pass": 300
+  },
+  "metric": "thread CPU milliseconds; wall milliseconds also recorded",
+  "book_cache": "fresh Book objects per timed pass, constructed outside timing",
+  "limits": "Synthetic callback CPU comparison; no orders, network, production history or live latency measured.",
+  "rows": [
+    {
+      "version": "baseline_13bf55b",
+      "pass": 0,
+      "callbacks": 300,
+      "wall_ms": 1328.3941589997994,
+      "cpu_ms": 1328.2792239999999
+    },
+    {
+      "version": "working_tree",
+      "pass": 0,
+      "callbacks": 300,
+      "wall_ms": 110.87153600055899,
+      "cpu_ms": 110.86369200000013
+    },
+    {
+      "version": "baseline_13bf55b",
+      "pass": 1,
+      "callbacks": 300,
+      "wall_ms": 1304.819986999064,
+      "cpu_ms": 1304.709419
+    },
+    {
+      "version": "working_tree",
+      "pass": 1,
+      "callbacks": 300,
+      "wall_ms": 103.64967699933914,
+      "cpu_ms": 103.64887900000008
+    },
+    {
+      "version": "baseline_13bf55b",
+      "pass": 2,
+      "callbacks": 300,
+      "wall_ms": 1295.827964999262,
+      "cpu_ms": 1295.7334340000002
+    },
+    {
+      "version": "working_tree",
+      "pass": 2,
+      "callbacks": 300,
+      "wall_ms": 101.18829000020924,
+      "cpu_ms": 101.17872599999967
+    }
+  ]
+}

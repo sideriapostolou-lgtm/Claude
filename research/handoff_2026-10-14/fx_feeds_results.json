@@ -1,0 +1,1639 @@
+{
+ "window": {
+  "start_utc": "2026-10-14T00:09:57.930515+00:00",
+  "end_utc": "2026-10-14T00:24:57.930515+00:00",
+  "duration_s": 900.0
+ },
+ "clock": {
+  "kraken_pong": {
+   "n": 43,
+   "offset_median_s": 0.0599,
+   "offset_min_s": 0.0479,
+   "offset_max_s": 0.0722,
+   "rtt_median_ms": 120.1,
+   "rtt_min_ms": 114.5,
+   "note": "offset = server - local via NTP-style ping; uncertainty about +/- rtt/2"
+  },
+  "truefx_date_header": {
+   "n": 1801,
+   "offset_interval_s": [
+    -0.053,
+    0.134
+   ],
+   "consistent": true,
+   "note": "intersection of [Date-t1, Date+1-t0) over all polls (1 s header resolution)"
+  },
+  "offset_used_s": 0.0599
+ },
+ "connections": {
+  "truefx": {
+   "connects": 0,
+   "disconnects": [],
+   "idle_30s": 0
+  },
+  "kraken_futures": {
+   "connects": 1,
+   "disconnects": [],
+   "idle_30s": 0
+  },
+  "hermes": {
+   "connects": 0,
+   "disconnects": [],
+   "idle_30s": 0
+  },
+  "solana_pyth": {
+   "connects": 1,
+   "disconnects": [],
+   "idle_30s": 29
+  },
+  "coinbase": {
+   "connects": 1,
+   "disconnects": [],
+   "idle_30s": 4
+  },
+  "bitstamp": {
+   "connects": 1,
+   "disconnects": [],
+   "idle_30s": 0
+  },
+  "binance": {
+   "connects": 1,
+   "disconnects": [],
+   "idle_30s": 0
+  },
+  "kraken": {
+   "connects": 3,
+   "disconnects": [
+    {
+     "t_utc": "00:12:17",
+     "alive_s": 140.0,
+     "err": "ConnectionClosedError: no close frame received or sent"
+    },
+    {
+     "t_utc": "00:24:08",
+     "alive_s": 708.6,
+     "err": "ConnectionClosedError: no close frame received or sent"
+    }
+   ],
+   "idle_30s": 0
+  }
+ },
+ "feeds": {
+  "kraken_spot": {
+   "pairs": {
+    "USD/JPY": {
+     "quote_updates": 2624,
+     "updates_per_min": 174.9,
+     "mid_changes": 420,
+     "mid_changes_per_min": 28.0,
+     "median_gap_ms": 0.1,
+     "p90_gap_ms": 1725.8,
+     "max_gap_s": 4.3,
+     "median_spread_pips": 355.6,
+     "trades": 0,
+     "updates_per_s": 2.92,
+     "mid_min": 159.082,
+     "mid_max": 159.478,
+     "range_pips": 39.6
+    },
+    "GBP/USD": {
+     "quote_updates": 25267,
+     "updates_per_min": 1684.5,
+     "mid_changes": 2700,
+     "mid_changes_per_min": 180.0,
+     "median_gap_ms": 0.1,
+     "p90_gap_ms": 59.3,
+     "max_gap_s": 3.5,
+     "median_spread_pips": 0.3,
+     "trades": 95,
+     "updates_per_s": 28.07,
+     "mid_min": 1.32567,
+     "mid_max": 1.32585,
+     "range_pips": 1.8
+    },
+    "EUR/USD": {
+     "quote_updates": 12947,
+     "updates_per_min": 863.1,
+     "mid_changes": 1749,
+     "mid_changes_per_min": 116.6,
+     "median_gap_ms": 0.1,
+     "p90_gap_ms": 101.8,
+     "max_gap_s": 3.9,
+     "median_spread_pips": 0.1,
+     "trades": 302,
+     "updates_per_s": 14.39,
+     "mid_min": 1.12006,
+     "mid_max": 1.12021,
+     "range_pips": 1.5
+    },
+    "AUD/USD": {
+     "quote_updates": 8367,
+     "updates_per_min": 557.8,
+     "mid_changes": 2084,
+     "mid_changes_per_min": 138.9,
+     "median_gap_ms": 0.1,
+     "p90_gap_ms": 331.5,
+     "max_gap_s": 6.8,
+     "median_spread_pips": 0.6,
+     "trades": 20,
+     "updates_per_s": 9.3,
+     "mid_min": 0.698215,
+     "mid_max": 0.69847,
+     "range_pips": 2.6
+    },
+    "USD/CAD": {
+     "quote_updates": 24931,
+     "updates_per_min": 1662.1,
+     "mid_changes": 7602,
+     "mid_changes_per_min": 506.8,
+     "median_gap_ms": 0.1,
+     "p90_gap_ms": 22.8,
+     "max_gap_s": 5.6,
+     "median_spread_pips": 1.7,
+     "trades": 77,
+     "updates_per_s": 27.7,
+     "mid_min": 1.421865,
+     "mid_max": 1.422365,
+     "range_pips": 5.0
+    }
+   },
+   "latency": {
+    "book": {
+     "n": 74121,
+     "min_ms": 56.8,
+     "p25_ms": 59.9,
+     "median_ms": 61.7,
+     "p75_ms": 65.5,
+     "p90_ms": 76.6,
+     "p99_ms": 132.0,
+     "max_ms": 446.2
+    },
+    "trade": {
+     "n": 494,
+     "min_ms": 58.3,
+     "p25_ms": 61.1,
+     "median_ms": 63.0,
+     "p75_ms": 67.5,
+     "p90_ms": 76.5,
+     "p99_ms": 127.3,
+     "max_ms": 378.4
+    }
+   }
+  },
+  "kraken_futures_perp": {
+   "pairs": {
+    "GBP/USD": {
+     "quote_updates": 305,
+     "updates_per_min": 20.3,
+     "mid_changes": 0,
+     "mid_changes_per_min": 0.0,
+     "median_gap_ms": 2001.0,
+     "p90_gap_ms": 6601.0,
+     "max_gap_s": 19.9,
+     "median_spread_pips": 6700.0,
+     "trades": 0,
+     "updates_per_s": 0.34,
+     "mid_min": 1.655,
+     "mid_max": 1.655,
+     "range_pips": 0.0
+    },
+    "EUR/USD": {
+     "quote_updates": 688,
+     "updates_per_min": 45.9,
+     "mid_changes": 12,
+     "mid_changes_per_min": 0.8,
+     "median_gap_ms": 1453.6,
+     "p90_gap_ms": 2002.2,
+     "max_gap_s": 4.0,
+     "median_spread_pips": 30.1,
+     "trades": 0,
+     "updates_per_s": 0.76,
+     "mid_min": 1.119245,
+     "mid_max": 1.122725,
+     "range_pips": 34.8
+    }
+   },
+   "latency": {
+    "ticker": {
+     "n": 993,
+     "min_ms": 82.6,
+     "p25_ms": 928.0,
+     "median_ms": 932.9,
+     "p75_ms": 1167.6,
+     "p90_ms": 19234.3,
+     "p99_ms": 45152.8,
+     "max_ms": 57209.8
+    },
+    "trade": {
+     "n": 0
+    }
+   }
+  },
+  "bitstamp": {
+   "pairs": {
+    "EUR/USD": {
+     "quote_updates": 1083,
+     "updates_per_min": 72.2,
+     "mid_changes": 88,
+     "mid_changes_per_min": 5.9,
+     "median_gap_ms": 398.0,
+     "p90_gap_ms": 2026.9,
+     "max_gap_s": 9.2,
+     "median_spread_pips": 1.1,
+     "trades": 1,
+     "updates_per_s": 1.2,
+     "mid_min": 1.119985,
+     "mid_max": 1.120175,
+     "range_pips": 1.9
+    },
+    "GBP/USD": {
+     "quote_updates": 300,
+     "updates_per_min": 20.0,
+     "mid_changes": 0,
+     "mid_changes_per_min": 0.0,
+     "median_gap_ms": 1593.6,
+     "p90_gap_ms": 9024.7,
+     "max_gap_s": 12.2,
+     "median_spread_pips": 0.2,
+     "trades": 0,
+     "updates_per_s": 0.33,
+     "mid_min": 1.32568,
+     "mid_max": 1.32568,
+     "range_pips": 0.0
+    }
+   },
+   "latency": {
+    "book": {
+     "n": 1383,
+     "min_ms": 68.4,
+     "p25_ms": 80.1,
+     "median_ms": 84.6,
+     "p75_ms": 90.8,
+     "p90_ms": 98.4,
+     "p99_ms": 144.1,
+     "max_ms": 558.1
+    },
+    "trade": {
+     "n": 1,
+     "min_ms": 84.1,
+     "p25_ms": 84.1,
+     "median_ms": 84.1,
+     "p75_ms": 84.1,
+     "p90_ms": 84.1,
+     "p99_ms": 84.1,
+     "max_ms": 84.1
+    }
+   }
+  },
+  "binance_usdt": {
+   "pairs": {
+    "EUR/USDT": {
+     "quote_updates": 272,
+     "updates_per_min": 18.1,
+     "mid_changes": 12,
+     "mid_changes_per_min": 0.8,
+     "median_gap_ms": 1133.9,
+     "p90_gap_ms": 10000.7,
+     "max_gap_s": 33.0,
+     "median_spread_pips": 1.0,
+     "trades": 117,
+     "updates_per_s": 0.3,
+     "mid_min": 1.12105,
+     "mid_max": 1.12125,
+     "range_pips": 2.0
+    }
+   },
+   "latency": {
+    "trade": {
+     "n": 193,
+     "min_ms": 96.7,
+     "p25_ms": 97.8,
+     "median_ms": 98.8,
+     "p75_ms": 102.3,
+     "p90_ms": 110.0,
+     "p99_ms": 134.4,
+     "max_ms": 173.6
+    }
+   }
+  },
+  "binance_usdc": {
+   "pairs": {
+    "EUR/USDC": {
+     "quote_updates": 317,
+     "updates_per_min": 21.1,
+     "mid_changes": 6,
+     "mid_changes_per_min": 0.4,
+     "median_gap_ms": 1067.7,
+     "p90_gap_ms": 7785.1,
+     "max_gap_s": 29.2,
+     "median_spread_pips": 1.0,
+     "trades": 76,
+     "updates_per_s": 0.35,
+     "mid_min": 1.12015,
+     "mid_max": 1.12035,
+     "range_pips": 2.0
+    }
+   },
+   "latency": {}
+  },
+  "coinbase": {
+   "pairs": {
+    "GBP/USDC": {
+     "quote_updates": 22,
+     "updates_per_min": 1.5,
+     "mid_changes": 0,
+     "mid_changes_per_min": 0.0,
+     "median_gap_ms": 28272.8,
+     "p90_gap_ms": 89215.3,
+     "max_gap_s": 132.6,
+     "median_spread_pips": 1.76,
+     "trades": 0,
+     "updates_per_s": 0.02,
+     "mid_min": 1.325996,
+     "mid_max": 1.325996,
+     "range_pips": 0.0
+    },
+    "EUR/USDT": {
+     "quote_updates": 66,
+     "updates_per_min": 4.4,
+     "mid_changes": 35,
+     "mid_changes_per_min": 2.3,
+     "median_gap_ms": 632.9,
+     "p90_gap_ms": 31245.0,
+     "max_gap_s": 223.1,
+     "median_spread_pips": 0.38,
+     "trades": 0,
+     "updates_per_s": 0.07,
+     "mid_min": 1.12107,
+     "mid_max": 1.121259,
+     "range_pips": 1.9
+    },
+    "EUR/USDC": {
+     "quote_updates": 120,
+     "updates_per_min": 8.0,
+     "mid_changes": 9,
+     "mid_changes_per_min": 0.6,
+     "median_gap_ms": 174.8,
+     "p90_gap_ms": 24443.5,
+     "max_gap_s": 94.6,
+     "median_spread_pips": 1.25,
+     "trades": 0,
+     "updates_per_s": 0.13,
+     "mid_min": 1.120134,
+     "mid_max": 1.120385,
+     "range_pips": 2.5
+    }
+   },
+   "latency": {
+    "ticker": {
+     "n": 208,
+     "min_ms": 19.9,
+     "p25_ms": 21.1,
+     "median_ms": 22.1,
+     "p75_ms": 26.9,
+     "p90_ms": 72.2,
+     "p99_ms": 10752.3,
+     "max_ms": 70266.0
+    }
+   }
+  },
+  "truefx": {
+   "pairs": {
+    "EUR/USD": {
+     "quote_updates": 158,
+     "updates_per_min": 10.5,
+     "mid_changes": 142,
+     "mid_changes_per_min": 9.5,
+     "median_gap_ms": 4000.2,
+     "p90_gap_ms": 14501.9,
+     "max_gap_s": 21.0,
+     "median_spread_pips": 0.4,
+     "trades": 0,
+     "updates_per_s": 0.18,
+     "mid_min": 1.1202,
+     "mid_max": 1.12039,
+     "range_pips": 1.9
+    },
+    "GBP/USD": {
+     "quote_updates": 208,
+     "updates_per_min": 13.9,
+     "mid_changes": 184,
+     "mid_changes_per_min": 12.3,
+     "median_gap_ms": 2001.3,
+     "p90_gap_ms": 13202.9,
+     "max_gap_s": 20.0,
+     "median_spread_pips": 0.7,
+     "trades": 0,
+     "updates_per_s": 0.23,
+     "mid_min": 1.32585,
+     "mid_max": 1.32604,
+     "range_pips": 1.9
+    },
+    "USD/JPY": {
+     "quote_updates": 265,
+     "updates_per_min": 17.7,
+     "mid_changes": 249,
+     "mid_changes_per_min": 16.6,
+     "median_gap_ms": 1819.0,
+     "p90_gap_ms": 8508.8,
+     "max_gap_s": 25.0,
+     "median_spread_pips": 0.6,
+     "trades": 0,
+     "updates_per_s": 0.29,
+     "mid_min": 158.298,
+     "mid_max": 158.3485,
+     "range_pips": 5.0
+    },
+    "AUD/USD": {
+     "quote_updates": 115,
+     "updates_per_min": 7.7,
+     "mid_changes": 109,
+     "mid_changes_per_min": 7.3,
+     "median_gap_ms": 5000.8,
+     "p90_gap_ms": 17996.6,
+     "max_gap_s": 40.0,
+     "median_spread_pips": 0.3,
+     "trades": 0,
+     "updates_per_s": 0.13,
+     "mid_min": 0.698475,
+     "mid_max": 0.698685,
+     "range_pips": 2.1
+    },
+    "USD/CAD": {
+     "quote_updates": 190,
+     "updates_per_min": 12.7,
+     "mid_changes": 151,
+     "mid_changes_per_min": 10.1,
+     "median_gap_ms": 2075.9,
+     "p90_gap_ms": 13503.6,
+     "max_gap_s": 28.5,
+     "median_spread_pips": 1.0,
+     "trades": 0,
+     "updates_per_s": 0.21,
+     "mid_min": 1.421235,
+     "mid_max": 1.421425,
+     "range_pips": 1.9
+    }
+   },
+   "latency": {
+    "quote_vs_recv": {
+     "n": 936,
+     "min_ms": 23.4,
+     "p25_ms": 121.1,
+     "median_ms": 253.9,
+     "p75_ms": 386.7,
+     "p90_ms": 474.8,
+     "p99_ms": 527.7,
+     "max_ms": 3536.6
+    },
+    "quote_vs_poll_send": {
+     "n": 936,
+     "min_ms": -457.5,
+     "p25_ms": 61.7,
+     "median_ms": 192.5,
+     "p75_ms": 326.7,
+     "p90_ms": 418.1,
+     "p99_ms": 468.2,
+     "max_ms": 2985.5
+    }
+   },
+   "polls": 190,
+   "poll_interval_s": 0.5
+  },
+  "solana_pyth_pushoracle": {
+   "account_notifications": 0,
+   "other_msgs": 2,
+   "note": "Pyth EUR/USD push-oracle accounts on Solana mainnet (shard0+shard1) subscribed for the whole window"
+  },
+  "pyth_hermes": {
+   "probes": [
+    {
+     "t_utc": "00:09:58",
+     "status": 401,
+     "body": "unauthorized"
+    },
+    {
+     "t_utc": "00:11:58",
+     "status": 401,
+     "body": "unauthorized"
+    },
+    {
+     "t_utc": "00:13:58",
+     "status": 401,
+     "body": "unauthorized"
+    },
+    {
+     "t_utc": "00:15:59",
+     "status": 401,
+     "body": "unauthorized"
+    },
+    {
+     "t_utc": "00:17:59",
+     "status": 401,
+     "body": "unauthorized"
+    },
+    {
+     "t_utc": "00:19:59",
+     "status": 401,
+     "body": "unauthorized"
+    },
+    {
+     "t_utc": "00:22:00",
+     "status": 401,
+     "body": "unauthorized"
+    },
+    {
+     "t_utc": "00:24:00",
+     "status": 401,
+     "body": "unauthorized"
+    }
+   ]
+  }
+ },
+ "lead_lag": {
+  "EUR/USD": {
+   "consensus_feeds": [
+    "truefx",
+    "kraken_spot",
+    "bitstamp"
+   ],
+   "move_1pip_by_receipt_time": {
+    "n_events": 2,
+    "threshold_pips": 1.0,
+    "consensus_feeds": [
+     "truefx",
+     "kraken_spot",
+     "bitstamp"
+    ],
+    "bias_vs_consensus_pips": {
+     "truefx": 1.9,
+     "kraken_spot": 0.0,
+     "bitstamp": -0.4,
+     "kraken_futures_perp": -8.25,
+     "binance_usdt:EUR/USDT": 10.15,
+     "binance_usdc:EUR/USDC": 1.15,
+     "coinbase:EUR/USDC": 1.25,
+     "coinbase:EUR/USDT": 10.46
+    },
+    "feeds": {
+     "truefx": {
+      "n_detected": 2,
+      "missed": 0,
+      "times_first": 1,
+      "lag_vs_first_median_ms": 10,
+      "lag_p25_ms": 5,
+      "lag_p75_ms": 15
+     },
+     "kraken_spot": {
+      "n_detected": 2,
+      "missed": 0,
+      "times_first": 0,
+      "lag_vs_first_median_ms": 1615,
+      "lag_p25_ms": 1455,
+      "lag_p75_ms": 1775
+     },
+     "bitstamp": {
+      "n_detected": 2,
+      "missed": 0,
+      "times_first": 1,
+      "lag_vs_first_median_ms": 835,
+      "lag_p25_ms": 417,
+      "lag_p75_ms": 1252
+     },
+     "kraken_futures_perp": {
+      "n_detected": 0,
+      "missed": 2,
+      "times_first": 0,
+      "lag_vs_first_median_ms": null,
+      "lag_p25_ms": null,
+      "lag_p75_ms": null
+     },
+     "binance_usdt:EUR/USDT": {
+      "n_detected": 1,
+      "missed": 1,
+      "times_first": 0,
+      "lag_vs_first_median_ms": 1224,
+      "lag_p25_ms": 1224,
+      "lag_p75_ms": 1224
+     },
+     "binance_usdc:EUR/USDC": {
+      "n_detected": 0,
+      "missed": 2,
+      "times_first": 0,
+      "lag_vs_first_median_ms": null,
+      "lag_p25_ms": null,
+      "lag_p75_ms": null
+     },
+     "coinbase:EUR/USDC": {
+      "n_detected": 1,
+      "missed": 1,
+      "times_first": 0,
+      "lag_vs_first_median_ms": 1199,
+      "lag_p25_ms": 1199,
+      "lag_p75_ms": 1199
+     },
+     "coinbase:EUR/USDT": {
+      "n_detected": 1,
+      "missed": 1,
+      "times_first": 0,
+      "lag_vs_first_median_ms": 4532,
+      "lag_p25_ms": 4532,
+      "lag_p75_ms": 4532
+     }
+    },
+    "events": [
+     {
+      "t_utc": "00:10:30.343",
+      "dir": "up",
+      "from": 1.12006,
+      "to": 1.12017,
+      "first": "truefx",
+      "lags_ms": {
+       "truefx": 0,
+       "coinbase:EUR/USDC": 1199,
+       "binance_usdt:EUR/USDT": 1224,
+       "kraken_spot": 1295,
+       "bitstamp": 1669,
+       "coinbase:EUR/USDT": 4532
+      }
+     },
+     {
+      "t_utc": "00:19:06.443",
+      "dir": "down",
+      "from": 1.12017,
+      "to": 1.12006,
+      "first": "bitstamp",
+      "lags_ms": {
+       "bitstamp": 0,
+       "truefx": 20,
+       "kraken_spot": 1934
+      }
+     }
+    ]
+   },
+   "move_1pip_by_venue_timestamp": {
+    "n_events": 2,
+    "threshold_pips": 1.0,
+    "consensus_feeds": [
+     "truefx",
+     "kraken_spot",
+     "bitstamp"
+    ],
+    "bias_vs_consensus_pips": {
+     "truefx": 1.9,
+     "kraken_spot": 0.0,
+     "bitstamp": -0.4,
+     "kraken_futures_perp": -8.2,
+     "coinbase:EUR/USDC": 1.25,
+     "coinbase:EUR/USDT": 10.43
+    },
+    "feeds": {
+     "truefx": {
+      "n_detected": 2,
+      "missed": 0,
+      "times_first": 2,
+      "lag_vs_first_median_ms": 0,
+      "lag_p25_ms": 0,
+      "lag_p75_ms": 0
+     },
+     "kraken_spot": {
+      "n_detected": 2,
+      "missed": 0,
+      "times_first": 0,
+      "lag_vs_first_median_ms": 1690,
+      "lag_p25_ms": 1539,
+      "lag_p75_ms": 1840
+     },
+     "bitstamp": {
+      "n_detected": 2,
+      "missed": 0,
+      "times_first": 0,
+      "lag_vs_first_median_ms": 891,
+      "lag_p25_ms": 464,
+      "lag_p75_ms": 1318
+     },
+     "kraken_futures_perp": {
+      "n_detected": 0,
+      "missed": 2,
+      "times_first": 0,
+      "lag_vs_first_median_ms": null,
+      "lag_p25_ms": null,
+      "lag_p75_ms": null
+     },
+     "coinbase:EUR/USDC": {
+      "n_detected": 1,
+      "missed": 1,
+      "times_first": 0,
+      "lag_vs_first_median_ms": 1332,
+      "lag_p25_ms": 1332,
+      "lag_p75_ms": 1332
+     },
+     "coinbase:EUR/USDT": {
+      "n_detected": 1,
+      "missed": 1,
+      "times_first": 0,
+      "lag_vs_first_median_ms": 4027,
+      "lag_p25_ms": 4027,
+      "lag_p75_ms": 4027
+     }
+    },
+    "events": [
+     {
+      "t_utc": "00:10:30.317",
+      "dir": "up",
+      "from": 1.12006,
+      "to": 1.12017,
+      "first": "truefx",
+      "lags_ms": {
+       "truefx": 0,
+       "coinbase:EUR/USDC": 1332,
+       "kraken_spot": 1389,
+       "bitstamp": 1745,
+       "coinbase:EUR/USDT": 4027
+      }
+     },
+     {
+      "t_utc": "00:19:06.416",
+      "dir": "down",
+      "from": 1.12017,
+      "to": 1.12006,
+      "first": "truefx",
+      "lags_ms": {
+       "truefx": 0,
+       "bitstamp": 37,
+       "kraken_spot": 1990
+      }
+     }
+    ]
+   },
+   "move_halfpip_by_receipt_time": {
+    "n_events": 3,
+    "threshold_pips": 0.5,
+    "consensus_feeds": [
+     "truefx",
+     "kraken_spot",
+     "bitstamp"
+    ],
+    "bias_vs_consensus_pips": {
+     "truefx": 1.9,
+     "kraken_spot": 0.0,
+     "bitstamp": -0.4,
+     "kraken_futures_perp": -8.25,
+     "binance_usdt:EUR/USDT": 10.15,
+     "binance_usdc:EUR/USDC": 1.15,
+     "coinbase:EUR/USDC": 1.25,
+     "coinbase:EUR/USDT": 10.46
+    },
+    "feeds": {
+     "truefx": {
+      "n_detected": 1,
+      "missed": 2,
+      "times_first": 0,
+      "lag_vs_first_median_ms": 10186,
+      "lag_p25_ms": 10186,
+      "lag_p75_ms": 10186
+     },
+     "kraken_spot": {
+      "n_detected": 2,
+      "missed": 0,
+      "times_first": 1,
+      "lag_vs_first_median_ms": 2251,
+      "lag_p25_ms": 1125,
+      "lag_p75_ms": 3376
+     },
+     "bitstamp": {
+      "n_detected": 2,
+      "missed": 1,
+      "times_first": 0,
+      "lag_vs_first_median_ms": 6993,
+      "lag_p25_ms": 5455,
+      "lag_p75_ms": 8531
+     },
+     "kraken_futures_perp": {
+      "n_detected": 1,
+      "missed": 2,
+      "times_first": 1,
+      "lag_vs_first_median_ms": 0,
+      "lag_p25_ms": 0,
+      "lag_p75_ms": 0
+     },
+     "binance_usdt:EUR/USDT": {
+      "n_detected": 1,
+      "missed": 2,
+      "times_first": 0,
+      "lag_vs_first_median_ms": 4071,
+      "lag_p25_ms": 4071,
+      "lag_p75_ms": 4071
+     },
+     "binance_usdc:EUR/USDC": {
+      "n_detected": 0,
+      "missed": 3,
+      "times_first": 0,
+      "lag_vs_first_median_ms": null,
+      "lag_p25_ms": null,
+      "lag_p75_ms": null
+     },
+     "coinbase:EUR/USDC": {
+      "n_detected": 1,
+      "missed": 2,
+      "times_first": 0,
+      "lag_vs_first_median_ms": 4045,
+      "lag_p25_ms": 4045,
+      "lag_p75_ms": 4045
+     },
+     "coinbase:EUR/USDT": {
+      "n_detected": 1,
+      "missed": 2,
+      "times_first": 0,
+      "lag_vs_first_median_ms": 6746,
+      "lag_p25_ms": 6746,
+      "lag_p75_ms": 6746
+     }
+    },
+    "events": [
+     {
+      "t_utc": "00:10:26.193",
+      "dir": "up",
+      "from": 1.12006,
+      "to": 1.12012,
+      "first": "kraken_spot",
+      "lags_ms": {
+       "kraken_spot": 0,
+       "bitstamp": 3918,
+       "coinbase:EUR/USDC": 4045,
+       "binance_usdt:EUR/USDT": 4071,
+       "coinbase:EUR/USDT": 6746
+      }
+     },
+     {
+      "t_utc": "00:18:57.343",
+      "dir": "down",
+      "from": 1.12017,
+      "to": 1.12011,
+      "first": "kraken_futures_perp",
+      "lags_ms": {
+       "kraken_futures_perp": 0,
+       "kraken_spot": 4502,
+       "bitstamp": 10069,
+       "truefx": 10186
+      }
+     }
+    ]
+   },
+   "xcorr_by_receipt_time": {
+    "truefx vs kraken_spot": {
+     "best_lag_s": 1.0,
+     "corr_at_best": 0.183,
+     "corr_at_zero": 0.113,
+     "reading": "truefx leads by 1.0s"
+    },
+    "truefx vs bitstamp": {
+     "best_lag_s": 0.0,
+     "corr_at_best": 0.585,
+     "corr_at_zero": 0.585,
+     "reading": "no measurable lead"
+    },
+    "truefx vs binance_usdt:EUR/USDT": {
+     "best_lag_s": -0.2,
+     "corr_at_best": 0.238,
+     "corr_at_zero": 0.237,
+     "reading": "binance_usdt:EUR/USDT leads by 0.2s"
+    },
+    "truefx vs binance_usdc:EUR/USDC": {
+     "best_lag_s": -0.2,
+     "corr_at_best": 0.275,
+     "corr_at_zero": 0.242,
+     "reading": "binance_usdc:EUR/USDC leads by 0.2s"
+    },
+    "truefx vs coinbase:EUR/USDC": {
+     "best_lag_s": -0.3,
+     "corr_at_best": 0.319,
+     "corr_at_zero": 0.274,
+     "reading": "coinbase:EUR/USDC leads by 0.3s"
+    },
+    "truefx vs coinbase:EUR/USDT": {
+     "best_lag_s": -0.4,
+     "corr_at_best": 0.151,
+     "corr_at_zero": 0.103,
+     "reading": "coinbase:EUR/USDT leads by 0.4s"
+    },
+    "kraken_spot vs bitstamp": {
+     "best_lag_s": -0.9,
+     "corr_at_best": 0.172,
+     "corr_at_zero": 0.162,
+     "reading": "bitstamp leads by 0.9s"
+    },
+    "kraken_spot vs binance_usdt:EUR/USDT": {
+     "best_lag_s": -0.1,
+     "corr_at_best": 0.143,
+     "corr_at_zero": 0.14,
+     "reading": "binance_usdt:EUR/USDT leads by 0.1s"
+    },
+    "kraken_spot vs binance_usdc:EUR/USDC": {
+     "best_lag_s": -0.2,
+     "corr_at_best": 0.05,
+     "corr_at_zero": 0.045,
+     "reading": "binance_usdc:EUR/USDC leads by 0.2s"
+    },
+    "kraken_spot vs coinbase:EUR/USDC": {
+     "best_lag_s": -0.2,
+     "corr_at_best": 0.116,
+     "corr_at_zero": 0.11,
+     "reading": "coinbase:EUR/USDC leads by 0.2s"
+    },
+    "kraken_spot vs coinbase:EUR/USDT": {
+     "best_lag_s": -0.5,
+     "corr_at_best": 0.092,
+     "corr_at_zero": 0.047,
+     "reading": "coinbase:EUR/USDT leads by 0.5s"
+    },
+    "bitstamp vs binance_usdt:EUR/USDT": {
+     "best_lag_s": -0.2,
+     "corr_at_best": 0.338,
+     "corr_at_zero": 0.326,
+     "reading": "binance_usdt:EUR/USDT leads by 0.2s"
+    },
+    "bitstamp vs binance_usdc:EUR/USDC": {
+     "best_lag_s": -0.2,
+     "corr_at_best": 0.208,
+     "corr_at_zero": 0.185,
+     "reading": "binance_usdc:EUR/USDC leads by 0.2s"
+    },
+    "bitstamp vs coinbase:EUR/USDC": {
+     "best_lag_s": -0.3,
+     "corr_at_best": 0.326,
+     "corr_at_zero": 0.292,
+     "reading": "coinbase:EUR/USDC leads by 0.3s"
+    },
+    "bitstamp vs coinbase:EUR/USDT": {
+     "best_lag_s": -0.6,
+     "corr_at_best": 0.128,
+     "corr_at_zero": 0.056,
+     "reading": "coinbase:EUR/USDT leads by 0.6s"
+    },
+    "binance_usdt:EUR/USDT vs binance_usdc:EUR/USDC": {
+     "best_lag_s": -1.0,
+     "corr_at_best": 0.164,
+     "corr_at_zero": 0.109,
+     "reading": "binance_usdc:EUR/USDC leads by 1.0s"
+    },
+    "binance_usdt:EUR/USDT vs coinbase:EUR/USDC": {
+     "best_lag_s": -0.2,
+     "corr_at_best": 0.36,
+     "corr_at_zero": 0.336,
+     "reading": "coinbase:EUR/USDC leads by 0.2s"
+    },
+    "binance_usdt:EUR/USDT vs coinbase:EUR/USDT": {
+     "best_lag_s": -0.2,
+     "corr_at_best": 0.158,
+     "corr_at_zero": 0.119,
+     "reading": "coinbase:EUR/USDT leads by 0.2s"
+    },
+    "binance_usdc:EUR/USDC vs coinbase:EUR/USDC": {
+     "best_lag_s": 0.3,
+     "corr_at_best": 0.298,
+     "corr_at_zero": 0.298,
+     "reading": "binance_usdc:EUR/USDC leads by 0.3s"
+    },
+    "binance_usdc:EUR/USDC vs coinbase:EUR/USDT": {
+     "best_lag_s": 3.0,
+     "corr_at_best": 0.0,
+     "corr_at_zero": 0.0,
+     "reading": "binance_usdc:EUR/USDC leads by 3.0s"
+    },
+    "coinbase:EUR/USDC vs coinbase:EUR/USDT": {
+     "best_lag_s": 0.1,
+     "corr_at_best": 0.298,
+     "corr_at_zero": 0.268,
+     "reading": "coinbase:EUR/USDC leads by 0.1s"
+    }
+   },
+   "xcorr_by_venue_timestamp": {
+    "truefx vs kraken_spot": {
+     "best_lag_s": 1.4,
+     "corr_at_best": 0.181,
+     "corr_at_zero": 0.098,
+     "reading": "truefx leads by 1.4s"
+    },
+    "truefx vs bitstamp": {
+     "best_lag_s": 0.1,
+     "corr_at_best": 0.602,
+     "corr_at_zero": 0.582,
+     "reading": "truefx leads by 0.1s"
+    },
+    "truefx vs coinbase:EUR/USDC": {
+     "best_lag_s": -0.1,
+     "corr_at_best": 0.305,
+     "corr_at_zero": 0.304,
+     "reading": "coinbase:EUR/USDC leads by 0.1s"
+    },
+    "truefx vs coinbase:EUR/USDT": {
+     "best_lag_s": 0.0,
+     "corr_at_best": 0.143,
+     "corr_at_zero": 0.143,
+     "reading": "no measurable lead"
+    },
+    "kraken_spot vs bitstamp": {
+     "best_lag_s": -1.2,
+     "corr_at_best": 0.176,
+     "corr_at_zero": 0.162,
+     "reading": "bitstamp leads by 1.2s"
+    },
+    "kraken_spot vs coinbase:EUR/USDC": {
+     "best_lag_s": -0.1,
+     "corr_at_best": 0.104,
+     "corr_at_zero": 0.1,
+     "reading": "coinbase:EUR/USDC leads by 0.1s"
+    },
+    "kraken_spot vs coinbase:EUR/USDT": {
+     "best_lag_s": -0.4,
+     "corr_at_best": 0.091,
+     "corr_at_zero": 0.061,
+     "reading": "coinbase:EUR/USDT leads by 0.4s"
+    },
+    "bitstamp vs coinbase:EUR/USDC": {
+     "best_lag_s": -0.2,
+     "corr_at_best": 0.285,
+     "corr_at_zero": 0.259,
+     "reading": "coinbase:EUR/USDC leads by 0.2s"
+    },
+    "bitstamp vs coinbase:EUR/USDT": {
+     "best_lag_s": -0.6,
+     "corr_at_best": 0.125,
+     "corr_at_zero": 0.065,
+     "reading": "coinbase:EUR/USDT leads by 0.6s"
+    },
+    "coinbase:EUR/USDC vs coinbase:EUR/USDT": {
+     "best_lag_s": 0.2,
+     "corr_at_best": 0.317,
+     "corr_at_zero": 0.276,
+     "reading": "coinbase:EUR/USDC leads by 0.2s"
+    }
+   }
+  },
+  "GBP/USD": {
+   "consensus_feeds": [
+    "truefx",
+    "kraken_spot",
+    "bitstamp"
+   ],
+   "move_1pip_by_receipt_time": {
+    "n_events": 1,
+    "threshold_pips": 1.0,
+    "consensus_feeds": [
+     "truefx",
+     "kraken_spot",
+     "bitstamp"
+    ],
+    "bias_vs_consensus_pips": {
+     "truefx": 1.55,
+     "kraken_spot": 0.0,
+     "bitstamp": -0.9,
+     "kraken_futures_perp": 3292.3,
+     "coinbase:GBP/USDC": 2.26
+    },
+    "feeds": {
+     "truefx": {
+      "n_detected": 0,
+      "missed": 1,
+      "times_first": 0,
+      "lag_vs_first_median_ms": null,
+      "lag_p25_ms": null,
+      "lag_p75_ms": null
+     },
+     "kraken_spot": {
+      "n_detected": 0,
+      "missed": 0,
+      "times_first": 0,
+      "lag_vs_first_median_ms": null,
+      "lag_p25_ms": null,
+      "lag_p75_ms": null
+     },
+     "bitstamp": {
+      "n_detected": 0,
+      "missed": 1,
+      "times_first": 0,
+      "lag_vs_first_median_ms": null,
+      "lag_p25_ms": null,
+      "lag_p75_ms": null
+     },
+     "kraken_futures_perp": {
+      "n_detected": 0,
+      "missed": 1,
+      "times_first": 0,
+      "lag_vs_first_median_ms": null,
+      "lag_p25_ms": null,
+      "lag_p75_ms": null
+     },
+     "coinbase:GBP/USDC": {
+      "n_detected": 0,
+      "missed": 1,
+      "times_first": 0,
+      "lag_vs_first_median_ms": null,
+      "lag_p25_ms": null,
+      "lag_p75_ms": null
+     }
+    },
+    "events": []
+   },
+   "move_1pip_by_venue_timestamp": {
+    "n_events": 1,
+    "threshold_pips": 1.0,
+    "consensus_feeds": [
+     "truefx",
+     "kraken_spot",
+     "bitstamp"
+    ],
+    "bias_vs_consensus_pips": {
+     "truefx": 1.55,
+     "kraken_spot": 0.0,
+     "bitstamp": -0.9,
+     "kraken_futures_perp": 3292.3,
+     "coinbase:GBP/USDC": 2.26
+    },
+    "feeds": {
+     "truefx": {
+      "n_detected": 0,
+      "missed": 1,
+      "times_first": 0,
+      "lag_vs_first_median_ms": null,
+      "lag_p25_ms": null,
+      "lag_p75_ms": null
+     },
+     "kraken_spot": {
+      "n_detected": 0,
+      "missed": 0,
+      "times_first": 0,
+      "lag_vs_first_median_ms": null,
+      "lag_p25_ms": null,
+      "lag_p75_ms": null
+     },
+     "bitstamp": {
+      "n_detected": 0,
+      "missed": 1,
+      "times_first": 0,
+      "lag_vs_first_median_ms": null,
+      "lag_p25_ms": null,
+      "lag_p75_ms": null
+     },
+     "kraken_futures_perp": {
+      "n_detected": 0,
+      "missed": 1,
+      "times_first": 0,
+      "lag_vs_first_median_ms": null,
+      "lag_p25_ms": null,
+      "lag_p75_ms": null
+     },
+     "coinbase:GBP/USDC": {
+      "n_detected": 0,
+      "missed": 1,
+      "times_first": 0,
+      "lag_vs_first_median_ms": null,
+      "lag_p25_ms": null,
+      "lag_p75_ms": null
+     }
+    },
+    "events": []
+   },
+   "move_halfpip_by_receipt_time": {
+    "n_events": 10,
+    "threshold_pips": 0.5,
+    "consensus_feeds": [
+     "truefx",
+     "kraken_spot",
+     "bitstamp"
+    ],
+    "bias_vs_consensus_pips": {
+     "truefx": 1.55,
+     "kraken_spot": 0.0,
+     "bitstamp": -0.9,
+     "kraken_futures_perp": 3292.3,
+     "coinbase:GBP/USDC": 2.26
+    },
+    "feeds": {
+     "truefx": {
+      "n_detected": 5,
+      "missed": 5,
+      "times_first": 2,
+      "lag_vs_first_median_ms": 7973,
+      "lag_p25_ms": 0,
+      "lag_p75_ms": 11265
+     },
+     "kraken_spot": {
+      "n_detected": 5,
+      "missed": 0,
+      "times_first": 3,
+      "lag_vs_first_median_ms": 0,
+      "lag_p25_ms": 0,
+      "lag_p75_ms": 4001
+     },
+     "bitstamp": {
+      "n_detected": 0,
+      "missed": 10,
+      "times_first": 0,
+      "lag_vs_first_median_ms": null,
+      "lag_p25_ms": null,
+      "lag_p75_ms": null
+     },
+     "kraken_futures_perp": {
+      "n_detected": 0,
+      "missed": 10,
+      "times_first": 0,
+      "lag_vs_first_median_ms": null,
+      "lag_p25_ms": null,
+      "lag_p75_ms": null
+     },
+     "coinbase:GBP/USDC": {
+      "n_detected": 0,
+      "missed": 10,
+      "times_first": 0,
+      "lag_vs_first_median_ms": null,
+      "lag_p25_ms": null,
+      "lag_p75_ms": null
+     }
+    },
+    "events": [
+     {
+      "t_utc": "00:13:16.038",
+      "dir": "down",
+      "from": 1.32578,
+      "to": 1.32574,
+      "first": "truefx",
+      "lags_ms": {
+       "truefx": 0,
+       "kraken_spot": 4001
+      }
+     },
+     {
+      "t_utc": "00:19:49.488",
+      "dir": "down",
+      "from": 1.32578,
+      "to": 1.32574,
+      "first": "kraken_spot",
+      "lags_ms": {
+       "kraken_spot": 0,
+       "truefx": 7973
+      }
+     },
+     {
+      "t_utc": "00:20:58.938",
+      "dir": "up",
+      "from": 1.32574,
+      "to": 1.32578,
+      "first": "kraken_spot",
+      "lags_ms": {
+       "kraken_spot": 0,
+       "truefx": 11265
+      }
+     },
+     {
+      "t_utc": "00:22:15.388",
+      "dir": "up",
+      "from": 1.32578,
+      "to": 1.32584,
+      "first": "truefx",
+      "lags_ms": {
+       "truefx": 0,
+       "kraken_spot": 4852
+      }
+     },
+     {
+      "t_utc": "00:24:26.938",
+      "dir": "down",
+      "from": 1.32584,
+      "to": 1.32578,
+      "first": "kraken_spot",
+      "lags_ms": {
+       "kraken_spot": 0,
+       "truefx": 16408
+      }
+     }
+    ]
+   },
+   "xcorr_by_receipt_time": {
+    "truefx vs kraken_spot": {
+     "best_lag_s": 0.3,
+     "corr_at_best": 0.168,
+     "corr_at_zero": 0.143,
+     "reading": "truefx leads by 0.3s"
+    }
+   },
+   "xcorr_by_venue_timestamp": {
+    "truefx vs kraken_spot": {
+     "best_lag_s": 0.3,
+     "corr_at_best": 0.157,
+     "corr_at_zero": 0.11,
+     "reading": "truefx leads by 0.3s"
+    }
+   }
+  }
+ },
+ "xcorr_all_pairs_truefx_vs_kraken": {
+  "EUR/USD": {
+   "by_receipt_time": {
+    "truefx vs kraken_spot": {
+     "best_lag_s": 1.0,
+     "corr_at_best": 0.187,
+     "corr_at_zero": 0.103,
+     "reading": "truefx leads by 1.0s"
+    },
+    "truefx vs bitstamp": {
+     "best_lag_s": 0.0,
+     "corr_at_best": 0.597,
+     "corr_at_zero": 0.597,
+     "reading": "no measurable lead"
+    },
+    "kraken_spot vs bitstamp": {
+     "best_lag_s": -1.0,
+     "corr_at_best": 0.178,
+     "corr_at_zero": 0.153,
+     "reading": "bitstamp leads by 1.0s"
+    }
+   },
+   "by_venue_timestamp": {
+    "truefx vs kraken_spot": {
+     "best_lag_s": 1.3,
+     "corr_at_best": 0.181,
+     "corr_at_zero": 0.089,
+     "reading": "truefx leads by 1.3s"
+    },
+    "truefx vs bitstamp": {
+     "best_lag_s": 0.1,
+     "corr_at_best": 0.624,
+     "corr_at_zero": 0.605,
+     "reading": "truefx leads by 0.1s"
+    },
+    "kraken_spot vs bitstamp": {
+     "best_lag_s": -1.2,
+     "corr_at_best": 0.176,
+     "corr_at_zero": 0.152,
+     "reading": "bitstamp leads by 1.2s"
+    }
+   }
+  },
+  "GBP/USD": {
+   "by_receipt_time": {
+    "truefx vs kraken_spot": {
+     "best_lag_s": 0.3,
+     "corr_at_best": 0.165,
+     "corr_at_zero": 0.139,
+     "reading": "truefx leads by 0.3s"
+    }
+   },
+   "by_venue_timestamp": {
+    "truefx vs kraken_spot": {
+     "best_lag_s": 0.6,
+     "corr_at_best": 0.149,
+     "corr_at_zero": 0.107,
+     "reading": "truefx leads by 0.6s"
+    }
+   }
+  },
+  "USD/JPY": {
+   "by_receipt_time": {
+    "truefx vs kraken_spot": {
+     "best_lag_s": 2.2,
+     "corr_at_best": 0.056,
+     "corr_at_zero": 0.003,
+     "reading": "truefx leads by 2.2s"
+    }
+   },
+   "by_venue_timestamp": {
+    "truefx vs kraken_spot": {
+     "best_lag_s": 2.3,
+     "corr_at_best": 0.058,
+     "corr_at_zero": 0.005,
+     "reading": "truefx leads by 2.3s"
+    }
+   }
+  },
+  "AUD/USD": {
+   "by_receipt_time": {
+    "truefx vs kraken_spot": {
+     "best_lag_s": 0.1,
+     "corr_at_best": 0.103,
+     "corr_at_zero": 0.102,
+     "reading": "truefx leads by 0.1s"
+    }
+   },
+   "by_venue_timestamp": {
+    "truefx vs kraken_spot": {
+     "best_lag_s": 0.4,
+     "corr_at_best": 0.114,
+     "corr_at_zero": 0.094,
+     "reading": "truefx leads by 0.4s"
+    }
+   }
+  },
+  "USD/CAD": {
+   "by_receipt_time": {
+    "truefx vs kraken_spot": {
+     "best_lag_s": -1.9,
+     "corr_at_best": 0.066,
+     "corr_at_zero": -0.004,
+     "reading": "kraken_spot leads by 1.9s"
+    }
+   },
+   "by_venue_timestamp": {
+    "truefx vs kraken_spot": {
+     "best_lag_s": -1.7,
+     "corr_at_best": 0.068,
+     "corr_at_zero": -0.014,
+     "reading": "kraken_spot leads by 1.7s"
+    }
+   }
+  }
+ },
+ "pyth_strike_check": {
+  "note": "Kalshi 15-minute FX markets use Pyth's published price at the window open as the strike; we compare each free feed's last mid before that instant (venue timestamps; stablecoin pairs carry a basis).",
+  "windows": {
+   "EUR/USD": {
+    "pyth_price_at_open": 1.12038,
+    "kalshi_ticker": "KXEURUSD15M-26OCT132030-30",
+    "t_utc": "2026-10-14T00:15:00Z",
+    "feeds": {
+     "kraken_spot": {
+      "mid": 1.120185,
+      "bid": 1.12018,
+      "ask": 1.12019,
+      "diff_pips": -1.95,
+      "age_s_at_open": 0.33,
+      "pyth_inside_spread": false
+     },
+     "bitstamp": {
+      "mid": 1.120165,
+      "bid": 1.12011,
+      "ask": 1.12022,
+      "diff_pips": -2.15,
+      "age_s_at_open": 0.29,
+      "pyth_inside_spread": false
+     },
+     "truefx": {
+      "mid": 1.12039,
+      "bid": 1.12037,
+      "ask": 1.12041,
+      "diff_pips": 0.1,
+      "age_s_at_open": 1.46,
+      "pyth_inside_spread": true
+     },
+     "binance_usdt_basis": {
+      "mid": 1.12125,
+      "bid": 1.1212,
+      "ask": 1.1213,
+      "diff_pips": 8.7,
+      "age_s_at_open": 1.05,
+      "pyth_inside_spread": false
+     },
+     "binance_usdc_basis": {
+      "mid": 1.12025,
+      "bid": 1.1202,
+      "ask": 1.1203,
+      "diff_pips": -1.3,
+      "age_s_at_open": 1.06,
+      "pyth_inside_spread": false
+     },
+     "coinbase_usdc_basis": {
+      "mid": 1.12026,
+      "bid": 1.120197154699227,
+      "ask": 1.1203226529240422,
+      "diff_pips": -1.2,
+      "age_s_at_open": 12.25,
+      "pyth_inside_spread": false
+     },
+     "coinbase_usdt_basis": {
+      "mid": 1.12124,
+      "bid": 1.1212144995459081,
+      "ask": 1.1212647866793743,
+      "diff_pips": 8.6,
+      "age_s_at_open": 0.63,
+      "pyth_inside_spread": false
+     },
+     "kraken_futures_perp": {
+      "mid": 1.119345,
+      "bid": 1.11789,
+      "ask": 1.1208,
+      "diff_pips": -10.35,
+      "age_s_at_open": 2.0,
+      "pyth_inside_spread": true
+     }
+    }
+   },
+   "GBP/USD": {
+    "pyth_price_at_open": 1.32594,
+    "kalshi_ticker": "KXGBPUSD15M-26OCT132030-30",
+    "t_utc": "2026-10-14T00:15:00Z",
+    "feeds": {
+     "kraken_spot": {
+      "mid": 1.325785,
+      "bid": 1.32578,
+      "ask": 1.32579,
+      "diff_pips": -1.55,
+      "age_s_at_open": 0.34,
+      "pyth_inside_spread": false
+     },
+     "bitstamp": {
+      "mid": 1.32568,
+      "bid": 1.32567,
+      "ask": 1.32569,
+      "diff_pips": -2.6,
+      "age_s_at_open": 0.08,
+      "pyth_inside_spread": false
+     },
+     "truefx": {
+      "mid": 1.32594,
+      "bid": 1.32593,
+      "ask": 1.32595,
+      "diff_pips": 0.0,
+      "age_s_at_open": 1.45,
+      "pyth_inside_spread": true
+     },
+     "coinbase_usdc_basis": {
+      "mid": 1.325996,
+      "bid": 1.3259082471492973,
+      "ask": 1.3260840737302746,
+      "diff_pips": 0.56,
+      "age_s_at_open": 67.32,
+      "pyth_inside_spread": true
+     },
+     "kraken_futures_perp": {
+      "mid": 1.655,
+      "bid": 1.32,
+      "ask": 1.99,
+      "diff_pips": 3290.6,
+      "age_s_at_open": 8.0,
+      "pyth_inside_spread": true
+     }
+    }
+   },
+   "USD/JPY": {
+    "pyth_price_at_open": 158.319,
+    "kalshi_ticker": "KXUSDJPY15M-26OCT132030-30",
+    "t_utc": "2026-10-14T00:15:00Z",
+    "feeds": {
+     "kraken_spot": {
+      "mid": 159.2545,
+      "bid": 157.509,
+      "ask": 161.0,
+      "diff_pips": 93.55,
+      "age_s_at_open": 0.7,
+      "pyth_inside_spread": true
+     },
+     "truefx": {
+      "mid": 158.3195,
+      "bid": 158.318,
+      "ask": 158.321,
+      "diff_pips": 0.05,
+      "age_s_at_open": 1.3,
+      "pyth_inside_spread": true
+     }
+    }
+   },
+   "AUD/USD": {
+    "pyth_price_at_open": 0.6986,
+    "kalshi_ticker": "KXAUDUSD15M-26OCT132030-30",
+    "t_utc": "2026-10-14T00:15:00Z",
+    "feeds": {
+     "kraken_spot": {
+      "mid": 0.698355,
+      "bid": 0.69833,
+      "ask": 0.69838,
+      "diff_pips": -2.45,
+      "age_s_at_open": 0.03,
+      "pyth_inside_spread": false
+     },
+     "truefx": {
+      "mid": 0.6986,
+      "bid": 0.69859,
+      "ask": 0.69861,
+      "diff_pips": 0.0,
+      "age_s_at_open": 1.46,
+      "pyth_inside_spread": true
+     }
+    }
+   },
+   "USD/CAD": {
+    "pyth_price_at_open": 1.4213,
+    "kalshi_ticker": "KXUSDCAD15M-26OCT132030-30",
+    "t_utc": "2026-10-14T00:15:00Z",
+    "feeds": {
+     "kraken_spot": {
+      "mid": 1.42222,
+      "bid": 1.42218,
+      "ask": 1.42226,
+      "diff_pips": 9.2,
+      "age_s_at_open": 0.19,
+      "pyth_inside_spread": false
+     },
+     "truefx": {
+      "mid": 1.42133,
+      "bid": 1.42131,
+      "ask": 1.42135,
+      "diff_pips": 0.3,
+      "age_s_at_open": 0.75,
+      "pyth_inside_spread": false
+     }
+    }
+   }
+  }
+ }
+}

@@ -1,0 +1,92 @@
+{
+  "head": "72a4ddcc1a49f72f1d90973a9904c5312c9f59fd",
+  "files": {
+    "src/nightcrawler/kalshi_probability_epochs.py": {
+      "sha256": "520f5769f3a059a6022005f427fa35ab59bac113466c40c41019a634bf04d05c",
+      "bytes": 13749
+    },
+    "src/nightcrawler/kalshi_probability_learning.py": {
+      "sha256": "43d8f527fd24aee3a7dbb33d848dcaaaf0e39089ab605deddad32dfabc1e35ab",
+      "bytes": 27111
+    },
+    "src/nightcrawler/kalshi_arena.py": {
+      "sha256": "52b983cb87ba6ec593124aef525b37b2ad48ce8cabba0325f6b813d52e7a0676",
+      "bytes": 137209
+    },
+    "src/nightcrawler/pagestate.py": {
+      "sha256": "d73eec093164c7a659f12b08226844fb58cfd01e96278585b255575ea8212479",
+      "bytes": 234901
+    },
+    "tests/test_kalshi_probability_epochs.py": {
+      "sha256": "49c19cf0c9f54bad3f716aa450202a70d4e2808fbc80c9d1f49a3b1e4c25d09f",
+      "bytes": 24187
+    },
+    "tests/test_kalshi_probability_arena.py": {
+      "sha256": "2f69e8c665b0b4d0277c398d4a7fa27aedfeecb544c1e32f9cb65a72cde8b4cb",
+      "bytes": 11571
+    },
+    "tests/test_kalshi_arena_page.py": {
+      "sha256": "2d922b6e2e586e7befa2b9d8f65c6477ea6ba36daf1e2f155198e04ecb516bfa",
+      "bytes": 23390
+    }
+  },
+  "patch_sha256": "9ad5d9a0eaac7d5f4e99a4531aada9bdcfb64fdd8cef4198c0e374f755c75036",
+  "patch_bytes": 52943,
+  "source_fingerprint": "9905cecc3ba3dcde150a3998d150b7e4477b5e9e98d33c95e38485c7a4278b18",
+  "resource": {
+    "fixture_sha256": "b38263befe992c5d705dac9cb49e29a44ff1dd540f1548fc701bea20d71a462e",
+    "serialized_bytes": 432031,
+    "legacy_bytes": 71189,
+    "record_state_bytes": [
+      71189,
+      71990,
+      71990,
+      71990,
+      71990
+    ],
+    "lineage_panel_bytes": 1667,
+    "current_source": "9905cecc3ba3dcde150a3998d150b7e4477b5e9e98d33c95e38485c7a4278b18",
+    "imported_modules": [
+      "/workspace/nightcrawler-probability-epochs/src/nightcrawler/kalshi_probability_epochs.py",
+      "/workspace/nightcrawler-probability-epochs/src/nightcrawler/kalshi_probability_learning.py"
+    ]
+  },
+  "fingerprint_preflight": {
+    "v2": {
+      "before": "19387e3a38d6d387f3cf74acfa1d3d90bd2aafda60a795d21111bf2ea5586f84",
+      "after": "9905cecc3ba3dcde150a3998d150b7e4477b5e9e98d33c95e38485c7a4278b18",
+      "affected": true,
+      "dependencies_before": [
+        "kalshi_probability_learning.py",
+        "speeddesk_model.py",
+        "speeddesk_feeds.py",
+        "speeddesk_kalshi.py",
+        "speeddesk_kalshi_ws.py",
+        "speeddesk_venues.py",
+        "speeddesk.py",
+        "kalshi_arena.py"
+      ],
+      "dependencies_after": [
+        "kalshi_probability_learning.py",
+        "kalshi_probability_epochs.py",
+        "speeddesk_model.py",
+        "speeddesk_feeds.py",
+        "speeddesk_kalshi.py",
+        "speeddesk_kalshi_ws.py",
+        "speeddesk_venues.py",
+        "speeddesk.py",
+        "kalshi_arena.py"
+      ]
+    },
+    "v1": {
+      "before": "b6112b7ef8955b20af734157c1e7f5ec533bf98f70e034558f06670578c391f2",
+      "after": "b6112b7ef8955b20af734157c1e7f5ec533bf98f70e034558f06670578c391f2",
+      "affected": false,
+      "dependencies": [
+        "kalshi_online_learning.py",
+        "speeddesk_model.py"
+      ]
+    },
+    "meaning": "Source identities are not aliases; current mismatch-disabled persisted V2 history remains a separate raw archive. No history was exported from production."
+  }
+}

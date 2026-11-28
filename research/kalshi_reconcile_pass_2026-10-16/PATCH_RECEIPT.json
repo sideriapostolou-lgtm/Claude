@@ -1,0 +1,16 @@
+{
+  "base": "d1ee16f728612275fedb0d08846e127b0ad9b88d",
+  "patch_sha256": "367397773be56b752d72cc84c06fd86484da5079095d39cb41e04fcefaad64ee",
+  "files": {
+    "src/nightcrawler/speeddesk_live.py": "3968b78a5fcb8bcdf40415d811cbf0947b2e64fe5750afee74de06eb2cae46bd",
+    "tests/test_speeddesk_live_settlement_pass.py": "96e4a0e14536505b5091fd0d43003be79c209572b4ef4b97384db3c1ecf0dfc6"
+  },
+  "focused": "........................................................................ [ 33%]\n........................................................................ [ 67%]\n......................................................................   [100%]\n214 passed in 33.70s",
+  "mypy": "Success: no issues found in 132 source files",
+  "ruff": "All checks passed!",
+  "original_regression_proof": "2failed/8passed; both boundedhistoryquery assertions fail with original method reconstruction; ORIGINAL_NEW_TESTS.log",
+  "first_new_tests": "9passed/1fixturefailure; existing integrity-stop cancels were incorrectly expected absent; corrected explicit2cancels, no productionchange; IMPLEMENTATION_FIRST.log",
+  "full_suite": "pending root",
+  "independent_review": "pending Astra exacthash",
+  "release": "not performed"
+}

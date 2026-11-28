@@ -1,0 +1,720 @@
+{
+  "fixed_sample": "nearest active 15m BTC ETH SOL XRP at 2026-10-13 13:47 UTC",
+  "public_api_requests": 26,
+  "observations": [
+    {
+      "series": "KXBTC15M",
+      "ticker": "KXBTC15M-26OCT131000-00",
+      "close_time": "2026-10-13T14:00:00Z",
+      "listed_at": "2026-10-13T13:47:43.783988+00:00",
+      "market_last_yes_dollars": "0.5100",
+      "book_received_at": "2026-10-13T13:48:43.799663+00:00",
+      "book_http_date": "Tue, 13 Oct 2026 13:48:43 GMT",
+      "book_keys": [
+        "orderbook_fp"
+      ],
+      "quotes": {
+        "yes": {
+          "best_bid": "0.5900",
+          "best_bid_contracts": "2237.12",
+          "best_ask": "0.6000",
+          "best_ask_contracts": "8391.26",
+          "asks_at_or_below_1_cent": [],
+          "bid_levels": 149,
+          "ask_levels": 130
+        },
+        "no": {
+          "best_bid": "0.4000",
+          "best_bid_contracts": "8391.26",
+          "best_ask": "0.4100",
+          "best_ask_contracts": "2237.12",
+          "asks_at_or_below_1_cent": [],
+          "bid_levels": 130,
+          "ask_levels": 149
+        }
+      },
+      "rules_primary_sha256": "b753828e1a3b0c11da10caa876e032ba88832baeace1f6165e111969262faf5f",
+      "rules_secondary_sha256": "05314f789a77296c55d1d390ea32bb4642197cc012055978c04e58c7dd765ad4",
+      "price_ranges": [
+        {
+          "end": "0.1000",
+          "start": "0.0000",
+          "step": "0.0010"
+        },
+        {
+          "end": "0.9000",
+          "start": "0.1000",
+          "step": "0.0100"
+        },
+        {
+          "end": "1.0000",
+          "start": "0.9000",
+          "step": "0.0010"
+        }
+      ],
+      "fractional_trading_enabled": null,
+      "recent_trade_count": 100,
+      "recent_trade_oldest": "2026-10-13T13:48:40.419466Z",
+      "recent_trade_latest": "2026-10-13T13:48:44.549332Z",
+      "recent_yes_min": "0.5800",
+      "recent_yes_max": "0.6000",
+      "trades_cursor_remaining": true
+    },
+    {
+      "series": "KXETH15M",
+      "ticker": "KXETH15M-26OCT131000-00",
+      "close_time": "2026-10-13T14:00:00Z",
+      "listed_at": "2026-10-13T13:47:45.518393+00:00",
+      "market_last_yes_dollars": "0.5500",
+      "book_received_at": "2026-10-13T13:48:46.607542+00:00",
+      "book_http_date": "Tue, 13 Oct 2026 13:48:46 GMT",
+      "book_keys": [
+        "orderbook_fp"
+      ],
+      "quotes": {
+        "yes": {
+          "best_bid": "0.6100",
+          "best_bid_contracts": "1020.83",
+          "best_ask": "0.6200",
+          "best_ask_contracts": "83.00",
+          "asks_at_or_below_1_cent": [],
+          "bid_levels": 151,
+          "ask_levels": 128
+        },
+        "no": {
+          "best_bid": "0.3800",
+          "best_bid_contracts": "83.00",
+          "best_ask": "0.3900",
+          "best_ask_contracts": "1020.83",
+          "asks_at_or_below_1_cent": [],
+          "bid_levels": 128,
+          "ask_levels": 151
+        }
+      },
+      "rules_primary_sha256": "e340b0ce6417548c419b93d2143164fa614d47f8fe329faa5dd2bbf2150f3c0e",
+      "rules_secondary_sha256": "05314f789a77296c55d1d390ea32bb4642197cc012055978c04e58c7dd765ad4",
+      "price_ranges": [
+        {
+          "end": "0.1000",
+          "start": "0.0000",
+          "step": "0.0010"
+        },
+        {
+          "end": "0.9000",
+          "start": "0.1000",
+          "step": "0.0100"
+        },
+        {
+          "end": "1.0000",
+          "start": "0.9000",
+          "step": "0.0010"
+        }
+      ],
+      "fractional_trading_enabled": null,
+      "recent_trade_count": 100,
+      "recent_trade_oldest": "2026-10-13T13:48:23.147778Z",
+      "recent_trade_latest": "2026-10-13T13:48:48.022964Z",
+      "recent_yes_min": "0.5400",
+      "recent_yes_max": "0.6500",
+      "trades_cursor_remaining": true
+    },
+    {
+      "series": "KXSOL15M",
+      "ticker": "KXSOL15M-26OCT131000-00",
+      "close_time": "2026-10-13T14:00:00Z",
+      "listed_at": "2026-10-13T13:47:46.991570+00:00",
+      "market_last_yes_dollars": "0.6200",
+      "book_received_at": "2026-10-13T13:48:49.898838+00:00",
+      "book_http_date": "Tue, 13 Oct 2026 13:48:49 GMT",
+      "book_keys": [
+        "orderbook_fp"
+      ],
+      "quotes": {
+        "yes": {
+          "best_bid": "0.6500",
+          "best_bid_contracts": "460.01",
+          "best_ask": "0.6600",
+          "best_ask_contracts": "30.00",
+          "asks_at_or_below_1_cent": [],
+          "bid_levels": 155,
+          "ask_levels": 124
+        },
+        "no": {
+          "best_bid": "0.3400",
+          "best_bid_contracts": "30.00",
+          "best_ask": "0.3500",
+          "best_ask_contracts": "460.01",
+          "asks_at_or_below_1_cent": [],
+          "bid_levels": 124,
+          "ask_levels": 155
+        }
+      },
+      "rules_primary_sha256": "cbde9a7c21676b2276a27fcb4fab00f7e717b5c24ef01781a977c44b4b76d351",
+      "rules_secondary_sha256": "4c3b4b54b3dbef687883b5a0dc56c1fce4cdb471666875cae35be7013df7a71d",
+      "price_ranges": [
+        {
+          "end": "0.1000",
+          "start": "0.0000",
+          "step": "0.0010"
+        },
+        {
+          "end": "0.9000",
+          "start": "0.1000",
+          "step": "0.0100"
+        },
+        {
+          "end": "1.0000",
+          "start": "0.9000",
+          "step": "0.0010"
+        }
+      ],
+      "fractional_trading_enabled": null,
+      "recent_trade_count": 100,
+      "recent_trade_oldest": "2026-10-13T13:47:34.20037Z",
+      "recent_trade_latest": "2026-10-13T13:48:50.709862Z",
+      "recent_yes_min": "0.5600",
+      "recent_yes_max": "0.7000",
+      "trades_cursor_remaining": true
+    },
+    {
+      "series": "KXXRP15M",
+      "ticker": "KXXRP15M-26OCT131000-00",
+      "close_time": "2026-10-13T14:00:00Z",
+      "listed_at": "2026-10-13T13:47:48.400765+00:00",
+      "market_last_yes_dollars": "0.5900",
+      "book_received_at": "2026-10-13T13:48:53.073258+00:00",
+      "book_http_date": "Tue, 13 Oct 2026 13:48:52 GMT",
+      "book_keys": [
+        "orderbook_fp"
+      ],
+      "quotes": {
+        "yes": {
+          "best_bid": "0.5800",
+          "best_bid_contracts": "450.63",
+          "best_ask": "0.5900",
+          "best_ask_contracts": "717.90",
+          "asks_at_or_below_1_cent": [],
+          "bid_levels": 146,
+          "ask_levels": 131
+        },
+        "no": {
+          "best_bid": "0.4100",
+          "best_bid_contracts": "717.90",
+          "best_ask": "0.4200",
+          "best_ask_contracts": "450.63",
+          "asks_at_or_below_1_cent": [],
+          "bid_levels": 131,
+          "ask_levels": 146
+        }
+      },
+      "rules_primary_sha256": "18edfc124822d9978a5f4bdf504492409b35ea071af94a17476d88ea09b8871d",
+      "rules_secondary_sha256": "4c3b4b54b3dbef687883b5a0dc56c1fce4cdb471666875cae35be7013df7a71d",
+      "price_ranges": [
+        {
+          "end": "0.1000",
+          "start": "0.0000",
+          "step": "0.0010"
+        },
+        {
+          "end": "0.9000",
+          "start": "0.1000",
+          "step": "0.0100"
+        },
+        {
+          "end": "1.0000",
+          "start": "0.9000",
+          "step": "0.0010"
+        }
+      ],
+      "fractional_trading_enabled": null,
+      "recent_trade_count": 100,
+      "recent_trade_oldest": "2026-10-13T13:48:27.096311Z",
+      "recent_trade_latest": "2026-10-13T13:48:53.223179Z",
+      "recent_yes_min": "0.5800",
+      "recent_yes_max": "0.6700",
+      "trades_cursor_remaining": true
+    }
+  ],
+  "historical_cutoff": {
+    "path": "/historical/cutoff",
+    "requested_at": "2026-10-13T13:48:54.666479+00:00",
+    "received_at": "2026-10-13T13:48:55.831575+00:00",
+    "http_date": "Tue, 13 Oct 2026 13:48:55 GMT",
+    "status": 200,
+    "data": {
+      "market_positions_last_updated_ts": "2026-08-14T00:00:00Z",
+      "market_settled_ts": "2026-08-14T00:00:00Z",
+      "orders_updated_ts": "2026-09-29T00:00:00Z",
+      "trades_created_ts": "2026-08-14T00:00:00Z"
+    }
+  },
+  "previous_window_observations": [
+    {
+      "series": "KXBTC15M",
+      "ticker": "KXBTC15M-26OCT130945-45",
+      "close_time": "2026-10-13T13:45:00Z",
+      "result_deliberately_not_inspected": true,
+      "requested_at": "2026-10-13T13:49:56.305541+00:00",
+      "trade_count": 1000,
+      "cursor_remaining": true,
+      "trade_oldest": "2026-10-13T13:44:26.609397Z",
+      "trade_latest": "2026-10-13T13:44:59.697944Z",
+      "tail_prints_side_price_le_1cent": 1000,
+      "tail_price_min": "0.0010",
+      "tail_total_print_contracts": "414221.48",
+      "candle_count": 15,
+      "first_candle_schema": {
+        "end_period_ts": 1791898260,
+        "open_interest_fp": "127433.00",
+        "price": {
+          "close_dollars": "0.6700",
+          "high_dollars": "0.6800",
+          "low_dollars": "0.4700",
+          "mean_dollars": "0.6048",
+          "open_dollars": "0.4900"
+        },
+        "volume_fp": "171430.95",
+        "yes_ask": {
+          "close_dollars": "0.6700",
+          "high_dollars": "1.0000",
+          "low_dollars": "0.4700",
+          "open_dollars": "1.0000"
+        },
+        "yes_bid": {
+          "close_dollars": "0.6600",
+          "high_dollars": "0.6700",
+          "low_dollars": "0.0010",
+          "open_dollars": "0.0010"
+        }
+      },
+      "tail_last_prints": [
+        {
+          "created_time": "2026-10-13T13:44:59.697944Z",
+          "count_fp": "6.00",
+          "yes_price_dollars": "0.0010",
+          "no_price_dollars": "0.9990",
+          "taker_outcome_side": "yes",
+          "taker_book_side": "bid",
+          "is_block_trade": false
+        },
+        {
+          "created_time": "2026-10-13T13:44:59.566116Z",
+          "count_fp": "0.19",
+          "yes_price_dollars": "0.0010",
+          "no_price_dollars": "0.9990",
+          "taker_outcome_side": "yes",
+          "taker_book_side": "bid",
+          "is_block_trade": false
+        },
+        {
+          "created_time": "2026-10-13T13:44:59.021262Z",
+          "count_fp": "3.75",
+          "yes_price_dollars": "0.0010",
+          "no_price_dollars": "0.9990",
+          "taker_outcome_side": "yes",
+          "taker_book_side": "bid",
+          "is_block_trade": false
+        },
+        {
+          "created_time": "2026-10-13T13:44:58.905766Z",
+          "count_fp": "2.03",
+          "yes_price_dollars": "0.0010",
+          "no_price_dollars": "0.9990",
+          "taker_outcome_side": "yes",
+          "taker_book_side": "bid",
+          "is_block_trade": false
+        },
+        {
+          "created_time": "2026-10-13T13:44:58.748567Z",
+          "count_fp": "5.00",
+          "yes_price_dollars": "0.0010",
+          "no_price_dollars": "0.9990",
+          "taker_outcome_side": "yes",
+          "taker_book_side": "bid",
+          "is_block_trade": false
+        }
+      ],
+      "tail_price_counts": {
+        "yes@0.0010": 435,
+        "yes@0.0020": 317,
+        "yes@0.0040": 95,
+        "yes@0.0030": 153
+      },
+      "tail_price_total_contracts": {
+        "yes@0.0010": "313922.67",
+        "yes@0.0020": "69483.98",
+        "yes@0.0040": "10675.80",
+        "yes@0.0030": "20139.03"
+      },
+      "prints_at_0_001_dollars": 435,
+      "tail_taker_exposure_toward_cheap_side": 723
+    },
+    {
+      "series": "KXETH15M",
+      "ticker": "KXETH15M-26OCT130945-45",
+      "close_time": "2026-10-13T13:45:00Z",
+      "result_deliberately_not_inspected": true,
+      "requested_at": "2026-10-13T13:50:01.423303+00:00",
+      "trade_count": 1000,
+      "cursor_remaining": true,
+      "trade_oldest": "2026-10-13T13:44:39.110181Z",
+      "trade_latest": "2026-10-13T13:44:59.965852Z",
+      "tail_prints_side_price_le_1cent": 80,
+      "tail_price_min": "0.0010",
+      "tail_total_print_contracts": "21550.32",
+      "candle_count": 15,
+      "first_candle_schema": {
+        "end_period_ts": 1791898260,
+        "open_interest_fp": "5084.25",
+        "price": {
+          "close_dollars": "0.6200",
+          "high_dollars": "0.6800",
+          "low_dollars": "0.5100",
+          "mean_dollars": "0.5813",
+          "open_dollars": "0.5200"
+        },
+        "volume_fp": "6420.80",
+        "yes_ask": {
+          "close_dollars": "0.6400",
+          "high_dollars": "1.0000",
+          "low_dollars": "0.5100",
+          "open_dollars": "1.0000"
+        },
+        "yes_bid": {
+          "close_dollars": "0.6200",
+          "high_dollars": "0.6700",
+          "low_dollars": "0.0100",
+          "open_dollars": "0.0100"
+        }
+      },
+      "tail_last_prints": [
+        {
+          "created_time": "2026-10-13T13:44:59.965852Z",
+          "count_fp": "372.55",
+          "yes_price_dollars": "0.9990",
+          "no_price_dollars": "0.0010",
+          "taker_outcome_side": "no",
+          "taker_book_side": "ask",
+          "is_block_trade": false
+        },
+        {
+          "created_time": "2026-10-13T13:44:59.959925Z",
+          "count_fp": "100.88",
+          "yes_price_dollars": "0.9990",
+          "no_price_dollars": "0.0010",
+          "taker_outcome_side": "no",
+          "taker_book_side": "ask",
+          "is_block_trade": false
+        },
+        {
+          "created_time": "2026-10-13T13:44:59.927164Z",
+          "count_fp": "131.85",
+          "yes_price_dollars": "0.9990",
+          "no_price_dollars": "0.0010",
+          "taker_outcome_side": "no",
+          "taker_book_side": "ask",
+          "is_block_trade": false
+        },
+        {
+          "created_time": "2026-10-13T13:44:59.723037Z",
+          "count_fp": "0.21",
+          "yes_price_dollars": "0.9990",
+          "no_price_dollars": "0.0010",
+          "taker_outcome_side": "no",
+          "taker_book_side": "ask",
+          "is_block_trade": false
+        },
+        {
+          "created_time": "2026-10-13T13:44:59.674332Z",
+          "count_fp": "12150.39",
+          "yes_price_dollars": "0.9990",
+          "no_price_dollars": "0.0010",
+          "taker_outcome_side": "no",
+          "taker_book_side": "ask",
+          "is_block_trade": false
+        }
+      ],
+      "tail_price_counts": {
+        "no@0.0010": 19,
+        "no@0.0020": 9,
+        "no@0.0070": 5,
+        "no@0.0060": 5,
+        "no@0.0050": 6,
+        "no@0.0030": 8,
+        "no@0.0040": 13,
+        "no@0.0080": 3,
+        "no@0.0090": 3,
+        "no@0.0100": 9
+      },
+      "tail_price_total_contracts": {
+        "no@0.0010": "13772.15",
+        "no@0.0020": "144.00",
+        "no@0.0070": "4067.00",
+        "no@0.0060": "1117.00",
+        "no@0.0050": "586.12",
+        "no@0.0030": "123.00",
+        "no@0.0040": "115.00",
+        "no@0.0080": "3.99",
+        "no@0.0090": "51.90",
+        "no@0.0100": "1570.16"
+      },
+      "prints_at_0_001_dollars": 19,
+      "tail_taker_exposure_toward_cheap_side": 15
+    },
+    {
+      "series": "KXSOL15M",
+      "ticker": "KXSOL15M-26OCT130945-45",
+      "close_time": "2026-10-13T13:45:00Z",
+      "result_deliberately_not_inspected": true,
+      "requested_at": "2026-10-13T13:50:05.917352+00:00",
+      "trade_count": 1000,
+      "cursor_remaining": true,
+      "trade_oldest": "2026-10-13T13:43:21.495234Z",
+      "trade_latest": "2026-10-13T13:44:54.966805Z",
+      "tail_prints_side_price_le_1cent": 263,
+      "tail_price_min": "0.0010",
+      "tail_total_print_contracts": "10555.01",
+      "candle_count": 15,
+      "first_candle_schema": {
+        "end_period_ts": 1791898260,
+        "open_interest_fp": "785.43",
+        "price": {
+          "close_dollars": "0.6400",
+          "high_dollars": "0.6600",
+          "low_dollars": "0.4700",
+          "mean_dollars": "0.5856",
+          "open_dollars": "0.5000"
+        },
+        "volume_fp": "1480.62",
+        "yes_ask": {
+          "close_dollars": "0.6500",
+          "high_dollars": "1.0000",
+          "low_dollars": "0.4700",
+          "open_dollars": "1.0000"
+        },
+        "yes_bid": {
+          "close_dollars": "0.6400",
+          "high_dollars": "0.6600",
+          "low_dollars": "0.0020",
+          "open_dollars": "0.0020"
+        }
+      },
+      "tail_last_prints": [
+        {
+          "created_time": "2026-10-13T13:44:54.966805Z",
+          "count_fp": "12.68",
+          "yes_price_dollars": "0.9990",
+          "no_price_dollars": "0.0010",
+          "taker_outcome_side": "no",
+          "taker_book_side": "ask",
+          "is_block_trade": false
+        },
+        {
+          "created_time": "2026-10-13T13:44:53.93731Z",
+          "count_fp": "9.55",
+          "yes_price_dollars": "0.9990",
+          "no_price_dollars": "0.0010",
+          "taker_outcome_side": "no",
+          "taker_book_side": "ask",
+          "is_block_trade": false
+        },
+        {
+          "created_time": "2026-10-13T13:44:50.052552Z",
+          "count_fp": "793.19",
+          "yes_price_dollars": "0.9990",
+          "no_price_dollars": "0.0010",
+          "taker_outcome_side": "no",
+          "taker_book_side": "ask",
+          "is_block_trade": false
+        },
+        {
+          "created_time": "2026-10-13T13:44:50.052552Z",
+          "count_fp": "122.80",
+          "yes_price_dollars": "0.9990",
+          "no_price_dollars": "0.0010",
+          "taker_outcome_side": "no",
+          "taker_book_side": "ask",
+          "is_block_trade": false
+        },
+        {
+          "created_time": "2026-10-13T13:44:49.641313Z",
+          "count_fp": "9.20",
+          "yes_price_dollars": "0.9990",
+          "no_price_dollars": "0.0010",
+          "taker_outcome_side": "no",
+          "taker_book_side": "ask",
+          "is_block_trade": false
+        }
+      ],
+      "tail_price_counts": {
+        "no@0.0010": 31,
+        "no@0.0020": 88,
+        "no@0.0050": 18,
+        "no@0.0040": 35,
+        "no@0.0030": 25,
+        "no@0.0100": 19,
+        "no@0.0080": 14,
+        "no@0.0090": 14,
+        "no@0.0060": 9,
+        "no@0.0070": 10
+      },
+      "tail_price_total_contracts": {
+        "no@0.0010": "2680.40",
+        "no@0.0020": "2120.60",
+        "no@0.0050": "1730.94",
+        "no@0.0040": "818.49",
+        "no@0.0030": "1650.00",
+        "no@0.0100": "233.69",
+        "no@0.0080": "209.57",
+        "no@0.0090": "417.00",
+        "no@0.0060": "215.00",
+        "no@0.0070": "479.32"
+      },
+      "prints_at_0_001_dollars": 31,
+      "tail_taker_exposure_toward_cheap_side": 102
+    },
+    {
+      "series": "KXXRP15M",
+      "ticker": "KXXRP15M-26OCT130945-45",
+      "close_time": "2026-10-13T13:45:00Z",
+      "result_deliberately_not_inspected": true,
+      "requested_at": "2026-10-13T13:50:11.626040+00:00",
+      "trade_count": 1000,
+      "cursor_remaining": true,
+      "trade_oldest": "2026-10-13T13:44:14.47079Z",
+      "trade_latest": "2026-10-13T13:44:57.57802Z",
+      "tail_prints_side_price_le_1cent": 176,
+      "tail_price_min": "0.0010",
+      "tail_total_print_contracts": "9085.79",
+      "candle_count": 15,
+      "first_candle_schema": {
+        "end_period_ts": 1791898260,
+        "open_interest_fp": "3492.30",
+        "price": {
+          "close_dollars": "0.7000",
+          "high_dollars": "0.7100",
+          "low_dollars": "0.4700",
+          "mean_dollars": "0.6081",
+          "open_dollars": "0.4900"
+        },
+        "volume_fp": "6209.99",
+        "yes_ask": {
+          "close_dollars": "0.6900",
+          "high_dollars": "0.9970",
+          "low_dollars": "0.4600",
+          "open_dollars": "0.9970"
+        },
+        "yes_bid": {
+          "close_dollars": "0.6800",
+          "high_dollars": "0.7000",
+          "low_dollars": "0.0000",
+          "open_dollars": "0.0000"
+        }
+      },
+      "tail_last_prints": [
+        {
+          "created_time": "2026-10-13T13:44:57.57802Z",
+          "count_fp": "0.07",
+          "yes_price_dollars": "0.0010",
+          "no_price_dollars": "0.9990",
+          "taker_outcome_side": "yes",
+          "taker_book_side": "bid",
+          "is_block_trade": false
+        },
+        {
+          "created_time": "2026-10-13T13:44:53.994571Z",
+          "count_fp": "3.00",
+          "yes_price_dollars": "0.0020",
+          "no_price_dollars": "0.9980",
+          "taker_outcome_side": "yes",
+          "taker_book_side": "bid",
+          "is_block_trade": false
+        },
+        {
+          "created_time": "2026-10-13T13:44:53.994571Z",
+          "count_fp": "4.00",
+          "yes_price_dollars": "0.0050",
+          "no_price_dollars": "0.9950",
+          "taker_outcome_side": "yes",
+          "taker_book_side": "bid",
+          "is_block_trade": false
+        },
+        {
+          "created_time": "2026-10-13T13:44:53.994571Z",
+          "count_fp": "38.00",
+          "yes_price_dollars": "0.0040",
+          "no_price_dollars": "0.9960",
+          "taker_outcome_side": "yes",
+          "taker_book_side": "bid",
+          "is_block_trade": false
+        },
+        {
+          "created_time": "2026-10-13T13:44:53.994571Z",
+          "count_fp": "3.00",
+          "yes_price_dollars": "0.0040",
+          "no_price_dollars": "0.9960",
+          "taker_outcome_side": "yes",
+          "taker_book_side": "bid",
+          "is_block_trade": false
+        }
+      ],
+      "tail_price_counts": {
+        "yes@0.0010": 9,
+        "yes@0.0020": 34,
+        "yes@0.0050": 21,
+        "yes@0.0040": 15,
+        "yes@0.0060": 17,
+        "yes@0.0070": 14,
+        "yes@0.0030": 14,
+        "yes@0.0090": 11,
+        "yes@0.0100": 32,
+        "yes@0.0080": 9
+      },
+      "tail_price_total_contracts": {
+        "yes@0.0010": "1314.57",
+        "yes@0.0020": "4124.31",
+        "yes@0.0050": "565.92",
+        "yes@0.0040": "397.00",
+        "yes@0.0060": "746.44",
+        "yes@0.0070": "363.71",
+        "yes@0.0030": "372.64",
+        "yes@0.0090": "216.73",
+        "yes@0.0100": "684.03",
+        "yes@0.0080": "300.44"
+      },
+      "prints_at_0_001_dollars": 9,
+      "tail_taker_exposure_toward_cheap_side": 64
+    }
+  ],
+  "archive_access_check": {
+    "path": "/historical/trades?ticker=KXBTC15M-26AUG130945-45&min_ts=1786627800&max_ts=1786628700&limit=10&is_block_trade=false",
+    "requested_at": "2026-10-13T13:50:15.969428+00:00",
+    "received_at": "2026-10-13T13:50:16.359966+00:00",
+    "http_date": "Tue, 13 Oct 2026 13:50:16 GMT",
+    "status": 200,
+    "trade_count": 10,
+    "cursor_remaining": true,
+    "first_trade_schema": {
+      "count_fp": "0.45",
+      "created_time": "2026-08-13T13:44:59.552214Z",
+      "is_block_trade": false,
+      "no_price_dollars": "0.0010",
+      "taker_book_side": "ask",
+      "taker_outcome_side": "no",
+      "taker_side": "no",
+      "ticker": "KXBTC15M-26AUG130945-45",
+      "trade_id": "84f988c2-8991-695d-1f87-0dd329570940",
+      "yes_price_dollars": "0.9990"
+    }
+  },
+  "method_notes": [
+    "Snapshots are not synchronized across series.",
+    "Latest 1000 previous-window trades are a late-window sample, with more pages remaining, not a complete or random sample.",
+    "Previous-window outcomes deliberately not inspected; no P&L or win-rate calculation.",
+    "Price and quantity decimals parsed exactly; asks derive as 1 minus opposite best bid.",
+    "Public REST books have no book event timestamp; HTTP Date is not source freshness proof.",
+    "Historical request used an arbitrary fixed old window, not one selected for profit."
+  ],
+  "source_snapshot_sha256": "3d07dea53a20a9abe09a21f788e7d2593e2ac7e04dd5acf2d9c95d13271caf04",
+  "artifact_note": "Long contract prose fingerprinted rather than copied; source URLs/timestamps retained. No outcome scoring."
+}

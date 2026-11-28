@@ -1,0 +1,894 @@
+{
+  "scope": "Eighteen distinct selected projects; immutable source references. Public review is selected text, not whole-source or account certification.",
+  "root": [
+    {
+      "repo": "J0shusmc/Kalshi-BTC",
+      "sha": "d5a55bf10c02ddc2b429eec78b1fd847fa1b6760",
+      "commit_utc": "2026-10-09T01:25:44Z",
+      "tree_truncated": false,
+      "license_file_paths": [
+        "LICENSE"
+      ],
+      "selected_source_text": [
+        {
+          "path": "LICENSE",
+          "url": "https://github.com/J0shusmc/Kalshi-BTC/blob/d5a55bf10c02ddc2b429eec78b1fd847fa1b6760/LICENSE",
+          "saved_normalized_text_sha256": "13d5a3409435bd07e9f77c1462e000dfe24b8d950438a3fc9f5c4be4ff608983",
+          "saved_bytes": 1202,
+          "note": "Local text saved through connector/apply_patch; do not interpret as original HTTP bytes."
+        },
+        {
+          "path": "README.md",
+          "url": "https://github.com/J0shusmc/Kalshi-BTC/blob/d5a55bf10c02ddc2b429eec78b1fd847fa1b6760/README.md",
+          "saved_normalized_text_sha256": "d9816530549d9f04dfec3686c72e99de50d1340ef9d5c79d15d3515f0dacbc40",
+          "saved_bytes": 10521,
+          "note": "Local text saved through connector/apply_patch; do not interpret as original HTTP bytes."
+        },
+        {
+          "path": "data/README.md",
+          "url": "https://github.com/J0shusmc/Kalshi-BTC/blob/d5a55bf10c02ddc2b429eec78b1fd847fa1b6760/data/README.md",
+          "saved_normalized_text_sha256": "39078c77ed2d26a47a9a1f9881fa6f0455d934a1fa688f20f414082e361cea1b",
+          "saved_bytes": 1822,
+          "note": "Local text saved through connector/apply_patch; do not interpret as original HTTP bytes."
+        },
+        {
+          "path": "data/kalshi_btc15_t600_audit.json",
+          "url": "https://github.com/J0shusmc/Kalshi-BTC/blob/d5a55bf10c02ddc2b429eec78b1fd847fa1b6760/data/kalshi_btc15_t600_audit.json",
+          "saved_normalized_text_sha256": "f37b3d82422944228613a17d4ae61c8e58321120db4beca9e817e79ba7d2238c",
+          "saved_bytes": 966,
+          "note": "Local text saved through connector/apply_patch; do not interpret as original HTTP bytes."
+        },
+        {
+          "path": "reports/btc15_default_strategy.md",
+          "url": "https://github.com/J0shusmc/Kalshi-BTC/blob/d5a55bf10c02ddc2b429eec78b1fd847fa1b6760/reports/btc15_default_strategy.md",
+          "saved_normalized_text_sha256": "dfa685204479b9aeb158e7e187fe9e3318b3ee706797702c0e5a8c6850d1bb71",
+          "saved_bytes": 1311,
+          "note": "Local text saved through connector/apply_patch; do not interpret as original HTTP bytes."
+        },
+        {
+          "path": "reports/btc15_reclaim_edge_research.md",
+          "url": "https://github.com/J0shusmc/Kalshi-BTC/blob/d5a55bf10c02ddc2b429eec78b1fd847fa1b6760/reports/btc15_reclaim_edge_research.md",
+          "saved_normalized_text_sha256": "0027e0a5157f3f98ab295c2b3dae839ee123fce6eef7d5d7bfdf01ec945ed8b4",
+          "saved_bytes": 3413,
+          "note": "Local text saved through connector/apply_patch; do not interpret as original HTTP bytes."
+        },
+        {
+          "path": "reports/btc15_spread_grid_research.md",
+          "url": "https://github.com/J0shusmc/Kalshi-BTC/blob/d5a55bf10c02ddc2b429eec78b1fd847fa1b6760/reports/btc15_spread_grid_research.md",
+          "saved_normalized_text_sha256": "f00578c034229ae5780e1471c6587d70387112f7a960e7cb2331c03f788c66ae",
+          "saved_bytes": 3421,
+          "note": "Local text saved through connector/apply_patch; do not interpret as original HTTP bytes."
+        },
+        {
+          "path": "reports/btc15_trade_log.json",
+          "url": "https://github.com/J0shusmc/Kalshi-BTC/blob/d5a55bf10c02ddc2b429eec78b1fd847fa1b6760/reports/btc15_trade_log.json",
+          "saved_normalized_text_sha256": "87eb7e2d816834c5039f4d0ad3c7121c171f423deceb67508d8af581fccdd5ed",
+          "saved_bytes": 136973,
+          "note": "Local text saved through connector/apply_patch; do not interpret as original HTTP bytes."
+        },
+        {
+          "path": "scripts/btc15_live_monitor.py",
+          "url": "https://github.com/J0shusmc/Kalshi-BTC/blob/d5a55bf10c02ddc2b429eec78b1fd847fa1b6760/scripts/btc15_live_monitor.py",
+          "saved_normalized_text_sha256": "9fc28efb22bd12b1f53b15d2fccf58b3cbbf4b054690006dbca98533a015e775",
+          "saved_bytes": 106198,
+          "note": "Local text saved through connector/apply_patch; do not interpret as original HTTP bytes."
+        }
+      ]
+    },
+    {
+      "repo": "zhangmatt/kalshi-btc-mm",
+      "sha": "24cde982c8a154308dd24a693edfa79ff59ec2e8",
+      "commit_utc": "2026-08-01T22:07:22Z",
+      "tree_truncated": false,
+      "license_file_paths": [],
+      "selected_source_text": [
+        {
+          "path": "README.md",
+          "url": "https://github.com/zhangmatt/kalshi-btc-mm/blob/24cde982c8a154308dd24a693edfa79ff59ec2e8/README.md",
+          "saved_normalized_text_sha256": "bf2f96f763585ac781cc7e5cf919208535db706bec2cc17d6c9e1404b471b154",
+          "saved_bytes": 6380,
+          "note": "Local text saved through connector/apply_patch; do not interpret as original HTTP bytes."
+        },
+        {
+          "path": "docs/experiments/20260726-confirmatory-results.md",
+          "url": "https://github.com/zhangmatt/kalshi-btc-mm/blob/24cde982c8a154308dd24a693edfa79ff59ec2e8/docs/experiments/20260726-confirmatory-results.md",
+          "saved_normalized_text_sha256": "eabba673a35554bba64f92ff90bd14f328857cd9e71ebc721136e6cee0e4c235",
+          "saved_bytes": 2344,
+          "note": "Local text saved through connector/apply_patch; do not interpret as original HTTP bytes."
+        },
+        {
+          "path": "docs/experiments/20260729-paper-regime-finding.md",
+          "url": "https://github.com/zhangmatt/kalshi-btc-mm/blob/24cde982c8a154308dd24a693edfa79ff59ec2e8/docs/experiments/20260729-paper-regime-finding.md",
+          "saved_normalized_text_sha256": "c92b830d2af9fdae3393408522e74adbc0b19f8d109a0f294e41775a815e42ba",
+          "saved_bytes": 1569,
+          "note": "Local text saved through connector/apply_patch; do not interpret as original HTTP bytes."
+        },
+        {
+          "path": "src/kalshi_mm/exchange.py",
+          "url": "https://github.com/zhangmatt/kalshi-btc-mm/blob/24cde982c8a154308dd24a693edfa79ff59ec2e8/src/kalshi_mm/exchange.py",
+          "saved_normalized_text_sha256": "883dcd6d529a422d4ce88d623879262f48a4ae16fda1652c3b75f1bc5f7e0ad0",
+          "saved_bytes": 20650,
+          "note": "Local text saved through connector/apply_patch; do not interpret as original HTTP bytes."
+        },
+        {
+          "path": "src/kalshi_mm/fair_value.py",
+          "url": "https://github.com/zhangmatt/kalshi-btc-mm/blob/24cde982c8a154308dd24a693edfa79ff59ec2e8/src/kalshi_mm/fair_value.py",
+          "saved_normalized_text_sha256": "0e5acad6e252e803f66fab51c55c4273d9f9b48b10251eb3584a4627a8d2c434",
+          "saved_bytes": 5324,
+          "note": "Local text saved through connector/apply_patch; do not interpret as original HTTP bytes."
+        },
+        {
+          "path": "src/kalshi_mm/replay.py",
+          "url": "https://github.com/zhangmatt/kalshi-btc-mm/blob/24cde982c8a154308dd24a693edfa79ff59ec2e8/src/kalshi_mm/replay.py",
+          "saved_normalized_text_sha256": "200235f180f41517d6a6af4da20a977f82fb685f39f03cc8467405026cccc3b8",
+          "saved_bytes": 22086,
+          "note": "Local text saved through connector/apply_patch; do not interpret as original HTTP bytes."
+        },
+        {
+          "path": "src/kalshi_mm/settlement.py",
+          "url": "https://github.com/zhangmatt/kalshi-btc-mm/blob/24cde982c8a154308dd24a693edfa79ff59ec2e8/src/kalshi_mm/settlement.py",
+          "saved_normalized_text_sha256": "a71c8b05e0139846fd1fd4333aa55302a087e12fb4c0c91826ceb7cf369ac2de",
+          "saved_bytes": 3103,
+          "note": "Local text saved through connector/apply_patch; do not interpret as original HTTP bytes."
+        },
+        {
+          "path": "src/kalshi_mm/strategy.py",
+          "url": "https://github.com/zhangmatt/kalshi-btc-mm/blob/24cde982c8a154308dd24a693edfa79ff59ec2e8/src/kalshi_mm/strategy.py",
+          "saved_normalized_text_sha256": "4a996631555ee6003889fe2679e571c1f2fe3b02e2a2aa46411e45d5621dd4ca",
+          "saved_bytes": 8931,
+          "note": "Local text saved through connector/apply_patch; do not interpret as original HTTP bytes."
+        }
+      ]
+    },
+    {
+      "repo": "danielsilvaperez/kalshi-trading-bot",
+      "sha": "2d982ed343e18a9e96a8ee93fbbc0c0f618ae42a",
+      "commit_utc": "2026-03-05T04:12:30Z",
+      "tree_truncated": false,
+      "license_file_paths": [],
+      "selected_source_text": [
+        {
+          "path": "README.md",
+          "url": "https://github.com/danielsilvaperez/kalshi-trading-bot/blob/2d982ed343e18a9e96a8ee93fbbc0c0f618ae42a/README.md",
+          "saved_normalized_text_sha256": "8ea31c530c70beabe3feb92279f38f9572bc5f13a5a4d8b79028d066efacb3c7",
+          "saved_bytes": 5216,
+          "note": "Local text saved through connector/apply_patch; do not interpret as original HTTP bytes."
+        },
+        {
+          "path": "src/ml/metaStrategy.ts",
+          "url": "https://github.com/danielsilvaperez/kalshi-trading-bot/blob/2d982ed343e18a9e96a8ee93fbbc0c0f618ae42a/src/ml/metaStrategy.ts",
+          "saved_normalized_text_sha256": "2c12ade0071a59e1016232d458bdd086c273dd05ef79ea392985ac66a1dbc423",
+          "saved_bytes": 4712,
+          "note": "Local text saved through connector/apply_patch; do not interpret as original HTTP bytes."
+        },
+        {
+          "path": "src/scalper.ts",
+          "url": "https://github.com/danielsilvaperez/kalshi-trading-bot/blob/2d982ed343e18a9e96a8ee93fbbc0c0f618ae42a/src/scalper.ts",
+          "saved_normalized_text_sha256": "d744108d0dfdb841fb7f336311b43047410a7cc4d83b97f31968f7a295f1a285",
+          "saved_bytes": 25089,
+          "note": "Local text saved through connector/apply_patch; do not interpret as original HTTP bytes."
+        },
+        {
+          "path": "src/strategy/btc15m.ts",
+          "url": "https://github.com/danielsilvaperez/kalshi-trading-bot/blob/2d982ed343e18a9e96a8ee93fbbc0c0f618ae42a/src/strategy/btc15m.ts",
+          "saved_normalized_text_sha256": "6169bca57a82744d0b8738342a3a0178e069b9d1540a0f13f796d01698b920bb",
+          "saved_bytes": 6408,
+          "note": "Local text saved through connector/apply_patch; do not interpret as original HTTP bytes."
+        },
+        {
+          "path": "src/swing.ts",
+          "url": "https://github.com/danielsilvaperez/kalshi-trading-bot/blob/2d982ed343e18a9e96a8ee93fbbc0c0f618ae42a/src/swing.ts",
+          "saved_normalized_text_sha256": "b8838954a1ea8a0659251228a32a0c011c46fcc7b3b0895e0db1958e08fe6329",
+          "saved_bytes": 65789,
+          "note": "Local text saved through connector/apply_patch; do not interpret as original HTTP bytes."
+        }
+      ]
+    },
+    {
+      "repo": "TylerShep/quant-kbtc",
+      "sha": "3e2ee26f0847f9c91e7c591647917ada4b2b60aa",
+      "commit_utc": "2026-06-30T15:08:02Z",
+      "tree_truncated": false,
+      "license_file_paths": [],
+      "selected_source_text": [
+        {
+          "path": "README.md",
+          "url": "https://github.com/TylerShep/quant-kbtc/blob/3e2ee26f0847f9c91e7c591647917ada4b2b60aa/README.md",
+          "saved_normalized_text_sha256": "4276aaf84949d5b82777a9cde69b178d237531ab63dfcd4af6fab487d7af41dd",
+          "saved_bytes": 17510,
+          "note": "Local text saved through connector/apply_patch; do not interpret as original HTTP bytes."
+        },
+        {
+          "path": "backend/backtesting/contract_backtester.py",
+          "url": "https://github.com/TylerShep/quant-kbtc/blob/3e2ee26f0847f9c91e7c591647917ada4b2b60aa/backend/backtesting/contract_backtester.py",
+          "saved_normalized_text_sha256": "e3e7c78ec87bab489917bda9e9e2cf898c73e495309f4fc0aaf8fd19b243e9ae",
+          "saved_bytes": 43354,
+          "note": "Local text saved through connector/apply_patch; do not interpret as original HTTP bytes."
+        },
+        {
+          "path": "backend/config/settings.py",
+          "url": "https://github.com/TylerShep/quant-kbtc/blob/3e2ee26f0847f9c91e7c591647917ada4b2b60aa/backend/config/settings.py",
+          "saved_normalized_text_sha256": "df22c4e75f6b188a427e03310a113d9d00964d0997605426b32ab25649020ecd",
+          "saved_bytes": 40298,
+          "note": "Local text saved through connector/apply_patch; do not interpret as original HTTP bytes."
+        },
+        {
+          "path": "backend/execution/paper_trader.py",
+          "url": "https://github.com/TylerShep/quant-kbtc/blob/3e2ee26f0847f9c91e7c591647917ada4b2b60aa/backend/execution/paper_trader.py",
+          "saved_normalized_text_sha256": "aa908a5e797709f1152536570ea81b3d5f0621c0b8ac438f98c2da33ddf6670c",
+          "saved_bytes": 7795,
+          "note": "Local text saved through connector/apply_patch; do not interpret as original HTTP bytes."
+        },
+        {
+          "path": "docs/findings/2026-04-28-tier0-live-vs-paper.md",
+          "url": "https://github.com/TylerShep/quant-kbtc/blob/3e2ee26f0847f9c91e7c591647917ada4b2b60aa/docs/findings/2026-04-28-tier0-live-vs-paper.md",
+          "saved_normalized_text_sha256": "b36c6f242bb97da5df973056153e409cb75acfb8e80cd7bac291e6d4f27c64d2",
+          "saved_bytes": 10416,
+          "note": "Local text saved through connector/apply_patch; do not interpret as original HTTP bytes."
+        }
+      ]
+    },
+    {
+      "repo": "OffGrid0xDAO/cross-platform-arbitrage",
+      "sha": "0c434a3e3a2e85d44f740d09bdc3782bfba27004",
+      "commit_utc": "2026-03-03T20:29:44Z",
+      "tree_truncated": false,
+      "license_file_paths": [],
+      "selected_source_text": [
+        {
+          "path": "README.md",
+          "url": "https://github.com/OffGrid0xDAO/cross-platform-arbitrage/blob/0c434a3e3a2e85d44f740d09bdc3782bfba27004/README.md",
+          "saved_normalized_text_sha256": "30eb414a70a89d87a81e0bea000fddbf185dba09878a253c8fda0f547cc51065",
+          "saved_bytes": 6223,
+          "note": "Local text saved through connector/apply_patch; do not interpret as original HTTP bytes."
+        },
+        {
+          "path": "data/README.md",
+          "url": "https://github.com/OffGrid0xDAO/cross-platform-arbitrage/blob/0c434a3e3a2e85d44f740d09bdc3782bfba27004/data/README.md",
+          "saved_normalized_text_sha256": "1b2dcbc493e3583113664170addcd2b7c71a9b1fd3ac796961db684b1c74b870",
+          "saved_bytes": 2464,
+          "note": "Local text saved through connector/apply_patch; do not interpret as original HTTP bytes."
+        },
+        {
+          "path": "paper/short_results.tex",
+          "url": "https://github.com/OffGrid0xDAO/cross-platform-arbitrage/blob/0c434a3e3a2e85d44f740d09bdc3782bfba27004/paper/short_results.tex",
+          "saved_normalized_text_sha256": "fb033bc7eac6aea3bfc8588b692de805b7030a86ea322fa0789875b6909d8259",
+          "saved_bytes": 8285,
+          "note": "Local text saved through connector/apply_patch; do not interpret as original HTTP bytes."
+        }
+      ]
+    },
+    {
+      "repo": "Strobingn/kalshi-odds-app",
+      "sha": "8e2cc6b4ab8e5fa8b1476894620fb217e67a27f7",
+      "commit_utc": "2026-10-16T00:10:47Z",
+      "tree_truncated": false,
+      "license_file_paths": [],
+      "selected_source_text": [
+        {
+          "path": "README.md",
+          "url": "https://github.com/Strobingn/kalshi-odds-app/blob/8e2cc6b4ab8e5fa8b1476894620fb217e67a27f7/README.md",
+          "saved_normalized_text_sha256": "cb681f5a9cb21ddf670c826cab7ab69a7bfc24d73d75cf82d0b979e7ff024b84",
+          "saved_bytes": 41088,
+          "note": "Local text saved through connector/apply_patch; do not interpret as original HTTP bytes."
+        }
+      ]
+    }
+  ],
+  "execution_reviewer": [
+    {
+      "repo": "DeweyMarco/simple-kalshi-bot",
+      "head_sha": "f01baea7cf185186e46ce701904d60357ad779ba",
+      "default_branch": "main",
+      "commit_time": "2026-02-26T17:54:06Z",
+      "api_license": {
+        "key": "apache-2.0",
+        "name": "Apache License 2.0",
+        "spdx_id": "Apache-2.0",
+        "url": "https://api.github.com/licenses/apache-2.0",
+        "node_id": "MDc6TGljZW5zZTI="
+      },
+      "tree_truncated": false,
+      "source_files": [
+        {
+          "path": "LICENSE",
+          "sha256": "c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4",
+          "bytes": 11357,
+          "lines": 201,
+          "saved_mtime_utc": "2026-10-16T00:46:59.518796+00:00"
+        },
+        {
+          "path": "README.md",
+          "sha256": "216dfbcf68a710d7b8fd71f8395b072678662cbbc95049707418a813f91ebb12",
+          "bytes": 2686,
+          "lines": 76,
+          "saved_mtime_utc": "2026-10-16T00:46:59.355012+00:00"
+        },
+        {
+          "path": "analyze.py",
+          "sha256": "f7b6f530f6a053acb6447a634f4325c40be687c07d91b58d12f570b057587308",
+          "bytes": 4989,
+          "lines": 153,
+          "saved_mtime_utc": "2026-10-16T00:46:59.843370+00:00"
+        },
+        {
+          "path": "bot.py",
+          "sha256": "dd8cba1e0b919e417cc31926361f1f5b9fc8774ef33937a9a483e6a53bc551e5",
+          "bytes": 36895,
+          "lines": 823,
+          "saved_mtime_utc": "2026-10-16T00:46:59.522291+00:00"
+        },
+        {
+          "path": "consensus.py",
+          "sha256": "7cf275e9e9b6b31eee0abe0b50890bd81d84cbcb089e685e503d7e622850b129",
+          "bytes": 18916,
+          "lines": 563,
+          "saved_mtime_utc": "2026-10-16T00:46:59.542531+00:00"
+        },
+        {
+          "path": "genetic/bot.py",
+          "sha256": "e3a37280a7d6c40d1e23f593e6f5d0bfea5bb0cf3ee64bd1447d1033ce58916a",
+          "bytes": 7954,
+          "lines": 222,
+          "saved_mtime_utc": "2026-10-16T00:46:59.869044+00:00"
+        },
+        {
+          "path": "genetic/config.py",
+          "sha256": "6422c5d31511779cbb063846396a57201be3988b9173b4e4c6420fe5e938e107",
+          "bytes": 1476,
+          "lines": 37,
+          "saved_mtime_utc": "2026-10-16T00:46:59.508938+00:00"
+        },
+        {
+          "path": "genetic/engine.py",
+          "sha256": "de86b8a8af6aad13337952c7b94ad8da66ebeb612aa826746060c3adaeaca381",
+          "bytes": 9355,
+          "lines": 279,
+          "saved_mtime_utc": "2026-10-16T00:46:59.643881+00:00"
+        },
+        {
+          "path": "genetic/evolution.py",
+          "sha256": "fb3e05508cb650f0f71d2aec733dd4ce3c98201ecc0b9ad3785c9ee83869eaf1",
+          "bytes": 3472,
+          "lines": 111,
+          "saved_mtime_utc": "2026-10-16T00:47:00.438626+00:00"
+        },
+        {
+          "path": "genetic/feed.py",
+          "sha256": "ade6083d84f128d29d895a1adf186d26c824877c1e7304f0f0cd9f2e345df376",
+          "bytes": 10202,
+          "lines": 292,
+          "saved_mtime_utc": "2026-10-16T00:46:59.911683+00:00"
+        },
+        {
+          "path": "genetic/genome.py",
+          "sha256": "f0c1260ce20150729e1cb8c6d096620300504360c4fc1d7e8049dff85426f825",
+          "bytes": 5711,
+          "lines": 163,
+          "saved_mtime_utc": "2026-10-16T00:46:59.863503+00:00"
+        },
+        {
+          "path": "genetic/persistence.py",
+          "sha256": "1c4cb70ce3c4c2cc6a0aecfbec7b605c5cb6380246ffb6b80dfd40e42047bb38",
+          "bytes": 5374,
+          "lines": 179,
+          "saved_mtime_utc": "2026-10-16T00:46:59.891214+00:00"
+        },
+        {
+          "path": "kalshi_client.py",
+          "sha256": "ba04b8fd29ae986feaea24dbe1632a425cededb4e394164fd45f828464e4fe87",
+          "bytes": 4649,
+          "lines": 137,
+          "saved_mtime_utc": "2026-10-16T00:46:59.510555+00:00"
+        },
+        {
+          "path": "momentum_15.py",
+          "sha256": "a461b3327b3db9d3ec44dc517bbb744621adb3e715ee7688b227947da23625dd",
+          "bytes": 16277,
+          "lines": 504,
+          "saved_mtime_utc": "2026-10-16T00:46:59.904294+00:00"
+        }
+      ]
+    },
+    {
+      "repo": "carterl96/KalshiBot",
+      "head_sha": "968dd835786fea36cb19dfbf9abb83fdaa2949fa",
+      "default_branch": "main",
+      "commit_time": "2026-06-21T20:12:48Z",
+      "api_license": null,
+      "tree_truncated": false,
+      "source_files": [
+        {
+          "path": "README.md",
+          "sha256": "c9e2c946d7645645c427765fd824424a1e6e6a1947d9b46c156e3d3b2cf40a42",
+          "bytes": 9057,
+          "lines": 189,
+          "saved_mtime_utc": "2026-10-16T00:46:58.446163+00:00"
+        },
+        {
+          "path": "engine/auth/rest_client.py",
+          "sha256": "d50c88deb69742c8a57dcd9e82eb4428ad361038ffb1127fe71bafe662125664",
+          "bytes": 5946,
+          "lines": 162,
+          "saved_mtime_utc": "2026-10-16T00:46:58.854456+00:00"
+        },
+        {
+          "path": "engine/backtest/runner.py",
+          "sha256": "a484e25f9cba4a902a14da743a7c2ffdb0d91ddd0b8fa4b67fdba7241acef3d5",
+          "bytes": 12254,
+          "lines": 325,
+          "saved_mtime_utc": "2026-10-16T00:46:58.927605+00:00"
+        },
+        {
+          "path": "engine/backtest/synthetic.py",
+          "sha256": "d3163b429c1caa3232c6aff94662719c4023a905a854e527e40b58648f31e3d7",
+          "bytes": 4008,
+          "lines": 91,
+          "saved_mtime_utc": "2026-10-16T00:46:58.598368+00:00"
+        },
+        {
+          "path": "engine/config.py",
+          "sha256": "1abdb0cca17780e526b3e1bc81b513f85a1a8cb9bca08a5813ccc07883b889cc",
+          "bytes": 6784,
+          "lines": 150,
+          "saved_mtime_utc": "2026-10-16T00:46:57.936492+00:00"
+        },
+        {
+          "path": "engine/data/brrny.py",
+          "sha256": "ba79c7fb0b1729d35e5ab3813350bc4944f5dda83b3742b8b45e03c8d48c5185",
+          "bytes": 3500,
+          "lines": 91,
+          "saved_mtime_utc": "2026-10-16T00:46:58.748391+00:00"
+        },
+        {
+          "path": "engine/data/spot.py",
+          "sha256": "bd777c385a84828bf192fc0a8718020b17f6720bc907fe1579dc4acc0dff4a26",
+          "bytes": 3276,
+          "lines": 99,
+          "saved_mtime_utc": "2026-10-16T00:46:59.006190+00:00"
+        },
+        {
+          "path": "engine/engine.py",
+          "sha256": "cbaa366c8a76e12a984485125729a8b56783d943bba89122180d4e6a6f31cd4c",
+          "bytes": 38692,
+          "lines": 886,
+          "saved_mtime_utc": "2026-10-16T00:46:58.226236+00:00"
+        },
+        {
+          "path": "engine/execution/fees.py",
+          "sha256": "da65b699480024df1476e8d68283e6579e37405e35f3aff809f8a68bc8c1e4a6",
+          "bytes": 1624,
+          "lines": 41,
+          "saved_mtime_utc": "2026-10-16T00:46:58.465624+00:00"
+        },
+        {
+          "path": "engine/execution/orders.py",
+          "sha256": "23132ed6c402660715d8544d38be8ce69245ee007d395edbee328c31927505ed",
+          "bytes": 13563,
+          "lines": 338,
+          "saved_mtime_utc": "2026-10-16T00:46:58.223136+00:00"
+        },
+        {
+          "path": "engine/execution/window.py",
+          "sha256": "8621ff40a8404f4ecc47e46fe19114cf1e8e13e8e1474b16fd806df2dc2588ca",
+          "bytes": 8802,
+          "lines": 226,
+          "saved_mtime_utc": "2026-10-16T00:46:58.338445+00:00"
+        },
+        {
+          "path": "engine/markets.py",
+          "sha256": "a3fe2568135f4d0f4a1268af2b2d690660a23347e96567ba6d2f7cb5263e328e",
+          "bytes": 3371,
+          "lines": 99,
+          "saved_mtime_utc": "2026-10-16T00:46:58.469921+00:00"
+        },
+        {
+          "path": "engine/pricing/model.py",
+          "sha256": "5fbf0a429cf1e730968f4de789e6a58535d20cf2e98e917e7dec0fcf8b8e19c5",
+          "bytes": 3772,
+          "lines": 100,
+          "saved_mtime_utc": "2026-10-16T00:46:58.452212+00:00"
+        },
+        {
+          "path": "engine/risk/limits.py",
+          "sha256": "a371e652b6e679622270913c352b7c18e501cde3df2977f1bb57188f5a7d2745",
+          "bytes": 5175,
+          "lines": 145,
+          "saved_mtime_utc": "2026-10-16T00:46:58.640734+00:00"
+        },
+        {
+          "path": "engine/strategy/edge.py",
+          "sha256": "71e14cc21e8657ff13282320adb69c9076804078f83329c762020bc9ed034a08",
+          "bytes": 3529,
+          "lines": 104,
+          "saved_mtime_utc": "2026-10-16T00:46:58.691070+00:00"
+        }
+      ]
+    },
+    {
+      "repo": "hamad-khawaja/kalshi-trading-bot",
+      "head_sha": "a72f24a7e1ac8bf2fe107e307686d3c6374766de",
+      "default_branch": "main",
+      "commit_time": "2026-02-25T22:56:33Z",
+      "api_license": {
+        "key": "mit",
+        "name": "MIT License",
+        "spdx_id": "MIT",
+        "url": "https://api.github.com/licenses/mit",
+        "node_id": "MDc6TGljZW5zZTEz"
+      },
+      "tree_truncated": false,
+      "source_files": [
+        {
+          "path": "LICENSE",
+          "sha256": "2aae78c6ab5e05f0a98119a6fc67b351515f05010df1fc352aef937aa2ea61df",
+          "bytes": 1062,
+          "lines": 21,
+          "saved_mtime_utc": "2026-10-16T00:46:57.106364+00:00"
+        },
+        {
+          "path": "README.md",
+          "sha256": "f7e7009a2a884617cf46447cd80e48b227b3668c4bc1b9ba57f428e0a946860b",
+          "bytes": 13487,
+          "lines": 313,
+          "saved_mtime_utc": "2026-10-16T00:46:57.101594+00:00"
+        },
+        {
+          "path": "backtest/backtester.py",
+          "sha256": "36f8293a2ebc75b01c84d47f0f65b666f15834f3351d111b4962ead426832c27",
+          "bytes": 33872,
+          "lines": 895,
+          "saved_mtime_utc": "2026-10-16T00:46:57.933929+00:00"
+        },
+        {
+          "path": "backtest/candle_features.py",
+          "sha256": "14a7c35b1d54c04a65edc836faf1d6e442f87ebc9288be9f7eb9acf6f033acae",
+          "bytes": 6532,
+          "lines": 190,
+          "saved_mtime_utc": "2026-10-16T00:46:57.822208+00:00"
+        },
+        {
+          "path": "config/settings.live.yaml",
+          "sha256": "84ea616803bcac52b0673f1c5487004c2a2102184c5f36ce22a50af2746d777e",
+          "bytes": 6750,
+          "lines": 219,
+          "saved_mtime_utc": "2026-10-16T00:46:57.047716+00:00"
+        },
+        {
+          "path": "config/settings.yaml",
+          "sha256": "80de5d9fe21ed2f4ed1ed81765346eb2afc2ebd2d9aeca82e6d5f8cd3255b5b1",
+          "bytes": 12100,
+          "lines": 225,
+          "saved_mtime_utc": "2026-10-16T00:46:57.535636+00:00"
+        },
+        {
+          "path": "src/bot.py",
+          "sha256": "839bee4424f57663f3860d00993faf355e2897da4473da6bf61351799c77d028",
+          "bytes": 107171,
+          "lines": 2255,
+          "saved_mtime_utc": "2026-10-16T00:46:57.908144+00:00"
+        },
+        {
+          "path": "src/config.py",
+          "sha256": "b3f46795deaffad50cf720e2f06eaec3282068b83da8475b12d0a8d1e8beef55",
+          "bytes": 17181,
+          "lines": 352,
+          "saved_mtime_utc": "2026-10-16T00:47:46.624046+00:00"
+        },
+        {
+          "path": "src/data/kalshi_client.py",
+          "sha256": "618633e0bf00098ce1d59570ac45f0286c58489d0d9ffa0654cae8aae549c813",
+          "bytes": 15350,
+          "lines": 415,
+          "saved_mtime_utc": "2026-10-16T00:46:58.169756+00:00"
+        },
+        {
+          "path": "src/data/market_scanner.py",
+          "sha256": "864c23959419b8b70a05a293265243469bc5dcdb3bae61e393051a648ee47faf",
+          "bytes": 7231,
+          "lines": 218,
+          "saved_mtime_utc": "2026-10-16T00:46:58.076515+00:00"
+        },
+        {
+          "path": "src/execution/order_manager.py",
+          "sha256": "03ecbe15971c9e9ff85e4abad0411e29bfa3b9cef837833a04232d02ba029fa6",
+          "bytes": 16602,
+          "lines": 477,
+          "saved_mtime_utc": "2026-10-16T00:46:57.626518+00:00"
+        },
+        {
+          "path": "src/execution/position_tracker.py",
+          "sha256": "7a8b3064c6b7cdbd0a50e71627ed0400940ef07bf0f2c749f2c53bfabe48be9b",
+          "bytes": 29519,
+          "lines": 725,
+          "saved_mtime_utc": "2026-10-16T00:46:57.799442+00:00"
+        },
+        {
+          "path": "src/model/predict.py",
+          "sha256": "c577449f38d7b5c83e16b6fb1e6fb08e4915d594476c27e338f8068bdc239bbe",
+          "bytes": 26295,
+          "lines": 603,
+          "saved_mtime_utc": "2026-10-16T00:47:45.650277+00:00"
+        },
+        {
+          "path": "src/risk/position_sizer.py",
+          "sha256": "d3f882ebf90e4eda126f92ec802c6bb0431e5c0b0ed44030f10fcf0e15b36270",
+          "bytes": 11630,
+          "lines": 298,
+          "saved_mtime_utc": "2026-10-16T00:46:57.406970+00:00"
+        },
+        {
+          "path": "src/risk/risk_manager.py",
+          "sha256": "14d6132384c32dd62ff2b984b3c3b02df0058c043462b7e53f43fc191eb8fdf5",
+          "bytes": 9549,
+          "lines": 269,
+          "saved_mtime_utc": "2026-10-16T00:46:57.563371+00:00"
+        },
+        {
+          "path": "src/strategy/edge_detector.py",
+          "sha256": "9d4bca0e8c87d93c235392c3e671d7621e2a35b5a1e26c51acde775d98260558",
+          "bytes": 25158,
+          "lines": 585,
+          "saved_mtime_utc": "2026-10-16T00:46:57.582390+00:00"
+        },
+        {
+          "path": "src/strategy/fair_value.py",
+          "sha256": "6781f2c3749b572ef2fab4a77b5c5f63b7b674e13ecc933bb42d795931384731",
+          "bytes": 3705,
+          "lines": 119,
+          "saved_mtime_utc": "2026-10-16T00:46:57.449451+00:00"
+        },
+        {
+          "path": "src/strategy/market_maker.py",
+          "sha256": "5071600e00f37f62073d2417d666c219ebbc89181e947e64d5058bddc51925c9",
+          "bytes": 11603,
+          "lines": 290,
+          "saved_mtime_utc": "2026-10-16T00:47:45.919592+00:00"
+        },
+        {
+          "path": "src/strategy/signal_combiner.py",
+          "sha256": "bd6e111724894db51c3df335ed17386afe26042a4746d3d0f3c2ab376ceedc4f",
+          "bytes": 36387,
+          "lines": 807,
+          "saved_mtime_utc": "2026-10-16T00:46:57.646249+00:00"
+        },
+        {
+          "path": "src/strategy/trend_continuation_detector.py",
+          "sha256": "5b6e47be8c9f69524eee907e64569f6de94a03311de81df95b270da389c7891d",
+          "bytes": 15420,
+          "lines": 418,
+          "saved_mtime_utc": "2026-10-16T00:47:46.249288+00:00"
+        }
+      ]
+    },
+    {
+      "repo": "preceptress/btc-15-minute-prediction-model",
+      "head_sha": "6f8df979cc4fb59490bf790649f3c565ffafe24a",
+      "default_branch": "master",
+      "commit_time": "2026-08-24T22:26:42Z",
+      "api_license": null,
+      "tree_truncated": false,
+      "source_files": [
+        {
+          "path": "LIVE_TRADING.md",
+          "sha256": "6294be4b1562f72f96691cf8f663d6d37652bee38c624e46d9337ac5ffcd5b8e",
+          "bytes": 2067,
+          "lines": 73,
+          "saved_mtime_utc": "2026-10-16T00:46:59.200518+00:00"
+        },
+        {
+          "path": "README.md",
+          "sha256": "46d6c7366145e07d81be8532e23d91e48707042dee3e28d10b0e0ced4d3e0a1f",
+          "bytes": 11931,
+          "lines": 378,
+          "saved_mtime_utc": "2026-10-16T00:46:58.845909+00:00"
+        },
+        {
+          "path": "scripts/btc_bot.py",
+          "sha256": "a0ab31893d23717f88927b26b9665bd921c113caf0c54777f7d4080a7a07a157",
+          "bytes": 22793,
+          "lines": 521,
+          "saved_mtime_utc": "2026-10-16T00:46:58.925112+00:00"
+        },
+        {
+          "path": "scripts/report.py",
+          "sha256": "e143fc2f8402299800bbdff591dab807c47b29c1f8f5167445343d88b70bd025",
+          "bytes": 3443,
+          "lines": 83,
+          "saved_mtime_utc": "2026-10-16T00:46:58.992770+00:00"
+        }
+      ]
+    },
+    {
+      "repo": "sarthak-p/Kalshi-BTC-Dashboard",
+      "head_sha": "13552e09844422c89feb02a79ae0342c5d9f97ba",
+      "default_branch": "main",
+      "commit_time": "2026-06-05T13:29:22Z",
+      "api_license": null,
+      "tree_truncated": false,
+      "source_files": [
+        {
+          "path": "README.md",
+          "sha256": "9aea82d905a27176bcb407427d9b35073f81987716d7f42416448d30ba4462c9",
+          "bytes": 11700,
+          "lines": 237,
+          "saved_mtime_utc": "2026-10-16T00:46:56.740743+00:00"
+        },
+        {
+          "path": "backtest_settlement.py",
+          "sha256": "ba7b59c6f8db1ffd6f0b4162c4099efa58336faeab7a0c2721c9e85fac337bfe",
+          "bytes": 22321,
+          "lines": 458,
+          "saved_mtime_utc": "2026-10-16T00:46:56.912540+00:00"
+        },
+        {
+          "path": "config.py",
+          "sha256": "ca2aa7791a57197c53985cc6ed2330f3a39790ce8ea36053abcee865a5fe3f80",
+          "bytes": 6434,
+          "lines": 101,
+          "saved_mtime_utc": "2026-10-16T00:46:57.030984+00:00"
+        },
+        {
+          "path": "feeds/kalshi_ws.py",
+          "sha256": "d7ad6aef2d9a20d6d2a3a82e391308c57b29745102802f4e778b9971a95f681a",
+          "bytes": 20194,
+          "lines": 509,
+          "saved_mtime_utc": "2026-10-16T00:46:56.969503+00:00"
+        },
+        {
+          "path": "main.py",
+          "sha256": "70d1613960d62b0c7a8d7ae9690364c54112117c889481c623ce2cf1bbbb7a8b",
+          "bytes": 3799,
+          "lines": 113,
+          "saved_mtime_utc": "2026-10-16T00:46:57.199467+00:00"
+        },
+        {
+          "path": "state/state_manager.py",
+          "sha256": "f326f269da93a28562d2961d12610cc21acc548352dd18cc7460a44c0b5c7012",
+          "bytes": 35951,
+          "lines": 849,
+          "saved_mtime_utc": "2026-10-16T00:46:56.747277+00:00"
+        },
+        {
+          "path": "strategy/scalper.py",
+          "sha256": "f4123136ec796f87db8f27b0369c7726b4a201ed4d9754a34f018c485a91b48a",
+          "bytes": 36555,
+          "lines": 842,
+          "saved_mtime_utc": "2026-10-16T00:46:56.839570+00:00"
+        },
+        {
+          "path": "trading/executor.py",
+          "sha256": "532fd29aa22e658d4c896da6281ee73addd387e628384a655e0d1b9f786ee19e",
+          "bytes": 4373,
+          "lines": 122,
+          "saved_mtime_utc": "2026-10-16T00:46:56.890028+00:00"
+        },
+        {
+          "path": "trading/live_executor.py",
+          "sha256": "d2c5e54a775e1bd78abc47ea41aca19b04e5dd949467080da939d8ef64992284",
+          "bytes": 15451,
+          "lines": 361,
+          "saved_mtime_utc": "2026-10-16T00:46:56.751522+00:00"
+        }
+      ]
+    },
+    {
+      "repo": "seanrobenalt/kalshi-bot",
+      "head_sha": "9698c3dfe8ce811f1ec16ba6eb76196810e4d871",
+      "default_branch": "master",
+      "commit_time": "2026-02-13T18:34:22Z",
+      "api_license": null,
+      "tree_truncated": false,
+      "source_files": [
+        {
+          "path": "README.md",
+          "sha256": "714d4eff69a42a01de145b88d5f574efa3996749043a2caf668d12e6e03c8481",
+          "bytes": 6782,
+          "lines": 225,
+          "saved_mtime_utc": "2026-10-16T00:46:59.331591+00:00"
+        },
+        {
+          "path": "src/cex.rs",
+          "sha256": "8a787f516d1162d27622d030f3d5402dca6566d5d29676ddff444e7e8965499c",
+          "bytes": 5497,
+          "lines": 207,
+          "saved_mtime_utc": "2026-10-16T00:46:59.287295+00:00"
+        },
+        {
+          "path": "src/client.rs",
+          "sha256": "aaeef5c7d073e9b21d6d37c9cec39d8444c5fd44be1bbd7487df0bef8273d71c",
+          "bytes": 22523,
+          "lines": 700,
+          "saved_mtime_utc": "2026-10-16T00:46:59.221525+00:00"
+        },
+        {
+          "path": "src/config.rs",
+          "sha256": "e5f11a518c9cd2402d9fcfbdad6a3e164e9913eac5d9123086667893fe67f5c1",
+          "bytes": 5954,
+          "lines": 162,
+          "saved_mtime_utc": "2026-10-16T00:46:59.112375+00:00"
+        },
+        {
+          "path": "src/main.rs",
+          "sha256": "00730b32c106f4387e398288d7d849b330f3df43e36cc5092fa926ff09aea3b4",
+          "bytes": 11536,
+          "lines": 354,
+          "saved_mtime_utc": "2026-10-16T00:46:59.205559+00:00"
+        },
+        {
+          "path": "src/models.rs",
+          "sha256": "331c9bef3a0c6ccd512c7510a53105e4743a9cff788463546f5b3fb80fd617a6",
+          "bytes": 2533,
+          "lines": 95,
+          "saved_mtime_utc": "2026-10-16T00:46:59.241601+00:00"
+        },
+        {
+          "path": "src/strategy.rs",
+          "sha256": "acb638bf58b886fe6001b10b5acb2f1f949ffa511964e4ea9df688b8a040c47e",
+          "bytes": 11577,
+          "lines": 389,
+          "saved_mtime_utc": "2026-10-16T00:46:59.138070+00:00"
+        }
+      ]
+    }
+  ],
+  "empirical_reviewer": [
+    {
+      "repo": "artyomderkach-bit/btc-15m-vol-backtest",
+      "branch": "main",
+      "sha": "8796d10d5e9d8bf99f16de769a758911a0f74759",
+      "commit_utc": "2026-04-29T17:04:13Z",
+      "license_api": null,
+      "license_paths": []
+    },
+    {
+      "repo": "aurascoper/brti-edge",
+      "branch": "master",
+      "sha": "df709577eebdf39efdb6d148d30cd2daff125668",
+      "commit_utc": "2026-09-21T22:24:55Z",
+      "license_api": null,
+      "license_paths": []
+    },
+    {
+      "repo": "elhamwork/btcbot",
+      "branch": "claude/btc-kalshi-backtester-w74k71",
+      "sha": "708f0a26aa58fcd6e45e9a5e621aea5f61b82b4c",
+      "commit_utc": "2026-10-16T00:44:02Z",
+      "license_api": null,
+      "license_paths": []
+    },
+    {
+      "repo": "hudsonjoshuaclark/kalshi-bot",
+      "branch": "master",
+      "sha": "8c2dd221ab9432dd8c91cbebb0e73f7dc60e26d8",
+      "commit_utc": "2026-09-14T04:19:42Z",
+      "license_api": null,
+      "license_paths": []
+    },
+    {
+      "repo": "mlysophia/kxbtc15m-overbet-study",
+      "branch": "main",
+      "sha": "a904abe18bba500c9ac5d04fd43dfd61b18c6485",
+      "commit_utc": "2026-08-30T10:43:46Z",
+      "license_api": null,
+      "license_paths": []
+    },
+    {
+      "repo": "rodiiipooo/kalshi-crypto-regime-edge",
+      "branch": "master",
+      "sha": "73708296532ae163e369fe1f494d47ef6a41f099",
+      "commit_utc": "2026-06-27T08:55:30Z",
+      "license_api": null,
+      "license_paths": []
+    }
+  ],
+  "supplemental_release_pin": {
+    "repo": "Strobingn/kalshi-odds-app",
+    "sha": "df83fa93dd3bfb074929b40a7b516e516e742b20",
+    "tag": "scalper-data"
+  },
+  "no_third_party_execution": true,
+  "sealed_test_opened": false,
+  "no_private_account_or_Railway_access": true,
+  "no_production_mutation": true
+}

@@ -1,0 +1,831 @@
+{
+ "note": "F2 momentum produced NO finalist: no configuration passed the validation gate. These are the best rejected candidates, documented for the record only.",
+ "rejected": [
+  {
+   "name": "f2_early30_hold10_nostop",
+   "id": "95bb3c8eae",
+   "status": "REJECTED - fails the validation gate; do NOT send to TEST",
+   "why_listed": "best TRAIN config (lower CI +7.2%); rides the brand-ticker launch farm 30 min after graduation",
+   "strategy_class": "F2Momentum",
+   "module": "research/lab/strategies/f2-momentum.py",
+   "how_to_build": "load the module with importlib (hyphenated file name; see f2_momentum_search.load_f2), then factory(F2Params(**params))",
+   "params": {
+    "entry": "early",
+    "check_min": 30,
+    "min_age_min": 0,
+    "max_age_min": 35,
+    "min_rel_grad": 1.5,
+    "max_dd": 0.25,
+    "min_vol_usd": 5000.0,
+    "vol_win": 15,
+    "grad_kind": "any",
+    "trail_pct": null,
+    "stop_pct": null,
+    "max_hold_min": 10
+   },
+   "configs_tried": {
+    "train": 982,
+    "validation": 19,
+    "eda_event_study_cuts": 68
+   },
+   "train_metrics": {
+    "per_coin": {
+     "trades": 30,
+     "coins_traded": 30,
+     "win_rate_pct": 83.33333333333333,
+     "avg_ret_pct": 17.425261935003757,
+     "median_ret_pct": 21.446854435089392,
+     "profit_factor": 4.525327133218012,
+     "net_pnl_usd": 104.55157161002255,
+     "expectancy_usd": 3.4850523870007515,
+     "exp_ci95_pct": [
+      7.197,
+      26.561
+     ],
+     "best_coin_pnl_usd": 11.61801878847064,
+     "best_coin_share_pct": 11.112237348096363,
+     "top3_share_pct": 28.31524268669375,
+     "pnl_without_best_coin_usd": 92.93355282155191,
+     "pnl_without_top3_usd": 74.94754037589226,
+     "exit_reasons": {
+      "time_stop": 30
+     },
+     "avg_hold_min": 10.0,
+     "costs_usd": 19.615655126952028
+    },
+    "portfolio": {
+     "trades": 30,
+     "coins_traded": 30,
+     "win_rate_pct": 83.33333333333333,
+     "avg_ret_pct": 17.425310851682674,
+     "median_ret_pct": 21.413871915773374,
+     "profit_factor": 4.876554128681959,
+     "net_pnl_usd": 120.21799859247959,
+     "expectancy_usd": 4.00726661974932,
+     "exp_ci95_pct": [
+      7.371,
+      26.711
+     ],
+     "best_coin_pnl_usd": 12.86312551211941,
+     "best_coin_share_pct": 10.699833355006527,
+     "top3_share_pct": 29.109776398703332,
+     "pnl_without_best_coin_usd": 107.35487308036018,
+     "pnl_without_top3_usd": 85.22280801121246,
+     "exit_reasons": {
+      "time_stop": 30
+     },
+     "avg_hold_min": 10.0,
+     "costs_usd": 21.58269742053508,
+     "total_return_pct": 120.21799859247957,
+     "final_equity_usd": 220.21799859247957,
+     "max_drawdown_pct": 23.35825162804846
+    }
+   },
+   "validation_metrics": {
+    "per_coin": {
+     "trades": 20,
+     "coins_traded": 20,
+     "win_rate_pct": 65.0,
+     "avg_ret_pct": -16.10355165363618,
+     "median_ret_pct": 14.765759076818885,
+     "profit_factor": 0.4568970880150854,
+     "net_pnl_usd": -64.41420661454472,
+     "expectancy_usd": -3.2207103307272362,
+     "exp_ci95_pct": [
+      -39.589,
+      6.743
+     ],
+     "best_coin_pnl_usd": 7.870082037436703,
+     "best_coin_share_pct": null,
+     "top3_share_pct": null,
+     "pnl_without_best_coin_usd": -72.28428865198143,
+     "pnl_without_top3_usd": -84.10869416307332,
+     "exit_reasons": {
+      "time_stop": 20
+     },
+     "avg_hold_min": 10.0,
+     "costs_usd": 10.895873919293855
+    },
+    "portfolio": {
+     "trades": 20,
+     "coins_traded": 20,
+     "win_rate_pct": 65.0,
+     "avg_ret_pct": -16.18854251446942,
+     "median_ret_pct": 14.666488320811208,
+     "profit_factor": 0.3989476842725726,
+     "net_pnl_usd": -56.23643433465073,
+     "expectancy_usd": -2.8118217167325366,
+     "exp_ci95_pct": [
+      -39.671,
+      6.65
+     ],
+     "best_coin_pnl_usd": 8.238188485379982,
+     "best_coin_share_pct": null,
+     "top3_share_pct": null,
+     "pnl_without_best_coin_usd": -64.47462282003072,
+     "pnl_without_top3_usd": -72.44060010655532,
+     "exit_reasons": {
+      "time_stop": 20
+     },
+     "avg_hold_min": 10.0,
+     "costs_usd": 7.737324898445876,
+     "total_return_pct": -56.23643433465077,
+     "final_equity_usd": 43.76356566534924,
+     "max_drawdown_pct": 61.12463300341637
+    }
+   },
+   "robustness_validation": {
+    "base": {
+     "trades": 20,
+     "avg_ret_pct": -16.10355165363618,
+     "exp_ci95_pct": [
+      -39.589,
+      6.743
+     ],
+     "win_rate_pct": 65.0,
+     "portfolio_return_pct": -56.23643433465077,
+     "portfolio_max_dd_pct": 61.12463300341637
+    },
+    "costs_x1.5": {
+     "trades": 20,
+     "avg_ret_pct": -17.35748390235832,
+     "exp_ci95_pct": [
+      -40.537,
+      5.178
+     ],
+     "win_rate_pct": 65.0,
+     "portfolio_return_pct": -58.49162882145088,
+     "portfolio_max_dd_pct": 62.83071071132823
+    },
+    "costs_x2": {
+     "trades": 20,
+     "avg_ret_pct": -18.60250983644794,
+     "exp_ci95_pct": [
+      -41.478,
+      3.624
+     ],
+     "win_rate_pct": 65.0,
+     "portfolio_return_pct": -60.64208110500338,
+     "portfolio_max_dd_pct": 64.4725190959312
+    },
+    "latency_+1bar": {
+     "trades": 20,
+     "avg_ret_pct": -12.309037291720722,
+     "exp_ci95_pct": [
+      -37.374,
+      11.389
+     ],
+     "win_rate_pct": 70.0,
+     "portfolio_return_pct": -48.54431304801749,
+     "portfolio_max_dd_pct": 53.48299051404033
+    },
+    "wick_worst": {
+     "trades": 20,
+     "avg_ret_pct": -16.10355165363618,
+     "exp_ci95_pct": [
+      -39.589,
+      6.743
+     ],
+     "win_rate_pct": 65.0,
+     "portfolio_return_pct": -56.23643433465077,
+     "portfolio_max_dd_pct": 61.12463300341637
+    },
+    "wick_touch": {
+     "trades": 20,
+     "avg_ret_pct": -16.10355165363618,
+     "exp_ci95_pct": [
+      -39.589,
+      6.743
+     ],
+     "win_rate_pct": 65.0,
+     "portfolio_return_pct": -56.23643433465077,
+     "portfolio_max_dd_pct": 61.12463300341637
+    },
+    "size_$10": {
+     "trades": 20,
+     "avg_ret_pct": -16.29370817298136,
+     "exp_ci95_pct": [
+      -39.789,
+      6.565
+     ],
+     "win_rate_pct": 65.0,
+     "portfolio_return_pct": -32.587416345962666,
+     "portfolio_max_dd_pct": 36.43388239219324
+    },
+    "size_$40": {
+     "trades": 20,
+     "avg_ret_pct": -16.072676692061975,
+     "exp_ci95_pct": [
+      -39.539,
+      6.751
+     ],
+     "win_rate_pct": 65.0,
+     "portfolio_return_pct": -84.3614686440929,
+     "portfolio_max_dd_pct": 87.40851161691955
+    },
+    "rug_aware_fills": {
+     "trades": 20,
+     "avg_ret_pct": -16.10355165363618,
+     "exp_ci95_pct": [
+      -39.589,
+      6.743
+     ],
+     "win_rate_pct": 65.0,
+     "portfolio_return_pct": -56.23643433465077,
+     "portfolio_max_dd_pct": 61.12463300341637
+    },
+    "without_best_coin": {
+     "trades": 19,
+     "avg_ret_pct": -19.02218122420564,
+     "exp_ci95_pct": [
+      -45.022,
+      4.561
+     ],
+     "win_rate_pct": 63.1578947368421,
+     "portfolio_return_pct": -60.91535630913653,
+     "portfolio_max_dd_pct": 63.84216079165617,
+     "removed_coin": "Tesla"
+    },
+    "first_half": {
+     "trades": 11,
+     "avg_ret_pct": -11.9198847484419,
+     "exp_ci95_pct": [
+      -47.01,
+      17.487
+     ],
+     "win_rate_pct": 63.63636363636363,
+     "portfolio_return_pct": -31.37625537301365,
+     "portfolio_max_dd_pct": 50.90050463719501
+    },
+    "second_half": {
+     "trades": 9,
+     "avg_ret_pct": -21.216922315540305,
+     "exp_ci95_pct": [
+      -57.777,
+      6.269
+     ],
+     "win_rate_pct": 66.66666666666667,
+     "portfolio_return_pct": -36.10891916773412,
+     "portfolio_max_dd_pct": 37.55935675350358
+    }
+   },
+   "lookahead_audit": {
+    "train_problems": [],
+    "validation_problems": []
+   }
+  },
+  {
+   "name": "f2_early25_hold20_stop20",
+   "id": "e67463df74",
+   "status": "REJECTED - fails the validation gate; do NOT send to TEST",
+   "why_listed": "least-bad shortlisted config on VALIDATION with >= 20 trades (+0.98%, CI [-17.1, +20.6])",
+   "strategy_class": "F2Momentum",
+   "module": "research/lab/strategies/f2-momentum.py",
+   "how_to_build": "load the module with importlib (hyphenated file name; see f2_momentum_search.load_f2), then factory(F2Params(**params))",
+   "params": {
+    "entry": "early",
+    "min_age_min": 0,
+    "max_dd": 0.25,
+    "min_vol_usd": 5000.0,
+    "vol_win": 15,
+    "grad_kind": "any",
+    "trail_pct": null,
+    "check_min": 25,
+    "max_age_min": 30,
+    "min_rel_grad": 1.5,
+    "max_hold_min": 20,
+    "stop_pct": 0.2
+   },
+   "configs_tried": {
+    "train": 982,
+    "validation": 19,
+    "eda_event_study_cuts": 68
+   },
+   "train_metrics": {
+    "per_coin": {
+     "trades": 37,
+     "coins_traded": 37,
+     "win_rate_pct": 62.16216216216216,
+     "avg_ret_pct": 20.058445578604566,
+     "median_ret_pct": 32.46924823246694,
+     "profit_factor": 2.2423460835271865,
+     "net_pnl_usd": 148.4324972816738,
+     "expectancy_usd": 4.011689115720913,
+     "exp_ci95_pct": [
+      3.042,
+      37.264
+     ],
+     "best_coin_pnl_usd": 22.16534416581382,
+     "best_coin_share_pct": 14.932945663341922,
+     "top3_share_pct": 42.61309410720719,
+     "pnl_without_best_coin_usd": 126.26715311585997,
+     "pnl_without_top3_usd": 85.18081752935639,
+     "exit_reasons": {
+      "stop": 13,
+      "time_stop": 24
+     },
+     "avg_hold_min": 14.675675675675675,
+     "costs_usd": 24.411208037796975
+    },
+    "portfolio": {
+     "trades": 34,
+     "coins_traded": 34,
+     "win_rate_pct": 61.76470588235294,
+     "avg_ret_pct": 19.28109917935316,
+     "median_ret_pct": 28.391368161788737,
+     "profit_factor": 2.295934907746729,
+     "net_pnl_usd": 145.9887232698948,
+     "expectancy_usd": 4.2937859785263175,
+     "exp_ci95_pct": [
+      -0.74,
+      37.825
+     ],
+     "best_coin_pnl_usd": 27.70486933426281,
+     "best_coin_share_pct": 18.97740367455902,
+     "top3_share_pct": 52.1173815855128,
+     "pnl_without_best_coin_usd": 118.28385393563198,
+     "pnl_without_top3_usd": 69.9032232915054,
+     "exit_reasons": {
+      "stop": 12,
+      "time_stop": 22
+     },
+     "avg_hold_min": 14.352941176470589,
+     "costs_usd": 23.50553678143809,
+     "total_return_pct": 145.98872326989482,
+     "final_equity_usd": 245.98872326989482,
+     "max_drawdown_pct": 44.20299396490211
+    }
+   },
+   "validation_metrics": {
+    "per_coin": {
+     "trades": 27,
+     "coins_traded": 27,
+     "win_rate_pct": 44.44444444444444,
+     "avg_ret_pct": 0.9780036506816872,
+     "median_ret_pct": -7.239461079142229,
+     "profit_factor": 1.0451652210184732,
+     "net_pnl_usd": 5.2812197136811125,
+     "expectancy_usd": 0.1956007301363375,
+     "exp_ci95_pct": [
+      -17.108,
+      20.586
+     ],
+     "best_coin_pnl_usd": 20.009360352835742,
+     "best_coin_share_pct": 378.87763504709085,
+     "top3_share_pct": 907.5340755297963,
+     "pnl_without_best_coin_usd": -14.72814063915463,
+     "pnl_without_top3_usd": -42.64764879157213,
+     "exit_reasons": {
+      "stop": 13,
+      "time_stop": 14
+     },
+     "avg_hold_min": 13.333333333333334,
+     "costs_usd": 16.307073231485848
+    },
+    "portfolio": {
+     "trades": 26,
+     "coins_traded": 26,
+     "win_rate_pct": 42.30769230769231,
+     "avg_ret_pct": -2.850307860391095,
+     "median_ret_pct": -15.066089970571506,
+     "profit_factor": 0.7721050055181705,
+     "net_pnl_usd": -24.988077724231037,
+     "expectancy_usd": -0.9610799124704245,
+     "exp_ci95_pct": [
+      -19.333,
+      16.008
+     ],
+     "best_coin_pnl_usd": 12.115462019004008,
+     "best_coin_share_pct": null,
+     "top3_share_pct": null,
+     "pnl_without_best_coin_usd": -37.103539743235046,
+     "pnl_without_top3_usd": -57.15779576956555,
+     "exit_reasons": {
+      "stop": 13,
+      "time_stop": 13
+     },
+     "avg_hold_min": 13.076923076923077,
+     "costs_usd": 13.592238919871622,
+     "total_return_pct": -24.98807772423102,
+     "final_equity_usd": 75.01192227576898,
+     "max_drawdown_pct": 43.32622357581546
+    }
+   },
+   "robustness_validation": {
+    "base": {
+     "trades": 27,
+     "avg_ret_pct": 0.9780036506816872,
+     "exp_ci95_pct": [
+      -17.108,
+      20.586
+     ],
+     "win_rate_pct": 44.44444444444444,
+     "portfolio_return_pct": -24.988077724231005,
+     "portfolio_max_dd_pct": 43.32622357581546
+    },
+    "costs_x1.5": {
+     "trades": 27,
+     "avg_ret_pct": -0.5348203341965277,
+     "exp_ci95_pct": [
+      -18.378,
+      18.81
+     ],
+     "win_rate_pct": 44.44444444444444,
+     "portfolio_return_pct": -30.574787669017496,
+     "portfolio_max_dd_pct": 44.15294287108567
+    },
+    "costs_x2": {
+     "trades": 27,
+     "avg_ret_pct": -2.0362430081585696,
+     "exp_ci95_pct": [
+      -19.64,
+      17.047
+     ],
+     "win_rate_pct": 44.44444444444444,
+     "portfolio_return_pct": -35.76658211226464,
+     "portfolio_max_dd_pct": 44.967262147134434
+    },
+    "latency_+1bar": {
+     "trades": 27,
+     "avg_ret_pct": 0.6519752811665169,
+     "exp_ci95_pct": [
+      -17.193,
+      20.539
+     ],
+     "win_rate_pct": 40.74074074074074,
+     "portfolio_return_pct": -26.21519762968748,
+     "portfolio_max_dd_pct": 41.43173960758134
+    },
+    "wick_worst": {
+     "trades": 27,
+     "avg_ret_pct": -9.52303235868386,
+     "exp_ci95_pct": [
+      -32.428,
+      15.32
+     ],
+     "win_rate_pct": 44.44444444444444,
+     "portfolio_return_pct": -63.42162638547006,
+     "portfolio_max_dd_pct": 68.55315935995056
+    },
+    "wick_touch": {
+     "trades": 27,
+     "avg_ret_pct": 11.494302107503424,
+     "exp_ci95_pct": [
+      -2.572,
+      25.923
+     ],
+     "win_rate_pct": 44.44444444444444,
+     "portfolio_return_pct": 43.45840081399808,
+     "portfolio_max_dd_pct": 23.35384133718336
+    },
+    "size_$10": {
+     "trades": 27,
+     "avg_ret_pct": 0.8055290857004196,
+     "exp_ci95_pct": [
+      -17.293,
+      20.427
+     ],
+     "win_rate_pct": 44.44444444444444,
+     "portfolio_return_pct": -7.816983521870114,
+     "portfolio_max_dd_pct": 23.76425715374443
+    },
+    "size_$40": {
+     "trades": 27,
+     "avg_ret_pct": 0.9736025047452442,
+     "exp_ci95_pct": [
+      -17.087,
+      20.558
+     ],
+     "win_rate_pct": 44.44444444444444,
+     "portfolio_return_pct": -33.72936753968645,
+     "portfolio_max_dd_pct": 56.62404896342779
+    },
+    "rug_aware_fills": {
+     "trades": 27,
+     "avg_ret_pct": -8.379442467529543,
+     "exp_ci95_pct": [
+      -31.059,
+      16.294
+     ],
+     "win_rate_pct": 44.44444444444444,
+     "portfolio_return_pct": -60.59459156278183,
+     "portfolio_max_dd_pct": 66.12272561541596
+    },
+    "without_best_coin": {
+     "trades": 26,
+     "avg_ret_pct": -2.832334738298967,
+     "exp_ci95_pct": [
+      -20.844,
+      15.622
+     ],
+     "win_rate_pct": 42.30769230769231,
+     "portfolio_return_pct": -24.988077724231005,
+     "portfolio_max_dd_pct": 43.32622357581546,
+     "removed_coin": "Tesla"
+    },
+    "first_half": {
+     "trades": 15,
+     "avg_ret_pct": 9.935804623226938,
+     "exp_ci95_pct": [
+      -16.085,
+      37.708
+     ],
+     "win_rate_pct": 46.666666666666664,
+     "portfolio_return_pct": 0.07369912000825707,
+     "portfolio_max_dd_pct": 43.32622357581546
+    },
+    "second_half": {
+     "trades": 12,
+     "avg_ret_pct": -10.219247564999877,
+     "exp_ci95_pct": [
+      -33.984,
+      13.194
+     ],
+     "win_rate_pct": 41.666666666666664,
+     "portfolio_return_pct": -25.043541147952936,
+     "portfolio_max_dd_pct": 28.855885296946887
+    }
+   },
+   "lookahead_audit": {
+    "train_problems": [],
+    "validation_problems": []
+   }
+  },
+  {
+   "name": "f2_trend_5M_2h",
+   "id": "e9e07c6499",
+   "status": "REJECTED - fails the validation gate; do NOT send to TEST",
+   "why_listed": "long-horizon trend on >= $5M coins; positive on validation but only 4 trades (one coin = 79% of profit)",
+   "strategy_class": "F2Momentum",
+   "module": "research/lab/strategies/f2-momentum.py",
+   "how_to_build": "load the module with importlib (hyphenated file name; see f2_momentum_search.load_f2), then factory(F2Params(**params))",
+   "params": {
+    "entry": "trend",
+    "min_age_min": 120,
+    "max_age_min": 1440,
+    "mc_lo": 5000000.0,
+    "trend_bars": 60,
+    "trend_ret": 0.02,
+    "higher_lows": false,
+    "min_vol_usd": 1000.0,
+    "vol_win": 60,
+    "max_entries": 3,
+    "stop_pct": 0.2,
+    "trail_pct": 0.2,
+    "max_hold_min": 360
+   },
+   "configs_tried": {
+    "train": 982,
+    "validation": 19,
+    "eda_event_study_cuts": 68
+   },
+   "train_metrics": {
+    "per_coin": {
+     "trades": 22,
+     "coins_traded": 18,
+     "win_rate_pct": 77.27272727272727,
+     "avg_ret_pct": 6.893889697821915,
+     "median_ret_pct": 13.42596760306835,
+     "profit_factor": 2.160223226464349,
+     "net_pnl_usd": 30.33311467041642,
+     "expectancy_usd": 1.3787779395643829,
+     "exp_ci95_pct": [
+      -1.767,
+      15.498
+     ],
+     "best_coin_pnl_usd": 8.428621680555484,
+     "best_coin_share_pct": 27.786865187226663,
+     "top3_share_pct": 61.325680310353675,
+     "pnl_without_best_coin_usd": 21.904492989860938,
+     "pnl_without_top3_usd": 11.731125739463856,
+     "exit_reasons": {
+      "end_of_data": 3,
+      "stop": 2,
+      "time_stop": 17
+     },
+     "avg_hold_min": 317.22727272727275,
+     "costs_usd": 6.851187436150645
+    },
+    "portfolio": {
+     "trades": 6,
+     "coins_traded": 5,
+     "win_rate_pct": 83.33333333333333,
+     "avg_ret_pct": 9.988217869867345,
+     "median_ret_pct": 11.449713008846059,
+     "profit_factor": 25.606515262936654,
+     "net_pnl_usd": 12.249028164361846,
+     "expectancy_usd": 2.0415046940603077,
+     "exp_ci95_pct": [
+      4.189,
+      16.724
+     ],
+     "best_coin_pnl_usd": 3.582657565922307,
+     "best_coin_share_pct": 29.248504598478547,
+     "top3_share_pct": 81.68426900202549,
+     "pnl_without_best_coin_usd": 8.666370598439538,
+     "pnl_without_top3_usd": 2.2434990484506514,
+     "exit_reasons": {
+      "end_of_data": 1,
+      "time_stop": 5
+     },
+     "avg_hold_min": 334.1666666666667,
+     "costs_usd": 1.9942705951752868,
+     "total_return_pct": 12.249028164361846,
+     "final_equity_usd": 112.24902816436185,
+     "max_drawdown_pct": 0.8016502833993664
+    }
+   },
+   "validation_metrics": {
+    "per_coin": {
+     "trades": 4,
+     "coins_traded": 4,
+     "win_rate_pct": 75.0,
+     "avg_ret_pct": 12.839110269945985,
+     "median_ret_pct": 5.880853062482607,
+     "profit_factor": 54.01827765607078,
+     "net_pnl_usd": 10.271288215956789,
+     "expectancy_usd": 2.567822053989197,
+     "exp_ci95_pct": [
+      0.601,
+      30.965
+     ],
+     "best_coin_pnl_usd": 8.112678071452375,
+     "best_coin_share_pct": 78.98403686938761,
+     "top3_share_pct": 101.88614199519452,
+     "pnl_without_best_coin_usd": 2.1586101445044132,
+     "pnl_without_top3_usd": -0.19373108048862875,
+     "exit_reasons": {
+      "end_of_data": 3,
+      "time_stop": 1
+     },
+     "avg_hold_min": 248.25,
+     "costs_usd": 1.2168552912745936
+    },
+    "portfolio": {
+     "trades": 3,
+     "coins_traded": 3,
+     "win_rate_pct": 100.0,
+     "avg_ret_pct": 17.447317128715575,
+     "median_ret_pct": 9.599304720541467,
+     "profit_factor": null,
+     "net_pnl_usd": 10.570855372250021,
+     "expectancy_usd": 3.523618457416674,
+     "exp_ci95_pct": [
+      2.179,
+      40.563
+     ],
+     "best_coin_pnl_usd": 8.112678071452375,
+     "best_coin_share_pct": 76.74571059546699,
+     "top3_share_pct": 100.0,
+     "pnl_without_best_coin_usd": 2.4581773007976455,
+     "pnl_without_top3_usd": 0.0,
+     "exit_reasons": {
+      "end_of_data": 2,
+      "time_stop": 1
+     },
+     "avg_hold_min": 262.6666666666667,
+     "costs_usd": 0.9504691787909869,
+     "total_return_pct": 10.570855372250037,
+     "final_equity_usd": 110.57085537225004,
+     "max_drawdown_pct": 0.9851536517528237
+    }
+   },
+   "robustness_validation": {
+    "base": {
+     "trades": 4,
+     "avg_ret_pct": 12.839110269945985,
+     "exp_ci95_pct": [
+      0.601,
+      30.965
+     ],
+     "win_rate_pct": 75.0,
+     "portfolio_return_pct": 10.570855372250008,
+     "portfolio_max_dd_pct": 0.9851536517528237
+    },
+    "costs_x1.5": {
+     "trades": 4,
+     "avg_ret_pct": 12.04098726522218,
+     "exp_ci95_pct": [
+      -0.126,
+      30.058
+     ],
+     "win_rate_pct": 75.0,
+     "portfolio_return_pct": 10.061139396098142,
+     "portfolio_max_dd_pct": 0.9835425130352518
+    },
+    "costs_x2": {
+     "trades": 4,
+     "avg_ret_pct": 11.245058492859743,
+     "exp_ci95_pct": [
+      -0.851,
+      29.154
+     ],
+     "win_rate_pct": 75.0,
+     "portfolio_return_pct": 9.553472227294463,
+     "portfolio_max_dd_pct": 0.9819269602362931
+    },
+    "latency_+1bar": {
+     "trades": 4,
+     "avg_ret_pct": 12.758035088322375,
+     "exp_ci95_pct": [
+      0.547,
+      30.974
+     ],
+     "win_rate_pct": 75.0,
+     "portfolio_return_pct": 10.519933238232696,
+     "portfolio_max_dd_pct": 0.9847017524726477
+    },
+    "wick_worst": {
+     "trades": 4,
+     "avg_ret_pct": 12.839110269945985,
+     "exp_ci95_pct": [
+      0.601,
+      30.965
+     ],
+     "win_rate_pct": 75.0,
+     "portfolio_return_pct": 10.570855372250008,
+     "portfolio_max_dd_pct": 0.9851536517528237
+    },
+    "wick_touch": {
+     "trades": 4,
+     "avg_ret_pct": 12.839110269945985,
+     "exp_ci95_pct": [
+      0.601,
+      30.965
+     ],
+     "win_rate_pct": 75.0,
+     "portfolio_return_pct": 10.570855372250008,
+     "portfolio_max_dd_pct": 0.9851536517528237
+    },
+    "size_$10": {
+     "trades": 4,
+     "avg_ret_pct": 12.622423888839135,
+     "exp_ci95_pct": [
+      0.388,
+      30.748
+     ],
+     "win_rate_pct": 75.0,
+     "portfolio_return_pct": 5.167369011968191,
+     "portfolio_max_dd_pct": 0.4903181175919136
+    },
+    "size_$40": {
+     "trades": 4,
+     "avg_ret_pct": 12.936275264181837,
+     "exp_ci95_pct": [
+      0.692,
+      31.064
+     ],
+     "win_rate_pct": 75.0,
+     "portfolio_return_pct": 19.078568314041846,
+     "portfolio_max_dd_pct": 1.5327866338665916
+    },
+    "rug_aware_fills": {
+     "trades": 4,
+     "avg_ret_pct": 12.839110269945985,
+     "exp_ci95_pct": [
+      0.601,
+      30.965
+     ],
+     "win_rate_pct": 75.0,
+     "portfolio_return_pct": 10.570855372250008,
+     "portfolio_max_dd_pct": 0.9851536517528237
+    },
+    "without_best_coin": {
+     "trades": 3,
+     "avg_ret_pct": 3.597683574174021,
+     "exp_ci95_pct": [
+      -0.969,
+      9.59
+     ],
+     "win_rate_pct": 66.66666666666667,
+     "portfolio_return_pct": 2.157540283733084,
+     "portfolio_max_dd_pct": 1.3132292589662051,
+     "removed_coin": "USDP"
+    },
+    "first_half": {
+     "trades": 1,
+     "avg_ret_pct": 40.56339035726187,
+     "exp_ci95_pct": null,
+     "win_rate_pct": 100.0,
+     "portfolio_return_pct": 8.112678071452379,
+     "portfolio_max_dd_pct": 0.27816990233471867
+    },
+    "second_half": {
+     "trades": 3,
+     "avg_ret_pct": 3.597683574174021,
+     "exp_ci95_pct": [
+      -0.969,
+      9.59
+     ],
+     "win_rate_pct": 66.66666666666667,
+     "portfolio_return_pct": 2.157540283733084,
+     "portfolio_max_dd_pct": 1.3132292589662051
+    }
+   },
+   "lookahead_audit": {
+    "train_problems": [],
+    "validation_problems": []
+   }
+  }
+ ]
+}

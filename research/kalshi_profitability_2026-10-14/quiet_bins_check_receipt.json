@@ -1,0 +1,28 @@
+{
+  "prepared_at_utc": "2026-10-14T22:25:00Z",
+  "prepared_at_pacific": "2026-10-14 3:25 PM PDT",
+  "reviewed_bundle_sha256": "db8dfd78384b96cf1c251cdb2614b628767392263287419a16b8e8a52c8ff135",
+  "source_test_files": {
+    "src/nightcrawler/speeddesk_workbins.py": "41fbf76947a1792fdc1f0c9a51e9352d0d4d160b2b968fc65691f9c0386ec4f8",
+    "src/nightcrawler/speeddesk_worktrace.py": "cc8b3770d125bed718144b7aaa4d60ea4408ef3142543d115afd5125b85195b2",
+    "tests/test_speeddesk_workbins.py": "96dea5680bfbbe8c09c1fc7b729c87eeb69c95494a7fa8c89cbe1c7d22beefdb",
+    "tests/test_speeddesk_workbins_independent.py": "ffa227efc189fb64fe76724350321f1f2ce257c96a7757b435fa5ca2d38e3707"
+  },
+  "full_pytest": {
+    "passed": 5471,
+    "existing_skips": 14,
+    "seconds": 305.84,
+    "log": "quiet_bins_full_pytest.log",
+    "sha256": "fb64916473037bcd2da01a9b3225a40a827ad9fd3a371a7ac597ee2aa7051cb3"
+  },
+  "mypy": "126 source files clean",
+  "ruff": "all4 changed Python files clean",
+  "overhead_evidence_archive_sha256": "f9ff4905f9a23bf60b5186e67c2a06dbf01871ae5562d622f3621cb723d6838f",
+  "status": "READY_NOT_DEPLOYED",
+  "limitations": [
+    "First fullpostscalar window evidence is pending; no source release before it completes.",
+    "Diagnostic adds coverage lowerbounds, not latency reduction or tradingstrategy.",
+    "No new order, cap, stop/resume or Railway-variable authority.",
+    "TJR remains data/cost blocked; its reminder doesnotauthorize this previously active release task."
+  ]
+}

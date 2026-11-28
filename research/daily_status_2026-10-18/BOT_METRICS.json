@@ -1,0 +1,50 @@
+{
+  "request": {
+    "projectId": "75750847-85c0-41a3-a2a7-b7f2201a51e9",
+    "environmentId": "17f7b0e0-104c-4903-9484-0106748b3cdb",
+    "serviceId": "f84d3b52-002f-44cb-931e-bc9e3e097e97",
+    "hoursBack": 1,
+    "measurements": [
+      "DISK_USAGE_GB",
+      "MEMORY_USAGE_GB",
+      "MEMORY_LIMIT_GB"
+    ],
+    "sampleRateSeconds": 60
+  },
+  "response": {
+    "service": {
+      "id": "f84d3b52-002f-44cb-931e-bc9e3e097e97",
+      "name": "bot"
+    },
+    "environment": {
+      "id": "17f7b0e0-104c-4903-9484-0106748b3cdb",
+      "name": "production"
+    },
+    "metrics": [
+      {
+        "measurement": "DISK_USAGE_GB",
+        "current": 4.995637248,
+        "average": 4.99555398504918,
+        "min": 4.995432448,
+        "max": 4.995637248,
+        "sampleCount": 61
+      },
+      {
+        "measurement": "MEMORY_USAGE_GB",
+        "current": 2.341687296,
+        "average": 2.341685516590163,
+        "min": 2.341400576,
+        "max": 2.342744064,
+        "sampleCount": 61
+      },
+      {
+        "measurement": "MEMORY_LIMIT_GB",
+        "current": 8,
+        "average": 8,
+        "min": 8,
+        "max": 8,
+        "sampleCount": 61
+      }
+    ]
+  }
+}

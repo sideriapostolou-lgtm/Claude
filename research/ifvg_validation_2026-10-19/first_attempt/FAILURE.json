@@ -1,0 +1,17 @@
+{
+  "recorded_at_utc": "2026-10-19T22:04:28.607039+00:00",
+  "attempt": "first frozen replay",
+  "exit_code": 1,
+  "output_file_created": false,
+  "error": "row 1: invalid source record (time data 'timestamp' does not match format '%Y-%m-%d %H:%M:%S')",
+  "failure_stage": "First CSV record, before parsing OHLC or invoking simulator",
+  "cause": "Ingestion assumed no header; exact sample header is timestamp,open,high,low,close,volume",
+  "preserved_sources": {
+    "test_study.py.txt": "24f339dd9b9e9c25ef9e7b71e8be19d075cfa337b1c6aaed47156efe365a07e0",
+    "EVALUATION.md.txt": "274ee2edc8ad1dc687c96bfed8e7b05d805d5681d2031650570f8a9861f0dbe6",
+    "RUN_MANIFEST.json.txt": "686c2829c57dabdf68d6c43a67a823616c82e3f29af0dc24d358d49b34516774",
+    "run_study.py.txt": "6e9d820aabc18776d7c6a316e9016dd24a94d87238f0f92a058eda5ce03fe76e"
+  },
+  "strategy_dates_costs_changed": false,
+  "completed_price_replays": 0
+}

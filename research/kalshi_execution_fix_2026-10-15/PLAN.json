@@ -1,0 +1,25 @@
+{
+  "recorded_at_utc": "2026-10-15T18:06:21.421832+00:00",
+  "owner_scope": "Concretebotcorrectnessfixauthorized; nofinanciallimit/stop/budget/variable/manualorderauthority inferred.",
+  "base": "beea7bf09be5405612cd11e4fcd7ee6c5678d469",
+  "primary_bug": "Lock order admittedwithfreshaccount/cash canwaitinworker/transport thenpassfinalguardonstaleaccount/cash. Independentactualfake_create reproductionconfirmed.",
+  "change": "Only final_lock_guard auth/account/reconciliation/cashfreshness checks, preservingownreservedintent andstrictlybalancingfinancial-stop exceptions.",
+  "excluded": [
+    "caps/stop/resume/daybudget/variables/keys",
+    "Polymarket/config/model/learner/protocol/stateformat",
+    "lockprice/size/cutoff/edge/strategy/fees",
+    "unrelatedmetadataoptimization/cancelACKs/producergapdiagnostics",
+    "claimedcausalprofitlosssaving/backfit"
+  ],
+  "checks": [
+    "Actualfake delayedtransportintegration: originalunsafecreatesreproduced, correctedcreatesnotcalledwhenstale",
+    "Freshcontrol/inclusiveaccount3s/cash5s/perwindowcashlimit andlatchstrictbalancing exceptions",
+    "Missing/future/nonfinite timestamps,auth/startup/uncertainty; originalbook/cutoff/stopgates retained",
+    "Journal/reservation/noblindretry/restart/accounting unchanged",
+    "Full pytest -q capturedexitstatus, mypysrc/nightcrawler, RuffchangedPython, exactindependentpatchreview, credentialscan"
+  ],
+  "release": "Safe minute afterlatestbranchintegration; exactSUCCESSsource, PolymarketLIVEoriginal, learneridentitysame, recorderhealth, originalalreadyusedcontrols ignored andselectedfinancialcontinuity. No newresume/reset.",
+  "postrelease": "Boundedoriginalstatus/health/errorreads andatleasttwoperiodicheartbeats forcorrectmode/caps/operation. Optionalactualguardrefusalonlyifnaturallyobserved; no inventedtesttrade/currentwindowprofit. Thisisacorrectnessrelease, notaprofitable-strategytrialorEXECclosure.",
+  "known_actual_loss": "Recorded priorwindow-.2965 followsintendedUphedge@.964fees.0025 againstDown.33; targetdecisiontosend9.8569ms, notconfirmedstaleauthoritycause. Retainalllosses.",
+  "queue": "EXEC/learning remainopen; TJRauthenticdata/costblocked/no duplicate research; recorder15:45PDTcheckpoint retained."
+}

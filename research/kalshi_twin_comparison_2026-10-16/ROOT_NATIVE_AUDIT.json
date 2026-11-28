@@ -1,0 +1,769 @@
+{
+  "kind": "independent direct-native audit; not a profitability gate",
+  "target": "KXBTC15M-26OCT152315-15",
+  "queries": [
+    {
+      "name": "native/CAPTURE_errors.native.json",
+      "sha256": "6e9854688851961c74b6e5cf534fea6beee43092ee12ed78b9eaf7a0362dc466",
+      "rows": 0,
+      "request": {
+        "projectId": "75750847-85c0-41a3-a2a7-b7f2201a51e9",
+        "deploymentId": "99bf5b9e-72b2-4912-a7cb-8a3db414133b",
+        "startDate": "2026-10-16T03:00:00Z",
+        "endDate": "2026-10-16T03:17:00Z",
+        "filter": "\"Traceback (most recent call last)\" OR \"speeddesk_live_error \"",
+        "limit": 500,
+        "types": [
+          "deploy"
+        ]
+      },
+      "before": {
+        "current_time": "2026-10-16 03:17:40 UTC"
+      },
+      "after": {
+        "current_time": "2026-10-16 03:17:42 UTC"
+      }
+    },
+    {
+      "name": "native/CAPTURE_input_diagnostic.native.json",
+      "sha256": "0e6f01fcc31eb87ab6e02dea100f59ff9efa913c54832506c557a2b3828dcad8",
+      "rows": 1,
+      "request": {
+        "projectId": "75750847-85c0-41a3-a2a7-b7f2201a51e9",
+        "deploymentId": "99bf5b9e-72b2-4912-a7cb-8a3db414133b",
+        "startDate": "2026-10-16T03:00:00Z",
+        "endDate": "2026-10-16T03:17:00Z",
+        "filter": "\"kalshi_learning_input_diagnostic \"",
+        "limit": 500,
+        "types": [
+          "deploy"
+        ]
+      },
+      "before": {
+        "current_time": "2026-10-16 03:17:40 UTC"
+      },
+      "after": {
+        "current_time": "2026-10-16 03:17:41 UTC"
+      }
+    },
+    {
+      "name": "native/CAPTURE_live_cancel.native.json",
+      "sha256": "4bc693ab43c22fcfb515e65a2f8fe7ff501cb5761f80a6942a6f34e33b71f091",
+      "rows": 21,
+      "request": {
+        "projectId": "75750847-85c0-41a3-a2a7-b7f2201a51e9",
+        "deploymentId": "99bf5b9e-72b2-4912-a7cb-8a3db414133b",
+        "startDate": "2026-10-16T03:00:00Z",
+        "endDate": "2026-10-16T03:17:00Z",
+        "filter": "\"INFO nightcrawler.speeddesk: speeddesk_live_cancel \"",
+        "limit": 500,
+        "types": [
+          "deploy"
+        ]
+      },
+      "before": {
+        "current_time": "2026-10-16 03:17:26 UTC"
+      },
+      "after": {
+        "current_time": "2026-10-16 03:17:28 UTC"
+      }
+    },
+    {
+      "name": "native/CAPTURE_live_fill.native.json",
+      "sha256": "6febf5c8b976af29fe4e3399f7ee81b17e69216c160e0805e3ab033245ba8740",
+      "rows": 4,
+      "request": {
+        "projectId": "75750847-85c0-41a3-a2a7-b7f2201a51e9",
+        "deploymentId": "99bf5b9e-72b2-4912-a7cb-8a3db414133b",
+        "startDate": "2026-10-16T03:00:00Z",
+        "endDate": "2026-10-16T03:17:00Z",
+        "filter": "\"INFO nightcrawler.speeddesk: speeddesk_live_fill \"",
+        "limit": 500,
+        "types": [
+          "deploy"
+        ]
+      },
+      "before": {
+        "current_time": "2026-10-16 03:17:26 UTC"
+      },
+      "after": {
+        "current_time": "2026-10-16 03:17:28 UTC"
+      }
+    },
+    {
+      "name": "native/CAPTURE_live_order.native.json",
+      "sha256": "e9600f84dead811d7a441bee56168647098d2294a2776c0f0e5baa2765461425",
+      "rows": 48,
+      "request": {
+        "projectId": "75750847-85c0-41a3-a2a7-b7f2201a51e9",
+        "deploymentId": "99bf5b9e-72b2-4912-a7cb-8a3db414133b",
+        "startDate": "2026-10-16T03:00:00Z",
+        "endDate": "2026-10-16T03:17:00Z",
+        "filter": "\"INFO nightcrawler.speeddesk: speeddesk_live_order \"",
+        "limit": 500,
+        "types": [
+          "deploy"
+        ]
+      },
+      "before": {
+        "current_time": "2026-10-16 03:17:26 UTC"
+      },
+      "after": {
+        "current_time": "2026-10-16 03:17:28 UTC"
+      }
+    },
+    {
+      "name": "native/CAPTURE_live_reject.native.json",
+      "sha256": "7fe8a202099a8cee14337739f518ac49fc0e1206473ec19c031d2a6eb282be75",
+      "rows": 0,
+      "request": {
+        "projectId": "75750847-85c0-41a3-a2a7-b7f2201a51e9",
+        "deploymentId": "99bf5b9e-72b2-4912-a7cb-8a3db414133b",
+        "startDate": "2026-10-16T03:00:00Z",
+        "endDate": "2026-10-16T03:17:00Z",
+        "filter": "\"INFO nightcrawler.speeddesk: speeddesk_live_reject \"",
+        "limit": 500,
+        "types": [
+          "deploy"
+        ]
+      },
+      "before": {
+        "current_time": "2026-10-16 03:17:26 UTC"
+      },
+      "after": {
+        "current_time": "2026-10-16 03:17:28 UTC"
+      }
+    },
+    {
+      "name": "native/CAPTURE_live_settlement.native.json",
+      "sha256": "e1230cd4c858816eb1fa8a59db051d2f11c0c87b5b2d1c2fcb373d4258ad2337",
+      "rows": 2,
+      "request": {
+        "projectId": "75750847-85c0-41a3-a2a7-b7f2201a51e9",
+        "deploymentId": "99bf5b9e-72b2-4912-a7cb-8a3db414133b",
+        "startDate": "2026-10-16T03:00:00Z",
+        "endDate": "2026-10-16T03:17:00Z",
+        "filter": "\"INFO nightcrawler.speeddesk: speeddesk_live_settlement \"",
+        "limit": 500,
+        "types": [
+          "deploy"
+        ]
+      },
+      "before": {
+        "current_time": "2026-10-16 03:17:26 UTC"
+      },
+      "after": {
+        "current_time": "2026-10-16 03:17:27 UTC"
+      }
+    },
+    {
+      "name": "native/CAPTURE_live_status.native.json",
+      "sha256": "db3a9c5a17c8ea93a583dfc8074a724f80fe1c157f3318d53e3875907dbb314e",
+      "rows": 17,
+      "request": {
+        "projectId": "75750847-85c0-41a3-a2a7-b7f2201a51e9",
+        "deploymentId": "99bf5b9e-72b2-4912-a7cb-8a3db414133b",
+        "startDate": "2026-10-16T03:00:00Z",
+        "endDate": "2026-10-16T03:17:00Z",
+        "filter": "\"INFO nightcrawler.speeddesk: speeddesk_live_status \"",
+        "limit": 500,
+        "types": [
+          "deploy"
+        ]
+      },
+      "before": {
+        "current_time": "2026-10-16 03:17:31 UTC"
+      },
+      "after": {
+        "current_time": "2026-10-16 03:17:33 UTC"
+      }
+    },
+    {
+      "name": "native/CAPTURE_practice_status.native.json",
+      "sha256": "6f83b8eb03923a77aaf5c5bbf7cabeb9f84223c9f265b1aa482e5438a5e7c7a4",
+      "rows": 17,
+      "request": {
+        "projectId": "75750847-85c0-41a3-a2a7-b7f2201a51e9",
+        "deploymentId": "99bf5b9e-72b2-4912-a7cb-8a3db414133b",
+        "startDate": "2026-10-16T03:00:00Z",
+        "endDate": "2026-10-16T03:17:00Z",
+        "filter": "\"INFO nightcrawler.speeddesk: speeddesk_status \"",
+        "limit": 500,
+        "types": [
+          "deploy"
+        ]
+      },
+      "before": {
+        "current_time": "2026-10-16 03:17:36 UTC"
+      },
+      "after": {
+        "current_time": "2026-10-16 03:17:38 UTC"
+      }
+    },
+    {
+      "name": "native/CAPTURE_practice_window.native.json",
+      "sha256": "b0d7f8088f4151f18d11351aebaf368f5e41d43cd980991d931335b866064621",
+      "rows": 4,
+      "request": {
+        "projectId": "75750847-85c0-41a3-a2a7-b7f2201a51e9",
+        "deploymentId": "99bf5b9e-72b2-4912-a7cb-8a3db414133b",
+        "startDate": "2026-10-16T03:00:00Z",
+        "endDate": "2026-10-16T03:17:00Z",
+        "filter": "\"INFO nightcrawler.speeddesk: speeddesk_window \"",
+        "limit": 500,
+        "types": [
+          "deploy"
+        ]
+      },
+      "before": {
+        "current_time": "2026-10-16 03:17:31 UTC"
+      },
+      "after": {
+        "current_time": "2026-10-16 03:17:33 UTC"
+      }
+    },
+    {
+      "name": "native/CAPTURE_probability_events.native.json",
+      "sha256": "33347baa3987a1de8416e18f0e3a753f0b91bd75785d22dddba8fd2a6ab12b65",
+      "rows": 7,
+      "request": {
+        "projectId": "75750847-85c0-41a3-a2a7-b7f2201a51e9",
+        "deploymentId": "99bf5b9e-72b2-4912-a7cb-8a3db414133b",
+        "startDate": "2026-10-16T03:00:00Z",
+        "endDate": "2026-10-16T03:17:00Z",
+        "filter": "\"kalshi_probability_learning_forecast \" OR \"kalshi_probability_learning_scored \" OR \"kalshi_probability_learning_unknown \" OR \"kalshi_probability_learning_status \"",
+        "limit": 500,
+        "types": [
+          "deploy"
+        ]
+      },
+      "before": {
+        "current_time": "2026-10-16 03:17:36 UTC"
+      },
+      "after": {
+        "current_time": "2026-10-16 03:17:37 UTC"
+      }
+    },
+    {
+      "name": "native/CAPTURE_reconcile_trace.native.json",
+      "sha256": "35b02f85e099b8de04bdfc6d655d16c32eb5b3e872f322aabe0a6b27350ac33d",
+      "rows": 11,
+      "request": {
+        "projectId": "75750847-85c0-41a3-a2a7-b7f2201a51e9",
+        "deploymentId": "99bf5b9e-72b2-4912-a7cb-8a3db414133b",
+        "startDate": "2026-10-16T03:00:00Z",
+        "endDate": "2026-10-16T03:17:00Z",
+        "filter": "\"INFO nightcrawler.speeddesk: speeddesk_reconcile_trace \"",
+        "limit": 500,
+        "types": [
+          "deploy"
+        ]
+      },
+      "before": {
+        "current_time": "2026-10-16 03:17:40 UTC"
+      },
+      "after": {
+        "current_time": "2026-10-16 03:17:42 UTC"
+      }
+    },
+    {
+      "name": "native/CAPTURE_twin_events.native.json",
+      "sha256": "228afffcaa8c1b05b553d6b0cdffd3c122da08d65e67669911a86acadd96b64a",
+      "rows": 45,
+      "request": {
+        "projectId": "75750847-85c0-41a3-a2a7-b7f2201a51e9",
+        "deploymentId": "99bf5b9e-72b2-4912-a7cb-8a3db414133b",
+        "startDate": "2026-10-16T03:00:00Z",
+        "endDate": "2026-10-16T03:17:00Z",
+        "filter": "\"INFO nightcrawler.speeddesk: speeddesk_twin \"",
+        "limit": 500,
+        "types": [
+          "deploy"
+        ]
+      },
+      "before": {
+        "current_time": "2026-10-16 03:17:31 UTC"
+      },
+      "after": {
+        "current_time": "2026-10-16 03:17:33 UTC"
+      }
+    },
+    {
+      "name": "native/CAPTURE_twin_settlement.native.json",
+      "sha256": "de9675712d8995c5be333fd9c5dbc973560cfc48a57eea838d08f34628f16ba3",
+      "rows": 2,
+      "request": {
+        "projectId": "75750847-85c0-41a3-a2a7-b7f2201a51e9",
+        "deploymentId": "99bf5b9e-72b2-4912-a7cb-8a3db414133b",
+        "startDate": "2026-10-16T03:00:00Z",
+        "endDate": "2026-10-16T03:17:00Z",
+        "filter": "\"INFO nightcrawler.speeddesk: speeddesk_twin_settlement \"",
+        "limit": 500,
+        "types": [
+          "deploy"
+        ]
+      },
+      "before": {
+        "current_time": "2026-10-16 03:17:31 UTC"
+      },
+      "after": {
+        "current_time": "2026-10-16 03:17:33 UTC"
+      }
+    },
+    {
+      "name": "native/CAPTURE_twin_trace.native.json",
+      "sha256": "fa4b863430a86fbc4f4c7efc92f3326c25de64365527885fb58f0855ce68ff93",
+      "rows": 49,
+      "request": {
+        "projectId": "75750847-85c0-41a3-a2a7-b7f2201a51e9",
+        "deploymentId": "99bf5b9e-72b2-4912-a7cb-8a3db414133b",
+        "startDate": "2026-10-16T03:00:00Z",
+        "endDate": "2026-10-16T03:17:00Z",
+        "filter": "\"INFO nightcrawler.speeddesk: speeddesk_twin_trace \"",
+        "limit": 500,
+        "types": [
+          "deploy"
+        ]
+      },
+      "before": {
+        "current_time": "2026-10-16 03:17:31 UTC"
+      },
+      "after": {
+        "current_time": "2026-10-16 03:17:32 UTC"
+      }
+    },
+    {
+      "name": "native/CAPTURE_warnings.native.json",
+      "sha256": "9cca35b23c87cbe699f35d54211406fe57fa3f68b7ff8e0030e18b8aad113f2d",
+      "rows": 12,
+      "request": {
+        "projectId": "75750847-85c0-41a3-a2a7-b7f2201a51e9",
+        "deploymentId": "99bf5b9e-72b2-4912-a7cb-8a3db414133b",
+        "startDate": "2026-10-16T03:00:00Z",
+        "endDate": "2026-10-16T03:17:00Z",
+        "filter": "\"WARNING \" AND (\"speeddesk\" OR \"kalshi\")",
+        "limit": 500,
+        "types": [
+          "deploy"
+        ]
+      },
+      "before": {
+        "current_time": "2026-10-16 03:17:40 UTC"
+      },
+      "after": {
+        "current_time": "2026-10-16 03:17:42 UTC"
+      }
+    },
+    {
+      "name": "native/CAPTURE_ws_gap.native.json",
+      "sha256": "51e1e6c137ed378e2d2fa450e76a9a46c5d7a6fadc720b71cae66655f390cf1a",
+      "rows": 10,
+      "request": {
+        "projectId": "75750847-85c0-41a3-a2a7-b7f2201a51e9",
+        "deploymentId": "99bf5b9e-72b2-4912-a7cb-8a3db414133b",
+        "startDate": "2026-10-16T03:00:00Z",
+        "endDate": "2026-10-16T03:17:00Z",
+        "filter": "\"WARNING nightcrawler.speeddesk_kalshi_ws: speeddesk_feed_kalshi_ws_gap \"",
+        "limit": 500,
+        "types": [
+          "deploy"
+        ]
+      },
+      "before": {
+        "current_time": "2026-10-16 03:17:36 UTC"
+      },
+      "after": {
+        "current_time": "2026-10-16 03:17:38 UTC"
+      }
+    },
+    {
+      "name": "native/CAPTURE_ws_timing.native.json",
+      "sha256": "12befdb9a7c899a86815ac05276bb730af2dfcfccf0f039422d93397e4bc9c8e",
+      "rows": 29,
+      "request": {
+        "projectId": "75750847-85c0-41a3-a2a7-b7f2201a51e9",
+        "deploymentId": "99bf5b9e-72b2-4912-a7cb-8a3db414133b",
+        "startDate": "2026-10-16T03:00:00Z",
+        "endDate": "2026-10-16T03:17:00Z",
+        "filter": "\"INFO nightcrawler.speeddesk_kalshi_ws: speeddesk_feed_kalshi_ws_timing \"",
+        "limit": 500,
+        "types": [
+          "deploy"
+        ]
+      },
+      "before": {
+        "current_time": "2026-10-16 03:17:36 UTC"
+      },
+      "after": {
+        "current_time": "2026-10-16 03:17:38 UTC"
+      }
+    },
+    {
+      "name": "native/CAPTURE_ws_unavailable.native.json",
+      "sha256": "d7a45c9cc79d11ac9c9b5e380e14de058bfd76bbade33d751d415b2abca2bf05",
+      "rows": 0,
+      "request": {
+        "projectId": "75750847-85c0-41a3-a2a7-b7f2201a51e9",
+        "deploymentId": "99bf5b9e-72b2-4912-a7cb-8a3db414133b",
+        "startDate": "2026-10-16T03:00:00Z",
+        "endDate": "2026-10-16T03:17:00Z",
+        "filter": "\"INFO nightcrawler.speeddesk_kalshi_ws: speeddesk_feed_kalshi_ws_timing_unavailable\"",
+        "limit": 500,
+        "types": [
+          "deploy"
+        ]
+      },
+      "before": {
+        "current_time": "2026-10-16 03:17:36 UTC"
+      },
+      "after": {
+        "current_time": "2026-10-16 03:17:38 UTC"
+      }
+    }
+  ],
+  "population": {
+    "raw_rows": 279,
+    "unique_rows": 269,
+    "duplicate_rows": 10,
+    "classification": {
+      "valid_json": 240,
+      "invalid_or_truncated_json": 17,
+      "plain_text": 12
+    }
+  },
+  "checks": [
+    {
+      "name": "CAPTURE_errors.native.json success/bounds/unsaturated",
+      "passed": true
+    },
+    {
+      "name": "CAPTURE_input_diagnostic.native.json success/bounds/unsaturated",
+      "passed": true
+    },
+    {
+      "name": "CAPTURE_live_cancel.native.json success/bounds/unsaturated",
+      "passed": true
+    },
+    {
+      "name": "CAPTURE_live_fill.native.json success/bounds/unsaturated",
+      "passed": true
+    },
+    {
+      "name": "CAPTURE_live_order.native.json success/bounds/unsaturated",
+      "passed": true
+    },
+    {
+      "name": "CAPTURE_live_reject.native.json success/bounds/unsaturated",
+      "passed": true
+    },
+    {
+      "name": "CAPTURE_live_settlement.native.json success/bounds/unsaturated",
+      "passed": true
+    },
+    {
+      "name": "CAPTURE_live_status.native.json success/bounds/unsaturated",
+      "passed": true
+    },
+    {
+      "name": "CAPTURE_practice_status.native.json success/bounds/unsaturated",
+      "passed": true
+    },
+    {
+      "name": "CAPTURE_practice_window.native.json success/bounds/unsaturated",
+      "passed": true
+    },
+    {
+      "name": "CAPTURE_probability_events.native.json success/bounds/unsaturated",
+      "passed": true
+    },
+    {
+      "name": "CAPTURE_reconcile_trace.native.json success/bounds/unsaturated",
+      "passed": true
+    },
+    {
+      "name": "CAPTURE_twin_events.native.json success/bounds/unsaturated",
+      "passed": true
+    },
+    {
+      "name": "CAPTURE_twin_settlement.native.json success/bounds/unsaturated",
+      "passed": true
+    },
+    {
+      "name": "CAPTURE_twin_trace.native.json success/bounds/unsaturated",
+      "passed": true
+    },
+    {
+      "name": "CAPTURE_warnings.native.json success/bounds/unsaturated",
+      "passed": true
+    },
+    {
+      "name": "CAPTURE_ws_gap.native.json success/bounds/unsaturated",
+      "passed": true
+    },
+    {
+      "name": "CAPTURE_ws_timing.native.json success/bounds/unsaturated",
+      "passed": true
+    },
+    {
+      "name": "CAPTURE_ws_unavailable.native.json success/bounds/unsaturated",
+      "passed": true
+    },
+    {
+      "name": "19 exact closed queries",
+      "passed": true
+    },
+    {
+      "name": "279 rows 269 unique 10 duplicates",
+      "passed": true
+    },
+    {
+      "name": "17 genuine invalid/truncated JSON",
+      "passed": true
+    },
+    {
+      "name": "six intents including one lock, six acknowledgements",
+      "passed": true
+    },
+    {
+      "name": "three unique fills on two orders",
+      "passed": true
+    },
+    {
+      "name": "all real fills join exact intents and acknowledgement IDs",
+      "passed": true
+    },
+    {
+      "name": "real costs quantities and fees",
+      "passed": true
+    },
+    {
+      "name": "settlement reconciliation with no double paired credit",
+      "passed": true
+    },
+    {
+      "name": "official response raw hash",
+      "passed": true
+    },
+    {
+      "name": "official finalized YES at declared bounds",
+      "passed": true
+    },
+    {
+      "name": "13 primary traces exact actions",
+      "passed": true
+    },
+    {
+      "name": "all five ordinary intents copied and matching-parent cancelled",
+      "passed": true
+    },
+    {
+      "name": "every real fill has explicit non-venue snapshot",
+      "passed": true
+    },
+    {
+      "name": "maker partials mapped; lock unknown and not counted as ordinary missing copy",
+      "passed": true
+    },
+    {
+      "name": "all six trace helper/publication counters zero across 17 panels",
+      "passed": true
+    },
+    {
+      "name": "decision twin and separate practice target have zero shares/cost/PnL",
+      "passed": true
+    },
+    {
+      "name": "forecast score same exact identity and original values",
+      "passed": true
+    },
+    {
+      "name": "unchanged named effective caps",
+      "passed": true
+    },
+    {
+      "name": "last financial raw PnL split within float representation",
+      "passed": true
+    },
+    {
+      "name": "tail successor fill kept separate",
+      "passed": true
+    }
+  ],
+  "fills": [
+    {
+      "at": "1792119628.064413",
+      "venue": "kalshi",
+      "fill_id": "0724483a-ced9-aa93-baf8-f3ce46a90c87",
+      "order_id": "01a142a7-4d58-78c9-9f62-5a4cff087113",
+      "client_order_id": "nc-speed-3acd81a1fe9d4a18bb0f0b489b9033ea",
+      "window": "KXBTC15M-26OCT152315-15",
+      "side": "down",
+      "price": "0.6",
+      "size": "3.12",
+      "fee_usd": "0.0",
+      "is_taker": false
+    },
+    {
+      "at": "1792119628.064489",
+      "venue": "kalshi",
+      "fill_id": "0724483a-ced9-a1bf-20e1-447b87aa876f",
+      "order_id": "01a142a7-4d58-78c9-9f62-5a4cff087113",
+      "client_order_id": "nc-speed-3acd81a1fe9d4a18bb0f0b489b9033ea",
+      "window": "KXBTC15M-26OCT152315-15",
+      "side": "down",
+      "price": "0.6",
+      "size": "1.88",
+      "fee_usd": "0.0",
+      "is_taker": false
+    },
+    {
+      "at": "1792120281.875297",
+      "venue": "kalshi",
+      "fill_id": "07244874-0909-b60c-a328-fbc7b4dc2bb7",
+      "order_id": "01a142b1-57a8-726d-8ddf-12008bf32dd6",
+      "client_order_id": "nc-speed-026f31046c994b68b24ad91ec58ac199",
+      "window": "KXBTC15M-26OCT152315-15",
+      "side": "up",
+      "price": "0.968",
+      "size": "5.0",
+      "fee_usd": "0.0109",
+      "is_taker": true
+    }
+  ],
+  "quantity": {
+    "up": "5.0",
+    "down": "5.00"
+  },
+  "cost": {
+    "up": "4.8400",
+    "down": "3.000"
+  },
+  "fees": "0.0109",
+  "payout": "5.0",
+  "pnl": "-2.8509",
+  "locked": "-2.8509",
+  "directional": "0",
+  "all_in_pair_cost": "1.57018",
+  "hedge_reduction_of_prehedge_worst_case": "0.1491",
+  "intent_count": 6,
+  "filled_orders": 2,
+  "trace_actions": {
+    "copy": 5,
+    "cancel": 5,
+    "real_fill_reconcile": 3
+  },
+  "trace_counter_max": {
+    "pending_dropped": "0",
+    "terminal_evicted": "0",
+    "identities_omitted": "0",
+    "helper_failures": "0",
+    "publication_dropped": "0",
+    "publication_unknown_batches": "0"
+  },
+  "forecast_brier": "0.07404503050425642887515710001",
+  "forecast": {
+    "at": "1792119900.0796075",
+    "mode": "observe_only",
+    "live_application": false,
+    "profitability_proven": false,
+    "protocol": "kalshi-probability-calibration-v2-h300-g5-b10-prior20",
+    "source_fingerprint": "f2652c6b9f5f4732b5ac865d72c4748df250ad73b38d493387f9dfc478dcff6c",
+    "window": "KXBTC15M-26OCT152315-15",
+    "p": "0.7278878346999965",
+    "q": "0.7278878346999965",
+    "bin": "7",
+    "n": "0",
+    "wins": "0",
+    "spot": "81979.44",
+    "sigma": "0.00003811828686505407",
+    "bitcoin_at": "1792119899.836125",
+    "opening": "81934.59",
+    "venue_start_price": "81934.59",
+    "batch_at": "1792119899.9890583",
+    "terms": [
+      "1792119600.0",
+      "1792120500.0",
+      "81934.59",
+      "81934.59",
+      "0.07",
+      "0.0",
+      "0.01",
+      "0.01",
+      "kalshi",
+      "kalshi"
+    ]
+  },
+  "score": {
+    "at": "1792120512.176181",
+    "mode": "observe_only",
+    "live_application": false,
+    "profitability_proven": false,
+    "protocol": "kalshi-probability-calibration-v2-h300-g5-b10-prior20",
+    "source_fingerprint": "f2652c6b9f5f4732b5ac865d72c4748df250ad73b38d493387f9dfc478dcff6c",
+    "window": "KXBTC15M-26OCT152315-15",
+    "status": "scored",
+    "outcome": true,
+    "forecast": {
+      "p": "0.7278878346999965",
+      "q": "0.7278878346999965",
+      "bin": "7",
+      "n": "0",
+      "wins": "0",
+      "at": "1792119900.0796075",
+      "spot": "81979.44",
+      "sigma": "0.00003811828686505407",
+      "bitcoin_at": "1792119899.836125",
+      "opening": "81934.59",
+      "venue_start_price": "81934.59",
+      "batch_at": "1792119899.9890583",
+      "terms": [
+        "1792119600.0",
+        "1792120500.0",
+        "81934.59",
+        "81934.59",
+        "0.07",
+        "0.0",
+        "0.01",
+        "0.01",
+        "kalshi",
+        "kalshi"
+      ],
+      "protocol": "kalshi-probability-calibration-v2-h300-g5-b10-prior20",
+      "source_fingerprint": "f2652c6b9f5f4732b5ac865d72c4748df250ad73b38d493387f9dfc478dcff6c"
+    },
+    "post_gaps": [],
+    "scored_at": "1792120512.176181"
+  },
+  "last_status": {
+    "platform_timestamp": "2026-10-16T03:16:48.413984947Z",
+    "selected": {
+      "at": "1792120608.223919",
+      "mode": "live",
+      "authenticated": true,
+      "trading_now": true,
+      "reason": "balancing_only",
+      "waiting": "",
+      "cash_usd": "25.9193",
+      "open_risk_usd": "2.04",
+      "reserved_usd": "0.8400000000000001",
+      "total_halted": false,
+      "day_stop_latched": false,
+      "caps": {
+        "window_usd": "10.0",
+        "open_usd": "20.0",
+        "day_stop_usd": "6.0",
+        "clip": "5.0",
+        "total_stop_usd": "10.0"
+      }
+    }
+  },
+  "coverage_certified": false,
+  "limits": [
+    "Complete bounded filtered log returns do not certify all market events, queue state or continuous coverage.",
+    "Lock policy does not produce the ordinary decision-twin copy; unknown is not a zero-size simulated hedge.",
+    "Raw practice combined-status JSONs remain genuinely truncated, unrepaired.",
+    "Original generic scaffold has known narrow-label/prefix exclusions; retained unchanged, superseded for final conclusions.",
+    "Snapshot during reconcile is not venue execution time; no exact callback/queue delay inferred.",
+    "One window cannot establish an edge or comparative profitability."
+  ]
+}

@@ -1,0 +1,10 @@
+{
+  "at_utc": "2026-10-15T19:55:25.854792+00:00",
+  "staged_files": 137,
+  "source_tests_or_build_staged": false,
+  "bounded_secret_pattern_hits": 0,
+  "normal_prose_whitespace": "passed",
+  "raw_snapshot_whitespace_note": "Default gitdiffcheck reports intentional blank separator at EOF in exact inserted-entry snapshots FINAL_COORD_ENTRY.md and FINAL_WORKLOG_ENTRY.md; retained as original archive bytes. Allstagedfiles pass otherwhitespace checks with percommand minusblank-at-eof; no source/prose changes or globalconfiguration change.",
+  "prior_check_attempt": "Setting core.whitespace to positiveotherchecks retained defaultblank-at-eof and exited2; corrected percommand explicitminusflag. Neither failure was an app test.",
+  "checks_not_repeated": "No appsource changes after5884-pass fullrun; docs/evidenceonly."
+}

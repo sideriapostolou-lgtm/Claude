@@ -1,0 +1,29 @@
+{
+  "service": {
+    "id": "f84d3b52-002f-44cb-931e-bc9e3e097e97",
+    "name": "bot",
+    "state": "live"
+  },
+  "volumes": [
+    {
+      "id": "61e83042-65c2-4aff-855b-a24a3b7989aa",
+      "name": "nightcrawler-data",
+      "mountPath": "/data",
+      "sizeMB": 5000,
+      "region": "us-east4-eqdc4a",
+      "state": "live"
+    }
+  ],
+  "latestDeployment": {
+    "id": "43f14443-2d07-4985-b879-3a2515fb8d2c",
+    "status": "SUCCESS",
+    "createdAt": "2026-10-16T23:49:24.905Z",
+    "url": null
+  },
+  "staged": null,
+  "source": {
+    "repo": "sideriapostolou-lgtm/Claude",
+    "branch": "claude/nightcrawler-memecoin-bot-Gwnb1S",
+    "checkSuites": false
+  }
+}

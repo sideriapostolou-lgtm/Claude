@@ -1,0 +1,86 @@
+{
+  "verdict": "Verified second scored forecast was directionally wrong (p<0.5, official YES), retained alongside first correct direction; not a booked trading loss",
+  "source_fingerprint": "23e2ca80d3c04415256bf3fc237ba017d56733a59219d718e86c554eaa1f1d25",
+  "second_forecast": {
+    "original_publication": "2026-10-15T22:20:00.071404112Z",
+    "payload_time": "2026-10-15T22:20:00.065374+00:00",
+    "p": 0.2138387913915002,
+    "q": 0.21383879139150022,
+    "bin": 2,
+    "prior_n": 0,
+    "prior_wins": 0,
+    "opening": 82371.62
+  },
+  "second_score": {
+    "original_publication": "2026-10-15T22:30:14.498982524Z",
+    "payload_time": "2026-10-15T22:30:14.490194+00:00",
+    "outcome": true,
+    "frozen_forecast_exact_match": true,
+    "brier_baseline": 0.6180494459207772,
+    "brier_shadow": 0.6180494459207772,
+    "post_gaps": [],
+    "expected_bin2_n_wins_after": [
+      1,
+      1
+    ],
+    "raw_bin_state_exported": false
+  },
+  "two_scores": {
+    "first_brier_baseline": 0.008383692762115782,
+    "first_brier_shadow": 0.008383692762115782,
+    "sum_brier_baseline": 0.626433138682893,
+    "sum_brier_shadow": 0.626433138682893,
+    "mean_brier_baseline": 0.3132165693414465,
+    "mean_brier_shadow": 0.3132165693414465,
+    "directional_threshold_description": "at p=0.5 threshold first Up correct, second Down wrong; descriptive only, n=2 not validated accuracy or strategy"
+  },
+  "latest_original_status": {
+    "publication": "2026-10-15T22:36:39.285800367Z",
+    "payload_at": 1792103799.2798164,
+    "counts": {
+      "forecasts": 3,
+      "scored": 2,
+      "unknown": 2,
+      "pending": 1
+    }
+  },
+  "third_pending": {
+    "window": "KXBTC15M-26OCT151845-45",
+    "publication": "2026-10-15T22:35:00.133843196Z",
+    "payload_time": "2026-10-15T22:35:00.094867+00:00",
+    "p": 0.46003552248597807,
+    "q": 0.4600355224859781,
+    "bin": 4,
+    "prior_n": 0,
+    "prior_wins": 0,
+    "close_at": "2026-10-15T22:45:00+00:00",
+    "status": "pending in saved2237wrapper; no outcome inferred"
+  },
+  "official_market": {
+    "ticker": "KXBTC15M-26OCT151830-30",
+    "status": "finalized",
+    "result": "yes",
+    "floor_strike": 82371.62,
+    "strike_type": "greater_or_equal",
+    "open_time": "2026-10-15T22:15:00Z",
+    "close_time": "2026-10-15T22:30:00Z",
+    "settlement_ts": "2026-10-15T22:30:01.881008Z",
+    "rules_primary": "If the simple average of the sixty seconds of CF Benchmarks' BRTI before 6:30 PM EDT on Oct 15, 2026 is at least the simple average of the sixty seconds of CF Benchmarks' BRTI before 6:15 PM EDT on October 15, 2026, then the market resolves to Yes.",
+    "rules_secondary": "Not all cryptocurrency price data is the same. While checking a source like Google or Coinbase may help guide your decision, the price used to determine this market is based on CF Benchmarks' corresponding Real Time Index (RTI). At the last minute before expiration, 60 RTI prices are collected. The official and final value is the average of these prices, rounded to the nearest 2 decimal places."
+  },
+  "evidence_sha256": {
+    "NATIVE_V2_LOGS_2221.json": "cca929706e7092a89e71b754d190e2eeb988fe0e35d362c247b439c315741526",
+    "NATIVE_V2_LOGS_2237.json": "eeec7f14d3cd73c0dedff70ef9a9888af329c764020596700c2efd4e660f2f58",
+    "PUBLIC_MARKET_1830.native.json": "119c8202da502f11892ac63b37011508f3bb93458885dc0b0ad12e593f58955f",
+    "PUBLIC_MARKET_1830.request.json": "a49f32ec9aba9e80ac089ed9a975e7c77c425914e8c48d2f81a5edaa7091e549"
+  },
+  "limits": [
+    "Second forecast is a probability miss, not evidence of an executed trade or dollar loss.",
+    "Original failed predeclared capture remains failed; these are later opportunistic receipts.",
+    "Preserve both scores and both unknowns plus actual evolving pending history; old5score archive remains separate.",
+    "Third forecast outcome and latest counts may change before release; read actual current lineage at release, do not substitute this snapshot.",
+    "Public official result not an independent reconstruction of BRTI samples.",
+    "No calibration/accuracy/profitability/continuouscoverage/live-enable claim.",
+    "No production mutation or credential read; one unauthenticated public GET only."
+  ]
+}

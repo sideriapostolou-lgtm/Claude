@@ -1,0 +1,5 @@
+src/nightcrawler/kalshi_arena.py:1118: error: Incompatible types in assignment (expression has type "Any | None", variable has type "str")  [assignment]
+src/nightcrawler/kalshi_arena.py:1133: error: Incompatible types in assignment (expression has type "dict[str, Any] | None", variable has type "dict[str, Any]")  [assignment]
+Found 2 errors in 1 file (checked 128 source files)
+
+CAPTURED_EXIT=1

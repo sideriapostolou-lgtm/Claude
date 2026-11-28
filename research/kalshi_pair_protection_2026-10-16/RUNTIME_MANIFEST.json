@@ -1,0 +1,326 @@
+{
+  "schema": 1,
+  "format": "ordered base64 -> XZ -> UTF-8 JSON files[path,text]",
+  "archive_sha256": "f9b97c861a9dbbd052fd3147ef5bdb959aed1ecb35cd95f695f0ea8fd442483e",
+  "unpacked_sha256": "48d87c546d7aed7935cccb134ff76c082f23f020a69d67b42e591269a52bfb29",
+  "archive_bytes": 176368,
+  "unpacked_bytes": 13469161,
+  "encoded_characters": 235160,
+  "parts": [
+    {
+      "path": "RUNTIME_EVIDENCE_01.b64.txt",
+      "sha256": "c1c74a1d5cffa05c61908404ff425d8274dd81be685c45d7875025cdec73a7e3",
+      "bytes": 40001
+    },
+    {
+      "path": "RUNTIME_EVIDENCE_02.b64.txt",
+      "sha256": "3b7c820c4b73c94597889666c7dce9bf321037df029a45f7d87a8e1cc9b33abd",
+      "bytes": 40001
+    },
+    {
+      "path": "RUNTIME_EVIDENCE_03.b64.txt",
+      "sha256": "f7b70baec1b942555a3ef82159b881caafbbcb32919789ec7aca5cc0fa21d456",
+      "bytes": 40001
+    },
+    {
+      "path": "RUNTIME_EVIDENCE_04.b64.txt",
+      "sha256": "31d3edbe723a2f399d43b89b632c1538fd33a4fd1fd0d9fc88d258a19d934eee",
+      "bytes": 40001
+    },
+    {
+      "path": "RUNTIME_EVIDENCE_05.b64.txt",
+      "sha256": "25d4933c94702a6c81d060c52f561f8de6ec8432715f5d1cbb890d4ea526dad3",
+      "bytes": 40001
+    },
+    {
+      "path": "RUNTIME_EVIDENCE_06.b64.txt",
+      "sha256": "c0f2283bc6bc735e1fe329f14a61f8790728740ab39d5ad8771b45d6628d150e",
+      "bytes": 35161
+    }
+  ],
+  "files": [
+    {
+      "path": "MERGE_69.json",
+      "bytes": 437,
+      "sha256": "9f0cf4d4fd385f33162bedbc4a51f8d6facdcdd8b3b4f5e4601f9600b41c79a5"
+    },
+    {
+      "path": "SOURCE_BINDING.json",
+      "bytes": 2771,
+      "sha256": "87535f34799bea28af67f4a3f6890959c6206abbfe5ab9575150cbb47b1cee58"
+    },
+    {
+      "path": "FORWARD_REQUESTS.json",
+      "bytes": 4952,
+      "sha256": "3ec065527e85739e1b63a792a93930f05aea64cb8b957b7684472e0b7b5926fa"
+    },
+    {
+      "path": "RUNTIME_AUDIT.json",
+      "bytes": 141898,
+      "sha256": "d20ad31590f21efae6b56a8a37922b584977e6f904bfedbdf07c2b349a89a82a"
+    },
+    {
+      "path": "ROOT_CAPTURE_ANALYSIS.json",
+      "bytes": 128308,
+      "sha256": "b4526e9148af8236478793cc445dccff11dc24d2a04f31762f426e04fb105153"
+    },
+    {
+      "path": "audit_capture_root.py",
+      "bytes": 9832,
+      "sha256": "a80c1cc3138025511e064668262902eab7e4e075739bf2b0ccd01e8f9f5c07df"
+    },
+    {
+      "path": "sol/audit_runtime_capture.py",
+      "bytes": 15753,
+      "sha256": "0ad57629447bd1b08cb5c79af876e9389b0cc4447c7eac387f3ca0a599ce598c"
+    },
+    {
+      "path": "sol/RUNTIME_AUDIT_CHECKS.json",
+      "bytes": 575,
+      "sha256": "a44fcf37c03ef7fa8aa95327f6c0385580dce709a92e1398b14c7a6cf7c101a3"
+    },
+    {
+      "path": "sol/RUNTIME_AUDIT_SELFCHECK.json",
+      "bytes": 219812,
+      "sha256": "871eb1b09efea10b70292ece6721c1fadc152d11f80eab549ff3a3cd22a9d3b0"
+    },
+    {
+      "path": "astra/RESTART_RETENTION_REVIEW.md",
+      "bytes": 12074,
+      "sha256": "44bb636b43248617b19884308c4cf8a68cc221deeceb3cabea03e27352d542d7"
+    },
+    {
+      "path": "astra/RESTART_RETENTION_ANALYSIS.json",
+      "bytes": 36846,
+      "sha256": "a92afd7669eef5bdb4a1b6ea23fcf4753e1e578d3ab95a1f30116b952261619d"
+    },
+    {
+      "path": "astra/RESTART_RETENTION_SUPPLEMENT.json",
+      "bytes": 38808,
+      "sha256": "8d851b8f5975b69feb70f9c81abcdabff95d4fb925e3ce7b55f93f332b59752e"
+    },
+    {
+      "path": "astra/restart_retention_audit.py",
+      "bytes": 7919,
+      "sha256": "7244ed919cb31eef0635e8db8f731fce3ff0aca36ffd6af6a77296d8a84051d7"
+    },
+    {
+      "path": "astra/restart_retention_supplement.py",
+      "bytes": 6418,
+      "sha256": "9c039cf9ed42e7094371e63637af13789f8b17472087fb7e89da9ff19a8f7378"
+    },
+    {
+      "path": "astra/PRECEDING_CLOSED_ANALYSIS.json",
+      "bytes": 13250,
+      "sha256": "b96df16c7e25232789d9d3cc2d0654a138c1e1864b5d9924d6ed688cc1e9519a"
+    },
+    {
+      "path": "astra/preceding_closed_audit.py",
+      "bytes": 5223,
+      "sha256": "992dd098c8b4b2c6eaf2e0c871b6da91809c0d149655cc6c562123e130b03c1e"
+    },
+    {
+      "path": "astra/RUNTIME_REVIEW.md",
+      "bytes": 10527,
+      "sha256": "73f6695ab9f1aeaae8d000d51f718829db8c15d37dbcd12d18ccb44490c94f04"
+    },
+    {
+      "path": "astra/RUNTIME_INDEPENDENT.json",
+      "bytes": 1845955,
+      "sha256": "ea82e6887c2ad9ec97101a0861da5e2cab3cafc019da3ba47a1b5eb511d81251"
+    },
+    {
+      "path": "astra/runtime_independent_audit.py",
+      "bytes": 15127,
+      "sha256": "324da88e4a1f27a573e89961ca1dd45972a05ba68b021907f6973a8a08fe55ed"
+    },
+    {
+      "path": "astra/RELEASE_FACTCHECK.md",
+      "bytes": 1591,
+      "sha256": "8fc6de8c99337ba8d101b191d32ce184f3a4dfe487b67e354c38fcffa85d0f58"
+    },
+    {
+      "path": "native/old_final_financial.json",
+      "bytes": 239683,
+      "sha256": "0af4f34c1d13634927037e3d58457d69c8b7c78ef3c5f1babf53e59f2d402d69"
+    },
+    {
+      "path": "native/old_final_learning.json",
+      "bytes": 5909,
+      "sha256": "d41e0b2ff47f1552e1fba7b71d6f03ace3a2b4720f10c69287c83c1a185f9b7b"
+    },
+    {
+      "path": "native/pre_epoch.json",
+      "bytes": 6000,
+      "sha256": "8ab1f4e182b4ff03444878d0f49cb800fa621eb9c46cdd82255ed22da0d11eb2"
+    },
+    {
+      "path": "native/warm_financial.json",
+      "bytes": 116803,
+      "sha256": "b114873d0b35367be112439ce15858058fc587bf5f5eb9ce407a01b5bc29335d"
+    },
+    {
+      "path": "native/warm_learning.json",
+      "bytes": 9018,
+      "sha256": "76c51d081bd8ccd75370d94e9d4ad611ae331f2cd9cb1bed6911d93358c8f026"
+    },
+    {
+      "path": "native/warm_controls.json",
+      "bytes": 127881,
+      "sha256": "47d3853ecc1e1bbe1663839898e9262a2a8caab3c62566cffde8f1d6d8fc96e5"
+    },
+    {
+      "path": "native/post_start_poly.json",
+      "bytes": 1643,
+      "sha256": "32344f65e6ff740d50b92c53235b3944a592a0e9cef3be73ffb77b37dece53fb"
+    },
+    {
+      "path": "native/post_start_financial.json",
+      "bytes": 1121,
+      "sha256": "75e40883e7de5a0cfa4cdd4181c11c1eeeba33be45deddf3e7c770723af8a8ae"
+    },
+    {
+      "path": "native/post_start_errors.json",
+      "bytes": 1077,
+      "sha256": "b8916a97290c3ef546b6a0ba0285263ad3824dde63a5977a2e543354c5194e34"
+    },
+    {
+      "path": "native/post_start_epoch.json",
+      "bytes": 1091,
+      "sha256": "ecadf599d2aeb3938abcdc51e533777d376945ab1fd10c701705f10d9c7e770f"
+    },
+    {
+      "path": "native/post_start_learning.json",
+      "bytes": 1089,
+      "sha256": "85dc6f44678dfa9bed56dab101c26e9d1b1457b958837453ec57d798d1f12870"
+    },
+    {
+      "path": "native/post_start_controls.json",
+      "bytes": 1110,
+      "sha256": "7ed01122a20656978bee9c88312d0df9f056ee15e8d19b2bdf5d8c521780b9ea"
+    },
+    {
+      "path": "native/old_shutdown.json",
+      "bytes": 11044,
+      "sha256": "a0a2317ed63dbe9a2b4639d2bd66f715e567cc28219c036807435317d5b6ba0e"
+    },
+    {
+      "path": "native/new_start_receipts.json",
+      "bytes": 3610,
+      "sha256": "b4c09673fff044b8d461c3f6687d32a36e83e88736394e6e90585363d16599fc"
+    },
+    {
+      "path": "native/fresh_financial_0412.json",
+      "bytes": 462659,
+      "sha256": "fafddc90b6d1a988aabe1ea08a4c65ac1e42dca475e31ace4ad03ca652e8bf39"
+    },
+    {
+      "path": "native/startup_errors_ladder.json",
+      "bytes": 1964768,
+      "sha256": "3f8599c1687b9dc59282990cd0038c850525c9751e08f3b04983212826df726f"
+    },
+    {
+      "path": "native/capture_publication.json",
+      "bytes": 1057,
+      "sha256": "a31f41bbd7d866eb6bad3bceec4d35536fc180d0e694099222b02bc2ca0b6525"
+    },
+    {
+      "path": "native/declare_health.json",
+      "bytes": 3262,
+      "sha256": "31752e48bf1e721fe25c82758854cbf5c4c917a9f09fc2dfe317d17b326f80aa"
+    },
+    {
+      "path": "native/docs_deployment.json",
+      "bytes": 2629,
+      "sha256": "e4567eaee2efe0e4872e0b7a754858991ab0bba84eff8abc44b6a854e9663949"
+    },
+    {
+      "path": "native/preceding_closed.json",
+      "bytes": 5044,
+      "sha256": "efecf8ccd666bc51676abfcde655ee1353f4e3c9ba13b0ab5350fc6483f0cf8c"
+    },
+    {
+      "path": "native/PUBLIC_PLANNED_WINDOW.json",
+      "bytes": 2510,
+      "sha256": "9291f3ebe0b2ba901d51f3902bf5952519667fdb8e1d75a4e665bb84311d1464"
+    },
+    {
+      "path": "native/PUBLIC_CLOSED_WINDOW.json",
+      "bytes": 2718,
+      "sha256": "a13350831f3bf9a07b9943d5dd43a4703f6b4d6155fade6623ca6c2b3c6789f1"
+    },
+    {
+      "path": "native/tail_health.json",
+      "bytes": 3326,
+      "sha256": "ad6d7b1df330dc7faa8b129563ee836323dd2dd13d58b10bf8de7bd70c585453"
+    },
+    {
+      "path": "native/tail_deployments.json",
+      "bytes": 2548,
+      "sha256": "79c4613ca250fc48c06d21f795691b532385dbbb5d35146d66bb63bd0b5da960"
+    },
+    {
+      "path": "native/forward_orders_00.json",
+      "bytes": 58515,
+      "sha256": "63c34b939d37692886db445ac9caf1b27b09a3ce84152239ec227e56e9d2ad28"
+    },
+    {
+      "path": "native/forward_orders_01.json",
+      "bytes": 1118,
+      "sha256": "689f6a7ae4e502d320e6121b36c6edac9ac9625a4106e28b63f559b1f0376110"
+    },
+    {
+      "path": "native/forward_orders_02.json",
+      "bytes": 1118,
+      "sha256": "b2ce664d8053dae2a63d5ac58432ad0d2bef73a11b02913eff818a97eed33a48"
+    },
+    {
+      "path": "native/forward_orders_tail.json",
+      "bytes": 53700,
+      "sha256": "e16eafd65cb013070eb32a4bd008c964ae5afd6533a91a70883056cfd2ef77cf"
+    },
+    {
+      "path": "native/forward_money.json",
+      "bytes": 53653,
+      "sha256": "43a2adc1f77bd1b3846d174c9f3ff993de3ef6e2c28df81c916e26568632d5af"
+    },
+    {
+      "path": "native/forward_twin.json",
+      "bytes": 213574,
+      "sha256": "f9cd98e12eeccd700a9f430d3ed79d1083ada2d6e0ce1849c8d20ff0e7985180"
+    },
+    {
+      "path": "native/forward_probability.json",
+      "bytes": 19847,
+      "sha256": "61f3058814b68bb5a93a3e10da0d5a3a43a4587af99603d11cb4db27146cc832"
+    },
+    {
+      "path": "native/forward_warnings.json",
+      "bytes": 21859,
+      "sha256": "475537fa7124d7c90356a6412add0d0f967ac84597abd0a21fdffa9359fcffcb"
+    },
+    {
+      "path": "native/forward_status.json",
+      "bytes": 5063727,
+      "sha256": "8463609bdf1b5aca060019e15fa5f5cfcd08c68b9604c9f35c468d0671e6f26b"
+    },
+    {
+      "path": "native/forward_diagnostics.json",
+      "bytes": 607710,
+      "sha256": "493eb91626256826ff6e96f3814a54077b61ce0ba7130ed4def45b0c039be4e8"
+    },
+    {
+      "path": "native/forward_window_practice_traceback.json",
+      "bytes": 5095,
+      "sha256": "b51bfcae14a61dc27e8de66fa2b885e5c691bfac70c6bd077563c5ae3220a4a0"
+    }
+  ],
+  "roundtrip": "all selected original bytes and hashes match",
+  "scope": "Explicit selected original receipts/reviews/analysis only. Service metadata is labeled selected; no raw-volume or continuous-market-coverage certificate.",
+  "excluded": [
+    "Unrelated owner orders/activity",
+    "Private operating handoffs and credential values",
+    "Full deployment creator/contact metadata",
+    "Sealed research TEST and unselected historical raw tapes"
+  ]
+}

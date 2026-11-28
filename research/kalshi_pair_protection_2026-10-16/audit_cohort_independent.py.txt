@@ -1,0 +1,81 @@
+"""Independent native receipt arithmetic only; no candidate fills or production access."""
+import hashlib
+import calendar
+import datetime
+import json
+from decimal import Decimal as D
+from pathlib import Path
+
+base=Path(__file__).resolve().parents[1]
+manifest=json.loads((base/'COHORT.json').read_text())
+assert len(manifest['queries']) == 10
+fills={}
+settlements={}
+intents={}
+checks=0
+def epoch_decimal(stamp):
+    whole,fraction=stamp.rstrip('Z').split('.')
+    parsed=datetime.datetime.strptime(whole,'%Y-%m-%dT%H:%M:%S')
+    return D(calendar.timegm(parsed.timetuple()))+D('0.'+fraction)
+for entry in manifest['queries']:
+    p=base/'native'/(entry['name']+'.json')
+    assert hashlib.sha256(p.read_bytes()).hexdigest()==entry['sha256']
+    raw=json.loads(p.read_text())
+    rows=raw['result']['structuredContent']['deploy']
+    assert len(rows)<raw['request']['limit'] and not raw['result'].get('isError')
+    checks+=2
+    for row in rows:
+        msg=row['message']
+        for label,target,idkey in [('speeddesk_live_fill',fills,'fill_id'),('speeddesk_live_settlement',settlements,'window'),('speeddesk_live_order',intents,'client_order_id')]:
+            marker=': '+label+' '
+            if marker not in msg: continue
+            tail=msg.split(marker,1)[1]
+            try: data=json.loads(tail,parse_float=D,parse_int=D)
+            except json.JSONDecodeError: continue
+            if label.endswith('_order') and not data.get('state','').startswith('durable intent'):continue
+            if data[idkey] in target:
+                assert target[data[idkey]][1]==data
+            target[data[idkey]]=(row['timestamp'],data)
+
+out=[]
+for window,(st,s) in sorted(settlements.items()):
+    payout=s['up_shares'] if s['up_wins'] else s['down_shares']
+    assert abs(payout-s['payout_usd'])<D('1e-9')
+    pnl=payout-s['cost_usd']-s['fee_usd']
+    assert abs(pnl-s['pnl_usd'])<D('1e-9')
+    checks+=2
+    own=sorted((v for v in fills.values() if v[1]['window']==window),key=lambda x:(x[0],x[1]['fill_id']))
+    q={'up':D(0),'down':D(0)}
+    cost=fee=D(0)
+    first=None
+    later=[]
+    for stamp,f in own:
+        q[f['side']]+=f['size'];cost+=f['size']*f['price'];fee+=f['fee_usd']
+        if first:
+            intent=intents.get(f['client_order_id'])
+            later.append({'fill_id':f['fill_id'],'client_order_id':f['client_order_id'],
+                          'intent_platform_timestamp':intent[0] if intent else None,
+                          'local_intent_at':intent[1]['at'] if intent else None,
+                          'new_intent_log_after_prefix':bool(intent and intent[0]>first['stamp']),
+                          'new_intent_local_at_after_prefix':bool(intent and intent[1]['at']>epoch_decimal(first['stamp']))})
+        if first is None and q['up']==q['down'] and q['up']>0 and q['up']-cost-fee>D('1e-9'):
+            first={'stamp':stamp,'floor':q['up']-cost-fee}
+    match=(q=={'up':s['up_shares'],'down':s['down_shares']} and abs(cost-s['cost_usd'])<D('1e-9') and abs(fee-s['fee_usd'])<D('1e-9'))
+    out.append({'window':window,'actual_pnl':pnl,'fees':s['fee_usd'],'fills_match':match,'prefix':first,'later':later})
+summary={'windows':len(out),'wins':sum(x['actual_pnl']>0 for x in out),'losses':sum(x['actual_pnl']<0 for x in out),
+         'actual_pnl':sum((x['actual_pnl'] for x in out),D(0)),'fees':sum((x['fees'] for x in out),D(0)),
+         'fill_totals_match':sum(x['fills_match'] for x in out),'prefix_count':sum(x['prefix'] is not None for x in out),
+         'prefix_then_negative':sum(bool(x['prefix']) and x['actual_pnl']<0 for x in out),
+         'prefix_then_higher_actual':sum(bool(x['prefix']) and x['actual_pnl']>x['prefix']['floor']+D('1e-9') for x in out),
+         'prefix_positive_but_lower':sum(bool(x['prefix']) and 0<x['actual_pnl']<x['prefix']['floor']-D('1e-9') for x in out),
+         'prefix_no_later_fills':sum(bool(x['prefix']) and not x['later'] for x in out),
+         'later_fill_rows':sum(len(x['later']) for x in out),
+         'later_fills_without_newer_intent_log':sum(not f['new_intent_log_after_prefix'] for x in out for f in x['later']),
+         'unique_later_filled_orders_local_intent_not_after_prefix':len({f['client_order_id'] for x in out for f in x['later'] if not f['new_intent_local_at_after_prefix']}),
+         'explicit_native_hash_count_and_arithmetic_assertions':checks}
+assert (summary['windows'],summary['wins'],summary['losses'],summary['fill_totals_match'],summary['prefix_count'])==(15,8,7,14,11)
+assert abs(summary['actual_pnl']-D('-4.0182'))<D('1e-9') and summary['fees']==D('.2632')
+assert (summary['prefix_then_negative'],summary['prefix_then_higher_actual'],summary['prefix_positive_but_lower'],summary['prefix_no_later_fills'])==(4,4,1,2)
+result={'summary':summary,'windows':out,'scope':'Native allowlisted receipt arithmetic/publication-order descriptive cohort only. No candidate P&L, simulated fills, or authoritative controller event timing.'}
+(base/'astra'/'COHORT_INDEPENDENT.json').write_text(json.dumps(result,indent=2,default=str)+'\n')
+print(json.dumps(summary,default=str))

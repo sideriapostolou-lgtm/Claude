@@ -1,0 +1,2472 @@
+{
+  "request": {
+    "projectId": "75750847-85c0-41a3-a2a7-b7f2201a51e9",
+    "deploymentId": "1c01ffe7-e231-40c6-a026-ac63fec01227",
+    "startDate": "2026-10-15T21:00:00Z",
+    "endDate": "2026-10-15T21:17:00Z",
+    "filter": "\"INFO nightcrawler.speeddesk: speeddesk_live_fill \" OR \"INFO nightcrawler.speeddesk: speeddesk_live_order \" OR \"INFO nightcrawler.speeddesk: speeddesk_live_cancel \" OR \"INFO nightcrawler.speeddesk: speeddesk_live_settlement \"",
+    "limit": 500
+  },
+  "before": {
+    "current_time": "2026-10-15 21:18:45 UTC"
+  },
+  "after": {
+    "current_time": "2026-10-15 21:18:46 UTC"
+  },
+  "original_native_sha256": "1fd286669742cda3c0d4df26fff6571b7c6330e0a3a2e26cc85a336bfb97a3e6",
+  "originals": [
+    {
+      "timestamp": "2026-10-15T21:00:06.234438285Z",
+      "event": "speeddesk_live_settlement",
+      "data": {
+        "at": 1792098001.928152,
+        "venue": "kalshi",
+        "window": "KXBTC15M-26OCT151700-00",
+        "settlement_id": "kalshi:KXBTC15M-26OCT151700-00",
+        "up_wins": false,
+        "up_shares": 1.0,
+        "down_shares": 1.0,
+        "cost_usd": 0.97,
+        "fee_usd": 0.0,
+        "paired_credit_usd": 1.0,
+        "net_payout_usd": 0.0,
+        "payout_usd": 1.0,
+        "locked_usd": 0.030000000000000027,
+        "direction_usd": 0.0,
+        "pnl_usd": 0.030000000000000027,
+        "observed_at": 1792098005.929015,
+        "time_source": "venue settled_time"
+      }
+    },
+    {
+      "timestamp": "2026-10-15T21:00:11.494264029Z",
+      "event": "speeddesk_live_order",
+      "data": {
+        "at": 1792098009.909416,
+        "venue": "kalshi",
+        "client_order_id": "nc-speed-e89bfd6affac4e2390f36b135df92669",
+        "window": "KXBTC15M-26OCT151715-15",
+        "side": "up",
+        "kind": "rest",
+        "price": 0.56,
+        "size": 1.0,
+        "fair": 0.5982159402036105,
+        "state": "durable intent",
+        "timing": [
+          {
+            "metric": "btc_exchange_to_decision",
+            "scope": "real_kalshi",
+            "at": 1792098009.909274,
+            "value_ms": 632.6565155759454,
+            "status": "ok"
+          },
+          {
+            "metric": "btc_receipt_to_decision",
+            "scope": "real_kalshi",
+            "at": 1792098009.909274,
+            "value_ms": 434.7035298123956,
+            "status": "ok"
+          }
+        ]
+      }
+    },
+    {
+      "timestamp": "2026-10-15T21:00:11.494279549Z",
+      "event": "speeddesk_live_order",
+      "data": {
+        "at": 1792098011.255958,
+        "venue": {
+          "ts_ms": 1792098010250,
+          "sent_ms": 1792098009947.1,
+          "acked_ms": 1792098011255.9,
+          "offset_ms": -351.5,
+          "rtt_ms": 1308.8
+        },
+        "client_order_id": "nc-speed-e89bfd6affac4e2390f36b135df92669",
+        "order_id": "01a1415d-8390-7e76-9d2c-58c4fde7fa68",
+        "window": "KXBTC15M-26OCT151715-15",
+        "state": "accepted; waiting for real fills",
+        "timing": {
+          "metric": "decision_to_ack",
+          "scope": "real_kalshi",
+          "at": 1792098009.909274,
+          "value_ms": 1346.562386956066,
+          "status": "ok"
+        },
+        "stages": {
+          "save_ms": 34.14863161742687,
+          "decision_to_send_ms": 37.73965919390321,
+          "send_to_ack_ms": 1308.8227277621627
+        }
+      }
+    },
+    {
+      "timestamp": "2026-10-15T21:00:13.530393998Z",
+      "event": "speeddesk_live_cancel",
+      "data": {
+        "at": 1792098011.8358705,
+        "venue": "kalshi",
+        "client_order_id": "nc-speed-e89bfd6affac4e2390f36b135df92669",
+        "order_id": "01a1415d-8390-7e76-9d2c-58c4fde7fa68",
+        "window": "KXBTC15M-26OCT151715-15",
+        "reason": "reprice",
+        "state": "not resting on Kalshi (404); reservation retained until reconciled",
+        "timing": {
+          "decision_to_ack_ms": 427.8,
+          "send_to_ack_ms": 427.8
+        }
+      }
+    },
+    {
+      "timestamp": "2026-10-15T21:00:13.530397328Z",
+      "event": "speeddesk_live_fill",
+      "data": {
+        "at": 1792098010.500247,
+        "venue": "kalshi",
+        "fill_id": "0724442b-8dd1-a9d0-8fc8-74b53e6420d4",
+        "order_id": "01a1415d-8390-7e76-9d2c-58c4fde7fa68",
+        "client_order_id": "nc-speed-e89bfd6affac4e2390f36b135df92669",
+        "window": "KXBTC15M-26OCT151715-15",
+        "side": "up",
+        "price": 0.56,
+        "size": 0.1,
+        "fee_usd": 0.0,
+        "is_taker": false
+      }
+    },
+    {
+      "timestamp": "2026-10-15T21:00:13.530404238Z",
+      "event": "speeddesk_live_fill",
+      "data": {
+        "at": 1792098010.493979,
+        "venue": "kalshi",
+        "fill_id": "0724442b-8dd1-a568-fa7e-81da41bfff04",
+        "order_id": "01a1415d-8390-7e76-9d2c-58c4fde7fa68",
+        "client_order_id": "nc-speed-e89bfd6affac4e2390f36b135df92669",
+        "window": "KXBTC15M-26OCT151715-15",
+        "side": "up",
+        "price": 0.56,
+        "size": 0.9,
+        "fee_usd": 0.0,
+        "is_taker": false
+      }
+    },
+    {
+      "timestamp": "2026-10-15T21:00:14.718278468Z",
+      "event": "speeddesk_live_order",
+      "data": {
+        "at": 1792098013.361442,
+        "venue": "kalshi",
+        "client_order_id": "nc-speed-dd21543bcaa643c6b3d5f87f557b1a60",
+        "window": "KXBTC15M-26OCT151715-15",
+        "side": "down",
+        "kind": "rest",
+        "price": 0.36,
+        "size": 1.0,
+        "fair": 0.39810176498300254,
+        "state": "durable intent",
+        "timing": [
+          {
+            "metric": "btc_exchange_to_decision",
+            "scope": "real_kalshi",
+            "at": 1792098013.361297,
+            "value_ms": 260.0572002120316,
+            "status": "ok"
+          },
+          {
+            "metric": "btc_receipt_to_decision",
+            "scope": "real_kalshi",
+            "at": 1792098013.361297,
+            "value_ms": 244.48512913659215,
+            "status": "ok"
+          }
+        ]
+      }
+    },
+    {
+      "timestamp": "2026-10-15T21:00:14.720452189Z",
+      "event": "speeddesk_live_order",
+      "data": {
+        "at": 1792098013.7343156,
+        "venue": "kalshi",
+        "client_order_id": "nc-speed-dd21543bcaa643c6b3d5f87f557b1a60",
+        "window": "KXBTC15M-26OCT151715-15",
+        "state": "not sent; prices moved before send"
+      }
+    },
+    {
+      "timestamp": "2026-10-15T21:00:14.721116873Z",
+      "event": "speeddesk_live_order",
+      "data": {
+        "at": 1792098014.301148,
+        "venue": "kalshi",
+        "client_order_id": "nc-speed-3c95c166024f4925b5ece4263b357c75",
+        "window": "KXBTC15M-26OCT151715-15",
+        "side": "down",
+        "kind": "rest",
+        "price": 0.36,
+        "size": 1.0,
+        "fair": 0.39804088199714593,
+        "state": "durable intent",
+        "timing": [
+          {
+            "metric": "btc_exchange_to_decision",
+            "scope": "real_kalshi",
+            "at": 1792098014.3010511,
+            "value_ms": 1199.7710252180696,
+            "status": "ok"
+          },
+          {
+            "metric": "btc_receipt_to_decision",
+            "scope": "real_kalshi",
+            "at": 1792098014.3010511,
+            "value_ms": 1184.19895414263,
+            "status": "ok"
+          }
+        ]
+      }
+    },
+    {
+      "timestamp": "2026-10-15T21:00:14.721122873Z",
+      "event": "speeddesk_live_order",
+      "data": {
+        "at": 1792098014.3895824,
+        "venue": {
+          "ts_ms": 1792098014367,
+          "sent_ms": 1792098014352.3,
+          "acked_ms": 1792098014389.6,
+          "offset_ms": -3.9,
+          "rtt_ms": 37.3
+        },
+        "client_order_id": "nc-speed-3c95c166024f4925b5ece4263b357c75",
+        "order_id": "01a1415d-9330-7d36-a30c-f79b39ca9dea",
+        "window": "KXBTC15M-26OCT151715-15",
+        "state": "accepted; waiting for real fills",
+        "timing": {
+          "metric": "decision_to_ack",
+          "scope": "real_kalshi",
+          "at": 1792098014.3010511,
+          "value_ms": 88.43672880902886,
+          "status": "ok"
+        },
+        "stages": {
+          "save_ms": 39.211017079651356,
+          "decision_to_send_ms": 51.18100484833121,
+          "send_to_ack_ms": 37.25572396069765
+        }
+      }
+    },
+    {
+      "timestamp": "2026-10-15T21:00:15.899351976Z",
+      "event": "speeddesk_live_cancel",
+      "data": {
+        "at": 1792098015.3068838,
+        "venue": {
+          "ts_ms": 1792098015175,
+          "sent_ms": 1792098015159.7,
+          "acked_ms": 1792098015306.9,
+          "offset_ms": -58.3,
+          "rtt_ms": 147.1
+        },
+        "client_order_id": "nc-speed-3c95c166024f4925b5ece4263b357c75",
+        "order_id": "01a1415d-9330-7d36-a30c-f79b39ca9dea",
+        "window": "KXBTC15M-26OCT151715-15",
+        "reason": "reprice",
+        "state": "requested; reservation retained until fills reconcile",
+        "reduced_by": "1.00",
+        "timing": {
+          "decision_to_ack_ms": 147.2,
+          "send_to_ack_ms": 147.1
+        }
+      }
+    },
+    {
+      "timestamp": "2026-10-15T21:00:21.452856962Z",
+      "event": "speeddesk_live_order",
+      "data": {
+        "at": 1792098020.4041293,
+        "venue": "kalshi",
+        "client_order_id": "nc-speed-9b0a7ecd94674addb804fc5c9f959ad2",
+        "window": "KXBTC15M-26OCT151715-15",
+        "side": "down",
+        "kind": "rest",
+        "price": 0.41,
+        "size": 1.0,
+        "fair": 0.4496788836977136,
+        "state": "durable intent",
+        "timing": [
+          {
+            "metric": "btc_exchange_to_decision",
+            "scope": "real_kalshi",
+            "at": 1792098020.403993,
+            "value_ms": 84.72653897479177,
+            "status": "ok"
+          },
+          {
+            "metric": "btc_receipt_to_decision",
+            "scope": "real_kalshi",
+            "at": 1792098020.403993,
+            "value_ms": 1.6693738289177418,
+            "status": "ok"
+          }
+        ]
+      }
+    },
+    {
+      "timestamp": "2026-10-15T21:00:21.452863072Z",
+      "event": "speeddesk_live_order",
+      "data": {
+        "at": 1792098021.277931,
+        "venue": {
+          "ts_ms": 1792098021202,
+          "sent_ms": 1792098021185.9,
+          "acked_ms": 1792098021277.9,
+          "offset_ms": -29.9,
+          "rtt_ms": 92.0
+        },
+        "client_order_id": "nc-speed-9b0a7ecd94674addb804fc5c9f959ad2",
+        "order_id": "01a1415d-ae88-761f-af6d-5ae4700115d1",
+        "window": "KXBTC15M-26OCT151715-15",
+        "state": "accepted; waiting for real fills",
+        "timing": {
+          "metric": "decision_to_ack",
+          "scope": "real_kalshi",
+          "at": 1792098020.403993,
+          "value_ms": 873.8380898721516,
+          "status": "ok"
+        },
+        "stages": {
+          "save_ms": 101.89488576725125,
+          "decision_to_send_ms": 781.8681318312883,
+          "send_to_ack_ms": 91.96995804086328
+        }
+      }
+    },
+    {
+      "timestamp": "2026-10-15T21:00:25.314751527Z",
+      "event": "speeddesk_live_cancel",
+      "data": {
+        "at": 1792098024.6973956,
+        "venue": {
+          "ts_ms": 1792098024665,
+          "sent_ms": 1792098024284.3,
+          "acked_ms": 1792098024697.4,
+          "offset_ms": 174.2,
+          "rtt_ms": 413.1
+        },
+        "client_order_id": "nc-speed-9b0a7ecd94674addb804fc5c9f959ad2",
+        "order_id": "01a1415d-ae88-761f-af6d-5ae4700115d1",
+        "window": "KXBTC15M-26OCT151715-15",
+        "reason": "Bitcoin feed stale",
+        "state": "requested; reservation retained until fills reconcile",
+        "reduced_by": "1.00",
+        "timing": {
+          "decision_to_ack_ms": 413.1,
+          "send_to_ack_ms": 413.1
+        }
+      }
+    },
+    {
+      "timestamp": "2026-10-15T21:00:26.959968365Z",
+      "event": "speeddesk_live_order",
+      "data": {
+        "at": 1792098026.6241133,
+        "venue": "kalshi",
+        "client_order_id": "nc-speed-8b99b337abff407cbee319b9fb797f79",
+        "window": "KXBTC15M-26OCT151715-15",
+        "side": "down",
+        "kind": "rest",
+        "price": 0.41,
+        "size": 1.0,
+        "fair": 0.44311852712864563,
+        "state": "durable intent",
+        "timing": [
+          {
+            "metric": "btc_exchange_to_decision",
+            "scope": "real_kalshi",
+            "at": 1792098026.6240253,
+            "value_ms": 1041.765883564949,
+            "status": "ok"
+          },
+          {
+            "metric": "btc_receipt_to_decision",
+            "scope": "real_kalshi",
+            "at": 1792098026.6240253,
+            "value_ms": 985.2292090654373,
+            "status": "ok"
+          }
+        ]
+      }
+    },
+    {
+      "timestamp": "2026-10-15T21:00:26.959974215Z",
+      "event": "speeddesk_live_order",
+      "data": {
+        "at": 1792098026.7347908,
+        "venue": {
+          "ts_ms": 1792098026707,
+          "sent_ms": 1792098026687.0,
+          "acked_ms": 1792098026734.8,
+          "offset_ms": -3.9,
+          "rtt_ms": 47.7
+        },
+        "client_order_id": "nc-speed-8b99b337abff407cbee319b9fb797f79",
+        "order_id": "01a1415d-c210-7b61-ab98-fde657589094",
+        "window": "KXBTC15M-26OCT151715-15",
+        "state": "accepted; waiting for real fills",
+        "timing": {
+          "metric": "decision_to_ack",
+          "scope": "real_kalshi",
+          "at": 1792098026.6240253,
+          "value_ms": 110.69176578894258,
+          "status": "ok"
+        },
+        "stages": {
+          "save_ms": 18.21422204375267,
+          "decision_to_send_ms": 62.99136579036713,
+          "send_to_ack_ms": 47.70039999857545
+        }
+      }
+    },
+    {
+      "timestamp": "2026-10-15T21:00:29.880657870Z",
+      "event": "speeddesk_live_cancel",
+      "data": {
+        "at": 1792098028.7257807,
+        "venue": {
+          "ts_ms": 1792098027857,
+          "sent_ms": 1792098027842.8,
+          "acked_ms": 1792098028725.8,
+          "offset_ms": -427.3,
+          "rtt_ms": 883.0
+        },
+        "client_order_id": "nc-speed-8b99b337abff407cbee319b9fb797f79",
+        "order_id": "01a1415d-c210-7b61-ab98-fde657589094",
+        "window": "KXBTC15M-26OCT151715-15",
+        "reason": "reprice",
+        "state": "requested; reservation retained until fills reconcile",
+        "reduced_by": "1.00",
+        "timing": {
+          "decision_to_ack_ms": 883.0,
+          "send_to_ack_ms": 883.0
+        }
+      }
+    },
+    {
+      "timestamp": "2026-10-15T21:00:29.880661650Z",
+      "event": "speeddesk_live_order",
+      "data": {
+        "at": 1792098029.4361613,
+        "venue": "kalshi",
+        "client_order_id": "nc-speed-492a65a8bd254fdeb0df20a079e30be3",
+        "window": "KXBTC15M-26OCT151715-15",
+        "side": "down",
+        "kind": "rest",
+        "price": 0.43,
+        "size": 1.0,
+        "fair": 0.46848287198566985,
+        "state": "durable intent",
+        "timing": [
+          {
+            "metric": "btc_exchange_to_decision",
+            "scope": "real_kalshi",
+            "at": 1792098029.4360363,
+            "value_ms": 1270.1036045327783,
+            "status": "ok"
+          },
+          {
+            "metric": "btc_receipt_to_decision",
+            "scope": "real_kalshi",
+            "at": 1792098029.4360363,
+            "value_ms": 708.6137840524316,
+            "status": "ok"
+          }
+        ]
+      }
+    },
+    {
+      "timestamp": "2026-10-15T21:00:29.880904889Z",
+      "event": "speeddesk_live_order",
+      "data": {
+        "at": 1792098029.796189,
+        "venue": {
+          "ts_ms": 1792098029770,
+          "sent_ms": 1792098029500.5,
+          "acked_ms": 1792098029796.2,
+          "offset_ms": 121.6,
+          "rtt_ms": 295.6
+        },
+        "client_order_id": "nc-speed-492a65a8bd254fdeb0df20a079e30be3",
+        "order_id": "01a1415d-cdc8-7b70-ac0d-689c7265bd8c",
+        "window": "KXBTC15M-26OCT151715-15",
+        "state": "accepted; waiting for real fills",
+        "timing": {
+          "metric": "decision_to_ack",
+          "scope": "real_kalshi",
+          "at": 1792098029.4360363,
+          "value_ms": 360.0765699520707,
+          "status": "ok"
+        },
+        "stages": {
+          "save_ms": 56.43873801454902,
+          "decision_to_send_ms": 64.46278374642134,
+          "send_to_ack_ms": 295.6137862056494
+        }
+      }
+    },
+    {
+      "timestamp": "2026-10-15T21:00:32.454610730Z",
+      "event": "speeddesk_live_cancel",
+      "data": {
+        "at": 1792098031.1446671,
+        "venue": {
+          "ts_ms": 1792098030763,
+          "sent_ms": 1792098030730.5,
+          "acked_ms": 1792098031144.7,
+          "offset_ms": -174.6,
+          "rtt_ms": 414.1
+        },
+        "client_order_id": "nc-speed-492a65a8bd254fdeb0df20a079e30be3",
+        "order_id": "01a1415d-cdc8-7b70-ac0d-689c7265bd8c",
+        "window": "KXBTC15M-26OCT151715-15",
+        "reason": "reprice",
+        "state": "requested; reservation retained until fills reconcile",
+        "reduced_by": "1.00",
+        "timing": {
+          "decision_to_ack_ms": 414.2,
+          "send_to_ack_ms": 414.1
+        }
+      }
+    },
+    {
+      "timestamp": "2026-10-15T21:03:47.873921532Z",
+      "event": "speeddesk_live_order",
+      "data": {
+        "at": 1792098226.9152699,
+        "venue": "kalshi",
+        "client_order_id": "nc-speed-666c14ffeb5c41dfb1c49bdd6c1f636a",
+        "window": "KXBTC15M-26OCT151715-15",
+        "side": "down",
+        "kind": "rest",
+        "price": 0.41,
+        "size": 1.0,
+        "fair": 0.4481266412220041,
+        "state": "durable intent",
+        "timing": [
+          {
+            "metric": "btc_exchange_to_decision",
+            "scope": "real_kalshi",
+            "at": 1792098226.9151423,
+            "value_ms": 42.27122012525797,
+            "status": "ok"
+          },
+          {
+            "metric": "btc_receipt_to_decision",
+            "scope": "real_kalshi",
+            "at": 1792098226.9151423,
+            "value_ms": 27.178608812391758,
+            "status": "ok"
+          }
+        ]
+      }
+    },
+    {
+      "timestamp": "2026-10-15T21:03:47.873928932Z",
+      "event": "speeddesk_live_order",
+      "data": {
+        "at": 1792098227.5097415,
+        "venue": {
+          "ts_ms": 1792098227165,
+          "sent_ms": 1792098226943.2,
+          "acked_ms": 1792098227509.7,
+          "offset_ms": -61.5,
+          "rtt_ms": 566.5
+        },
+        "client_order_id": "nc-speed-666c14ffeb5c41dfb1c49bdd6c1f636a",
+        "order_id": "01a14160-d338-7b75-bbad-a6b4383d0426",
+        "window": "KXBTC15M-26OCT151715-15",
+        "state": "accepted; waiting for real fills",
+        "timing": {
+          "metric": "decision_to_ack",
+          "scope": "real_kalshi",
+          "at": 1792098226.9151423,
+          "value_ms": 594.5181818678975,
+          "status": "ok"
+        },
+        "stages": {
+          "save_ms": 3.3144401386380196,
+          "decision_to_send_ms": 28.025289997458458,
+          "send_to_ack_ms": 566.492891870439
+        }
+      }
+    },
+    {
+      "timestamp": "2026-10-15T21:03:49.782310432Z",
+      "event": "speeddesk_live_cancel",
+      "data": {
+        "at": 1792098228.3668623,
+        "venue": {
+          "ts_ms": 1792098227993,
+          "sent_ms": 1792098227876.7,
+          "acked_ms": 1792098228366.9,
+          "offset_ms": -128.8,
+          "rtt_ms": 490.2
+        },
+        "client_order_id": "nc-speed-666c14ffeb5c41dfb1c49bdd6c1f636a",
+        "order_id": "01a14160-d338-7b75-bbad-a6b4383d0426",
+        "window": "KXBTC15M-26OCT151715-15",
+        "reason": "reprice",
+        "state": "requested; reservation retained until fills reconcile",
+        "reduced_by": "1.00",
+        "timing": {
+          "decision_to_ack_ms": 490.2,
+          "send_to_ack_ms": 490.2
+        }
+      }
+    },
+    {
+      "timestamp": "2026-10-15T21:03:49.782314212Z",
+      "event": "speeddesk_live_order",
+      "data": {
+        "at": 1792098229.458797,
+        "venue": "kalshi",
+        "client_order_id": "nc-speed-d54a1485ece643df82bdc502d9b4d5c0",
+        "window": "KXBTC15M-26OCT151715-15",
+        "side": "down",
+        "kind": "rest",
+        "price": 0.33,
+        "size": 1.0,
+        "fair": 0.3686178094177608,
+        "state": "durable intent",
+        "timing": [
+          {
+            "metric": "btc_exchange_to_decision",
+            "scope": "real_kalshi",
+            "at": 1792098229.458701,
+            "value_ms": 75.67788381129503,
+            "status": "ok"
+          },
+          {
+            "metric": "btc_receipt_to_decision",
+            "scope": "real_kalshi",
+            "at": 1792098229.458701,
+            "value_ms": 19.957792945206165,
+            "status": "ok"
+          }
+        ]
+      }
+    },
+    {
+      "timestamp": "2026-10-15T21:03:49.782564569Z",
+      "event": "speeddesk_live_order",
+      "data": {
+        "at": 1792098229.5293143,
+        "venue": {
+          "ts_ms": 1792098229503,
+          "sent_ms": 1792098229482.9,
+          "acked_ms": 1792098229529.3,
+          "offset_ms": -3.1,
+          "rtt_ms": 46.4
+        },
+        "client_order_id": "nc-speed-d54a1485ece643df82bdc502d9b4d5c0",
+        "order_id": "01a14160-db08-7451-966b-75d111c684cd",
+        "window": "KXBTC15M-26OCT151715-15",
+        "state": "accepted; waiting for real fills",
+        "timing": {
+          "metric": "decision_to_ack",
+          "scope": "real_kalshi",
+          "at": 1792098229.458701,
+          "value_ms": 70.55112300440669,
+          "status": "ok"
+        },
+        "stages": {
+          "save_ms": 20.667816046625376,
+          "decision_to_send_ms": 24.16900498792529,
+          "send_to_ack_ms": 46.3821180164814
+        }
+      }
+    },
+    {
+      "timestamp": "2026-10-15T21:03:56.187241996Z",
+      "event": "speeddesk_live_cancel",
+      "data": {
+        "at": 1792098235.9115705,
+        "venue": {
+          "ts_ms": 1792098235628,
+          "sent_ms": 1792098235604.7,
+          "acked_ms": 1792098235911.6,
+          "offset_ms": -130.1,
+          "rtt_ms": 306.9
+        },
+        "client_order_id": "nc-speed-d54a1485ece643df82bdc502d9b4d5c0",
+        "order_id": "01a14160-db08-7451-966b-75d111c684cd",
+        "window": "KXBTC15M-26OCT151715-15",
+        "reason": "reprice",
+        "state": "requested; reservation retained until fills reconcile",
+        "reduced_by": "1.00",
+        "timing": {
+          "decision_to_ack_ms": 306.9,
+          "send_to_ack_ms": 306.9
+        }
+      }
+    },
+    {
+      "timestamp": "2026-10-15T21:03:58.549428520Z",
+      "event": "speeddesk_live_order",
+      "data": {
+        "at": 1792098237.829901,
+        "venue": "kalshi",
+        "client_order_id": "nc-speed-fd46e0f818ee41f0b165f1355e767340",
+        "window": "KXBTC15M-26OCT151715-15",
+        "side": "down",
+        "kind": "rest",
+        "price": 0.28,
+        "size": 1.0,
+        "fair": 0.31014825632187437,
+        "state": "durable intent",
+        "timing": [
+          {
+            "metric": "btc_exchange_to_decision",
+            "scope": "real_kalshi",
+            "at": 1792098237.8298056,
+            "value_ms": 456.24360255897045,
+            "status": "ok"
+          },
+          {
+            "metric": "btc_receipt_to_decision",
+            "scope": "real_kalshi",
+            "at": 1792098237.8298056,
+            "value_ms": 2.0514409989118576,
+            "status": "ok"
+          }
+        ]
+      }
+    },
+    {
+      "timestamp": "2026-10-15T21:03:58.549443090Z",
+      "event": "speeddesk_live_order",
+      "data": {
+        "at": 1792098238.4241123,
+        "venue": {
+          "ts_ms": 1792098237955,
+          "sent_ms": 1792098237907.1,
+          "acked_ms": 1792098238424.1,
+          "offset_ms": -210.6,
+          "rtt_ms": 517.0
+        },
+        "client_order_id": "nc-speed-fd46e0f818ee41f0b165f1355e767340",
+        "order_id": "01a14160-fa48-759a-b842-7953c81a83d5",
+        "window": "KXBTC15M-26OCT151715-15",
+        "state": "accepted; waiting for real fills",
+        "timing": {
+          "metric": "decision_to_ack",
+          "scope": "real_kalshi",
+          "at": 1792098237.8298056,
+          "value_ms": 594.2317149601877,
+          "status": "ok"
+        },
+        "stages": {
+          "save_ms": 37.460117135196924,
+          "decision_to_send_ms": 77.27579493075609,
+          "send_to_ack_ms": 516.9559200294316
+        }
+      }
+    },
+    {
+      "timestamp": "2026-10-15T21:03:59.799631791Z",
+      "event": "speeddesk_live_cancel",
+      "data": {
+        "at": 1792098238.8046088,
+        "venue": {
+          "ts_ms": 1792098238581,
+          "sent_ms": 1792098238552.3,
+          "acked_ms": 1792098238804.6,
+          "offset_ms": -97.4,
+          "rtt_ms": 252.3
+        },
+        "client_order_id": "nc-speed-fd46e0f818ee41f0b165f1355e767340",
+        "order_id": "01a14160-fa48-759a-b842-7953c81a83d5",
+        "window": "KXBTC15M-26OCT151715-15",
+        "reason": "Kalshi book stale",
+        "state": "requested; reservation retained until fills reconcile",
+        "reduced_by": "1.00",
+        "timing": {
+          "decision_to_ack_ms": 252.3,
+          "send_to_ack_ms": 252.3
+        }
+      }
+    },
+    {
+      "timestamp": "2026-10-15T21:03:59.799637251Z",
+      "event": "speeddesk_live_order",
+      "data": {
+        "at": 1792098239.1032505,
+        "venue": "kalshi",
+        "client_order_id": "nc-speed-2d509d07e36f4ecc98d86f2d2b39fb46",
+        "window": "KXBTC15M-26OCT151715-15",
+        "side": "down",
+        "kind": "rest",
+        "price": 0.29,
+        "size": 1.0,
+        "fair": 0.3208431275783884,
+        "state": "durable intent",
+        "timing": [
+          {
+            "metric": "btc_exchange_to_decision",
+            "scope": "real_kalshi",
+            "at": 1792098239.103149,
+            "value_ms": 103.28618483617902,
+            "status": "ok"
+          },
+          {
+            "metric": "btc_receipt_to_decision",
+            "scope": "real_kalshi",
+            "at": 1792098239.103149,
+            "value_ms": 79.25430731847882,
+            "status": "ok"
+          }
+        ]
+      }
+    },
+    {
+      "timestamp": "2026-10-15T21:03:59.799646001Z",
+      "event": "speeddesk_live_order",
+      "data": {
+        "at": 1792098239.1719246,
+        "venue": {
+          "ts_ms": 1792098239152,
+          "sent_ms": 1792098239124.4,
+          "acked_ms": 1792098239171.9,
+          "offset_ms": 3.8,
+          "rtt_ms": 47.5
+        },
+        "client_order_id": "nc-speed-2d509d07e36f4ecc98d86f2d2b39fb46",
+        "order_id": "01a14161-0218-731d-8216-3dfb2a394a8b",
+        "window": "KXBTC15M-26OCT151715-15",
+        "state": "accepted; waiting for real fills",
+        "timing": {
+          "metric": "decision_to_ack",
+          "scope": "real_kalshi",
+          "at": 1792098239.103149,
+          "value_ms": 68.70811013504863,
+          "status": "ok"
+        },
+        "stages": {
+          "save_ms": 19.87167401239276,
+          "decision_to_send_ms": 21.2446809746325,
+          "send_to_ack_ms": 47.463429160416126
+        }
+      }
+    },
+    {
+      "timestamp": "2026-10-15T21:04:02.293969835Z",
+      "event": "speeddesk_live_cancel",
+      "data": {
+        "at": 1792098240.973595,
+        "venue": {
+          "ts_ms": 1792098240961,
+          "sent_ms": 1792098240947.0,
+          "acked_ms": 1792098240973.6,
+          "offset_ms": 0.7,
+          "rtt_ms": 26.6
+        },
+        "client_order_id": "nc-speed-2d509d07e36f4ecc98d86f2d2b39fb46",
+        "order_id": "01a14161-0218-731d-8216-3dfb2a394a8b",
+        "window": "KXBTC15M-26OCT151715-15",
+        "reason": "reprice",
+        "state": "requested; reservation retained until fills reconcile",
+        "reduced_by": "1.00",
+        "timing": {
+          "decision_to_ack_ms": 26.6,
+          "send_to_ack_ms": 26.6
+        }
+      }
+    },
+    {
+      "timestamp": "2026-10-15T21:04:02.293972635Z",
+      "event": "speeddesk_live_order",
+      "data": {
+        "at": 1792098241.955474,
+        "venue": "kalshi",
+        "client_order_id": "nc-speed-1c270616b6404014a9c0ddcbb8d3720c",
+        "window": "KXBTC15M-26OCT151715-15",
+        "side": "down",
+        "kind": "rest",
+        "price": 0.27,
+        "size": 1.0,
+        "fair": 0.3039384043466562,
+        "state": "durable intent",
+        "timing": [
+          {
+            "metric": "btc_exchange_to_decision",
+            "scope": "real_kalshi",
+            "at": 1792098241.9553466,
+            "value_ms": 156.50217235088348,
+            "status": "ok"
+          },
+          {
+            "metric": "btc_receipt_to_decision",
+            "scope": "real_kalshi",
+            "at": 1792098241.9553466,
+            "value_ms": 126.82859599590302,
+            "status": "ok"
+          }
+        ]
+      }
+    },
+    {
+      "timestamp": "2026-10-15T21:04:02.294059564Z",
+      "event": "speeddesk_live_order",
+      "data": {
+        "at": 1792098242.0817966,
+        "venue": {
+          "ts_ms": 1792098242060,
+          "sent_ms": 1792098242042.6,
+          "acked_ms": 1792098242081.8,
+          "offset_ms": -2.2,
+          "rtt_ms": 39.2
+        },
+        "client_order_id": "nc-speed-1c270616b6404014a9c0ddcbb8d3720c",
+        "order_id": "01a14161-0dd0-7645-a1b3-c6027f6c644e",
+        "window": "KXBTC15M-26OCT151715-15",
+        "state": "accepted; waiting for real fills",
+        "timing": {
+          "metric": "decision_to_ack",
+          "scope": "real_kalshi",
+          "at": 1792098241.9553466,
+          "value_ms": 126.3765781186521,
+          "status": "ok"
+        },
+        "stages": {
+          "save_ms": 39.1500829719007,
+          "decision_to_send_ms": 87.21830509603024,
+          "send_to_ack_ms": 39.15827302262187
+        }
+      }
+    },
+    {
+      "timestamp": "2026-10-15T21:04:08.914760112Z",
+      "event": "speeddesk_live_cancel",
+      "data": {
+        "at": 1792098248.5017223,
+        "venue": {
+          "ts_ms": 1792098248246,
+          "sent_ms": 1792098248180.2,
+          "acked_ms": 1792098248501.7,
+          "offset_ms": -95.0,
+          "rtt_ms": 321.5
+        },
+        "client_order_id": "nc-speed-1c270616b6404014a9c0ddcbb8d3720c",
+        "order_id": "01a14161-0dd0-7645-a1b3-c6027f6c644e",
+        "window": "KXBTC15M-26OCT151715-15",
+        "reason": "reprice",
+        "state": "requested; reservation retained until fills reconcile",
+        "reduced_by": "1.00",
+        "timing": {
+          "decision_to_ack_ms": 321.5,
+          "send_to_ack_ms": 321.5
+        }
+      }
+    },
+    {
+      "timestamp": "2026-10-15T21:04:10.360306031Z",
+      "event": "speeddesk_live_order",
+      "data": {
+        "at": 1792098250.1387577,
+        "venue": "kalshi",
+        "client_order_id": "nc-speed-643e85e8e04946f483876f18bb4f68c3",
+        "window": "KXBTC15M-26OCT151715-15",
+        "side": "down",
+        "kind": "rest",
+        "price": 0.25,
+        "size": 1.0,
+        "fair": 0.28274636098146,
+        "state": "durable intent",
+        "timing": [
+          {
+            "metric": "btc_exchange_to_decision",
+            "scope": "real_kalshi",
+            "at": 1792098250.138665,
+            "value_ms": 345.9995426237583,
+            "status": "ok"
+          },
+          {
+            "metric": "btc_receipt_to_decision",
+            "scope": "real_kalshi",
+            "at": 1792098250.138665,
+            "value_ms": 340.99966660141945,
+            "status": "ok"
+          }
+        ]
+      }
+    },
+    {
+      "timestamp": "2026-10-15T21:04:10.360313891Z",
+      "event": "speeddesk_live_order",
+      "data": {
+        "at": 1792098250.2409315,
+        "venue": {
+          "ts_ms": 1792098250222,
+          "sent_ms": 1792098250179.2,
+          "acked_ms": 1792098250240.9,
+          "offset_ms": 11.9,
+          "rtt_ms": 61.7
+        },
+        "client_order_id": "nc-speed-643e85e8e04946f483876f18bb4f68c3",
+        "order_id": "01a14161-2d10-7dd6-8861-640f702a2e16",
+        "window": "KXBTC15M-26OCT151715-15",
+        "state": "accepted; waiting for real fills",
+        "timing": {
+          "metric": "decision_to_ack",
+          "scope": "real_kalshi",
+          "at": 1792098250.138665,
+          "value_ms": 102.20453515648842,
+          "status": "ok"
+        },
+        "stages": {
+          "save_ms": 14.267674181610346,
+          "decision_to_send_ms": 40.528631303459406,
+          "send_to_ack_ms": 61.67590385302901
+        }
+      }
+    },
+    {
+      "timestamp": "2026-10-15T21:04:19.536843083Z",
+      "event": "speeddesk_live_cancel",
+      "data": {
+        "at": 1792098259.043325,
+        "venue": {
+          "ts_ms": 1792098258669,
+          "sent_ms": 1792098258645.5,
+          "acked_ms": 1792098259043.3,
+          "offset_ms": -175.4,
+          "rtt_ms": 397.8
+        },
+        "client_order_id": "nc-speed-643e85e8e04946f483876f18bb4f68c3",
+        "order_id": "01a14161-2d10-7dd6-8861-640f702a2e16",
+        "window": "KXBTC15M-26OCT151715-15",
+        "reason": "reprice",
+        "state": "requested; reservation retained until fills reconcile",
+        "reduced_by": "1.00",
+        "timing": {
+          "decision_to_ack_ms": 397.8,
+          "send_to_ack_ms": 397.8
+        }
+      }
+    },
+    {
+      "timestamp": "2026-10-15T21:04:20.859454841Z",
+      "event": "speeddesk_live_order",
+      "data": {
+        "at": 1792098260.67696,
+        "venue": "kalshi",
+        "client_order_id": "nc-speed-0d56242dac6c4aa582476c793bdb7866",
+        "window": "KXBTC15M-26OCT151715-15",
+        "side": "down",
+        "kind": "rest",
+        "price": 0.27,
+        "size": 1.0,
+        "fair": 0.3085634514947879,
+        "state": "durable intent",
+        "timing": [
+          {
+            "metric": "btc_exchange_to_decision",
+            "scope": "real_kalshi",
+            "at": 1792098260.6768565,
+            "value_ms": 1015.168524812907,
+            "status": "ok"
+          },
+          {
+            "metric": "btc_receipt_to_decision",
+            "scope": "real_kalshi",
+            "at": 1792098260.6768565,
+            "value_ms": 955.7262430898845,
+            "status": "ok"
+          }
+        ]
+      }
+    },
+    {
+      "timestamp": "2026-10-15T21:04:20.859461361Z",
+      "event": "speeddesk_live_order",
+      "data": {
+        "at": 1792098260.7754984,
+        "venue": {
+          "ts_ms": 1792098260746,
+          "sent_ms": 1792098260689.1,
+          "acked_ms": 1792098260775.5,
+          "offset_ms": 13.7,
+          "rtt_ms": 86.4
+        },
+        "client_order_id": "nc-speed-0d56242dac6c4aa582476c793bdb7866",
+        "order_id": "01a14161-5420-7d45-b4ab-cb0d76e3b7c3",
+        "window": "KXBTC15M-26OCT151715-15",
+        "state": "accepted; waiting for real fills",
+        "timing": {
+          "metric": "decision_to_ack",
+          "scope": "real_kalshi",
+          "at": 1792098260.6768565,
+          "value_ms": 98.57303788885474,
+          "status": "ok"
+        },
+        "stages": {
+          "save_ms": 10.583356022834778,
+          "decision_to_send_ms": 12.204543221741915,
+          "send_to_ack_ms": 86.36849466711283
+        }
+      }
+    },
+    {
+      "timestamp": "2026-10-15T21:04:22.750031879Z",
+      "event": "speeddesk_live_cancel",
+      "data": {
+        "at": 1792098261.948683,
+        "venue": {
+          "ts_ms": 1792098261555,
+          "sent_ms": 1792098261527.0,
+          "acked_ms": 1792098261948.7,
+          "offset_ms": -182.9,
+          "rtt_ms": 421.6
+        },
+        "client_order_id": "nc-speed-0d56242dac6c4aa582476c793bdb7866",
+        "order_id": "01a14161-5420-7d45-b4ab-cb0d76e3b7c3",
+        "window": "KXBTC15M-26OCT151715-15",
+        "reason": "reprice",
+        "state": "requested; reservation retained until fills reconcile",
+        "reduced_by": "1.00",
+        "timing": {
+          "decision_to_ack_ms": 421.7,
+          "send_to_ack_ms": 421.6
+        }
+      }
+    },
+    {
+      "timestamp": "2026-10-15T21:04:24.096520341Z",
+      "event": "speeddesk_live_order",
+      "data": {
+        "at": 1792098263.9034626,
+        "venue": "kalshi",
+        "client_order_id": "nc-speed-ef878d4c7193418cb40014c26fecffb1",
+        "window": "KXBTC15M-26OCT151715-15",
+        "side": "down",
+        "kind": "rest",
+        "price": 0.29,
+        "size": 1.0,
+        "fair": 0.32787913336059127,
+        "state": "durable intent",
+        "timing": [
+          {
+            "metric": "btc_exchange_to_decision",
+            "scope": "real_kalshi",
+            "at": 1792098263.9033613,
+            "value_ms": 1399.149876087904,
+            "status": "ok"
+          },
+          {
+            "metric": "btc_receipt_to_decision",
+            "scope": "real_kalshi",
+            "at": 1792098263.9033613,
+            "value_ms": 1140.7484821975231,
+            "status": "ok"
+          }
+        ]
+      }
+    },
+    {
+      "timestamp": "2026-10-15T21:04:24.096527821Z",
+      "event": "speeddesk_live_order",
+      "data": {
+        "at": 1792098263.9823942,
+        "venue": {
+          "ts_ms": 1792098263963,
+          "sent_ms": 1792098263946.9,
+          "acked_ms": 1792098263982.4,
+          "offset_ms": -1.6,
+          "rtt_ms": 35.5
+        },
+        "client_order_id": "nc-speed-ef878d4c7193418cb40014c26fecffb1",
+        "order_id": "01a14161-5fd8-7571-922a-e6fb2f0b85a6",
+        "window": "KXBTC15M-26OCT151715-15",
+        "state": "accepted; waiting for real fills",
+        "timing": {
+          "metric": "decision_to_ack",
+          "scope": "real_kalshi",
+          "at": 1792098263.9033613,
+          "value_ms": 78.97211192175746,
+          "status": "ok"
+        },
+        "stages": {
+          "save_ms": 18.66737427189946,
+          "decision_to_send_ms": 43.460526037961245,
+          "send_to_ack_ms": 35.511585883796215
+        }
+      }
+    },
+    {
+      "timestamp": "2026-10-15T21:04:25.928838471Z",
+      "event": "speeddesk_live_cancel",
+      "data": {
+        "at": 1792098265.2358136,
+        "venue": {
+          "ts_ms": 1792098265200,
+          "sent_ms": 1792098265161.2,
+          "acked_ms": 1792098265235.8,
+          "offset_ms": 1.5,
+          "rtt_ms": 74.6
+        },
+        "client_order_id": "nc-speed-ef878d4c7193418cb40014c26fecffb1",
+        "order_id": "01a14161-5fd8-7571-922a-e6fb2f0b85a6",
+        "window": "KXBTC15M-26OCT151715-15",
+        "reason": "reprice",
+        "state": "requested; reservation retained until fills reconcile",
+        "reduced_by": "1.00",
+        "timing": {
+          "decision_to_ack_ms": 74.6,
+          "send_to_ack_ms": 74.6
+        }
+      }
+    },
+    {
+      "timestamp": "2026-10-15T21:04:27.195295958Z",
+      "event": "speeddesk_live_order",
+      "data": {
+        "at": 1792098266.9468925,
+        "venue": "kalshi",
+        "client_order_id": "nc-speed-89ce6273243e4755b73e67016c6f4f69",
+        "window": "KXBTC15M-26OCT151715-15",
+        "side": "down",
+        "kind": "rest",
+        "price": 0.3,
+        "size": 1.0,
+        "fair": 0.3393343121581619,
+        "state": "durable intent",
+        "timing": [
+          {
+            "metric": "btc_exchange_to_decision",
+            "scope": "real_kalshi",
+            "at": 1792098266.9467926,
+            "value_ms": 66.91392045468092,
+            "status": "ok"
+          },
+          {
+            "metric": "btc_receipt_to_decision",
+            "scope": "real_kalshi",
+            "at": 1792098266.9467926,
+            "value_ms": 61.51564698666334,
+            "status": "ok"
+          }
+        ]
+      }
+    },
+    {
+      "timestamp": "2026-10-15T21:04:27.195303338Z",
+      "event": "speeddesk_live_order",
+      "data": {
+        "at": 1792098267.0286093,
+        "venue": {
+          "ts_ms": 1792098266980,
+          "sent_ms": 1792098266961.4,
+          "acked_ms": 1792098267028.6,
+          "offset_ms": -15.0,
+          "rtt_ms": 67.2
+        },
+        "client_order_id": "nc-speed-89ce6273243e4755b73e67016c6f4f69",
+        "order_id": "01a14161-6b90-7855-a18a-2874bc497ebf",
+        "window": "KXBTC15M-26OCT151715-15",
+        "state": "accepted; waiting for real fills",
+        "timing": {
+          "metric": "decision_to_ack",
+          "scope": "real_kalshi",
+          "at": 1792098266.9467926,
+          "value_ms": 81.74473699182272,
+          "status": "ok"
+        },
+        "stages": {
+          "save_ms": 7.1129878051579,
+          "decision_to_send_ms": 14.573460910469294,
+          "send_to_ack_ms": 67.17127608135343
+        }
+      }
+    },
+    {
+      "timestamp": "2026-10-15T21:04:30.457024648Z",
+      "event": "speeddesk_live_cancel",
+      "data": {
+        "at": 1792098269.9163773,
+        "venue": {
+          "ts_ms": 1792098269712,
+          "sent_ms": 1792098269679.0,
+          "acked_ms": 1792098269916.4,
+          "offset_ms": -85.7,
+          "rtt_ms": 237.3
+        },
+        "client_order_id": "nc-speed-89ce6273243e4755b73e67016c6f4f69",
+        "order_id": "01a14161-6b90-7855-a18a-2874bc497ebf",
+        "window": "KXBTC15M-26OCT151715-15",
+        "reason": "reprice",
+        "state": "requested; reservation retained until fills reconcile",
+        "reduced_by": "1.00",
+        "timing": {
+          "decision_to_ack_ms": 237.4,
+          "send_to_ack_ms": 237.3
+        }
+      }
+    },
+    {
+      "timestamp": "2026-10-15T21:04:30.457029598Z",
+      "event": "speeddesk_live_order",
+      "data": {
+        "at": 1792098270.2878,
+        "venue": "kalshi",
+        "client_order_id": "nc-speed-0191d2357a344848a9316ee6e7c2e1cd",
+        "window": "KXBTC15M-26OCT151715-15",
+        "side": "down",
+        "kind": "rest",
+        "price": 0.29,
+        "size": 1.0,
+        "fair": 0.32828504628276334,
+        "state": "durable intent",
+        "timing": [
+          {
+            "metric": "btc_exchange_to_decision",
+            "scope": "real_kalshi",
+            "at": 1792098270.287702,
+            "value_ms": 299.5811840519309,
+            "status": "ok"
+          },
+          {
+            "metric": "btc_receipt_to_decision",
+            "scope": "real_kalshi",
+            "at": 1792098270.287702,
+            "value_ms": 278.5564800724387,
+            "status": "ok"
+          }
+        ]
+      }
+    },
+    {
+      "timestamp": "2026-10-15T21:04:30.457406665Z",
+      "event": "speeddesk_live_order",
+      "data": {
+        "at": 1792098270.3526642,
+        "venue": {
+          "ts_ms": 1792098270325,
+          "sent_ms": 1792098270305.9,
+          "acked_ms": 1792098270352.6,
+          "offset_ms": -4.3,
+          "rtt_ms": 46.8
+        },
+        "client_order_id": "nc-speed-0191d2357a344848a9316ee6e7c2e1cd",
+        "order_id": "01a14161-7b30-75d4-8d8e-06569bb1d712",
+        "window": "KXBTC15M-26OCT151715-15",
+        "state": "accepted; waiting for real fills",
+        "timing": {
+          "metric": "decision_to_ack",
+          "scope": "real_kalshi",
+          "at": 1792098270.287702,
+          "value_ms": 64.89440612494946,
+          "status": "ok"
+        },
+        "stages": {
+          "save_ms": 10.317958891391754,
+          "decision_to_send_ms": 18.120280001312494,
+          "send_to_ack_ms": 46.77412612363696
+        }
+      }
+    },
+    {
+      "timestamp": "2026-10-15T21:04:36.477042704Z",
+      "event": "speeddesk_live_cancel",
+      "data": {
+        "at": 1792098275.904363,
+        "venue": {
+          "ts_ms": 1792098275864,
+          "sent_ms": 1792098275839.3,
+          "acked_ms": 1792098275904.4,
+          "offset_ms": -7.8,
+          "rtt_ms": 65.0
+        },
+        "client_order_id": "nc-speed-0191d2357a344848a9316ee6e7c2e1cd",
+        "order_id": "01a14161-7b30-75d4-8d8e-06569bb1d712",
+        "window": "KXBTC15M-26OCT151715-15",
+        "reason": "reprice",
+        "state": "requested; reservation retained until fills reconcile",
+        "reduced_by": "1.00",
+        "timing": {
+          "decision_to_ack_ms": 65.1,
+          "send_to_ack_ms": 65.0
+        }
+      }
+    },
+    {
+      "timestamp": "2026-10-15T21:04:38.755070093Z",
+      "event": "speeddesk_live_order",
+      "data": {
+        "at": 1792098278.3504632,
+        "venue": "kalshi",
+        "client_order_id": "nc-speed-c3357b3c4d5446148b23c51c0534c5bc",
+        "window": "KXBTC15M-26OCT151715-15",
+        "side": "down",
+        "kind": "rest",
+        "price": 0.33,
+        "size": 1.0,
+        "fair": 0.3669777643692299,
+        "state": "durable intent",
+        "timing": [
+          {
+            "metric": "btc_exchange_to_decision",
+            "scope": "real_kalshi",
+            "at": 1792098278.3503697,
+            "value_ms": 437.07359582185745,
+            "status": "ok"
+          },
+          {
+            "metric": "btc_receipt_to_decision",
+            "scope": "real_kalshi",
+            "at": 1792098278.3503697,
+            "value_ms": 410.1029708981514,
+            "status": "ok"
+          }
+        ]
+      }
+    },
+    {
+      "timestamp": "2026-10-15T21:04:40.201012497Z",
+      "event": "speeddesk_live_order",
+      "data": {
+        "at": 1792098279.8322802,
+        "venue": "kalshi",
+        "client_order_id": "nc-speed-6805b3640c8f46bbafdc926bf1501e9e",
+        "window": "KXBTC15M-26OCT151715-15",
+        "side": "down",
+        "kind": "rest",
+        "price": 0.33,
+        "size": 1.0,
+        "fair": 0.36683438454354356,
+        "state": "durable intent",
+        "timing": [
+          {
+            "metric": "btc_exchange_to_decision",
+            "scope": "real_kalshi",
+            "at": 1792098279.8321767,
+            "value_ms": 1918.8861539587379,
+            "status": "ok"
+          },
+          {
+            "metric": "btc_receipt_to_decision",
+            "scope": "real_kalshi",
+            "at": 1792098279.8321767,
+            "value_ms": 1891.9155290350318,
+            "status": "ok"
+          }
+        ]
+      }
+    },
+    {
+      "timestamp": "2026-10-15T21:04:42.406752185Z",
+      "event": "speeddesk_live_order",
+      "data": {
+        "at": 1792098282.109072,
+        "venue": "kalshi",
+        "client_order_id": "nc-speed-fcb000d432654236b9f136cf7a51e582",
+        "window": "KXBTC15M-26OCT151715-15",
+        "side": "down",
+        "kind": "rest",
+        "price": 0.3,
+        "size": 1.0,
+        "fair": 0.33216657080508205,
+        "state": "durable intent",
+        "timing": [
+          {
+            "metric": "btc_exchange_to_decision",
+            "scope": "real_kalshi",
+            "at": 1792098282.108969,
+            "value_ms": 1010.3093357756734,
+            "status": "ok"
+          },
+          {
+            "metric": "btc_receipt_to_decision",
+            "scope": "real_kalshi",
+            "at": 1792098282.108969,
+            "value_ms": 853.2632561400533,
+            "status": "ok"
+          }
+        ]
+      }
+    },
+    {
+      "timestamp": "2026-10-15T21:04:42.406758185Z",
+      "event": "speeddesk_live_order",
+      "data": {
+        "at": 1792098282.2480059,
+        "venue": {
+          "ts_ms": 1792098282212,
+          "sent_ms": 1792098282192.1,
+          "acked_ms": 1792098282248.0,
+          "offset_ms": -8.1,
+          "rtt_ms": 55.9
+        },
+        "client_order_id": "nc-speed-fcb000d432654236b9f136cf7a51e582",
+        "order_id": "01a14161-aa10-7e55-a69b-514f73e38419",
+        "window": "KXBTC15M-26OCT151715-15",
+        "state": "accepted; waiting for real fills",
+        "timing": {
+          "metric": "decision_to_ack",
+          "scope": "real_kalshi",
+          "at": 1792098282.108969,
+          "value_ms": 138.9298541471362,
+          "status": "ok"
+        },
+        "stages": {
+          "save_ms": 78.73833598569036,
+          "decision_to_send_ms": 83.12066690996289,
+          "send_to_ack_ms": 55.80918723717332
+        }
+      }
+    },
+    {
+      "timestamp": "2026-10-15T21:04:47.130727325Z",
+      "event": "speeddesk_live_cancel",
+      "data": {
+        "at": 1792098286.5928788,
+        "venue": {
+          "ts_ms": 1792098286542,
+          "sent_ms": 1792098285754.9,
+          "acked_ms": 1792098286592.9,
+          "offset_ms": 368.1,
+          "rtt_ms": 838.0
+        },
+        "client_order_id": "nc-speed-fcb000d432654236b9f136cf7a51e582",
+        "order_id": "01a14161-aa10-7e55-a69b-514f73e38419",
+        "window": "KXBTC15M-26OCT151715-15",
+        "reason": "Bitcoin feed stale",
+        "state": "requested; reservation retained until fills reconcile",
+        "reduced_by": "1.00",
+        "timing": {
+          "decision_to_ack_ms": 838.0,
+          "send_to_ack_ms": 838.0
+        }
+      }
+    },
+    {
+      "timestamp": "2026-10-15T21:04:48.799554502Z",
+      "event": "speeddesk_live_order",
+      "data": {
+        "at": 1792098288.4661272,
+        "venue": "kalshi",
+        "client_order_id": "nc-speed-87176704912d4c928720d318d57dd45d",
+        "window": "KXBTC15M-26OCT151715-15",
+        "side": "down",
+        "kind": "rest",
+        "price": 0.28,
+        "size": 1.0,
+        "fair": 0.3130173194104152,
+        "state": "durable intent",
+        "timing": [
+          {
+            "metric": "btc_exchange_to_decision",
+            "scope": "real_kalshi",
+            "at": 1792098288.4660273,
+            "value_ms": 394.7512013837695,
+            "status": "ok"
+          },
+          {
+            "metric": "btc_receipt_to_decision",
+            "scope": "real_kalshi",
+            "at": 1792098288.4660273,
+            "value_ms": 368.927369825542,
+            "status": "ok"
+          }
+        ]
+      }
+    },
+    {
+      "timestamp": "2026-10-15T21:04:48.799561052Z",
+      "event": "speeddesk_live_order",
+      "data": {
+        "at": 1792098288.5519807,
+        "venue": {
+          "ts_ms": 1792098288527,
+          "sent_ms": 1792098288514.3,
+          "acked_ms": 1792098288552.0,
+          "offset_ms": -6.1,
+          "rtt_ms": 37.7
+        },
+        "client_order_id": "nc-speed-87176704912d4c928720d318d57dd45d",
+        "order_id": "01a14161-c180-7e84-9cd2-02a5ee998813",
+        "window": "KXBTC15M-26OCT151715-15",
+        "state": "accepted; waiting for real fills",
+        "timing": {
+          "metric": "decision_to_ack",
+          "scope": "real_kalshi",
+          "at": 1792098288.4660273,
+          "value_ms": 85.88885283097625,
+          "status": "ok"
+        },
+        "stages": {
+          "save_ms": 37.49419981613755,
+          "decision_to_send_ms": 48.21565607562661,
+          "send_to_ack_ms": 37.673196755349636
+        }
+      }
+    },
+    {
+      "timestamp": "2026-10-15T21:04:50.828762929Z",
+      "event": "speeddesk_live_cancel",
+      "data": {
+        "at": 1792098290.2293446,
+        "venue": "kalshi",
+        "client_order_id": "nc-speed-87176704912d4c928720d318d57dd45d",
+        "order_id": "01a14161-c180-7e84-9cd2-02a5ee998813",
+        "window": "KXBTC15M-26OCT151715-15",
+        "reason": "reprice",
+        "state": "not resting on Kalshi (404); reservation retained until reconciled",
+        "timing": {
+          "decision_to_ack_ms": 890.2,
+          "send_to_ack_ms": 890.1
+        }
+      }
+    },
+    {
+      "timestamp": "2026-10-15T21:04:51.047055117Z",
+      "event": "speeddesk_live_fill",
+      "data": {
+        "at": 1792098289.101737,
+        "venue": "kalshi",
+        "fill_id": "072444e6-d421-9e72-303d-e6471b479343",
+        "order_id": "01a14161-c180-7e84-9cd2-02a5ee998813",
+        "client_order_id": "nc-speed-87176704912d4c928720d318d57dd45d",
+        "window": "KXBTC15M-26OCT151715-15",
+        "side": "down",
+        "price": 0.28,
+        "size": 1.0,
+        "fee_usd": 0.0,
+        "is_taker": false
+      }
+    },
+    {
+      "timestamp": "2026-10-15T21:15:08.714959433Z",
+      "event": "speeddesk_live_order",
+      "data": {
+        "at": 1792098906.6992486,
+        "venue": "kalshi",
+        "client_order_id": "nc-speed-2d9aa0ebf2c449b1a0c568097f0ba48e",
+        "window": "KXBTC15M-26OCT151730-30",
+        "side": "up",
+        "kind": "rest",
+        "price": 0.48,
+        "size": 1.0,
+        "fair": 0.5159218042937378,
+        "state": "durable intent",
+        "timing": [
+          {
+            "metric": "btc_exchange_to_decision",
+            "scope": "real_kalshi",
+            "at": 1792098906.6990528,
+            "value_ms": 108.9310017414391,
+            "status": "ok"
+          },
+          {
+            "metric": "btc_receipt_to_decision",
+            "scope": "real_kalshi",
+            "at": 1792098906.6990528,
+            "value_ms": 64.27806289866567,
+            "status": "ok"
+          }
+        ]
+      }
+    },
+    {
+      "timestamp": "2026-10-15T21:15:08.714971532Z",
+      "event": "speeddesk_live_order",
+      "data": {
+        "at": 1792098906.945601,
+        "venue": {
+          "ts_ms": 1792098906897,
+          "sent_ms": 1792098906750.6,
+          "acked_ms": 1792098906945.6,
+          "offset_ms": 48.9,
+          "rtt_ms": 195.0
+        },
+        "client_order_id": "nc-speed-2d9aa0ebf2c449b1a0c568097f0ba48e",
+        "order_id": "01a1416b-2f90-7dd1-ae8f-2dec393bd534",
+        "window": "KXBTC15M-26OCT151730-30",
+        "state": "accepted; waiting for real fills",
+        "timing": {
+          "metric": "decision_to_ack",
+          "scope": "real_kalshi",
+          "at": 1792098906.6990528,
+          "value_ms": 246.37985602021217,
+          "status": "ok"
+        },
+        "stages": {
+          "save_ms": 46.16620484739542,
+          "decision_to_send_ms": 51.44029203802347,
+          "send_to_ack_ms": 194.9395639821887
+        }
+      }
+    },
+    {
+      "timestamp": "2026-10-15T21:15:11.417806213Z",
+      "event": "speeddesk_live_settlement",
+      "data": {
+        "at": 1792098906.827365,
+        "venue": "kalshi",
+        "window": "KXBTC15M-26OCT151715-15",
+        "settlement_id": "kalshi:KXBTC15M-26OCT151715-15",
+        "up_wins": true,
+        "up_shares": 1.0,
+        "down_shares": 1.0,
+        "cost_usd": 0.8400000000000002,
+        "fee_usd": 0.0,
+        "paired_credit_usd": 1.0,
+        "net_payout_usd": 0.0,
+        "payout_usd": 1.0,
+        "locked_usd": 0.1599999999999998,
+        "direction_usd": 0.0,
+        "pnl_usd": 0.1599999999999998,
+        "observed_at": 1792098911.2333462,
+        "time_source": "venue settled_time"
+      }
+    },
+    {
+      "timestamp": "2026-10-15T21:15:21.095515832Z",
+      "event": "speeddesk_live_cancel",
+      "data": {
+        "at": 1792098920.8274977,
+        "venue": {
+          "ts_ms": 1792098920453,
+          "sent_ms": 1792098920387.6,
+          "acked_ms": 1792098920827.5,
+          "offset_ms": -154.6,
+          "rtt_ms": 439.9
+        },
+        "client_order_id": "nc-speed-2d9aa0ebf2c449b1a0c568097f0ba48e",
+        "order_id": "01a1416b-2f90-7dd1-ae8f-2dec393bd534",
+        "window": "KXBTC15M-26OCT151730-30",
+        "reason": "reprice",
+        "state": "requested; reservation retained until fills reconcile",
+        "reduced_by": "1.00",
+        "timing": {
+          "decision_to_ack_ms": 439.8,
+          "send_to_ack_ms": 439.8
+        }
+      }
+    },
+    {
+      "timestamp": "2026-10-15T21:15:23.861037413Z",
+      "event": "speeddesk_live_cancel",
+      "data": {
+        "at": 1792098922.6661263,
+        "venue": "kalshi",
+        "client_order_id": "nc-speed-2d9aa0ebf2c449b1a0c568097f0ba48e",
+        "order_id": "01a1416b-2f90-7dd1-ae8f-2dec393bd534",
+        "window": "KXBTC15M-26OCT151730-30",
+        "reason": "Kalshi book stale",
+        "state": "not resting on Kalshi (404); reservation retained until reconciled",
+        "timing": {
+          "decision_to_ack_ms": 118.1,
+          "send_to_ack_ms": 118.1
+        }
+      }
+    },
+    {
+      "timestamp": "2026-10-15T21:15:23.861042473Z",
+      "event": "speeddesk_live_order",
+      "data": {
+        "at": 1792098923.547742,
+        "venue": "kalshi",
+        "client_order_id": "nc-speed-f1c4751624f24926abee00a65db805ba",
+        "window": "KXBTC15M-26OCT151730-30",
+        "side": "up",
+        "kind": "rest",
+        "price": 0.51,
+        "size": 1.0,
+        "fair": 0.5469691631696098,
+        "state": "durable intent",
+        "timing": [
+          {
+            "metric": "btc_exchange_to_decision",
+            "scope": "real_kalshi",
+            "at": 1792098923.5476089,
+            "value_ms": 123.73632891103625,
+            "status": "ok"
+          },
+          {
+            "metric": "btc_receipt_to_decision",
+            "scope": "real_kalshi",
+            "at": 1792098923.5476089,
+            "value_ms": 93.81312830373645,
+            "status": "ok"
+          }
+        ]
+      }
+    },
+    {
+      "timestamp": "2026-10-15T21:15:23.861048793Z",
+      "event": "speeddesk_live_order",
+      "data": {
+        "at": 1792098923.680665,
+        "venue": {
+          "ts_ms": 1792098923657,
+          "sent_ms": 1792098923605.0,
+          "acked_ms": 1792098923680.6,
+          "offset_ms": 14.2,
+          "rtt_ms": 75.7
+        },
+        "client_order_id": "nc-speed-f1c4751624f24926abee00a65db805ba",
+        "order_id": "01a1416b-71f8-731f-8c7e-c4490588bf20",
+        "window": "KXBTC15M-26OCT151730-30",
+        "state": "accepted; waiting for real fills",
+        "timing": {
+          "metric": "decision_to_ack",
+          "scope": "real_kalshi",
+          "at": 1792098923.5476089,
+          "value_ms": 132.95148173347116,
+          "status": "ok"
+        },
+        "stages": {
+          "save_ms": 46.39762407168746,
+          "decision_to_send_ms": 57.289392687380314,
+          "send_to_ack_ms": 75.66208904609084
+        }
+      }
+    },
+    {
+      "timestamp": "2026-10-15T21:15:26.796023494Z",
+      "event": "speeddesk_live_cancel",
+      "data": {
+        "at": 1792098926.5256145,
+        "venue": {
+          "ts_ms": 1792098926100,
+          "sent_ms": 1792098926060.9,
+          "acked_ms": 1792098926525.6,
+          "offset_ms": -193.2,
+          "rtt_ms": 464.7
+        },
+        "client_order_id": "nc-speed-f1c4751624f24926abee00a65db805ba",
+        "order_id": "01a1416b-71f8-731f-8c7e-c4490588bf20",
+        "window": "KXBTC15M-26OCT151730-30",
+        "reason": "reprice",
+        "state": "requested; reservation retained until fills reconcile",
+        "reduced_by": "1.00",
+        "timing": {
+          "decision_to_ack_ms": 464.7,
+          "send_to_ack_ms": 464.7
+        }
+      }
+    },
+    {
+      "timestamp": "2026-10-15T21:15:28.008144685Z",
+      "event": "speeddesk_live_order",
+      "data": {
+        "at": 1792098927.7518866,
+        "venue": "kalshi",
+        "client_order_id": "nc-speed-6f2c973d82d04c8cae439bdb4bde7f22",
+        "window": "KXBTC15M-26OCT151730-30",
+        "side": "up",
+        "kind": "rest",
+        "price": 0.51,
+        "size": 1.0,
+        "fair": 0.5470873782583789,
+        "state": "durable intent",
+        "timing": [
+          {
+            "metric": "btc_exchange_to_decision",
+            "scope": "real_kalshi",
+            "at": 1792098927.7517164,
+            "value_ms": 435.4080846533179,
+            "status": "ok"
+          },
+          {
+            "metric": "btc_receipt_to_decision",
+            "scope": "real_kalshi",
+            "at": 1792098927.7517164,
+            "value_ms": 171.5173413977027,
+            "status": "ok"
+          }
+        ]
+      }
+    },
+    {
+      "timestamp": "2026-10-15T21:15:28.008163534Z",
+      "event": "speeddesk_live_order",
+      "data": {
+        "at": 1792098927.8633487,
+        "venue": {
+          "ts_ms": 1792098927813,
+          "sent_ms": 1792098927774.4,
+          "acked_ms": 1792098927863.3,
+          "offset_ms": -5.9,
+          "rtt_ms": 88.9
+        },
+        "client_order_id": "nc-speed-6f2c973d82d04c8cae439bdb4bde7f22",
+        "order_id": "01a1416b-8198-7697-9906-8e24ad8f5aa2",
+        "window": "KXBTC15M-26OCT151730-30",
+        "state": "accepted; waiting for real fills",
+        "timing": {
+          "metric": "decision_to_ack",
+          "scope": "real_kalshi",
+          "at": 1792098927.7517164,
+          "value_ms": 111.49830184876919,
+          "status": "ok"
+        },
+        "stages": {
+          "save_ms": 11.057737283408642,
+          "decision_to_send_ms": 22.587301675230265,
+          "send_to_ack_ms": 88.91100017353892
+        }
+      }
+    },
+    {
+      "timestamp": "2026-10-15T21:15:51.515929251Z",
+      "event": "speeddesk_live_cancel",
+      "data": {
+        "at": 1792098951.2093084,
+        "venue": {
+          "ts_ms": 1792098951174,
+          "sent_ms": 1792098951116.6,
+          "acked_ms": 1792098951209.3,
+          "offset_ms": 11.1,
+          "rtt_ms": 92.7
+        },
+        "client_order_id": "nc-speed-6f2c973d82d04c8cae439bdb4bde7f22",
+        "order_id": "01a1416b-8198-7697-9906-8e24ad8f5aa2",
+        "window": "KXBTC15M-26OCT151730-30",
+        "reason": "reprice",
+        "state": "requested; reservation retained until fills reconcile",
+        "reduced_by": "1.00",
+        "timing": {
+          "decision_to_ack_ms": 92.8,
+          "send_to_ack_ms": 92.7
+        }
+      }
+    },
+    {
+      "timestamp": "2026-10-15T21:15:52.793872714Z",
+      "event": "speeddesk_live_order",
+      "data": {
+        "at": 1792098952.6589568,
+        "venue": "kalshi",
+        "client_order_id": "nc-speed-80873d1b015c43a5b8738187849e9212",
+        "window": "KXBTC15M-26OCT151730-30",
+        "side": "down",
+        "kind": "rest",
+        "price": 0.45,
+        "size": 1.0,
+        "fair": 0.4861393802384064,
+        "state": "durable intent",
+        "timing": [
+          {
+            "metric": "btc_exchange_to_decision",
+            "scope": "real_kalshi",
+            "at": 1792098952.6587946,
+            "value_ms": 873.3037551864982,
+            "status": "ok"
+          },
+          {
+            "metric": "btc_receipt_to_decision",
+            "scope": "real_kalshi",
+            "at": 1792098952.6587946,
+            "value_ms": 866.2050804123282,
+            "status": "ok"
+          }
+        ]
+      }
+    },
+    {
+      "timestamp": "2026-10-15T21:15:52.802894679Z",
+      "event": "speeddesk_live_order",
+      "data": {
+        "at": 1792098952.7151933,
+        "venue": {
+          "ts_ms": 1792098952698,
+          "sent_ms": 1792098952675.5,
+          "acked_ms": 1792098952715.2,
+          "offset_ms": 2.7,
+          "rtt_ms": 39.7
+        },
+        "client_order_id": "nc-speed-80873d1b015c43a5b8738187849e9212",
+        "order_id": "01a1416b-e340-7265-91cc-a5e4644496c6",
+        "window": "KXBTC15M-26OCT151730-30",
+        "state": "accepted; waiting for real fills",
+        "timing": {
+          "metric": "decision_to_ack",
+          "scope": "real_kalshi",
+          "at": 1792098952.6587946,
+          "value_ms": 56.283890735358,
+          "status": "ok"
+        },
+        "stages": {
+          "save_ms": 9.86957922577858,
+          "decision_to_send_ms": 16.59818086773157,
+          "send_to_ack_ms": 39.68570986762643
+        }
+      }
+    },
+    {
+      "timestamp": "2026-10-15T21:16:06.875980329Z",
+      "event": "speeddesk_live_cancel",
+      "data": {
+        "at": 1792098961.910328,
+        "venue": {
+          "ts_ms": 1792098961460,
+          "sent_ms": 1792098961432.9,
+          "acked_ms": 1792098961910.3,
+          "offset_ms": -211.6,
+          "rtt_ms": 477.4
+        },
+        "client_order_id": "nc-speed-80873d1b015c43a5b8738187849e9212",
+        "order_id": "01a1416b-e340-7265-91cc-a5e4644496c6",
+        "window": "KXBTC15M-26OCT151730-30",
+        "reason": "reprice",
+        "state": "requested; reservation retained until fills reconcile",
+        "reduced_by": "1.00",
+        "timing": {
+          "decision_to_ack_ms": 477.4,
+          "send_to_ack_ms": 477.4
+        }
+      }
+    },
+    {
+      "timestamp": "2026-10-15T21:16:08.278910480Z",
+      "event": "speeddesk_live_order",
+      "data": {
+        "at": 1792098967.5314212,
+        "venue": "kalshi",
+        "client_order_id": "nc-speed-573c1239be854b3b99d7974ef96288d6",
+        "window": "KXBTC15M-26OCT151730-30",
+        "side": "up",
+        "kind": "rest",
+        "price": 0.45,
+        "size": 1.0,
+        "fair": 0.4894019232993815,
+        "state": "durable intent",
+        "timing": [
+          {
+            "metric": "btc_exchange_to_decision",
+            "scope": "real_kalshi",
+            "at": 1792098967.5312037,
+            "value_ms": 328.5607495345175,
+            "status": "ok"
+          },
+          {
+            "metric": "btc_receipt_to_decision",
+            "scope": "real_kalshi",
+            "at": 1792098967.5312037,
+            "value_ms": 7.103601936250925,
+            "status": "ok"
+          }
+        ]
+      }
+    },
+    {
+      "timestamp": "2026-10-15T21:16:08.278918920Z",
+      "event": "speeddesk_live_order",
+      "data": {
+        "at": 1792098967.642766,
+        "venue": {
+          "ts_ms": 1792098967624,
+          "sent_ms": 1792098967609.1,
+          "acked_ms": 1792098967642.7,
+          "offset_ms": -1.9,
+          "rtt_ms": 33.6
+        },
+        "client_order_id": "nc-speed-573c1239be854b3b99d7974ef96288d6",
+        "order_id": "01a1416c-1dd8-7308-b8a0-9d1e0d0bb7e3",
+        "window": "KXBTC15M-26OCT151730-30",
+        "state": "accepted; waiting for real fills",
+        "timing": {
+          "metric": "decision_to_ack",
+          "scope": "real_kalshi",
+          "at": 1792098967.5312037,
+          "value_ms": 111.39240302145481,
+          "status": "ok"
+        },
+        "stages": {
+          "save_ms": 53.05388895794749,
+          "decision_to_send_ms": 77.7686620131135,
+          "send_to_ack_ms": 33.62374100834131
+        }
+      }
+    },
+    {
+      "timestamp": "2026-10-15T21:16:33.088880969Z",
+      "event": "speeddesk_live_cancel",
+      "data": {
+        "at": 1792098991.3783746,
+        "venue": {
+          "ts_ms": 1792098991051,
+          "sent_ms": 1792098991006.7,
+          "acked_ms": 1792098991378.4,
+          "offset_ms": -141.5,
+          "rtt_ms": 371.6
+        },
+        "client_order_id": "nc-speed-573c1239be854b3b99d7974ef96288d6",
+        "order_id": "01a1416c-1dd8-7308-b8a0-9d1e0d0bb7e3",
+        "window": "KXBTC15M-26OCT151730-30",
+        "reason": "Bitcoin feed stale",
+        "state": "requested; reservation retained until fills reconcile",
+        "reduced_by": "1.00",
+        "timing": {
+          "decision_to_ack_ms": 371.6,
+          "send_to_ack_ms": 371.6
+        }
+      }
+    },
+    {
+      "timestamp": "2026-10-15T21:16:33.544368345Z",
+      "event": "speeddesk_live_order",
+      "data": {
+        "at": 1792098993.211786,
+        "venue": "kalshi",
+        "client_order_id": "nc-speed-706246383dd84953bd0c77e2391dcf9a",
+        "window": "KXBTC15M-26OCT151730-30",
+        "side": "down",
+        "kind": "rest",
+        "price": 0.48,
+        "size": 1.0,
+        "fair": 0.5178784261470688,
+        "state": "durable intent",
+        "timing": [
+          {
+            "metric": "btc_exchange_to_decision",
+            "scope": "real_kalshi",
+            "at": 1792098993.2116432,
+            "value_ms": 1464.851537719369,
+            "status": "ok"
+          },
+          {
+            "metric": "btc_receipt_to_decision",
+            "scope": "real_kalshi",
+            "at": 1792098993.2116432,
+            "value_ms": 1458.3696518093348,
+            "status": "ok"
+          }
+        ]
+      }
+    },
+    {
+      "timestamp": "2026-10-15T21:16:33.544376345Z",
+      "event": "speeddesk_live_order",
+      "data": {
+        "at": 1792098993.306943,
+        "venue": {
+          "ts_ms": 1792098993281,
+          "sent_ms": 1792098993234.7,
+          "acked_ms": 1792098993306.9,
+          "offset_ms": 10.2,
+          "rtt_ms": 72.2
+        },
+        "client_order_id": "nc-speed-706246383dd84953bd0c77e2391dcf9a",
+        "order_id": "01a1416c-8368-78ca-9e4c-6ceb0f63b59f",
+        "window": "KXBTC15M-26OCT151730-30",
+        "state": "accepted; waiting for real fills",
+        "timing": {
+          "metric": "decision_to_ack",
+          "scope": "real_kalshi",
+          "at": 1792098993.2116432,
+          "value_ms": 95.19443893805146,
+          "status": "ok"
+        },
+        "stages": {
+          "save_ms": 18.45355611294508,
+          "decision_to_send_ms": 23.003348149359226,
+          "send_to_ack_ms": 72.19109078869224
+        }
+      }
+    },
+    {
+      "timestamp": "2026-10-15T21:16:43.008814786Z",
+      "event": "speeddesk_live_cancel",
+      "data": {
+        "at": 1792099002.061205,
+        "venue": {
+          "ts_ms": 1792099001996,
+          "sent_ms": 1792099001530.3,
+          "acked_ms": 1792099002061.2,
+          "offset_ms": 200.3,
+          "rtt_ms": 530.9
+        },
+        "client_order_id": "nc-speed-706246383dd84953bd0c77e2391dcf9a",
+        "order_id": "01a1416c-8368-78ca-9e4c-6ceb0f63b59f",
+        "window": "KXBTC15M-26OCT151730-30",
+        "reason": "Bitcoin feed stale",
+        "state": "requested; reservation retained until fills reconcile",
+        "reduced_by": "1.00",
+        "timing": {
+          "decision_to_ack_ms": 530.9,
+          "send_to_ack_ms": 530.9
+        }
+      }
+    },
+    {
+      "timestamp": "2026-10-15T21:16:44.569680481Z",
+      "event": "speeddesk_live_cancel",
+      "data": {
+        "at": 1792099003.9119303,
+        "venue": "kalshi",
+        "client_order_id": "nc-speed-706246383dd84953bd0c77e2391dcf9a",
+        "order_id": "01a1416c-8368-78ca-9e4c-6ceb0f63b59f",
+        "window": "KXBTC15M-26OCT151730-30",
+        "reason": "Kalshi book stale",
+        "state": "not resting on Kalshi (404); reservation retained until reconciled",
+        "timing": {
+          "decision_to_ack_ms": 51.2,
+          "send_to_ack_ms": 51.2
+        }
+      }
+    },
+    {
+      "timestamp": "2026-10-15T21:16:47.416879174Z",
+      "event": "speeddesk_live_order",
+      "data": {
+        "at": 1792099006.800642,
+        "venue": "kalshi",
+        "client_order_id": "nc-speed-067b36e8ac0b4c569b3069d16dee3f3d",
+        "window": "KXBTC15M-26OCT151730-30",
+        "side": "down",
+        "kind": "rest",
+        "price": 0.48,
+        "size": 1.0,
+        "fair": 0.5180265575193695,
+        "state": "durable intent",
+        "timing": [
+          {
+            "metric": "btc_exchange_to_decision",
+            "scope": "real_kalshi",
+            "at": 1792099006.800512,
+            "value_ms": 15.430908184498549,
+            "status": "ok"
+          },
+          {
+            "metric": "btc_receipt_to_decision",
+            "scope": "real_kalshi",
+            "at": 1792099006.800512,
+            "value_ms": 2.3324298672378063,
+            "status": "ok"
+          }
+        ]
+      }
+    },
+    {
+      "timestamp": "2026-10-15T21:16:47.429112773Z",
+      "event": "speeddesk_live_order",
+      "data": {
+        "at": 1792099007.3061662,
+        "venue": {
+          "ts_ms": 1792099006848,
+          "sent_ms": 1792099006819.0,
+          "acked_ms": 1792099007306.2,
+          "offset_ms": -214.6,
+          "rtt_ms": 487.2
+        },
+        "client_order_id": "nc-speed-067b36e8ac0b4c569b3069d16dee3f3d",
+        "order_id": "01a1416c-b630-7d20-9536-21941646ca9f",
+        "window": "KXBTC15M-26OCT151730-30",
+        "state": "accepted; waiting for real fills",
+        "timing": {
+          "metric": "decision_to_ack",
+          "scope": "real_kalshi",
+          "at": 1792099006.800512,
+          "value_ms": 505.5394023656845,
+          "status": "ok"
+        },
+        "stages": {
+          "save_ms": 15.609980095177889,
+          "decision_to_send_ms": 18.417387269437313,
+          "send_to_ack_ms": 487.1220150962472
+        }
+      }
+    },
+    {
+      "timestamp": "2026-10-15T21:16:53.666598358Z",
+      "event": "speeddesk_live_fill",
+      "data": {
+        "at": 1792099012.828383,
+        "venue": "kalshi",
+        "fill_id": "072444df-80b1-afce-766c-da8dd3123d7f",
+        "order_id": "01a1416c-b630-7d20-9536-21941646ca9f",
+        "client_order_id": "nc-speed-067b36e8ac0b4c569b3069d16dee3f3d",
+        "window": "KXBTC15M-26OCT151730-30",
+        "side": "down",
+        "price": 0.48,
+        "size": 1.0,
+        "fee_usd": 0.0,
+        "is_taker": false
+      }
+    },
+    {
+      "timestamp": "2026-10-15T21:16:55.910412159Z",
+      "event": "speeddesk_live_order",
+      "data": {
+        "at": 1792099014.553642,
+        "venue": "kalshi",
+        "client_order_id": "nc-speed-99a10743d3e6416f9966cf9b8d1bc692",
+        "window": "KXBTC15M-26OCT151730-30",
+        "side": "up",
+        "kind": "rest",
+        "price": 0.45,
+        "size": 1.0,
+        "fair": 0.4818976864664639,
+        "state": "durable intent",
+        "timing": [
+          {
+            "metric": "btc_exchange_to_decision",
+            "scope": "real_kalshi",
+            "at": 1792099014.5535486,
+            "value_ms": 209.8236521705985,
+            "status": "ok"
+          },
+          {
+            "metric": "btc_receipt_to_decision",
+            "scope": "real_kalshi",
+            "at": 1792099014.5535486,
+            "value_ms": 191.2527522072196,
+            "status": "ok"
+          }
+        ]
+      }
+    },
+    {
+      "timestamp": "2026-10-15T21:16:55.910693687Z",
+      "event": "speeddesk_live_order",
+      "data": {
+        "at": 1792099014.6978662,
+        "venue": {
+          "ts_ms": 1792099014623,
+          "sent_ms": 1792099014607.4,
+          "acked_ms": 1792099014697.8,
+          "offset_ms": -29.6,
+          "rtt_ms": 90.5
+        },
+        "client_order_id": "nc-speed-99a10743d3e6416f9966cf9b8d1bc692",
+        "order_id": "01a1416c-d570-7211-a53e-19da17cace83",
+        "window": "KXBTC15M-26OCT151730-30",
+        "state": "accepted; waiting for real fills",
+        "timing": {
+          "metric": "decision_to_ack",
+          "scope": "real_kalshi",
+          "at": 1792099014.5535486,
+          "value_ms": 144.25033377483487,
+          "status": "ok"
+        },
+        "stages": {
+          "save_ms": 49.6603287756443,
+          "decision_to_send_ms": 53.79444360733032,
+          "send_to_ack_ms": 90.45589016750455
+        }
+      }
+    },
+    {
+      "timestamp": "2026-10-15T21:16:55.910702306Z",
+      "event": "speeddesk_live_cancel",
+      "data": {
+        "at": 1792099015.4187539,
+        "venue": {
+          "ts_ms": 1792099014966,
+          "sent_ms": 1792099014933.7,
+          "acked_ms": 1792099015418.7,
+          "offset_ms": -210.2,
+          "rtt_ms": 485.1
+        },
+        "client_order_id": "nc-speed-99a10743d3e6416f9966cf9b8d1bc692",
+        "order_id": "01a1416c-d570-7211-a53e-19da17cace83",
+        "window": "KXBTC15M-26OCT151730-30",
+        "reason": "reprice",
+        "state": "requested; reservation retained until fills reconcile",
+        "reduced_by": "1.00",
+        "timing": {
+          "decision_to_ack_ms": 485.1,
+          "send_to_ack_ms": 485.1
+        }
+      }
+    },
+    {
+      "timestamp": "2026-10-15T21:16:57.459442319Z",
+      "event": "speeddesk_live_order",
+      "data": {
+        "at": 1792099017.2208903,
+        "venue": "kalshi",
+        "client_order_id": "nc-speed-18979c934c1541c0bb3f765ff9774b88",
+        "window": "KXBTC15M-26OCT151730-30",
+        "side": "up",
+        "kind": "rest",
+        "price": 0.48,
+        "size": 1.0,
+        "fair": 0.516693748737675,
+        "state": "durable intent",
+        "timing": [
+          {
+            "metric": "btc_exchange_to_decision",
+            "scope": "real_kalshi",
+            "at": 1792099017.220786,
+            "value_ms": 161.89186135306954,
+            "status": "ok"
+          },
+          {
+            "metric": "btc_receipt_to_decision",
+            "scope": "real_kalshi",
+            "at": 1792099017.220786,
+            "value_ms": 56.57546082511544,
+            "status": "ok"
+          }
+        ]
+      }
+    },
+    {
+      "timestamp": "2026-10-15T21:16:57.459451179Z",
+      "event": "speeddesk_live_order",
+      "data": {
+        "at": 1792099017.3264036,
+        "venue": {
+          "ts_ms": 1792099017307,
+          "sent_ms": 1792099017263.0,
+          "acked_ms": 1792099017326.4,
+          "offset_ms": 12.3,
+          "rtt_ms": 63.3
+        },
+        "client_order_id": "nc-speed-18979c934c1541c0bb3f765ff9774b88",
+        "order_id": "01a1416c-e128-724c-af10-650d8d6a6cd7",
+        "window": "KXBTC15M-26OCT151730-30",
+        "state": "accepted; waiting for real fills",
+        "timing": {
+          "metric": "decision_to_ack",
+          "scope": "real_kalshi",
+          "at": 1792099017.220786,
+          "value_ms": 105.54872313514352,
+          "status": "ok"
+        },
+        "stages": {
+          "save_ms": 16.40918431803584,
+          "decision_to_send_ms": 42.21644904464483,
+          "send_to_ack_ms": 63.332274090498686
+        }
+      }
+    },
+    {
+      "timestamp": "2026-10-15T21:16:59.579943536Z",
+      "event": "speeddesk_live_cancel",
+      "data": {
+        "at": 1792099018.3955088,
+        "venue": {
+          "ts_ms": 1792099018316,
+          "sent_ms": 1792099018285.6,
+          "acked_ms": 1792099018395.5,
+          "offset_ms": -24.5,
+          "rtt_ms": 109.9
+        },
+        "client_order_id": "nc-speed-18979c934c1541c0bb3f765ff9774b88",
+        "order_id": "01a1416c-e128-724c-af10-650d8d6a6cd7",
+        "window": "KXBTC15M-26OCT151730-30",
+        "reason": "Kalshi book stale",
+        "state": "requested; reservation retained until fills reconcile",
+        "reduced_by": "1.00",
+        "timing": {
+          "decision_to_ack_ms": 109.9,
+          "send_to_ack_ms": 109.9
+        }
+      }
+    }
+  ]
+}

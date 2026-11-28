@@ -1,0 +1,113 @@
+{
+  "decision": "ACCEPT bounded target financial reconciliation; coverage/feed evidence review still pending",
+  "reviewed_at_utc": "2026-10-15T21:19:31.098950+00:00",
+  "target": "KXBTC15M-26OCT151715-15",
+  "native_query_count": 89,
+  "limit": 500,
+  "saturated": false,
+  "anchored_counts": {
+    "speeddesk_live_settlement": 2,
+    "speeddesk_live_order": 56,
+    "speeddesk_live_cancel": 27,
+    "speeddesk_live_fill": 4
+  },
+  "target_math": {
+    "fills": 3,
+    "side": {
+      "Up": {
+        "shares": "1.0",
+        "cost": "0.560",
+        "fees": "0.0"
+      },
+      "Down": {
+        "shares": "1.0",
+        "cost": "0.280",
+        "fees": "0.0"
+      }
+    },
+    "settlements": [
+      {
+        "timestamp": "2026-10-15T21:15:11.417806213Z",
+        "event": "speeddesk_live_settlement",
+        "payload": {
+          "at": 1792098906.827365,
+          "venue": "kalshi",
+          "window": "KXBTC15M-26OCT151715-15",
+          "settlement_id": "kalshi:KXBTC15M-26OCT151715-15",
+          "up_wins": true,
+          "up_shares": 1.0,
+          "down_shares": 1.0,
+          "cost_usd": 0.8400000000000002,
+          "fee_usd": 0.0,
+          "paired_credit_usd": 1.0,
+          "net_payout_usd": 0.0,
+          "payout_usd": 1.0,
+          "locked_usd": 0.1599999999999998,
+          "direction_usd": 0.0,
+          "pnl_usd": 0.1599999999999998,
+          "observed_at": 1792098911.2333462,
+          "time_source": "venue settled_time"
+        },
+        "message": "2026-10-15T21:15:11Z INFO nightcrawler.speeddesk: speeddesk_live_settlement {\"at\":1792098906.827365,\"venue\":\"kalshi\",\"window\":\"KXBTC15M-26OCT151715-15\",\"settlement_id\":\"kalshi:KXBTC15M-26OCT151715-15\",\"up_wins\":true,\"up_shares\":1.0,\"down_shares\":1.0,\"cost_usd\":0.8400000000000002,\"fee_usd\":0.0,\"paired_credit_usd\":1.0,\"net_payout_usd\":0.0,\"payout_usd\":1.0,\"locked_usd\":0.1599999999999998,\"direction_usd\":0.0,\"pnl_usd\":0.1599999999999998,\"observed_at\":1792098911.2333462,\"time_source\":\"venue settled_time\"}"
+      }
+    ],
+    "cost": "0.840",
+    "fees": "0.0",
+    "payout": "1.0",
+    "paired_credit": "1.0",
+    "net_payout": "0.0",
+    "locked": "0.160",
+    "directional": "0.000",
+    "pnl": "0.160",
+    "official_up_wins": true
+  },
+  "target_fill_order_joins": [
+    {
+      "fill_id": "0724442b-8dd1-a9d0-8fc8-74b53e6420d4",
+      "order_id": "01a1415d-8390-7e76-9d2c-58c4fde7fa68",
+      "client_order_id": "nc-speed-e89bfd6affac4e2390f36b135df92669",
+      "fill_venue_at": 1792098010.500247,
+      "fill_log_timestamp": "2026-10-15T21:00:13.530397328Z",
+      "intent_log_timestamp": "2026-10-15T21:00:11.494264029Z",
+      "accept_log_timestamp": "2026-10-15T21:00:11.494279549Z"
+    },
+    {
+      "fill_id": "0724442b-8dd1-a568-fa7e-81da41bfff04",
+      "order_id": "01a1415d-8390-7e76-9d2c-58c4fde7fa68",
+      "client_order_id": "nc-speed-e89bfd6affac4e2390f36b135df92669",
+      "fill_venue_at": 1792098010.493979,
+      "fill_log_timestamp": "2026-10-15T21:00:13.530404238Z",
+      "intent_log_timestamp": "2026-10-15T21:00:11.494264029Z",
+      "accept_log_timestamp": "2026-10-15T21:00:11.494279549Z"
+    },
+    {
+      "fill_id": "072444e6-d421-9e72-303d-e6471b479343",
+      "order_id": "01a14161-c180-7e84-9cd2-02a5ee998813",
+      "client_order_id": "nc-speed-87176704912d4c928720d318d57dd45d",
+      "fill_venue_at": 1792098289.101737,
+      "fill_log_timestamp": "2026-10-15T21:04:51.047055117Z",
+      "intent_log_timestamp": "2026-10-15T21:04:48.799554502Z",
+      "accept_log_timestamp": "2026-10-15T21:04:48.799561052Z"
+    }
+  ],
+  "distinct_target_fill_ids": 3,
+  "distinct_target_orders": 2,
+  "other_cohorts": {
+    "prior": "KXBTC15M-26OCT151700-00 settles +0.03 at21:00:06; originating fills outside captured bounds; excluded target result",
+    "next": "KXBTC15M-26OCT151730-30 Down1@0.48 maker fee0 at21:16:53; unsettled in fixed tail and excluded target result"
+  },
+  "limits": [
+    "Official finalizedYES uses CF Benchmarks60second BRTI averages; no Coinbase substitution.",
+    "Settlement time_source is venue settled_time, at1792098906.827365; original service log21:15:11.417806213Z.",
+    "Prior and target settled results sum+0.19 within capture; target alone+0.16.",
+    "No causal saved-dollar/profitability inference; no certified continuous coverage/native account audit.",
+    "Initial reviewer parser assumed capitalized sides and failed assertion; corrected lowercase comparison; preserved failure stdout.",
+    "Initial sibling native transfer was invalid/truncated and not used; root exact native parses completely."
+  ],
+  "evidence_sha256": {
+    "/workspace/private-handoffs/claude-2026-10-15/kalshi-recovery-review/pr65_capture_independent.py": "511b424371df4e603b18eeee24f95477bcd47edfbb030184954188e97516880a",
+    "/workspace/private-handoffs/claude-2026-10-15/kalshi-recovery-review/pr65_capture_independent.json": "76d425f017c3a3db987cb02929326d7e1d00a684e7e1e09e129c022043f6ad53",
+    "/workspace/private-handoffs/claude-2026-10-15/kalshi-recovery-review/pr65_capture_independent.stdout": "a616c53f044e0716026bd58408c0d44898c5c8db1ef504661d8e5a11696c133d",
+    "/workspace/private-handoffs/claude-2026-10-15/PR65_CAPTURE/root_exact_transactions.native.json": "1fd286669742cda3c0d4df26fff6571b7c6330e0a3a2e26cc85a336bfb97a3e6"
+  }
+}

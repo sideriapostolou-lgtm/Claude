@@ -1,0 +1,12 @@
+{
+  "command": [
+    "/workspace/shared/nightcrawler-venv/bin/python",
+    "-m",
+    "pytest",
+    "-q"
+  ],
+  "start_utc": "2026-10-15T19:03:37.351400+00:00",
+  "end_utc": "2026-10-15T19:08:58.125551+00:00",
+  "elapsed_s": 320.7741654499987,
+  "exit_code": 0
+}

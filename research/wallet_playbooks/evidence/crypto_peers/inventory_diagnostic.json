@@ -1,0 +1,45 @@
+{
+  "caveat": "Exploratory fill-order signature only. Equal-second ordering unresolved. Window coverage does not guarantee all pre-open fills. No sells inincludedwindows; averagecostpair. Not actual P&L or proven rule.",
+  "wallets": {
+    "ce25": {
+      "fills_after_first": 721,
+      "share_fills_reduce_absolute_imbalance": 0.47711511789181693,
+      "matched_increment_events": 417,
+      "median_increment_pair_cost": 0.9510510020340521,
+      "matched_increment_quantity": 5730.541155999999,
+      "share_matched_increment_qty_cost_above_one": 0.37968406033030494
+    },
+    "mo-money": {
+      "fills_after_first": 710,
+      "share_fills_reduce_absolute_imbalance": 0.3563380281690141,
+      "matched_increment_events": 275,
+      "median_increment_pair_cost": 1.0,
+      "matched_increment_quantity": 15843.975814000009,
+      "share_matched_increment_qty_cost_above_one": 0.4708753009713475
+    },
+    "GoodFallen": {
+      "fills_after_first": 841,
+      "share_fills_reduce_absolute_imbalance": 0.5196195005945303,
+      "matched_increment_events": 472,
+      "median_increment_pair_cost": 0.981961831089305,
+      "matched_increment_quantity": 8290.023983999998,
+      "share_matched_increment_qty_cost_above_one": 0.4400664665194051
+    },
+    "DB5": {
+      "fills_after_first": 0,
+      "share_fills_reduce_absolute_imbalance": null,
+      "matched_increment_events": 0,
+      "median_increment_pair_cost": null,
+      "matched_increment_quantity": 0,
+      "share_matched_increment_qty_cost_above_one": null
+    },
+    "rwo": {
+      "fills_after_first": 896,
+      "share_fills_reduce_absolute_imbalance": 0.3247767857142857,
+      "matched_increment_events": 306,
+      "median_increment_pair_cost": 0.86000000445,
+      "matched_increment_quantity": 20233.397772,
+      "share_matched_increment_qty_cost_above_one": 0.5555519094551413
+    }
+  }
+}

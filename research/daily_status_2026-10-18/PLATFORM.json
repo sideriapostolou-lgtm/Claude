@@ -1,0 +1,81 @@
+{
+  "environment": {
+    "id": "17f7b0e0-104c-4903-9484-0106748b3cdb",
+    "name": "production"
+  },
+  "services": [
+    {
+      "serviceId": "f84d3b52-002f-44cb-931e-bc9e3e097e97",
+      "serviceName": "bot",
+      "state": "online",
+      "statusText": "Online",
+      "activeDeployments": [
+        {
+          "id": "43f14443-2d07-4985-b879-3a2515fb8d2c",
+          "status": "SUCCESS",
+          "createdAt": "2026-10-16T23:49:24.905Z",
+          "statusUpdatedAt": "2026-10-16T23:50:35.236Z"
+        }
+      ],
+      "replicaStatus": {
+        "running": 1,
+        "crashed": 0,
+        "total": 1
+      },
+      "cronJob": null,
+      "issues": {
+        "warningCount": 0,
+        "criticalCount": 0
+      },
+      "recentFailures": 0,
+      "recentFailedDeployments": [],
+      "hasIssues": false,
+      "isCronJob": false,
+      "hasVolume": true
+    },
+    {
+      "serviceId": "736b1c8a-8311-4ee0-9043-d05f508cd821",
+      "serviceName": "kalshi-recorder",
+      "state": "online",
+      "statusText": "Online",
+      "activeDeployments": [
+        {
+          "id": "8453f919-b891-4aa7-8478-6fcf6b9c24ee",
+          "status": "SUCCESS",
+          "createdAt": "2026-10-14T16:36:40.384Z",
+          "statusUpdatedAt": "2026-10-14T16:38:15.302Z"
+        }
+      ],
+      "replicaStatus": {
+        "running": 1,
+        "crashed": 0,
+        "total": 1
+      },
+      "cronJob": null,
+      "issues": {
+        "warningCount": 0,
+        "criticalCount": 0
+      },
+      "recentFailures": 0,
+      "recentFailedDeployments": [],
+      "hasIssues": false,
+      "isCronJob": false,
+      "hasVolume": true
+    }
+  ],
+  "pendingWork": [
+    {
+      "id": "patch:9a84e13c-3caf-4a85-b5f5-d9a2fcb8a021",
+      "kind": "EnvironmentPatch",
+      "status": "staged",
+      "changes": [],
+      "startedAt": "2026-10-12T16:21:53.480Z",
+      "workflowId": "commitChanges/17f7b0e0-104c-4903-9484-0106748b3cdb/9a84e13c-3caf-4a85-b5f5-d9a2fcb8a021"
+    }
+  ],
+  "summary": {
+    "totalServices": 2,
+    "servicesWithIssues": 0,
+    "totalFailures": 0
+  }
+}

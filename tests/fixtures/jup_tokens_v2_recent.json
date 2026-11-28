@@ -1,0 +1,168 @@
+[
+ {
+  "id": "8RScxJmdMU58Kt1WiYM6jx7wvZXtXwfqY8ZZceAcCKJL",
+  "name": "The Altruists",
+  "symbol": "Altruists",
+  "icon": "https://wsrv.nl/?w=128&h=128&url=https%3A%2F%2Faxiomtrading-v2.axiom-cdn.io%2F7hPfWQQNweQsZ1hpDeAZKyfvPFexRJVzuxSfnXonpump.webp&dpr=2",
+  "decimals": 6,
+  "dev": "BWYM29nmA1MFRpFm2bsgCpNJfKQmAp4LKM9168XVZbJp",
+  "circSupply": 1000000000,
+  "totalSupply": 1000000000,
+  "tokenProgram": "TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb",
+  "holderCount": 1,
+  "firstPool": {
+   "id": "4y58AmpZwjiZ4gEr5ibYtR2S1JmFqiFZ9wGD3bPS9Bi2",
+   "createdAt": "2026-10-08T15:38:09Z"
+  },
+  "audit": {
+   "isSus": true,
+   "mintAuthorityDisabled": true,
+   "freezeAuthorityDisabled": true,
+   "topHoldersPercentage": 100,
+   "devBalancePercentage": 100,
+   "devMints": 12
+  },
+  "organicScore": 0,
+  "organicScoreLabel": "low",
+  "tags": [
+   "unknown",
+   "token-2022"
+  ],
+  "createdAt": "2026-10-08T15:38:06Z",
+  "updatedAt": "2026-10-08T15:38:11.750362685Z"
+ },
+ {
+  "id": "G5pUPqCZBzYVpSCwSE1b1JvhTjdGAMepJUhmDMpPn2ES",
+  "name": "Hedged Equity Portfolio",
+  "symbol": "HEDGE",
+  "icon": "https://axiomtrading-v2.axiom-cdn.io/D5je9XWoKKHuoYW63B7SH7KWTCFrjrPgUV4UkDCRkF6F.webp",
+  "decimals": 6,
+  "twitter": "https://x.com/Na1_N1ako/status/2108220183898677538",
+  "website": "https://otcdesks.cash/coin/G5pUPqCZBzYVpSCwSE1b1JvhTjdGAMepJUhmDMpPn2ES",
+  "dev": "7ZV54HcwtzRhZSEPskT8ox5hn9yNocK9xpe4BQXoziaP",
+  "circSupply": 1000000000,
+  "totalSupply": 1000000000,
+  "tokenProgram": "TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb",
+  "launchpad": "pump.fun",
+  "holderCount": 6,
+  "fdv": 4622.811714754749,
+  "mcap": 4622.811714754749,
+  "usdPrice": 4.6228117147547495e-06,
+  "priceBlockId": 454587127,
+  "liquidity": 4031.261803944889,
+  "stats5m": {
+   "priceChange": -6.142862492304143,
+   "buyVolume": 894.4628074481323,
+   "sellVolume": 135.0667960153345,
+   "numBuys": 6,
+   "numSells": 4,
+   "numTraders": 5,
+   "numNetBuyers": 5
+  },
+  "stats1h": {
+   "priceChange": -6.142862492304143,
+   "buyVolume": 894.4628074481323,
+   "sellVolume": 135.0667960153345,
+   "numBuys": 6,
+   "numSells": 4,
+   "numTraders": 5,
+   "numNetBuyers": 5
+  },
+  "stats6h": {
+   "priceChange": -6.142862492304143,
+   "buyVolume": 894.4628074481323,
+   "sellVolume": 135.0667960153345,
+   "numBuys": 6,
+   "numSells": 4,
+   "numTraders": 5,
+   "numNetBuyers": 5
+  },
+  "stats24h": {
+   "priceChange": -6.142862492304143,
+   "buyVolume": 894.4628074481323,
+   "sellVolume": 135.0667960153345,
+   "numBuys": 6,
+   "numSells": 4,
+   "numTraders": 5,
+   "numNetBuyers": 5
+  },
+  "firstPool": {
+   "id": "G5pUPqCZBzYVpSCwSE1b1JvhTjdGAMepJUhmDMpPn2ES",
+   "createdAt": "2026-10-08T15:38:07Z"
+  },
+  "audit": {
+   "mintAuthorityDisabled": true,
+   "freezeAuthorityDisabled": true,
+   "devBalancePercentage": 20.0963210657135,
+   "devMigrations": 149,
+   "devMints": 7306
+  },
+  "organicScore": 0,
+  "organicScoreLabel": "low",
+  "tags": [
+   "unknown",
+   "token-2022"
+  ],
+  "createdAt": "2026-10-08T15:38:07Z",
+  "updatedAt": "2026-10-08T15:38:12.75044129Z"
+ },
+ {
+  "id": "Cdjau3dXXw1eC44vyMtUkSff4Q4kMD9dwZcWhk4Rpump",
+  "name": "HEDGE",
+  "symbol": "HEDGE",
+  "decimals": 6,
+  "dev": "F8SxdRwjhiZQUVuCDQmtQBjydyHKoojsXvZAHyKWS64P",
+  "circSupply": 1000000000,
+  "totalSupply": 1000000000,
+  "tokenProgram": "TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb",
+  "launchpad": "pump.fun",
+  "holderCount": 2,
+  "fdv": 3099.581563908214,
+  "mcap": 3099.581563908214,
+  "usdPrice": 3.099581563908214e-06,
+  "priceBlockId": 454587088,
+  "liquidity": 3325.851015545749,
+  "stats5m": {
+   "buyVolume": 53.985223033657576,
+   "numBuys": 1,
+   "numTraders": 1,
+   "numNetBuyers": 1
+  },
+  "stats1h": {
+   "buyVolume": 53.985223033657576,
+   "numBuys": 1,
+   "numTraders": 1,
+   "numNetBuyers": 1
+  },
+  "stats6h": {
+   "buyVolume": 53.985223033657576,
+   "numBuys": 1,
+   "numTraders": 1,
+   "numNetBuyers": 1
+  },
+  "stats24h": {
+   "buyVolume": 53.985223033657576,
+   "numBuys": 1,
+   "numTraders": 1,
+   "numNetBuyers": 1
+  },
+  "firstPool": {
+   "id": "Cdjau3dXXw1eC44vyMtUkSff4Q4kMD9dwZcWhk4Rpump",
+   "createdAt": "2026-10-08T15:38:00Z"
+  },
+  "audit": {
+   "mintAuthorityDisabled": true,
+   "freezeAuthorityDisabled": true,
+   "devBalancePercentage": 1.7416939003079002,
+   "devMints": 47
+  },
+  "organicScore": 0,
+  "organicScoreLabel": "low",
+  "tags": [
+   "unknown",
+   "token-2022"
+  ],
+  "createdAt": "2026-10-08T15:38:00Z",
+  "updatedAt": "2026-10-08T15:38:12.827042474Z"
+ }
+]

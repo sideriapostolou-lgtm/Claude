@@ -1,0 +1,29 @@
+{
+  "generatedAtUTC": "2026-10-19T22:04:09.799995+00:00",
+  "scope": "HEADER_SCHEMA_TIMESTAMP_ONLY",
+  "file": "/workspace/ifvg_data_20261019/MNQ_1min_sample.csv",
+  "sha256": "6dc53ce719b935022c668f36bd2532887a6548b83a7b28d6ac5df0b4f79ee83b",
+  "headerPresent": true,
+  "header": [
+    "timestamp",
+    "open",
+    "high",
+    "low",
+    "close",
+    "volume"
+  ],
+  "csvRecordsIncludingHeader": 16201,
+  "dataRows": 16200,
+  "columnCounts": {
+    "6": 16201
+  },
+  "timestampFormat": "%Y-%m-%d %H:%M:%S",
+  "timezone": "US Eastern per vendor readme",
+  "barLabel": "INTERVAL_START per vendor readme",
+  "firstDataTimestamp": "2026-10-01 00:00:00",
+  "lastDataTimestamp": "2026-10-16 16:59:00",
+  "duplicateTimestampRows": 0,
+  "correction": "DATA_FEASIBILITY.json headerPresent:false was incorrect. Timestamp extraction already excluded the header through a numeric-year filter, so16200dataRows and timestamp coverage remain unchanged. Correct ingestion must validate and skip the literal header. No rule/cost/date change.",
+  "priceValuesInspected": false,
+  "strategyRuns": 0
+}

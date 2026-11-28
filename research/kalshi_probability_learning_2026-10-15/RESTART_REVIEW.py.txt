@@ -1,0 +1,179 @@
+"""Read-only native-original PR64 restart audit. No network or production calls."""
+from __future__ import annotations
+import hashlib
+import json
+import math
+import re
+import subprocess
+from datetime import datetime
+from pathlib import Path
+
+ROOT=Path('/workspace/nightcrawler-probability-learning')
+EVIDENCE=ROOT/'research/kalshi_probability_learning_2026-10-15'
+COMMIT='8c8681a032a6181c49915ba88ba38d0818dc69d3'
+DEPLOYMENT='2e88601d-c9c7-474f-add8-72c0a13c1a4b'
+PATTERN=re.compile(r'^\S+\s+(?:INFO|WARNING|ERROR)\s+(?P<logger>nightcrawler\.[\w.]+):\s+(?P<event>\w+)(?:\s+(?P<body>.*))?$')
+used={}
+
+def read(name):
+    data=(EVIDENCE/name).read_bytes()
+    used[name]=hashlib.sha256(data).hexdigest()
+    return json.loads(data)
+
+def native(name,event=None):
+    wrapper=read(name)
+    result=wrapper['result']
+    assert not result.get('isError'),name
+    data=result['structuredContent']
+    rows=data.get('deploy',[])
+    if 'limit' in wrapper.get('request',{}):
+        assert len(rows)<wrapper['request']['limit'],(name,'potential cap')
+    out=[]
+    for row in rows:
+        match=PATTERN.fullmatch(row['message'])
+        if match and (event is None or match['event']==event):
+            body=match['body']
+            payload=json.loads(body) if body and body.startswith('{') else body
+            out.append({'timestamp':row['timestamp'],'event':match['event'],'payload':payload})
+    return out,{'file':name,'request':wrapper.get('request'),'returned':len(rows),'selected':len(out),
+                'nonmatching_excluded':len(rows)-len(out),'retrieved_before':wrapper.get('before',wrapper.get('at')),
+                'retrieved_after':wrapper.get('after'),'isError':result.get('isError',False)}
+
+def get_path(row,path):
+    for key in path.split('.'):row=row[key]
+    return row
+
+def close(a,b):return math.isclose(a,b,rel_tol=0,abs_tol=1e-10)
+
+def iso(value):return datetime.fromisoformat(value.replace('Z','+00:00')).timestamp()
+
+def main():
+    queries=[]
+    before_rows,q=native('BEFORE_STATUS.native.json','speeddesk_live_status');queries.append(q)
+    after_rows,q=native('AFTER_STATUS_READY_5.native.json','speeddesk_live_status');queries.append(q)
+    before=next(x for x in before_rows if x['timestamp']=='2026-10-15T19:16:26.987202075Z')
+    after=next(x for x in after_rows if x['timestamp']=='2026-10-15T19:26:26.283880736Z')
+    b,a=before['payload'],after['payload']
+    bsel,asel=read('BEFORE_SELECTED.json'),read('AFTER_SELECTED.json')
+    assert set(bsel['fields'])==set(asel['fields']) and len(bsel['fields'])==67
+    for item,original in ((bsel,b),(asel,a)):
+        assert item['payload_at']==original['at']
+        assert all(v==get_path(original,k) for k,v in item['fields'].items())
+    fields={key:{'before':get_path(b,key),'after':get_path(a,key),'equal':get_path(b,key)==get_path(a,key)}
+            for key in bsel['fields']}
+    events={}
+    for cohort in ('OLD','NEW_FINAL'):
+        events[cohort]={}
+        for kind in ('ORDER','FILL','SETTLEMENT','CANCEL'):
+            rows,q=native(f'RESTART_{cohort}_{kind}.native.json','speeddesk_live_'+kind.lower());queries.append(q)
+            selected=[row for row in rows if b['at']<row['payload']['at']<=a['at']]
+            assert len(selected)==len(rows)
+            events[cohort][kind]=selected
+    old=events['OLD'];new=events['NEW_FINAL']
+    assert [len(old[k]) for k in ('ORDER','FILL','SETTLEMENT','CANCEL')]==[14,0,0,7]
+    assert [len(new[k]) for k in ('ORDER','FILL','SETTLEMENT','CANCEL')]==[6,1,0,0]
+    old_intents=[r['payload'] for r in old['ORDER'] if r['payload']['state'].startswith('durable intent')]
+    new_intents=[r['payload'] for r in new['ORDER'] if r['payload']['state'].startswith('durable intent')]
+    all_orders=old['ORDER']+new['ORDER']
+    ack={r['payload']['client_order_id']:r['payload'] for r in all_orders
+         if r['payload']['state']=='accepted; waiting for real fills'}
+    assert len(old_intents)==7 and all(x['kind']=='rest' for x in old_intents)
+    assert len(new_intents)==3 and all(x['kind']=='lock' for x in new_intents)
+    assert all(x['client_order_id'] in ack for x in old_intents+new_intents)
+    fill=new['FILL'][0]['payload']
+    matched_intent=next(x for x in new_intents if x['client_order_id']==fill['client_order_id'])
+    matched_ack=ack[fill['client_order_id']]
+    assert matched_ack['order_id']==fill['order_id']
+    assert all(matched_intent[key]==fill[key] for key in ('window','side','price','size'))
+    cost=fill['price']*fill['size']+fill['fee_usd']
+    credit=(a['open_cost_usd']-a['open_risk_usd'])-(b['open_cost_usd']-b['open_risk_usd'])
+    checks={
+        'cash_consistent_with_cost_and_implied_pair_credit':close(a['cash_usd'],b['cash_usd']-cost+credit),
+        'filled_cost':close(a['open_cost_usd'],b['open_cost_usd']+cost),
+        'risk_equals_cost_minus_implied_credit':close(a['open_risk_usd'],a['open_cost_usd']-credit),
+        'pair_credit_one':close(credit,1),
+        'reported_positions_zero':a['positions']==0,
+        'ladder_anchor_display_float_only':close(a['ladder']['start_pnl_usd'],b['ladder']['start_pnl_usd']),
+    }
+    for scope in ('today','total'):
+        for key,delta in [('fills',1),('fees_usd',fill['fee_usd']),('maker_orders',7),('locks',3),('lock_fills',1)]:
+            checks[scope+'.'+key]=close(a[scope][key]-b[scope][key],delta)
+    assert all(checks.values()),checks
+    for row in (b,a):
+        assert row['mode']==row['configured_mode']=='live' and row['authenticated'] and row['trading_now']
+        assert row['waiting']=='' and not row['cleanup_pending'] and row['integrity_error'] is None
+        assert not row['total_halted'] and not row['day_stop_latched']
+    controls,q=native('STARTUP_CONTROLS_4.native.json');queries.append(q)
+    controls=[x for x in controls if x['event'] in ('speeddesk_live_resume','speeddesk_live_integrity_reset','speeddesk_live_day_reset')]
+    assert len(controls)==3 and all(x['payload']['state']=='ignored; this value was already used' for x in controls)
+    v1,q=native('STARTUP_V1_4.native.json','kalshi_online_learning_status');queries.append(q)
+    v2,q=native('STARTUP_PROBABILITY_4.native.json');queries.append(q)
+    v2=[x for x in v2 if x['event'].startswith('kalshi_probability_learning_')]
+    assert len(v1)==1 and v1[0]['payload']['learning']['unknown']==23
+    assert v1[0]['payload']['source_fingerprint']=='b6112b7ef8955b20af734157c1e7f5ec533bf98f70e034558f06670578c391f2'
+    assert v1[0]['payload']['learning']['forecasts']==v1[0]['payload']['learning']['scored']==0
+    status=next(x for x in v2 if x['event']=='kalshi_probability_learning_status')['payload']
+    assert status['learning']['forecasts']==status['learning']['scored']==status['learning']['unknown']==0
+    assert status['source_fingerprint']=='e79897062a3ebbd61fe5dc70617f02c44bb7d29c9dbf51e23940459686653c7c'
+    assert all(x['payload']['mode']=='observe_only' and x['payload']['live_application'] is False for x in v1+v2)
+    deployment=next(x for x in read('DEPLOYMENT_ROLLOUT.native.json')['result']['structuredContent']['deployments'] if x['id']==DEPLOYMENT)
+    assert deployment['status']=='SUCCESS' and deployment['meta']['commitHash']==COMMIT
+    assert deployment['updatedAt']=='2026-10-15T19:22:21.502Z'
+    polys,q=native('STARTUP_POLYDESK_FINAL.native.json','polydesk_started');queries.append(q)
+    assert len(polys)==1 and polys[0]['payload'].endswith('(LIVE: 10 contract(s) per order)')
+    health=read('AFTER_HEALTH.native.json')['result']['structuredContent']
+    assert all(x['state']=='online' and not x['hasIssues'] for x in health['services'])
+    exact_review=json.load(open('/workspace/probability-learning-exact-review.json'))
+    merge_hashes={}
+    for path,expected in exact_review['source_files_sha256'].items():
+        data=subprocess.check_output(['git','show',COMMIT+':'+path],cwd=ROOT)
+        merge_hashes[path]=hashlib.sha256(data).hexdigest()
+        assert merge_hashes[path]==expected,path
+    declaration=read('CAPTURE_DECLARATION.json');plan=read('CAPTURE_QUERY_PLAN.json')
+    public=read('PUBLIC_DECLARATION_READ.native.json')
+    text=public['result']['structuredContent']['content']
+    assert json.loads(text)==declaration
+    assert hashlib.sha256((EVIDENCE/'CAPTURE_DECLARATION.json').read_bytes()).hexdigest()==plan['declaration_sha256']
+    margin=declaration['start']-iso(declaration['declared_at_utc'])
+    public_at=datetime.strptime(public['at']['current_time'],'%Y-%m-%d %H:%M:%S UTC').replace(tzinfo=datetime.fromisoformat('2026-01-01T00:00:00+00:00').tzinfo).timestamp()
+    assert margin>=30 and declaration['start']-public_at>=30
+    assert declaration['source_commit']==COMMIT and declaration['deployment_id']==DEPLOYMENT
+    assert declaration['end']-declaration['start']==900 and declaration['tail_end']-declaration['end']==120
+    assert declaration['learner_fingerprint']==status['source_fingerprint']
+    excluded_stale=[{'timestamp':r['timestamp'],'waiting':r['payload']['waiting']} for r in after_rows if not r['payload']['trading_now']]
+    assert len(excluded_stale)==3
+    output={
+        'status':'Bounded independent restart audit accepted; prospective capture remains separate.',
+        'deployed_source':COMMIT,'deployment_id':DEPLOYMENT,'candidate_merged_bytes_match':merge_hashes,
+        'deployment_success_at':deployment['updatedAt'],'polydesk_original':polys[0],
+        'services':[{'name':x['serviceName'],'state':x['state'],'deployment':x['activeDeployments'][0]['id']} for x in health['services']],
+        'existing_empty_staged_patch_retained':health.get('pendingWork'),
+        'before':{'timestamp':before['timestamp'],'payload_at':b['at'],'cash':b['cash_usd'],'cumulative_settled_pnl':b['total']['pnl_usd']},
+        'after':{'timestamp':after['timestamp'],'payload_at':a['at'],'cash':a['cash_usd'],'cumulative_settled_pnl':a['total']['pnl_usd']},
+        'selected_fields':fields,'selected_exact':sum(x['equal'] for x in fields.values()),
+        'selected_changed':sum(not x['equal'] for x in fields.values()),'change_reconciliation_checks':checks,
+        'fill_join':{'fill':fill,'intent':matched_intent,'ack':matched_ack,'all_in_new_cost':cost,
+                     'implied_pair_credit':credit,'resulting_open_cost':a['open_cost_usd'],'remaining_reported_risk':a['open_risk_usd'],
+                     'interpretation':'Unsettled loss-bearing pair; implied credit reconciles observed cash but is not a native cash-ledger transaction receipt.'},
+        'orders':{'old_durable_intents':7,'old_matching_acks':7,'new_lock_intents':3,'new_matching_acks':3,
+                  'old_cancel_requests':7,'cancel_is_terminal_confirmation':False},
+        'original_events':events,'readiness_excluded_stale_rows':excluded_stale,
+        'stop_latches':{k:{'before':b[k],'after':a[k]} for k in ('total_halted','day_stop_latched')},
+        'ignored_used_controls':controls,'startup_v1':v1,'startup_v2':v2,
+        'timing':{'before_cash_age_seconds':b['at']-b['cash_at'],'after_cash_age_seconds':a['at']-a['cash_at'],
+                  'account_age_seconds':None,'account_age_reason':'Unpublished; as_of is panel generation time, not account snapshot time.'},
+        'prospective_declaration':{'start':declaration['start'],'end':declaration['end'],'tail_end':declaration['tail_end'],
+                                  'declaration_margin_seconds':margin,'public_original_read_margin_seconds':declaration['start']-public_at,
+                                  'public_bytes_match':True,'query_plan_hash_matches':True,'result_not_yet_audited':True},
+        'queries':queries,'native_sha256':used,
+        'limits':['All queries bounded and under requested limits; filtered logs do not certify full market/account/native ledger coverage.',
+                  'Selected67paths plus two reported latches are not full persisted risk state, budget anchors, cash ledger, or native durable volume export.',
+                  'V1 startup matching source and counters does not independently prove complete numerical history continuity against absent immediately-pre-restart V1 state.',
+                  'V2 new startup0counts and startup-inside exclusion demonstrate separate observer startup, not forecast/score/calibration/profitability.',
+                  'No original settlement occurred within these saved bounds; current paired loss is unsettled and cumulative settled losses are retained.',
+                  'No extra production queries, source/settings/order/financial changes or shifted capture bounds by independent reviewer.']}
+    Path('/workspace/probability-restart-independent.json').write_text(json.dumps(output,indent=2)+'\n')
+    print(json.dumps({'status':output['status'],'selected_exact':output['selected_exact'],'selected_changed':output['selected_changed'],
+                      'receipt':'/workspace/probability-restart-independent.json','queries':len(queries),'native_files_hashed':len(used)}))
+
+if __name__=='__main__':main()

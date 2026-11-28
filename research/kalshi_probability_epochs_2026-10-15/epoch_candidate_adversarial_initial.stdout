@@ -1,0 +1,2 @@
+{"case": "malformed_active_digest", "before_archives": 2, "after_archives": null, "active": null, "error": "epoch_state_invalid"}
+{"case": "host_constructor_failure", "active_still_enabled": true, "host_exists": false, "arena_state_serializes": true}

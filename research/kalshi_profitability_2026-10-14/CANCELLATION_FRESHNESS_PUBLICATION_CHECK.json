@@ -1,0 +1,25 @@
+{
+  "checked_at_utc": "2026-10-15T12:58:31.719986+00:00",
+  "base": "0960bf41474c44ee1a872e095661475adf0905c0",
+  "report_sha256": "2a16d96e3ff02c5a41b397308723fa0e52d6b4d53114dd6fa21ce5dd7b6fec45",
+  "independent_document_review": "Astra accepted exact final report against original financial/timing/cash evidence, no material incorrect or unsupported claim; no files changed by reviewer.",
+  "checks": {
+    "existing_docs_lines_preserved_in_order": true,
+    "new_local_links_valid": 9,
+    "scope_docs_research_only": true,
+    "archive_crc_member_bytes_hashes": true,
+    "initial_archives_unchanged": true,
+    "private_recognized_pattern_scan": "zero flags"
+  },
+  "application_checks": "No application/source/build/settings edits in this docs publication. Full 5582/14skip pytest/mypy127/Ruff2 evidence belongs to identical deployed source, not rerun.",
+  "limitations": "No new production query, complete tape/native-ledger proof, profitable-edge/avoided-loss claim or EXEC completion. Historical gaps remain unknown.",
+  "files_before_receipt": {
+    "docs/COORDINATION.md": "c6ee83b4a4e4dca02ce4054e7ea8bd0c712572083a2861d7553a0e72e0f0d24f",
+    "docs/WORKLOG.md": "b5d7c2a5262af832e658291e76c407638bf0efcaf5b5487486f5fad53b515b64",
+    "research/kalshi_profitability_2026-10-14/CANCELLATION_FRESHNESS_POSTRELEASE.md": "2a16d96e3ff02c5a41b397308723fa0e52d6b4d53114dd6fa21ce5dd7b6fec45",
+    "research/kalshi_profitability_2026-10-14/CANCELLATION_FRESHNESS_POSTRELEASE.zip": "23d8e4a39d0f8821ab2a7bb51ad6a558a691073f428dd1c623602c7cc44c6994",
+    "research/kalshi_profitability_2026-10-14/CANCELLATION_FRESHNESS_POSTRELEASE_ARCHIVE.json": "758051d0063d3c304711c8e04aab44e5e4b6210f78dfe2f3db68c23c4553fe05",
+    "research/kalshi_profitability_2026-10-14/CANCELLATION_FRESHNESS_SUPPLEMENT.zip": "1c16eb4b0a783658802e8443b17ef4de7e760469cadb21229078891ca7f4704b",
+    "research/kalshi_profitability_2026-10-14/CANCELLATION_FRESHNESS_SUPPLEMENT_ARCHIVE.json": "5699bef6c21d0dfaed5dc29d29d867be115278fc20126d1cf63756d983964514"
+  }
+}

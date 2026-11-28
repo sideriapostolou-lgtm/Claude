@@ -1,0 +1,64 @@
+{
+  "reviewer": "/root/input_cause_review",
+  "base": "beea7bf09be5405612cd11e4fcd7ee6c5678d469",
+  "mode": "offline read-only independent forensic/source review; private artifacts only",
+  "source_sha256": {
+    "src/nightcrawler/speeddesk_live.py": "2253d3ce64de8da30ab7a1e60c3a78d2d74a10920ee6733786884f43a07c9221",
+    "src/nightcrawler/speeddesk_live_model.py": "689207e3a681b591f64a43f03a359d2dc0dbe424cbc2f74809669866ffab36de",
+    "research/kalshi_profitability_2026-10-14/LOSS_AUDIT.md": "c43aa1a0d8700cd58c133c4b870fbb684a85ef17df5c483cdec83d1b35a9418c"
+  },
+  "primary_finding": {
+    "severity": "money-sensitive correctness",
+    "title": "Lock before-send guard omits fresh account and cash authority",
+    "references": [
+      "src/nightcrawler/speeddesk_live.py:2085 (_lock initial admission)",
+      "src/nightcrawler/speeddesk_live.py:2210 (_lock_guard)",
+      "src/nightcrawler/speeddesk_live.py:2233 (_send_guard contrast)",
+      "src/nightcrawler/speeddesk_live_model.py:699 (cash freshness)"
+    ],
+    "reproduction_source": "/workspace/kalshi-lock-guard-repro.py",
+    "reproduction_result": "/workspace/kalshi-lock-guard-repro.json",
+    "observed": "Actual fake create receives IOC after account age4s with fresh books, despite waiting reason account stale. Also sends with cash age6s and account age0; initial can_lock correctly rejects stale cash. Fresh normal, day-stop, total-loss-stop controls send; paper/shutdown controls block.",
+    "minimal_correction": "Recheck authentication/account waiting and finite cash freshness at transport guard. Preserve loss-reducing lock exemption from financial stops and its already reserved intent. Avoid naively calling can_lock: own reservation yields order_pending even for every fresh valid lock.",
+    "acceptance": [
+      "Fresh account/cash lock remains sendable, including day and total-loss stop.",
+      "After initial valid reservation then transport wait, account age>3 or cash age>cash_max_age rejects with fresh books. Include exact boundaries, future and missing/nonfinite cash/account timestamps.",
+      "Guard rejection remains a definitive unsent refusal; reservation/journal terminal state releases correctly and does not resend create.",
+      "Book stale, changed terms, foreign window, completed pair, paper/shutdown/integrity, no matching ask continue blocking.",
+      "No financial cap/stop/budget/ladder/model/Polymarket changes."
+    ]
+  },
+  "secondary_finding": {
+    "title": "Acknowledged cancel repeats under feed/gate reasons while order list lags",
+    "references": [
+      "src/nightcrawler/speeddesk_live.py:1197",
+      "src/nightcrawler/speeddesk_live.py:1212",
+      "src/nightcrawler/speeddesk_live.py:1481"
+    ],
+    "reproduction_source": "/workspace/kalshi-cancel-ack-repro.py",
+    "reproduction_result": "/workspace/kalshi-cancel-ack-repro.json",
+    "observed": "4 acknowledged cancels across6.3s for BTC-stale, missing-book, paper cases; stale-bid control1. Reservations retained in every case.",
+    "priority": "Secondary/defer scope; no current production occurrence established."
+  },
+  "actual_loss_attribution": {
+    "prior_window": "KXBTC15M-26OCT151330-30",
+    "recorded_pnl_usd": -0.2965,
+    "paired_cost": 1.294,
+    "fees": 0.0025,
+    "payout": 1,
+    "late_fill": "Up1@.964, taker fee.0025; lock intent limit.97 and accepted matching order IDs",
+    "decision_to_send_ms": 9.856907650828362,
+    "send_to_ack_ms": 321.6094430536032,
+    "interpretation": "Intended worst-case-loss-reducing lock exemption permits >$1 combined pair cost. Observed loss does not prove lock-policy bug, and recorded9.86ms pre-send latency does not evidence reproduced long-wait freshness omission. No dollars saved attributed to proposed correction.",
+    "target_window": "KXBTC15M-26OCT151345-45",
+    "target_pnl_usd": 0.11,
+    "target_interpretation": "Two maker fills Up1@.43 Down1@.46 fee0 paid.89 for1 payout; one profitable paired window is not validated edge.",
+    "historical_loss": "Published Oct13 sample -11.9154; strong descriptive adverse selection of filled makers, not executable reverse-strategy proof. Removing locks counterfactual unsupported; fixed-fill lock legs improved aggregate.8246."
+  },
+  "limits": [
+    "No network/production queries or mutations performed by reviewer.",
+    "No sealed TEST opened, thresholds tuned, financial settings changed, or source/public docs written.",
+    "Source and synthetic fakes establish correctness bug; live incidence, causal loss saving, execution speed improvement, and profitability remain unproven.",
+    "Ready for independent exact patch review once integration freezes candidate."
+  ]
+}

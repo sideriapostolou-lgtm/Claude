@@ -1,0 +1,48 @@
+"""Serial clean-environment subprocesses, exact commands/status/limits recorded."""
+import subprocess, time, json, hashlib, sys
+from pathlib import Path
+OUT=Path('/workspace/private-handoffs/claude-2026-10-15/checkpoint-profile')
+ROOT=Path('/workspace/nightcrawler-practice-checkpoint')
+PY='/workspace/shared/nightcrawler-venv/bin/python'
+manifest={'runs':[],'source_hashes':{},'fixture_protocol':'24 sparse windows/venue/completed day; older case35days*8; no full-day coverage or production equivalence','resource_scope':'each sequential child <=60s elapsed <=256MiB RSS/AS <=100MiB scratch; supervisor tiny, metrics per child'}
+for rel in ['src/nightcrawler/speeddesk.py','src/nightcrawler/speeddesk_model.py','src/nightcrawler/speeddesk_metrics.py','src/nightcrawler/speeddesk_scorecard.py','src/nightcrawler/ledger.py','tests/test_speeddesk_runtime.py','tests/test_speeddesk_snapshot_cache.py','tests/fakes.py','AGENTS.md','docs/COORDINATION.md','docs/MODEL_WORKFLOW.md','docs/WORKLOG.md']:
+    manifest['source_hashes'][rel]=hashlib.sha256((ROOT/rel).read_bytes()).hexdigest()
+manifest['harness_sha256']=hashlib.sha256((OUT/'profile_baseline.py').read_bytes()).hexdigest()
+manifest['git_head']=subprocess.check_output(['git','rev-parse','HEAD'],cwd=ROOT,text=True).strip()
+manifest['git_tree']=subprocess.check_output(['git','rev-parse','HEAD^{tree}'],cwd=ROOT,text=True).strip()
+manifest['git_status_before']=subprocess.check_output(['git','status','--porcelain'],cwd=ROOT,text=True)
+for fixture in ['1day','7days','31days','older35days']:
+    for mode, repeats in [('timing',3),('count',1),('allocation',1)]:
+        for rep in range(repeats):
+            label=f'{fixture}-{mode}-{rep+1}'
+            cmd=['/usr/bin/env','-i','PATH=/usr/bin:/bin',f'PYTHONPATH={ROOT}/src:{ROOT}/tests',PY,'-B',str(OUT/'profile_baseline.py'),fixture,mode]
+            row={'label':label,'command_argv':cmd,'stdout':f'{label}.stdout.json','stderr':f'{label}.stderr.txt','rss_peak_sampled_kib':0,'scratch_disk_peak_sampled_bytes':0}
+            start=time.monotonic(); proc=None
+            with (OUT/row['stdout']).open('w') as stdout,(OUT/row['stderr']).open('w') as stderr:
+                proc=subprocess.Popen(cmd,cwd=ROOT,stdout=stdout,stderr=stderr,env={})
+                while proc.poll() is None:
+                    elapsed=time.monotonic()-start
+                    try:
+                        status=Path(f'/proc/{proc.pid}/status').read_text()
+                        rss=next((int(line.split()[1]) for line in status.splitlines() if line.startswith('VmRSS:')),0)
+                    except FileNotFoundError: rss=0
+                    disk=sum(p.stat().st_size for scratch in OUT.glob('scratch-*') for p in scratch.rglob('*') if p.is_file())
+                    row['rss_peak_sampled_kib']=max(row['rss_peak_sampled_kib'],rss)
+                    row['scratch_disk_peak_sampled_bytes']=max(row['scratch_disk_peak_sampled_bytes'],disk)
+                    if elapsed>60 or rss>256*1024 or disk>100*1024**2:
+                        row['aborted_budget']={'elapsed_s':elapsed,'rss_kib':rss,'disk_bytes':disk}
+                        proc.kill(); break
+                    time.sleep(.02)
+                row['exit_code']=proc.wait()
+            row['elapsed_s']=time.monotonic()-start
+            row['stdout_sha256']=hashlib.sha256((OUT/row['stdout']).read_bytes()).hexdigest()
+            row['stderr_sha256']=hashlib.sha256((OUT/row['stderr']).read_bytes()).hexdigest()
+            manifest['runs'].append(row)
+            (OUT/'matrix_manifest.json').write_text(json.dumps(manifest,indent=2)+'\n')
+            print(label,row['exit_code'],round(row['elapsed_s'],3),flush=True)
+            if row['exit_code']!=0: print('FAILED STOP; originals retained',flush=True); sys.exit(1)
+manifest['git_status_after']=subprocess.check_output(['git','status','--porcelain'],cwd=ROOT,text=True)
+manifest['source_hashes_after']={rel:hashlib.sha256((ROOT/rel).read_bytes()).hexdigest() for rel in manifest['source_hashes']}
+assert manifest['source_hashes_after']==manifest['source_hashes']
+manifest['status']='passed'
+(OUT/'matrix_manifest.json').write_text(json.dumps(manifest,indent=2)+'\n')

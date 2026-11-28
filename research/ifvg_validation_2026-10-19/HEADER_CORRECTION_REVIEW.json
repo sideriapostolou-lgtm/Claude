@@ -1,0 +1,34 @@
+{
+  "schema_version": 1,
+  "review_date_utc": "2026-10-19",
+  "verdict": "NO_BLOCKING_HEADER_CORRECTION_FINDING",
+  "scope": "Independent real header-only inspection, correction diff review and invented-data checks before corrected replay",
+  "observed_first_line_bytes_repr": "b'timestamp,open,high,low,close,volume\\r\\n'",
+  "actual_price_values_read": false,
+  "actual_results_read": false,
+  "original_failed_attempt": "first_attempt/FAILURE.json",
+  "original_runner_sha256": "6e9d820aabc18776d7c6a316e9016dd24a94d87238f0f92a058eda5ce03fe76e",
+  "corrected_runner_sha256": "e71008ad7604de1464eb63519457644254596cc16e80c0d76ad86fbb1fe35b0c",
+  "corrected_evaluation_sha256": "f43925d6a91017094b1acd10885c413eb2e43c61a77e2e7d22f92f32e8097dcf",
+  "unchanged_simulator_sha256": "69caef01eb392211342524b2fc3bc695f5cb31eab9d6d64763a4fc4503c2615b",
+  "prior_review_preserved": true,
+  "correction": "New parse_csv_rows requires exact six-column header at first record and delegates remaining rows to unchanged parse_rows; run callsite uses wrapper",
+  "strategy_dates_costs_changed": false,
+  "checks": {
+    "independent_header_probes": 12,
+    "independent_header_probe_failures": 0,
+    "accepted": ["Exact header plus one invented valid OHLC row yields identical parsed bar to parse_rows"],
+    "rejected": ["Empty input", "Header only", "Missing header", "Repeated header before data", "Repeated header after data", "Changed case", "Missing column", "Extra column", "Trailing header whitespace", "Leading blank record", "Reordered columns"],
+    "independent_regressions_passed": 62,
+    "root_runner_regressions_passed": 14,
+    "pytest_output": "76 passed in 0.42s",
+    "archived_original_runner_hash_matches_prior_review": true
+  },
+  "blocking_findings": [],
+  "limitations": [
+    "Prior synthetic tests did not establish the real CSV header; the original metadata no-header assertion was incorrect and initial replay failed before OHLC parsing",
+    "Only the header bytes were read in this correction review; dataset row-count/coverage corrections are the separate data reviewer's evidence",
+    "Refreeze corrected runner and declaration before replay, preserve original manifest/source/failure, and keep exploratory proxy limitations",
+    "No old TEST, production, accounts or network accessed"
+  ]
+}

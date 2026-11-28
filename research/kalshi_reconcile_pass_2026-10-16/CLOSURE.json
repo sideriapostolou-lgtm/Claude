@@ -1,0 +1,262 @@
+{
+  "recorded_at": {
+    "current_time": "2026-10-16 07:50:15 UTC"
+  },
+  "scope": "PR71 bounded performance release, actual completed-day loss audit and documentation publication; profitable edge and broader tasks remain open",
+  "pr": {
+    "number": 71,
+    "merged": true,
+    "merged_at": "2026-10-16T07:37:31Z",
+    "merge_commit_sha": "275392733de1458692211506228f7dd30e60c693"
+  },
+  "candidate": "b5da12468a3136af84f43c12f07a5d0fb345c6a7",
+  "merge_tree": "cdd8212700011f90f4fd4438d59638370e5ad645",
+  "application_source_sha": "275392733de1458692211506228f7dd30e60c693",
+  "patch_sha256": "367397773be56b752d72cc84c06fd86484da5079095d39cb41e04fcefaad64ee",
+  "production": {
+    "deployment_id": "3e6e1589-0247-4eaa-b11c-e6117a72fa0b",
+    "status": "SUCCESS",
+    "at_utc": "2026-10-16T07:38:55.750Z",
+    "at_pacific": "October16,12:38:55.750AM PDT",
+    "exact_source_verified": true,
+    "polydesk_live_startup": true
+  },
+  "checks": {
+    "pytest_passed": 6173,
+    "existing_skips": 14,
+    "focused": 214,
+    "mypy_files": 132,
+    "ruff_files": 2,
+    "independent_patch": 30,
+    "root_retention": 86,
+    "independent_retention": 90,
+    "forecast_fields_retained": 15,
+    "cohort": 1105,
+    "actual_attribution": 889,
+    "archive_originals": 143,
+    "archive_parts": 41,
+    "byte_identical_local_audit_steps": 6
+  },
+  "readbacks": {
+    "candidate_files": 28,
+    "docs": {
+      "docs_sha": "420baeaebb024ef467cf3867a8a1fc9cf5225c55",
+      "verified": 59,
+      "source_blob": "767c97c23bb88027b204e09fe29083fc27c7d364",
+      "time": {
+        "current_time": "2026-10-16 07:49:26 UTC"
+      }
+    }
+  },
+  "docs_deployments": {
+    "request": {
+      "projectId": "75750847-85c0-41a3-a2a7-b7f2201a51e9",
+      "environmentId": "17f7b0e0-104c-4903-9484-0106748b3cdb",
+      "serviceId": "f84d3b52-002f-44cb-931e-bc9e3e097e97",
+      "limit": 3
+    },
+    "retrieved_after": {
+      "current_time": "2026-10-16 07:49:27 UTC"
+    },
+    "deployments": [
+      {
+        "id": "e31b457f-16e1-428b-a9ac-68b4cbbde731",
+        "status": "SKIPPED",
+        "createdAt": "2026-10-16T07:49:06.955Z",
+        "updatedAt": "2026-10-16T07:49:06.955Z",
+        "serviceId": "f84d3b52-002f-44cb-931e-bc9e3e097e97",
+        "environmentId": "17f7b0e0-104c-4903-9484-0106748b3cdb",
+        "url": null,
+        "snapshotId": null,
+        "canRollback": false,
+        "canRedeploy": false,
+        "regions": [],
+        "meta": {
+          "commitMessage": "docs: preserve PR71 runtime and actual loss evidence",
+          "commitHash": "420baeaebb024ef467cf3867a8a1fc9cf5225c55",
+          "branch": "claude/nightcrawler-memecoin-bot-Gwnb1S"
+        }
+      },
+      {
+        "id": "3e6e1589-0247-4eaa-b11c-e6117a72fa0b",
+        "status": "SUCCESS",
+        "createdAt": "2026-10-16T07:37:33.515Z",
+        "updatedAt": "2026-10-16T07:38:55.750Z",
+        "serviceId": "f84d3b52-002f-44cb-931e-bc9e3e097e97",
+        "environmentId": "17f7b0e0-104c-4903-9484-0106748b3cdb",
+        "url": null,
+        "snapshotId": "b6f47254-bb42-408d-8f00-38b180372d1d",
+        "canRollback": true,
+        "canRedeploy": true,
+        "regions": [
+          "us-east4-eqdc4a"
+        ],
+        "meta": {
+          "reason": "deploy",
+          "commitMessage": "Merge pull request #71 from sideriapostolou-lgtm/codex/profit-next-20261016\n\nperf: reuse Kalshi settlement membership (touches real money)",
+          "commitHash": "275392733de1458692211506228f7dd30e60c693",
+          "branch": "claude/nightcrawler-memecoin-bot-Gwnb1S"
+        }
+      },
+      {
+        "id": "f2691051-9714-4c4b-a9ff-8a297307b1f3",
+        "status": "SKIPPED",
+        "createdAt": "2026-10-16T07:26:21.059Z",
+        "updatedAt": "2026-10-16T07:26:21.059Z",
+        "serviceId": "f84d3b52-002f-44cb-931e-bc9e3e097e97",
+        "environmentId": "17f7b0e0-104c-4903-9484-0106748b3cdb",
+        "url": null,
+        "snapshotId": null,
+        "canRollback": false,
+        "canRedeploy": false,
+        "regions": [],
+        "meta": {
+          "commitMessage": "docs: reserve bounded reconciliation fix and actual-fill audit",
+          "commitHash": "3ced64366e4fb88bda50b6abf4bd2486363343f2",
+          "branch": "claude/nightcrawler-memecoin-bot-Gwnb1S"
+        }
+      }
+    ]
+  },
+  "health": {
+    "environment": {
+      "id": "17f7b0e0-104c-4903-9484-0106748b3cdb",
+      "name": "production"
+    },
+    "services": [
+      {
+        "serviceId": "f84d3b52-002f-44cb-931e-bc9e3e097e97",
+        "serviceName": "bot",
+        "state": "online",
+        "statusText": "Online",
+        "activeDeployments": [
+          {
+            "id": "3e6e1589-0247-4eaa-b11c-e6117a72fa0b",
+            "status": "SUCCESS",
+            "createdAt": "2026-10-16T07:37:33.515Z",
+            "statusUpdatedAt": "2026-10-16T07:38:55.750Z"
+          }
+        ],
+        "replicaStatus": {
+          "running": 1,
+          "crashed": 0,
+          "total": 1
+        },
+        "cronJob": null,
+        "issues": {
+          "warningCount": 0,
+          "criticalCount": 0
+        },
+        "recentFailures": 0,
+        "recentFailedDeployments": [],
+        "hasIssues": false,
+        "isCronJob": false,
+        "hasVolume": true
+      },
+      {
+        "serviceId": "736b1c8a-8311-4ee0-9043-d05f508cd821",
+        "serviceName": "kalshi-recorder",
+        "state": "online",
+        "statusText": "Online",
+        "activeDeployments": [
+          {
+            "id": "8453f919-b891-4aa7-8478-6fcf6b9c24ee",
+            "status": "SUCCESS",
+            "createdAt": "2026-10-14T16:36:40.384Z",
+            "statusUpdatedAt": "2026-10-14T16:38:15.302Z"
+          }
+        ],
+        "replicaStatus": {
+          "running": 1,
+          "crashed": 0,
+          "total": 1
+        },
+        "cronJob": null,
+        "issues": {
+          "warningCount": 0,
+          "criticalCount": 0
+        },
+        "recentFailures": 0,
+        "recentFailedDeployments": [],
+        "hasIssues": false,
+        "isCronJob": false,
+        "hasVolume": true
+      }
+    ],
+    "pendingWork": [
+      {
+        "id": "patch:9a84e13c-3caf-4a85-b5f5-d9a2fcb8a021",
+        "kind": "EnvironmentPatch",
+        "status": "staged",
+        "changes": [],
+        "startedAt": "2026-10-12T16:21:53.480Z",
+        "workflowId": "commitChanges/17f7b0e0-104c-4903-9484-0106748b3cdb/9a84e13c-3caf-4a85-b5f5-d9a2fcb8a021"
+      }
+    ],
+    "summary": {
+      "totalServices": 2,
+      "servicesWithIssues": 0,
+      "totalFailures": 0
+    }
+  },
+  "latest_financial_observation": {
+    "platform_timestamp": "2026-10-16T07:46:08.504069960Z",
+    "cash_usd": 25.1219,
+    "settled_pnl_usd": -24.61950000000001,
+    "day_pnl_usd": -5.127699999999999,
+    "mode": "paper",
+    "configured_mode": "live",
+    "reason": "Daily loss stop; no new risk until 00:00 UTC or the owner's day reset",
+    "caps": {
+      "window_usd": 10,
+      "open_usd": 20,
+      "day_stop_usd": 6,
+      "clip": 5,
+      "total_stop_usd": 10
+    },
+    "rung": 0,
+    "risk": 0,
+    "reservations": 0,
+    "orders": 0,
+    "positions": 0,
+    "queue": {
+      "mode": "diagnostic",
+      "version": 1,
+      "session_id": "5d3b81b927f647c8884fac58c85736c1",
+      "enabled": true,
+      "in_flight": false,
+      "buffered": 0,
+      "max_buffered": 64,
+      "cadence_s": 1,
+      "counts": {
+        "no_candidate": 330
+      },
+      "last": null,
+      "registry_size": 0,
+      "registry_limit": 32,
+      "coverage": "new_owned_ordinary_rest_acks_only; no_history_or_recovered_order_backfill",
+      "publication": "next_existing_checkpoint",
+      "financial_authority": false,
+      "error": null
+    }
+  },
+  "no_changes": [
+    "money amounts/clip",
+    "variables",
+    "stop/reset/resume budgets",
+    "orders",
+    "trading policy",
+    "Polymarket",
+    "recorder",
+    "sealed Family A TEST",
+    "TJR research/paper/live/automations"
+  ],
+  "remaining": [
+    "No profitable first-entry policy established; no size increase selected",
+    "Prospective fixed natural first-fill/markout/queue cohort; actual populated queue HTTP remains unverified",
+    "Remaining full-scan/account/practice fidelity cost",
+    "Recorder Phase0/raw volume/retention fit before Oct20/cost",
+    "Operating transfer/access/automation ownership",
+    "TJR last; historical profitability untested, authentic data/costs missing, paper not started/live disabled"
+  ]
+}

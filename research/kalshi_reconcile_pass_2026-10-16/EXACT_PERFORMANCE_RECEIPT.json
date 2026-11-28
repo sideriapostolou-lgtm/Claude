@@ -1,0 +1,13 @@
+{
+  "decision": "accept_exact_patch_subject_to_root_full_suite_and_release_retention",
+  "patch_sha256": "367397773be56b752d72cc84c06fd86484da5079095d39cb41e04fcefaad64ee",
+  "independent_cases": 8,
+  "total_targeted_passes": 30,
+  "full_suite": "pending_root",
+  "files": {
+    "EXACT_PERFORMANCE_REVIEW.md": "ae393e81f1da0b1a2ce67bf015e817778f9376e2fe00970440dd622f0267ba2c",
+    "EXACT_PERFORMANCE_HASHES.json": "0f99fca879d7a7603a61a458050b54f14eb9594ba729f947eba0b7f87274619d",
+    "PERFORMANCE_CHECK_RESULTS.json": "634c0ff9dfedab517bc30ebeb41b4fb92a860d4f72ab32dfc6847d2bf0909c9f",
+    "test_settlement_snapshot_independent.py": "bc8442a6167e1c6fb79ea6adc88ca472c48c3da47f97f2796a0b6883d7f396a7"
+  }
+}

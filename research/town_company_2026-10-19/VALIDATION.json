@@ -1,0 +1,57 @@
+{
+  "local_commit": "dcfca4536c49b6464259a4e6b17e9421a8ef6b39",
+  "base_commit": "9c2c776bfc4492b2ccf7e2b93122a07dc2025041",
+  "full_suite": {
+    "passed": 6336,
+    "failed": 2,
+    "skipped": 14,
+    "seconds": 398.43,
+    "completed_utc": "2026-10-20T01:38:36Z",
+    "failed_nodes": [
+      "tests/test_kalshi_arena_feed.py::test_a_flush_of_a_busy_market_costs_well_under_half_a_millisecond",
+      "tests/test_kalshi_arena_feed_backlog.py::test_production_depth_and_delayed_steps_keep_up[700-0.3]"
+    ],
+    "busy_p99_ms": 0.684,
+    "backlog_dropped_events": 1728,
+    "repeat_attempts": 0
+  },
+  "mypy": "pass, 136 source files",
+  "ruff": "pass, 8 changed Python files",
+  "secret_pattern_scan": "0 findings in 8 changed application/test files",
+  "focused_final": {
+    "passed": 38
+  },
+  "independent_review": "No remaining blocker in final source; earlier 53 tests pass (overlapping coverage).",
+  "browser": {
+    "viewports": [
+      [
+        390,
+        844
+      ],
+      [
+        320,
+        740
+      ],
+      [
+        820,
+        900
+      ],
+      [
+        1440,
+        1000
+      ],
+      [
+        1280,
+        400
+      ]
+    ],
+    "js_errors": 0,
+    "horizontal_overflow": false,
+    "final_six_markers": true,
+    "company_cards": 6,
+    "conditions": "Local empty financial fixture, lite=1, reduced motion, software WebGL, harness-only 250ms animation scheduling delay; not a phone performance claim.",
+    "preserved_failures": "Initial normal desktop screenshot timeout; initial narrow layout hid one marker, fixed and rerun."
+  },
+  "production_release": "blocked, not deployed",
+  "patch_sha256": "f5ff4d43132ba850186093e466bcde217c12e36528efe66df7c2464f321bf2b3"
+}

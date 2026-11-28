@@ -1,0 +1,19 @@
+{
+  "base": "ee0e4b520de29a8da0031d94eb90c0b0d5a4dc94",
+  "code_scope": "seven Python files only; root documentation changes excluded",
+  "complete_patch_sha256": "edaad1806ae064aa081019531bfc0d1084c8026510d86ce81b3f064d721ffc8e",
+  "files": {
+    "src/nightcrawler/speeddesk_live.py": "870158bafe8ef55c50c34262be24aa19b30e1916e0b15a34e978e926bfd3b4f2",
+    "src/nightcrawler/speeddesk_live_model.py": "38f2a455a68b5d0f2a311e692d223286c043d0c2f8cdedd2d16344b66f54ba42",
+    "tests/test_speeddesk_pair_protection.py": "e6dee0cde3cdd807a23e01ccc25f49acde8ca4aa6810d68a42bd65dfe507f6eb",
+    "tests/test_speeddesk_live_balancing.py": "fcc681aba10a2a1a430f4de974f90e44a2120d6894e92590bfeddb65075be30b",
+    "tests/test_speeddesk_live_pull.py": "2dc23854509ca6a2cad20c71c538208abf71b53222132a9f4b1fdfc37934d80b",
+    "tests/test_speeddesk_live_crash.py": "1b7c83510741f282ef51d9d24c09b04c8baffacbfd6daa5103afc87517cc2335",
+    "tests/test_speeddesk_speed2_risk_integration.py": "ba8aba142e045e883ea9117abeb8b049b883c5abc532d90b8ae79712bb15e328"
+  },
+  "focused_tests": "283 passed in 10.45s",
+  "ruff": "all seven changed Python files passed",
+  "diff_check": "passed",
+  "first_root_suite": "1 failed /6092 passed/14 skipped in302.35s; sole intentionally obsolete post-pair-admission test fixture; amended without source changes",
+  "previous_patch_sha256": "23a459ed7a9ef5b32b62309f9a263de26bd7b9a6894de96fcc3f42aef76cbe6a"
+}

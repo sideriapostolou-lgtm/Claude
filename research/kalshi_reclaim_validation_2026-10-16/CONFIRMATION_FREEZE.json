@@ -1,0 +1,143 @@
+{
+  "protocol": "RCL-2026-10-16-v1",
+  "created_utc": "2026-10-16T02:08:15.085746+00:00",
+  "independent_review_approved": true,
+  "tests_passed": true,
+  "required_paths_explicitly_checked": true,
+  "confirmation_data_absent": true,
+  "outcome_exposure": "DEV and fixed VAL inspected. No CONF data downloaded/read. No strategy thresholds changed. Test-only narrowing and collector metadata-path correction after VAL disclosed.",
+  "checks": "95fakepytestpass; strictmypy10files plusdefaultmypy2independentfiles; isolatedRuff12files+format",
+  "files": [
+    {
+      "path": "CHECKS.json",
+      "sha256": "c310499f638dd8c7881976655c9a8817047d1e9bee81a59e833faf721aee3bbe",
+      "published": true
+    },
+    {
+      "path": "PROTOCOL.md",
+      "sha256": "91ff9c423b9b0ea4a594db9815ff0dc654a447baef23be63fa5b98338b64707b",
+      "published": true
+    },
+    {
+      "path": "PROTOCOL_AMENDMENT_1.md",
+      "sha256": "ee1d913f19e71310835df7ed344ece22bf33f53225a3eaeb74e9d9707d5db938",
+      "published": true
+    },
+    {
+      "path": "RELEASE_METADATA.json",
+      "sha256": "697a426dab1a9155fc696c71654149869c711fe85b02101cce2eb0966fa9750d",
+      "published": false
+    },
+    {
+      "path": "REPRODUCTION.md",
+      "sha256": "c2381b09f3bcf22fb436ea3b6817f8fa8158fd14a50fb696bace7a04d27d7994",
+      "published": true
+    },
+    {
+      "path": "RULE_CARDS.json",
+      "sha256": "709bc21b38223442ca8844aedef99eb43e3dbac9096d85b3b8c5ee9b7d1319bc",
+      "published": true
+    },
+    {
+      "path": "astra-review/CORE_APPROVAL.json",
+      "sha256": "7633a161ae479052a0fa5201c319d578feb85e13f000559e91fada8e007d26fb",
+      "published": true
+    },
+    {
+      "path": "astra-review/CORE_REVIEW.md",
+      "sha256": "30ca691be257a342b41954920cf65af2ff05a5a212862213a4d27c0552ac0821",
+      "published": true
+    },
+    {
+      "path": "astra-review/DECLARATION_REVIEW.md",
+      "sha256": "5bdbc4ff7eec4f4a694d7dd9cc466cc02685380005ce7efd57e8952096d270ad",
+      "published": true
+    },
+    {
+      "path": "astra-review/FINAL_CODE_RENEWAL.json",
+      "sha256": "2465a5c93ac5b127bfb2dccb4b99374166fbfc30f16d18865d85dac416c52704",
+      "published": true
+    },
+    {
+      "path": "astra-review/RUNNER_APPROVAL.json",
+      "sha256": "99076762463d0d58d167e79b58a46f40d945f8cc53a9835d0d7a2cd9f875c592",
+      "published": true
+    },
+    {
+      "path": "astra-review/RUNNER_CHECKS.json",
+      "sha256": "b94a56135e79b278ff68eb54083202694848ff7fd210a8bba497b1fbce18c458",
+      "published": true
+    },
+    {
+      "path": "astra-review/RUNNER_REVIEW.md",
+      "sha256": "e98cff93826014fb4f9c159f1f0c6fe492f05c6e1f07ce3dc4e96bfa537eaecf",
+      "published": true
+    },
+    {
+      "path": "astra-review/test_independent_replay.py",
+      "sha256": "1181da327a53a6b6a1f5228ea5b20184db5af4e6b1a5cbfd8b0c13f434049b49",
+      "published": true
+    },
+    {
+      "path": "astra-review/test_independent_runner.py",
+      "sha256": "743ddd5b51277b10e59c91bc063197e9115ac564b865fb9c7fd6c47b3854fc03",
+      "published": true
+    },
+    {
+      "path": "root-data/fetch_data.py",
+      "sha256": "9cf50ddba2ab5c86d30971f6f30801149d92f4cd429f33ee1527eb732c23024f",
+      "published": true
+    },
+    {
+      "path": "root-data/test_fetch_data.py",
+      "sha256": "453cb9f0e9a7a4e23fc6703155b155230225baa7ff44bfca66a4e869a5f542ce",
+      "published": true
+    },
+    {
+      "path": "sol-replay/FROZEN_CONFIG.json",
+      "sha256": "7b9e7ac78dd429d54a0b5544aba99714a3b655dfe7afcb0c9936fb2b01f2361b",
+      "published": true
+    },
+    {
+      "path": "sol-replay/evaluate.py",
+      "sha256": "8bb3100c77c4fa3889e2b3f7691b55988b23df13ac44f10d0d96bbdfc02c9ca1",
+      "published": true
+    },
+    {
+      "path": "sol-replay/replay.py",
+      "sha256": "4bb43b0848b3fd3ad2eba73d90f9786f5ef4119ca4e60887d98dc3ab32be93da",
+      "published": true
+    },
+    {
+      "path": "sol-replay/run_partition.py",
+      "sha256": "99543027428a048227691579e82fda20ae34f673a171b01aa848acf280060fee",
+      "published": true
+    },
+    {
+      "path": "sol-replay/test_evaluate.py",
+      "sha256": "1d2a5a5324b9676f72fae4fd68fac1ba47c0e2e8042794f025608697d18e2100",
+      "published": true
+    },
+    {
+      "path": "sol-replay/test_replay.py",
+      "sha256": "6bfec48f5941eb929d3a8ff2dfd0806adfe225a18cf41388997874a47a493143",
+      "published": true
+    },
+    {
+      "path": "sol-replay/test_runner.py",
+      "sha256": "bc4d865014d7487d9d5d5ea9a956880d802b3dae7f34099cc613a67e1af36de8",
+      "published": true
+    },
+    {
+      "path": "sol-replay/test_verify_data.py",
+      "sha256": "8e6f9fb04c5e4683bdbebd6bde77daf281e46ee428f8418abd796263e9cf6dcb",
+      "published": true
+    },
+    {
+      "path": "sol-replay/verify_data.py",
+      "sha256": "cf5460292896392955d9ba360c7b9d36d96936fc6617287b524b94a6d3a1a52e",
+      "published": true
+    }
+  ],
+  "publication_requirement": "Root must publish/readback complete published=true files and this manifest before confirmation GET. Rawrelease metadata private; digest independently checked."
+}

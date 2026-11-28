@@ -1,0 +1,825 @@
+{
+  "base": "d1ee16f728612275fedb0d08846e127b0ad9b88d",
+  "source_sha256": "38f2a455a68b5d0f2a311e692d223286c043d0c2f8cdedd2d16344b66f54ba42",
+  "scope": "Pure fake risk-book calculations; not real account state, configuration authorization, ledger restore or fill predictions.",
+  "assumptions": [
+    "No pending or unsettled exposure",
+    "Fresh cash at evaluation",
+    "Total allowance assumed completely unused; actual current anchor not audited",
+    "Maker coefficient0,taker.07,directfee precision.0001",
+    "Strict budget inequalities and .01contract partition reserve retained"
+  ],
+  "scenarios": [
+    {
+      "case": "current_stopped",
+      "synthetic": true,
+      "cash": 25.1219,
+      "day_loss": 5.1277,
+      "day_cap": 6,
+      "clip": 5,
+      "total_remaining_assumed_fresh": 10,
+      "first_price": 0.48,
+      "first_unit_reserve": 0.48,
+      "opposing_price_cap": 0.51,
+      "hedge_unit_reserve": 0.53,
+      "pair_conservative_reserve": 1.01,
+      "fit": 0,
+      "reason": "day_stop",
+      "day_latched": true
+    },
+    {
+      "case": "illustrative_day_3_9851",
+      "synthetic": true,
+      "cash": 25.1219,
+      "day_loss": 3.9851,
+      "day_cap": 6,
+      "clip": 5,
+      "total_remaining_assumed_fresh": 10,
+      "first_price": 0.48,
+      "first_unit_reserve": 0.48,
+      "opposing_price_cap": 0.51,
+      "hedge_unit_reserve": 0.53,
+      "pair_conservative_reserve": 1.01,
+      "fit": 1,
+      "reason": "",
+      "day_latched": false
+    },
+    {
+      "case": "illustrative_day_3_9251",
+      "synthetic": true,
+      "cash": 25.1219,
+      "day_loss": 3.9251,
+      "day_cap": 6,
+      "clip": 5,
+      "total_remaining_assumed_fresh": 10,
+      "first_price": 0.48,
+      "first_unit_reserve": 0.48,
+      "opposing_price_cap": 0.51,
+      "hedge_unit_reserve": 0.53,
+      "pair_conservative_reserve": 1.01,
+      "fit": 2,
+      "reason": "",
+      "day_latched": false
+    },
+    {
+      "case": "fresh_current_caps",
+      "synthetic": true,
+      "cash": 25.1219,
+      "day_loss": 0,
+      "day_cap": 6,
+      "clip": 5,
+      "total_remaining_assumed_fresh": 10,
+      "first_price": 0.48,
+      "first_unit_reserve": 0.48,
+      "opposing_price_cap": 0.51,
+      "hedge_unit_reserve": 0.53,
+      "pair_conservative_reserve": 1.01,
+      "fit": 5,
+      "reason": "",
+      "day_latched": false
+    },
+    {
+      "case": "hypothetical_clip10_only",
+      "synthetic": true,
+      "cash": 25.1219,
+      "day_loss": 0,
+      "day_cap": 6,
+      "clip": 10,
+      "total_remaining_assumed_fresh": 10,
+      "first_price": 0.48,
+      "first_unit_reserve": 0.48,
+      "opposing_price_cap": 0.51,
+      "hedge_unit_reserve": 0.53,
+      "pair_conservative_reserve": 1.01,
+      "fit": 5,
+      "reason": "",
+      "day_latched": false
+    },
+    {
+      "case": "hypothetical_day12_clip10",
+      "synthetic": true,
+      "cash": 25.1219,
+      "day_loss": 0,
+      "day_cap": 12,
+      "clip": 10,
+      "total_remaining_assumed_fresh": 10,
+      "first_price": 0.48,
+      "first_unit_reserve": 0.48,
+      "opposing_price_cap": 0.51,
+      "hedge_unit_reserve": 0.53,
+      "pair_conservative_reserve": 1.01,
+      "fit": 9,
+      "reason": "",
+      "day_latched": false
+    },
+    {
+      "case": "deposit_does_not_clear_stop",
+      "synthetic": true,
+      "cash": 250,
+      "day_loss": 5.1277,
+      "day_cap": 6,
+      "clip": 5,
+      "total_remaining_assumed_fresh": 10,
+      "first_price": 0.48,
+      "first_unit_reserve": 0.48,
+      "opposing_price_cap": 0.51,
+      "hedge_unit_reserve": 0.53,
+      "pair_conservative_reserve": 1.01,
+      "fit": 0,
+      "reason": "day_stop",
+      "day_latched": true
+    }
+  ],
+  "prices": [
+    {
+      "price": 0.01,
+      "hedge_unit": 0.99,
+      "pair_reserve": 1.0,
+      "max_first_size": 9,
+      "reason": ""
+    },
+    {
+      "price": 0.02,
+      "hedge_unit": 0.98,
+      "pair_reserve": 1.0,
+      "max_first_size": 9,
+      "reason": ""
+    },
+    {
+      "price": 0.03,
+      "hedge_unit": 0.97,
+      "pair_reserve": 1.0,
+      "max_first_size": 9,
+      "reason": ""
+    },
+    {
+      "price": 0.04,
+      "hedge_unit": 0.96,
+      "pair_reserve": 1.0,
+      "max_first_size": 9,
+      "reason": ""
+    },
+    {
+      "price": 0.05,
+      "hedge_unit": 0.95,
+      "pair_reserve": 1.0,
+      "max_first_size": 9,
+      "reason": ""
+    },
+    {
+      "price": 0.06,
+      "hedge_unit": 0.94,
+      "pair_reserve": 1.0,
+      "max_first_size": 9,
+      "reason": ""
+    },
+    {
+      "price": 0.07,
+      "hedge_unit": 0.93,
+      "pair_reserve": 1.0,
+      "max_first_size": 9,
+      "reason": ""
+    },
+    {
+      "price": 0.08,
+      "hedge_unit": 0.92,
+      "pair_reserve": 1.0,
+      "max_first_size": 9,
+      "reason": ""
+    },
+    {
+      "price": 0.09,
+      "hedge_unit": 0.91,
+      "pair_reserve": 1.0,
+      "max_first_size": 9,
+      "reason": ""
+    },
+    {
+      "price": 0.1,
+      "hedge_unit": 0.9,
+      "pair_reserve": 1.0,
+      "max_first_size": 9,
+      "reason": ""
+    },
+    {
+      "price": 0.11,
+      "hedge_unit": 0.89,
+      "pair_reserve": 1.0,
+      "max_first_size": 9,
+      "reason": ""
+    },
+    {
+      "price": 0.12,
+      "hedge_unit": 0.88,
+      "pair_reserve": 1.0,
+      "max_first_size": 9,
+      "reason": ""
+    },
+    {
+      "price": 0.13,
+      "hedge_unit": 0.87,
+      "pair_reserve": 1.0,
+      "max_first_size": 9,
+      "reason": ""
+    },
+    {
+      "price": 0.14,
+      "hedge_unit": 0.86,
+      "pair_reserve": 1.0,
+      "max_first_size": 9,
+      "reason": ""
+    },
+    {
+      "price": 0.15,
+      "hedge_unit": 0.85,
+      "pair_reserve": 1.0,
+      "max_first_size": 9,
+      "reason": ""
+    },
+    {
+      "price": 0.16,
+      "hedge_unit": 0.84,
+      "pair_reserve": 1.0,
+      "max_first_size": 9,
+      "reason": ""
+    },
+    {
+      "price": 0.17,
+      "hedge_unit": 0.84,
+      "pair_reserve": 1.01,
+      "max_first_size": 9,
+      "reason": ""
+    },
+    {
+      "price": 0.18,
+      "hedge_unit": 0.83,
+      "pair_reserve": 1.01,
+      "max_first_size": 9,
+      "reason": ""
+    },
+    {
+      "price": 0.19,
+      "hedge_unit": 0.82,
+      "pair_reserve": 1.01,
+      "max_first_size": 9,
+      "reason": ""
+    },
+    {
+      "price": 0.2,
+      "hedge_unit": 0.81,
+      "pair_reserve": 1.01,
+      "max_first_size": 9,
+      "reason": ""
+    },
+    {
+      "price": 0.21,
+      "hedge_unit": 0.8,
+      "pair_reserve": 1.01,
+      "max_first_size": 9,
+      "reason": ""
+    },
+    {
+      "price": 0.22,
+      "hedge_unit": 0.79,
+      "pair_reserve": 1.01,
+      "max_first_size": 9,
+      "reason": ""
+    },
+    {
+      "price": 0.23,
+      "hedge_unit": 0.78,
+      "pair_reserve": 1.01,
+      "max_first_size": 9,
+      "reason": ""
+    },
+    {
+      "price": 0.24,
+      "hedge_unit": 0.77,
+      "pair_reserve": 1.01,
+      "max_first_size": 9,
+      "reason": ""
+    },
+    {
+      "price": 0.25,
+      "hedge_unit": 0.76,
+      "pair_reserve": 1.01,
+      "max_first_size": 9,
+      "reason": ""
+    },
+    {
+      "price": 0.26,
+      "hedge_unit": 0.75,
+      "pair_reserve": 1.01,
+      "max_first_size": 9,
+      "reason": ""
+    },
+    {
+      "price": 0.27,
+      "hedge_unit": 0.74,
+      "pair_reserve": 1.01,
+      "max_first_size": 9,
+      "reason": ""
+    },
+    {
+      "price": 0.28,
+      "hedge_unit": 0.73,
+      "pair_reserve": 1.01,
+      "max_first_size": 9,
+      "reason": ""
+    },
+    {
+      "price": 0.29,
+      "hedge_unit": 0.72,
+      "pair_reserve": 1.01,
+      "max_first_size": 9,
+      "reason": ""
+    },
+    {
+      "price": 0.3,
+      "hedge_unit": 0.71,
+      "pair_reserve": 1.01,
+      "max_first_size": 9,
+      "reason": ""
+    },
+    {
+      "price": 0.31,
+      "hedge_unit": 0.7,
+      "pair_reserve": 1.01,
+      "max_first_size": 9,
+      "reason": ""
+    },
+    {
+      "price": 0.32,
+      "hedge_unit": 0.69,
+      "pair_reserve": 1.01,
+      "max_first_size": 9,
+      "reason": ""
+    },
+    {
+      "price": 0.33,
+      "hedge_unit": 0.68,
+      "pair_reserve": 1.01,
+      "max_first_size": 9,
+      "reason": ""
+    },
+    {
+      "price": 0.34,
+      "hedge_unit": 0.67,
+      "pair_reserve": 1.01,
+      "max_first_size": 9,
+      "reason": ""
+    },
+    {
+      "price": 0.35,
+      "hedge_unit": 0.66,
+      "pair_reserve": 1.01,
+      "max_first_size": 9,
+      "reason": ""
+    },
+    {
+      "price": 0.36,
+      "hedge_unit": 0.65,
+      "pair_reserve": 1.01,
+      "max_first_size": 9,
+      "reason": ""
+    },
+    {
+      "price": 0.37,
+      "hedge_unit": 0.64,
+      "pair_reserve": 1.01,
+      "max_first_size": 9,
+      "reason": ""
+    },
+    {
+      "price": 0.38,
+      "hedge_unit": 0.63,
+      "pair_reserve": 1.01,
+      "max_first_size": 9,
+      "reason": ""
+    },
+    {
+      "price": 0.39,
+      "hedge_unit": 0.62,
+      "pair_reserve": 1.01,
+      "max_first_size": 9,
+      "reason": ""
+    },
+    {
+      "price": 0.4,
+      "hedge_unit": 0.61,
+      "pair_reserve": 1.01,
+      "max_first_size": 9,
+      "reason": ""
+    },
+    {
+      "price": 0.41,
+      "hedge_unit": 0.6,
+      "pair_reserve": 1.01,
+      "max_first_size": 9,
+      "reason": ""
+    },
+    {
+      "price": 0.42,
+      "hedge_unit": 0.59,
+      "pair_reserve": 1.01,
+      "max_first_size": 9,
+      "reason": ""
+    },
+    {
+      "price": 0.43,
+      "hedge_unit": 0.58,
+      "pair_reserve": 1.01,
+      "max_first_size": 9,
+      "reason": ""
+    },
+    {
+      "price": 0.44,
+      "hedge_unit": 0.57,
+      "pair_reserve": 1.01,
+      "max_first_size": 9,
+      "reason": ""
+    },
+    {
+      "price": 0.45,
+      "hedge_unit": 0.56,
+      "pair_reserve": 1.01,
+      "max_first_size": 9,
+      "reason": ""
+    },
+    {
+      "price": 0.46,
+      "hedge_unit": 0.55,
+      "pair_reserve": 1.01,
+      "max_first_size": 9,
+      "reason": ""
+    },
+    {
+      "price": 0.47,
+      "hedge_unit": 0.54,
+      "pair_reserve": 1.01,
+      "max_first_size": 9,
+      "reason": ""
+    },
+    {
+      "price": 0.48,
+      "hedge_unit": 0.53,
+      "pair_reserve": 1.01,
+      "max_first_size": 9,
+      "reason": ""
+    },
+    {
+      "price": 0.49,
+      "hedge_unit": 0.52,
+      "pair_reserve": 1.01,
+      "max_first_size": 9,
+      "reason": ""
+    },
+    {
+      "price": 0.5,
+      "hedge_unit": 0.51,
+      "pair_reserve": 1.01,
+      "max_first_size": 9,
+      "reason": ""
+    },
+    {
+      "price": 0.51,
+      "hedge_unit": 0.5,
+      "pair_reserve": 1.01,
+      "max_first_size": 9,
+      "reason": ""
+    },
+    {
+      "price": 0.52,
+      "hedge_unit": 0.49,
+      "pair_reserve": 1.01,
+      "max_first_size": 9,
+      "reason": ""
+    },
+    {
+      "price": 0.53,
+      "hedge_unit": 0.48,
+      "pair_reserve": 1.01,
+      "max_first_size": 9,
+      "reason": ""
+    },
+    {
+      "price": 0.54,
+      "hedge_unit": 0.47,
+      "pair_reserve": 1.01,
+      "max_first_size": 9,
+      "reason": ""
+    },
+    {
+      "price": 0.55,
+      "hedge_unit": 0.46,
+      "pair_reserve": 1.01,
+      "max_first_size": 9,
+      "reason": ""
+    },
+    {
+      "price": 0.56,
+      "hedge_unit": 0.45,
+      "pair_reserve": 1.01,
+      "max_first_size": 9,
+      "reason": ""
+    },
+    {
+      "price": 0.57,
+      "hedge_unit": 0.44,
+      "pair_reserve": 1.01,
+      "max_first_size": 9,
+      "reason": ""
+    },
+    {
+      "price": 0.58,
+      "hedge_unit": 0.43,
+      "pair_reserve": 1.01,
+      "max_first_size": 9,
+      "reason": ""
+    },
+    {
+      "price": 0.59,
+      "hedge_unit": 0.42,
+      "pair_reserve": 1.01,
+      "max_first_size": 9,
+      "reason": ""
+    },
+    {
+      "price": 0.6,
+      "hedge_unit": 0.41,
+      "pair_reserve": 1.01,
+      "max_first_size": 9,
+      "reason": ""
+    },
+    {
+      "price": 0.61,
+      "hedge_unit": 0.4,
+      "pair_reserve": 1.01,
+      "max_first_size": 9,
+      "reason": ""
+    },
+    {
+      "price": 0.62,
+      "hedge_unit": 0.39,
+      "pair_reserve": 1.01,
+      "max_first_size": 9,
+      "reason": ""
+    },
+    {
+      "price": 0.63,
+      "hedge_unit": 0.38,
+      "pair_reserve": 1.01,
+      "max_first_size": 9,
+      "reason": ""
+    },
+    {
+      "price": 0.64,
+      "hedge_unit": 0.37,
+      "pair_reserve": 1.01,
+      "max_first_size": 9,
+      "reason": ""
+    },
+    {
+      "price": 0.65,
+      "hedge_unit": 0.36,
+      "pair_reserve": 1.01,
+      "max_first_size": 9,
+      "reason": ""
+    },
+    {
+      "price": 0.66,
+      "hedge_unit": 0.35,
+      "pair_reserve": 1.01,
+      "max_first_size": 9,
+      "reason": ""
+    },
+    {
+      "price": 0.67,
+      "hedge_unit": 0.34,
+      "pair_reserve": 1.01,
+      "max_first_size": 9,
+      "reason": ""
+    },
+    {
+      "price": 0.68,
+      "hedge_unit": 0.33,
+      "pair_reserve": 1.01,
+      "max_first_size": 9,
+      "reason": ""
+    },
+    {
+      "price": 0.69,
+      "hedge_unit": 0.32,
+      "pair_reserve": 1.01,
+      "max_first_size": 9,
+      "reason": ""
+    },
+    {
+      "price": 0.7,
+      "hedge_unit": 0.31,
+      "pair_reserve": 1.01,
+      "max_first_size": 9,
+      "reason": ""
+    },
+    {
+      "price": 0.71,
+      "hedge_unit": 0.3,
+      "pair_reserve": 1.01,
+      "max_first_size": 9,
+      "reason": ""
+    },
+    {
+      "price": 0.72,
+      "hedge_unit": 0.29,
+      "pair_reserve": 1.01,
+      "max_first_size": 9,
+      "reason": ""
+    },
+    {
+      "price": 0.73,
+      "hedge_unit": 0.28,
+      "pair_reserve": 1.01,
+      "max_first_size": 9,
+      "reason": ""
+    },
+    {
+      "price": 0.74,
+      "hedge_unit": 0.27,
+      "pair_reserve": 1.01,
+      "max_first_size": 9,
+      "reason": ""
+    },
+    {
+      "price": 0.75,
+      "hedge_unit": 0.26,
+      "pair_reserve": 1.01,
+      "max_first_size": 9,
+      "reason": ""
+    },
+    {
+      "price": 0.76,
+      "hedge_unit": 0.25,
+      "pair_reserve": 1.01,
+      "max_first_size": 9,
+      "reason": ""
+    },
+    {
+      "price": 0.77,
+      "hedge_unit": 0.24,
+      "pair_reserve": 1.01,
+      "max_first_size": 9,
+      "reason": ""
+    },
+    {
+      "price": 0.78,
+      "hedge_unit": 0.23,
+      "pair_reserve": 1.01,
+      "max_first_size": 9,
+      "reason": ""
+    },
+    {
+      "price": 0.79,
+      "hedge_unit": 0.22,
+      "pair_reserve": 1.01,
+      "max_first_size": 9,
+      "reason": ""
+    },
+    {
+      "price": 0.8,
+      "hedge_unit": 0.21,
+      "pair_reserve": 1.01,
+      "max_first_size": 9,
+      "reason": ""
+    },
+    {
+      "price": 0.81,
+      "hedge_unit": 0.2,
+      "pair_reserve": 1.01,
+      "max_first_size": 9,
+      "reason": ""
+    },
+    {
+      "price": 0.82,
+      "hedge_unit": 0.18,
+      "pair_reserve": 1.0,
+      "max_first_size": 9,
+      "reason": ""
+    },
+    {
+      "price": 0.83,
+      "hedge_unit": 0.17,
+      "pair_reserve": 1.0,
+      "max_first_size": 9,
+      "reason": ""
+    },
+    {
+      "price": 0.84,
+      "hedge_unit": 0.16,
+      "pair_reserve": 1.0,
+      "max_first_size": 9,
+      "reason": ""
+    },
+    {
+      "price": 0.85,
+      "hedge_unit": 0.15,
+      "pair_reserve": 1.0,
+      "max_first_size": 9,
+      "reason": ""
+    },
+    {
+      "price": 0.86,
+      "hedge_unit": 0.14,
+      "pair_reserve": 1.0,
+      "max_first_size": 9,
+      "reason": ""
+    },
+    {
+      "price": 0.87,
+      "hedge_unit": 0.13,
+      "pair_reserve": 1.0,
+      "max_first_size": 9,
+      "reason": ""
+    },
+    {
+      "price": 0.88,
+      "hedge_unit": 0.12,
+      "pair_reserve": 1.0,
+      "max_first_size": 9,
+      "reason": ""
+    },
+    {
+      "price": 0.89,
+      "hedge_unit": 0.11,
+      "pair_reserve": 1.0,
+      "max_first_size": 9,
+      "reason": ""
+    },
+    {
+      "price": 0.9,
+      "hedge_unit": 0.1,
+      "pair_reserve": 1.0,
+      "max_first_size": 9,
+      "reason": ""
+    },
+    {
+      "price": 0.91,
+      "hedge_unit": 0.09,
+      "pair_reserve": 1.0,
+      "max_first_size": 9,
+      "reason": ""
+    },
+    {
+      "price": 0.92,
+      "hedge_unit": 0.08,
+      "pair_reserve": 1.0,
+      "max_first_size": 9,
+      "reason": ""
+    },
+    {
+      "price": 0.93,
+      "hedge_unit": 0.07,
+      "pair_reserve": 1.0,
+      "max_first_size": 9,
+      "reason": ""
+    },
+    {
+      "price": 0.94,
+      "hedge_unit": 0.06,
+      "pair_reserve": 1.0,
+      "max_first_size": 9,
+      "reason": ""
+    },
+    {
+      "price": 0.95,
+      "hedge_unit": 0.05,
+      "pair_reserve": 1.0,
+      "max_first_size": 9,
+      "reason": ""
+    },
+    {
+      "price": 0.96,
+      "hedge_unit": 0.04,
+      "pair_reserve": 1.0,
+      "max_first_size": 9,
+      "reason": ""
+    },
+    {
+      "price": 0.97,
+      "hedge_unit": 0.03,
+      "pair_reserve": 1.0,
+      "max_first_size": 9,
+      "reason": ""
+    },
+    {
+      "price": 0.98,
+      "hedge_unit": 0.02,
+      "pair_reserve": 1.0,
+      "max_first_size": 9,
+      "reason": ""
+    }
+  ],
+  "checks": {
+    "seven_expected_sizes": true,
+    "all98_valid_starter_prices_fit9_not10": true
+  }
+}

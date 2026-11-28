@@ -1,0 +1,167 @@
+{
+ "frozen_utc": "2026-10-08 20:14:59",
+ "finalists": [
+  {
+   "name": "S4_vol_dip_wideband_10k",
+   "family_file": "f1-dip-rebound-plus.json",
+   "strategy_class": "DipReboundPlus",
+   "module": "research/lab/strategies/f1-dip-rebound-plus.py",
+   "params": {
+    "dd_min": 0.4,
+    "dd_max": 0.8,
+    "max_reb": 1.6,
+    "confirm": "vol",
+    "min_age_min": 0.0,
+    "min_vol_usd": 10000.0,
+    "exit": "fixed",
+    "stop_pct": 0.2,
+    "tp_pct": 0.4,
+    "max_hold_min": 60.0
+   },
+   "researcher_verdict": "REJECTED - fails: train_ci_above_0, validation_ci_above_0, validation_portfolio_positive, train_without_top3_positive, validation_without_best_coin_positive, validation_without_top3_positive, train_costs_x2_positive, validation_costs_x2_positive, validation_wick_worst_positive",
+   "recommend_test": false,
+   "validation_reproduced": true,
+   "validation_mismatches": []
+  },
+  {
+   "name": "S1_vol_dip_fixed",
+   "family_file": "f1-dip-rebound-plus.json",
+   "strategy_class": "DipReboundPlus",
+   "module": "research/lab/strategies/f1-dip-rebound-plus.py",
+   "params": {
+    "dd_min": 0.6,
+    "dd_max": 0.8,
+    "max_reb": 2.0,
+    "confirm": "vol",
+    "min_age_min": 0.0,
+    "min_vol_usd": 2000.0,
+    "exit": "fixed",
+    "stop_pct": 0.2,
+    "tp_pct": 0.4,
+    "max_hold_min": 60.0,
+    "max_entries": 1
+   },
+   "researcher_verdict": "REJECTED - fails: train_ci_above_0, validation_avg_positive, validation_ci_above_0, validation_portfolio_positive, train_without_top3_positive, validation_without_best_coin_positive, validation_without_top3_positive, train_costs_x2_positive, validation_costs_x2_positive, train_wick_worst_positive, validation_wick_worst_positive",
+   "recommend_test": false,
+   "validation_reproduced": true,
+   "validation_mismatches": []
+  },
+  {
+   "name": "F4_farm_climb_gbt_tp30_sl15_h15_q98",
+   "family_file": "f4-learned.json",
+   "strategy_class": "F4Learned",
+   "module": "research/lab/strategies/f4-learned.py",
+   "params": {
+    "label": "tp30_sl15_h15",
+    "model": "gbt",
+    "variant": "all",
+    "q": 0.98,
+    "model_file": "LAB/f4/models/tp30_sl15_h15_gbt.pkl",
+    "scorer": "ModelScorer(FoldEnsemble.load(model_file), F4Params.gate)",
+    "strategy": {
+     "threshold": 0.7390078621388908,
+     "tp": 0.3,
+     "sl": 0.15,
+     "hold_min": 15.0,
+     "max_entries": 1,
+     "max_age_min": 360.0,
+     "min_vol10_usd": 1000.0,
+     "min_mcap_sol": 30.0
+    }
+   },
+   "researcher_verdict": "REJECTED - fails: validation_ci_above_0, validation_wick_worst_portfolio_positive",
+   "recommend_test": false,
+   "validation_reproduced": true,
+   "validation_mismatches": [],
+   "model_sha256": "def79da0369b86bdfc8da769d3dc9452346f2c084f03756338aa00f2a0cdf0aa"
+  },
+  {
+   "name": "F4_farm_climb_gbt_tp30_sl15_h15_q99",
+   "family_file": "f4-learned.json",
+   "strategy_class": "F4Learned",
+   "module": "research/lab/strategies/f4-learned.py",
+   "params": {
+    "label": "tp30_sl15_h15",
+    "model": "gbt",
+    "variant": "all",
+    "q": 0.99,
+    "model_file": "LAB/f4/models/tp30_sl15_h15_gbt.pkl",
+    "scorer": "ModelScorer(FoldEnsemble.load(model_file), F4Params.gate)",
+    "strategy": {
+     "threshold": 0.7783890001619868,
+     "tp": 0.3,
+     "sl": 0.15,
+     "hold_min": 15.0,
+     "max_entries": 1,
+     "max_age_min": 360.0,
+     "min_vol10_usd": 1000.0,
+     "min_mcap_sol": 30.0
+    }
+   },
+   "researcher_verdict": "REJECTED - fails: validation_ci_above_0, validation_at_least_15_trades",
+   "recommend_test": false,
+   "validation_reproduced": true,
+   "validation_mismatches": [],
+   "model_sha256": "def79da0369b86bdfc8da769d3dc9452346f2c084f03756338aa00f2a0cdf0aa"
+  }
+ ],
+ "m": 4,
+ "configs_tried": {
+  "f1-dip-rebound-plus": {
+   "train": 828,
+   "validation": 6,
+   "unlogged": "event study on TRAIN to design the grid"
+  },
+  "f2-momentum": {
+   "train": 982,
+   "validation": 19,
+   "unlogged": "68 exploratory event-study checks on TRAIN"
+  },
+  "f3-lifecycle": {
+   "train": 487,
+   "validation": 8,
+   "unlogged": "13 logged event-study cuts (149 groups) + 3 drill-downs"
+  },
+  "f4-learned": {
+   "train": 240,
+   "validation": 5,
+   "unlogged": "none reported"
+  }
+ },
+ "configs_tried_total": {
+  "train": 2537,
+  "validation": 38,
+  "all": 2575
+ },
+ "code_sha256": {
+  "harness.py": "99dab33ee8948ccf1cbf2ea8e824e8c0542bbf1fe465b5c3dfd33b0e314a6f07",
+  "costs.py": "699fd1876da47e594e36391e5dd0c8e154cf781e20637e210e91217bbef62aed",
+  "strategies/f1-dip-rebound-plus.py": "179dc8c9ed0cc7ee4e520ee8783232b5b3d5e3b8c11d22b7bcc670b0e8d76a3a",
+  "strategies/f4-learned.py": "8ad117b6ced1d5a9e44af12c161a58a7f34057b4b1f57a5fb1c7d1d89ffd249f",
+  "f4_learned_search.py": "90dc5973f25831e12180f2d52a10a89c4d85b3d60b953c09bbab72b2bc7519f0",
+  "baseline.py": "402285ba3cb6e08dad791fa40df8d1bdb9c69b18b715f60ae56cb6b14e006399",
+  "judge/judge.py": "97cdb08c7ac4d21623c5c3c8fd658698007ea19471e1067d613525aa76766146"
+ },
+ "splits_sha256": "d5b273950de03880419800b707c406a31f87a6f0827b392bb7252ef13d8e9818",
+ "decision_rule": {
+  "family_for_adjustment": "the finalists evaluated on TEST (Holm over m = number of frozen finalists)",
+  "winner_requires_all": {
+   "W1_trades": "per-coin TEST trades >= 30",
+   "W2_net_profitable": "per-coin TEST mean net return per trade > 0 AND $100 portfolio total return > 0",
+   "W3_adjusted_significance": "Holm-adjusted one-sided coin-bootstrap p < 0.05 AND the Bonferroni (1 - 0.05/m two-sided) coin-bootstrap CI lower bound > 0",
+   "W4_costs_x1.5": "per-coin mean > 0 AND portfolio return > 0 with every cost component x1.5",
+   "W5_latency": "per-coin mean > 0 AND portfolio return > 0 with fills one extra bar later",
+   "W6_concentration": "per-coin P&L > 0 without the best coin AND without the top-3 coins; portfolio return > 0 re-run without the best coin",
+   "W7_fill_realism": "per-coin mean > 0 with rug-aware stop fills (a stop fills no better than the bar close)",
+   "W8_lookahead": "audit_lookahead on the TEST coins returns no problems"
+  },
+  "informational_only": [
+   "Bonferroni across every configuration tried in the lab (deflated view)",
+   "costs x2, wick_fill=worst",
+   "baselines on TEST: random entry, buy at graduation hold 60 min, nightcrawler default",
+   "validation-stage verdicts of the researchers (all finalists were marked REJECTED / recommend_test=false)"
+  ],
+  "no_retuning": "Parameters, thresholds and model files are frozen by hash; nothing is changed after TEST."
+ },
+ "test_cost_model": "CostModel() defaults; wick_fill='half'; $20 per-coin; $100 portfolio"
+}

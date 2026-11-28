@@ -1,0 +1,94 @@
+{
+  "scope": "Local browser simulation only; all account figures in this receipt are synthetic. Not production money, execution or profitability evidence.",
+  "checked_at": "2026-10-16T18:42:49Z",
+  "checked_at_pacific": "October 16, 2026, 11:42 AM PDT",
+  "viewport_sizes": [
+    "390x844",
+    "320x640",
+    "1440x960"
+  ],
+  "errors": [],
+  "checks": [
+    {
+      "name": "money_while_full_page_blocked",
+      "fullPending": 1,
+      "fastReplies": 1,
+      "cash": "$25.00",
+      "profit": "+$0.10",
+      "total": "\u2212$22.90",
+      "mode": "REAL MONEY \u00b7 Kalshi",
+      "blocker": "Real orders enabled \u00b7 waiting for the next recorded decision.",
+      "pageStale": false,
+      "pmCurrent": false
+    },
+    {
+      "name": "stale_cash_independent_profit",
+      "cash": "\u2014",
+      "profit": "+$0.10",
+      "total": "\u2212$22.90",
+      "mode": "REAL MONEY \u00b7 Kalshi",
+      "blocker": "Real orders enabled \u00b7 waiting for the next recorded decision.",
+      "pageStale": false,
+      "pmCurrent": false
+    },
+    {
+      "name": "incomplete_book_keeps_cash",
+      "cash": "$25.00",
+      "profit": "\u2014",
+      "total": "\u2014",
+      "mode": "REAL MONEY \u00b7 Kalshi",
+      "blocker": "Real orders enabled \u00b7 waiting for the next recorded decision.",
+      "pageStale": false,
+      "pmCurrent": false
+    },
+    {
+      "name": "401_clears_private_values",
+      "cash": "\u2014",
+      "profit": "\u2014",
+      "total": "\u2014",
+      "mode": "Locked \u00b7 sign in again",
+      "blocker": "Sign in again to load private account data.",
+      "pageStale": false,
+      "pmCurrent": false
+    },
+    {
+      "name": "authenticated_recovery",
+      "cash": "$25.00",
+      "profit": "+$0.10",
+      "total": "\u2212$22.90",
+      "mode": "REAL MONEY \u00b7 Kalshi",
+      "blocker": "Real orders enabled \u00b7 waiting for the next recorded decision.",
+      "pageStale": false,
+      "pmCurrent": false
+    },
+    {
+      "name": "selected_station",
+      "dockVisible": "none",
+      "headerBottom": 336.125,
+      "selectionTop": 681.40625
+    },
+    {
+      "name": "small",
+      "horizontalOverflow": false,
+      "headerBottom": 268.296875,
+      "dockTop": 503.625,
+      "blockerFont": "13px",
+      "canvas": true
+    },
+    {
+      "name": "desktop",
+      "horizontalOverflow": false,
+      "headerBottom": 348.125,
+      "dockTop": 763.046875,
+      "blockerFont": "14px",
+      "canvas": true
+    },
+    {
+      "name": "money_details",
+      "hasCumulative": true,
+      "hasLoss": true,
+      "hasSeparatePM": true,
+      "hasGrossCostNote": true
+    }
+  ]
+}

@@ -1,0 +1,88 @@
+"""Offline byte restoration and bounded original-loss arithmetic; no network or orders.
+
+Run: python REPRODUCE.py.txt [archive_directory] [optional_new_restore_directory]
+The full application tests need the matching repository and its dev dependencies.
+"""
+from __future__ import annotations
+import base64, hashlib, json, lzma, math, pathlib, re, subprocess, sys, tempfile
+
+def sha(value):
+    return hashlib.sha256(value).hexdigest()
+
+def restore(folder, target):
+    manifest=json.loads((folder/'RUNTIME_MANIFEST.json').read_text())
+    encoded=[]
+    for row in manifest['parts']:
+        raw=(folder/row['path']).read_bytes()
+        assert len(raw)==row['bytes'] and sha(raw)==row['sha256'], row['path']
+        encoded.append(raw.strip())
+    packed=base64.b64decode(b''.join(encoded),validate=True)
+    assert sha(packed)==manifest['archive_sha256']
+    raw=lzma.decompress(packed)
+    assert sha(raw)==manifest['unpacked_sha256']
+    restored=json.loads(raw)['files']
+    assert len(restored)==len(manifest['files'])
+    for expected,row in zip(manifest['files'],restored,strict=True):
+        name=pathlib.Path(row['path'])
+        assert not name.is_absolute() and '..' not in name.parts
+        assert expected['path']==row['path']
+        data=row['text'].encode()
+        assert len(data)==expected['bytes'] and sha(data)==expected['sha256'],str(name)
+        dest=target/name;dest.parent.mkdir(parents=True,exist_ok=True);dest.write_bytes(data)
+    return len(restored)
+
+def financial(target):
+    outcomes=[]
+    for name,ticker,count,want in [
+      ('last_pair_loss.json','KXBTC15M-26OCT160130-30',2,-.7726),
+      ('last_unpaired_loss.json','KXBTC15M-26OCT160200-00',1,-.44)]:
+        original=json.loads((target/name).read_text())
+        rows=original['result']['structuredContent']['deploy'];events=[]
+        for native in rows:
+            matched=re.search(r'\b(speeddesk_[a-z_]+) (\{.*)$',native['message'])
+            if matched:
+                try: payload=json.loads(matched[2])
+                except json.JSONDecodeError: continue
+                if payload.get('window')==ticker:events.append((matched[1],payload))
+        fills=[v for kind,v in events if kind=='speeddesk_live_fill']
+        settlements=[v for kind,v in events if kind=='speeddesk_live_settlement']
+        twin=[v for kind,v in events if kind=='speeddesk_twin_settlement']
+        assert len(fills)==count and len({x['fill_id'] for x in fills})==count
+        assert len(settlements)==len(twin)==1
+        settled=settlements[0]
+        cost=sum(v['price']*v['size'] for v in fills)
+        fee=sum(v['fee_usd'] for v in fills)
+        payout=sum(v['size'] for v in fills if (v['side']=='up')==settled['up_wins'])
+        assert math.isclose(cost,settled['cost_usd'],abs_tol=1e-9)
+        assert math.isclose(fee,settled['fee_usd'],abs_tol=1e-9)
+        assert math.isclose(payout-cost-fee,want,abs_tol=1e-9)
+        assert math.isclose(settled['pnl_usd'],want,abs_tol=1e-9)
+        assert math.isclose(settled['locked_usd']+settled['direction_usd'],want,abs_tol=1e-9)
+        # Source twin settlement must retain zero shares; field spelling is kept in the original.
+        assert twin[0]['up_shares']==0 and twin[0]['down_shares']==0
+        outcomes.append({'window':ticker,'fills':count,'cost_usd':cost,'fee_usd':fee,'payout_usd':payout,'pnl_usd':want})
+    before=json.loads((target/'ROOT_PRE_RELEASE_AUDIT.json').read_text())['speeddesk_live_status']
+    assert before['day_stop_latched'] is True and before['mode']=='paper'
+    assert before['caps']=={'window_usd':10.0,'open_usd':20.0,'day_stop_usd':6.0,'clip':5.0,'total_stop_usd':10.0}
+    assert before['cash_usd']==25.1219 and math.isclose(before['total']['pnl_usd'],-24.6195,abs_tol=1e-9)
+    for field in ['reserved_usd','open_risk_usd','open_cost_usd','at_risk_usd','open_orders','positions']:assert before[field]==0
+    return outcomes
+
+def independent(target):
+    names=['astra/RESTART_IDLE_ANALYSIS.json','astra/RESTART_FOLLOWUP_ANALYSIS.json']
+    originals={name:sha((target/name).read_bytes()) for name in names}
+    runs=[]
+    for script in ['astra/restart_idle_audit.py','astra/restart_followup_audit.py']:
+        completed=subprocess.run([sys.executable,str(target/script)],cwd=target,text=True,capture_output=True,check=True)
+        runs.append({'script':script,'stdout':completed.stdout.strip()})
+    for name in names:
+        assert sha((target/name).read_bytes())==originals[name],name+' did not reproduce byte-for-byte'
+    return runs
+
+if __name__=='__main__':
+    folder=pathlib.Path(sys.argv[1]) if len(sys.argv)>1 else pathlib.Path(__file__).resolve().parent
+    target=pathlib.Path(sys.argv[2]) if len(sys.argv)>2 else pathlib.Path(tempfile.mkdtemp(prefix='own-queue-evidence-'))
+    target.mkdir(parents=True,exist_ok=True)
+    restored=restore(folder,target)
+    print(json.dumps({'restored_files':restored,'all_hashes_and_bytes':'passed','original_bounded_losses':financial(target),'independent_native_replays':independent(target),
+      'scope':'bounded receipts/synthetic checks; no continuous coverage, runtime queue or profit certificate'},indent=2))

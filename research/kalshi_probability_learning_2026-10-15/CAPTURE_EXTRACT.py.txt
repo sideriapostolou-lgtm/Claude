@@ -1,0 +1,65 @@
+"""Offline evidence extraction; never connects to an account or changes a bot."""
+import datetime
+import hashlib
+import json
+import re
+from pathlib import Path
+
+D = Path('/workspace/nightcrawler-probability-learning/research/kalshi_probability_learning_2026-10-15')
+PREFIX = re.compile(r'^\S+ INFO (nightcrawler\.[a-z_]+): ([a-z_]+) (\{[^\n]*\})$')
+
+
+def extract():
+    events = {}
+    queries = []
+    for path in sorted(D.glob('CAPTURE_*.native.json')):
+        wrapper = json.loads(path.read_text())
+        req, result = wrapper['request'], wrapper['result']
+        structured = result.get('structuredContent', {})
+        rows = structured.get('deploy', [])
+        before = datetime.datetime.strptime(wrapper['before']['current_time'], '%Y-%m-%d %H:%M:%S UTC').replace(tzinfo=datetime.timezone.utc)
+        end = datetime.datetime.fromisoformat(req['endDate'].replace('Z', '+00:00'))
+        failures = []
+        if result.get('isError'):
+            failures.append('native_tool_error')
+        if len(rows) >= req['limit']:
+            failures.append('at_or_over_query_limit')
+        if end > before:
+            failures.append('query_end_after_before_clock')
+        original_count = 0
+        for row in rows:
+            match = PREFIX.fullmatch(row['message'])
+            if not match:
+                continue
+            logger, event, encoded = match.groups()
+            if not event.startswith(('kalshi_probability_learning_', 'kalshi_online_learning_', 'kalshi_learning_input_', 'speeddesk_live_')):
+                continue
+            expected = ('nightcrawler.speeddesk' if event.startswith('speeddesk_live_') else
+                        'nightcrawler.kalshi_arena' if event == 'kalshi_learning_input_diagnostic' else
+                        'nightcrawler.kalshi_probability_learning' if event.startswith('kalshi_probability_learning_') else
+                        'nightcrawler.kalshi_online_learning')
+            if logger != expected:
+                continue
+            original_count += 1
+            identity = (row['timestamp'], row['message'])
+            bucket = events.setdefault(event, {})
+            if identity not in bucket:
+                bucket[identity] = {'timestamp': row['timestamp'], 'payload': json.loads(encoded), 'query_files': []}
+            if path.name not in bucket[identity]['query_files']:
+                bucket[identity]['query_files'].append(path.name)
+        queries.append({'file': path.name, 'sha256': hashlib.sha256(path.read_bytes()).hexdigest(),
+                        'request': req, 'before': wrapper['before'], 'after': wrapper['after'],
+                        'raw_rows': len(rows), 'anchored_originals': original_count,
+                        'excluded_nested_or_other': len(rows) - original_count, 'failures': failures})
+    out = {event: sorted(bucket.values(), key=lambda x: (x['payload'].get('at', 0), x['timestamp']))
+           for event, bucket in events.items()}
+    result = {'recorded_at_utc': datetime.datetime.now(datetime.timezone.utc).isoformat(),
+              'queries': queries, 'unique_original_counts': {e: len(v) for e, v in out.items()},
+              'events': out, 'coverage': 'Filtered original receipts only; no complete source/volume/account certification.'}
+    (D / 'CAPTURE_ORIGINALS.json').write_text(json.dumps(result, indent=2) + '\n')
+    print(json.dumps({'queries': len(queries), 'counts': result['unique_original_counts'],
+                      'failed_queries': [q['file'] for q in queries if q['failures']]}))
+
+
+if __name__ == '__main__':
+    extract()

@@ -1,0 +1,1480 @@
+{
+  "schema": 1,
+  "purpose": "Observation-only deployment verification; not a profitable-strategy test",
+  "pr": 50,
+  "commit": "176916071029c13e73cd5ae41fbc8413532dce71",
+  "deployment": "80d6a42a-48da-4ae2-bcea-1f73c396ad93",
+  "success_at_utc": "2026-10-14T18:20:43.184Z",
+  "success_at_pacific": "2026-10-14 11:20:43 AM PDT",
+  "tests": {
+    "passed": 5381,
+    "skipped": 14,
+    "seconds": 300.11,
+    "mypy_source_files": 123,
+    "changed_python_ruff": "pass",
+    "targeted_checks": 79
+  },
+  "baseline": {
+    "timestamp": "2026-10-14T18:20:01.409472339Z",
+    "panel": {
+      "as_of": 1792002001.2205598,
+      "mode": "live",
+      "reason": "balancing_only",
+      "cash_usd": 38.9281,
+      "open_cost_usd": 2,
+      "open_risk_usd": 2,
+      "reserved_usd": 0,
+      "at_risk_usd": 2,
+      "total_halted": false,
+      "day_stop_latched": false,
+      "integrity_error": null,
+      "caps": {
+        "window_usd": 10,
+        "open_usd": 20,
+        "day_stop_usd": 6,
+        "clip": 5,
+        "total_stop_usd": 10
+      },
+      "total": {
+        "day": null,
+        "windows": 89,
+        "fills": 418,
+        "latency": null,
+        "scorecard": null,
+        "settled_windows": 102,
+        "fees_usd": 1.9764,
+        "locked_usd": 4.482598351648345,
+        "directional_usd": -13.29589835164835,
+        "pnl_usd": -8.813300000000005,
+        "worst_usd": -2.9791999999999987,
+        "take_attempts": 39,
+        "take_fills": 17,
+        "maker_orders": 2443,
+        "maker_fills": 284,
+        "locks": 63,
+        "lock_fills": 57,
+        "take_fill_rate": 0.4358974358974359,
+        "maker_fill_rate": 0.11625051166598445,
+        "avg_latency_ms": 4336.205571719578,
+        "latency_definition": "durable real decision to venue fill timestamp; maker includes resting time"
+      },
+      "today": {
+        "day": "2026-10-14",
+        "windows": 19,
+        "fills": 116,
+        "settled_windows": 29,
+        "fees_usd": 0.40628,
+        "locked_usd": 4.73915897435897,
+        "directional_usd": -3.610358974358972,
+        "pnl_usd": 1.1287999999999985,
+        "worst_usd": -2.15,
+        "take_attempts": 0,
+        "take_fills": 0,
+        "maker_orders": 896,
+        "maker_fills": 80,
+        "locks": 14,
+        "lock_fills": 14,
+        "take_fill_rate": null,
+        "maker_fill_rate": 0.08928571428571429,
+        "avg_latency_ms": 2493.6276771584335,
+        "latency_definition": "durable real decision to venue fill timestamp; maker includes resting time"
+      },
+      "ladder": {
+        "enabled": true,
+        "rung": 0,
+        "ladder_rung": 0,
+        "max_window_usd": 20,
+        "configured_max_window_usd": 50000,
+        "top_rung": 2,
+        "change_pending": false,
+        "recheck_pending": false,
+        "effective_from": null,
+        "pending_limits": null,
+        "rung_started_at": 1791923645.5061624,
+        "start_pnl_usd": -3.7461000000000055,
+        "last_change": null
+      },
+      "fill_markouts": {
+        "enabled": true,
+        "mode": "diagnostic",
+        "fill_source": "real",
+        "session_id": "21e981ced492a70a593a",
+        "basis": "fills_batch_return",
+        "liquidity_scope": "isolated_fill_not_joint_inventory_liquidation",
+        "session_only": true,
+        "earlier_pending_unknown": true,
+        "restored_pending": false,
+        "started_at": 1792001264.6964455,
+        "horizons_s": [
+          1,
+          5,
+          30
+        ],
+        "sampling_method": "first_post_horizon_websocket_update",
+        "max_age_s": 0.5,
+        "max_levels_per_side": 128,
+        "max_measurements_per_book": 32,
+        "pending_fills": 0,
+        "max_pending": 1024,
+        "dedup_entries": 9,
+        "dedup_capacity": 8192,
+        "counts": {
+          "observed_fills": 9,
+          "gap_horizons": 27
+        },
+        "gap_reasons": {
+          "book_stale": 3,
+          "depth_work_bound": 23,
+          "observation_late": 1
+        },
+        "not_realized_pnl": true,
+        "exit_latency_not_simulated": true,
+        "error": null,
+        "own_depth_policy": "all_original_bot_order_sizes_in_window"
+      }
+    }
+  },
+  "first_post_restart": {
+    "timestamp": "2026-10-14T18:20:45.355934657Z",
+    "panel": {
+      "as_of": 1792002044.9246955,
+      "mode": "live",
+      "reason": "pair_cap",
+      "cash_usd": 38.9281,
+      "open_cost_usd": 2,
+      "open_risk_usd": 2,
+      "reserved_usd": 0,
+      "at_risk_usd": 2,
+      "total_halted": false,
+      "day_stop_latched": false,
+      "integrity_error": null,
+      "caps": {
+        "window_usd": 10,
+        "open_usd": 20,
+        "day_stop_usd": 6,
+        "clip": 5,
+        "total_stop_usd": 10
+      },
+      "total": {
+        "day": null,
+        "windows": 89,
+        "fills": 418,
+        "latency": null,
+        "scorecard": null,
+        "settled_windows": 102,
+        "fees_usd": 1.9764,
+        "locked_usd": 4.482598351648345,
+        "directional_usd": -13.29589835164835,
+        "pnl_usd": -8.813300000000005,
+        "worst_usd": -2.9791999999999987,
+        "take_attempts": 39,
+        "take_fills": 17,
+        "maker_orders": 2443,
+        "maker_fills": 284,
+        "locks": 63,
+        "lock_fills": 57,
+        "take_fill_rate": 0.4358974358974359,
+        "maker_fill_rate": 0.11625051166598445,
+        "avg_latency_ms": 4336.205571719578,
+        "latency_definition": "durable real decision to venue fill timestamp; maker includes resting time"
+      },
+      "today": {
+        "day": "2026-10-14",
+        "windows": 19,
+        "fills": 116,
+        "settled_windows": 29,
+        "fees_usd": 0.40628,
+        "locked_usd": 4.73915897435897,
+        "directional_usd": -3.610358974358972,
+        "pnl_usd": 1.1287999999999985,
+        "worst_usd": -2.15,
+        "take_attempts": 0,
+        "take_fills": 0,
+        "maker_orders": 896,
+        "maker_fills": 80,
+        "locks": 14,
+        "lock_fills": 14,
+        "take_fill_rate": null,
+        "maker_fill_rate": 0.08928571428571429,
+        "avg_latency_ms": 2493.6276771584335,
+        "latency_definition": "durable real decision to venue fill timestamp; maker includes resting time"
+      },
+      "ladder": {
+        "enabled": true,
+        "rung": 0,
+        "ladder_rung": 0,
+        "max_window_usd": 20,
+        "configured_max_window_usd": 50000,
+        "top_rung": 2,
+        "change_pending": false,
+        "recheck_pending": false,
+        "effective_from": null,
+        "pending_limits": null,
+        "rung_started_at": 1791923645.5061624,
+        "start_pnl_usd": -3.7461000000000055,
+        "last_change": null
+      },
+      "fill_markouts": {
+        "enabled": true,
+        "mode": "diagnostic",
+        "fill_source": "real",
+        "session_id": "8e1348d43e4e2d63de14",
+        "protocol_version": 2,
+        "basis": "fills_batch_return",
+        "liquidity_scope": "isolated_fill_not_joint_inventory_liquidation",
+        "session_only": true,
+        "earlier_pending_unknown": true,
+        "restored_pending": false,
+        "started_at": 1792002041.830995,
+        "horizons_s": [
+          1,
+          5,
+          30
+        ],
+        "sampling_method": "first_post_horizon_websocket_update",
+        "max_age_s": 0.5,
+        "max_levels_per_side": 512,
+        "max_measurements_per_book": 8,
+        "pending_fills": 0,
+        "max_pending": 1024,
+        "dedup_entries": 0,
+        "dedup_capacity": 8192,
+        "counts": {},
+        "gap_reasons": {},
+        "not_realized_pnl": true,
+        "exit_latency_not_simulated": true,
+        "error": null,
+        "own_depth_policy": "all_original_bot_order_sizes_in_window"
+      }
+    }
+  },
+  "preservation_checks": [
+    {
+      "field": "mode",
+      "equal": true
+    },
+    {
+      "field": "cash_usd",
+      "equal": true
+    },
+    {
+      "field": "open_cost_usd",
+      "equal": true
+    },
+    {
+      "field": "open_risk_usd",
+      "equal": true
+    },
+    {
+      "field": "reserved_usd",
+      "equal": true
+    },
+    {
+      "field": "at_risk_usd",
+      "equal": true
+    },
+    {
+      "field": "total_halted",
+      "equal": true
+    },
+    {
+      "field": "day_stop_latched",
+      "equal": true
+    },
+    {
+      "field": "integrity_error",
+      "equal": true
+    },
+    {
+      "field": "caps",
+      "equal": true
+    },
+    {
+      "field": "total.fills",
+      "equal": true
+    },
+    {
+      "field": "total.fees_usd",
+      "equal": true
+    },
+    {
+      "field": "total.pnl_usd",
+      "equal": true
+    },
+    {
+      "field": "total.locked_usd",
+      "equal": true
+    },
+    {
+      "field": "total.directional_usd",
+      "equal": true
+    }
+  ],
+  "resume": [
+    {
+      "timestamp": "2026-10-14T18:20:42.014692287Z",
+      "event": "speeddesk_live_resume",
+      "record": {
+        "at": 1792002041.83098,
+        "venue": "kalshi",
+        "state": "ignored; this value was already used",
+        "total_pnl_usd": -8.813300000000005,
+        "counted_from_usd": null,
+        "total_halted": false
+      }
+    }
+  ],
+  "polydesk_start": [
+    {
+      "timestamp": "2026-10-14T18:20:30.957593131Z",
+      "severity": "info",
+      "message": "2026-10-14T18:20:30Z INFO nightcrawler.polydesk: polydesk_started theta=0.97 hours=1 ticket_usd=20 poll_s=90 (LIVE: 10 contract(s) per order)",
+      "attributes": [
+        {
+          "key": "level",
+          "value": "\"info\""
+        }
+      ]
+    }
+  ],
+  "recorder": {
+    "timestamp": "2026-10-14T18:00:06.644457139Z",
+    "data": {
+      "commit": "a0782b743a31369fe25ddf6d2eea96df8511cd8d",
+      "coverage": {
+        "backfill_jobs_pending": 0,
+        "btc15m_fresh_minutes": 60,
+        "btc15m_minutes": 60,
+        "candidate_book_fresh_share": 1,
+        "minutes_sampled": 60,
+        "trade_covered_to": 1792000798,
+        "trade_tape_minutes": 60
+      },
+      "coverage_certified": false,
+      "gaps": {
+        "by_cause": {
+          "spot_reconnected": 1
+        },
+        "by_lane": {
+          "spot": 1
+        },
+        "open_ended_records": 0,
+        "records": 1
+      },
+      "manifest_sha256": "292f2a9e6d86d4af17fd32b0248af7f1e72b336c077dd51c326b37c71bfab97c",
+      "observed_at": 1792000800.7889652,
+      "order_capability": false,
+      "per_venue_spot_ticks_verified": false,
+      "period": {
+        "from": 1791997200,
+        "partial": false,
+        "to": 1792000800
+      },
+      "read_only": true,
+      "rest_lanes": {
+        "backfill": {
+          "429": null,
+          "errors": null,
+          "ok": null,
+          "requests": null,
+          "rtt_ms": {
+            "p50": null,
+            "p95": null,
+            "p99": null
+          }
+        },
+        "books": {
+          "429": null,
+          "errors": null,
+          "ok": 2351,
+          "requests": 2351,
+          "rtt_ms": {
+            "p50": 67.276,
+            "p95": 125.512,
+            "p99": 190.367
+          }
+        },
+        "btc15m_meta": {
+          "429": null,
+          "errors": null,
+          "ok": 12,
+          "requests": 12,
+          "rtt_ms": {
+            "p50": 79.557,
+            "p95": 123.262,
+            "p99": 123.262
+          }
+        },
+        "discovery": {
+          "429": null,
+          "errors": null,
+          "ok": 676,
+          "requests": 676,
+          "rtt_ms": {
+            "p50": 83.055,
+            "p95": 141.927,
+            "p99": 208.314
+          }
+        },
+        "fees": {
+          "429": null,
+          "errors": null,
+          "ok": null,
+          "requests": null,
+          "rtt_ms": {
+            "p50": null,
+            "p95": null,
+            "p99": null
+          }
+        },
+        "other": {
+          "429": null,
+          "errors": null,
+          "ok": null,
+          "requests": null,
+          "rtt_ms": {
+            "p50": null,
+            "p95": null,
+            "p99": null
+          }
+        },
+        "settlement": {
+          "429": null,
+          "errors": null,
+          "ok": 4,
+          "requests": 4,
+          "rtt_ms": {
+            "p50": 79.687,
+            "p95": 86.254,
+            "p99": 86.254
+          }
+        },
+        "sweep": {
+          "429": null,
+          "errors": null,
+          "ok": 24,
+          "requests": 24,
+          "rtt_ms": {
+            "p50": 91.035,
+            "p95": 133.504,
+            "p99": 141.873
+          }
+        },
+        "trades": {
+          "429": null,
+          "errors": null,
+          "ok": 1584,
+          "requests": 1584,
+          "rtt_ms": {
+            "p50": 90.711,
+            "p95": 140.983,
+            "p99": 230.073
+          }
+        }
+      },
+      "rows_and_test_outcomes_read": false,
+      "schema": 1,
+      "sealed_lanes": {
+        "admissions": {
+          "first_append_at": 1791997205.7865045,
+          "gz_bytes": 2245,
+          "last_append_at": 1792000744.3235054,
+          "record_envelopes": 10,
+          "segments": 1
+        },
+        "book_calls": {
+          "first_append_at": 1791997202.435621,
+          "gz_bytes": 432332,
+          "last_append_at": 1792000798.1433105,
+          "record_envelopes": 2350,
+          "segments": 2
+        },
+        "books": {
+          "first_append_at": 1791997202.435621,
+          "gz_bytes": 1224845,
+          "last_append_at": 1792000798.1433105,
+          "record_envelopes": 6268,
+          "segments": 1
+        },
+        "books_btc15m": {
+          "first_append_at": 1791997202.435621,
+          "gz_bytes": 1087498,
+          "last_append_at": 1792000798.1433105,
+          "record_envelopes": 2354,
+          "segments": 2
+        },
+        "btc15m_meta": {
+          "first_append_at": 1791997205.0485237,
+          "gz_bytes": 4019,
+          "last_append_at": 1792000510.1911254,
+          "record_envelopes": 16,
+          "segments": 1
+        },
+        "discovery": {
+          "first_append_at": 1791999487.8751688,
+          "gz_bytes": 62709,
+          "last_append_at": 1791999607.2346315,
+          "record_envelopes": 72,
+          "segments": 1
+        },
+        "gaps": {
+          "first_append_at": 1791998931.8910923,
+          "gz_bytes": 190,
+          "last_append_at": 1791998931.8910923,
+          "record_envelopes": 1,
+          "segments": 1
+        },
+        "markets": {
+          "first_append_at": 1791997448.7951317,
+          "gz_bytes": 3979608,
+          "last_append_at": 1792000751.808148,
+          "record_envelopes": 628,
+          "segments": 6
+        },
+        "requests": {
+          "first_append_at": 1791997202.435621,
+          "gz_bytes": 619946,
+          "last_append_at": 1792000799.5017073,
+          "record_envelopes": 4650,
+          "segments": 2
+        },
+        "spot": {
+          "first_append_at": 1791997202.0690746,
+          "gz_bytes": 878341,
+          "last_append_at": 1792000799.6582494,
+          "record_envelopes": 5498,
+          "segments": 2
+        },
+        "telemetry": {
+          "first_append_at": 1791997202.1054666,
+          "gz_bytes": 232,
+          "last_append_at": 1791997202.1054666,
+          "record_envelopes": 1,
+          "segments": 1
+        },
+        "trade_coverage": {
+          "first_append_at": 1791997203.7777224,
+          "gz_bytes": 34666,
+          "last_append_at": 1792000799.5017073,
+          "record_envelopes": 696,
+          "segments": 1
+        },
+        "trades": {
+          "first_append_at": 1791997203.1162004,
+          "gz_bytes": 183706,
+          "last_append_at": 1792000793.2447388,
+          "record_envelopes": 609,
+          "segments": 1
+        },
+        "trades_btc15m": {
+          "first_append_at": 1791997203.1162004,
+          "gz_bytes": 4606632,
+          "last_append_at": 1792000798.913277,
+          "record_envelopes": 891,
+          "segments": 7
+        }
+      },
+      "sealed_only": true,
+      "segment_hash_basis": "index_metadata_computed_at_seal_not_rechecked",
+      "segment_hashes_reverified": false,
+      "session": "6196abf087e64f069778dfb2addee131",
+      "session_started_at": 1791995887.7187006,
+      "source": "saved_hourly_manifest",
+      "status": "available",
+      "storage": {
+        "cap_bytes": 4831838208,
+        "deleted_segments": 0,
+        "level": 0,
+        "used_bytes": 248759168
+      },
+      "trade_receive_lag_s": {
+        "p50": 3.648,
+        "p95": 6.606,
+        "p99": 7.762
+      }
+    },
+    "scope": "saved hourly metadata; no raw-row or per-venue certification"
+  },
+  "observations": [
+    {
+      "timestamp": "2026-10-14T18:20:42.014703687Z",
+      "event": "speeddesk_fill_markout_status",
+      "record": {
+        "at": 1792002041.8310366,
+        "venue": "kalshi",
+        "enabled": true,
+        "mode": "diagnostic",
+        "fill_source": "real",
+        "session_id": "8e1348d43e4e2d63de14",
+        "protocol_version": 2,
+        "basis": "fills_batch_return",
+        "liquidity_scope": "isolated_fill_not_joint_inventory_liquidation",
+        "session_only": true,
+        "earlier_pending_unknown": true,
+        "restored_pending": false,
+        "started_at": 1792002041.830995,
+        "horizons_s": [
+          1,
+          5,
+          30
+        ],
+        "sampling_method": "first_post_horizon_websocket_update",
+        "max_age_s": 0.5,
+        "max_levels_per_side": 512,
+        "max_measurements_per_book": 8,
+        "pending_fills": 0,
+        "max_pending": 1024,
+        "dedup_entries": 0,
+        "dedup_capacity": 8192,
+        "counts": {},
+        "gap_reasons": {},
+        "not_realized_pnl": true,
+        "exit_latency_not_simulated": true,
+        "error": null,
+        "own_depth_policy": "all_original_bot_order_sizes_in_window"
+      }
+    },
+    {
+      "timestamp": "2026-10-14T18:20:45.353767776Z",
+      "event": "speeddesk_fill_markout_status",
+      "record": {
+        "at": 1792002044.9246075,
+        "venue": "kalshi",
+        "enabled": true,
+        "mode": "diagnostic",
+        "fill_source": "real",
+        "session_id": "8e1348d43e4e2d63de14",
+        "protocol_version": 2,
+        "basis": "fills_batch_return",
+        "liquidity_scope": "isolated_fill_not_joint_inventory_liquidation",
+        "session_only": true,
+        "earlier_pending_unknown": true,
+        "restored_pending": false,
+        "started_at": 1792002041.830995,
+        "horizons_s": [
+          1,
+          5,
+          30
+        ],
+        "sampling_method": "first_post_horizon_websocket_update",
+        "max_age_s": 0.5,
+        "max_levels_per_side": 512,
+        "max_measurements_per_book": 8,
+        "pending_fills": 0,
+        "max_pending": 1024,
+        "dedup_entries": 0,
+        "dedup_capacity": 8192,
+        "counts": {},
+        "gap_reasons": {},
+        "not_realized_pnl": true,
+        "exit_latency_not_simulated": true,
+        "error": null,
+        "own_depth_policy": "all_original_bot_order_sizes_in_window"
+      }
+    },
+    {
+      "timestamp": "2026-10-14T18:21:51.531080628Z",
+      "event": "speeddesk_fill_markout_status",
+      "record": {
+        "at": 1792002110.958381,
+        "venue": "kalshi",
+        "enabled": true,
+        "mode": "diagnostic",
+        "fill_source": "real",
+        "session_id": "8e1348d43e4e2d63de14",
+        "protocol_version": 2,
+        "basis": "fills_batch_return",
+        "liquidity_scope": "isolated_fill_not_joint_inventory_liquidation",
+        "session_only": true,
+        "earlier_pending_unknown": true,
+        "restored_pending": false,
+        "started_at": 1792002041.830995,
+        "horizons_s": [
+          1,
+          5,
+          30
+        ],
+        "sampling_method": "first_post_horizon_websocket_update",
+        "max_age_s": 0.5,
+        "max_levels_per_side": 512,
+        "max_measurements_per_book": 8,
+        "pending_fills": 0,
+        "max_pending": 1024,
+        "dedup_entries": 0,
+        "dedup_capacity": 8192,
+        "counts": {},
+        "gap_reasons": {},
+        "not_realized_pnl": true,
+        "exit_latency_not_simulated": true,
+        "error": null,
+        "own_depth_policy": "all_original_bot_order_sizes_in_window"
+      }
+    },
+    {
+      "timestamp": "2026-10-14T18:21:58.183320108Z",
+      "event": "speeddesk_fill_observed",
+      "record": {
+        "at": 1792002117.096657,
+        "venue": "kalshi",
+        "protocol_version": 2,
+        "max_levels_per_side": 512,
+        "mode": "diagnostic",
+        "fill_source": "real",
+        "session_id": "8e1348d43e4e2d63de14",
+        "fill_id": "0725d53e-d201-af8d-73d3-f7945a2ed491",
+        "order_id": "01a13ba6-3a00-7ddf-845d-b15cf6fcfb21",
+        "window": "KXBTC15M-26OCT141430-30",
+        "side": "down",
+        "entry_price": 0.58,
+        "entry_size": 5,
+        "entry_fee_usd": 0,
+        "actual_fill_at": 1792002112.545424,
+        "fills_batch_returned_at": 1792002117.096657,
+        "detection_delay_s": 4.5512330532073975,
+        "detection_delay_kind": "venue_fill_to_complete_paginated_batch_return",
+        "horizon_basis": "fills_batch_return",
+        "window_end": 1792002600,
+        "fee_coefficient": 0.07,
+        "fee_precision": 0.0001,
+        "fee_verified": true,
+        "is_taker": false,
+        "horizons_s": [
+          1,
+          5,
+          30
+        ],
+        "session_only": true
+      }
+    },
+    {
+      "timestamp": "2026-10-14T18:22:01.207023630Z",
+      "event": "speeddesk_fill_markout",
+      "record": {
+        "at": 1792002118.169394,
+        "venue": "kalshi",
+        "protocol_version": 2,
+        "max_levels_per_side": 512,
+        "mode": "diagnostic",
+        "fill_source": "real",
+        "session_id": "8e1348d43e4e2d63de14",
+        "fill_id": "0725d53e-d201-af8d-73d3-f7945a2ed491",
+        "order_id": "01a13ba6-3a00-7ddf-845d-b15cf6fcfb21",
+        "window": "KXBTC15M-26OCT141430-30",
+        "side": "down",
+        "entry_price": 0.58,
+        "entry_size": 5,
+        "entry_fee_usd": 0,
+        "actual_fill_at": 1792002112.545424,
+        "fills_batch_returned_at": 1792002117.096657,
+        "detection_delay_s": 4.5512330532073975,
+        "detection_delay_kind": "venue_fill_to_complete_paginated_batch_return",
+        "horizon_basis": "fills_batch_return",
+        "window_end": 1792002600,
+        "fee_coefficient": 0.07,
+        "fee_precision": 0.0001,
+        "fee_verified": true,
+        "is_taker": false,
+        "horizons_s": [
+          1,
+          5,
+          30
+        ],
+        "session_only": true,
+        "horizon_s": 1,
+        "target_at": 1792002118.096657,
+        "elapsed_s": 1.0727367750369012,
+        "sampling_method": "first_post_horizon_websocket_update",
+        "fee_model": "sell_formula_plus_per_0.01_contract_rounding_upper_bound",
+        "reason": null,
+        "filled_size": 5,
+        "unfilled_size": 0,
+        "gross_proceeds_usd": 3.05,
+        "allocated_entry_fee_usd": 0,
+        "exit_fee_bound_usd": 0.133265,
+        "partial_hypothetical_net_usd": 0.016735,
+        "hypothetical_net_usd": 0.016735,
+        "consumed_depth": [
+          {
+            "price": 0.61,
+            "size": 5
+          }
+        ],
+        "execution_assumption": "instantaneous_visible_bid_depth_no_order_sent",
+        "own_depth_policy": "all_original_bot_order_sizes_in_window",
+        "external_depth_is_conservative_lower_bound": true,
+        "liquidity_scope": "isolated_fill_not_joint_inventory_liquidation",
+        "own_bids_subtracted": true,
+        "complete_depth": true,
+        "own_bid_sizes_excluded": [
+          {
+            "price": 0.62,
+            "size": 5
+          },
+          {
+            "price": 0.59,
+            "size": 15
+          },
+          {
+            "price": 0.58,
+            "size": 35
+          },
+          {
+            "price": 0.57,
+            "size": 5
+          },
+          {
+            "price": 0.56,
+            "size": 10
+          },
+          {
+            "price": 0.55,
+            "size": 10
+          },
+          {
+            "price": 0.54,
+            "size": 5
+          },
+          {
+            "price": 0.5,
+            "size": 5
+          },
+          {
+            "price": 0.49,
+            "size": 5
+          },
+          {
+            "price": 0.48,
+            "size": 5
+          }
+        ],
+        "book_received_at": 1792002118.1665792,
+        "book_bid_levels": 151,
+        "book_ask_levels": 128,
+        "own_bid_levels": 10,
+        "book_exchange_at": 1792002117.845,
+        "book_source": "websocket",
+        "book_receive_age_s": 0.002814769744873047,
+        "book_source_age_s": 0.32439398765563965
+      }
+    },
+    {
+      "timestamp": "2026-10-14T18:22:07.443760461Z",
+      "event": "speeddesk_fill_markout_gap",
+      "record": {
+        "at": 1792002122.0968926,
+        "venue": "kalshi",
+        "protocol_version": 2,
+        "max_levels_per_side": 512,
+        "mode": "diagnostic",
+        "fill_source": "real",
+        "session_id": "8e1348d43e4e2d63de14",
+        "fill_id": "0725d53e-d201-af8d-73d3-f7945a2ed491",
+        "order_id": "01a13ba6-3a00-7ddf-845d-b15cf6fcfb21",
+        "window": "KXBTC15M-26OCT141430-30",
+        "side": "down",
+        "entry_price": 0.58,
+        "entry_size": 5,
+        "entry_fee_usd": 0,
+        "actual_fill_at": 1792002112.545424,
+        "fills_batch_returned_at": 1792002117.096657,
+        "detection_delay_s": 4.5512330532073975,
+        "detection_delay_kind": "venue_fill_to_complete_paginated_batch_return",
+        "horizon_basis": "fills_batch_return",
+        "window_end": 1792002600,
+        "fee_coefficient": 0.07,
+        "fee_precision": 0.0001,
+        "fee_verified": true,
+        "is_taker": false,
+        "horizons_s": [
+          1,
+          5,
+          30
+        ],
+        "session_only": true,
+        "horizon_s": 5,
+        "target_at": 1792002122.096657,
+        "elapsed_s": 5.0002352274023,
+        "sampling_method": "first_post_horizon_websocket_update",
+        "fee_model": "sell_formula_plus_per_0.01_contract_rounding_upper_bound",
+        "reason": "book_stale",
+        "filled_size": null,
+        "unfilled_size": null,
+        "gross_proceeds_usd": null,
+        "allocated_entry_fee_usd": null,
+        "exit_fee_bound_usd": null,
+        "partial_hypothetical_net_usd": null,
+        "hypothetical_net_usd": null,
+        "consumed_depth": [],
+        "execution_assumption": "instantaneous_visible_bid_depth_no_order_sent",
+        "own_depth_policy": "all_original_bot_order_sizes_in_window",
+        "external_depth_is_conservative_lower_bound": true,
+        "liquidity_scope": "isolated_fill_not_joint_inventory_liquidation",
+        "book_received_at": 1792002122.0966415,
+        "book_bid_levels": 155,
+        "book_ask_levels": 124,
+        "own_bid_levels": 10,
+        "book_exchange_at": 1792002121.526,
+        "book_source": "websocket",
+        "book_receive_age_s": 0.0002510547637939453,
+        "book_source_age_s": 0.5708925724029541
+      }
+    },
+    {
+      "timestamp": "2026-10-14T18:22:09.067514310Z",
+      "event": "speeddesk_fill_markout_gap",
+      "record": {
+        "at": 1792002128.5668428,
+        "venue": "kalshi",
+        "protocol_version": 2,
+        "max_levels_per_side": 512,
+        "mode": "diagnostic",
+        "fill_source": "real",
+        "session_id": "8e1348d43e4e2d63de14",
+        "fill_id": "0725d53e-d201-af8d-73d3-f7945a2ed491",
+        "order_id": "01a13ba6-3a00-7ddf-845d-b15cf6fcfb21",
+        "window": "KXBTC15M-26OCT141430-30",
+        "side": "down",
+        "entry_price": 0.58,
+        "entry_size": 5,
+        "entry_fee_usd": 0,
+        "actual_fill_at": 1792002112.545424,
+        "fills_batch_returned_at": 1792002117.096657,
+        "detection_delay_s": 4.5512330532073975,
+        "detection_delay_kind": "venue_fill_to_complete_paginated_batch_return",
+        "horizon_basis": "fills_batch_return",
+        "window_end": 1792002600,
+        "fee_coefficient": 0.07,
+        "fee_precision": 0.0001,
+        "fee_verified": true,
+        "is_taker": false,
+        "horizons_s": [
+          1,
+          5,
+          30
+        ],
+        "session_only": true,
+        "horizon_s": 30,
+        "target_at": 1792002147.096657,
+        "elapsed_s": 11.470185470301658,
+        "sampling_method": "first_post_horizon_websocket_update",
+        "fee_model": "sell_formula_plus_per_0.01_contract_rounding_upper_bound",
+        "reason": "venue_feed_gap",
+        "filled_size": null,
+        "unfilled_size": null,
+        "gross_proceeds_usd": null,
+        "allocated_entry_fee_usd": null,
+        "exit_fee_bound_usd": null,
+        "partial_hypothetical_net_usd": null,
+        "hypothetical_net_usd": null,
+        "consumed_depth": [],
+        "execution_assumption": "instantaneous_visible_bid_depth_no_order_sent",
+        "own_depth_policy": "all_original_bot_order_sizes_in_window",
+        "external_depth_is_conservative_lower_bound": true,
+        "liquidity_scope": "isolated_fill_not_joint_inventory_liquidation"
+      }
+    },
+    {
+      "timestamp": "2026-10-14T18:22:35.753604581Z",
+      "event": "speeddesk_fill_observed",
+      "record": {
+        "at": 1792002152.6329715,
+        "venue": "kalshi",
+        "protocol_version": 2,
+        "max_levels_per_side": 512,
+        "mode": "diagnostic",
+        "fill_source": "real",
+        "session_id": "8e1348d43e4e2d63de14",
+        "fill_id": "0725d53c-6b01-a629-fc3c-97653516cc59",
+        "order_id": "01a13ba6-b700-752f-a20d-e38cbaddfde1",
+        "window": "KXBTC15M-26OCT141430-30",
+        "side": "down",
+        "entry_price": 0.49,
+        "entry_size": 3,
+        "entry_fee_usd": 0,
+        "actual_fill_at": 1792002144.47466,
+        "fills_batch_returned_at": 1792002152.6329715,
+        "detection_delay_s": 8.158311605453491,
+        "detection_delay_kind": "venue_fill_to_complete_paginated_batch_return",
+        "horizon_basis": "fills_batch_return",
+        "window_end": 1792002600,
+        "fee_coefficient": 0.07,
+        "fee_precision": 0.0001,
+        "fee_verified": true,
+        "is_taker": false,
+        "horizons_s": [
+          1,
+          5,
+          30
+        ],
+        "session_only": true
+      }
+    },
+    {
+      "timestamp": "2026-10-14T18:22:35.754036688Z",
+      "event": "speeddesk_fill_markout_gap",
+      "record": {
+        "at": 1792002154.0021095,
+        "venue": "kalshi",
+        "protocol_version": 2,
+        "max_levels_per_side": 512,
+        "mode": "diagnostic",
+        "fill_source": "real",
+        "session_id": "8e1348d43e4e2d63de14",
+        "fill_id": "0725d53c-6b01-a629-fc3c-97653516cc59",
+        "order_id": "01a13ba6-b700-752f-a20d-e38cbaddfde1",
+        "window": "KXBTC15M-26OCT141430-30",
+        "side": "down",
+        "entry_price": 0.49,
+        "entry_size": 3,
+        "entry_fee_usd": 0,
+        "actual_fill_at": 1792002144.47466,
+        "fills_batch_returned_at": 1792002152.6329715,
+        "detection_delay_s": 8.158311605453491,
+        "detection_delay_kind": "venue_fill_to_complete_paginated_batch_return",
+        "horizon_basis": "fills_batch_return",
+        "window_end": 1792002600,
+        "fee_coefficient": 0.07,
+        "fee_precision": 0.0001,
+        "fee_verified": true,
+        "is_taker": false,
+        "horizons_s": [
+          1,
+          5,
+          30
+        ],
+        "session_only": true,
+        "horizon_s": 1,
+        "target_at": 1792002153.6329715,
+        "elapsed_s": 1.3691376657225192,
+        "sampling_method": "first_post_horizon_websocket_update",
+        "fee_model": "sell_formula_plus_per_0.01_contract_rounding_upper_bound",
+        "reason": "book_stale",
+        "filled_size": null,
+        "unfilled_size": null,
+        "gross_proceeds_usd": null,
+        "allocated_entry_fee_usd": null,
+        "exit_fee_bound_usd": null,
+        "partial_hypothetical_net_usd": null,
+        "hypothetical_net_usd": null,
+        "consumed_depth": [],
+        "execution_assumption": "instantaneous_visible_bid_depth_no_order_sent",
+        "own_depth_policy": "all_original_bot_order_sizes_in_window",
+        "external_depth_is_conservative_lower_bound": true,
+        "liquidity_scope": "isolated_fill_not_joint_inventory_liquidation",
+        "book_received_at": 1792002154.0005443,
+        "book_bid_levels": 147,
+        "book_ask_levels": 132,
+        "own_bid_levels": 11,
+        "book_exchange_at": 1792002153.186,
+        "book_source": "websocket",
+        "book_receive_age_s": 0.0015652179718017578,
+        "book_source_age_s": 0.8161094188690186
+      }
+    },
+    {
+      "timestamp": "2026-10-14T18:22:45.232032626Z",
+      "event": "speeddesk_fill_markout",
+      "record": {
+        "at": 1792002157.8651366,
+        "venue": "kalshi",
+        "protocol_version": 2,
+        "max_levels_per_side": 512,
+        "mode": "diagnostic",
+        "fill_source": "real",
+        "session_id": "8e1348d43e4e2d63de14",
+        "fill_id": "0725d53c-6b01-a629-fc3c-97653516cc59",
+        "order_id": "01a13ba6-b700-752f-a20d-e38cbaddfde1",
+        "window": "KXBTC15M-26OCT141430-30",
+        "side": "down",
+        "entry_price": 0.49,
+        "entry_size": 3,
+        "entry_fee_usd": 0,
+        "actual_fill_at": 1792002144.47466,
+        "fills_batch_returned_at": 1792002152.6329715,
+        "detection_delay_s": 8.158311605453491,
+        "detection_delay_kind": "venue_fill_to_complete_paginated_batch_return",
+        "horizon_basis": "fills_batch_return",
+        "window_end": 1792002600,
+        "fee_coefficient": 0.07,
+        "fee_precision": 0.0001,
+        "fee_verified": true,
+        "is_taker": false,
+        "horizons_s": [
+          1,
+          5,
+          30
+        ],
+        "session_only": true,
+        "horizon_s": 5,
+        "target_at": 1792002157.6329715,
+        "elapsed_s": 5.232164954766631,
+        "sampling_method": "first_post_horizon_websocket_update",
+        "fee_model": "sell_formula_plus_per_0.01_contract_rounding_upper_bound",
+        "reason": null,
+        "filled_size": 3,
+        "unfilled_size": 0,
+        "gross_proceeds_usd": 1.77,
+        "allocated_entry_fee_usd": 0,
+        "exit_fee_bound_usd": 0.080799,
+        "partial_hypothetical_net_usd": 0.219201,
+        "hypothetical_net_usd": 0.219201,
+        "consumed_depth": [
+          {
+            "price": 0.59,
+            "size": 3
+          }
+        ],
+        "execution_assumption": "instantaneous_visible_bid_depth_no_order_sent",
+        "own_depth_policy": "all_original_bot_order_sizes_in_window",
+        "external_depth_is_conservative_lower_bound": true,
+        "liquidity_scope": "isolated_fill_not_joint_inventory_liquidation",
+        "own_bids_subtracted": true,
+        "complete_depth": true,
+        "own_bid_sizes_excluded": [
+          {
+            "price": 0.62,
+            "size": 5
+          },
+          {
+            "price": 0.59,
+            "size": 15
+          },
+          {
+            "price": 0.58,
+            "size": 35
+          },
+          {
+            "price": 0.57,
+            "size": 5
+          },
+          {
+            "price": 0.56,
+            "size": 10
+          },
+          {
+            "price": 0.55,
+            "size": 10
+          },
+          {
+            "price": 0.54,
+            "size": 8
+          },
+          {
+            "price": 0.5,
+            "size": 5
+          },
+          {
+            "price": 0.49,
+            "size": 8
+          },
+          {
+            "price": 0.48,
+            "size": 5
+          },
+          {
+            "price": 0.46,
+            "size": 3
+          }
+        ],
+        "book_received_at": 1792002157.864597,
+        "book_bid_levels": 149,
+        "book_ask_levels": 130,
+        "own_bid_levels": 11,
+        "book_exchange_at": 1792002157.61,
+        "book_source": "websocket",
+        "book_receive_age_s": 0.0005395412445068359,
+        "book_source_age_s": 0.25513672828674316
+      }
+    },
+    {
+      "timestamp": "2026-10-14T18:22:55.210645636Z",
+      "event": "speeddesk_fill_markout_status",
+      "record": {
+        "at": 1792002174.8619838,
+        "venue": "kalshi",
+        "enabled": true,
+        "mode": "diagnostic",
+        "fill_source": "real",
+        "session_id": "8e1348d43e4e2d63de14",
+        "protocol_version": 2,
+        "basis": "fills_batch_return",
+        "liquidity_scope": "isolated_fill_not_joint_inventory_liquidation",
+        "session_only": true,
+        "earlier_pending_unknown": true,
+        "restored_pending": false,
+        "started_at": 1792002041.830995,
+        "horizons_s": [
+          1,
+          5,
+          30
+        ],
+        "sampling_method": "first_post_horizon_websocket_update",
+        "max_age_s": 0.5,
+        "max_levels_per_side": 512,
+        "max_measurements_per_book": 8,
+        "pending_fills": 1,
+        "max_pending": 1024,
+        "dedup_entries": 2,
+        "dedup_capacity": 8192,
+        "counts": {
+          "observed_fills": 2,
+          "measured_horizons": 2,
+          "full_depth_horizons": 2,
+          "gap_horizons": 3
+        },
+        "gap_reasons": {
+          "book_stale": 2,
+          "venue_feed_gap": 1
+        },
+        "not_realized_pnl": true,
+        "exit_latency_not_simulated": true,
+        "error": null,
+        "own_depth_policy": "all_original_bot_order_sizes_in_window"
+      }
+    },
+    {
+      "timestamp": "2026-10-14T18:23:03.577860584Z",
+      "event": "speeddesk_fill_markout_gap",
+      "record": {
+        "at": 1792002182.6330686,
+        "venue": "kalshi",
+        "protocol_version": 2,
+        "max_levels_per_side": 512,
+        "mode": "diagnostic",
+        "fill_source": "real",
+        "session_id": "8e1348d43e4e2d63de14",
+        "fill_id": "0725d53c-6b01-a629-fc3c-97653516cc59",
+        "order_id": "01a13ba6-b700-752f-a20d-e38cbaddfde1",
+        "window": "KXBTC15M-26OCT141430-30",
+        "side": "down",
+        "entry_price": 0.49,
+        "entry_size": 3,
+        "entry_fee_usd": 0,
+        "actual_fill_at": 1792002144.47466,
+        "fills_batch_returned_at": 1792002152.6329715,
+        "detection_delay_s": 8.158311605453491,
+        "detection_delay_kind": "venue_fill_to_complete_paginated_batch_return",
+        "horizon_basis": "fills_batch_return",
+        "window_end": 1792002600,
+        "fee_coefficient": 0.07,
+        "fee_precision": 0.0001,
+        "fee_verified": true,
+        "is_taker": false,
+        "horizons_s": [
+          1,
+          5,
+          30
+        ],
+        "session_only": true,
+        "horizon_s": 30,
+        "target_at": 1792002182.6329715,
+        "elapsed_s": 30.000096771866083,
+        "sampling_method": "first_post_horizon_websocket_update",
+        "fee_model": "sell_formula_plus_per_0.01_contract_rounding_upper_bound",
+        "reason": "book_before_horizon",
+        "filled_size": null,
+        "unfilled_size": null,
+        "gross_proceeds_usd": null,
+        "allocated_entry_fee_usd": null,
+        "exit_fee_bound_usd": null,
+        "partial_hypothetical_net_usd": null,
+        "hypothetical_net_usd": null,
+        "consumed_depth": [],
+        "execution_assumption": "instantaneous_visible_bid_depth_no_order_sent",
+        "own_depth_policy": "all_original_bot_order_sizes_in_window",
+        "external_depth_is_conservative_lower_bound": true,
+        "liquidity_scope": "isolated_fill_not_joint_inventory_liquidation",
+        "book_received_at": 1792002182.6329339,
+        "book_bid_levels": 147,
+        "book_ask_levels": 132,
+        "own_bid_levels": 11,
+        "book_exchange_at": 1792002182.264,
+        "book_source": "websocket",
+        "book_receive_age_s": 0.0001347064971923828,
+        "book_source_age_s": 0.36906862258911133
+      }
+    }
+  ],
+  "observation_query": {
+    "start_utc": "2026-10-14T18:20:00Z",
+    "end_utc": "2026-10-14T18:23:20Z",
+    "limit": 300,
+    "returned_rows": 12,
+    "coverage": "partial current window; no profitability, full-window or full-day claim"
+  },
+  "results": {
+    "fills": 2,
+    "terminal_horizons": 6,
+    "measured": 2,
+    "full_depth": 2,
+    "gaps": 4,
+    "gap_reasons": {
+      "book_stale": 2,
+      "venue_feed_gap": 1,
+      "book_before_horizon": 1
+    },
+    "hypothetical_quote_outcomes_only": [
+      {
+        "fill_id": "0725d53e-d201-af8d-73d3-f7945a2ed491",
+        "horizon_s": 1,
+        "isolated_net_usd": 0.016735
+      },
+      {
+        "fill_id": "0725d53c-6b01-a629-fc3c-97653516cc59",
+        "horizon_s": 5,
+        "isolated_net_usd": 0.219201
+      }
+    ],
+    "not_realized_pnl": true,
+    "not_joint_inventory_liquidation": true
+  },
+  "error_queries": {
+    "through_utc": "2026-10-14T18:23:20Z",
+    "tracebacks": 0,
+    "actual_error_rows": []
+  },
+  "latest_status": {
+    "timestamp": "2026-10-14T18:22:55.212596800Z",
+    "as_of": 1792002174.862056,
+    "mode": "live",
+    "reason": "Kalshi account data stale",
+    "cash_usd": 39.5581,
+    "open_cost_usd": 6.37,
+    "open_risk_usd": 1.37,
+    "reserved_usd": 0,
+    "total_pnl_usd": -8.813300000000005,
+    "utc_day_pnl_usd": 1.1287999999999985,
+    "total_halted": false,
+    "day_stop_latched": false,
+    "integrity_error": null,
+    "caps": {
+      "window_usd": 10,
+      "open_usd": 20,
+      "day_stop_usd": 6,
+      "clip": 5,
+      "total_stop_usd": 10
+    },
+    "fill_markouts": {
+      "enabled": true,
+      "mode": "diagnostic",
+      "fill_source": "real",
+      "session_id": "8e1348d43e4e2d63de14",
+      "protocol_version": 2,
+      "basis": "fills_batch_return",
+      "liquidity_scope": "isolated_fill_not_joint_inventory_liquidation",
+      "session_only": true,
+      "earlier_pending_unknown": true,
+      "restored_pending": false,
+      "started_at": 1792002041.830995,
+      "horizons_s": [
+        1,
+        5,
+        30
+      ],
+      "sampling_method": "first_post_horizon_websocket_update",
+      "max_age_s": 0.5,
+      "max_levels_per_side": 512,
+      "max_measurements_per_book": 8,
+      "pending_fills": 1,
+      "max_pending": 1024,
+      "dedup_entries": 2,
+      "dedup_capacity": 8192,
+      "counts": {
+        "observed_fills": 2,
+        "measured_horizons": 2,
+        "full_depth_horizons": 2,
+        "gap_horizons": 3
+      },
+      "gap_reasons": {
+        "book_stale": 2,
+        "venue_feed_gap": 1
+      },
+      "not_realized_pnl": true,
+      "exit_latency_not_simulated": true,
+      "error": null,
+      "own_depth_policy": "all_original_bot_order_sizes_in_window"
+    }
+  },
+  "health": {
+    "environment": {
+      "id": "17f7b0e0-104c-4903-9484-0106748b3cdb",
+      "name": "production"
+    },
+    "services": [
+      {
+        "serviceId": "f84d3b52-002f-44cb-931e-bc9e3e097e97",
+        "serviceName": "bot",
+        "state": "online",
+        "statusText": "Online",
+        "activeDeployments": [
+          {
+            "id": "80d6a42a-48da-4ae2-bcea-1f73c396ad93",
+            "status": "SUCCESS",
+            "createdAt": "2026-10-14T18:18:23.279Z",
+            "statusUpdatedAt": "2026-10-14T18:20:43.182Z"
+          }
+        ],
+        "replicaStatus": {
+          "running": 1,
+          "crashed": 0,
+          "total": 1
+        },
+        "cronJob": null,
+        "issues": {
+          "warningCount": 0,
+          "criticalCount": 0
+        },
+        "recentFailures": 0,
+        "recentFailedDeployments": [],
+        "hasIssues": false,
+        "isCronJob": false,
+        "hasVolume": true
+      },
+      {
+        "serviceId": "736b1c8a-8311-4ee0-9043-d05f508cd821",
+        "serviceName": "kalshi-recorder",
+        "state": "online",
+        "statusText": "Online",
+        "activeDeployments": [
+          {
+            "id": "8453f919-b891-4aa7-8478-6fcf6b9c24ee",
+            "status": "SUCCESS",
+            "createdAt": "2026-10-14T16:36:40.384Z",
+            "statusUpdatedAt": "2026-10-14T16:38:15.302Z"
+          }
+        ],
+        "replicaStatus": {
+          "running": 1,
+          "crashed": 0,
+          "total": 1
+        },
+        "cronJob": null,
+        "issues": {
+          "warningCount": 0,
+          "criticalCount": 0
+        },
+        "recentFailures": 0,
+        "recentFailedDeployments": [],
+        "hasIssues": false,
+        "isCronJob": false,
+        "hasVolume": true
+      }
+    ],
+    "pendingWork": [
+      {
+        "id": "patch:9a84e13c-3caf-4a85-b5f5-d9a2fcb8a021",
+        "kind": "EnvironmentPatch",
+        "status": "staged",
+        "changes": [],
+        "startedAt": "2026-10-12T16:21:53.480Z",
+        "workflowId": "commitChanges/17f7b0e0-104c-4903-9484-0106748b3cdb/9a84e13c-3caf-4a85-b5f5-d9a2fcb8a021"
+      }
+    ],
+    "summary": {
+      "totalServices": 2,
+      "servicesWithIssues": 0,
+      "totalFailures": 0
+    }
+  },
+  "merged_at_utc": "2026-10-14T18:18:21Z"
+}

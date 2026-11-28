@@ -1,0 +1,11 @@
+{
+  "canonicalContract": "MNQZ2025",
+  "providerSymbol": null,
+  "exchange": "CME",
+  "expirationMonth": "2025-12",
+  "instrumentType": "FUTURE",
+  "minPriceIncrement": 0.25,
+  "pointValueUSD": 2,
+  "adjusted": false,
+  "sourceEvidence": null
+}

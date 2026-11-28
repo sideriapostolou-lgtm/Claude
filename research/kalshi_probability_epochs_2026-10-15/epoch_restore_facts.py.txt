@@ -1,0 +1,79 @@
+"""Offline actual-restore facts and design-only lineage transition fakes; no production IO."""
+import copy,json,sys
+from pathlib import Path
+from unittest.mock import patch
+ROOT=Path('/workspace/nightcrawler-feed-recovery');sys.path[:0]=[str(ROOT/'src'),str(ROOT/'tests')]
+from nightcrawler.kalshi_probability_learning import ProbabilityLearning,PROTOCOL
+from test_kalshi_probability_learning import window,predict
+
+def learner(source,at):
+    with patch('nightcrawler.kalshi_probability_learning.fingerprint',return_value=source):
+        return ProbabilityLearning(at)
+old=learner('a'*64,900)
+for start in (1000,2000,3000,4000,5000):
+    w=window(start); old.discover([w],start-50);predict(old,w,start+300)
+    old.labels_received([(w.slug,False)],start+900)
+    old.advance([w],100,.001,start+900,start+900)
+old.discover([window(6000)],6100);old.advance([],100,.001,6100,6100)
+raw=old.state();original=copy.deepcopy(raw)
+probe=learner('b'*64,7000);probe.restore(raw,7000)
+assert raw==original and probe.counts['scored']==5 and probe.counts['unknown']==1
+assert probe.error=='source_or_protocol_mismatch' and not probe.restore_rejected
+assert probe.state()!=raw and probe.last_at==7000
+missing=learner('b'*64,7000);missing.restore(None,7000)
+assert missing.enabled # wrapper MUST intercept explicit missing/null history
+corrupt=copy.deepcopy(raw);corrupt['counts']['forecasts']=0
+bad=learner('b'*64,7000);bad.restore(corrupt,7000)
+assert bad.restore_rejected and bad.error=='malformed_optional_learning_state'
+latched=copy.deepcopy(raw);latched.update(enabled=False,error='raw_stream_invalid')
+p=learner('b'*64,7000);p.restore(latched,7000)
+assert p.error=='source_or_protocol_mismatch' # wrapper MUST inspect original error before restore
+rejected=copy.deepcopy(raw);rejected.update(enabled=False,error='malformed_optional_learning_state',restore_rejected=True)
+p=learner('b'*64,7000);p.restore(rejected,7000)
+assert p.restore_rejected
+
+# Design-only fail-closed state machine: no history evictions, no old-source reactivation.
+# Does not claim to implement schema/byte-budget/panel/arena integration.
+class Refusal(ValueError):pass
+LIMIT=3
+
+def validate(state,source,now):
+    if not isinstance(state,dict):raise Refusal('missing state')
+    if state.get('protocol')!=PROTOCOL or state.get('restore_rejected') is not False:raise Refusal('unusable history')
+    if not ((state.get('enabled') is True and state.get('error') is None) or
+            (state.get('enabled') is False and state.get('error')=='source_or_protocol_mismatch')):
+        raise Refusal('disabled history')
+    p=learner(source,now);p.restore(state,now)
+    if p.restore_rejected:raise Refusal('malformed history')
+    return p
+
+def transition(env,source,now):
+    if not isinstance(env,dict) or set(env)!={'archived','active'}:raise Refusal('bad envelope')
+    if not isinstance(env['archived'],list) or len(env['archived'])+1>LIMIT:raise Refusal('capacity')
+    for previous in env['archived']:validate(previous,source,now)
+    p=validate(env['active'],source,now)
+    if env['active']['source_fingerprint']==source:
+        return {'archived':copy.deepcopy(env['archived']),'active':p.state()}
+    if len(env['archived'])+1>=LIMIT:raise Refusal('capacity')
+    return {'archived':copy.deepcopy(env['archived']+[env['active']]),'active':learner(source,now).state()}
+
+env={'archived':[],'active':raw}
+new=transition(env,'b'*64,7000)
+assert new['archived']==[raw] and new['active']['counts']['scored']==0 and new['active']['bin_n']==[0]*10
+restart=transition(new,'b'*64,7100)
+assert restart['archived']==new['archived'] and restart['active']['counts']==new['active']['counts']
+flip=transition(restart,'a'*64,7200)
+assert len(flip['archived'])==2 and flip['active']['counts']['scored']==0
+assert flip['archived'][0]==raw # A->B->A creates third occurrence; never revives old A bins
+for badenv in ({'archived':[],'active':None},{'archived':[],'active':corrupt},
+               {'archived':[latched],'active':new['active']}, {'archived':[]},flip):
+    saved=copy.deepcopy(badenv)
+    try:transition(badenv,'c'*64,7300)
+    except Refusal:pass
+    else:raise AssertionError('unsafe transition accepted')
+    assert badenv==saved
+print(json.dumps({'actual_restore_checks':'pass','old_scored':raw['counts']['scored'],'old_unknown':raw['counts']['unknown'],
+ 'missing_raw_restore_is_noop':missing.enabled,'mismatch_masks_original_disable_reason':p.error=='source_or_protocol_mismatch',
+ 'archive_probe_state_is_not_exact_original':probe.state()!=raw,'design_transition_checks':'pass',
+ 'source_flip':'A->B->A produces separate empty third epoch','retention':'capacity refusal leaves all input history exact',
+ 'limits':'transition function is design-only; complete schema/lineage/byte-cap/arena integration not implemented'},indent=2))

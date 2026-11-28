@@ -1,0 +1,435 @@
+{
+  "encoding": "Concatenate ordered parts, verify hashes, base64 decode, lzma decompress, parse JSON files[].utf8; preserve UTF-8 exactly.",
+  "files": [
+    {
+      "name": "native/PRE_RELEASE_FINANCIAL.json",
+      "sha256": "b85ee3ad2dde2d7dc34bb6df75588b83cf198eff9d9693c8b825a14b6337d8d8"
+    },
+    {
+      "name": "native/PRE_RELEASE_PROBABILITY.json",
+      "sha256": "5018a3cfefa2b26685c174047e3a7f6bc217b568a1698acf244d187113270db2"
+    },
+    {
+      "name": "native/PRE_RELEASE_SETTLEMENT.json",
+      "sha256": "3f40a2d3aee4629d27e0315bb41fb185a7b936f0ff0f7fa3d9fe1bd932ee9b68"
+    },
+    {
+      "name": "native/PRE_OLD_EPOCH_STARTUP.json",
+      "sha256": "c748baa512ac29cf0c4e1c10aa616d8632abc48f5c5ecc160e622c64998d8140"
+    },
+    {
+      "name": "native/PRE_OLD_EPOCH_STARTUP_WIDE.json",
+      "sha256": "315ca247dbd8c11a8ba67d9fb997faaca226c1e755f71634500b0690d060e8ca"
+    },
+    {
+      "name": "native/FINAL_PRE_FINANCIAL.json",
+      "sha256": "8e3859ba381ab691b886288f9be920c2d690ab43310609b68f1a78e5d340a130"
+    },
+    {
+      "name": "native/FINAL_PRE_PROBABILITY.json",
+      "sha256": "02f923c6bab9315e9fb5574f5007cb334be7905a435f77e04cbcb80b22601771"
+    },
+    {
+      "name": "native/FINAL_PRE_SCORE.json",
+      "sha256": "42d7c4b7a37673e0e224592fa151f7fea50e1ad9cd41b74f95aa5ddaa87fdffd"
+    },
+    {
+      "name": "native/IMMEDIATE_PRE_FINANCIAL.json",
+      "sha256": "3b1e934807ffc5a2ee460b7e59dfbbfb6251d6475d6c1fc7d2d7dd2e0ebcbc53"
+    },
+    {
+      "name": "native/IMMEDIATE_PRE_PROBABILITY.json",
+      "sha256": "c6111b799b950dcad461fa824579f93f096c54fd33709af172ee1b386cd9f2d4"
+    },
+    {
+      "name": "native/OLD_FINAL_STATUS_ACTIONS.json",
+      "sha256": "7384af6b107b8c9ab4fad33bb8ccbb2e416e3e11f44514a5b784738216b6a6e9"
+    },
+    {
+      "name": "native/READY_CONTROLS.json",
+      "sha256": "3f732ac0bd5ea491b32bd93d433c57bfa6d2f8bed686edc68f2091b31182212c"
+    },
+    {
+      "name": "native/READY_EPOCH.json",
+      "sha256": "c0282a59116cd8d9a0d161579aa1613e7462c8bfc1ef7a6a4b07c8c6daf78407"
+    },
+    {
+      "name": "native/READY_FINANCIAL.json",
+      "sha256": "e9b843e8d1b4f667623f890cca81581f457d5a2d55a72db56dda212a21e210b9"
+    },
+    {
+      "name": "native/READY_PROBABILITY.json",
+      "sha256": "084cd5e4ce23722ca366a4796f173b556b20ac68e27b43cd5ddfba16ff9fdd2b"
+    },
+    {
+      "name": "native/READINESS_FINANCIAL.json",
+      "sha256": "7b5e8f1856cb9bf86abc5ce436735fcf4b4143a4b49dc8badd8df4bd9c3e3366"
+    },
+    {
+      "name": "native/POST_START_POLY.json",
+      "sha256": "8623768aa288265fe161ebffcc70c855c0444c471c053817b74452bc78e0a331"
+    },
+    {
+      "name": "native/PUBLIC_FUTURE_MARKET.json",
+      "sha256": "94e03df7ab8b113a5535cf507650048a0f6d3a4a92887d7a041318253af72c27"
+    },
+    {
+      "name": "native/PUBLIC_PRIOR_LOSS_MARKET.json",
+      "sha256": "7fe1e68d987d4a9c2949511323227043a583b6c31e31fc662cceda2b2932d825"
+    },
+    {
+      "name": "native/PUBLIC_TARGET_FINAL_FIRST.json",
+      "sha256": "1d132446aa0745de06e7a38db7fb19e15b0ebbada8f90a104bbfe8a282a2d92d"
+    },
+    {
+      "name": "native/POST_TAIL_IDENTITY_SELECTED.json",
+      "sha256": "159f75b317ee67e2ab52d7ed600ecf76b9455feea6fe75d00cbf4c9c3892b547"
+    },
+    {
+      "name": "native/PRIOR_LOSS_FILLS.json",
+      "sha256": "29b1ce4ba725757801b4df12f18cf6be77b920ebfcedac758084a0db90cde448"
+    },
+    {
+      "name": "native/PRIOR_LOSS_ORDERS.json",
+      "sha256": "29e3afa2d825a0eb312900ca870cfc7bfb9d479c8aaab97a5273085092adf773"
+    },
+    {
+      "name": "native/PRIOR_LOSS_REJECTS.json",
+      "sha256": "819e48831b76e70128fd339e9be4a7b64422780bc399c93733e4321a100e771e"
+    },
+    {
+      "name": "native/CAPTURE_ws_timing.native.json",
+      "sha256": "12befdb9a7c899a86815ac05276bb730af2dfcfccf0f039422d93397e4bc9c8e"
+    },
+    {
+      "name": "native/CAPTURE_ws_gap.native.json",
+      "sha256": "51e1e6c137ed378e2d2fa450e76a9a46c5d7a6fadc720b71cae66655f390cf1a"
+    },
+    {
+      "name": "native/CAPTURE_practice_window.native.json",
+      "sha256": "b0d7f8088f4151f18d11351aebaf368f5e41d43cd980991d931335b866064621"
+    },
+    {
+      "name": "native/CAPTURE_practice_status.native.json",
+      "sha256": "6f83b8eb03923a77aaf5c5bbf7cabeb9f84223c9f265b1aa482e5438a5e7c7a4"
+    },
+    {
+      "name": "native/CAPTURE_live_order.native.json",
+      "sha256": "e9600f84dead811d7a441bee56168647098d2294a2776c0f0e5baa2765461425"
+    },
+    {
+      "name": "native/CAPTURE_live_reject.native.json",
+      "sha256": "7fe8a202099a8cee14337739f518ac49fc0e1206473ec19c031d2a6eb282be75"
+    },
+    {
+      "name": "native/CAPTURE_warnings.native.json",
+      "sha256": "9cca35b23c87cbe699f35d54211406fe57fa3f68b7ff8e0030e18b8aad113f2d"
+    },
+    {
+      "name": "native/CAPTURE_reconcile_trace.native.json",
+      "sha256": "35b02f85e099b8de04bdfc6d655d16c32eb5b3e872f322aabe0a6b27350ac33d"
+    },
+    {
+      "name": "native/CAPTURE_live_fill.native.json",
+      "sha256": "6febf5c8b976af29fe4e3399f7ee81b17e69216c160e0805e3ab033245ba8740"
+    },
+    {
+      "name": "native/CAPTURE_twin_trace.native.json",
+      "sha256": "fa4b863430a86fbc4f4c7efc92f3326c25de64365527885fb58f0855ce68ff93"
+    },
+    {
+      "name": "native/CAPTURE_probability_events.native.json",
+      "sha256": "33347baa3987a1de8416e18f0e3a753f0b91bd75785d22dddba8fd2a6ab12b65"
+    },
+    {
+      "name": "native/CAPTURE_live_settlement.native.json",
+      "sha256": "e1230cd4c858816eb1fa8a59db051d2f11c0c87b5b2d1c2fcb373d4258ad2337"
+    },
+    {
+      "name": "native/CAPTURE_errors.native.json",
+      "sha256": "6e9854688851961c74b6e5cf534fea6beee43092ee12ed78b9eaf7a0362dc466"
+    },
+    {
+      "name": "native/CAPTURE_twin_settlement.native.json",
+      "sha256": "de9675712d8995c5be333fd9c5dbc973560cfc48a57eea838d08f34628f16ba3"
+    },
+    {
+      "name": "native/CAPTURE_live_cancel.native.json",
+      "sha256": "4bc693ab43c22fcfb515e65a2f8fe7ff501cb5761f80a6942a6f34e33b71f091"
+    },
+    {
+      "name": "native/CAPTURE_input_diagnostic.native.json",
+      "sha256": "0e6f01fcc31eb87ab6e02dea100f59ff9efa913c54832506c557a2b3828dcad8"
+    },
+    {
+      "name": "native/CAPTURE_twin_events.native.json",
+      "sha256": "228afffcaa8c1b05b553d6b0cdffd3c122da08d65e67669911a86acadd96b64a"
+    },
+    {
+      "name": "native/CAPTURE_live_status.native.json",
+      "sha256": "db3a9c5a17c8ea93a583dfc8074a724f80fe1c157f3318d53e3875907dbb314e"
+    },
+    {
+      "name": "native/CAPTURE_ws_unavailable.native.json",
+      "sha256": "d7a45c9cc79d11ac9c9b5e380e14de058bfd76bbade33d751d415b2abca2bf05"
+    },
+    {
+      "name": "native/POST_START_EPOCH.json",
+      "sha256": "0a413eafe86609a121d3ce2b3359ffcecdce9626c4feeac4037ce694bd0be1c3"
+    },
+    {
+      "name": "native/POST_START_FINANCIAL.json",
+      "sha256": "2788bc9667f282ae8609391c77dc2f32b396942845340c21aa6dc0bd7c0003c0"
+    },
+    {
+      "name": "native/POST_START_PROBABILITY.json",
+      "sha256": "2c0e62a6df9dd4e8e0122544ac6c2bb68f0f05b00793f040100e8fccd6b72553"
+    },
+    {
+      "name": "native/POST_START_TRACEBACK.json",
+      "sha256": "c5b822ca54f9173b9226024ee4a2e7e4b9d134d0bd15376ed83fd565e29d9870"
+    },
+    {
+      "name": "native/POST_START_TWIN_TRACE.json",
+      "sha256": "a8ed48ada361df0a7f319cc2ff970e93c9b63f830663870a007a94ebfe06fb25"
+    },
+    {
+      "name": "native/WARM_EPOCH.json",
+      "sha256": "38a4741751bf9eea43e49a3adf2c6403e7cca0efa79f0719d4673ae5a889600f"
+    },
+    {
+      "name": "native/WARM_FINANCIAL.json",
+      "sha256": "e83425f6ceb43f05ae0a53c6f41849bb24ec86985d071477aab178322b865edb"
+    },
+    {
+      "name": "native/WARM_PROBABILITY.json",
+      "sha256": "a9bf00ca563d7a965e18565d2a1039b69b5644e079d3e81b38ef3ba50047bf2b"
+    },
+    {
+      "name": "native/WARM_TWIN_TRACE.json",
+      "sha256": "b7b31f4980451d75f166a04c89c8f6fc8e10b678805e7349f0f2672e660c7f68"
+    },
+    {
+      "name": "native/FRESH_ERRORS.json",
+      "sha256": "49c9f7c91f6e9ffdc2048158145f7bd604b2ec1541c7d5235c09f85fbb1a22eb"
+    },
+    {
+      "name": "native/FRESH_TWIN_TRACE.json",
+      "sha256": "0428d5416f4df68d718ccfa4ace6290ce82ae2989a757a47b25f15727fadbc1e"
+    },
+    {
+      "name": "native/READY_TWIN_TRACE.json",
+      "sha256": "98201fad425959c7e458984b504b427320c293a0a5e170430676ed361ae3d1d9"
+    },
+    {
+      "name": "native/READY_HEALTH.json",
+      "sha256": "a9d64d3496326b35e82da2a27f561b9250ec142e91cd9f804a582fc07b5929d6"
+    },
+    {
+      "name": "FORWARD_MANIFEST.json",
+      "sha256": "09d7f67664276e420b96e888221514c2ed5f3322be17095ca084e9a0042d6db8"
+    },
+    {
+      "name": "ROOT_FORWARD_SCAFFOLD.json",
+      "sha256": "a46971f83c64865e914a7d511fd75d0baa67115f1db2a70c6f695bc86681acf5"
+    },
+    {
+      "name": "ROOT_NATIVE_AUDIT.json",
+      "sha256": "2560dfe363df03d6a9ae2581e5bed3bf7c9ef2f5fe3d3dfef38233986b3b205c"
+    },
+    {
+      "name": "ROOT_RECURRENCE.json",
+      "sha256": "160d6dfbe00ea72982514613d1d97e120debe63db7c3675496b9f5545b5d25ae"
+    },
+    {
+      "name": "root_audit.py",
+      "sha256": "2cf41b5160768755b06007f1c73bed5396d4551519ea125425f5db8124e44d44"
+    },
+    {
+      "name": "MERGE_68.json",
+      "sha256": "451cf24efd82d90d42e26c9e10e431c1926ccfd83802aba50f349ccf5cdfa730"
+    },
+    {
+      "name": "sol/PRIOR_LOSS_REVIEW.md",
+      "sha256": "943ff2117bb7de1d31bed092347efebd13dc22644427880700061ad75b1b164d"
+    },
+    {
+      "name": "sol/PRIOR_LOSS_REVIEW.json",
+      "sha256": "a40a7802cec5f5b56fb5a288580c7dffb6bad009cf925019427ed522da317386"
+    },
+    {
+      "name": "astra/RESTART_RETENTION_REVIEW.md",
+      "sha256": "2b242a0c755874d48b3fe886f53c6257c3476ee5c0db4a5673bce8a6915bb7e5"
+    },
+    {
+      "name": "astra/RESTART_RETENTION_CHECKS.json",
+      "sha256": "0d2175408d640c698146293a63d609b26ce09d3136aaf2593d8873ab395128c0"
+    },
+    {
+      "name": "astra/restart_retention.py",
+      "sha256": "fc9f1d43131a64d54fcdba23b031b20c2dea6f07b2a7a8278ef37905b0c8a013"
+    },
+    {
+      "name": "astra/PRE_RELEASE_BASELINE.json",
+      "sha256": "3efb20b66635e72ac24d0d5da407b9e95d1ac82c75c7ad0ca2c022f614919b41"
+    },
+    {
+      "name": "astra/FINAL_PRE_RELEASE_BASELINE.json",
+      "sha256": "ca41da098a6661420f38f8a517d1bc57901c25169b402927df45a282244c8494"
+    },
+    {
+      "name": "astra/FORWARD_REVIEW_PLAN.md",
+      "sha256": "8e65323eb9a199615df5fb67de2a206807894b35f251b7839f80a6df2e687add"
+    },
+    {
+      "name": "astra/FORWARD_PREPARATION_CHECKS.json",
+      "sha256": "10cf16f620bab3d6e6f7a8d4020f3e07f6ad8a962c23dc3c62c5dd61ed307fab"
+    },
+    {
+      "name": "astra/forward_audit.py",
+      "sha256": "c6204d2707c1a153a69b45344ef2004b993849db587c297863a0caa45b60a228"
+    },
+    {
+      "name": "astra/test_forward_audit.py",
+      "sha256": "e78d8259e0280fff3c643ab8dc5be391ca2bca2f3be2f2b21753afbe2fb23ee9"
+    },
+    {
+      "name": "astra/FIXED_WINDOW_REVIEW.md",
+      "sha256": "bef124be04087b3c9f724dab6ec421bd2c917c140638020b24f50c29a0dd00e1"
+    },
+    {
+      "name": "astra/FIXED_WINDOW_REVIEW_MANIFEST.json",
+      "sha256": "414c977a3b406de0f703ee390994d352a7e682799c09ee92c7c0e7edfb7d421d"
+    },
+    {
+      "name": "astra/FIXED_WINDOW_CHECKS.json",
+      "sha256": "7c8b5668509bb1da244c518dc3380ca6d62b94cf2494d321aa884189a13eafcf"
+    },
+    {
+      "name": "astra/audit_fixed_window.py",
+      "sha256": "a381ce5253ed96f0b87200edabd1a8d8762c80dac50a36b82aadab4a5493f81c"
+    },
+    {
+      "name": "astra/native_receipts.py",
+      "sha256": "4731ed48a793c58197dcb892b48b552f6f2fff898770edaf30fc1521e6c90eef"
+    },
+    {
+      "name": "astra/test_native_receipts.py",
+      "sha256": "5b36b022d00dd74d9adf25e8b1318b75dc6f931d80139ae6f944b42be26cf017"
+    },
+    {
+      "name": "astra/run_portable_audit.py",
+      "sha256": "96edc9ebb10c5925cac8883e6cc94ecd15b13db06cea6f50e85f5783d5361ecc"
+    },
+    {
+      "name": "astra/test_portable_adapter.py",
+      "sha256": "cbdb986fe84313c46091c0bc61eaaad20bfb5b15a5194adc69a3a22ea3b63168"
+    },
+    {
+      "name": "astra/PORTABLE_AUDIT.md",
+      "sha256": "0e41210d08ea9ed8c00c2274ff4d480a0aefe92107f756ddd824fd2a56e49696"
+    },
+    {
+      "name": "astra/PORTABLE_ADAPTER_CHECKS.json",
+      "sha256": "dc17931f72a0eb437f89982064ed492e11c09d77bbb64cd3054cbfe79a35646d"
+    },
+    {
+      "name": "astra/portable-validation/PORTABLE_REPRODUCTION.json",
+      "sha256": "12cb451e8c08fa81b3a7e8c2fc98a3ebd5d63510f77b0b6d008d69c56f47fb7a"
+    },
+    {
+      "name": "astra/portable-validation/PORTABLE_FIXED_WINDOW_CHECKS.json",
+      "sha256": "56b7d7639fd0709ef0163be77e46132d85cb5c95124e30a5a5c8999c44edefb3"
+    },
+    {
+      "name": "astra/portable-validation/PORTABLE_RUN_STDOUT.json",
+      "sha256": "c362909e76cbaac7c3348a52aa5fb93bad56c1404d28ec0bb1672e34583da7a9"
+    }
+  ],
+  "parts": [
+    {
+      "name": "RUNTIME_00.b64.txt",
+      "bytes": 28000,
+      "sha256": "b6a682776f976187eb28c3da10eec9a98cc4ce34849dd4614c9d1a57375706db"
+    },
+    {
+      "name": "RUNTIME_01.b64.txt",
+      "bytes": 28000,
+      "sha256": "c647ca33d320a843d453ed8098bcca608d01cdd8b858423cfdbe080298a38670"
+    },
+    {
+      "name": "RUNTIME_02.b64.txt",
+      "bytes": 28000,
+      "sha256": "ed090db3275184fb5cae4d7e0f62e7887aed6976adce6bd6c4d8e78e62d5f4d9"
+    },
+    {
+      "name": "RUNTIME_03.b64.txt",
+      "bytes": 28000,
+      "sha256": "8303938ebf027102fad7ccf7dc4f7e0094aa1822993000409acf33b88b45acfa"
+    },
+    {
+      "name": "RUNTIME_04.b64.txt",
+      "bytes": 28000,
+      "sha256": "8ea4215361b7d7ba36d815b11447a1b2c0245cb40280f81f1430d6557cae7d9f"
+    },
+    {
+      "name": "RUNTIME_05.b64.txt",
+      "bytes": 28000,
+      "sha256": "38a80f3f32db81b336526b19c3661095bd4b9e721cfc74264725ec8170321d0c"
+    },
+    {
+      "name": "RUNTIME_06.b64.txt",
+      "bytes": 28000,
+      "sha256": "4935c6a424e5b954045c740f37dd3c337a07cfe77cb6ac821796b41a20e4baa5"
+    },
+    {
+      "name": "RUNTIME_07.b64.txt",
+      "bytes": 22128,
+      "sha256": "de628ee3d4c9d60c25d080e6b042aa88d168f9a7e00696ed021ab890edbb366f"
+    }
+  ],
+  "combined_base64_sha256": "de4bb880a4d5697b7477d33df0c0ca23adc9b7f94ed1050f188b240f0d23084a",
+  "payload_sha256": "613f2e357eb041699f4b42854b5f2b3efcb352812c25e0f915dec7c02cfdcb42",
+  "roundtrip": "Every original byte and file hash matched after decoding.",
+  "privacy_scan": {
+    "patterns": [
+      "private_key",
+      "secret_prefix",
+      "auth_bearer",
+      "contact_email"
+    ],
+    "findings": [
+      {
+        "name": "astra/test_portable_adapter.py",
+        "kind": "contact_email"
+      }
+    ],
+    "review": "Only intentionally fake contact fixture in portable adapter test. No actual contacts/key values. Full metadata/startup/private operating handoff excluded."
+  },
+  "explicit_exclusions": [
+    {
+      "name": "native/UNFILTERED_STARTUP.json",
+      "private_original_sha256": "7a812f31977c797701f3ee73378b9b61a56870b2ac2bb0c8535e56e83791f41f",
+      "reason": "Unfiltered startup includes unrelated owner Polymarket activity and an unprefixed malformed fragment; filtered originals are separately included."
+    },
+    {
+      "name": "native/POST_TAIL_IDENTITY_FULL_PRIVATE.json",
+      "private_original_sha256": "dba792d68bd8a9b3d617ef1dab85855c1c71018cc7355a9631ff9eaf47dab71e",
+      "reason": "Full deployment creator/contact metadata excluded; selected health/source derivative is included, linked by original hash."
+    },
+    {
+      "name": "native/PUBLIC_QUEUE_SCHEMA.yaml",
+      "private_original_sha256": "a33d05aaa5deab319674407d543b5c0027d41adbf2c4f8a11dab708a0debd35a",
+      "reason": "Large public schema contains key-example text; relevant safe operations/schemas are separately published in QUEUE_API_DOCUMENTATION.json."
+    }
+  ],
+  "scope_limits": [
+    "Explicit selected evidence only; intermediate progress polls and other private working files remain outside this archive.",
+    "Hashes do not authenticate full omitted identity metadata or market completeness.",
+    "Native empty queries and genuinely truncated strings are preserved, not repaired.",
+    "A portable independent runner uses an explicitly synthetic identity wrapper from selected public fields; original audit results remain unchanged."
+  ],
+  "reproduce_root": "Unpack paths safely, run python root_audit.py in archive root. All39 current direct-native checks are asserted; no network or bot import.",
+  "reproduce_independent": "Run python astra/run_portable_audit.py --archive-root . --output-dir portable-results. See astra/PORTABLE_AUDIT.md for exact transformations.",
+  "reproduce_recurrence": "Use unchanged research/kalshi_probability_epochs_2026-10-15/pr66_recurrence.py.txt with the three CAPTURE_ws_* native files, --start 2026-10-16T03:00:00Z --end 2026-10-16T03:15:00Z --tail 2026-10-16T03:17:00Z --expected-deployment 99bf5b9e-72b2-4912-a7cb-8a3db414133b --expected-source 66561e4ee43c962292347693e98ea00986f5db35 and a separate --output."
+}

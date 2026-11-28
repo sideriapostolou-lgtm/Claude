@@ -1,0 +1,144 @@
+"""Predeclared local child resource comparison; fake clocks and no network/I/O."""
+from __future__ import annotations
+import hashlib
+import json
+import math
+import statistics
+import tempfile
+import time
+from dataclasses import astuple
+from pathlib import Path
+from unittest.mock import patch
+import probability_review_harness as harness
+from nightcrawler import kalshi_probability_learning as probability
+from nightcrawler.speeddesk_model import Window
+
+ROOT=harness.ROOT
+TRIALS=40
+
+def percentile(values, fraction):
+    return sorted(values)[max(0,math.ceil(len(values)*fraction)-1)]
+
+def summary(values):
+    return {'n':len(values),'mean':statistics.mean(values),'median':statistics.median(values),
+            'p95':percentile(values,.95),'p99':percentile(values,.99),'min':min(values),'max':max(values)}
+
+def make_window(start, index, long=False):
+    slug=f'KXBTC15M-{index:06d}'
+    if long:slug=slug.ljust(128,'X')
+    return Window(slug,start,start+900,100,venue_start_price=100,fee_rounding='kalshi',venue='kalshi')
+
+def child_trial(module,path,kind):
+    clock=[900.]
+    view=module.WireView()
+    writes=[]
+    def write(path,data,durable=False):
+        writes.append((Path(path).name,durable))
+    with patch.object(module,'_write',write),patch('os.urandom',lambda n:b'x'*n):
+        town=module.KalshiArena(module.ArenaConfig(path,population=12),lambda:view,
+                               clock=lambda:clock[0],cpu=lambda:0.)
+        if kind=='max32forecast':
+            windows=[make_window(1000+i/8,i) for i in range(32)]
+        else:
+            windows=[make_window(1000,1),make_window(1900,2)]
+        town.receive(('batch',1,900.,0,0,[('w',[astuple(w) for w in windows]),('m',100,900.,.001),
+                                        ('g',(),True,True)]),view)
+        town.step(900.)
+        samples=1 if kind=='max32forecast' else 100
+        frames=[]
+        for i in range(samples):
+            now=1304. if kind=='max32forecast' else 1100.+i/10
+            records=[('m',100,now,.001)]
+            if kind=='steady2windows512records': records.extend([('g',(),True,True)]*512)
+            frames.append((now,('batch',i+2,now,0,0,records)))
+        before=time.thread_time_ns()
+        for now,frame in frames:
+            clock[0]=now
+            town.receive(frame,view)
+            town.step(now)
+        elapsed=time.thread_time_ns()-before
+        return elapsed/1e6/samples,writes
+
+def checkpoint():
+    events=[]
+    def log(fmt,*args,**kwargs):events.append(len((fmt%args).encode()))
+    learner=probability.ProbabilityLearning(0.)
+    seq=0
+    def batch(now):
+        nonlocal seq
+        seq+=1
+        learner.batch(('batch',seq,now,0,0,[]),now)
+        learner.batch_complete()
+    with patch.object(probability.log,'info',log):
+        for i in range(64):
+            start=1000.+1800*i
+            w=make_window(start,i,True)
+            learner.discover([w],start-10)
+            batch(start+300)
+            learner.advance([w],100,.001,start+300,start+300)
+            learner.labels_received([(w.slug,bool(i%2))],start+900)
+            learner.advance([w],100,.001,start+900,start+900)
+        start=1000.+1800*64
+        windows=[make_window(start+i/8,100+i,True) for i in range(32)]
+        learner.discover(windows,start-10)
+        batch(start+304)
+        learner.advance(windows,100,.001,start+304,start+304)
+    state=learner.state()
+    serialized=json.dumps(state,allow_nan=False,separators=(',',':')).encode()
+    assert len(state['pending'])==32 and len(state['recent'])==64 and len(state['labels'])==64
+    restored=probability.ProbabilityLearning(start+305)
+    restored.restore(json.loads(serialized),start+305)
+    assert restored.enabled and restored.counts==learner.counts
+    assert all(row['forecast'] is not None for row in restored.pending.values())
+    times=[]
+    for _ in range(40):
+        begin=time.thread_time_ns()
+        json.dumps(learner.state(),allow_nan=False,separators=(',',':'))
+        times.append((time.thread_time_ns()-begin)/1e6)
+    return {'new_state_bytes':len(serialized),'max_event_bytes':max(events),'pending':32,'recent':64,'labels':64,
+            'restore_accepted':True,'counts_preserved':True,'state_copy_and_json_cpu_ms':summary(times)}
+
+def main():
+    files=('kalshi_arena.py','kalshi_probability_learning.py')
+    before={name:hashlib.sha256((ROOT/'src/nightcrawler'/name).read_bytes()).hexdigest() for name in files}
+    rows=[]
+    # No-op sink leaves the actual source formatting/JSON cost in the timed path.
+    with patch('logging.Logger.info',lambda *a,**k:None), tempfile.TemporaryDirectory(prefix='prob-resource-') as tmp:
+        for kind in ('steady2windows','steady2windows512records','max32forecast'):
+            for trial in range(TRIALS):
+                order=('base','candidate') if trial%2==0 else ('candidate','base')
+                values={}
+                durable={}
+                for name in order:
+                    module=harness.baseline if name=='base' else harness.candidate
+                    values[name],durable[name]=child_trial(module,Path(tmp)/f'{kind}-{trial}-{name}',kind)
+                assert durable['base']==durable['candidate']
+                rows.append({'case':kind,'trial':trial,'order':list(order),'base_cpu_ms':values['base'],
+                             'candidate_cpu_ms':values['candidate'],'extra_cpu_ms':values['candidate']-values['base']})
+        startup=[]
+        for _ in range(40):
+            begin=time.thread_time_ns();probability.fingerprint();startup.append((time.thread_time_ns()-begin)/1e6)
+        Path('/workspace/probability-resource-independent.partial.json').write_text(json.dumps(
+            {'raw_trials':rows,'startup_fingerprint_cpu_ms_raw':startup,'source_sha256':before},indent=2))
+        capacity=checkpoint()
+    aggregate={kind:{field:summary([row[field] for row in rows if row['case']==kind])
+                     for field in ('base_cpu_ms','candidate_cpu_ms','extra_cpu_ms')}
+               for kind in ('steady2windows','steady2windows512records','max32forecast')}
+    gates={'steady_mean_extra_cpu_ms':aggregate['steady2windows']['extra_cpu_ms']['mean']<=1,
+           'steady512_mean_extra_cpu_ms':aggregate['steady2windows512records']['extra_cpu_ms']['mean']<=1,
+           'max32_due_p95_extra_cpu_ms':aggregate['max32forecast']['extra_cpu_ms']['p95']<=10,
+           'new_state_bytes':capacity['new_state_bytes']<=131072,
+           'max_event_bytes':capacity['max_event_bytes']<=16384}
+    after={name:hashlib.sha256((ROOT/'src/nightcrawler'/name).read_bytes()).hexdigest() for name in files}
+    assert before==after,'source changed during benchmark'
+    output={'plan':str(ROOT/'research/kalshi_probability_learning_2026-10-15/RESOURCE_PLAN.json'),
+            'source_sha256':before,'source_unchanged_during_run':True,'trial_count_per_case':TRIALS,
+            'method':'Repeated interleaved original base88/candidate actual child receive+step,12 residents,fake clocks,no-op logs, no file I/O; JSON construction charged; startup excluded.',
+            'cpu_ms_per_frame':aggregate,'raw_trials':rows,'checkpoint':capacity,
+            'startup_fingerprint_cpu_ms':summary(startup),'local_envelope_gates':gates,
+            'limitations':['Synthetic local CPU only; no production contention/log backpressure/latency/continuity/profit inference.',
+                          'Max32 simultaneous due windows use artificial distinct starts spaced1/8second; capacity stress, not real market cadence.',
+                          'All negative deltas/outliers retained in raw trials; no clamping or trimming.']}
+    print(json.dumps(output,indent=2))
+
+if __name__=='__main__':main()

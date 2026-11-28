@@ -1,0 +1,237 @@
+{
+ "hypothesis": "Q10",
+ "version": "q10-v1",
+ "stage": "debug",
+ "split": "final_train",
+ "utc": "2026-10-09 10:59:32",
+ "provisional": false,
+ "debug_only": true,
+ "prereg_sha256": "dbcfe323c0753cf08b1d94644666a416ed24a4c74e0ace488c9d61b311006466",
+ "rerun_reason": null,
+ "coverage": {
+  "split": "final_train",
+  "bounds_utc": [
+   "2026-10-07 19:37:30",
+   "2026-10-08 08:06:47"
+  ],
+  "debug_only": true,
+  "graduates_in_split": 644,
+  "tradeable": 450,
+  "usable": 450,
+  "excluded": {
+   "mayhem": 129,
+   "not_sol_quoted": 65
+  },
+  "created_inexact": 0,
+  "has_create0": 44,
+  "chain_hours_scanned_frac": 1.0,
+  "days": [
+   {
+    "day": "2026-10-07",
+    "hours_in_split": 5,
+    "curve_hours": 5,
+    "b2_hours": 5,
+    "b2_hours_midrun": 0,
+    "coins_created": 294,
+    "tradeable": 196,
+    "usable": 196,
+    "usable_frac": 1.0,
+    "partial": false
+   },
+   {
+    "day": "2026-10-08",
+    "hours_in_split": 9,
+    "curve_hours": 9,
+    "b2_hours": 9,
+    "b2_hours_midrun": 0,
+    "coins_created": 350,
+    "tradeable": 254,
+    "usable": 254,
+    "usable_frac": 1.0,
+    "partial": false
+   }
+  ],
+  "days_expected": 0.52,
+  "days_full": 2,
+  "curve_span_utc": [
+   "2026-09-29 21:00:00",
+   "2026-10-09 02:00:00"
+  ],
+  "b2_span_utc": [
+   "2026-10-07 19:00:00",
+   "2026-10-08 19:00:00"
+  ],
+  "completeness_source": "raw_chunks",
+  "parquet_snapshot_utc": "2026-10-09 10:40:52",
+  "b2_hours_needed": 24,
+  "b2_hours_done": 24,
+  "b2_hours_midrun": [],
+  "sol_usd": {
+   "series_utc": [
+    "2026-09-15 00:00:00",
+    "2026-10-08 23:59:00"
+   ],
+   "constant_fallback": false,
+   "lookahead_coins": 0,
+   "stale_coins": 0
+  },
+  "power": {
+   "entry_bar_coins": {
+    "need": 40,
+    "have_usable_coins": 450,
+    "ok": true
+   },
+   "x1_r0_trades_5_seeds": {
+    "need": 200,
+    "max_possible": 2250,
+    "ok": true
+   },
+   "g1_flagged_coins_val": {
+    "need": 200,
+    "max_possible": 450,
+    "ok": true
+   }
+  },
+  "underpowered": false,
+  "complete": true,
+  "notes": [],
+  "from_flow": true
+ },
+ "n_coins": 450,
+ "span_days": 0.5203240740740741,
+ "event_counts": {
+  "coins": 450,
+  "alive_at_10min": 8,
+  "mcap_ge_420_at_10min": 7,
+  "r15_ok_at_10min": 0,
+  "vol_ratio_ge": {
+   "6": 2,
+   "3": 2
+  }
+ },
+ "configs": {
+  "M6|D0.7": {
+   "config": "M6|D0.7",
+   "params_hash": "8280b9fc12e4",
+   "hypothesis": "Q10",
+   "n": 50,
+   "n_coins": 50,
+   "by_stratum_n": {
+    "lp": 50
+   },
+   "n_placebo": 1000,
+   "horizon_exits": 0,
+   "trial": {
+    "config": "Q10|8280b9fc12e4|cfg:a06543feac6c",
+    "new_trial": false,
+    "n_trials_total": 2575
+   },
+   "returns": "hidden on the debug split (never choose parameters on FINAL data)"
+  },
+  "M6|D0.5": {
+   "config": "M6|D0.5",
+   "params_hash": "11c27f090609",
+   "hypothesis": "Q10",
+   "n": 50,
+   "n_coins": 50,
+   "by_stratum_n": {
+    "lp": 50
+   },
+   "n_placebo": 1000,
+   "horizon_exits": 0,
+   "trial": {
+    "config": "Q10|11c27f090609|cfg:a06543feac6c",
+    "new_trial": false,
+    "n_trials_total": 2575
+   },
+   "returns": "hidden on the debug split (never choose parameters on FINAL data)"
+  },
+  "M6|deadline": {
+   "config": "M6|deadline",
+   "params_hash": "77a1c0942fb4",
+   "hypothesis": "Q10",
+   "n": 50,
+   "n_coins": 50,
+   "by_stratum_n": {
+    "lp": 50
+   },
+   "n_placebo": 1000,
+   "horizon_exits": 0,
+   "trial": {
+    "config": "Q10|77a1c0942fb4|cfg:a06543feac6c",
+    "new_trial": false,
+    "n_trials_total": 2575
+   },
+   "returns": "hidden on the debug split (never choose parameters on FINAL data)"
+  },
+  "M3|D0.7": {
+   "config": "M3|D0.7",
+   "params_hash": "72a3fd0264a6",
+   "hypothesis": "Q10",
+   "n": 58,
+   "n_coins": 58,
+   "by_stratum_n": {
+    "lp": 58
+   },
+   "n_placebo": 1160,
+   "horizon_exits": 0,
+   "trial": {
+    "config": "Q10|72a3fd0264a6|cfg:a06543feac6c",
+    "new_trial": false,
+    "n_trials_total": 2575
+   },
+   "returns": "hidden on the debug split (never choose parameters on FINAL data)"
+  },
+  "M3|D0.5": {
+   "config": "M3|D0.5",
+   "params_hash": "5b0dac929855",
+   "hypothesis": "Q10",
+   "n": 58,
+   "n_coins": 58,
+   "by_stratum_n": {
+    "lp": 58
+   },
+   "n_placebo": 1160,
+   "horizon_exits": 0,
+   "trial": {
+    "config": "Q10|5b0dac929855|cfg:a06543feac6c",
+    "new_trial": false,
+    "n_trials_total": 2575
+   },
+   "returns": "hidden on the debug split (never choose parameters on FINAL data)"
+  },
+  "M3|deadline": {
+   "config": "M3|deadline",
+   "params_hash": "ba1e46ea869e",
+   "hypothesis": "Q10",
+   "n": 58,
+   "n_coins": 58,
+   "by_stratum_n": {
+    "lp": 58
+   },
+   "n_placebo": 1160,
+   "horizon_exits": 0,
+   "trial": {
+    "config": "Q10|ba1e46ea869e|cfg:a06543feac6c",
+    "new_trial": false,
+    "n_trials_total": 2575
+   },
+   "returns": "hidden on the debug split (never choose parameters on FINAL data)"
+  }
+ },
+ "entries_per_day": {
+  "M6|D0.7": 96.0939585372364,
+  "M6|D0.5": 96.0939585372364,
+  "M6|deadline": 96.0939585372364,
+  "M3|D0.7": 111.46899190319422,
+  "M3|D0.5": 111.46899190319422,
+  "M3|deadline": 111.46899190319422
+ },
+ "decision": {
+  "verdict": "DEBUG",
+  "note": "mechanics and counts only; returns hidden"
+ },
+ "runtime_s": 29.3,
+ "n_trials_total": 2575,
+ "overall": "PENDING (no official TRAIN run)"
+}

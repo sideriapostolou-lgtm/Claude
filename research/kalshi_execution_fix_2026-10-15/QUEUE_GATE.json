@@ -1,0 +1,26 @@
+{
+  "recorded_at_utc": "2026-10-15T18:30:31.770144+00:00",
+  "display_timezone": "America/Los_Angeles",
+  "branch": "claude/nightcrawler-memecoin-bot-Gwnb1S",
+  "checked_head": "59ba6a8e33c4e7368e74ca1e71645cc4f288d699",
+  "current_connected_github_blobs": {
+    "AGENTS.md": "389266a51ccba3d21072371fd680bc8e4aff2af9",
+    "docs/COORDINATION.md": "a83a4dcc3c4ef754f544b1bc355497b6626b023c",
+    "docs/WORKLOG.md": "3ccd530c1cde718e63efaa867d19883193e78066",
+    "research/kalshi_profitability_2026-10-14/PR47_DEPLOYMENT.md": "33c13fb39f85c958e322b8afbcaecfc052d6531b",
+    "research/tjr_validation_2026-10-14/DATA_ACCESS.md": "78c2beb80e24a5f5e2305561ecf7f496abdd3e40"
+  },
+  "read_scope": "Connected GitHub full AGENTS and COORDINATION including existing TJR queue; newest220 WORKLOG lines; exact pinned full PR47 release/restart and DATA_ACCESS. Matching fetched branch blobs checked below.",
+  "gate": "BLOCKED; broader EXEC/input-gap/zero-scored learner evidence remains open. Prior explicit offline priority persists but supplies no authentic historical bars/account costs. PR47 completion is supported by separate exact deployment/startup/restart/followup records, not only merge metadata.",
+  "tjr_status": {
+    "historical_trades": 0,
+    "historical_pnl": null,
+    "paper_started": false,
+    "live_enabled": false,
+    "holdout_opened": false,
+    "saved_prototype_tests": "65 previously reproduced synthetic checks; not rerun in this task",
+    "required_input": "Authorized actual MNQ December2025 Sep19\u2013Oct31 minute bars, contract mapping/license/timezone/bar convention and verified account costs."
+  },
+  "action": "Existing queue left blocked/unfinished; saved sources/tests preserved. No new Page reads, reconstruction, duplicate probes/research/tests, production authority or routine unchanged notification; automation unchanged.",
+  "next_step": "Continue existing Kalshi causal input/admission work; TJR historical validation only when authentic inputs arrive, then separately verify paper start with live disabled."
+}

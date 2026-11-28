@@ -1,0 +1,328 @@
+{
+  "captured_at_utc": "2026-10-14 16:32:43 UTC",
+  "deployment_id": "f707494f-1b45-4610-9488-def9796b5923",
+  "commit": "e8db34ee34d95411ac7f695f704ceb82ef8e32d5",
+  "source": "Exact top-level speeddesk_live_* log messages only; nested status copies excluded. No production mutations.",
+  "startup_log_at_utc": "2026-10-14T16:24:11.297591877Z",
+  "earlier_window_lock_fill": {
+    "log_at": "2026-10-14T16:26:05.667801268Z",
+    "at": 1791995164.430974,
+    "window": "KXBTC15M-26OCT141230-30",
+    "side": "up",
+    "price": 0.79,
+    "size": 5,
+    "fee_usd": 0.0581,
+    "is_taker": true
+  },
+  "settlement": [
+    {
+      "log_at": "2026-10-14T16:30:07.438256206Z",
+      "at": 1791995404.141105,
+      "window": "KXBTC15M-26OCT141230-30",
+      "up_wins": true,
+      "up_shares": 13,
+      "down_shares": 13,
+      "cost_usd": 13.83,
+      "fee_usd": 0.0581,
+      "payout_usd": 13,
+      "locked_usd": -0.8880999999999992,
+      "direction_usd": -4.440892098500626e-16,
+      "pnl_usd": -0.8880999999999997,
+      "observed_at": 1791995407.3455498,
+      "time_source": "venue settled_time"
+    }
+  ],
+  "active_window": {
+    "market": "KXBTC15M-26OCT141245-45",
+    "window_start_utc": "2026-10-14T16:30:00Z",
+    "window_end_utc": "2026-10-14T16:45:00Z",
+    "bounded_log_query_start": "2026-10-14T16:30:00Z",
+    "bounded_log_query_end": "2026-10-14T16:31:15Z",
+    "earliest_intent_at": "2026-10-14T16:30:07.568Z",
+    "last_observed_ack_at": "2026-10-14T16:31:07.211Z",
+    "unique_order_intents": 12,
+    "unique_accepted_orders": 12,
+    "unique_canceled_orders": 11,
+    "cancel_events": 11,
+    "cancel_reasons": [
+      "reprice"
+    ],
+    "all_intents_kind": "rest",
+    "all_intents_size": 5,
+    "actual_new_fill_records": 0,
+    "actual_new_contracts": 0,
+    "new_fill_fees_usd": 0,
+    "metrics": {
+      "btc_exchange_to_decision": {
+        "n": 12,
+        "median_ms": 230.40395672433078,
+        "p95_ms": 771.6818787157536,
+        "max_ms": 771.6818787157536,
+        "quantile_method": "median midpoint; p95 nearest-rank"
+      },
+      "btc_receipt_to_decision": {
+        "n": 12,
+        "median_ms": 92.58979908190668,
+        "p95_ms": 605.9456802904606,
+        "max_ms": 605.9456802904606,
+        "quantile_method": "median midpoint; p95 nearest-rank"
+      },
+      "decision_to_ack": {
+        "n": 12,
+        "median_ms": 82.56375649943948,
+        "p95_ms": 269.7995090857148,
+        "max_ms": 269.7995090857148,
+        "quantile_method": "median midpoint; p95 nearest-rank"
+      },
+      "cancel_decision_to_ack": {
+        "n": 11,
+        "median_ms": 78.5,
+        "p95_ms": 285.8,
+        "max_ms": 285.8,
+        "quantile_method": "median midpoint; p95 nearest-rank"
+      }
+    },
+    "limits": "This is the first75 seconds, not a completed window or strategy backtest. Event timestamps are distinct from Railway ingestion timestamps; zero observed fills does not prove an order cannot fill later."
+  },
+  "latest_status": {
+    "log_at": "2026-10-14T16:31:17.199862423Z",
+    "at": 1791995476.98103,
+    "as_of": 1791995476.9572866,
+    "mode": "live",
+    "configured_mode": "live",
+    "status": "REAL MONEY (Kalshi)",
+    "reason": "Window has not started",
+    "trading_now": true,
+    "waiting": "",
+    "authenticated": true,
+    "caps": {
+      "window_usd": 10,
+      "open_usd": 20,
+      "day_stop_usd": 6,
+      "clip": 5,
+      "total_stop_usd": 10
+    },
+    "total_halted": false,
+    "day_stop_latched": false,
+    "integrity_error": null,
+    "cash_usd": 41.9427,
+    "cash_at": 1791995476.9564798,
+    "reserved_usd": 2.5,
+    "open_risk_usd": 0,
+    "open_cost_usd": 0,
+    "at_risk_usd": 2.5,
+    "open_orders": 1,
+    "positions": 0,
+    "lifetime_pnl_usd": -7.7987000000000055,
+    "day": "2026-10-14",
+    "day_pnl_usd": 2.143399999999998,
+    "lifetime_fills": 364,
+    "lifetime_fees_usd": 1.8718,
+    "phase_ms": {
+      "step": {
+        "n": 563,
+        "median_ms": 1.3,
+        "p90_ms": 2.7,
+        "max_ms": 2294
+      },
+      "reconcile": {
+        "n": 41,
+        "median_ms": 495.8,
+        "p90_ms": 1287.8,
+        "max_ms": 2079.6
+      },
+      "heartbeat": {
+        "n": 563,
+        "median_ms": 0,
+        "p90_ms": 0.1,
+        "max_ms": 405
+      }
+    },
+    "event_loop_lag_ms": {
+      "n": 1316,
+      "median_ms": 10.7,
+      "p90_ms": 73.1,
+      "max_ms": 711
+    },
+    "read_worker_tail_ms": {
+      "balance_worker_resume": {
+        "n": 41,
+        "median_ms": 14.5,
+        "p90_ms": 224.2,
+        "max_ms": 873.8
+      },
+      "list_orders_worker_resume": {
+        "n": 82,
+        "median_ms": 8.2,
+        "p90_ms": 311.6,
+        "max_ms": 577.4
+      },
+      "positions_worker_resume": {
+        "n": 41,
+        "median_ms": 15.6,
+        "p90_ms": 105.7,
+        "max_ms": 638.6
+      }
+    },
+    "client_http_ms": {
+      "list_orders_http_ms": {
+        "n": 86,
+        "median_ms": 45.2,
+        "p90_ms": 115.3,
+        "max_ms": 314.1
+      },
+      "fills_http_ms": {
+        "n": 41,
+        "median_ms": 33,
+        "p90_ms": 45.1,
+        "max_ms": 228.7
+      },
+      "positions_http_ms": {
+        "n": 41,
+        "median_ms": 32.1,
+        "p90_ms": 48.6,
+        "max_ms": 251.4
+      },
+      "balance_http_ms": {
+        "n": 41,
+        "median_ms": 35.1,
+        "p90_ms": 49.4,
+        "max_ms": 73.6
+      },
+      "create_order_http_ms": {
+        "n": 9,
+        "median_ms": 38.9,
+        "p90_ms": 53.6,
+        "max_ms": 53.6
+      },
+      "cancel_http_ms": {
+        "n": 9,
+        "median_ms": 32.7,
+        "p90_ms": 68.3,
+        "max_ms": 68.3
+      }
+    },
+    "client_lock_wait_ms": {
+      "list_orders_lock_wait_ms": {
+        "n": 86,
+        "median_ms": 0,
+        "p90_ms": 0,
+        "max_ms": 0
+      },
+      "create_order_lock_wait_ms": {
+        "n": 9,
+        "median_ms": 0,
+        "p90_ms": 0,
+        "max_ms": 0
+      },
+      "cancel_lock_wait_ms": {
+        "n": 9,
+        "median_ms": 0,
+        "p90_ms": 0,
+        "max_ms": 0
+      }
+    },
+    "client_rate_wait_ms": {
+      "list_orders_rate_wait_ms": {
+        "n": 86,
+        "median_ms": 0,
+        "p90_ms": 0,
+        "max_ms": 0
+      },
+      "create_order_rate_wait_ms": {
+        "n": 9,
+        "median_ms": 0,
+        "p90_ms": 0,
+        "max_ms": 0
+      },
+      "cancel_rate_wait_ms": {
+        "n": 9,
+        "median_ms": 0,
+        "p90_ms": 0,
+        "max_ms": 0
+      }
+    },
+    "request_counts": {
+      "dropped": 0,
+      "list_orders_ok": 86,
+      "fills_ok": 41,
+      "positions_ok": 41,
+      "balance_ok": 41,
+      "cancel_ok": 9,
+      "create_order_ok": 9
+    }
+  },
+  "earlier_tail_evidence": [
+    {
+      "log_at": "2026-10-14T16:26:15.316291739Z",
+      "event_loop_lag_ms": {
+        "n": 816,
+        "median_ms": 15.6,
+        "p90_ms": 150.5,
+        "max_ms": 1765
+      },
+      "step": {
+        "n": 340,
+        "median_ms": 1.9,
+        "p90_ms": 6.4,
+        "max_ms": 4595.3
+      },
+      "reconcile_recent": {
+        "n": 27,
+        "median_ms": 707.9,
+        "p90_ms": 2744.6,
+        "max_ms": 4393.5
+      },
+      "balance_worker_resume": {
+        "n": 29,
+        "median_ms": 45.9,
+        "p90_ms": 510.8,
+        "max_ms": 1928.7
+      },
+      "orders_http": {
+        "n": 60,
+        "median_ms": 49.2,
+        "p90_ms": 104,
+        "max_ms": 363.3
+      },
+      "balance_http": {
+        "n": 28,
+        "median_ms": 33.6,
+        "p90_ms": 46.5,
+        "max_ms": 341.2
+      }
+    }
+  ],
+  "interpretation": [
+    "The 16:15–16:30 window lost $0.8881 net; it straddled the deployment. Do not attribute all its fills or profit to PR47.",
+    "Gross window cost $13.8881 exceeded the ordinary $10 entry budget through the existing risk-reducing lock exemption; this is not a new cap increase.",
+    "The next window had no fills observed in the first75s, so no realized P&L inference follows from its orders or faster acknowledgments.",
+    "Measured local queue/resume and event-loop tails remain materially longer than typical HTTP times. Metric maxima are not matched per-request causal decomposition.",
+    "step awaits sequential reconciliation; account_at is invalidated when reconciliation exceeds3s. Fast median step does not mean the complete decision/reconciliation path is consistently fast.",
+    "Arena late increments when queued book/trade age exceeds3s and marks that window degraded; zero dropped does not prove complete usable evidence or locate the exact delay stage."
+  ],
+  "code_references": [
+    {
+      "path": "src/nightcrawler/speeddesk_live.py",
+      "lines": [
+        615,
+        649,
+        1423,
+        1438,
+        1616,
+        2196,
+        2300
+      ],
+      "meaning": "Worker queue/resume diagnostics, cancellation-safe awaited reads, sequential account reconciliation, slow-reconcile freshness guard, step and event-loop probe."
+    },
+    {
+      "path": "src/nightcrawler/kalshi_arena.py",
+      "lines": [
+        1192,
+        1218,
+        1231
+      ],
+      "meaning": "late counts event age >3s; feed_late degrades window before continued processing."
+    }
+  ]
+}

@@ -1,0 +1,61 @@
+{
+  "candidate": [
+    {
+      "path": "src/nightcrawler/kalshi_probability_epochs.py",
+      "equal": true,
+      "blob": "2900774856f3a251fd740ac01425d4b76aa4c3e4"
+    },
+    {
+      "path": "src/nightcrawler/kalshi_probability_learning.py",
+      "equal": true,
+      "blob": "3cf8ea01bd189b9fbde3d57b7f4060f285b83bac"
+    },
+    {
+      "path": "src/nightcrawler/kalshi_arena.py",
+      "equal": true,
+      "blob": "7085a8aea4b1202ace29e25114782808ae31d987"
+    },
+    {
+      "path": "src/nightcrawler/pagestate.py",
+      "equal": true,
+      "blob": "d538995e10010689df380caeac2278ffdac35cb2"
+    }
+  ],
+  "merged": [
+    {
+      "status": "fulfilled",
+      "value": {
+        "path": "src/nightcrawler/kalshi_probability_epochs.py",
+        "equal": true,
+        "blob": "2900774856f3a251fd740ac01425d4b76aa4c3e4"
+      }
+    },
+    {
+      "status": "fulfilled",
+      "value": {
+        "path": "src/nightcrawler/kalshi_probability_learning.py",
+        "equal": true,
+        "blob": "3cf8ea01bd189b9fbde3d57b7f4060f285b83bac"
+      }
+    },
+    {
+      "status": "fulfilled",
+      "value": {
+        "path": "src/nightcrawler/kalshi_arena.py",
+        "equal": true,
+        "blob": "7085a8aea4b1202ace29e25114782808ae31d987"
+      }
+    },
+    {
+      "status": "fulfilled",
+      "value": {
+        "path": "src/nightcrawler/pagestate.py",
+        "equal": true,
+        "blob": "d538995e10010689df380caeac2278ffdac35cb2"
+      }
+    }
+  ],
+  "candidate_commit": "1cca7075afc90dda1e335043b2e3d683a4b1d744",
+  "merge_commit": "0c30491e0bd101250ee443912e1352f38718af45",
+  "local_tree": "f41a5d677cafc331e953bb4170be329704c5c569"
+}

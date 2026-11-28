@@ -1,0 +1,19 @@
+{
+  "recorded_at_utc": "2026-10-15T18:17:31.126978+00:00",
+  "PR": 63,
+  "candidate": "a056fcae3024399ef57558163eed648a5d17ab13",
+  "merge": "59ba6a8e33c4e7368e74ca1e71645cc4f288d699",
+  "merged_at_utc": "2026-10-15T18:17:03Z",
+  "safe_minute": true,
+  "merged_objects_equal_tested_candidate": {
+    "src": "280d49d0c7f2a29f22b72597ce0f9eec3e36d3f6",
+    "tests": "2371985e0b5a63bdec8df97d5d276d8fca6f4890",
+    "pyproject.toml": "ad94cd44427c5a1568d656952f7e9ec67ef8c639",
+    "Dockerfile": "a76dc75e2a3f985c1385b226d1fa314082cfa969",
+    "railway.json": "44934d9e77c22063020f2d956237949145491616",
+    "README.md": "1e54bb612cae60809dec0d5f334c1911352ddc99"
+  },
+  "source_sha256": "2471adff4eca63ee6abba73031da75793ae5e1b3cb0468e30e1e2d6b9934efd5",
+  "money_changes": "No variables/caps/stop/resume/daybudgets/manualorders; existinglivebotsrestartfromauthorizedsourceautorelease.",
+  "specific_gh_read_failure": "InitialbaseRefOidfieldunsupported; correctedbaseRefNameread succeeded. No failedmutation or waivedcheck."
+}

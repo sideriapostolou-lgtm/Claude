@@ -1,0 +1,292 @@
+{
+ "hypothesis": "Y2",
+ "version": "y2-v1",
+ "stage": "debug",
+ "split": "final_train",
+ "utc": "2026-10-09 02:52:30",
+ "provisional": false,
+ "debug_only": true,
+ "prereg_sha256": "23acd7b4364a7de259b638930189d6f2391a236aa781cc2cc92f65c16e8eb0f8",
+ "rerun_reason": null,
+ "coverage": {
+  "split": "final_train",
+  "bounds_utc": [
+   "2026-10-07 19:37:30",
+   "2026-10-08 08:06:47"
+  ],
+  "debug_only": true,
+  "graduates_in_split": 644,
+  "tradeable": 450,
+  "usable": 450,
+  "excluded": {
+   "mayhem": 129,
+   "not_sol_quoted": 65
+  },
+  "created_inexact": 0,
+  "has_create0": 44,
+  "chain_hours_scanned_frac": 1.0,
+  "days": [
+   {
+    "day": "2026-10-07",
+    "hours_in_split": 5,
+    "curve_hours": 5,
+    "b2_hours": 5,
+    "b2_hours_midrun": 0,
+    "coins_created": 294,
+    "tradeable": 196,
+    "usable": 196,
+    "usable_frac": 1.0,
+    "partial": false
+   },
+   {
+    "day": "2026-10-08",
+    "hours_in_split": 9,
+    "curve_hours": 9,
+    "b2_hours": 9,
+    "b2_hours_midrun": 0,
+    "coins_created": 350,
+    "tradeable": 254,
+    "usable": 254,
+    "usable_frac": 1.0,
+    "partial": false
+   }
+  ],
+  "days_expected": 0.52,
+  "days_full": 2,
+  "curve_span_utc": [
+   "2026-10-04 18:00:00",
+   "2026-10-08 21:00:00"
+  ],
+  "b2_span_utc": [
+   "2026-10-07 19:00:00",
+   "2026-10-08 19:00:00"
+  ],
+  "completeness_source": "raw_chunks",
+  "parquet_snapshot_utc": "2026-10-09 00:30:55",
+  "b2_hours_needed": 24,
+  "b2_hours_done": 24,
+  "b2_hours_midrun": [],
+  "sol_usd": {
+   "series_utc": [
+    "2026-09-15 00:00:00",
+    "2026-10-08 23:59:00"
+   ],
+   "constant_fallback": false,
+   "lookahead_coins": 0,
+   "stale_coins": 0
+  },
+  "power": {
+   "entry_bar_coins": {
+    "need": 40,
+    "have_usable_coins": 450,
+    "ok": true
+   },
+   "x1_r0_trades_5_seeds": {
+    "need": 200,
+    "max_possible": 2250,
+    "ok": true
+   },
+   "g1_flagged_coins_val": {
+    "need": 200,
+    "max_possible": 450,
+    "ok": true
+   }
+  },
+  "underpowered": false,
+  "complete": true,
+  "notes": [],
+  "from_flow": true
+ },
+ "n_coins": 450,
+ "span_days": 0.5203240740740741,
+ "event_counts": {
+  "usable": 450,
+  "ineligible": {
+   "instant": 277,
+   "curve_partial": 21
+  },
+  "eligible": 152,
+  "eligible_warm": 152,
+  "eligible_alive": 47,
+  "terciles": {
+   "mid": 52,
+   "bottom": 56,
+   "top": 44
+  },
+  "selector_coins": {
+   "T3": 44,
+   "T5": 26,
+   "PE11": 77
+  },
+  "selector_alive": {
+   "T3": 14,
+   "T5": 7,
+   "PE11": 16,
+   "ALL": 47
+  },
+  "n_ref_median": 307.0,
+  "n_ref_min": 299,
+  "ref_pool_size": 473,
+  "ref_graduates_read": 2089,
+  "ref_coverage_source": "raw_curve_chunks"
+ },
+ "configs": {
+  "T3|X60": {
+   "config": "T3|X60",
+   "params_hash": "0e25686fa3ef",
+   "hypothesis": "Y2",
+   "n": 14,
+   "n_coins": 14,
+   "by_tercile_n": {
+    "top": 14
+   },
+   "n_placebo": 266,
+   "horizon_exits": 0,
+   "trial": {
+    "config": "Y2|0e25686fa3ef|cfg:a06543feac6c",
+    "new_trial": false,
+    "n_trials_total": 2575
+   },
+   "returns": "hidden on the debug split (never choose parameters on FINAL data)"
+  },
+  "T3|H178": {
+   "config": "T3|H178",
+   "params_hash": "7fbce04c537f",
+   "hypothesis": "Y2",
+   "n": 14,
+   "n_coins": 14,
+   "by_tercile_n": {
+    "top": 14
+   },
+   "n_placebo": 266,
+   "horizon_exits": 0,
+   "trial": {
+    "config": "Y2|7fbce04c537f|cfg:a06543feac6c",
+    "new_trial": false,
+    "n_trials_total": 2575
+   },
+   "returns": "hidden on the debug split (never choose parameters on FINAL data)"
+  },
+  "T5|X60": {
+   "config": "T5|X60",
+   "params_hash": "8a569c73cebb",
+   "hypothesis": "Y2",
+   "n": 7,
+   "n_coins": 7,
+   "by_tercile_n": {
+    "top": 7
+   },
+   "n_placebo": 134,
+   "horizon_exits": 0,
+   "trial": {
+    "config": "Y2|8a569c73cebb|cfg:a06543feac6c",
+    "new_trial": false,
+    "n_trials_total": 2575
+   },
+   "returns": "hidden on the debug split (never choose parameters on FINAL data)"
+  },
+  "T5|H178": {
+   "config": "T5|H178",
+   "params_hash": "03ab70f478bb",
+   "hypothesis": "Y2",
+   "n": 7,
+   "n_coins": 7,
+   "by_tercile_n": {
+    "top": 7
+   },
+   "n_placebo": 134,
+   "horizon_exits": 0,
+   "trial": {
+    "config": "Y2|03ab70f478bb|cfg:a06543feac6c",
+    "new_trial": false,
+    "n_trials_total": 2575
+   },
+   "returns": "hidden on the debug split (never choose parameters on FINAL data)"
+  },
+  "PE11|X60": {
+   "config": "PE11|X60",
+   "params_hash": "42ae6d4a712e",
+   "hypothesis": "Y2",
+   "n": 16,
+   "n_coins": 16,
+   "by_tercile_n": {
+    "bottom": 12,
+    "mid": 4
+   },
+   "n_placebo": 301,
+   "horizon_exits": 0,
+   "trial": {
+    "config": "Y2|42ae6d4a712e|cfg:a06543feac6c",
+    "new_trial": false,
+    "n_trials_total": 2575
+   },
+   "returns": "hidden on the debug split (never choose parameters on FINAL data)"
+  },
+  "PE11|H178": {
+   "config": "PE11|H178",
+   "params_hash": "07df03cfeff0",
+   "hypothesis": "Y2",
+   "n": 16,
+   "n_coins": 16,
+   "by_tercile_n": {
+    "bottom": 12,
+    "mid": 4
+   },
+   "n_placebo": 301,
+   "horizon_exits": 0,
+   "trial": {
+    "config": "Y2|07df03cfeff0|cfg:a06543feac6c",
+    "new_trial": false,
+    "n_trials_total": 2575
+   },
+   "returns": "hidden on the debug split (never choose parameters on FINAL data)"
+  },
+  "dose": {
+   "config": "ALL|H178",
+   "params_hash": "82e00b03b5ec",
+   "hypothesis": "Y2",
+   "n": 47,
+   "n_coins": 47,
+   "by_tercile_n": {
+    "mid": 19,
+    "top": 14,
+    "bottom": 14
+   },
+   "n_placebo": 0,
+   "horizon_exits": 0,
+   "trial": {
+    "config": "Y2|82e00b03b5ec|cfg:a06543feac6c",
+    "new_trial": false,
+    "n_trials_total": 2575
+   },
+   "returns": "hidden on the debug split (never choose parameters on FINAL data)"
+  }
+ },
+ "dose": {
+  "n": 47,
+  "by_tercile_n": {
+   "mid": 19,
+   "top": 14,
+   "bottom": 14
+  },
+  "pe11_n": 16,
+  "rest_n": 31,
+  "returns": "hidden on the debug split"
+ },
+ "n_trials_total": 2575,
+ "entries_per_day": {
+  "T3|X60": 26.906308390426194,
+  "T3|H178": 26.906308390426194,
+  "T5|X60": 13.453154195213097,
+  "T5|H178": 13.453154195213097,
+  "PE11|X60": 30.75006673191565,
+  "PE11|H178": 30.75006673191565,
+  "dose": 90.32832102500223
+ },
+ "decision": {
+  "verdict": "DEBUG",
+  "note": "mechanics and counts only; returns hidden"
+ },
+ "runtime_s": 5.3,
+ "overall": "PENDING (no official TRAIN run)"
+}

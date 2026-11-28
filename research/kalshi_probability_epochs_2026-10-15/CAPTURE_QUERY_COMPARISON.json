@@ -1,0 +1,98 @@
+{
+  "initial_retrieval": "2026-10-15T22:02:08Z/22:02:10Z",
+  "same_bounds_repeat": "2026-10-15T22:03:38Z/22:03:39Z",
+  "fixed_start": "2026-10-15T21:45:00Z",
+  "fixed_end": "2026-10-15T22:00:00Z",
+  "fixed_tail": "2026-10-15T22:02:00Z",
+  "queries": [
+    {
+      "name": "learning",
+      "count": 11,
+      "saturated": false,
+      "isError": false,
+      "added": 0,
+      "removed": 0
+    },
+    {
+      "name": "v1",
+      "count": 11,
+      "saturated": false,
+      "isError": false,
+      "added": 0,
+      "removed": 0
+    },
+    {
+      "name": "diagnostics",
+      "count": 1,
+      "saturated": false,
+      "isError": false,
+      "added": 0,
+      "removed": 0
+    },
+    {
+      "name": "timing",
+      "count": 48,
+      "saturated": false,
+      "isError": false,
+      "added": 0,
+      "removed": 0
+    },
+    {
+      "name": "gaps",
+      "count": 21,
+      "saturated": false,
+      "isError": false,
+      "added": 0,
+      "removed": 0
+    },
+    {
+      "name": "timing_unavailable",
+      "count": 0,
+      "saturated": false,
+      "isError": false,
+      "added": 0,
+      "removed": 0
+    },
+    {
+      "name": "live",
+      "count": 19,
+      "saturated": false,
+      "isError": false,
+      "added": 0,
+      "removed": 0
+    },
+    {
+      "name": "practice_windows",
+      "count": 3,
+      "saturated": false,
+      "isError": false,
+      "added": 0,
+      "removed": 0
+    },
+    {
+      "name": "tracebacks",
+      "count": 0,
+      "saturated": false,
+      "isError": false,
+      "added": 0,
+      "removed": 0
+    },
+    {
+      "name": "trade_gaps",
+      "count": 2,
+      "saturated": false,
+      "isError": false,
+      "added": 0,
+      "removed": 0
+    },
+    {
+      "name": "lineage",
+      "count": 0,
+      "saturated": false,
+      "isError": false,
+      "added": 0,
+      "removed": 0
+    }
+  ],
+  "limitation": "Both exact-bounds reads agree; this does not certify continuous source/logging coverage or resolve overflow."
+}

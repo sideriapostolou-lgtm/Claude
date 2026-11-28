@@ -1,0 +1,203 @@
+{
+ "hypothesis": "M1",
+ "version": "m1-v1",
+ "stage": "train",
+ "split": "train",
+ "utc": "2026-10-09 04:43:41",
+ "provisional": false,
+ "debug_only": false,
+ "prereg_sha256": "82f2166071669e8228283f3ac5d26fb699278e63e293bfd5c102df548da874df",
+ "rerun_reason": null,
+ "coverage": {
+  "split": "train",
+  "bounds_utc": [
+   "2026-10-01 00:00:00",
+   "2026-10-05 00:00:00"
+  ],
+  "debug_only": false,
+  "graduates_in_split": 5435,
+  "tradeable": 3863,
+  "usable": 3863,
+  "excluded": {
+   "mayhem": 1422,
+   "not_sol_quoted": 150
+  },
+  "created_inexact": 943,
+  "has_create0": 943,
+  "chain_hours_scanned_frac": 1.0,
+  "days": [
+   {
+    "day": "2026-10-01",
+    "hours_in_split": 24,
+    "curve_hours": 24,
+    "b2_hours": 24,
+    "b2_hours_midrun": 0,
+    "coins_created": 1261,
+    "tradeable": 989,
+    "usable": 989,
+    "usable_frac": 1.0,
+    "partial": false
+   },
+   {
+    "day": "2026-10-02",
+    "hours_in_split": 24,
+    "curve_hours": 24,
+    "b2_hours": 24,
+    "b2_hours_midrun": 0,
+    "coins_created": 1255,
+    "tradeable": 933,
+    "usable": 933,
+    "usable_frac": 1.0,
+    "partial": false
+   },
+   {
+    "day": "2026-10-03",
+    "hours_in_split": 24,
+    "curve_hours": 24,
+    "b2_hours": 24,
+    "b2_hours_midrun": 0,
+    "coins_created": 1632,
+    "tradeable": 966,
+    "usable": 966,
+    "usable_frac": 1.0,
+    "partial": false
+   },
+   {
+    "day": "2026-10-04",
+    "hours_in_split": 24,
+    "curve_hours": 24,
+    "b2_hours": 24,
+    "b2_hours_midrun": 0,
+    "coins_created": 1287,
+    "tradeable": 975,
+    "usable": 975,
+    "usable_frac": 1.0,
+    "partial": false
+   }
+  ],
+  "days_expected": 4.0,
+  "days_full": 4,
+  "curve_span_utc": [
+   "2026-09-30 17:00:00",
+   "2026-10-09 02:00:00"
+  ],
+  "b2_span_utc": [
+   "2026-10-01 00:00:00",
+   "2026-10-05 04:00:00"
+  ],
+  "completeness_source": "raw_chunks",
+  "parquet_snapshot_utc": "2026-10-09 03:57:17",
+  "b2_hours_needed": 100,
+  "b2_hours_done": 100,
+  "b2_hours_midrun": [],
+  "sol_usd": {
+   "series_utc": [
+    "2026-09-15 00:00:00",
+    "2026-10-08 23:59:00"
+   ],
+   "constant_fallback": false,
+   "lookahead_coins": 0,
+   "stale_coins": 0
+  },
+  "power": {
+   "entry_bar_coins": {
+    "need": 40,
+    "have_usable_coins": 3863,
+    "ok": true
+   },
+   "x1_r0_trades_5_seeds": {
+    "need": 500,
+    "max_possible": 19315,
+    "ok": true
+   },
+   "g1_flagged_coins_val": {
+    "need": 200,
+    "max_possible": 3863,
+    "ok": true
+   }
+  },
+  "underpowered": false,
+  "complete": true,
+  "notes": [],
+  "from_flow": true
+ },
+ "n_coins": 3863,
+ "span_days": 4.0,
+ "allowed_coins": {
+  "OTHER": 2240,
+  "OPERATOR": 287
+ },
+ "clusters_allowed": 151,
+ "clusters_operator": 2,
+ "model_check": {
+  "n_obs": 874,
+  "n_coins": 173,
+  "by_class": {
+   "OPERATOR": 868,
+   "OTHER": 6
+  },
+  "n_clusters": 3,
+  "need": {
+   "coins": 30,
+   "obs": 100,
+   "slope": 0.5,
+   "r2": 0.05
+  },
+  "fit": {
+   "slope": -0.023091803847789517,
+   "intercept": 0.009875374679296521,
+   "r2": 0.01053192297675262,
+   "n": 874
+  },
+  "decision": "KILL",
+  "slope_ci95_coin": [
+   -0.05603832852889084,
+   0.7800905863136136
+  ],
+  "diagnostics": {
+   "one_obs_per_coin": {
+    "slope": -0.006405091590690717,
+    "intercept": 0.019372401581378738,
+    "r2": 0.0010485625491440346,
+    "n": 173
+   },
+   "realized_winsorized_5_95": {
+    "slope": -0.001424788823621039,
+    "intercept": 0.04039779878478899,
+    "r2": 0.0009938187779417237,
+    "n": 874
+   },
+   "log_log": {
+    "slope": -0.27597831611681206,
+    "intercept": -0.19141013415137137,
+    "r2": 0.0017490073456708252,
+    "n": 874
+   },
+   "without_rug_windows": {
+    "slope": -0.0036653955348839662,
+    "intercept": 0.04646955330666237,
+    "r2": 0.0019588354933891476,
+    "n": 841
+   },
+   "rug_window_share": 0.03775743707093822,
+   "mean_pred": 0.1418338191400622,
+   "mean_realized": 0.006600175948731351
+  },
+  "trial": {
+   "config": "M1-modelcheck|869e50779074",
+   "new_trial": true,
+   "n_trials_total": 2582,
+   "hypothesis_configs": 2,
+   "over_variant_limit": false,
+   "family_val_looks": 0
+  }
+ },
+ "decision": {
+  "verdict": "KILLED_MODEL_CHECK",
+  "shortlist_written": false,
+  "note": "PLAN 4.5: the model check precedes any P&L; the grid was not run"
+ },
+ "runtime_s": 17.3,
+ "n_trials_total": 2582,
+ "overall": "KILLED (model check failed: PLAN 8 stop rule 5)"
+}

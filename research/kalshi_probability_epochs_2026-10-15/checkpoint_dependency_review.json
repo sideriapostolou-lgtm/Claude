@@ -1,0 +1,55 @@
+{
+  "review": "checkpoint_dependency_review",
+  "role": "GPT-6 Astra architecture / read-only review",
+  "local_head": "dc77d38ab9906d2a9fe6b12b657a8632ed6cb7a2",
+  "local_full_tree": "f41a5d677cafc331e953bb4170be329704c5c569",
+  "local_src_tree": "b76a254f4904e2cd1506742b24bf103c6dcd52ac",
+  "production_source": "0c30491 (root connected-tool proof; object unavailable locally)",
+  "source_equivalence": "Root reports deployed full tree f41a5d677cafc331e953bb4170be329704c5c569, and separately verified exact deployed ledger.py and speeddesk.py Git blob IDs match these local bytes. This agent made no production calls.",
+  "files": {
+    "src/nightcrawler/speeddesk.py": {
+      "sha256": "79a8ad7fc10879035297e2af4d87af1bff758b4f89c2adae3464fe812235477d",
+      "git_blob": "1428ecdfa11bba32c84f1d792bfc9eaa91c10113"
+    },
+    "src/nightcrawler/speeddesk_live.py": {
+      "sha256": "2471adff4eca63ee6abba73031da75793ae5e1b3cb0468e30e1e2d6b9934efd5",
+      "git_blob": "23fce9699d4633decdf543e8f13e5c9dcfe874a9"
+    },
+    "src/nightcrawler/engine.py": {
+      "sha256": "556bf27762401e0c97386d463efde19556aa3d368fddbd8203ce952fea1e0fb5",
+      "git_blob": "8c49fd23f2938a660807199ff271eabf2f61ef7b"
+    },
+    "src/nightcrawler/ledger.py": {
+      "sha256": "c9b5268048381293a11dba514d8b66eeff7a7636b1685332fd9464fbf21f358c",
+      "git_blob": "702cc3252038be311eae273bf1da041c767a12dd"
+    },
+    "src/nightcrawler/models.py": {
+      "sha256": "656730a3d188e7812c49f4f49102d11bd1b840f8f87d942f8a8817231613c2a6",
+      "git_blob": "c0d5a3cb04ad160e43778e41c1cae5c15e90b13b"
+    },
+    "src/nightcrawler/speeddesk_model.py": {
+      "sha256": "50ba3b4f78c6efd031fdcd8bb1cb1a59ea2988973c341b9ad275345d70de7429",
+      "git_blob": "3dd92d74c5b6b284e578008b1625ed14cc2bba55"
+    },
+    "src/nightcrawler/speeddesk_metrics.py": {
+      "sha256": "b6bb72ac1ec236f4fa70a39b5b4c9303ba3648211618c4e9739a99b782eef127",
+      "git_blob": "66d9e1e3e392eaea7ec250d15f216f41fdc704a3"
+    },
+    "src/nightcrawler/speeddesk_scorecard.py": {
+      "sha256": "5fd51b95ee1aed89585e8035c911302058dd155cbe4e3fad1b0e8076505cede4",
+      "git_blob": "0afc324bc0bc570d28ea0fcc5513c847020599c7"
+    },
+    "src/nightcrawler/kalshi_probability_learning.py": {
+      "sha256": "43d8f527fd24aee3a7dbb33d848dcaaaf0e39089ab605deddad32dfabc1e35ab",
+      "git_blob": "3cf8ea01bd189b9fbde3d57b7f4060f285b83bac"
+    }
+  },
+  "evidence_file": "pr65_local_residence_proof_v2.json",
+  "evidence_sha256": "5939d363181a6603aaa857aacfe9f9289b6375b1b815eac2be0c403189224f17",
+  "implementation": false,
+  "tests_run": false,
+  "production_calls": false,
+  "source_tests_docs_modified": false,
+  "unique_causality_established": false,
+  "next_action": "Close frozen 21:45-22:00 UTC / 22:02 tail; reuse fixed existing trace records, then one offline fake-only report-input conversion profile with no production instrumentation or source edits."
+}

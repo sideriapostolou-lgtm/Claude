@@ -1,0 +1,39 @@
+{
+  "task": "read-only RELEASE_CAPTURE archive integrity verification",
+  "archive": {
+    "path": "/workspace/nightcrawler-input-causes/research/kalshi_input_causes_2026-10-15/RELEASE_CAPTURE.zip",
+    "actual_bytes": 1169840,
+    "expected_bytes": 1169840,
+    "actual_sha256": "935ef2d7c3b03abff091a6c902f77e766905502e71aec49a15e5e2153ae6a0f6",
+    "expected_sha256": "935ef2d7c3b03abff091a6c902f77e766905502e71aec49a15e5e2153ae6a0f6",
+    "zip_member_count": 99,
+    "expected_member_count": 99,
+    "manifest_member_count": 99,
+    "zip_testzip_bad_member": null,
+    "member_read_crc_checked": 99,
+    "members_matching_manifest_bytes_and_sha256": 99,
+    "local_member_files_checked": 99,
+    "local_member_files_byte_identical": 99,
+    "local_member_files_missing_count": 0,
+    "local_member_files_different_count": 0,
+    "zip_missing_member_count": 0,
+    "zip_extra_member_count": 0
+  },
+  "manifest": {
+    "path": "/workspace/nightcrawler-input-causes/research/kalshi_input_causes_2026-10-15/RELEASE_CAPTURE_MANIFEST.json",
+    "actual_sha256": "8864fe1dac95c0234dbd818355f2baf6684c68b27d40c099ed880404adba13c0",
+    "declared_bytes": 1169840,
+    "declared_sha256": "935ef2d7c3b03abff091a6c902f77e766905502e71aec49a15e5e2153ae6a0f6",
+    "declared_member_count": 99
+  },
+  "preparation_archive": {
+    "path": "/workspace/nightcrawler-input-causes/research/kalshi_input_causes_2026-10-15/PREPARATION.zip",
+    "actual_bytes": 194674,
+    "actual_sha256": "eae0203dd58b6413d7c449f3e79ab1f4fe39cb2796a2dd2e084705d7a7e5808d",
+    "expected_sha256": "eae0203dd58b6413d7c449f3e79ab1f4fe39cb2796a2dd2e084705d7a7e5808d",
+    "matches_expected": true
+  },
+  "error_count": 0,
+  "errors": [],
+  "scope": "No private handoff, credentials, production, source, or tests were inspected or changed. The public archive and manifest were not modified."
+}

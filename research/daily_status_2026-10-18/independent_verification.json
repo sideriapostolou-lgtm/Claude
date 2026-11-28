@@ -1,0 +1,406 @@
+{
+  "scope": "offline selected sanitized receipts; no venue read or new full-day coverage certificate",
+  "checks_passed": 97,
+  "checks": [
+    {
+      "name": "one real settlement",
+      "pass": true
+    },
+    {
+      "name": "zero real fill rows",
+      "pass": true
+    },
+    {
+      "name": "36 practice settlement rows",
+      "pass": true
+    },
+    {
+      "name": "zero practice fill rows",
+      "pass": true
+    },
+    {
+      "name": "36 distinct practice windows",
+      "pass": true
+    },
+    {
+      "name": "1 nonempty practice settlement",
+      "pass": true
+    },
+    {
+      "name": "35 empty practice settlements",
+      "pass": true
+    },
+    {
+      "name": "settlement 0 payout-cost-fee",
+      "pass": true
+    },
+    {
+      "name": "settlement 0 decomposition",
+      "pass": true
+    },
+    {
+      "name": "settlement 1 payout-cost-fee",
+      "pass": true
+    },
+    {
+      "name": "settlement 1 decomposition",
+      "pass": true
+    },
+    {
+      "name": "settlement 2 payout-cost-fee",
+      "pass": true
+    },
+    {
+      "name": "settlement 2 decomposition",
+      "pass": true
+    },
+    {
+      "name": "settlement 3 payout-cost-fee",
+      "pass": true
+    },
+    {
+      "name": "settlement 3 decomposition",
+      "pass": true
+    },
+    {
+      "name": "settlement 4 payout-cost-fee",
+      "pass": true
+    },
+    {
+      "name": "settlement 4 decomposition",
+      "pass": true
+    },
+    {
+      "name": "settlement 5 payout-cost-fee",
+      "pass": true
+    },
+    {
+      "name": "settlement 5 decomposition",
+      "pass": true
+    },
+    {
+      "name": "settlement 6 payout-cost-fee",
+      "pass": true
+    },
+    {
+      "name": "settlement 6 decomposition",
+      "pass": true
+    },
+    {
+      "name": "settlement 7 payout-cost-fee",
+      "pass": true
+    },
+    {
+      "name": "settlement 7 decomposition",
+      "pass": true
+    },
+    {
+      "name": "settlement 8 payout-cost-fee",
+      "pass": true
+    },
+    {
+      "name": "settlement 8 decomposition",
+      "pass": true
+    },
+    {
+      "name": "settlement 9 payout-cost-fee",
+      "pass": true
+    },
+    {
+      "name": "settlement 9 decomposition",
+      "pass": true
+    },
+    {
+      "name": "settlement 10 payout-cost-fee",
+      "pass": true
+    },
+    {
+      "name": "settlement 10 decomposition",
+      "pass": true
+    },
+    {
+      "name": "settlement 11 payout-cost-fee",
+      "pass": true
+    },
+    {
+      "name": "settlement 11 decomposition",
+      "pass": true
+    },
+    {
+      "name": "settlement 12 payout-cost-fee",
+      "pass": true
+    },
+    {
+      "name": "settlement 12 decomposition",
+      "pass": true
+    },
+    {
+      "name": "settlement 13 payout-cost-fee",
+      "pass": true
+    },
+    {
+      "name": "settlement 13 decomposition",
+      "pass": true
+    },
+    {
+      "name": "settlement 14 payout-cost-fee",
+      "pass": true
+    },
+    {
+      "name": "settlement 14 decomposition",
+      "pass": true
+    },
+    {
+      "name": "settlement 15 payout-cost-fee",
+      "pass": true
+    },
+    {
+      "name": "settlement 15 decomposition",
+      "pass": true
+    },
+    {
+      "name": "settlement 16 payout-cost-fee",
+      "pass": true
+    },
+    {
+      "name": "settlement 16 decomposition",
+      "pass": true
+    },
+    {
+      "name": "settlement 17 payout-cost-fee",
+      "pass": true
+    },
+    {
+      "name": "settlement 17 decomposition",
+      "pass": true
+    },
+    {
+      "name": "settlement 18 payout-cost-fee",
+      "pass": true
+    },
+    {
+      "name": "settlement 18 decomposition",
+      "pass": true
+    },
+    {
+      "name": "settlement 19 payout-cost-fee",
+      "pass": true
+    },
+    {
+      "name": "settlement 19 decomposition",
+      "pass": true
+    },
+    {
+      "name": "settlement 20 payout-cost-fee",
+      "pass": true
+    },
+    {
+      "name": "settlement 20 decomposition",
+      "pass": true
+    },
+    {
+      "name": "settlement 21 payout-cost-fee",
+      "pass": true
+    },
+    {
+      "name": "settlement 21 decomposition",
+      "pass": true
+    },
+    {
+      "name": "settlement 22 payout-cost-fee",
+      "pass": true
+    },
+    {
+      "name": "settlement 22 decomposition",
+      "pass": true
+    },
+    {
+      "name": "settlement 23 payout-cost-fee",
+      "pass": true
+    },
+    {
+      "name": "settlement 23 decomposition",
+      "pass": true
+    },
+    {
+      "name": "settlement 24 payout-cost-fee",
+      "pass": true
+    },
+    {
+      "name": "settlement 24 decomposition",
+      "pass": true
+    },
+    {
+      "name": "settlement 25 payout-cost-fee",
+      "pass": true
+    },
+    {
+      "name": "settlement 25 decomposition",
+      "pass": true
+    },
+    {
+      "name": "settlement 26 payout-cost-fee",
+      "pass": true
+    },
+    {
+      "name": "settlement 26 decomposition",
+      "pass": true
+    },
+    {
+      "name": "settlement 27 payout-cost-fee",
+      "pass": true
+    },
+    {
+      "name": "settlement 27 decomposition",
+      "pass": true
+    },
+    {
+      "name": "settlement 28 payout-cost-fee",
+      "pass": true
+    },
+    {
+      "name": "settlement 28 decomposition",
+      "pass": true
+    },
+    {
+      "name": "settlement 29 payout-cost-fee",
+      "pass": true
+    },
+    {
+      "name": "settlement 29 decomposition",
+      "pass": true
+    },
+    {
+      "name": "settlement 30 payout-cost-fee",
+      "pass": true
+    },
+    {
+      "name": "settlement 30 decomposition",
+      "pass": true
+    },
+    {
+      "name": "settlement 31 payout-cost-fee",
+      "pass": true
+    },
+    {
+      "name": "settlement 31 decomposition",
+      "pass": true
+    },
+    {
+      "name": "settlement 32 payout-cost-fee",
+      "pass": true
+    },
+    {
+      "name": "settlement 32 decomposition",
+      "pass": true
+    },
+    {
+      "name": "settlement 33 payout-cost-fee",
+      "pass": true
+    },
+    {
+      "name": "settlement 33 decomposition",
+      "pass": true
+    },
+    {
+      "name": "settlement 34 payout-cost-fee",
+      "pass": true
+    },
+    {
+      "name": "settlement 34 decomposition",
+      "pass": true
+    },
+    {
+      "name": "settlement 35 payout-cost-fee",
+      "pass": true
+    },
+    {
+      "name": "settlement 35 decomposition",
+      "pass": true
+    },
+    {
+      "name": "settlement 36 payout-cost-fee",
+      "pass": true
+    },
+    {
+      "name": "settlement 36 decomposition",
+      "pass": true
+    },
+    {
+      "name": "real net +0.0127",
+      "pass": true
+    },
+    {
+      "name": "practice net +0.59",
+      "pass": true
+    },
+    {
+      "name": "payout split no duplicate credit",
+      "pass": true
+    },
+    {
+      "name": "inherited two actual fills",
+      "pass": true
+    },
+    {
+      "name": "inherited cost .97",
+      "pass": true
+    },
+    {
+      "name": "inherited fees .0173",
+      "pass": true
+    },
+    {
+      "name": "carry fills predate Oct17",
+      "pass": true
+    },
+    {
+      "name": "all returned settlement logs Oct17",
+      "pass": true
+    },
+    {
+      "name": "caps unchanged last native",
+      "pass": true
+    },
+    {
+      "name": "policy reduction only",
+      "pass": true
+    },
+    {
+      "name": "no practice comparability",
+      "pass": true
+    },
+    {
+      "name": "stale coverage 26/36 complete 10 gaps",
+      "pass": true
+    },
+    {
+      "name": "no full day certification",
+      "pass": true
+    },
+    {
+      "name": "ladder no pending promotion",
+      "pass": true
+    },
+    {
+      "name": "ladder blockers retained",
+      "pass": true
+    },
+    {
+      "name": "zero later status rows",
+      "pass": true
+    }
+  ],
+  "source_sha256": {
+    "research/daily_status_2026-10-18/DAY_REAL_LOGS.json": "184ee736d357b5b253da639757cd258674074d4f2d8de80b852fce17f9dcdadc",
+    "research/daily_status_2026-10-18/DAY_PRACTICE_LOGS.json": "56903aabe0eab3d89b3b1b7062e840ef625f2f1d016f6e392b2b51f242682b74",
+    "research/daily_status_2026-10-17/DAY_MONEY_LOGS.json": "3403054f77951930f349721c3526c1057ab2c4f5de9dbd685ee9475debf13d67",
+    "research/daily_status_2026-10-17/LAST_NATIVE.json": "9cea80860cbb90405ee174272ac4f696114db23a989dc7ca9ce77ef34f2fd079",
+    "research/daily_status_2026-10-18/NO_LATER_NATIVE.json": "79f9e2dbf20f47dd6a712e2b14f4fc474ddfbf93781dc5ad55a3ae4b0b07157a"
+  },
+  "real_pnl_usd": 0.012699999999999934,
+  "practice_pnl_usd": 0.5900000000000001,
+  "practice_first_log": "2026-10-17T00:00:21.555225105Z",
+  "practice_last_log": "2026-10-17T08:45:07.099233874Z",
+  "current_balance_and_exposure": "unknown; last-native snapshot predates halt"
+}

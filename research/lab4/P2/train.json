@@ -1,0 +1,660 @@
+{
+ "cells": [
+  {
+   "hours": 0.25,
+   "key": "theta0.95|H0.25",
+   "summary": {
+    "bid_side_share": 0.5453074433656958,
+    "by_family": {
+     "sports": {
+      "mean_net": -0.002372349077047134,
+      "mean_p_exec": 0.9732317036779093,
+      "n": 507,
+      "total_usd": -24.055619641257948,
+      "win_rate": 0.9723865877712031
+     }
+    },
+    "calibration_gap": -0.0008451159067062175,
+    "ci95": [
+     -0.018718529717965154,
+     0.011999771799948138
+    ],
+    "daily": {
+     "max_drawdown_usd": -94.57289637870332,
+     "n_days": 40,
+     "sharpe": -0.866833657913254,
+     "total_usd": -24.055619641257948
+    },
+    "lock_h_mean": 3.358734385272846,
+    "lock_h_median": 2.553611111111111,
+    "longest_losing_streak": 1,
+    "losses": 14,
+    "mean_net": -0.002372349077047134,
+    "mean_p_exec": 0.9732317036779093,
+    "mean_pnl_usd": -0.0474469815409427,
+    "missed": 111,
+    "n": 507,
+    "n_events": 160,
+    "trades_per_day": 11.021739130434783,
+    "win_rate": 0.9723865877712031,
+    "worst_case_net": 0.0199475832694052,
+    "worst_pnl_usd": -20.13
+   },
+   "theta": 0.95
+  },
+  {
+   "hours": 0.5,
+   "key": "theta0.95|H0.5",
+   "summary": {
+    "bid_side_share": 0.4956268221574344,
+    "by_family": {
+     "sports": {
+      "mean_net": -0.008820271424013332,
+      "mean_p_exec": 0.9732406562416196,
+      "n": 531,
+      "total_usd": -93.67128252302156,
+      "win_rate": 0.9661016949152542
+     }
+    },
+    "calibration_gap": -0.007138961326365378,
+    "ci95": [
+     -0.027122741590656467,
+     0.007464802713686374
+    ],
+    "daily": {
+     "max_drawdown_usd": -164.64441807669306,
+     "n_days": 42,
+     "sharpe": -2.863437987242647,
+     "total_usd": -93.67128252302155
+    },
+    "lock_h_mean": 3.7799733207784056,
+    "lock_h_median": 2.7952777777777778,
+    "longest_losing_streak": 2,
+    "losses": 18,
+    "mean_net": -0.008820271424013332,
+    "mean_p_exec": 0.9732406562416196,
+    "mean_pnl_usd": -0.17640542848026658,
+    "missed": 155,
+    "n": 531,
+    "n_events": 173,
+    "trades_per_day": 11.543478260869565,
+    "win_rate": 0.9661016949152542,
+    "worst_case_net": 0.020232982989225785,
+    "worst_pnl_usd": -20.13
+   },
+   "theta": 0.95
+  },
+  {
+   "hours": 1.0,
+   "key": "theta0.95|H1",
+   "summary": {
+    "bid_side_share": 0.5013089005235603,
+    "by_family": {
+     "sports": {
+      "mean_net": 0.002501689953120083,
+      "mean_p_exec": 0.9730799408467022,
+      "n": 561,
+      "total_usd": 28.068961274007314,
+      "win_rate": 0.9768270944741533
+     }
+    },
+    "calibration_gap": 0.0037471536274510386,
+    "ci95": [
+     -0.011044200361709151,
+     0.015289404420530575
+    ],
+    "daily": {
+     "max_drawdown_usd": -61.37824090697937,
+     "n_days": 44,
+     "sharpe": 1.068161961443927,
+     "total_usd": 28.068961274007314
+    },
+    "lock_h_mean": 4.057509096506256,
+    "lock_h_median": 3.3208333333333333,
+    "longest_losing_streak": 2,
+    "losses": 13,
+    "mean_net": 0.002501689953120083,
+    "mean_p_exec": 0.9730799408467022,
+    "mean_pnl_usd": 0.05003379906240163,
+    "missed": 203,
+    "n": 561,
+    "n_events": 192,
+    "trades_per_day": 12.195652173913043,
+    "win_rate": 0.9768270944741533,
+    "worst_case_net": 0.02084330996074952,
+    "worst_pnl_usd": -20.13
+   },
+   "theta": 0.95
+  },
+  {
+   "hours": 2.0,
+   "key": "theta0.95|H2",
+   "summary": {
+    "bid_side_share": 0.47766990291262135,
+    "by_family": {
+     "sports": {
+      "mean_net": 0.006541536300644556,
+      "mean_p_exec": 0.9689852621480769,
+      "n": 728,
+      "total_usd": 95.24476853738473,
+      "win_rate": 0.9766483516483516
+     }
+    },
+    "calibration_gap": 0.007663089500274722,
+    "ci95": [
+     -0.0050912548221443005,
+     0.017842965139317313
+    ],
+    "daily": {
+     "max_drawdown_usd": -105.74322324007284,
+     "n_days": 46,
+     "sharpe": 2.970174895608276,
+     "total_usd": 95.24476853738472
+    },
+    "lock_h_mean": 4.512825614813811,
+    "lock_h_median": 4.159583333333334,
+    "longest_losing_streak": 2,
+    "losses": 17,
+    "mean_net": 0.006541536300644556,
+    "mean_p_exec": 0.9689852621480769,
+    "mean_pnl_usd": 0.1308307260128911,
+    "missed": 302,
+    "n": 728,
+    "n_events": 333,
+    "trades_per_day": 15.826086956521738,
+    "win_rate": 0.9766483516483516,
+    "worst_case_net": 0.026421493745843516,
+    "worst_pnl_usd": -20.1552283025
+   },
+   "theta": 0.95
+  },
+  {
+   "hours": Infinity,
+   "key": "theta0.95|Hinf",
+   "summary": {
+    "bid_side_share": 0.419933815693533,
+    "by_family": {
+     "sports": {
+      "mean_net": -0.015254184126984404,
+      "mean_p_exec": 0.9439055927747386,
+      "n": 14255,
+      "total_usd": -4348.967894603254,
+      "win_rate": 0.9322343037530691
+     }
+    },
+    "calibration_gap": -0.011671289021669473,
+    "ci95": [
+     -0.020552173473335825,
+     -0.009936306756407123
+    ],
+    "daily": {
+     "max_drawdown_usd": -4194.94662326497,
+     "n_days": 46,
+     "sharpe": -13.489237834348883,
+     "total_usd": -4348.967894603253
+    },
+    "lock_h_mean": 5.90896891978104,
+    "lock_h_median": 2.158888888888889,
+    "longest_losing_streak": 5,
+    "losses": 966,
+    "mean_net": -0.015254184126984404,
+    "mean_p_exec": 0.9439055927747386,
+    "mean_pnl_usd": -0.3050836825396881,
+    "missed": 3574,
+    "n": 14255,
+    "n_events": 7437,
+    "trades_per_day": 309.89130434782606,
+    "win_rate": 0.9322343037530691,
+    "worst_case_net": 0.05661294373369595,
+    "worst_pnl_usd": -20.99
+   },
+   "theta": 0.95
+  },
+  {
+   "hours": 0.25,
+   "key": "theta0.97|H0.25",
+   "summary": {
+    "bid_side_share": 0.5142118863049095,
+    "by_family": {
+     "sports": {
+      "mean_net": -0.0017977481815501346,
+      "mean_p_exec": 0.9850557384277956,
+      "n": 313,
+      "total_usd": -11.253903616503841,
+      "win_rate": 0.9840255591054313
+     }
+    },
+    "calibration_gap": -0.0010301793223642663,
+    "ci95": [
+     -0.017275778610571096,
+     0.010652714613926957
+    ],
+    "daily": {
+     "max_drawdown_usd": -54.60525349674651,
+     "n_days": 30,
+     "sharpe": -0.9325267706214485,
+     "total_usd": -11.253903616503852
+    },
+    "lock_h_mean": 3.556673766418175,
+    "lock_h_median": 2.525,
+    "longest_losing_streak": 1,
+    "losses": 5,
+    "mean_net": -0.0017977481815501346,
+    "mean_p_exec": 0.9850557384277956,
+    "mean_pnl_usd": -0.03595496363100269,
+    "missed": 74,
+    "n": 313,
+    "n_events": 101,
+    "trades_per_day": 6.804347826086956,
+    "win_rate": 0.9840255591054313,
+    "worst_case_net": 0.004700484408656181,
+    "worst_pnl_usd": -20.0310003004
+   },
+   "theta": 0.97
+  },
+  {
+   "hours": 0.5,
+   "key": "theta0.97|H0.5",
+   "summary": {
+    "bid_side_share": 0.4782608695652174,
+    "by_family": {
+     "sports": {
+      "mean_net": -0.0032511688809082053,
+      "mean_p_exec": 0.984677340024179,
+      "n": 335,
+      "total_usd": -21.782831502084964,
+      "win_rate": 0.982089552238806
+     }
+    },
+    "calibration_gap": -0.0025877877853729414,
+    "ci95": [
+     -0.021991705751888732,
+     0.011393987576232981
+    ],
+    "daily": {
+     "max_drawdown_usd": -66.53767640844242,
+     "n_days": 33,
+     "sharpe": -1.4496341016272576,
+     "total_usd": -21.782831502084974
+    },
+    "lock_h_mean": 3.999698175787728,
+    "lock_h_median": 2.7619444444444445,
+    "longest_losing_streak": 1,
+    "losses": 6,
+    "mean_net": -0.0032511688809082053,
+    "mean_p_exec": 0.984677340024179,
+    "mean_pnl_usd": -0.06502337761816407,
+    "missed": 102,
+    "n": 335,
+    "n_events": 107,
+    "trades_per_day": 7.282608695652174,
+    "win_rate": 0.982089552238806,
+    "worst_case_net": 0.005854595128192074,
+    "worst_pnl_usd": -20.0310003004
+   },
+   "theta": 0.97
+  },
+  {
+   "hours": 1.0,
+   "key": "theta0.97|H1",
+   "summary": {
+    "bid_side_share": 0.500998003992016,
+    "by_family": {
+     "sports": {
+      "mean_net": 0.0021141353646699735,
+      "mean_p_exec": 0.9835532945645252,
+      "n": 358,
+      "total_usd": 15.137209211037021,
+      "win_rate": 0.9860335195530726
+     }
+    },
+    "calibration_gap": 0.002480224988547386,
+    "ci95": [
+     -0.01092808635139988,
+     0.013891847526991945
+    ],
+    "daily": {
+     "max_drawdown_usd": -41.97106514750401,
+     "n_days": 37,
+     "sharpe": 1.1426271600898796,
+     "total_usd": 15.137209211037021
+    },
+    "lock_h_mean": 3.9817460981564516,
+    "lock_h_median": 3.286388888888889,
+    "longest_losing_streak": 1,
+    "losses": 5,
+    "mean_net": 0.0021141353646699735,
+    "mean_p_exec": 0.9835532945645252,
+    "mean_pnl_usd": 0.0422827072933995,
+    "missed": 143,
+    "n": 358,
+    "n_events": 130,
+    "trades_per_day": 7.782608695652174,
+    "win_rate": 0.9860335195530726,
+    "worst_case_net": 0.00780461739805899,
+    "worst_pnl_usd": -20.0310003004
+   },
+   "theta": 0.97
+  },
+  {
+   "hours": 2.0,
+   "key": "theta0.97|H2",
+   "summary": {
+    "bid_side_share": 0.4953519256308101,
+    "by_family": {
+     "sports": {
+      "mean_net": 0.005782417127580589,
+      "mean_p_exec": 0.9780395701240459,
+      "n": 524,
+      "total_usd": 60.599731497044594,
+      "win_rate": 0.9847328244274809
+     }
+    },
+    "calibration_gap": 0.006693254303435037,
+    "ci95": [
+     -0.005644544719121629,
+     0.016646514030061
+    ],
+    "daily": {
+     "max_drawdown_usd": -83.70849658623945,
+     "n_days": 46,
+     "sharpe": 2.4600284388614617,
+     "total_usd": 60.59973149704457
+    },
+    "lock_h_mean": 4.4775908456870415,
+    "lock_h_median": 4.061388888888889,
+    "longest_losing_streak": 2,
+    "losses": 8,
+    "mean_net": 0.005782417127580589,
+    "mean_p_exec": 0.9780395701240459,
+    "mean_pnl_usd": 0.11564834255161183,
+    "missed": 229,
+    "n": 524,
+    "n_events": 269,
+    "trades_per_day": 11.391304347826088,
+    "win_rate": 0.9847328244274809,
+    "worst_case_net": 0.015583369942339786,
+    "worst_pnl_usd": -20.23
+   },
+   "theta": 0.97
+  },
+  {
+   "hours": Infinity,
+   "key": "theta0.97|Hinf",
+   "summary": {
+    "bid_side_share": 0.47465437788018433,
+    "by_family": {
+     "sports": {
+      "mean_net": -0.012098003011534646,
+      "mean_p_exec": 0.9638228348513032,
+      "n": 13276,
+      "total_usd": -3212.2617596226796,
+      "win_rate": 0.9536758059656523
+     }
+    },
+    "calibration_gap": -0.010147028885650888,
+    "ci95": [
+     -0.01669351094103914,
+     -0.007397928958115923
+    ],
+    "daily": {
+     "max_drawdown_usd": -3160.9677475295375,
+     "n_days": 46,
+     "sharpe": -13.571480444051614,
+     "total_usd": -3212.261759622679
+    },
+    "lock_h_mean": 5.5365821319551864,
+    "lock_h_median": 2.108888888888889,
+    "longest_losing_streak": 5,
+    "losses": 615,
+    "mean_net": -0.012098003011534646,
+    "mean_p_exec": 0.9638228348513032,
+    "mean_pnl_usd": -0.24196006023069294,
+    "missed": 4301,
+    "n": 13276,
+    "n_events": 7118,
+    "trades_per_day": 288.60869565217394,
+    "win_rate": 0.9536758059656523,
+    "worst_case_net": 0.03596849410047783,
+    "worst_pnl_usd": -20.99
+   },
+   "theta": 0.97
+  },
+  {
+   "hours": 0.25,
+   "key": "theta0.99|H0.25",
+   "summary": {
+    "bid_side_share": 0.4685714285714286,
+    "by_family": {
+     "sports": {
+      "mean_net": 0.005897853426052857,
+      "mean_p_exec": 0.9938559672834586,
+      "n": 133,
+      "total_usd": 15.688290113300603,
+      "win_rate": 1.0
+     }
+    },
+    "calibration_gap": 0.006144032716541403,
+    "ci95": [
+     0.005119263632675927,
+     0.006782782391880988
+    ],
+    "daily": {
+     "max_drawdown_usd": 0.0,
+     "n_days": 23,
+     "sharpe": 23.899232076934986,
+     "total_usd": 15.688290113300603
+    },
+    "lock_h_mean": 4.221662489557226,
+    "lock_h_median": 2.522222222222222,
+    "longest_losing_streak": 0,
+    "losses": 0,
+    "mean_net": 0.005897853426052857,
+    "mean_p_exec": 0.9938559672834586,
+    "mean_pnl_usd": 0.11795706852105717,
+    "missed": 42,
+    "n": 133,
+    "n_events": 61,
+    "trades_per_day": 2.891304347826087,
+    "win_rate": 1.0,
+    "worst_case_net": -0.016791571839196454,
+    "worst_pnl_usd": 0.01902002002001879
+   },
+   "theta": 0.99
+  },
+  {
+   "hours": 0.5,
+   "key": "theta0.99|H0.5",
+   "summary": {
+    "bid_side_share": 0.43478260869565216,
+    "by_family": {
+     "sports": {
+      "mean_net": -0.0004594883410648509,
+      "mean_p_exec": 0.9935166689753332,
+      "n": 150,
+      "total_usd": -1.3784650231945506,
+      "win_rate": 0.9933333333333333
+     }
+    },
+    "calibration_gap": -0.00018333564199990438,
+    "ci95": [
+     -0.017503018350494753,
+     0.007387602423794707
+    ],
+    "daily": {
+     "max_drawdown_usd": -19.1226145741013,
+     "n_days": 23,
+     "sharpe": -0.2723236984156749,
+     "total_usd": -1.3784650231945506
+    },
+    "lock_h_mean": 4.799944444444445,
+    "lock_h_median": 2.7555555555555555,
+    "longest_losing_streak": 1,
+    "losses": 1,
+    "mean_net": -0.0004594883410648509,
+    "mean_p_exec": 0.9935166689753332,
+    "mean_pnl_usd": -0.009189766821297003,
+    "missed": 57,
+    "n": 150,
+    "n_events": 70,
+    "trades_per_day": 3.260869565217391,
+    "win_rate": 0.9933333333333333,
+    "worst_case_net": -0.013873508631788812,
+    "worst_pnl_usd": -20.008
+   },
+   "theta": 0.99
+  },
+  {
+   "hours": 1.0,
+   "key": "theta0.99|H1",
+   "summary": {
+    "bid_side_share": 0.47058823529411764,
+    "by_family": {
+     "sports": {
+      "mean_net": 0.0010213241763686286,
+      "mean_p_exec": 0.9930407519250001,
+      "n": 176,
+      "total_usd": 3.5950611008175706,
+      "win_rate": 0.9943181818181818
+     }
+    },
+    "calibration_gap": 0.0012774298931816919,
+    "ci95": [
+     -0.01195487527146576,
+     0.0079218600905144
+    ],
+    "daily": {
+     "max_drawdown_usd": -19.295126730195584,
+     "n_days": 31,
+     "sharpe": 0.6019092296547283,
+     "total_usd": 3.5950611008175706
+    },
+    "lock_h_mean": 4.295092126426823,
+    "lock_h_median": 3.2588888888888885,
+    "longest_losing_streak": 1,
+    "losses": 1,
+    "mean_net": 0.0010213241763686286,
+    "mean_p_exec": 0.9930407519250001,
+    "mean_pnl_usd": 0.02042648352737256,
+    "missed": 79,
+    "n": 176,
+    "n_events": 89,
+    "trades_per_day": 3.8260869565217392,
+    "win_rate": 0.9943181818181818,
+    "worst_case_net": -0.010416672775257402,
+    "worst_pnl_usd": -20.008
+   },
+   "theta": 0.99
+  },
+  {
+   "hours": 2.0,
+   "key": "theta0.99|H2",
+   "summary": {
+    "bid_side_share": 0.5594713656387665,
+    "by_family": {
+     "sports": {
+      "mean_net": 0.001756398018281134,
+      "mean_p_exec": 0.9908532524,
+      "n": 281,
+      "total_usd": 9.87095686273997,
+      "win_rate": 0.9928825622775801
+     }
+    },
+    "calibration_gap": 0.002029309877580099,
+    "ci95": [
+     -0.009241729004253317,
+     0.009697486209901612
+    ],
+    "daily": {
+     "max_drawdown_usd": -24.556784486705755,
+     "n_days": 42,
+     "sharpe": 1.0229857278413563,
+     "total_usd": 9.87095686273997
+    },
+    "lock_h_mean": 4.490833700379632,
+    "lock_h_median": 3.721388888888889,
+    "longest_losing_streak": 1,
+    "losses": 2,
+    "mean_net": 0.001756398018281134,
+    "mean_p_exec": 0.9908532524,
+    "mean_pnl_usd": 0.03512796036562267,
+    "missed": 173,
+    "n": 281,
+    "n_events": 174,
+    "trades_per_day": 6.108695652173913,
+    "win_rate": 0.9928825622775801,
+    "worst_case_net": -0.0018291623567636625,
+    "worst_pnl_usd": -20.02
+   },
+   "theta": 0.99
+  },
+  {
+   "hours": Infinity,
+   "key": "theta0.99|Hinf",
+   "summary": {
+    "bid_side_share": 0.573496729951108,
+    "by_family": {
+     "sports": {
+      "mean_net": -0.0042292998911277096,
+      "mean_p_exec": 0.983105315098879,
+      "n": 10168,
+      "total_usd": -860.0704258597314,
+      "win_rate": 0.980330448465775
+     }
+    },
+    "calibration_gap": -0.0027748666331040006,
+    "ci95": [
+     -0.007478012372117991,
+     -0.001293908979615834
+    ],
+    "daily": {
+     "max_drawdown_usd": -911.7569863450484,
+     "n_days": 46,
+     "sharpe": -6.922342078652304,
+     "total_usd": -860.0704258597312
+    },
+    "lock_h_mean": 5.482565595348489,
+    "lock_h_median": 2.0548611111111112,
+    "longest_losing_streak": 3,
+    "losses": 200,
+    "mean_net": -0.0042292998911277096,
+    "mean_p_exec": 0.983105315098879,
+    "mean_pnl_usd": -0.08458599782255423,
+    "missed": 5581,
+    "n": 10168,
+    "n_events": 5878,
+    "trades_per_day": 221.04347826086956,
+    "win_rate": 0.980330448465775,
+    "worst_case_net": 0.015589877421246007,
+    "worst_pnl_usd": -20.97
+   },
+   "theta": 0.99
+  }
+ ],
+ "coverage": {
+  "eligible": 40350,
+  "share": 1.0,
+  "with_tape": 40350
+ },
+ "decision": "NO EDGE on TRAIN (no cell qualifies)",
+ "families": {
+  "crypto": 18226,
+  "culture": 628,
+  "economics": 87,
+  "finance": 275,
+  "mentions": 34,
+  "none": 393,
+  "politics": 250,
+  "sports": 18064,
+  "tech": 143,
+  "weather": 1544
+ },
+ "hyp": "P2",
+ "n_markets": 39644,
+ "n_trials_total": 2867,
+ "prereg_sha256": "6785d8d2b857ea42dd66f44880abcb59c45b2765539e4211843e96a173dcecb6",
+ "selected": null,
+ "split": "train",
+ "stage": "train",
+ "utc": "2026-10-09T18:00:50+00:00"
+}

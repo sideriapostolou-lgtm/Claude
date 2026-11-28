@@ -1,0 +1,29 @@
+{
+  "content": [
+    {
+      "type": "text",
+      "text": "**Deployment c1fda55b-72fd-47b3-9801-dffec83b9e8b** [SUCCESS]\nservice: f84d3b52-002f-44cb-931e-bc9e3e097e97, env: 17f7b0e0-104c-4903-9484-0106748b3cdb\n\n### Deploy logs (1)\n2026-10-15T18:20:56.409095037Z info 2026-10-15T18:20:56Z INFO nightcrawler.speeddesk: speeddesk_started {\"mode\":\"practice\",\"at\":1792088456.0579128,\"real_orders\":false,\"trial_started_at\":1791831625.5335124,\"config\":{\"take_edge\":1.0,\"make_edge\":0.03,\"clip\":25.0,\"pair_cap\":0.99,\"max_imbalance\":0.25,\"window_usd\":20.0,\"open_usd\":20.0,\"day_stop_usd\":10.0,\"cutoff_s\":60.0,\"latency_ms\":250.0,\"stale_s\":3.0,\"reprice\":0.01,\"sigma_min_samples\":1500,\"sigma_warmup_s\":3600.0}}"
+    }
+  ],
+  "structuredContent": {
+    "scope": "deployment",
+    "deploymentId": "c1fda55b-72fd-47b3-9801-dffec83b9e8b",
+    "serviceId": "f84d3b52-002f-44cb-931e-bc9e3e097e97",
+    "environmentId": "17f7b0e0-104c-4903-9484-0106748b3cdb",
+    "status": "SUCCESS",
+    "deploy": [
+      {
+        "timestamp": "2026-10-15T18:20:56.409095037Z",
+        "severity": "info",
+        "message": "2026-10-15T18:20:56Z INFO nightcrawler.speeddesk: speeddesk_started {\"mode\":\"practice\",\"at\":1792088456.0579128,\"real_orders\":false,\"trial_started_at\":1791831625.5335124,\"config\":{\"take_edge\":1.0,\"make_edge\":0.03,\"clip\":25.0,\"pair_cap\":0.99,\"max_imbalance\":0.25,\"window_usd\":20.0,\"open_usd\":20.0,\"day_stop_usd\":10.0,\"cutoff_s\":60.0,\"latency_ms\":250.0,\"stale_s\":3.0,\"reprice\":0.01,\"sigma_min_samples\":1500,\"sigma_warmup_s\":3600.0}}",
+        "attributes": [
+          {
+            "key": "level",
+            "value": "\"info\""
+          }
+        ]
+      }
+    ]
+  },
+  "isError": false
+}

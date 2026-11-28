@@ -1,0 +1,1306 @@
+{
+  "scope": "Historical development/diagnosis, actual fills only; no untouched test or strategy profit claim",
+  "source_sha256": {
+    "research/daily_status_2026-10-17/DAY_MONEY_LOGS.json": "3403054f77951930f349721c3526c1057ab2c4f5de9dbd685ee9475debf13d67",
+    "research/kalshi_loss_cause_2026-10-16/orders_1700.json": "70ed14a13fe7ba497392cb764629b775d4ecde169e9d5b2bafcadb69fe85237f",
+    "research/kalshi_loss_cause_2026-10-16/orders_1730.json": "8122334ac48499604fb366f7f343740652f21d616f26e1157ad30bbd5f2ab98c",
+    "research/kalshi_post75_loss_2026-10-16/TARGET_ORDERS.json": "5b6b604a7e801a7c8162117ce5bd086fac1496cf7033fae875f4a30a2d0c5554",
+    "research/kalshi_post75_loss_2026-10-16/TARGET_START.json": "0f174861e3f5272e1afe30694a8c6e18ab9283e0f060d7da33a16c44b222d476",
+    "research/daily_status_2026-10-17/PRIOR_UTC_DAY_NATIVE.json": "eaa2d859e05505189d058c60ad186c9ca991174b2144d828514ecf8a43626e64",
+    "research/kalshi_post75_loss_2026-10-16/NEXT_WINDOW.json": "164d227c3ff36b1ab5ebdd7a437933cd181dd6af289b8e91be15da1fc6fd49cf",
+    "research/kalshi_post75_loss_2026-10-16/MARKOUTS.json": "cbfa517105331520225d2594e082bcdf5090c7b263942c4d2e722ec95a20e787"
+  },
+  "checks_passed": 577,
+  "day": "2026-10-16 UTC settlement-day cohort",
+  "summary": {
+    "fill_receipts": 149,
+    "settled_traded_windows": 55,
+    "empty_settlements": 5,
+    "net_pnl_usd": "-8.169800000000000711",
+    "locked_usd": "4.942283216783217871",
+    "directional_usd": "-13.11208321678321864774397303",
+    "first_order_cashflow_usd": "-16.3428",
+    "later_fill_cashflow_usd": "8.1730",
+    "first_order_equal_window_per_contract_sum_usd": "-2.81",
+    "first_side_outcome_wins": 24,
+    "first_side_outcome_losses": 31,
+    "exact_predecision_intent_joins": 5,
+    "warning": "First-order/later-fill split is fixed-receipt cashflow attribution, not two executable strategies"
+  },
+  "post_outcome_partitions": {
+    "True": {
+      "windows": 44,
+      "pnl_usd": "3.203000000000000635",
+      "warning": "POST-OUTCOME DIAGNOSTIC; never an entry filter"
+    },
+    "False": {
+      "windows": 11,
+      "pnl_usd": "-11.372800000000001346",
+      "warning": "POST-OUTCOME DIAGNOSTIC; never an entry filter"
+    }
+  },
+  "pr75_complete_cohort": {
+    "windows": 11,
+    "net_pnl_usd": "-0.267400000000000221",
+    "wins_usd": "0.154399999999999979",
+    "losses_usd": "-0.4218000000000002"
+  },
+  "excluded_settlement_day_carry": {
+    "window": "KXBTC15M-26OCT162000-00",
+    "fill_ids": [
+      "07245b76-26c1-a5e3-ad80-3146c684184f",
+      "07245b74-a759-9069-574d-70cdbc72aaa5"
+    ],
+    "next_day_pnl_usd": "0.012699999999999934",
+    "reason": "Settled October17 UTC; PR75 inherited into PR76"
+  },
+  "target": {
+    "window": "KXBTC15M-26OCT161815-15",
+    "ordinary_opposite_intents": 39,
+    "opposite_price_counts": {
+      "0.49": 1,
+      "0.5": 38
+    },
+    "first_opposite_intent_delay_s": 2.425982713699341,
+    "zero_queue_samples_on_unfilled_hedge": 2,
+    "zero_queue_is_fill_evidence": false,
+    "first_fill_markout_gaps": [
+      {
+        "horizon_s": 1,
+        "reason": "book_stale",
+        "detection_delay_s": 1.4395945072174072
+      },
+      {
+        "horizon_s": 5,
+        "reason": "observation_late",
+        "detection_delay_s": 1.4395945072174072
+      },
+      {
+        "horizon_s": 30,
+        "reason": "book_stale",
+        "detection_delay_s": 1.4395945072174072
+      }
+    ]
+  },
+  "empty_settlement_windows": [
+    "KXBTC15M-26OCT160115-15",
+    "KXBTC15M-26OCT160930-30",
+    "KXBTC15M-26OCT160945-45",
+    "KXBTC15M-26OCT161830-30",
+    "KXBTC15M-26OCT161915-15"
+  ],
+  "per_window": [
+    {
+      "window": "KXBTC15M-26OCT152015-15",
+      "fill_count": 7,
+      "balanced_at_settlement": false,
+      "up_wins": true,
+      "pnl_usd": "0.019999999999999574",
+      "first_order_id": "01a14202-5ac8-7f4a-84ac-d72b5480ff55",
+      "first_client_order_id": "nc-speed-d5cbea4f687b48d89948722af91bcf5a",
+      "first_order_fill_ids": [
+        "07244a0b-31e9-b1a0-2ee4-f086ffe735f9"
+      ],
+      "first_fill_at": 1792108813.562056,
+      "first_side": "down",
+      "first_order_quantity": "5.0",
+      "first_order_fee_usd": "0.0",
+      "first_order_settlement_cashflow_usd": "-2.50",
+      "first_order_per_contract_cashflow_usd": "-0.5",
+      "all_other_fill_settlement_cashflow_usd": "2.520",
+      "first_opposite_fill_delay_s": 5.386802911758423,
+      "predecision_intent": null
+    },
+    {
+      "window": "KXBTC15M-26OCT152030-30",
+      "fill_count": 7,
+      "balanced_at_settlement": true,
+      "up_wins": true,
+      "pnl_usd": "0.10999999999999943",
+      "first_order_id": "01a14210-2220-76f7-932d-c72c880d7932",
+      "first_client_order_id": "nc-speed-a93a9d5e8b7d41719ceee8a3146caf4d",
+      "first_order_fill_ids": [
+        "07244a50-9541-b725-44e2-8b4f98af04ae",
+        "07244a50-9541-9da1-d9f5-ab05b51ab51e"
+      ],
+      "first_fill_at": 1792109719.117728,
+      "first_side": "up",
+      "first_order_quantity": "5.00",
+      "first_order_fee_usd": "0.0",
+      "first_order_settlement_cashflow_usd": "3.000",
+      "first_order_per_contract_cashflow_usd": "0.6",
+      "all_other_fill_settlement_cashflow_usd": "-2.890",
+      "first_opposite_fill_delay_s": 38.01294803619385,
+      "predecision_intent": null
+    },
+    {
+      "window": "KXBTC15M-26OCT152045-45",
+      "fill_count": 5,
+      "balanced_at_settlement": true,
+      "up_wins": true,
+      "pnl_usd": "-0.5324999999999989",
+      "first_order_id": "01a14220-46f0-7071-a26e-b34797201186",
+      "first_client_order_id": "nc-speed-0137ed88354b4dfcb97b126a71a1a176",
+      "first_order_fill_ids": [
+        "07244aa1-6d91-8bd7-ddcc-130e1a7b3f2e"
+      ],
+      "first_fill_at": 1792110775.899568,
+      "first_side": "up",
+      "first_order_quantity": "5.0",
+      "first_order_fee_usd": "0.0",
+      "first_order_settlement_cashflow_usd": "3.400",
+      "first_order_per_contract_cashflow_usd": "0.68",
+      "all_other_fill_settlement_cashflow_usd": "-3.9325",
+      "first_opposite_fill_delay_s": 17.979700803756714,
+      "predecision_intent": null
+    },
+    {
+      "window": "KXBTC15M-26OCT152100-00",
+      "fill_count": 2,
+      "balanced_at_settlement": true,
+      "up_wins": false,
+      "pnl_usd": "1.7418",
+      "first_order_id": "01a1422b-9578-70d2-bfc0-a64e24b3a4b4",
+      "first_client_order_id": "nc-speed-edd89f8eeb24442fb11169919bf021a5",
+      "first_order_fill_ids": [
+        "07244a85-f0f9-9128-1476-ea8fc7012398"
+      ],
+      "first_fill_at": 1792111516.243713,
+      "first_side": "down",
+      "first_order_quantity": "5.0",
+      "first_order_fee_usd": "0.0",
+      "first_order_settlement_cashflow_usd": "1.950",
+      "first_order_per_contract_cashflow_usd": "0.39",
+      "all_other_fill_settlement_cashflow_usd": "-0.2082",
+      "first_opposite_fill_delay_s": 644.5091969966888,
+      "predecision_intent": null
+    },
+    {
+      "window": "KXBTC15M-26OCT152115-15",
+      "fill_count": 7,
+      "balanced_at_settlement": true,
+      "up_wins": true,
+      "pnl_usd": "0.7058",
+      "first_order_id": "01a1423a-00e0-7515-8a62-bbf4080fe25d",
+      "first_client_order_id": "nc-speed-b5c14bbc0a31466b8c54fe3345ff8291",
+      "first_order_fill_ids": [
+        "07244ad2-42e1-a92f-9572-3d78bc40fd11"
+      ],
+      "first_fill_at": 1792112464.602276,
+      "first_side": "down",
+      "first_order_quantity": "5.0",
+      "first_order_fee_usd": "0.0",
+      "first_order_settlement_cashflow_usd": "-2.400",
+      "first_order_per_contract_cashflow_usd": "-0.48",
+      "all_other_fill_settlement_cashflow_usd": "3.1058",
+      "first_opposite_fill_delay_s": 122.73375296592712,
+      "predecision_intent": null
+    },
+    {
+      "window": "KXBTC15M-26OCT152130-30",
+      "fill_count": 5,
+      "balanced_at_settlement": false,
+      "up_wins": false,
+      "pnl_usd": "-1.4100000000000001",
+      "first_order_id": "01a14247-b4b0-7cec-a673-de7d773e7874",
+      "first_client_order_id": "nc-speed-1d27e292b3624d58aed73a3e54b6f7b3",
+      "first_order_fill_ids": [
+        "07244b58-b511-a1be-c64c-5c8da41c72d8"
+      ],
+      "first_fill_at": 1792113361.599326,
+      "first_side": "up",
+      "first_order_quantity": "5.0",
+      "first_order_fee_usd": "0.0",
+      "first_order_settlement_cashflow_usd": "-2.600",
+      "first_order_per_contract_cashflow_usd": "-0.52",
+      "all_other_fill_settlement_cashflow_usd": "1.190",
+      "first_opposite_fill_delay_s": 153.61557507514954,
+      "predecision_intent": null
+    },
+    {
+      "window": "KXBTC15M-26OCT152145-45",
+      "fill_count": 7,
+      "balanced_at_settlement": true,
+      "up_wins": false,
+      "pnl_usd": "0.27839999999999954",
+      "first_order_id": "01a14255-58e0-7bdf-ba7d-14eff87a0438",
+      "first_client_order_id": "nc-speed-c808a1e91db045dcb17da2836b77e9a6",
+      "first_order_fill_ids": [
+        "07244b00-8801-90dd-32f7-7ed42ac24054"
+      ],
+      "first_fill_at": 1792114259.936397,
+      "first_side": "up",
+      "first_order_quantity": "5.0",
+      "first_order_fee_usd": "0.0",
+      "first_order_settlement_cashflow_usd": "-2.650",
+      "first_order_per_contract_cashflow_usd": "-0.53",
+      "all_other_fill_settlement_cashflow_usd": "2.9284",
+      "first_opposite_fill_delay_s": 13.209229946136475,
+      "predecision_intent": null
+    },
+    {
+      "window": "KXBTC15M-26OCT152200-00",
+      "fill_count": 6,
+      "balanced_at_settlement": true,
+      "up_wins": false,
+      "pnl_usd": "1.6243000000000016",
+      "first_order_id": "01a14264-3590-7405-9293-c6702a96e001",
+      "first_client_order_id": "nc-speed-85eb47447669469e9760f52b880b0027",
+      "first_order_fill_ids": [
+        "07244bf5-30b1-83ff-e6d3-d0b53ecbf385"
+      ],
+      "first_fill_at": 1792115229.226706,
+      "first_side": "down",
+      "first_order_quantity": "5.0",
+      "first_order_fee_usd": "0.0",
+      "first_order_settlement_cashflow_usd": "2.400",
+      "first_order_per_contract_cashflow_usd": "0.48",
+      "all_other_fill_settlement_cashflow_usd": "-0.7757",
+      "first_opposite_fill_delay_s": 90.39340806007385,
+      "predecision_intent": null
+    },
+    {
+      "window": "KXBTC15M-26OCT152215-15",
+      "fill_count": 7,
+      "balanced_at_settlement": true,
+      "up_wins": true,
+      "pnl_usd": "0.6338000000000008",
+      "first_order_id": "01a14270-62c0-7e06-bb68-ecea9196a528",
+      "first_client_order_id": "nc-speed-b4c1ee99728b48998bcb9c511d56b0df",
+      "first_order_fill_ids": [
+        "07244bb1-bbe1-ba50-b803-3938438e1244"
+      ],
+      "first_fill_at": 1792116029.228108,
+      "first_side": "down",
+      "first_order_quantity": "5.0",
+      "first_order_fee_usd": "0.0",
+      "first_order_settlement_cashflow_usd": "-2.550",
+      "first_order_per_contract_cashflow_usd": "-0.51",
+      "all_other_fill_settlement_cashflow_usd": "3.1838",
+      "first_opposite_fill_delay_s": 270.08663415908813,
+      "predecision_intent": null
+    },
+    {
+      "window": "KXBTC15M-26OCT152230-30",
+      "fill_count": 7,
+      "balanced_at_settlement": true,
+      "up_wins": false,
+      "pnl_usd": "-0.18100000000000094",
+      "first_order_id": "01a1427f-f320-7cd0-af80-c9a1d1d98e20",
+      "first_client_order_id": "nc-speed-9c33e3c448d943be930d82e4075e8b2b",
+      "first_order_fill_ids": [
+        "07244b80-18e1-9b82-4126-8aece754f748"
+      ],
+      "first_fill_at": 1792117046.182654,
+      "first_side": "down",
+      "first_order_quantity": "5.0",
+      "first_order_fee_usd": "0.0",
+      "first_order_settlement_cashflow_usd": "2.400",
+      "first_order_per_contract_cashflow_usd": "0.48",
+      "all_other_fill_settlement_cashflow_usd": "-2.5810",
+      "first_opposite_fill_delay_s": 383.7516300678253,
+      "predecision_intent": null
+    },
+    {
+      "window": "KXBTC15M-26OCT152245-45",
+      "fill_count": 3,
+      "balanced_at_settlement": false,
+      "up_wins": true,
+      "pnl_usd": "-1.2300000000000004",
+      "first_order_id": "01a1428b-af08-7324-aac6-7b80c5cd9970",
+      "first_client_order_id": "nc-speed-6da21f6e47fe4500b3a82d4cc3d1aac8",
+      "first_order_fill_ids": [
+        "072448a5-1329-98d2-6f2c-72d75d8d44b0"
+      ],
+      "first_fill_at": 1792117813.721327,
+      "first_side": "down",
+      "first_order_quantity": "5.0",
+      "first_order_fee_usd": "0.0",
+      "first_order_settlement_cashflow_usd": "-2.450",
+      "first_order_per_contract_cashflow_usd": "-0.49",
+      "all_other_fill_settlement_cashflow_usd": "1.220",
+      "first_opposite_fill_delay_s": 25.995940923690796,
+      "predecision_intent": null
+    },
+    {
+      "window": "KXBTC15M-26OCT152300-00",
+      "fill_count": 1,
+      "balanced_at_settlement": false,
+      "up_wins": false,
+      "pnl_usd": "-1.2",
+      "first_order_id": "01a1429a-31e0-7b95-bbac-89941cfe9a44",
+      "first_client_order_id": "nc-speed-a763bed587844fd7bded14df086f2107",
+      "first_order_fill_ids": [
+        "072448f3-d121-b477-ba44-dcdbeffb2c10"
+      ],
+      "first_fill_at": 1792118782.807471,
+      "first_side": "up",
+      "first_order_quantity": "5.0",
+      "first_order_fee_usd": "0.0",
+      "first_order_settlement_cashflow_usd": "-1.200",
+      "first_order_per_contract_cashflow_usd": "-0.24",
+      "all_other_fill_settlement_cashflow_usd": "0",
+      "first_opposite_fill_delay_s": null,
+      "predecision_intent": null
+    },
+    {
+      "window": "KXBTC15M-26OCT152315-15",
+      "fill_count": 3,
+      "balanced_at_settlement": true,
+      "up_wins": true,
+      "pnl_usd": "-2.8509",
+      "first_order_id": "01a142a7-4d58-78c9-9f62-5a4cff087113",
+      "first_client_order_id": "nc-speed-3acd81a1fe9d4a18bb0f0b489b9033ea",
+      "first_order_fill_ids": [
+        "0724483a-ced9-aa93-baf8-f3ce46a90c87",
+        "0724483a-ced9-a1bf-20e1-447b87aa876f"
+      ],
+      "first_fill_at": 1792119628.064413,
+      "first_side": "down",
+      "first_order_quantity": "5.00",
+      "first_order_fee_usd": "0.0",
+      "first_order_settlement_cashflow_usd": "-3.000",
+      "first_order_per_contract_cashflow_usd": "-0.6",
+      "all_other_fill_settlement_cashflow_usd": "0.1491",
+      "first_opposite_fill_delay_s": 653.8108839988708,
+      "predecision_intent": null
+    },
+    {
+      "window": "KXBTC15M-26OCT152330-30",
+      "fill_count": 2,
+      "balanced_at_settlement": true,
+      "up_wins": false,
+      "pnl_usd": "-1.9392999999999994",
+      "first_order_id": "01a142b6-2a08-7f4e-96b7-7874d1d2010c",
+      "first_client_order_id": "nc-speed-af45de757f73454dbbfd37e8d4198dd2",
+      "first_order_fill_ids": [
+        "0724486e-cca9-bb98-86aa-3f70ee287bfc"
+      ],
+      "first_fill_at": 1792120601.091323,
+      "first_side": "up",
+      "first_order_quantity": "3.0",
+      "first_order_fee_usd": "0.0",
+      "first_order_settlement_cashflow_usd": "-2.040",
+      "first_order_per_contract_cashflow_usd": "-0.68",
+      "all_other_fill_settlement_cashflow_usd": "0.1007",
+      "first_opposite_fill_delay_s": 559.4929389953613,
+      "predecision_intent": null
+    },
+    {
+      "window": "KXBTC15M-26OCT152345-45",
+      "fill_count": 2,
+      "balanced_at_settlement": true,
+      "up_wins": false,
+      "pnl_usd": "0.21139999999999992",
+      "first_order_id": "01a142c3-1a88-7683-bbfb-7de536a740db",
+      "first_client_order_id": "nc-speed-3367afc361ff49cb971ec2a9ed514a79",
+      "first_order_fill_ids": [
+        "072449cf-93e9-99a9-66ec-f6fa472a359f"
+      ],
+      "first_fill_at": 1792121447.307014,
+      "first_side": "down",
+      "first_order_quantity": "1.0",
+      "first_order_fee_usd": "0.0",
+      "first_order_settlement_cashflow_usd": "0.220",
+      "first_order_per_contract_cashflow_usd": "0.22",
+      "all_other_fill_settlement_cashflow_usd": "-0.0086",
+      "first_opposite_fill_delay_s": 612.8914260864258,
+      "predecision_intent": null
+    },
+    {
+      "window": "KXBTC15M-26OCT160000-00",
+      "fill_count": 2,
+      "balanced_at_settlement": true,
+      "up_wins": true,
+      "pnl_usd": "0.034600000000000075",
+      "first_order_id": "01a142d4-8b60-7fd6-b7a5-752fc8c36afe",
+      "first_client_order_id": "nc-speed-a10c6ab412dc4608931e550a350e1f7b",
+      "first_order_fill_ids": [
+        "07244986-21e1-94c0-8a6f-5fda0c7b3ed2"
+      ],
+      "first_fill_at": 1792122596.60638,
+      "first_side": "up",
+      "first_order_quantity": "1.0",
+      "first_order_fee_usd": "0.0",
+      "first_order_settlement_cashflow_usd": "0.040",
+      "first_order_per_contract_cashflow_usd": "0.04",
+      "all_other_fill_settlement_cashflow_usd": "-0.0054",
+      "first_opposite_fill_delay_s": 364.15145802497864,
+      "predecision_intent": null
+    },
+    {
+      "window": "KXBTC15M-26OCT160015-15",
+      "fill_count": 2,
+      "balanced_at_settlement": true,
+      "up_wins": false,
+      "pnl_usd": "-0.3514999999999999",
+      "first_order_id": "01a142de-10e0-7765-b68f-f30a0e309b41",
+      "first_client_order_id": "nc-speed-af2e73222f5a4f4dbb67ae5c0f41ba53",
+      "first_order_fill_ids": [
+        "072449a6-43c1-ab23-df7f-7511023acee1"
+      ],
+      "first_fill_at": 1792123213.089957,
+      "first_side": "up",
+      "first_order_quantity": "1.0",
+      "first_order_fee_usd": "0.0",
+      "first_order_settlement_cashflow_usd": "-0.40",
+      "first_order_per_contract_cashflow_usd": "-0.4",
+      "all_other_fill_settlement_cashflow_usd": "0.0485",
+      "first_opposite_fill_delay_s": 647.1071410179138,
+      "predecision_intent": null
+    },
+    {
+      "window": "KXBTC15M-26OCT160030-30",
+      "fill_count": 2,
+      "balanced_at_settlement": true,
+      "up_wins": true,
+      "pnl_usd": "0.11999999999999988",
+      "first_order_id": "01a142ec-e1d8-7479-b748-5747db5e80b8",
+      "first_client_order_id": "nc-speed-79b65c18dd074daca8fab581289e6836",
+      "first_order_fill_ids": [
+        "0724495f-4779-af47-b218-be172b24bd70"
+      ],
+      "first_fill_at": 1792124185.98085,
+      "first_side": "up",
+      "first_order_quantity": "1.0",
+      "first_order_fee_usd": "0.0",
+      "first_order_settlement_cashflow_usd": "0.680",
+      "first_order_per_contract_cashflow_usd": "0.68",
+      "all_other_fill_settlement_cashflow_usd": "-0.560",
+      "first_opposite_fill_delay_s": 48.46780705451965,
+      "predecision_intent": null
+    },
+    {
+      "window": "KXBTC15M-26OCT160045-45",
+      "fill_count": 2,
+      "balanced_at_settlement": true,
+      "up_wins": false,
+      "pnl_usd": "0.22999999999999998",
+      "first_order_id": "01a142fa-0908-7eb3-a7bc-dc3ad4f19cd3",
+      "first_client_order_id": "nc-speed-318fe3c765e84cd0932cbee951978092",
+      "first_order_fill_ids": [
+        "07244912-d909-b621-152c-6ce18ee0434f"
+      ],
+      "first_fill_at": 1792125056.651914,
+      "first_side": "up",
+      "first_order_quantity": "1.0",
+      "first_order_fee_usd": "0.0",
+      "first_order_settlement_cashflow_usd": "-0.410",
+      "first_order_per_contract_cashflow_usd": "-0.41",
+      "all_other_fill_settlement_cashflow_usd": "0.640",
+      "first_opposite_fill_delay_s": 72.03018307685852,
+      "predecision_intent": null
+    },
+    {
+      "window": "KXBTC15M-26OCT160100-00",
+      "fill_count": 2,
+      "balanced_at_settlement": true,
+      "up_wins": true,
+      "pnl_usd": "0.06000000000000005",
+      "first_order_id": "01a14307-a180-7a97-a802-db7b8c04cdbd",
+      "first_client_order_id": "nc-speed-c7feb32c017f492785bd27c01abfa8e5",
+      "first_order_fill_ids": [
+        "07244f19-6501-8269-5b39-311bcaed44e1"
+      ],
+      "first_fill_at": 1792125940.930472,
+      "first_side": "up",
+      "first_order_quantity": "1.0",
+      "first_order_fee_usd": "0.0",
+      "first_order_settlement_cashflow_usd": "0.480",
+      "first_order_per_contract_cashflow_usd": "0.48",
+      "all_other_fill_settlement_cashflow_usd": "-0.420",
+      "first_opposite_fill_delay_s": 43.000673055648804,
+      "predecision_intent": null
+    },
+    {
+      "window": "KXBTC15M-26OCT160130-30",
+      "fill_count": 2,
+      "balanced_at_settlement": true,
+      "up_wins": false,
+      "pnl_usd": "-0.7725999999999997",
+      "first_order_id": "01a14323-91d8-72be-9515-94f35780d0ec",
+      "first_client_order_id": "nc-speed-7efa2f26773c4e62afc43ed960417a1e",
+      "first_order_fill_ids": [
+        "07244fad-f779-98a0-00a1-c690de7c2720"
+      ],
+      "first_fill_at": 1792127769.556741,
+      "first_side": "up",
+      "first_order_quantity": "2.0",
+      "first_order_fee_usd": "0.0",
+      "first_order_settlement_cashflow_usd": "-0.960",
+      "first_order_per_contract_cashflow_usd": "-0.48",
+      "all_other_fill_settlement_cashflow_usd": "0.1874",
+      "first_opposite_fill_delay_s": 590.5967400074005,
+      "predecision_intent": null
+    },
+    {
+      "window": "KXBTC15M-26OCT160145-45",
+      "fill_count": 2,
+      "balanced_at_settlement": true,
+      "up_wins": false,
+      "pnl_usd": "0.010000000000000009",
+      "first_order_id": "01a14331-4d78-74f1-aeaf-2932428c1dd1",
+      "first_client_order_id": "nc-speed-e9e48e65f7094151a5ce3162cd15891c",
+      "first_order_fill_ids": [
+        "07244ff4-3919-ad83-6f8a-d3b6cdb53649"
+      ],
+      "first_fill_at": 1792128671.179678,
+      "first_side": "down",
+      "first_order_quantity": "1.0",
+      "first_order_fee_usd": "0.0",
+      "first_order_settlement_cashflow_usd": "0.560",
+      "first_order_per_contract_cashflow_usd": "0.56",
+      "all_other_fill_settlement_cashflow_usd": "-0.550",
+      "first_opposite_fill_delay_s": 22.650213956832886,
+      "predecision_intent": null
+    },
+    {
+      "window": "KXBTC15M-26OCT160200-00",
+      "fill_count": 1,
+      "balanced_at_settlement": false,
+      "up_wins": true,
+      "pnl_usd": "-0.44",
+      "first_order_id": "01a1433e-41e0-73fa-8ef7-8645bbf0a326",
+      "first_client_order_id": "nc-speed-2fff2fff4cfc4c72978a51b0d9e1d5ed",
+      "first_order_fill_ids": [
+        "07244fc7-6721-ab68-0095-35d364f81b2e"
+      ],
+      "first_fill_at": 1792129518.195434,
+      "first_side": "down",
+      "first_order_quantity": "1.0",
+      "first_order_fee_usd": "0.0",
+      "first_order_settlement_cashflow_usd": "-0.440",
+      "first_order_per_contract_cashflow_usd": "-0.44",
+      "all_other_fill_settlement_cashflow_usd": "0",
+      "first_opposite_fill_delay_s": null,
+      "predecision_intent": null
+    },
+    {
+      "window": "KXBTC15M-26OCT161130-30",
+      "fill_count": 2,
+      "balanced_at_settlement": true,
+      "up_wins": false,
+      "pnl_usd": "1.04",
+      "first_order_id": "01a1454c-d2a8-7d58-81c1-e0a9f75a974b",
+      "first_client_order_id": "nc-speed-5dc11d58977c4284afbc9eba204f8722",
+      "first_order_fill_ids": [
+        "0724507f-88e9-975e-6bc8-72b9ae33a357"
+      ],
+      "first_fill_at": 1792164026.122949,
+      "first_side": "down",
+      "first_order_quantity": "4.0",
+      "first_order_fee_usd": "0.0",
+      "first_order_settlement_cashflow_usd": "1.520",
+      "first_order_per_contract_cashflow_usd": "0.38",
+      "all_other_fill_settlement_cashflow_usd": "-0.480",
+      "first_opposite_fill_delay_s": 214.81440114974976,
+      "predecision_intent": null
+    },
+    {
+      "window": "KXBTC15M-26OCT161145-45",
+      "fill_count": 3,
+      "balanced_at_settlement": true,
+      "up_wins": true,
+      "pnl_usd": "-0.27860000000000085",
+      "first_order_id": "01a14556-0620-7ac9-b2a3-5e82ad79d689",
+      "first_client_order_id": "nc-speed-7d302fdd499847bb914f17c88082d02e",
+      "first_order_fill_ids": [
+        "0724500e-1ea1-98cf-d679-e4d32065ae75",
+        "0724500e-1ea1-9dd3-cb06-8cc6ba49affd"
+      ],
+      "first_fill_at": 1792164628.420908,
+      "first_side": "down",
+      "first_order_quantity": "5.00",
+      "first_order_fee_usd": "0.0",
+      "first_order_settlement_cashflow_usd": "-1.9000",
+      "first_order_per_contract_cashflow_usd": "-0.38",
+      "all_other_fill_settlement_cashflow_usd": "1.6214",
+      "first_opposite_fill_delay_s": 634.728178024292,
+      "predecision_intent": null
+    },
+    {
+      "window": "KXBTC15M-26OCT161200-00",
+      "fill_count": 2,
+      "balanced_at_settlement": true,
+      "up_wins": false,
+      "pnl_usd": "0.40000000000000036",
+      "first_order_id": "01a14563-9ab0-7547-be59-244709677cbb",
+      "first_client_order_id": "nc-speed-111e539885fe4f9591a7f1f29da5e06d",
+      "first_order_fill_ids": [
+        "072450ed-0311-b7a9-3bc4-ad275020f053"
+      ],
+      "first_fill_at": 1792165521.701848,
+      "first_side": "up",
+      "first_order_quantity": "5.0",
+      "first_order_fee_usd": "0.0",
+      "first_order_settlement_cashflow_usd": "-2.150",
+      "first_order_per_contract_cashflow_usd": "-0.43",
+      "all_other_fill_settlement_cashflow_usd": "2.550",
+      "first_opposite_fill_delay_s": 72.63601994514465,
+      "predecision_intent": null
+    },
+    {
+      "window": "KXBTC15M-26OCT161215-15",
+      "fill_count": 2,
+      "balanced_at_settlement": true,
+      "up_wins": true,
+      "pnl_usd": "0.09999999999999964",
+      "first_order_id": "01a14572-b1f8-76f9-bbc1-c2681b32b8b1",
+      "first_client_order_id": "nc-speed-9975774cc3d64c60b9d0bc219547ad73",
+      "first_order_fill_ids": [
+        "072450b8-7619-b7ab-f072-60dbcda78d1d"
+      ],
+      "first_fill_at": 1792166507.633457,
+      "first_side": "down",
+      "first_order_quantity": "5.0",
+      "first_order_fee_usd": "0.0",
+      "first_order_settlement_cashflow_usd": "-3.150",
+      "first_order_per_contract_cashflow_usd": "-0.63",
+      "all_other_fill_settlement_cashflow_usd": "3.250",
+      "first_opposite_fill_delay_s": 11.511466979980469,
+      "predecision_intent": null
+    },
+    {
+      "window": "KXBTC15M-26OCT161230-30",
+      "fill_count": 2,
+      "balanced_at_settlement": true,
+      "up_wins": true,
+      "pnl_usd": "0.04999999999999982",
+      "first_order_id": "01a14580-8cd8-7646-a097-5d5f9780eb9e",
+      "first_client_order_id": "nc-speed-5b4b95cfdf1d43cc8fcbe2f0ca34096e",
+      "first_order_fill_ids": [
+        "07245382-de79-bd8c-4475-caf6a8b9fb9e"
+      ],
+      "first_fill_at": 1792167417.890168,
+      "first_side": "down",
+      "first_order_quantity": "5.0",
+      "first_order_fee_usd": "0.0",
+      "first_order_settlement_cashflow_usd": "-2.50",
+      "first_order_per_contract_cashflow_usd": "-0.5",
+      "all_other_fill_settlement_cashflow_usd": "2.550",
+      "first_opposite_fill_delay_s": 40.05484104156494,
+      "predecision_intent": null
+    },
+    {
+      "window": "KXBTC15M-26OCT161245-45",
+      "fill_count": 2,
+      "balanced_at_settlement": true,
+      "up_wins": false,
+      "pnl_usd": "0.40000000000000036",
+      "first_order_id": "01a1458c-c1d8-7510-a904-f6c78962b968",
+      "first_client_order_id": "nc-speed-57cd2e68d49c4f27acfd883d6dc40c1e",
+      "first_order_fill_ids": [
+        "072453bf-f799-91de-dcc8-af3a44500924"
+      ],
+      "first_fill_at": 1792168218.949859,
+      "first_side": "down",
+      "first_order_quantity": "5.0",
+      "first_order_fee_usd": "0.0",
+      "first_order_settlement_cashflow_usd": "2.650",
+      "first_order_per_contract_cashflow_usd": "0.53",
+      "all_other_fill_settlement_cashflow_usd": "-2.250",
+      "first_opposite_fill_delay_s": 2.5725882053375244,
+      "predecision_intent": null
+    },
+    {
+      "window": "KXBTC15M-26OCT161300-00",
+      "fill_count": 2,
+      "balanced_at_settlement": true,
+      "up_wins": false,
+      "pnl_usd": "0.8499999999999996",
+      "first_order_id": "01a1459b-2958-7eb0-84c9-c5e922df90c7",
+      "first_client_order_id": "nc-speed-9527b3c288004b4e9cc992e31bec4bb2",
+      "first_order_fill_ids": [
+        "072453f7-8c39-a24a-842b-fd9951921f4b"
+      ],
+      "first_fill_at": 1792169159.307073,
+      "first_side": "down",
+      "first_order_quantity": "5.0",
+      "first_order_fee_usd": "0.0",
+      "first_order_settlement_cashflow_usd": "3.300",
+      "first_order_per_contract_cashflow_usd": "0.66",
+      "all_other_fill_settlement_cashflow_usd": "-2.450",
+      "first_opposite_fill_delay_s": 115.54875993728638,
+      "predecision_intent": null
+    },
+    {
+      "window": "KXBTC15M-26OCT161315-15",
+      "fill_count": 1,
+      "balanced_at_settlement": false,
+      "up_wins": false,
+      "pnl_usd": "-1.6500000000000001",
+      "first_order_id": "01a145aa-3100-731d-bdf6-c5f78db2d7ad",
+      "first_client_order_id": "nc-speed-8b1dbcc853ab437ea0c4eea1742fecda",
+      "first_order_fill_ids": [
+        "07245302-d241-aad3-e6b0-ef795716d18d"
+      ],
+      "first_fill_at": 1792170146.320459,
+      "first_side": "up",
+      "first_order_quantity": "5.0",
+      "first_order_fee_usd": "0.0",
+      "first_order_settlement_cashflow_usd": "-1.650",
+      "first_order_per_contract_cashflow_usd": "-0.33",
+      "all_other_fill_settlement_cashflow_usd": "0",
+      "first_opposite_fill_delay_s": null,
+      "predecision_intent": {
+        "at": 1792170144.4997027,
+        "side": "up",
+        "kind": "rest",
+        "price": 0.33,
+        "size": 5.0,
+        "fair": 0.3651224144739616,
+        "quoted_model_edge": "0.0351224144739616",
+        "decision_to_first_fill_s": 1.820756196975708
+      }
+    },
+    {
+      "window": "KXBTC15M-26OCT161330-30",
+      "fill_count": 2,
+      "balanced_at_settlement": true,
+      "up_wins": false,
+      "pnl_usd": "1.4286000000000003",
+      "first_order_id": "01a145b7-7388-7b41-92eb-2f816aa85721",
+      "first_client_order_id": "nc-speed-a63eaa0205f24835801c1cf3119d03c8",
+      "first_order_fill_ids": [
+        "0724536a-ae49-afd7-ec72-70376eaeb06d"
+      ],
+      "first_fill_at": 1792171014.192107,
+      "first_side": "down",
+      "first_order_quantity": "5.0",
+      "first_order_fee_usd": "0.0",
+      "first_order_settlement_cashflow_usd": "1.450",
+      "first_order_per_contract_cashflow_usd": "0.29",
+      "all_other_fill_settlement_cashflow_usd": "-0.0214",
+      "first_opposite_fill_delay_s": 545.9706001281738,
+      "predecision_intent": null
+    },
+    {
+      "window": "KXBTC15M-26OCT161345-45",
+      "fill_count": 1,
+      "balanced_at_settlement": false,
+      "up_wins": true,
+      "pnl_usd": "-1.75",
+      "first_order_id": "01a145c4-3140-7975-be09-07e2ea0abedc",
+      "first_client_order_id": "nc-speed-e8fdd39826a44541907dcbb492a3f429",
+      "first_order_fill_ids": [
+        "072452d4-d501-9eb3-0975-cdcba3495c58"
+      ],
+      "first_fill_at": 1792171850.114039,
+      "first_side": "down",
+      "first_order_quantity": "5.0",
+      "first_order_fee_usd": "0.0",
+      "first_order_settlement_cashflow_usd": "-1.750",
+      "first_order_per_contract_cashflow_usd": "-0.35",
+      "all_other_fill_settlement_cashflow_usd": "0",
+      "first_opposite_fill_delay_s": null,
+      "predecision_intent": {
+        "at": 1792171848.8819015,
+        "side": "down",
+        "kind": "rest",
+        "price": 0.35,
+        "size": 5.0,
+        "fair": 0.3899382197676483,
+        "quoted_model_edge": "0.0399382197676483",
+        "decision_to_first_fill_s": 1.2321374416351318
+      }
+    },
+    {
+      "window": "KXBTC15M-26OCT161400-00",
+      "fill_count": 1,
+      "balanced_at_settlement": false,
+      "up_wins": false,
+      "pnl_usd": "-1.44",
+      "first_order_id": "01a145d3-2948-7b4e-8ae1-2a9fd8a8641a",
+      "first_client_order_id": "nc-speed-518950b4ef4940b4a116d0c5aafb2514",
+      "first_order_fill_ids": [
+        "0724529e-2ba9-97bc-326e-d375d0f38416"
+      ],
+      "first_fill_at": 1792172835.44159,
+      "first_side": "up",
+      "first_order_quantity": "4.0",
+      "first_order_fee_usd": "0.0",
+      "first_order_settlement_cashflow_usd": "-1.440",
+      "first_order_per_contract_cashflow_usd": "-0.36",
+      "all_other_fill_settlement_cashflow_usd": "0",
+      "first_opposite_fill_delay_s": null,
+      "predecision_intent": {
+        "at": 1792172829.4184554,
+        "side": "up",
+        "kind": "rest",
+        "price": 0.36,
+        "size": 4.0,
+        "fair": 0.398685083849031,
+        "quoted_model_edge": "0.038685083849031",
+        "decision_to_first_fill_s": 6.023134708404541
+      }
+    },
+    {
+      "window": "KXBTC15M-26OCT161415-15",
+      "fill_count": 2,
+      "balanced_at_settlement": true,
+      "up_wins": true,
+      "pnl_usd": "-0.7284000000000006",
+      "first_order_id": "01a145df-5290-73fd-97ca-669ff4fd2f53",
+      "first_client_order_id": "nc-speed-19b3f309e2284138b906b6c61198d56e",
+      "first_order_fill_ids": [
+        "072452a2-2bb1-9473-aa83-e9ef078f002f"
+      ],
+      "first_fill_at": 1792173629.3368,
+      "first_side": "down",
+      "first_order_quantity": "3.0",
+      "first_order_fee_usd": "0.0",
+      "first_order_settlement_cashflow_usd": "-1.410",
+      "first_order_per_contract_cashflow_usd": "-0.47",
+      "all_other_fill_settlement_cashflow_usd": "0.6816",
+      "first_opposite_fill_delay_s": 630.8815019130707,
+      "predecision_intent": {
+        "at": 1792173626.8251295,
+        "side": "down",
+        "kind": "rest",
+        "price": 0.47,
+        "size": 3.0,
+        "fair": 0.5086577471456845,
+        "quoted_model_edge": "0.0386577471456845",
+        "decision_to_first_fill_s": 2.5116705894470215
+      }
+    },
+    {
+      "window": "KXBTC15M-26OCT161430-30",
+      "fill_count": 2,
+      "balanced_at_settlement": true,
+      "up_wins": true,
+      "pnl_usd": "0.26",
+      "first_order_id": "01a145ed-3540-7106-b894-fcf59af35236",
+      "first_client_order_id": "nc-speed-cde58fd6b7de4ebb8f5169af698312ec",
+      "first_order_fill_ids": [
+        "07245258-1661-bbe8-864e-89552c028246"
+      ],
+      "first_fill_at": 1792174541.658925,
+      "first_side": "down",
+      "first_order_quantity": "2.0",
+      "first_order_fee_usd": "0.0",
+      "first_order_settlement_cashflow_usd": "-0.820",
+      "first_order_per_contract_cashflow_usd": "-0.41",
+      "all_other_fill_settlement_cashflow_usd": "1.080",
+      "first_opposite_fill_delay_s": 163.1149709224701,
+      "predecision_intent": null
+    },
+    {
+      "window": "KXBTC15M-26OCT161445-45",
+      "fill_count": 2,
+      "balanced_at_settlement": true,
+      "up_wins": false,
+      "pnl_usd": "0.20999999999999996",
+      "first_order_id": "01a145fc-3130-7def-8858-9068bcd6a463",
+      "first_client_order_id": "nc-speed-fcaf09b77bca413e846c0a63abbde8f5",
+      "first_order_fill_ids": [
+        "0724520c-c291-ae91-3221-7a454ea780d3"
+      ],
+      "first_fill_at": 1792175521.758944,
+      "first_side": "down",
+      "first_order_quantity": "3.0",
+      "first_order_fee_usd": "0.0",
+      "first_order_settlement_cashflow_usd": "1.680",
+      "first_order_per_contract_cashflow_usd": "0.56",
+      "all_other_fill_settlement_cashflow_usd": "-1.470",
+      "first_opposite_fill_delay_s": 180.65572690963745,
+      "predecision_intent": null
+    },
+    {
+      "window": "KXBTC15M-26OCT161500-00",
+      "fill_count": 2,
+      "balanced_at_settlement": false,
+      "up_wins": true,
+      "pnl_usd": "-0.23280000000000012",
+      "first_order_id": "01a1460a-3ed8-76f5-8a52-b3f5fef6936f",
+      "first_client_order_id": "nc-speed-82345cc7730645ad8d6613357ad46ab7",
+      "first_order_fill_ids": [
+        "07245e22-c5b9-aff3-098b-89f099076d73"
+      ],
+      "first_fill_at": 1792176439.269137,
+      "first_side": "down",
+      "first_order_quantity": "2.56",
+      "first_order_fee_usd": "0.0",
+      "first_order_settlement_cashflow_usd": "-1.6128",
+      "first_order_per_contract_cashflow_usd": "-0.63",
+      "all_other_fill_settlement_cashflow_usd": "1.380",
+      "first_opposite_fill_delay_s": 2.232755184173584,
+      "predecision_intent": null
+    },
+    {
+      "window": "KXBTC15M-26OCT161515-15",
+      "fill_count": 2,
+      "balanced_at_settlement": true,
+      "up_wins": true,
+      "pnl_usd": "0.3899999999999997",
+      "first_order_id": "01a14616-4cc8-77e3-a3cd-3fc5e8de2c94",
+      "first_client_order_id": "nc-speed-8a0f2fcd53d84e54a93e3dbd59aa0cb0",
+      "first_order_fill_ids": [
+        "07245e4f-0e09-958d-3d86-bd3c01cee894"
+      ],
+      "first_fill_at": 1792177230.833624,
+      "first_side": "down",
+      "first_order_quantity": "3.0",
+      "first_order_fee_usd": "0.0",
+      "first_order_settlement_cashflow_usd": "-1.350",
+      "first_order_per_contract_cashflow_usd": "-0.45",
+      "all_other_fill_settlement_cashflow_usd": "1.740",
+      "first_opposite_fill_delay_s": 393.0828981399536,
+      "predecision_intent": null
+    },
+    {
+      "window": "KXBTC15M-26OCT161530-30",
+      "fill_count": 3,
+      "balanced_at_settlement": true,
+      "up_wins": true,
+      "pnl_usd": "0.33000000000000007",
+      "first_order_id": "01a14624-71e0-7433-8de9-96852c50234d",
+      "first_client_order_id": "nc-speed-4d106f13031d45aa97a5875cc78dccac",
+      "first_order_fill_ids": [
+        "07245eb5-a6c1-bddd-e6fe-c0858a965add"
+      ],
+      "first_fill_at": 1792178157.308335,
+      "first_side": "up",
+      "first_order_quantity": "3.0",
+      "first_order_fee_usd": "0.0",
+      "first_order_settlement_cashflow_usd": "1.650",
+      "first_order_per_contract_cashflow_usd": "0.55",
+      "all_other_fill_settlement_cashflow_usd": "-1.320",
+      "first_opposite_fill_delay_s": 68.90710282325745,
+      "predecision_intent": null
+    },
+    {
+      "window": "KXBTC15M-26OCT161545-45",
+      "fill_count": 1,
+      "balanced_at_settlement": false,
+      "up_wins": false,
+      "pnl_usd": "-1.2000000000000002",
+      "first_order_id": "01a14632-3168-7c6e-858d-001aa5140fc2",
+      "first_client_order_id": "nc-speed-f9b5af6f81784faf8242fe4680a4c7cf",
+      "first_order_fill_ids": [
+        "07245efa-e429-8090-2793-d042145d2742"
+      ],
+      "first_fill_at": 1792179058.509722,
+      "first_side": "up",
+      "first_order_quantity": "3.0",
+      "first_order_fee_usd": "0.0",
+      "first_order_settlement_cashflow_usd": "-1.20",
+      "first_order_per_contract_cashflow_usd": "-0.4",
+      "all_other_fill_settlement_cashflow_usd": "0",
+      "first_opposite_fill_delay_s": null,
+      "predecision_intent": null
+    },
+    {
+      "window": "KXBTC15M-26OCT161600-00",
+      "fill_count": 1,
+      "balanced_at_settlement": false,
+      "up_wins": true,
+      "pnl_usd": "-0.84",
+      "first_order_id": "01a14640-1800-72a5-a5a1-2df32aa00909",
+      "first_client_order_id": "nc-speed-66b391fd49dc4a09910f6c322ebf08fa",
+      "first_order_fill_ids": [
+        "07245f40-77a1-90e3-b527-3cf8dfdeee29"
+      ],
+      "first_fill_at": 1792179969.034759,
+      "first_side": "down",
+      "first_order_quantity": "2.0",
+      "first_order_fee_usd": "0.0",
+      "first_order_settlement_cashflow_usd": "-0.840",
+      "first_order_per_contract_cashflow_usd": "-0.42",
+      "all_other_fill_settlement_cashflow_usd": "0",
+      "first_opposite_fill_delay_s": null,
+      "predecision_intent": null
+    },
+    {
+      "window": "KXBTC15M-26OCT161615-15",
+      "fill_count": 2,
+      "balanced_at_settlement": true,
+      "up_wins": false,
+      "pnl_usd": "0.040000000000000036",
+      "first_order_id": "01a1464d-4700-70d6-be73-32a7b73a034b",
+      "first_client_order_id": "nc-speed-4bfafa13dc564665891ed699ab5b0019",
+      "first_order_fill_ids": [
+        "07245f78-efa1-a1b8-303d-05888e1df143"
+      ],
+      "first_fill_at": 1792180841.465648,
+      "first_side": "down",
+      "first_order_quantity": "1.0",
+      "first_order_fee_usd": "0.0",
+      "first_order_settlement_cashflow_usd": "0.510",
+      "first_order_per_contract_cashflow_usd": "0.51",
+      "all_other_fill_settlement_cashflow_usd": "-0.470",
+      "first_opposite_fill_delay_s": 125.39143109321594,
+      "predecision_intent": null
+    },
+    {
+      "window": "KXBTC15M-26OCT161630-30",
+      "fill_count": 2,
+      "balanced_at_settlement": true,
+      "up_wins": true,
+      "pnl_usd": "-0.2008000000000001",
+      "first_order_id": "01a1465a-c420-79fb-bf81-ab2bf17b8bc1",
+      "first_client_order_id": "nc-speed-8e28e0607e324f798c4e13ddb2c286c3",
+      "first_order_fill_ids": [
+        "07245f31-ebe1-89c9-8d9d-260237da502d"
+      ],
+      "first_fill_at": 1792181718.545815,
+      "first_side": "down",
+      "first_order_quantity": "1.0",
+      "first_order_fee_usd": "0.0",
+      "first_order_settlement_cashflow_usd": "-0.380",
+      "first_order_per_contract_cashflow_usd": "-0.38",
+      "all_other_fill_settlement_cashflow_usd": "0.1792",
+      "first_opposite_fill_delay_s": 641.5811049938202,
+      "predecision_intent": null
+    },
+    {
+      "window": "KXBTC15M-26OCT161645-45",
+      "fill_count": 2,
+      "balanced_at_settlement": true,
+      "up_wins": true,
+      "pnl_usd": "0.06000000000000005",
+      "first_order_id": "01a14668-8b78-7bfd-b97a-0a5c52ed1361",
+      "first_client_order_id": "nc-speed-f18062e8ec4644229ffffd17162b5a73",
+      "first_order_fill_ids": [
+        "07245fca-d7b9-a2f3-fef2-50b1c13b45f5"
+      ],
+      "first_fill_at": 1792182622.140487,
+      "first_side": "down",
+      "first_order_quantity": "1.0",
+      "first_order_fee_usd": "0.0",
+      "first_order_settlement_cashflow_usd": "-0.330",
+      "first_order_per_contract_cashflow_usd": "-0.33",
+      "all_other_fill_settlement_cashflow_usd": "0.390",
+      "first_opposite_fill_delay_s": 105.94777512550354,
+      "predecision_intent": null
+    },
+    {
+      "window": "KXBTC15M-26OCT161700-00",
+      "fill_count": 2,
+      "balanced_at_settlement": true,
+      "up_wins": true,
+      "pnl_usd": "0.010000000000000009",
+      "first_order_id": "01a14679-b218-776b-9671-f7afa570dac2",
+      "first_client_order_id": "nc-speed-e3260890920842bb96ada0814abc2b66",
+      "first_order_fill_ids": [
+        "07245f9e-f779-929d-a28a-d6734f86a4fa"
+      ],
+      "first_fill_at": 1792183751.04609,
+      "first_side": "down",
+      "first_order_quantity": "1.0",
+      "first_order_fee_usd": "0.0",
+      "first_order_settlement_cashflow_usd": "-0.530",
+      "first_order_per_contract_cashflow_usd": "-0.53",
+      "all_other_fill_settlement_cashflow_usd": "0.540",
+      "first_opposite_fill_delay_s": 12.270018100738525,
+      "predecision_intent": null
+    },
+    {
+      "window": "KXBTC15M-26OCT161715-15",
+      "fill_count": 2,
+      "balanced_at_settlement": true,
+      "up_wins": false,
+      "pnl_usd": "0.010000000000000009",
+      "first_order_id": "01a14684-3580-7be4-82b0-70de06d4cf01",
+      "first_client_order_id": "nc-speed-1b26744a5eb1463189c8b507627745aa",
+      "first_order_fill_ids": [
+        "07245c95-8541-a75e-6bcc-2dcbd94e1301"
+      ],
+      "first_fill_at": 1792184446.011169,
+      "first_side": "down",
+      "first_order_quantity": "1.0",
+      "first_order_fee_usd": "0.0",
+      "first_order_settlement_cashflow_usd": "0.460",
+      "first_order_per_contract_cashflow_usd": "0.46",
+      "all_other_fill_settlement_cashflow_usd": "-0.450",
+      "first_opposite_fill_delay_s": 11.860056161880493,
+      "predecision_intent": null
+    },
+    {
+      "window": "KXBTC15M-26OCT161730-30",
+      "fill_count": 2,
+      "balanced_at_settlement": true,
+      "up_wins": true,
+      "pnl_usd": "0.020000000000000018",
+      "first_order_id": "01a14694-e308-7d68-9dd5-675ab5907842",
+      "first_client_order_id": "nc-speed-2b9142ace8d547e8bee351a80efceba7",
+      "first_order_fill_ids": [
+        "07245cc7-78c9-b5aa-a677-ea819691ffbe"
+      ],
+      "first_fill_at": 1792185526.666486,
+      "first_side": "up",
+      "first_order_quantity": "1.0",
+      "first_order_fee_usd": "0.0",
+      "first_order_settlement_cashflow_usd": "0.380",
+      "first_order_per_contract_cashflow_usd": "0.38",
+      "all_other_fill_settlement_cashflow_usd": "-0.360",
+      "first_opposite_fill_delay_s": 96.28914499282837,
+      "predecision_intent": null
+    },
+    {
+      "window": "KXBTC15M-26OCT161745-45",
+      "fill_count": 2,
+      "balanced_at_settlement": true,
+      "up_wins": false,
+      "pnl_usd": "0.03249999999999997",
+      "first_order_id": "01a146a0-7bc8-797e-8483-8d48b76a6d22",
+      "first_client_order_id": "nc-speed-aee5d484961c4e708afb76e5ad6d06f5",
+      "first_order_fill_ids": [
+        "07245c22-0009-9e00-30c7-c9db73813f8a"
+      ],
+      "first_fill_at": 1792186294.062151,
+      "first_side": "down",
+      "first_order_quantity": "1.0",
+      "first_order_fee_usd": "0.0",
+      "first_order_settlement_cashflow_usd": "0.560",
+      "first_order_per_contract_cashflow_usd": "0.56",
+      "all_other_fill_settlement_cashflow_usd": "-0.5275",
+      "first_opposite_fill_delay_s": 219.6549940109253,
+      "predecision_intent": null
+    },
+    {
+      "window": "KXBTC15M-26OCT161800-00",
+      "fill_count": 2,
+      "balanced_at_settlement": true,
+      "up_wins": false,
+      "pnl_usd": "0.012500000000000067",
+      "first_order_id": "01a146af-0670-7f0a-815c-f762e1365ac8",
+      "first_client_order_id": "nc-speed-22910df1efcd4395abc3dba42ad3476a",
+      "first_order_fill_ids": [
+        "07245c12-2511-9820-37c2-9cc78e033b9c"
+      ],
+      "first_fill_at": 1792187255.668847,
+      "first_side": "down",
+      "first_order_quantity": "1.0",
+      "first_order_fee_usd": "0.0",
+      "first_order_settlement_cashflow_usd": "0.520",
+      "first_order_per_contract_cashflow_usd": "0.52",
+      "all_other_fill_settlement_cashflow_usd": "-0.5075",
+      "first_opposite_fill_delay_s": 18.23056983947754,
+      "predecision_intent": null
+    },
+    {
+      "window": "KXBTC15M-26OCT161815-15",
+      "fill_count": 2,
+      "balanced_at_settlement": true,
+      "up_wins": true,
+      "pnl_usd": "-0.4218000000000002",
+      "first_order_id": "01a146ba-e968-7f1a-89b4-ce8f169f2eed",
+      "first_client_order_id": "nc-speed-69322701b9244c75a543f8ad0042ec94",
+      "first_order_fill_ids": [
+        "07245c51-5c29-b660-fad1-06f6072738d9"
+      ],
+      "first_fill_at": 1792188018.717831,
+      "first_side": "down",
+      "first_order_quantity": "1.0",
+      "first_order_fee_usd": "0.0",
+      "first_order_settlement_cashflow_usd": "-0.490",
+      "first_order_per_contract_cashflow_usd": "-0.49",
+      "all_other_fill_settlement_cashflow_usd": "0.0682",
+      "first_opposite_fill_delay_s": 641.6415460109711,
+      "predecision_intent": {
+        "at": 1792188017.2501774,
+        "side": "down",
+        "kind": "rest",
+        "price": 0.49,
+        "size": 1.0,
+        "fair": 0.5409194601796361,
+        "quoted_model_edge": "0.0509194601796361",
+        "decision_to_first_fill_s": 1.467653512954712
+      }
+    },
+    {
+      "window": "KXBTC15M-26OCT161845-45",
+      "fill_count": 2,
+      "balanced_at_settlement": true,
+      "up_wins": true,
+      "pnl_usd": "0.010000000000000009",
+      "first_order_id": "01a146d9-b820-79d7-866b-6550c1496129",
+      "first_client_order_id": "nc-speed-7d2b2645d0294009b517a2bfcf6f7963",
+      "first_order_fill_ids": [
+        "07245dbf-4801-baf1-a0a2-783324171df9"
+      ],
+      "first_fill_at": 1792190037.94427,
+      "first_side": "up",
+      "first_order_quantity": "1.0",
+      "first_order_fee_usd": "0.0",
+      "first_order_settlement_cashflow_usd": "0.420",
+      "first_order_per_contract_cashflow_usd": "0.42",
+      "all_other_fill_settlement_cashflow_usd": "-0.410",
+      "first_opposite_fill_delay_s": 51.85042405128479,
+      "predecision_intent": null
+    },
+    {
+      "window": "KXBTC15M-26OCT161900-00",
+      "fill_count": 2,
+      "balanced_at_settlement": true,
+      "up_wins": true,
+      "pnl_usd": "0.01419999999999999",
+      "first_order_id": "01a146e9-7b48-7973-aaec-8b351c2abff2",
+      "first_client_order_id": "nc-speed-be0832fe8d5e42889b508038fb08d048",
+      "first_order_fill_ids": [
+        "07245d4f-50e9-9495-2ff5-c96012a3d586"
+      ],
+      "first_fill_at": 1792191073.034839,
+      "first_side": "down",
+      "first_order_quantity": "1.0",
+      "first_order_fee_usd": "0.0",
+      "first_order_settlement_cashflow_usd": "-0.310",
+      "first_order_per_contract_cashflow_usd": "-0.31",
+      "all_other_fill_settlement_cashflow_usd": "0.3242",
+      "first_opposite_fill_delay_s": 9.470944166183472,
+      "predecision_intent": null
+    },
+    {
+      "window": "KXBTC15M-26OCT161930-30",
+      "fill_count": 2,
+      "balanced_at_settlement": true,
+      "up_wins": false,
+      "pnl_usd": "0.022499999999999964",
+      "first_order_id": "01a14700-1088-781c-a0a3-d8b140950258",
+      "first_client_order_id": "nc-speed-eb59335f5a804f3b919fec6c59714007",
+      "first_order_fill_ids": [
+        "07245b00-6189-9eb2-7cef-ee31344126ec"
+      ],
+      "first_fill_at": 1792192552.618165,
+      "first_side": "down",
+      "first_order_quantity": "1.0",
+      "first_order_fee_usd": "0.0",
+      "first_order_settlement_cashflow_usd": "0.520",
+      "first_order_per_contract_cashflow_usd": "0.52",
+      "all_other_fill_settlement_cashflow_usd": "-0.4975",
+      "first_opposite_fill_delay_s": 4.656126022338867,
+      "predecision_intent": null
+    },
+    {
+      "window": "KXBTC15M-26OCT161945-45",
+      "fill_count": 2,
+      "balanced_at_settlement": true,
+      "up_wins": false,
+      "pnl_usd": "0.010000000000000009",
+      "first_order_id": "01a14713-4298-7392-a4ab-80b947622b5a",
+      "first_client_order_id": "nc-speed-a9d114ea6a64485abbb40f19175e10e2",
+      "first_order_fill_ids": [
+        "07245b5e-9719-80b0-a001-a6585dc6b52e"
+      ],
+      "first_fill_at": 1792193820.822622,
+      "first_side": "down",
+      "first_order_quantity": "1.0",
+      "first_order_fee_usd": "0.0",
+      "first_order_settlement_cashflow_usd": "0.320",
+      "first_order_per_contract_cashflow_usd": "0.32",
+      "all_other_fill_settlement_cashflow_usd": "-0.310",
+      "first_opposite_fill_delay_s": 203.0891978740692,
+      "predecision_intent": null
+    }
+  ],
+  "limitations": [
+    "Observed money log receipts reconcile; provider/raw-volume completeness not certified.",
+    "Whole day mixes source versions, pauses and caps; no causal before/after claim.",
+    "Selected historical intent joins cannot estimate calibration or an entry-gate edge.",
+    "Settlement-balanced cohorts use future information and cannot select entries.",
+    "No alternate fill, exit, cancellation success or missing markout is imputed.",
+    "Public quote alone does not establish queue priority, depth survival or achievable hedge.",
+    "No sealed Family A TEST, network, production mutation or rule/cap change."
+  ]
+}

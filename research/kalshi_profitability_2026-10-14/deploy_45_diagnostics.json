@@ -1,0 +1,370 @@
+{
+  "scope": "PR #45 exact deployment 11b6b12e, startup and first diagnostic minute; observational only",
+  "commit": "18e180f44d7e71123c4ccd21a098996a8597faf5",
+  "status": {
+    "timestamp": "2026-10-14T14:51:46.630433967Z",
+    "mode": "live",
+    "caps": {
+      "window_usd": 10,
+      "open_usd": 20,
+      "day_stop_usd": 6,
+      "clip": 5,
+      "total_stop_usd": 10
+    },
+    "cash_usd": 41.917,
+    "at_risk_usd": 1.8900000000000003,
+    "open_orders": 1,
+    "positions": 1,
+    "today_pnl_usd": 2.8076999999999996,
+    "total_pnl_usd": -7.134400000000004,
+    "requests": {
+      "ms": {
+        "list_orders_lock_wait_ms": {
+          "n": 48,
+          "median_ms": 0,
+          "p90_ms": 0,
+          "max_ms": 0
+        },
+        "list_orders_rate_wait_ms": {
+          "n": 48,
+          "median_ms": 0,
+          "p90_ms": 0,
+          "max_ms": 0
+        },
+        "list_orders_prepare_ms": {
+          "n": 48,
+          "median_ms": 0.8,
+          "p90_ms": 11.2,
+          "max_ms": 20.1
+        },
+        "list_orders_http_ms": {
+          "n": 48,
+          "median_ms": 40.8,
+          "p90_ms": 93.3,
+          "max_ms": 335.9
+        },
+        "list_orders_decode_ms": {
+          "n": 48,
+          "median_ms": 0.3,
+          "p90_ms": 0.5,
+          "max_ms": 0.5
+        },
+        "list_orders_total_ms": {
+          "n": 48,
+          "median_ms": 44.7,
+          "p90_ms": 99,
+          "max_ms": 336.4
+        },
+        "fills_lock_wait_ms": {
+          "n": 24,
+          "median_ms": 0,
+          "p90_ms": 0,
+          "max_ms": 0
+        },
+        "fills_rate_wait_ms": {
+          "n": 24,
+          "median_ms": 0,
+          "p90_ms": 0,
+          "max_ms": 0
+        },
+        "fills_prepare_ms": {
+          "n": 24,
+          "median_ms": 1.5,
+          "p90_ms": 13.3,
+          "max_ms": 23.4
+        },
+        "fills_http_ms": {
+          "n": 24,
+          "median_ms": 35.6,
+          "p90_ms": 58.6,
+          "max_ms": 319.3
+        },
+        "fills_decode_ms": {
+          "n": 24,
+          "median_ms": 0.1,
+          "p90_ms": 0.1,
+          "max_ms": 0.1
+        },
+        "fills_total_ms": {
+          "n": 24,
+          "median_ms": 38.4,
+          "p90_ms": 64.9,
+          "max_ms": 320.6
+        },
+        "positions_lock_wait_ms": {
+          "n": 24,
+          "median_ms": 0,
+          "p90_ms": 0,
+          "max_ms": 0
+        },
+        "positions_rate_wait_ms": {
+          "n": 24,
+          "median_ms": 0,
+          "p90_ms": 0,
+          "max_ms": 0
+        },
+        "positions_prepare_ms": {
+          "n": 24,
+          "median_ms": 0.3,
+          "p90_ms": 6.4,
+          "max_ms": 10.4
+        },
+        "positions_http_ms": {
+          "n": 24,
+          "median_ms": 36.8,
+          "p90_ms": 64.5,
+          "max_ms": 311.3
+        },
+        "positions_decode_ms": {
+          "n": 24,
+          "median_ms": 0,
+          "p90_ms": 0,
+          "max_ms": 0.1
+        },
+        "positions_total_ms": {
+          "n": 24,
+          "median_ms": 39,
+          "p90_ms": 64.7,
+          "max_ms": 311.4
+        },
+        "balance_lock_wait_ms": {
+          "n": 24,
+          "median_ms": 0,
+          "p90_ms": 0,
+          "max_ms": 0
+        },
+        "balance_rate_wait_ms": {
+          "n": 24,
+          "median_ms": 0,
+          "p90_ms": 0,
+          "max_ms": 0
+        },
+        "balance_prepare_ms": {
+          "n": 24,
+          "median_ms": 1.3,
+          "p90_ms": 7.3,
+          "max_ms": 10.8
+        },
+        "balance_http_ms": {
+          "n": 24,
+          "median_ms": 35.7,
+          "p90_ms": 58.6,
+          "max_ms": 294.6
+        },
+        "balance_decode_ms": {
+          "n": 24,
+          "median_ms": 0,
+          "p90_ms": 0,
+          "max_ms": 0
+        },
+        "balance_total_ms": {
+          "n": 24,
+          "median_ms": 37.1,
+          "p90_ms": 67.8,
+          "max_ms": 295.9
+        },
+        "cancel_lock_wait_ms": {
+          "n": 9,
+          "median_ms": 0,
+          "p90_ms": 0,
+          "max_ms": 0
+        },
+        "cancel_rate_wait_ms": {
+          "n": 9,
+          "median_ms": 0,
+          "p90_ms": 0,
+          "max_ms": 0
+        },
+        "cancel_prepare_ms": {
+          "n": 9,
+          "median_ms": 3.2,
+          "p90_ms": 28.4,
+          "max_ms": 28.4
+        },
+        "cancel_http_ms": {
+          "n": 9,
+          "median_ms": 36.6,
+          "p90_ms": 125,
+          "max_ms": 125
+        },
+        "cancel_decode_ms": {
+          "n": 9,
+          "median_ms": 0,
+          "p90_ms": 0,
+          "max_ms": 0
+        },
+        "cancel_total_ms": {
+          "n": 9,
+          "median_ms": 46.8,
+          "p90_ms": 125.1,
+          "max_ms": 125.1
+        },
+        "create_order_lock_wait_ms": {
+          "n": 8,
+          "median_ms": 0,
+          "p90_ms": 0,
+          "max_ms": 0
+        },
+        "create_order_rate_wait_ms": {
+          "n": 8,
+          "median_ms": 0,
+          "p90_ms": 0,
+          "max_ms": 0
+        },
+        "create_order_prepare_ms": {
+          "n": 8,
+          "median_ms": 1.5,
+          "p90_ms": 17,
+          "max_ms": 17
+        },
+        "create_order_http_ms": {
+          "n": 8,
+          "median_ms": 40.3,
+          "p90_ms": 54.3,
+          "max_ms": 54.3
+        },
+        "create_order_decode_ms": {
+          "n": 8,
+          "median_ms": 0,
+          "p90_ms": 0,
+          "max_ms": 0
+        },
+        "create_order_total_ms": {
+          "n": 8,
+          "median_ms": 45.1,
+          "p90_ms": 62.8,
+          "max_ms": 62.8
+        }
+      },
+      "counts": {
+        "dropped": 0,
+        "list_orders_ok": 48,
+        "fills_ok": 24,
+        "positions_ok": 24,
+        "balance_ok": 24,
+        "cancel_ok": 8,
+        "create_order_ok": 8,
+        "cancel_error": 1
+      }
+    },
+    "loop": {
+      "ms": {
+        "event_loop_lag": {
+          "n": 618,
+          "median_ms": 9,
+          "p90_ms": 220.5,
+          "max_ms": 3280.7
+        },
+        "list_orders_worker_queue": {
+          "n": 48,
+          "median_ms": 6.4,
+          "p90_ms": 410.9,
+          "max_ms": 1101.8
+        },
+        "list_orders_worker_resume": {
+          "n": 48,
+          "median_ms": 15.6,
+          "p90_ms": 574.7,
+          "max_ms": 4608.2
+        },
+        "fills_worker_queue": {
+          "n": 24,
+          "median_ms": 4.6,
+          "p90_ms": 49.4,
+          "max_ms": 188.4
+        },
+        "fills_worker_resume": {
+          "n": 24,
+          "median_ms": 9.2,
+          "p90_ms": 154.6,
+          "max_ms": 638.1
+        },
+        "positions_worker_queue": {
+          "n": 24,
+          "median_ms": 1.1,
+          "p90_ms": 58,
+          "max_ms": 120
+        },
+        "positions_worker_resume": {
+          "n": 24,
+          "median_ms": 23.8,
+          "p90_ms": 182.4,
+          "max_ms": 779.9
+        },
+        "balance_worker_queue": {
+          "n": 24,
+          "median_ms": 5.5,
+          "p90_ms": 42.1,
+          "max_ms": 712
+        },
+        "balance_worker_resume": {
+          "n": 24,
+          "median_ms": 22.1,
+          "p90_ms": 813.5,
+          "max_ms": 2175.7
+        },
+        "cancel_worker_queue": {
+          "n": 9,
+          "median_ms": 8.1,
+          "p90_ms": 649.4,
+          "max_ms": 649.4
+        },
+        "cancel_worker_resume": {
+          "n": 9,
+          "median_ms": 37.3,
+          "p90_ms": 835.6,
+          "max_ms": 835.6
+        },
+        "cancel_decision_to_ack": {
+          "n": 9,
+          "median_ms": 95.5,
+          "p90_ms": 1447.4,
+          "max_ms": 1447.4
+        },
+        "cancel_send_to_ack": {
+          "n": 9,
+          "median_ms": 95.5,
+          "p90_ms": 1447.4,
+          "max_ms": 1447.4
+        },
+        "create_order_worker_queue": {
+          "n": 8,
+          "median_ms": 0.4,
+          "p90_ms": 59.3,
+          "max_ms": 59.3
+        },
+        "create_order_worker_resume": {
+          "n": 8,
+          "median_ms": 15.3,
+          "p90_ms": 858.6,
+          "max_ms": 858.6
+        }
+      },
+      "counts": {}
+    }
+  },
+  "arena": [
+    {
+      "timestamp": "2026-10-14T14:51:45.192821782Z",
+      "message": "2026-10-14T14:51:44Z INFO nightcrawler.kalshi_arena: kalshi_arena_status residents=12 windows=0 void=63 void_feed=56 received=15334 dropped=69940 late=13280 coalesced=14006 pass_p99_ms=0.529 pass_max_ms=1.025 duty_pct=0.32 lag_s=49.66 errors=0 live_flush_us_p99=16782 live_flush_us_max=21898"
+    },
+    {
+      "timestamp": "2026-10-14T14:52:46.370265968Z",
+      "message": "2026-10-14T14:52:46Z INFO nightcrawler.kalshi_arena: kalshi_arena_status residents=12 windows=0 void=63 void_feed=56 received=24278 dropped=170289 late=22224 coalesced=22290 pass_p99_ms=0.604 pass_max_ms=1.936 duty_pct=0.29 lag_s=94.54 errors=0 live_flush_us_p99=11751 live_flush_us_max=299288"
+    },
+    {
+      "timestamp": "2026-10-14T14:53:46.602145012Z",
+      "message": "2026-10-14T14:53:46Z INFO nightcrawler.kalshi_arena: kalshi_arena_status residents=12 windows=0 void=63 void_feed=56 received=38406 dropped=247475 late=36352 coalesced=34472 pass_p99_ms=0.785 pass_max_ms=1.36 duty_pct=0.44 lag_s=77.32 errors=0 live_flush_us_p99=17641 live_flush_us_max=326188"
+    },
+    {
+      "timestamp": "2026-10-14T14:54:47.131515259Z",
+      "message": "2026-10-14T14:54:47Z INFO nightcrawler.kalshi_arena: kalshi_arena_status residents=12 windows=0 void=63 void_feed=56 received=54900 dropped=343425 late=52846 coalesced=47968 pass_p99_ms=0.895 pass_max_ms=5.067 duty_pct=0.45 lag_s=60.29 errors=0 live_flush_us_p99=19428 live_flush_us_max=31517"
+    }
+  ],
+  "limitations": [
+    "No controlled profit comparison or sustained coverage claim.",
+    "Runtime arena remained behind; zero complete windows.",
+    "Current cash includes open positions and pending orders; it is not profit.",
+    "Three profitable-net post-restart windows predate PR #45."
+  ]
+}

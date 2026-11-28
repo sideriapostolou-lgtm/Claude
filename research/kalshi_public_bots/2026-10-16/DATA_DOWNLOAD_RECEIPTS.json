@@ -1,0 +1,42 @@
+[
+  {
+    "name": "book_2026-10-03.csv.gz",
+    "url": "https://github.com/Strobingn/kalshi-odds-app/releases/download/scalper-data/book_2026-10-03.csv.gz",
+    "sha256": "c448ac7e2a0003614be41a21ba0137d82497b810102a1c1f8c62d8561e84bb0e",
+    "expected_digest": "sha256:c448ac7e2a0003614be41a21ba0137d82497b810102a1c1f8c62d8561e84bb0e",
+    "bytes": 2313170,
+    "raw_bytes": 14206172,
+    "rows": 149145,
+    "header": "ts_ms,ticker,strike,close_ms,yes_bid,yes_bid_qty,yes_ask,yes_ask_qty,no_bid,no_bid_qty,no_ask,no_ask_qty"
+  },
+  {
+    "name": "depth_2026-10-09.csv.gz",
+    "url": "https://github.com/Strobingn/kalshi-odds-app/releases/download/scalper-data/depth_2026-10-09.csv.gz",
+    "sha256": "a07e4f542c8db9e1757aa88ea6ea22b5602c9b637d9c3ef3dcd5b8a15acfdd66",
+    "expected_digest": "sha256:a07e4f542c8db9e1757aa88ea6ea22b5602c9b637d9c3ef3dcd5b8a15acfdd66",
+    "bytes": 1541107,
+    "raw_bytes": 6325173,
+    "rows": 19885,
+    "header": "ts_ms,ticker,yes_levels,no_levels"
+  },
+  {
+    "name": "settle_2026-10-03.csv",
+    "url": "https://github.com/Strobingn/kalshi-odds-app/releases/download/scalper-data/settle_2026-10-03.csv",
+    "sha256": "f082445049a0c8ba7ddff11cade77ba8557aec2586853fa5620aff65966c7db8",
+    "expected_digest": "sha256:f082445049a0c8ba7ddff11cade77ba8557aec2586853fa5620aff65966c7db8",
+    "bytes": 8459,
+    "raw_bytes": 8459,
+    "rows": 171,
+    "header": "ticker,close_ms,strike,result"
+  },
+  {
+    "name": "spot_2026-10-03.csv.gz",
+    "url": "https://github.com/Strobingn/kalshi-odds-app/releases/download/scalper-data/spot_2026-10-03.csv.gz",
+    "sha256": "f72bacfa203e07d5dbace85612182a18d2a834abf2e07be8eda0839dc828035c",
+    "expected_digest": "sha256:f72bacfa203e07d5dbace85612182a18d2a834abf2e07be8eda0839dc828035c",
+    "bytes": 682436,
+    "raw_bytes": 4585148,
+    "rows": 155715,
+    "header": "ts_ms,product,price"
+  }
+]

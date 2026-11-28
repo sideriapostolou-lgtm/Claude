@@ -1,0 +1,5 @@
+Traceback (most recent call last):
+  File "/workspace/private-handoffs/claude-2026-10-15/checkpoint-profile/run_matrix.py", line 46, in <module>
+    assert manifest['source_hashes_after']==manifest['source_hashes']
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError

@@ -1,0 +1,533 @@
+{
+  "reviewed_at_utc": "2026-10-15T17:49:40.870184+00:00",
+  "decision": "Declared fixedcapture independently reconciled from saved originals. One identity-qualified due pregap diagnostic/receipt; no forecasts/scores. Two target makerfills reconcile to+.11settlement. Prior-.2965loss and nextwindowtailfills retained separately.",
+  "window": "KXBTC15M-26OCT151345-45",
+  "bounds": {
+    "start_utc": "2026-10-15T17:30:00+00:00",
+    "end_utc": "2026-10-15T17:45:00+00:00",
+    "tail_end_utc": "2026-10-15T17:47:00+00:00"
+  },
+  "queries": [
+    {
+      "file": "capture_slot_kalshi_learning_input_diagnostic.native.json",
+      "phase": "slot",
+      "raw_rows": 1,
+      "anchored_originals": 1,
+      "excluded_nested_or_other": 0,
+      "at_cap": false,
+      "errors": [],
+      "requested_end": "2026-10-15T17:35:30+00:00",
+      "before": "2026-10-15T17:35:30+00:00",
+      "after": "2026-10-15T17:35:32+00:00"
+    },
+    {
+      "file": "capture_slot_kalshi_online_learning_forecast.native.json",
+      "phase": "slot",
+      "raw_rows": 0,
+      "anchored_originals": 0,
+      "excluded_nested_or_other": 0,
+      "at_cap": false,
+      "errors": [],
+      "requested_end": "2026-10-15T17:35:30+00:00",
+      "before": "2026-10-15T17:35:30+00:00",
+      "after": "2026-10-15T17:35:30+00:00"
+    },
+    {
+      "file": "capture_slot_kalshi_online_learning_status.native.json",
+      "phase": "slot",
+      "raw_rows": 2,
+      "anchored_originals": 2,
+      "excluded_nested_or_other": 0,
+      "at_cap": false,
+      "errors": [],
+      "requested_end": "2026-10-15T17:35:30+00:00",
+      "before": "2026-10-15T17:35:30+00:00",
+      "after": "2026-10-15T17:35:32+00:00"
+    },
+    {
+      "file": "capture_slot_kalshi_online_learning_unknown.native.json",
+      "phase": "slot",
+      "raw_rows": 1,
+      "anchored_originals": 1,
+      "excluded_nested_or_other": 0,
+      "at_cap": false,
+      "errors": [],
+      "requested_end": "2026-10-15T17:35:30+00:00",
+      "before": "2026-10-15T17:35:30+00:00",
+      "after": "2026-10-15T17:35:32+00:00"
+    },
+    {
+      "file": "capture_final_kalshi_learning_input_diagnostic.native.json",
+      "phase": "final",
+      "raw_rows": 1,
+      "anchored_originals": 1,
+      "excluded_nested_or_other": 0,
+      "at_cap": false,
+      "errors": [],
+      "requested_end": "2026-10-15T17:47:00+00:00",
+      "before": "2026-10-15T17:47:00+00:00",
+      "after": "2026-10-15T17:47:09+00:00"
+    },
+    {
+      "file": "capture_final_kalshi_online_learning_forecast.native.json",
+      "phase": "final",
+      "raw_rows": 0,
+      "anchored_originals": 0,
+      "excluded_nested_or_other": 0,
+      "at_cap": false,
+      "errors": [],
+      "requested_end": "2026-10-15T17:47:00+00:00",
+      "before": "2026-10-15T17:47:00+00:00",
+      "after": "2026-10-15T17:47:09+00:00"
+    },
+    {
+      "file": "capture_final_kalshi_online_learning_scored.native.json",
+      "phase": "final",
+      "raw_rows": 0,
+      "anchored_originals": 0,
+      "excluded_nested_or_other": 0,
+      "at_cap": false,
+      "errors": [],
+      "requested_end": "2026-10-15T17:47:00+00:00",
+      "before": "2026-10-15T17:47:00+00:00",
+      "after": "2026-10-15T17:47:09+00:00"
+    },
+    {
+      "file": "capture_final_kalshi_online_learning_status.native.json",
+      "phase": "final",
+      "raw_rows": 5,
+      "anchored_originals": 5,
+      "excluded_nested_or_other": 0,
+      "at_cap": false,
+      "errors": [],
+      "requested_end": "2026-10-15T17:47:00+00:00",
+      "before": "2026-10-15T17:47:00+00:00",
+      "after": "2026-10-15T17:47:09+00:00"
+    },
+    {
+      "file": "capture_final_kalshi_online_learning_unknown.native.json",
+      "phase": "final",
+      "raw_rows": 1,
+      "anchored_originals": 1,
+      "excluded_nested_or_other": 0,
+      "at_cap": false,
+      "errors": [],
+      "requested_end": "2026-10-15T17:47:00+00:00",
+      "before": "2026-10-15T17:47:00+00:00",
+      "after": "2026-10-15T17:47:09+00:00"
+    },
+    {
+      "file": "capture_final_speeddesk_live_fill.native.json",
+      "phase": "final",
+      "raw_rows": 35,
+      "anchored_originals": 4,
+      "excluded_nested_or_other": 31,
+      "at_cap": false,
+      "errors": [],
+      "requested_end": "2026-10-15T17:47:00+00:00",
+      "before": "2026-10-15T17:47:00+00:00",
+      "after": "2026-10-15T17:47:00+00:00"
+    },
+    {
+      "file": "capture_final_speeddesk_live_settlement.native.json",
+      "phase": "final",
+      "raw_rows": 2,
+      "anchored_originals": 2,
+      "excluded_nested_or_other": 0,
+      "at_cap": false,
+      "errors": [],
+      "requested_end": "2026-10-15T17:47:00+00:00",
+      "before": "2026-10-15T17:47:00+00:00",
+      "after": "2026-10-15T17:47:09+00:00"
+    },
+    {
+      "file": "capture_final_speeddesk_live_status.native.json",
+      "phase": "final",
+      "raw_rows": 16,
+      "anchored_originals": 16,
+      "excluded_nested_or_other": 0,
+      "at_cap": false,
+      "errors": [],
+      "requested_end": "2026-10-15T17:47:00+00:00",
+      "before": "2026-10-15T17:47:00+00:00",
+      "after": "2026-10-15T17:47:09+00:00"
+    }
+  ],
+  "unique_original_counts": {
+    "kalshi_learning_input_diagnostic": 1,
+    "kalshi_online_learning_status": 5,
+    "kalshi_online_learning_unknown": 1,
+    "speeddesk_live_fill": 4,
+    "speeddesk_live_settlement": 2,
+    "speeddesk_live_status": 16
+  },
+  "diagnostic": {
+    "original_timestamp": "2026-10-15T17:35:00.129676813Z",
+    "payload_at": 1792085700.117887,
+    "source_sha256": "091ea297b1fed8973be3c78e74184e6ea71fa8f36e808e67449f433c88d19a0e",
+    "learner_fingerprint": "b6112b7ef8955b20af734157c1e7f5ec533bf98f70e034558f06670578c391f2",
+    "protocol": "kalshi-online-calibration-v1-h300-g5-b10-prior20",
+    "mode": "observe_only",
+    "disposition": "unknown",
+    "reason": "pregap",
+    "query_files": [
+      "capture_slot_kalshi_learning_input_diagnostic.native.json",
+      "capture_final_kalshi_learning_input_diagnostic.native.json"
+    ],
+    "cause_history": "restart_history_unavailable",
+    "first_effective_cause": {
+      "flags": {
+        "explicit_slug": true,
+        "trade_stream_false": false,
+        "coinbase_false": false,
+        "sequence_discontinuity": false,
+        "drop_counter_increased": false,
+        "missing_ladder": false,
+        "late_book": false,
+        "late_trade": false,
+        "replayed_drop": false
+      },
+      "effective_at": 1792085400.7004135,
+      "child_apply_at": 1792085400.7004135,
+      "child_receive_at": 1792085400.6991065,
+      "frame_sequence": 3530,
+      "parent_frame_sent_at": 1792085400.6331902,
+      "producer_event_time": null,
+      "producer_timing": "unavailable_on_gap_wire",
+      "frame_transit_s": 0.06591629981994629,
+      "child_wait_s": 0.0013070106506347656,
+      "data_at": null,
+      "data_clock": null,
+      "data_checked_at": null,
+      "data_age_s": null,
+      "timing": "finite_ordered"
+    },
+    "last_effective_cause": {
+      "flags": {
+        "explicit_slug": true,
+        "trade_stream_false": false,
+        "coinbase_false": false,
+        "sequence_discontinuity": false,
+        "drop_counter_increased": false,
+        "missing_ladder": false,
+        "late_book": false,
+        "late_trade": false,
+        "replayed_drop": false
+      },
+      "effective_at": 1792085696.826439,
+      "child_apply_at": 1792085696.826439,
+      "child_receive_at": 1792085696.8260307,
+      "frame_sequence": 6086,
+      "parent_frame_sent_at": 1792085696.8212507,
+      "producer_event_time": null,
+      "producer_timing": "unavailable_on_gap_wire",
+      "frame_transit_s": 0.0047800540924072266,
+      "child_wait_s": 0.000408172607421875,
+      "data_at": null,
+      "data_clock": null,
+      "data_checked_at": null,
+      "data_age_s": null,
+      "timing": "finite_ordered"
+    },
+    "input_facts": {
+      "bitcoin_age_s": 0.24464702606201172,
+      "bitcoin_age_valid": true,
+      "spot_valid": true,
+      "sigma_valid": true
+    },
+    "feed_ok": true,
+    "feed_status": [
+      true,
+      true
+    ]
+  },
+  "learner_statuses": [
+    {
+      "timestamp": "2026-10-15T17:30:09.171920436Z",
+      "forecasts": 0,
+      "scored": 0,
+      "unknown": 15,
+      "exclusions": {
+        "startup_inside": 1,
+        "late": 0,
+        "invalid": 0,
+        "pregap": 14,
+        "terms_changed": 0,
+        "missing_label": 0,
+        "outcome_known": 0,
+        "invalid_label": 0,
+        "capacity": 0
+      },
+      "enabled": true,
+      "error": null
+    },
+    {
+      "timestamp": "2026-10-15T17:34:54.429009372Z",
+      "forecasts": 0,
+      "scored": 0,
+      "unknown": 15,
+      "exclusions": {
+        "startup_inside": 1,
+        "late": 0,
+        "invalid": 0,
+        "pregap": 14,
+        "terms_changed": 0,
+        "missing_label": 0,
+        "outcome_known": 0,
+        "invalid_label": 0,
+        "capacity": 0
+      },
+      "enabled": true,
+      "error": null
+    },
+    {
+      "timestamp": "2026-10-15T17:39:47.839143233Z",
+      "forecasts": 0,
+      "scored": 0,
+      "unknown": 16,
+      "exclusions": {
+        "startup_inside": 1,
+        "late": 0,
+        "invalid": 0,
+        "pregap": 15,
+        "terms_changed": 0,
+        "missing_label": 0,
+        "outcome_known": 0,
+        "invalid_label": 0,
+        "capacity": 0
+      },
+      "enabled": true,
+      "error": null
+    },
+    {
+      "timestamp": "2026-10-15T17:43:23.211390056Z",
+      "forecasts": 0,
+      "scored": 0,
+      "unknown": 16,
+      "exclusions": {
+        "startup_inside": 1,
+        "late": 0,
+        "invalid": 0,
+        "pregap": 15,
+        "terms_changed": 0,
+        "missing_label": 0,
+        "outcome_known": 0,
+        "invalid_label": 0,
+        "capacity": 0
+      },
+      "enabled": true,
+      "error": null
+    },
+    {
+      "timestamp": "2026-10-15T17:45:18.145735611Z",
+      "forecasts": 0,
+      "scored": 0,
+      "unknown": 16,
+      "exclusions": {
+        "startup_inside": 1,
+        "late": 0,
+        "invalid": 0,
+        "pregap": 15,
+        "terms_changed": 0,
+        "missing_label": 0,
+        "outcome_known": 0,
+        "invalid_label": 0,
+        "capacity": 0
+      },
+      "enabled": true,
+      "error": null
+    }
+  ],
+  "target_fills": [
+    {
+      "timestamp": "2026-10-15T17:30:34.499716128Z",
+      "payload": {
+        "at": 1792085432.226529,
+        "venue": "kalshi",
+        "fill_id": "072442eb-2899-a0a9-e1c4-fd00f033a081",
+        "order_id": "01a1409d-7398-71cb-ab8e-2bc74fec4fb5",
+        "client_order_id": "nc-speed-ce14291b37094acb92d120aee545814d",
+        "window": "KXBTC15M-26OCT151345-45",
+        "side": "down",
+        "price": 0.46,
+        "size": 1.0,
+        "fee_usd": 0.0,
+        "is_taker": false
+      },
+      "query_files": [
+        "capture_final_speeddesk_live_fill.native.json"
+      ]
+    },
+    {
+      "timestamp": "2026-10-15T17:30:48.118449967Z",
+      "payload": {
+        "at": 1792085446.237864,
+        "venue": "kalshi",
+        "fill_id": "072442ea-8811-8855-dd5f-5a0c56e6fde4",
+        "order_id": "01a1409d-bdd0-784f-a213-055ba5011494",
+        "client_order_id": "nc-speed-eaf7e136059e4a2891d5a8f718110850",
+        "window": "KXBTC15M-26OCT151345-45",
+        "side": "up",
+        "price": 0.43,
+        "size": 1.0,
+        "fee_usd": 0.0,
+        "is_taker": false
+      },
+      "query_files": [
+        "capture_final_speeddesk_live_fill.native.json"
+      ]
+    }
+  ],
+  "target_settlement": {
+    "timestamp": "2026-10-15T17:45:10.419127968Z",
+    "payload": {
+      "at": 1792086306.817731,
+      "venue": "kalshi",
+      "window": "KXBTC15M-26OCT151345-45",
+      "settlement_id": "kalshi:KXBTC15M-26OCT151345-45",
+      "up_wins": true,
+      "up_shares": 1.0,
+      "down_shares": 1.0,
+      "cost_usd": 0.89,
+      "fee_usd": 0.0,
+      "paired_credit_usd": 1.0,
+      "net_payout_usd": 0.0,
+      "payout_usd": 1.0,
+      "locked_usd": 0.11000000000000004,
+      "direction_usd": -5.551115123125783e-17,
+      "pnl_usd": 0.10999999999999999,
+      "observed_at": 1792086309.8968086,
+      "time_source": "venue settled_time"
+    },
+    "query_files": [
+      "capture_final_speeddesk_live_settlement.native.json"
+    ]
+  },
+  "target_arithmetic": {
+    "up_shares": 1.0,
+    "down_shares": 1.0,
+    "cost_usd": 0.89,
+    "fees_usd": 0.0,
+    "gross_payout_usd": 1.0,
+    "pnl_usd": 0.11,
+    "locked_usd": 0.11,
+    "direction_usd": "floating-point zero within1e-12",
+    "paired_credit_usd": 1.0,
+    "net_payout_usd": 0.0
+  },
+  "excluded_prior_settlement": {
+    "timestamp": "2026-10-15T17:30:04.857030090Z",
+    "payload": {
+      "at": 1792085401.86544,
+      "venue": "kalshi",
+      "window": "KXBTC15M-26OCT151330-30",
+      "settlement_id": "kalshi:KXBTC15M-26OCT151330-30",
+      "up_wins": true,
+      "up_shares": 1.0,
+      "down_shares": 1.0,
+      "cost_usd": 1.294,
+      "fee_usd": 0.0025,
+      "paired_credit_usd": 1.0,
+      "net_payout_usd": 0.0,
+      "payout_usd": 1.0,
+      "locked_usd": -0.29649999999999993,
+      "direction_usd": -5.551115123125783e-17,
+      "pnl_usd": -0.2965,
+      "observed_at": 1792085404.5845292,
+      "time_source": "venue settled_time"
+    },
+    "query_files": [
+      "capture_final_speeddesk_live_settlement.native.json"
+    ]
+  },
+  "excluded_next_window_fills": [
+    {
+      "timestamp": "2026-10-15T17:45:24.082817150Z",
+      "payload": {
+        "at": 1792086322.979739,
+        "venue": "kalshi",
+        "fill_id": "07244207-8ec1-93ea-4c3b-ab17d455b133",
+        "order_id": "01a140ab-2380-7d40-9c49-6c02784eb1e3",
+        "client_order_id": "nc-speed-abab65fe12d848398a326dbb0429fc0b",
+        "window": "KXBTC15M-26OCT151400-00",
+        "side": "up",
+        "price": 0.42,
+        "size": 1.0,
+        "fee_usd": 0.0,
+        "is_taker": false
+      },
+      "query_files": [
+        "capture_final_speeddesk_live_fill.native.json"
+      ]
+    },
+    {
+      "timestamp": "2026-10-15T17:46:24.212352183Z",
+      "payload": {
+        "at": 1792086383.422706,
+        "venue": "kalshi",
+        "fill_id": "0724421c-7ff9-af2b-9684-3619107b516d",
+        "order_id": "01a140ac-1998-769d-bef9-165bd4b81a95",
+        "client_order_id": "nc-speed-c7dd77cfef4440508557fa25b4855a93",
+        "window": "KXBTC15M-26OCT151400-00",
+        "side": "down",
+        "price": 0.42,
+        "size": 1.0,
+        "fee_usd": 0.0,
+        "is_taker": false
+      },
+      "query_files": [
+        "capture_final_speeddesk_live_fill.native.json"
+      ]
+    }
+  ],
+  "two_settlement_pnl_delta_usd": -0.1865,
+  "latest_capture_status": {
+    "timestamp": "2026-10-15T17:46:05.621857132Z",
+    "mode": "live",
+    "configured_mode": "live",
+    "authenticated": true,
+    "trading_now": false,
+    "waiting": "Kalshi account data stale",
+    "cash_usd": 30.1939,
+    "open_risk_usd": 0.42,
+    "open_cost_usd": 0.42,
+    "open_orders": 0,
+    "positions": 1,
+    "total_pnl_usd": -19.12750000000001,
+    "day_pnl_usd": -4.6804000000000086
+  },
+  "post_capture_platform": "Savednative health bothonline/noissues; selecteddeployment derivative exactc64/ff05SUCCESS, docsdeploymentSKIPPED; recorder8453 unchanged.",
+  "post_capture_traceback": "Native savedresponse has0matchingrows; originalrequest start/end/filter/limit not present in reviewedwrapper and must be retained separately for boundedquery claim.",
+  "original_hashes": {
+    "CAPTURE_DECLARATION.json": "d8fb192eaba52325c76ef1560229f97b6013ae6d68052eabcd03ffac4fa02261",
+    "CAPTURE_QUERY_PLAN.json": "2c3bebe0482810161df4ea9cb3a4b8dd799530c0227c73b8258b0072db3ae440",
+    "CAPTURE_REQUESTS.json": "348553eb0f70a7902c2a598e54b4a202d08bdbb000da4349e17abfe3e839b989",
+    "CAPTURE_AUDIT.json": "9dab2db762a90f06daf6f1fbb4657c71117133e5a4d07635b35bf7ffa7ec8636",
+    "capture_slot_kalshi_learning_input_diagnostic.native.json": "3a7b3a7c80ae0c536b2b67ee487c4e7e26300a94e3d399185bb94b9d5cc1af54",
+    "capture_slot_kalshi_online_learning_forecast.native.json": "db6c1e8fb3de77f84a86c33a493b5392629c9d0a5f3c8a488acec917208a8bc5",
+    "capture_slot_kalshi_online_learning_status.native.json": "681c4b0212a6b1f9cae468915370903b1eaa3323d26ebb226cd248ccd23de014",
+    "capture_slot_kalshi_online_learning_unknown.native.json": "39b8163e082b94c1413a25a37cfc49c31a74eb665f921efdcf6e90c354c3f5f0",
+    "capture_final_kalshi_learning_input_diagnostic.native.json": "3a7b3a7c80ae0c536b2b67ee487c4e7e26300a94e3d399185bb94b9d5cc1af54",
+    "capture_final_kalshi_online_learning_forecast.native.json": "db6c1e8fb3de77f84a86c33a493b5392629c9d0a5f3c8a488acec917208a8bc5",
+    "capture_final_kalshi_online_learning_scored.native.json": "db6c1e8fb3de77f84a86c33a493b5392629c9d0a5f3c8a488acec917208a8bc5",
+    "capture_final_kalshi_online_learning_status.native.json": "3738eae8a5b92e3df1599b73dbf12c7c06b0a6de53e32ca32ba134c200e869f6",
+    "capture_final_kalshi_online_learning_unknown.native.json": "39b8163e082b94c1413a25a37cfc49c31a74eb665f921efdcf6e90c354c3f5f0",
+    "capture_final_speeddesk_live_fill.native.json": "d7c3b30b1f0e7c2f1a7a744a6070b0e750a86628f125edd182e6100b818a7acd",
+    "capture_final_speeddesk_live_settlement.native.json": "b43c2da8abcdadad18a3ce447a655e58bfa1f7db0917422270e130185ca6972f",
+    "capture_final_speeddesk_live_status.native.json": "3c0fb52a78f1a69b31c4ab665e1b8c53dee41782bd86a1d68df74f60747135fb",
+    "RESTART_READY_AUDIT.json": "35505db0029ca0c04e051bd5ad9c3aedc18812d12dd969895f872b3baef5d1bd",
+    "post_capture_health.json": "f3530206ddeabf09be4a335c8ede15e90abaef19f34ec835874c01f6f89617a3",
+    "post_capture_deployments.json": "67ac1e0bd3a2893255b9647848e37f4065d352197eeed1782bebf15873629689",
+    "post_capture_traceback.json": "916bc6f498a75c5bc55b449f131dfe1768f2c1120e4fcbfeb351beb9911d6647"
+  },
+  "limits": [
+    "12filteredreads uncapped/error-free and exactbounds; absence of match is not complete source-stream certification.",
+    "Deduplicated exact timestamp/message across slot/final; firstlast describe childobservations only, not unique upstreammakerquiet cause or complete interveningcause history.",
+    "Restart history marker preserves unavailable prior transient context; no olderunknownrelabelling.",
+    "Target fills joined by ticker/shares/cost/fees to settlement, not to unqueried intent/ack/cancel ledgers or fullvenueexport.",
+    "Priorpartial loss-.2965 excluded only from target total, retained in overallnet-.1865 and accountloss history.",
+    "Two nextwindow fills retained but excluded target; latest17:46:05status predates secondtailfill17:46:24 and is stale, not endpoint readiness.",
+    "Cash is distinct from realizedPnL. Single+.11pairedresult does not prove strategyedge, improvedexecution or successfullearnertraining.",
+    "No source/controller/settings or network/production actions by reviewer."
+  ]
+}

@@ -1,0 +1,333 @@
+{
+  "source_sha256": {
+    "src/nightcrawler/speeddesk_kalshi.py": "53727b3d3f2ec6790469d53d8fb330f7501ad1838c558c887ea95c54840d8f82",
+    "src/nightcrawler/speeddesk_kalshi_ws.py": "d76e9dfa6a026f796f11503642a373a5a0f2799da8dabadf078c565591f82112",
+    "src/nightcrawler/speeddesk.py": "79a8ad7fc10879035297e2af4d87af1bff758b4f89c2adae3464fe812235477d",
+    "src/nightcrawler/speeddesk_live.py": "2471adff4eca63ee6abba73031da75793ae5e1b3cb0468e30e1e2d6b9934efd5",
+    "src/nightcrawler/kalshi_arena.py": "f183d7f66de018126445effcde714992808a36527e7a30f35ad36782fdd55d7b"
+  },
+  "cases": [
+    {
+      "kind": "book",
+      "action": "recover",
+      "outcome": "error",
+      "books_before": 2,
+      "books_after": 0,
+      "fresh_ws_at_completion": [
+        "KXBTC15M-26OCT151545-45"
+      ],
+      "cached_ws_makers_at_completion": [
+        "KXBTC15M-26OCT151545-45"
+      ],
+      "last_status": {
+        "markets": "book_unavailable",
+        "trade_stream": true,
+        "venue": "kalshi",
+        "transport": "market_websocket",
+        "ws_connected": true,
+        "ws_books": [
+          "KXBTC15M-26OCT151545-45"
+        ],
+        "ws_maker_windows": [
+          "KXBTC15M-26OCT151545-45"
+        ],
+        "ws_status": "market_websocket",
+        "maker_windows": [
+          "KXBTC15M-26OCT151545-45"
+        ],
+        "gap_windows": [
+          "KXBTC15M-26OCT151545-45"
+        ]
+      },
+      "received_sources": [
+        "websocket",
+        "websocket"
+      ],
+      "cancellations": 1
+    },
+    {
+      "kind": "book",
+      "action": "recover",
+      "outcome": "invalid",
+      "books_before": 2,
+      "books_after": 0,
+      "fresh_ws_at_completion": [
+        "KXBTC15M-26OCT151545-45"
+      ],
+      "cached_ws_makers_at_completion": [
+        "KXBTC15M-26OCT151545-45"
+      ],
+      "last_status": {
+        "markets": "book_unavailable",
+        "trade_stream": true,
+        "venue": "kalshi",
+        "transport": "market_websocket",
+        "ws_connected": true,
+        "ws_books": [
+          "KXBTC15M-26OCT151545-45"
+        ],
+        "ws_maker_windows": [
+          "KXBTC15M-26OCT151545-45"
+        ],
+        "ws_status": "market_websocket",
+        "maker_windows": [
+          "KXBTC15M-26OCT151545-45"
+        ],
+        "gap_windows": [
+          "KXBTC15M-26OCT151545-45"
+        ]
+      },
+      "received_sources": [
+        "websocket",
+        "websocket"
+      ],
+      "cancellations": 1
+    },
+    {
+      "kind": "tape",
+      "action": "recover",
+      "outcome": "error",
+      "books_before": 2,
+      "books_after": 0,
+      "fresh_ws_at_completion": [
+        "KXBTC15M-26OCT151545-45"
+      ],
+      "cached_ws_makers_at_completion": [
+        "KXBTC15M-26OCT151545-45"
+      ],
+      "last_status": {
+        "markets": "trade_tape_gap",
+        "trade_stream": true,
+        "venue": "kalshi",
+        "transport": "market_websocket",
+        "ws_connected": true,
+        "ws_books": [
+          "KXBTC15M-26OCT151545-45"
+        ],
+        "ws_maker_windows": [
+          "KXBTC15M-26OCT151545-45"
+        ],
+        "ws_status": "market_websocket",
+        "maker_windows": [
+          "KXBTC15M-26OCT151545-45"
+        ],
+        "gap_windows": [
+          "KXBTC15M-26OCT151545-45"
+        ]
+      },
+      "received_sources": [
+        "websocket",
+        "websocket"
+      ],
+      "cancellations": 1
+    },
+    {
+      "kind": "book",
+      "action": "none",
+      "outcome": "error",
+      "books_before": 0,
+      "books_after": 0,
+      "fresh_ws_at_completion": [],
+      "cached_ws_makers_at_completion": [],
+      "last_status": {
+        "markets": "book_unavailable",
+        "trade_stream": false,
+        "venue": "kalshi",
+        "transport": "public_rest",
+        "maker_windows": [],
+        "gap_windows": [
+          "KXBTC15M-26OCT151545-45"
+        ]
+      },
+      "received_sources": [],
+      "cancellations": 1
+    },
+    {
+      "kind": "book",
+      "action": "stale_cache",
+      "outcome": "error",
+      "books_before": 2,
+      "books_after": 0,
+      "fresh_ws_at_completion": [],
+      "cached_ws_makers_at_completion": [
+        "KXBTC15M-26OCT151545-45"
+      ],
+      "last_status": {
+        "markets": "book_unavailable",
+        "trade_stream": true,
+        "venue": "kalshi",
+        "transport": "market_websocket",
+        "ws_connected": true,
+        "ws_books": [
+          "KXBTC15M-26OCT151545-45"
+        ],
+        "ws_maker_windows": [
+          "KXBTC15M-26OCT151545-45"
+        ],
+        "ws_status": "market_websocket",
+        "maker_windows": [
+          "KXBTC15M-26OCT151545-45"
+        ],
+        "gap_windows": [
+          "KXBTC15M-26OCT151545-45"
+        ]
+      },
+      "received_sources": [
+        "websocket",
+        "websocket"
+      ],
+      "cancellations": 1
+    },
+    {
+      "kind": "tape",
+      "action": "book_only",
+      "outcome": "error",
+      "books_before": 2,
+      "books_after": 0,
+      "fresh_ws_at_completion": [
+        "KXBTC15M-26OCT151545-45"
+      ],
+      "cached_ws_makers_at_completion": [],
+      "last_status": {
+        "markets": "trade_tape_gap",
+        "trade_stream": false,
+        "venue": "kalshi",
+        "transport": "market_websocket",
+        "ws_connected": true,
+        "ws_books": [
+          "KXBTC15M-26OCT151545-45"
+        ],
+        "ws_maker_windows": [],
+        "ws_status": "market_websocket",
+        "maker_windows": [],
+        "gap_windows": [
+          "KXBTC15M-26OCT151545-45"
+        ]
+      },
+      "received_sources": [
+        "websocket",
+        "websocket"
+      ],
+      "cancellations": 2
+    },
+    {
+      "kind": "book",
+      "action": "removed",
+      "outcome": "error",
+      "books_before": 0,
+      "books_after": 0,
+      "fresh_ws_at_completion": [],
+      "cached_ws_makers_at_completion": [],
+      "last_status": {
+        "markets": "book_unavailable",
+        "trade_stream": false,
+        "venue": "kalshi",
+        "transport": "public_rest",
+        "maker_windows": [],
+        "gap_windows": [
+          "KXBTC15M-26OCT151545-45"
+        ]
+      },
+      "received_sources": [],
+      "cancellations": 1
+    },
+    {
+      "kind": "book",
+      "action": "readmitted",
+      "outcome": "valid",
+      "books_before": 0,
+      "books_after": 2,
+      "fresh_ws_at_completion": [],
+      "cached_ws_makers_at_completion": [],
+      "last_status": null,
+      "received_sources": [
+        "rest",
+        "rest"
+      ],
+      "cancellations": 0
+    },
+    {
+      "kind": "book",
+      "action": "no_ws",
+      "outcome": "error",
+      "books_before": 0,
+      "books_after": 0,
+      "fresh_ws_at_completion": [],
+      "cached_ws_makers_at_completion": [],
+      "last_status": {
+        "markets": "book_unavailable",
+        "trade_stream": false,
+        "venue": "kalshi",
+        "transport": "public_rest",
+        "maker_windows": [],
+        "gap_windows": [
+          "KXBTC15M-26OCT151545-45"
+        ]
+      },
+      "received_sources": [],
+      "cancellations": 1
+    },
+    {
+      "kind": "tape",
+      "action": "stale_trade",
+      "outcome": "error",
+      "books_before": 2,
+      "books_after": 0,
+      "fresh_ws_at_completion": [
+        "KXBTC15M-26OCT151545-45"
+      ],
+      "cached_ws_makers_at_completion": [
+        "KXBTC15M-26OCT151545-45"
+      ],
+      "last_status": {
+        "markets": "trade_tape_gap",
+        "trade_stream": true,
+        "venue": "kalshi",
+        "transport": "market_websocket",
+        "ws_connected": true,
+        "ws_books": [
+          "KXBTC15M-26OCT151545-45"
+        ],
+        "ws_maker_windows": [
+          "KXBTC15M-26OCT151545-45"
+        ],
+        "ws_status": "market_websocket",
+        "maker_windows": [
+          "KXBTC15M-26OCT151545-45"
+        ],
+        "gap_windows": [
+          "KXBTC15M-26OCT151545-45"
+        ]
+      },
+      "received_sources": [
+        "websocket",
+        "websocket"
+      ],
+      "cancellations": 1
+    },
+    {
+      "kind": "book",
+      "action": "failure_first",
+      "outcome": "error",
+      "books_before": 0,
+      "books_after": 0,
+      "fresh_ws_at_completion": [],
+      "cached_ws_makers_at_completion": [],
+      "last_status": {
+        "markets": "book_unavailable",
+        "trade_stream": false,
+        "venue": "kalshi",
+        "transport": "public_rest",
+        "maker_windows": [],
+        "gap_windows": [
+          "KXBTC15M-26OCT151545-45"
+        ]
+      },
+      "received_sources": [],
+      "cancellations": 1,
+      "later_recovery_preserves_original_gap": true
+    }
+  ],
+  "historical_loss_causation": "unproved",
+  "app_tests_rerun": false
+}

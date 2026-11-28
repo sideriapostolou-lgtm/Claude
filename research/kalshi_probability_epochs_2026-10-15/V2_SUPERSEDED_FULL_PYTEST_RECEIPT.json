@@ -1,0 +1,34 @@
+{
+  "command": [
+    "/workspace/shared/nightcrawler-venv/bin/python",
+    "-m",
+    "pytest",
+    "-q"
+  ],
+  "pythonpath": "src",
+  "imported_host": "/workspace/nightcrawler-probability-epochs/src/nightcrawler/kalshi_probability_epochs.py",
+  "candidate_patch": "9ad5d9a0eaac7d5f4e99a4531aada9bdcfb64fdd8cef4198c0e374f755c75036",
+  "started_at_utc": "2026-10-15T21:06:05.704517+00:00",
+  "finished_at_utc": "2026-10-15T21:08:29.307306+00:00",
+  "seconds": 143.60279599299247,
+  "exit_code": -9,
+  "source_test_hashes_unchanged": false,
+  "before_sha256": {
+    "src/nightcrawler/kalshi_probability_epochs.py": "520f5769f3a059a6022005f427fa35ab59bac113466c40c41019a634bf04d05c",
+    "src/nightcrawler/kalshi_probability_learning.py": "43d8f527fd24aee3a7dbb33d848dcaaaf0e39089ab605deddad32dfabc1e35ab",
+    "src/nightcrawler/kalshi_arena.py": "52b983cb87ba6ec593124aef525b37b2ad48ce8cabba0325f6b813d52e7a0676",
+    "src/nightcrawler/pagestate.py": "d73eec093164c7a659f12b08226844fb58cfd01e96278585b255575ea8212479",
+    "tests/test_kalshi_probability_epochs.py": "49c19cf0c9f54bad3f716aa450202a70d4e2808fbc80c9d1f49a3b1e4c25d09f",
+    "tests/test_kalshi_probability_arena.py": "2f69e8c665b0b4d0277c398d4a7fa27aedfeecb544c1e32f9cb65a72cde8b4cb",
+    "tests/test_kalshi_arena_page.py": "2d922b6e2e586e7befa2b9d8f65c6477ea6ba36daf1e2f155198e04ecb516bfa"
+  },
+  "after_sha256": {
+    "src/nightcrawler/kalshi_probability_epochs.py": "495450c64b9402e2f9dfaa53756a51dbf44a5c75bf7245b6dc428271cddc708f",
+    "src/nightcrawler/kalshi_probability_learning.py": "43d8f527fd24aee3a7dbb33d848dcaaaf0e39089ab605deddad32dfabc1e35ab",
+    "src/nightcrawler/kalshi_arena.py": "52b983cb87ba6ec593124aef525b37b2ad48ce8cabba0325f6b813d52e7a0676",
+    "src/nightcrawler/pagestate.py": "d73eec093164c7a659f12b08226844fb58cfd01e96278585b255575ea8212479",
+    "tests/test_kalshi_probability_epochs.py": "671901f4d93506aeee614e22a171d99f92fc8725631a40c55f95009470a30d4d",
+    "tests/test_kalshi_probability_arena.py": "2f69e8c665b0b4d0277c398d4a7fa27aedfeecb544c1e32f9cb65a72cde8b4cb",
+    "tests/test_kalshi_arena_page.py": "2d922b6e2e586e7befa2b9d8f65c6477ea6ba36daf1e2f155198e04ecb516bfa"
+  }
+}

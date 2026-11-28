@@ -1,0 +1,53 @@
+{
+  "tool": "connected Railway get_logs",
+  "deployment": "7582010e-5681-41bb-964b-951e8b3c6767",
+  "source": "2f0bba487b4c88fa39299924b7a112e8413cb933",
+  "requests": [
+    {
+      "file": "MONEY_LOGS.json",
+      "start": "2026-10-16T20:34:00Z",
+      "end": "2026-10-16T23:25:00Z",
+      "filter": "\"nightcrawler.speeddesk: speeddesk_live_settlement\" OR \"nightcrawler.speeddesk: speeddesk_live_fill\"",
+      "limit": 300,
+      "returned": 29,
+      "saturated": false
+    },
+    {
+      "file": "STATUS.json",
+      "start": "2026-10-16T23:24:00Z",
+      "end": "2026-10-16T23:27:30Z",
+      "filter": "\"nightcrawler.speeddesk: speeddesk_live_status\"",
+      "limit": 2,
+      "returned": 3,
+      "coverage": "latest sampled status only; provider returned more than requested"
+    },
+    {
+      "file": "TARGET_ORDERS.json",
+      "start": "2026-10-16T22:00:00Z",
+      "end": "2026-10-16T22:16:00Z",
+      "filter": "\"nightcrawler.speeddesk: speeddesk_live_order\" OR \"nightcrawler.speeddesk: speeddesk_live_cancel\" OR \"nightcrawler.speeddesk: speeddesk_live_lock\" OR \"nightcrawler.speeddesk: speeddesk_live_refusal\" OR \"nightcrawler.speeddesk: speeddesk_live_fill\"",
+      "limit": 500,
+      "returned": 148,
+      "saturated": false
+    },
+    {
+      "file": "TARGET_START.json",
+      "start": "2026-10-16T22:00:00Z",
+      "end": "2026-10-16T22:00:35Z",
+      "filter": "\"nightcrawler.speeddesk: speeddesk_live_\"",
+      "limit": 500,
+      "returned": 18,
+      "saturated": false
+    },
+    {
+      "file": "TARGET_PARTIAL_LOGS.json.gz",
+      "start": "2026-10-16T22:00:00Z",
+      "end": "2026-10-16T22:16:00Z",
+      "filter": "\"KXBTC15M-26OCT161815-15\" -\"speeddesk_live_status\" -\"speeddesk_status\" -\"speeddesk_live_reconcile_trace\"",
+      "limit": 500,
+      "returned": 501,
+      "saturated": true,
+      "coverage": "incomplete; first returned22:03:47, not a whole target tape"
+    }
+  ]
+}

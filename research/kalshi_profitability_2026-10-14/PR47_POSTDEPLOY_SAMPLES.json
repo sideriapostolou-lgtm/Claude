@@ -1,0 +1,932 @@
+{
+  "commit": "e8db34ee34d95411ac7f695f704ceb82ef8e32d5",
+  "deployment": "f707494f-1b45-4610-9488-def9796b5923",
+  "limitations": "Bounded restart/cutoff samples. No full-window coverage or profitability established.",
+  "samples": [
+    {
+      "log_timestamp": "2026-10-14T16:25:09.373477841Z",
+      "type": "arena",
+      "message": "2026-10-14T16:25:09Z INFO nightcrawler.kalshi_arena: kalshi_arena_status residents=12 windows=0 void=69 void_feed=60 received=104740 dropped=0 late=136 coalesced=98962 pass_p99_ms=2.966 pass_max_ms=3.935 duty_pct=1.23 lag_s=1.04 errors=0 live_flush_us_p99=13189 live_flush_us_max=230297"
+    },
+    {
+      "log_timestamp": "2026-10-14T16:25:15.435374271Z",
+      "type": "live_status",
+      "data": {
+        "at": 1791995115.0364146,
+        "mode": "live",
+        "status": "REAL MONEY (Kalshi)",
+        "reason": "Kalshi account data stale",
+        "cash_usd": 40.9508,
+        "open_risk_usd": 1.879999999999999,
+        "open_cost_usd": 9.879999999999999,
+        "caps": {
+          "window_usd": 10,
+          "open_usd": 20,
+          "day_stop_usd": 6,
+          "clip": 5,
+          "total_stop_usd": 10
+        },
+        "total_halted": false,
+        "day_stop_latched": false,
+        "integrity_error": null,
+        "save": {
+          "last_ms": 139.32048389688134,
+          "build_ms": 77.86918478086591,
+          "ledger_ms": 61.43286032602191,
+          "mirror_ms": null,
+          "archived_windows": 177,
+          "saved_orders": 200
+        },
+        "reconcile": {
+          "ms": {
+            "recent_ms": {
+              "n": 33,
+              "median_ms": 511.1,
+              "p90_ms": 1449.7,
+              "max_ms": 2258.1
+            },
+            "list_orders_ms": {
+              "n": 68,
+              "median_ms": 68.7,
+              "p90_ms": 519.8,
+              "max_ms": 1922.4
+            },
+            "fills_ms": {
+              "n": 34,
+              "median_ms": 66,
+              "p90_ms": 255.3,
+              "max_ms": 501.8
+            },
+            "positions_ms": {
+              "n": 34,
+              "median_ms": 58.3,
+              "p90_ms": 186.4,
+              "max_ms": 930.5
+            },
+            "balance_ms": {
+              "n": 34,
+              "median_ms": 62.6,
+              "p90_ms": 388.4,
+              "max_ms": 577.2
+            },
+            "full_ms": {
+              "n": 1,
+              "median_ms": 3759.1,
+              "p90_ms": 3759.1,
+              "max_ms": 3759.1
+            }
+          },
+          "counts": {
+            "pages": 140,
+            "rows": 7604,
+            "bytes": 5794239,
+            "check_reconcile_slow": 1
+          },
+          "last": {
+            "full": true,
+            "ms": 3759.1,
+            "failed": false,
+            "checks": {
+              "reconcile_slow": 1
+            },
+            "reads": [
+              {
+                "read": "list_orders",
+                "ms": 580.9,
+                "rows": 2082,
+                "pages": 3,
+                "bytes": 1647668
+              },
+              {
+                "read": "fills",
+                "ms": 132.4,
+                "rows": 368,
+                "pages": 1,
+                "bytes": 187762
+              },
+              {
+                "read": "list_orders",
+                "ms": 1922.4,
+                "rows": 2082,
+                "pages": 3,
+                "bytes": 1647668
+              },
+              {
+                "read": "positions",
+                "ms": 930.5,
+                "rows": 3,
+                "pages": 1,
+                "bytes": 1405
+              },
+              {
+                "read": "balance",
+                "ms": 146.7,
+                "rows": null,
+                "pages": null,
+                "bytes": null
+              }
+            ]
+          }
+        },
+        "phases": {
+          "heartbeat": {
+            "n": 574,
+            "median_ms": 0,
+            "p90_ms": 0.1,
+            "max_ms": 571.3
+          },
+          "step": {
+            "n": 574,
+            "median_ms": 1.7,
+            "p90_ms": 2.8,
+            "max_ms": 2260.5
+          },
+          "observe": {
+            "n": 574,
+            "median_ms": 0.8,
+            "p90_ms": 1.1,
+            "max_ms": 9.8
+          },
+          "cancel_unsafe": {
+            "n": 1148,
+            "median_ms": 0,
+            "p90_ms": 0,
+            "max_ms": 0.3
+          },
+          "lock": {
+            "n": 574,
+            "median_ms": 0.1,
+            "p90_ms": 0.1,
+            "max_ms": 1.5
+          },
+          "decide": {
+            "n": 574,
+            "median_ms": 0.8,
+            "p90_ms": 1,
+            "max_ms": 6.9
+          },
+          "reconcile": {
+            "n": 34,
+            "median_ms": 511.1,
+            "p90_ms": 1460.6,
+            "max_ms": 3759.1
+          }
+        },
+        "loop": {
+          "ms": {
+            "event_loop_lag": {
+              "n": 1261,
+              "median_ms": 8.6,
+              "p90_ms": 85.7,
+              "max_ms": 1487.9
+            },
+            "balance_worker_queue": {
+              "n": 34,
+              "median_ms": 4.6,
+              "p90_ms": 18.4,
+              "max_ms": 41.6
+            },
+            "balance_worker_resume": {
+              "n": 34,
+              "median_ms": 13.2,
+              "p90_ms": 313.7,
+              "max_ms": 467.4
+            },
+            "list_orders_worker_queue": {
+              "n": 68,
+              "median_ms": 11.4,
+              "p90_ms": 66.8,
+              "max_ms": 471.2
+            },
+            "list_orders_worker_resume": {
+              "n": 68,
+              "median_ms": 16.8,
+              "p90_ms": 262,
+              "max_ms": 1293.8
+            },
+            "fills_worker_queue": {
+              "n": 34,
+              "median_ms": 4,
+              "p90_ms": 52.7,
+              "max_ms": 111.3
+            },
+            "fills_worker_resume": {
+              "n": 34,
+              "median_ms": 17.9,
+              "p90_ms": 85.6,
+              "max_ms": 334.7
+            },
+            "positions_worker_queue": {
+              "n": 34,
+              "median_ms": 1.2,
+              "p90_ms": 26.4,
+              "max_ms": 95.3
+            },
+            "positions_worker_resume": {
+              "n": 34,
+              "median_ms": 12.5,
+              "p90_ms": 54.2,
+              "max_ms": 752.2
+            }
+          },
+          "counts": {}
+        }
+      }
+    },
+    {
+      "log_timestamp": "2026-10-14T16:26:09.736657792Z",
+      "type": "arena",
+      "message": "2026-10-14T16:26:09Z INFO nightcrawler.kalshi_arena: kalshi_arena_status residents=12 windows=0 void=69 void_feed=60 received=225614 dropped=0 late=25485 coalesced=209998 pass_p99_ms=3.414 pass_max_ms=6.097 duty_pct=1.42 lag_s=4.35 errors=0 live_flush_us_p99=16644 live_flush_us_max=28859"
+    },
+    {
+      "log_timestamp": "2026-10-14T16:26:15.316291739Z",
+      "type": "live_status",
+      "data": {
+        "at": 1791995175.0853534,
+        "mode": "live",
+        "status": "REAL MONEY (Kalshi)",
+        "reason": "Window has not started",
+        "cash_usd": 41.9427,
+        "open_risk_usd": 0.8880999999999997,
+        "open_cost_usd": 13.8881,
+        "caps": {
+          "window_usd": 10,
+          "open_usd": 20,
+          "day_stop_usd": 6,
+          "clip": 5,
+          "total_stop_usd": 10
+        },
+        "total_halted": false,
+        "day_stop_latched": false,
+        "integrity_error": null,
+        "save": {
+          "last_ms": 150.94861621037126,
+          "build_ms": 75.25186007842422,
+          "ledger_ms": 75.68691624328494,
+          "mirror_ms": null,
+          "archived_windows": 177,
+          "saved_orders": 201
+        },
+        "reconcile": {
+          "ms": {
+            "recent_ms": {
+              "n": 27,
+              "median_ms": 707.9,
+              "p90_ms": 2744.6,
+              "max_ms": 4393.5
+            },
+            "list_orders_ms": {
+              "n": 56,
+              "median_ms": 129.6,
+              "p90_ms": 668.6,
+              "max_ms": 2277.5
+            },
+            "fills_ms": {
+              "n": 28,
+              "median_ms": 86.2,
+              "p90_ms": 731.6,
+              "max_ms": 897.4
+            },
+            "positions_ms": {
+              "n": 28,
+              "median_ms": 70.6,
+              "p90_ms": 467.6,
+              "max_ms": 847.3
+            },
+            "balance_ms": {
+              "n": 28,
+              "median_ms": 80.9,
+              "p90_ms": 407.9,
+              "max_ms": 3218.7
+            },
+            "full_ms": {
+              "n": 1,
+              "median_ms": 2674.9,
+              "p90_ms": 2674.9,
+              "max_ms": 2674.9
+            }
+          },
+          "counts": {
+            "pages": 116,
+            "rows": 7056,
+            "bytes": 5380857,
+            "check_reconcile_slow": 2
+          },
+          "last": {
+            "full": true,
+            "ms": 2674.9,
+            "failed": false,
+            "checks": {},
+            "reads": [
+              {
+                "read": "list_orders",
+                "ms": 1963.2,
+                "rows": 2083,
+                "pages": 3,
+                "bytes": 1648421
+              },
+              {
+                "read": "fills",
+                "ms": 135.5,
+                "rows": 369,
+                "pages": 1,
+                "bytes": 188272
+              },
+              {
+                "read": "list_orders",
+                "ms": 468.8,
+                "rows": 2083,
+                "pages": 3,
+                "bytes": 1648421
+              },
+              {
+                "read": "positions",
+                "ms": 40.3,
+                "rows": 3,
+                "pages": 1,
+                "bytes": 1408
+              },
+              {
+                "read": "balance",
+                "ms": 29,
+                "rows": null,
+                "pages": null,
+                "bytes": null
+              }
+            ]
+          }
+        },
+        "phases": {
+          "heartbeat": {
+            "n": 340,
+            "median_ms": 0,
+            "p90_ms": 0.1,
+            "max_ms": 421.3
+          },
+          "step": {
+            "n": 340,
+            "median_ms": 1.9,
+            "p90_ms": 6.4,
+            "max_ms": 4595.3
+          },
+          "observe": {
+            "n": 340,
+            "median_ms": 0.9,
+            "p90_ms": 1.2,
+            "max_ms": 18.4
+          },
+          "cancel_unsafe": {
+            "n": 680,
+            "median_ms": 0,
+            "p90_ms": 0,
+            "max_ms": 0.1
+          },
+          "reconcile": {
+            "n": 28,
+            "median_ms": 708,
+            "p90_ms": 2744.6,
+            "max_ms": 4393.5
+          },
+          "lock": {
+            "n": 340,
+            "median_ms": 0.1,
+            "p90_ms": 0.1,
+            "max_ms": 236.1
+          },
+          "decide": {
+            "n": 339,
+            "median_ms": 0.9,
+            "p90_ms": 1.1,
+            "max_ms": 4.2
+          }
+        },
+        "loop": {
+          "ms": {
+            "event_loop_lag": {
+              "n": 816,
+              "median_ms": 15.6,
+              "p90_ms": 150.5,
+              "max_ms": 1765
+            },
+            "balance_worker_queue": {
+              "n": 29,
+              "median_ms": 3.7,
+              "p90_ms": 32.9,
+              "max_ms": 829.7
+            },
+            "balance_worker_resume": {
+              "n": 29,
+              "median_ms": 45.9,
+              "p90_ms": 510.8,
+              "max_ms": 1928.7
+            },
+            "list_orders_worker_queue": {
+              "n": 56,
+              "median_ms": 19.3,
+              "p90_ms": 218.5,
+              "max_ms": 664.1
+            },
+            "list_orders_worker_resume": {
+              "n": 56,
+              "median_ms": 38.5,
+              "p90_ms": 465.9,
+              "max_ms": 1647.2
+            },
+            "fills_worker_queue": {
+              "n": 28,
+              "median_ms": 12.1,
+              "p90_ms": 65,
+              "max_ms": 253.6
+            },
+            "fills_worker_resume": {
+              "n": 28,
+              "median_ms": 28.6,
+              "p90_ms": 467.7,
+              "max_ms": 906
+            },
+            "positions_worker_queue": {
+              "n": 28,
+              "median_ms": 2.5,
+              "p90_ms": 50.6,
+              "max_ms": 127.7
+            },
+            "positions_worker_resume": {
+              "n": 28,
+              "median_ms": 16,
+              "p90_ms": 217.5,
+              "max_ms": 649.3
+            },
+            "create_order_worker_queue": {
+              "n": 1,
+              "median_ms": 22.8,
+              "p90_ms": 22.8,
+              "max_ms": 22.8
+            },
+            "create_order_worker_resume": {
+              "n": 1,
+              "median_ms": 19.7,
+              "p90_ms": 19.7,
+              "max_ms": 19.7
+            }
+          },
+          "counts": {}
+        }
+      }
+    },
+    {
+      "log_timestamp": "2026-10-14T16:27:09.813271193Z",
+      "type": "arena",
+      "message": "2026-10-14T16:27:09Z INFO nightcrawler.kalshi_arena: kalshi_arena_status residents=12 windows=0 void=69 void_feed=60 received=333120 dropped=0 late=32187 coalesced=308028 pass_p99_ms=3.985 pass_max_ms=4.001 duty_pct=1.32 lag_s=1.06 errors=0 live_flush_us_p99=15930 live_flush_us_max=306493"
+    },
+    {
+      "log_timestamp": "2026-10-14T16:27:16.846730045Z",
+      "type": "live_status",
+      "data": {
+        "at": 1791995236.4432802,
+        "mode": "live",
+        "status": "REAL MONEY (Kalshi)",
+        "reason": "Window has not started",
+        "cash_usd": 41.9427,
+        "open_risk_usd": 0.8880999999999997,
+        "open_cost_usd": 13.8881,
+        "caps": {
+          "window_usd": 10,
+          "open_usd": 20,
+          "day_stop_usd": 6,
+          "clip": 5,
+          "total_stop_usd": 10
+        },
+        "total_halted": false,
+        "day_stop_latched": false,
+        "integrity_error": null,
+        "save": {
+          "last_ms": 484.32081611827016,
+          "build_ms": 11.943759396672249,
+          "ledger_ms": 472.35440695658326,
+          "mirror_ms": null,
+          "archived_windows": 177,
+          "saved_orders": 201
+        },
+        "reconcile": {
+          "ms": {
+            "recent_ms": {
+              "n": 37,
+              "median_ms": 304.4,
+              "p90_ms": 1294.1,
+              "max_ms": 2410.4
+            },
+            "list_orders_ms": {
+              "n": 76,
+              "median_ms": 54.5,
+              "p90_ms": 342.5,
+              "max_ms": 834.4
+            },
+            "fills_ms": {
+              "n": 38,
+              "median_ms": 40.7,
+              "p90_ms": 378,
+              "max_ms": 689.9
+            },
+            "positions_ms": {
+              "n": 38,
+              "median_ms": 44.5,
+              "p90_ms": 190,
+              "max_ms": 447.3
+            },
+            "balance_ms": {
+              "n": 38,
+              "median_ms": 46.9,
+              "p90_ms": 172.1,
+              "max_ms": 959.5
+            },
+            "full_ms": {
+              "n": 1,
+              "median_ms": 747.1,
+              "p90_ms": 747.1,
+              "max_ms": 747.1
+            }
+          },
+          "counts": {
+            "pages": 156,
+            "rows": 8072,
+            "bytes": 6138869
+          },
+          "last": {
+            "full": false,
+            "ms": 1883.8,
+            "failed": false,
+            "checks": {},
+            "reads": [
+              {
+                "read": "list_orders",
+                "ms": 46.3,
+                "rows": 40,
+                "pages": 1,
+                "bytes": 31734
+              },
+              {
+                "read": "fills",
+                "ms": 689.9,
+                "rows": 10,
+                "pages": 1,
+                "bytes": 5125
+              },
+              {
+                "read": "list_orders",
+                "ms": 834.4,
+                "rows": 40,
+                "pages": 1,
+                "bytes": 31734
+              },
+              {
+                "read": "positions",
+                "ms": 138.7,
+                "rows": 3,
+                "pages": 1,
+                "bytes": 1408
+              },
+              {
+                "read": "balance",
+                "ms": 172.1,
+                "rows": null,
+                "pages": null,
+                "bytes": null
+              }
+            ]
+          }
+        },
+        "phases": {
+          "heartbeat": {
+            "n": 856,
+            "median_ms": 0,
+            "p90_ms": 0.1,
+            "max_ms": 485.5
+          },
+          "step": {
+            "n": 856,
+            "median_ms": 1.1,
+            "p90_ms": 1.6,
+            "max_ms": 2897.4
+          },
+          "observe": {
+            "n": 856,
+            "median_ms": 0.8,
+            "p90_ms": 1.1,
+            "max_ms": 21.1
+          },
+          "cancel_unsafe": {
+            "n": 1712,
+            "median_ms": 0,
+            "p90_ms": 0,
+            "max_ms": 0.2
+          },
+          "lock": {
+            "n": 856,
+            "median_ms": 0.1,
+            "p90_ms": 0.1,
+            "max_ms": 0.2
+          },
+          "decide": {
+            "n": 856,
+            "median_ms": 0.1,
+            "p90_ms": 0.2,
+            "max_ms": 5.3
+          },
+          "reconcile": {
+            "n": 38,
+            "median_ms": 304.4,
+            "p90_ms": 1294.1,
+            "max_ms": 2410.4
+          }
+        },
+        "loop": {
+          "ms": {
+            "event_loop_lag": {
+              "n": 1712,
+              "median_ms": 7.4,
+              "p90_ms": 33.4,
+              "max_ms": 925.1
+            },
+            "list_orders_worker_queue": {
+              "n": 76,
+              "median_ms": 1.6,
+              "p90_ms": 28,
+              "max_ms": 489
+            },
+            "list_orders_worker_resume": {
+              "n": 76,
+              "median_ms": 7.8,
+              "p90_ms": 172.8,
+              "max_ms": 655
+            },
+            "fills_worker_queue": {
+              "n": 38,
+              "median_ms": 0.5,
+              "p90_ms": 40.8,
+              "max_ms": 182.5
+            },
+            "fills_worker_resume": {
+              "n": 38,
+              "median_ms": 5,
+              "p90_ms": 268.2,
+              "max_ms": 725.3
+            },
+            "positions_worker_queue": {
+              "n": 38,
+              "median_ms": 0.2,
+              "p90_ms": 7.5,
+              "max_ms": 104.8
+            },
+            "positions_worker_resume": {
+              "n": 38,
+              "median_ms": 6.4,
+              "p90_ms": 87.5,
+              "max_ms": 246.8
+            },
+            "balance_worker_queue": {
+              "n": 37,
+              "median_ms": 0.5,
+              "p90_ms": 26.2,
+              "max_ms": 110.6
+            },
+            "balance_worker_resume": {
+              "n": 37,
+              "median_ms": 7.2,
+              "p90_ms": 58.7,
+              "max_ms": 971.7
+            }
+          },
+          "counts": {}
+        }
+      }
+    },
+    {
+      "log_timestamp": "2026-10-14T16:28:16.600212058Z",
+      "type": "live_status",
+      "data": {
+        "at": 1791995296.4730253,
+        "mode": "live",
+        "status": "REAL MONEY (Kalshi)",
+        "reason": "Window has not started",
+        "cash_usd": 41.9427,
+        "open_risk_usd": 0.8880999999999997,
+        "open_cost_usd": 13.8881,
+        "caps": {
+          "window_usd": 10,
+          "open_usd": 20,
+          "day_stop_usd": 6,
+          "clip": 5,
+          "total_stop_usd": 10
+        },
+        "total_halted": false,
+        "day_stop_latched": false,
+        "integrity_error": null,
+        "save": {
+          "last_ms": 178.62523766234517,
+          "build_ms": 9.246880654245615,
+          "ledger_ms": 169.3637170828879,
+          "mirror_ms": null,
+          "archived_windows": 177,
+          "saved_orders": 201
+        },
+        "reconcile": {
+          "ms": {
+            "recent_ms": {
+              "n": 32,
+              "median_ms": 437.2,
+              "p90_ms": 1669.6,
+              "max_ms": 3176.3
+            },
+            "list_orders_ms": {
+              "n": 66,
+              "median_ms": 67.4,
+              "p90_ms": 363.6,
+              "max_ms": 924
+            },
+            "fills_ms": {
+              "n": 33,
+              "median_ms": 46.4,
+              "p90_ms": 241.2,
+              "max_ms": 1231.8
+            },
+            "positions_ms": {
+              "n": 33,
+              "median_ms": 50,
+              "p90_ms": 338.7,
+              "max_ms": 2050
+            },
+            "balance_ms": {
+              "n": 33,
+              "median_ms": 53.6,
+              "p90_ms": 471.4,
+              "max_ms": 1414.8
+            },
+            "full_ms": {
+              "n": 1,
+              "median_ms": 576.5,
+              "p90_ms": 576.5,
+              "max_ms": 576.5
+            }
+          },
+          "counts": {
+            "pages": 136,
+            "rows": 7514,
+            "bytes": 5726554,
+            "check_reconcile_slow": 2
+          },
+          "last": {
+            "full": false,
+            "ms": 195.1,
+            "failed": false,
+            "checks": {},
+            "reads": [
+              {
+                "read": "list_orders",
+                "ms": 57.9,
+                "rows": 40,
+                "pages": 1,
+                "bytes": 31734
+              },
+              {
+                "read": "fills",
+                "ms": 32.5,
+                "rows": 10,
+                "pages": 1,
+                "bytes": 5125
+              },
+              {
+                "read": "list_orders",
+                "ms": 38.6,
+                "rows": 40,
+                "pages": 1,
+                "bytes": 31734
+              },
+              {
+                "read": "positions",
+                "ms": 35.1,
+                "rows": 3,
+                "pages": 1,
+                "bytes": 1408
+              },
+              {
+                "read": "balance",
+                "ms": 28.5,
+                "rows": null,
+                "pages": null,
+                "bytes": null
+              }
+            ]
+          }
+        },
+        "phases": {
+          "heartbeat": {
+            "n": 586,
+            "median_ms": 0,
+            "p90_ms": 0.1,
+            "max_ms": 557.8
+          },
+          "step": {
+            "n": 586,
+            "median_ms": 1.1,
+            "p90_ms": 1.6,
+            "max_ms": 3239.6
+          },
+          "observe": {
+            "n": 586,
+            "median_ms": 0.8,
+            "p90_ms": 1,
+            "max_ms": 10.5
+          },
+          "cancel_unsafe": {
+            "n": 1172,
+            "median_ms": 0,
+            "p90_ms": 0,
+            "max_ms": 0.1
+          },
+          "lock": {
+            "n": 586,
+            "median_ms": 0.1,
+            "p90_ms": 0.1,
+            "max_ms": 12.9
+          },
+          "decide": {
+            "n": 586,
+            "median_ms": 0.1,
+            "p90_ms": 0.2,
+            "max_ms": 0.3
+          },
+          "reconcile": {
+            "n": 33,
+            "median_ms": 504.8,
+            "p90_ms": 1669.6,
+            "max_ms": 3176.3
+          }
+        },
+        "loop": {
+          "ms": {
+            "balance_worker_queue": {
+              "n": 34,
+              "median_ms": 0.5,
+              "p90_ms": 23.6,
+              "max_ms": 110.5
+            },
+            "balance_worker_resume": {
+              "n": 34,
+              "median_ms": 13.5,
+              "p90_ms": 652.7,
+              "max_ms": 1097.6
+            },
+            "event_loop_lag": {
+              "n": 1235,
+              "median_ms": 9.2,
+              "p90_ms": 70.2,
+              "max_ms": 1365.6
+            },
+            "list_orders_worker_queue": {
+              "n": 66,
+              "median_ms": 2.9,
+              "p90_ms": 59.7,
+              "max_ms": 378.1
+            },
+            "list_orders_worker_resume": {
+              "n": 66,
+              "median_ms": 8.7,
+              "p90_ms": 131.6,
+              "max_ms": 880.6
+            },
+            "fills_worker_queue": {
+              "n": 33,
+              "median_ms": 1.7,
+              "p90_ms": 39.9,
+              "max_ms": 143
+            },
+            "fills_worker_resume": {
+              "n": 33,
+              "median_ms": 6,
+              "p90_ms": 125.9,
+              "max_ms": 894.8
+            },
+            "positions_worker_queue": {
+              "n": 33,
+              "median_ms": 0.2,
+              "p90_ms": 12.5,
+              "max_ms": 440.3
+            },
+            "positions_worker_resume": {
+              "n": 33,
+              "median_ms": 9.5,
+              "p90_ms": 106.4,
+              "max_ms": 1215.5
+            }
+          },
+          "counts": {}
+        }
+      }
+    },
+    {
+      "log_timestamp": "2026-10-14T16:28:25.892368129Z",
+      "type": "arena",
+      "message": "2026-10-14T16:28:25Z INFO nightcrawler.kalshi_arena: kalshi_arena_status residents=12 windows=0 void=69 void_feed=60 received=508022 dropped=0 late=53649 coalesced=467446 pass_p99_ms=3.549 pass_max_ms=4.006 duty_pct=1.60 lag_s=1.44 errors=0 live_flush_us_p99=19290 live_flush_us_max=26556"
+    }
+  ]
+}

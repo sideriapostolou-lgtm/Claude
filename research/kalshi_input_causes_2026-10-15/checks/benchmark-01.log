@@ -1,0 +1,3 @@
+{"file": "/workspace/nightcrawler-input-causes/research/kalshi_input_causes_2026-10-15/BENCHMARK.json", "envelope": {"maximum_observed_synthetic_json_bytes": 2470, "retained_diagnostic_bytes": 63862, "normal_32_incremental_median_cpu_ms": 0.21525299999999997, "burst_32_incremental_median_cpu_ms": 1.1295}, "pass": true}
+
+CAPTURED_EXIT=0

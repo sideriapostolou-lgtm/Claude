@@ -1,0 +1,112 @@
+{
+  "decision": "ACCEPT exact v4 source/test bytes for integration conditional on fresh full-suite pass and release/runtime gates",
+  "reviewed_at": "2026-10-15T21:21:11.675552+00:00",
+  "manifest": {
+    "head": "72a4ddcc1a49f72f1d90973a9904c5312c9f59fd",
+    "files": {
+      "src/nightcrawler/kalshi_probability_epochs.py": {
+        "sha256": "495450c64b9402e2f9dfaa53756a51dbf44a5c75bf7245b6dc428271cddc708f",
+        "bytes": 13936
+      },
+      "src/nightcrawler/kalshi_probability_learning.py": {
+        "sha256": "43d8f527fd24aee3a7dbb33d848dcaaaf0e39089ab605deddad32dfabc1e35ab",
+        "bytes": 27111
+      },
+      "src/nightcrawler/kalshi_arena.py": {
+        "sha256": "52b983cb87ba6ec593124aef525b37b2ad48ce8cabba0325f6b813d52e7a0676",
+        "bytes": 137209
+      },
+      "src/nightcrawler/pagestate.py": {
+        "sha256": "d73eec093164c7a659f12b08226844fb58cfd01e96278585b255575ea8212479",
+        "bytes": 234901
+      },
+      "tests/test_kalshi_probability_epochs.py": {
+        "sha256": "977f3ee0c6c9bc69a40951567cb9a4cedad13a529fd0754862fcf49ac48b51da",
+        "bytes": 25458
+      },
+      "tests/test_kalshi_probability_arena.py": {
+        "sha256": "2f69e8c665b0b4d0277c398d4a7fa27aedfeecb544c1e32f9cb65a72cde8b4cb",
+        "bytes": 11571
+      },
+      "tests/test_kalshi_arena_page.py": {
+        "sha256": "2d922b6e2e586e7befa2b9d8f65c6477ea6ba36daf1e2f155198e04ecb516bfa",
+        "bytes": 23390
+      }
+    },
+    "patch_sha256": "3f3626033fb618a08d79270c2dd6e4165ecbc49888849bae5d99800c72e7f957",
+    "patch_bytes": 54430,
+    "source_fingerprint": "23e2ca80d3c04415256bf3fc237ba017d56733a59219d718e86c554eaa1f1d25",
+    "resource": {
+      "fixture_sha256": "52da05ecda8e352a4639c9c8194fc8b34c839b3d7c74b4bef006635b1e77001e",
+      "serialized_bytes": 432031,
+      "legacy_bytes": 71189,
+      "record_state_bytes": [
+        71189,
+        71990,
+        71990,
+        71990,
+        71990
+      ],
+      "lineage_panel_bytes": 1667,
+      "current_source": "23e2ca80d3c04415256bf3fc237ba017d56733a59219d718e86c554eaa1f1d25",
+      "imported_modules": [
+        "/workspace/nightcrawler-probability-epochs/src/nightcrawler/kalshi_probability_epochs.py",
+        "/workspace/nightcrawler-probability-epochs/src/nightcrawler/kalshi_probability_learning.py"
+      ]
+    },
+    "fingerprint_preflight": {
+      "v2": {
+        "before": "19387e3a38d6d387f3cf74acfa1d3d90bd2aafda60a795d21111bf2ea5586f84",
+        "after": "23e2ca80d3c04415256bf3fc237ba017d56733a59219d718e86c554eaa1f1d25",
+        "affected": true,
+        "dependencies_before": [
+          "kalshi_probability_learning.py",
+          "speeddesk_model.py",
+          "speeddesk_feeds.py",
+          "speeddesk_kalshi.py",
+          "speeddesk_kalshi_ws.py",
+          "speeddesk_venues.py",
+          "speeddesk.py",
+          "kalshi_arena.py"
+        ],
+        "dependencies_after": [
+          "kalshi_probability_learning.py",
+          "kalshi_probability_epochs.py",
+          "speeddesk_model.py",
+          "speeddesk_feeds.py",
+          "speeddesk_kalshi.py",
+          "speeddesk_kalshi_ws.py",
+          "speeddesk_venues.py",
+          "speeddesk.py",
+          "kalshi_arena.py"
+        ]
+      },
+      "v1": {
+        "before": "b6112b7ef8955b20af734157c1e7f5ec533bf98f70e034558f06670578c391f2",
+        "after": "b6112b7ef8955b20af734157c1e7f5ec533bf98f70e034558f06670578c391f2",
+        "affected": false,
+        "dependencies": [
+          "kalshi_online_learning.py",
+          "speeddesk_model.py"
+        ]
+      },
+      "meaning": "Source identities are not aliases; persisted mismatch-disabled V2 history remains a separate raw archive; no production history export."
+    },
+    "v3_source_bytes_identical": true,
+    "v4_change": "Only test startup capture cleared after fixture setup; target timestamp asserted9000. Prior INFO-level/full-suite failures retained, no production code change."
+  },
+  "delta": "Only fixture capture clear/comment and explicit target timestamp assertion; unchanged assertion exactly one receipt after restored constructor/save/step.",
+  "independent_test": "188 passed in 1.96s",
+  "unchanged_source_reviews": [
+    "epoch_v3_resume_review.json",
+    "epoch_resource_v3_resume.json"
+  ],
+  "failure_retention": "V3 full suite FAILED5991passed/14skipped/1failed; independently reproduced under INFO. Not waived or mislabeled as pass.",
+  "limitations": "All v3 review/resource limitations continue. Root fresh v4 full suite pending. No deployment/runtime/profit claim.",
+  "evidence_sha256": {
+    "epoch_v3_resume_review.json": "303c81342e19ed122fa91e1b8048cd3ea2bf2108892b7b133cf239b3ee93ed25",
+    "epoch_resource_v3_resume.json": "54efd92d4504b3e13149abcafc0b2e6350c4d7feca95aeb91c0e707b3b2b0668",
+    "epoch_v3_full_failure_review.json": "ccb833211664edcff20c7524991ef1d4b26e8049ea399ceea87a936f25a87a31",
+    "epoch_v4_frozen_info_logging_focused.stdout": "78a14374177a0c4aab4715ba600d9c74eecdf8b76d32381071378f158e7f7f11"
+  }
+}

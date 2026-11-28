@@ -1,0 +1,17 @@
+{
+ "configs": [
+  {
+   "gate": "G-time"
+  },
+  {
+   "gate": "G-chain+"
+  }
+ ],
+ "hashes": [
+  "1e4842f81140",
+  "b843b614c9a2"
+ ],
+ "hypothesis": "G1",
+ "note": "G1 PREREG rule",
+ "written_utc": "2026-10-09 04:43:26"
+}

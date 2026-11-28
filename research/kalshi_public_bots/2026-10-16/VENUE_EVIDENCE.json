@@ -1,0 +1,49 @@
+{
+  "series_fetch": {
+    "url": "https://api.elections.kalshi.com/trade-api/v2/series/KXBTC15M",
+    "status": 200,
+    "retrieved_utc": "2026-10-16T00:52:10.998505+00:00",
+    "bytes": 1152,
+    "sha256": "ab4c388d16507d0228e19956c240104bd3f14bd16b18c6071cc0b7c93b4f0483"
+  },
+  "market_fetch": {
+    "url": "https://api.elections.kalshi.com/trade-api/v2/markets/KXBTC15M-26OCT030545-45",
+    "status": 200,
+    "retrieved_utc": "2026-10-16T00:54:12.368773+00:00",
+    "bytes": 2218,
+    "sha256": "fc00b9cf271be98a21fa3a09548016a56f7c15f56223324cdef658b38e2d2e95"
+  },
+  "official_docs": [
+    "https://kalshi.com/docs/kalshi-fee-schedule.pdf",
+    "https://docs.kalshi.com/getting_started/fee_rounding",
+    "https://docs.kalshi.com/api-reference/orders/create-order-v2"
+  ],
+  "openapi": {
+    "url": "https://docs.kalshi.com/openapi.yaml",
+    "retrieved_utc": "2026-10-16T00:24:21Z",
+    "sha256": "a33d05aaa5deab319674407d543b5c0027d41adbf2c4f8a11dab708a0debd35a",
+    "raw_not_published": "Public schema includes a key-looking example; preserve metadata/hash only, no authentication claim."
+  },
+  "failures": [
+    {
+      "operation": "Web browser tool open of keyless series URL",
+      "result": "not accessible via this tool/InternalError",
+      "resolved": "Unauthenticated standard-library HTTPS GET succeeded; exact receipt above."
+    },
+    {
+      "operation": "Initial worker local git lookup of current owner commit",
+      "result": "Commit absent from stale local object database",
+      "resolved": "Connected GitHub exact-reference reads supplied canonical documents."
+    },
+    {
+      "operation": "Worker session usage exhaustion",
+      "result": "Two workers interrupted before final handback",
+      "resolved": "Owner reset usage; saved source evidence retained, workers completed/reviewed supplements afterward."
+    },
+    {
+      "operation": "In-memory research orchestration state after usage interruption",
+      "result": "Earlier store keys unavailable; private files survived",
+      "resolved": "Refreshed discovery and root immutable commit/tree metadata; no source/production change."
+    }
+  ]
+}

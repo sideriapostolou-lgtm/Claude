@@ -1,0 +1,756 @@
+{
+ "hypothesis": "Y5",
+ "version": "y5-v1",
+ "stage": "debug",
+ "split": "final_train",
+ "utc": "2026-10-09 03:29:09",
+ "provisional": false,
+ "debug_only": true,
+ "prereg_sha256": "5d36ec39af2623a8e102fcc96b7ebd308cfb370ed3de40e0a39f553244d181eb",
+ "rerun_reason": null,
+ "coverage": {
+  "split": "final_train",
+  "bounds_utc": [
+   "2026-10-07 19:37:30",
+   "2026-10-08 08:06:47"
+  ],
+  "debug_only": true,
+  "graduates_in_split": 644,
+  "tradeable": 450,
+  "usable": 450,
+  "excluded": {
+   "mayhem": 129,
+   "not_sol_quoted": 65
+  },
+  "created_inexact": 0,
+  "has_create0": 44,
+  "chain_hours_scanned_frac": 1.0,
+  "days": [
+   {
+    "day": "2026-10-07",
+    "hours_in_split": 5,
+    "curve_hours": 5,
+    "b2_hours": 5,
+    "b2_hours_midrun": 0,
+    "coins_created": 294,
+    "tradeable": 196,
+    "usable": 196,
+    "usable_frac": 1.0,
+    "partial": false
+   },
+   {
+    "day": "2026-10-08",
+    "hours_in_split": 9,
+    "curve_hours": 9,
+    "b2_hours": 9,
+    "b2_hours_midrun": 0,
+    "coins_created": 350,
+    "tradeable": 254,
+    "usable": 254,
+    "usable_frac": 1.0,
+    "partial": false
+   }
+  ],
+  "days_expected": 0.52,
+  "days_full": 2,
+  "curve_span_utc": [
+   "2026-10-01 21:00:00",
+   "2026-10-09 00:00:00"
+  ],
+  "b2_span_utc": [
+   "2026-10-07 19:00:00",
+   "2026-10-08 19:00:00"
+  ],
+  "completeness_source": "raw_chunks",
+  "parquet_snapshot_utc": "2026-10-09 02:53:25",
+  "b2_hours_needed": 24,
+  "b2_hours_done": 24,
+  "b2_hours_midrun": [],
+  "sol_usd": {
+   "series_utc": [
+    "2026-09-15 00:00:00",
+    "2026-10-08 23:59:00"
+   ],
+   "constant_fallback": false,
+   "lookahead_coins": 0,
+   "stale_coins": 0
+  },
+  "power": {
+   "entry_bar_coins": {
+    "need": 40,
+    "have_usable_coins": 450,
+    "ok": true
+   },
+   "x1_r0_trades_5_seeds": {
+    "need": 200,
+    "max_possible": 2250,
+    "ok": true
+   },
+   "g1_flagged_coins_val": {
+    "need": 200,
+    "max_possible": 450,
+    "ok": true
+   }
+  },
+  "underpowered": false,
+  "complete": true,
+  "notes": [],
+  "from_flow": true
+ },
+ "n_coins": 450,
+ "span_days": 0.5203240740740741,
+ "m1_host": {
+  "version": "m1-v1",
+  "params_hash": "9c0a14afb895"
+ },
+ "event_counts": {
+  "coins": 450,
+  "span_days": 0.5203240740740741,
+  "r30_decisions_by_session": {
+   "ASIA": 265,
+   "EU": 18,
+   "US": 167
+  },
+  "r30_alive_by_session": {
+   "ASIA": 92,
+   "EU": 6,
+   "US": 39
+  },
+  "r30_decisions_by_day_type": {
+   "WEEKDAY": 450,
+   "WEEKEND": 0
+  },
+  "r30_decisions_by_hour": {
+   "0": 48,
+   "1": 40,
+   "2": 36,
+   "3": 36,
+   "4": 33,
+   "5": 21,
+   "6": 28,
+   "7": 23,
+   "8": 16,
+   "9": 1,
+   "12": 1,
+   "16": 1,
+   "20": 42,
+   "21": 41,
+   "22": 35,
+   "23": 48
+  },
+  "creation_window_plus_30min_utc": [
+   "2026-10-07 20:07:30",
+   "2026-10-08 08:36:46"
+  ],
+  "session_exposure_h": {
+   "ASIA": 8.0,
+   "EU": 0.6127777777777778,
+   "US": 3.875
+  }
+ },
+ "configs": {
+  "R30|ASIA": {
+   "config": "R30|ASIA",
+   "params_hash": "b795f68bf1e3",
+   "hypothesis": "Y5",
+   "host": "R30",
+   "sessions": [
+    "ASIA"
+   ],
+   "candidate": true,
+   "n": 92,
+   "n_coins": 92,
+   "by_session_n": {
+    "ASIA": 92,
+    "EU": 0,
+    "US": 0
+   },
+   "by_day_type_n": {
+    "WEEKDAY": 92,
+    "WEEKEND": 0
+   },
+   "by_date_n": {
+    "2026-10-08": 92
+   },
+   "by_hour_n": {
+    "0": 18,
+    "1": 12,
+    "2": 15,
+    "3": 10,
+    "4": 10,
+    "5": 11,
+    "6": 10,
+    "7": 6
+   },
+   "by_tag_n": {
+    "R30": 92
+   },
+   "n_placebo": 1840,
+   "n_controls": {},
+   "horizon_exits": 0,
+   "trial": {
+    "config": "Y5|b795f68bf1e3|cfg:a06543feac6c",
+    "new_trial": false,
+    "n_trials_total": 2575
+   },
+   "returns": "hidden on the debug split (never choose parameters on FINAL data)"
+  },
+  "R30|EU": {
+   "config": "R30|EU",
+   "params_hash": "c79bac789bf6",
+   "hypothesis": "Y5",
+   "host": "R30",
+   "sessions": [
+    "EU"
+   ],
+   "candidate": true,
+   "n": 6,
+   "n_coins": 6,
+   "by_session_n": {
+    "ASIA": 0,
+    "EU": 6,
+    "US": 0
+   },
+   "by_day_type_n": {
+    "WEEKDAY": 6,
+    "WEEKEND": 0
+   },
+   "by_date_n": {
+    "2026-10-08": 6
+   },
+   "by_hour_n": {
+    "8": 4,
+    "9": 1,
+    "12": 1
+   },
+   "by_tag_n": {
+    "R30": 6
+   },
+   "n_placebo": 120,
+   "n_controls": {},
+   "horizon_exits": 0,
+   "trial": {
+    "config": "Y5|c79bac789bf6|cfg:a06543feac6c",
+    "new_trial": false,
+    "n_trials_total": 2575
+   },
+   "returns": "hidden on the debug split (never choose parameters on FINAL data)"
+  },
+  "R30|US": {
+   "config": "R30|US",
+   "params_hash": "e8b81ae44044",
+   "hypothesis": "Y5",
+   "host": "R30",
+   "sessions": [
+    "US"
+   ],
+   "candidate": true,
+   "n": 39,
+   "n_coins": 39,
+   "by_session_n": {
+    "ASIA": 0,
+    "EU": 0,
+    "US": 39
+   },
+   "by_day_type_n": {
+    "WEEKDAY": 39,
+    "WEEKEND": 0
+   },
+   "by_date_n": {
+    "2026-10-07": 38,
+    "2026-10-08": 1
+   },
+   "by_hour_n": {
+    "16": 1,
+    "20": 10,
+    "21": 8,
+    "22": 5,
+    "23": 15
+   },
+   "by_tag_n": {
+    "R30": 39
+   },
+   "n_placebo": 780,
+   "n_controls": {},
+   "horizon_exits": 0,
+   "trial": {
+    "config": "Y5|e8b81ae44044|cfg:a06543feac6c",
+    "new_trial": false,
+    "n_trials_total": 2575
+   },
+   "returns": "hidden on the debug split (never choose parameters on FINAL data)"
+  },
+  "R30|ASIA+EU": {
+   "config": "R30|ASIA+EU",
+   "params_hash": "1417b9c3e359",
+   "hypothesis": "Y5",
+   "host": "R30",
+   "sessions": [
+    "ASIA",
+    "EU"
+   ],
+   "candidate": true,
+   "n": 98,
+   "n_coins": 98,
+   "by_session_n": {
+    "ASIA": 92,
+    "EU": 6,
+    "US": 0
+   },
+   "by_day_type_n": {
+    "WEEKDAY": 98,
+    "WEEKEND": 0
+   },
+   "by_date_n": {
+    "2026-10-08": 98
+   },
+   "by_hour_n": {
+    "0": 18,
+    "1": 12,
+    "2": 15,
+    "3": 10,
+    "4": 10,
+    "5": 11,
+    "6": 10,
+    "7": 6,
+    "8": 4,
+    "9": 1,
+    "12": 1
+   },
+   "by_tag_n": {
+    "R30": 98
+   },
+   "n_placebo": 1960,
+   "n_controls": {},
+   "horizon_exits": 0,
+   "trial": {
+    "config": "Y5|1417b9c3e359|cfg:a06543feac6c",
+    "new_trial": false,
+    "n_trials_total": 2575
+   },
+   "returns": "hidden on the debug split (never choose parameters on FINAL data)"
+  },
+  "R30|ASIA+US": {
+   "config": "R30|ASIA+US",
+   "params_hash": "5631772cb0d6",
+   "hypothesis": "Y5",
+   "host": "R30",
+   "sessions": [
+    "ASIA",
+    "US"
+   ],
+   "candidate": true,
+   "n": 131,
+   "n_coins": 131,
+   "by_session_n": {
+    "ASIA": 92,
+    "EU": 0,
+    "US": 39
+   },
+   "by_day_type_n": {
+    "WEEKDAY": 131,
+    "WEEKEND": 0
+   },
+   "by_date_n": {
+    "2026-10-07": 38,
+    "2026-10-08": 93
+   },
+   "by_hour_n": {
+    "0": 18,
+    "1": 12,
+    "2": 15,
+    "3": 10,
+    "4": 10,
+    "5": 11,
+    "6": 10,
+    "7": 6,
+    "16": 1,
+    "20": 10,
+    "21": 8,
+    "22": 5,
+    "23": 15
+   },
+   "by_tag_n": {
+    "R30": 131
+   },
+   "n_placebo": 2620,
+   "n_controls": {},
+   "horizon_exits": 0,
+   "trial": {
+    "config": "Y5|5631772cb0d6|cfg:a06543feac6c",
+    "new_trial": false,
+    "n_trials_total": 2575
+   },
+   "returns": "hidden on the debug split (never choose parameters on FINAL data)"
+  },
+  "R30|EU+US": {
+   "config": "R30|EU+US",
+   "params_hash": "8f35d4519206",
+   "hypothesis": "Y5",
+   "host": "R30",
+   "sessions": [
+    "EU",
+    "US"
+   ],
+   "candidate": true,
+   "n": 45,
+   "n_coins": 45,
+   "by_session_n": {
+    "ASIA": 0,
+    "EU": 6,
+    "US": 39
+   },
+   "by_day_type_n": {
+    "WEEKDAY": 45,
+    "WEEKEND": 0
+   },
+   "by_date_n": {
+    "2026-10-07": 38,
+    "2026-10-08": 7
+   },
+   "by_hour_n": {
+    "8": 4,
+    "9": 1,
+    "12": 1,
+    "16": 1,
+    "20": 10,
+    "21": 8,
+    "22": 5,
+    "23": 15
+   },
+   "by_tag_n": {
+    "R30": 45
+   },
+   "n_placebo": 900,
+   "n_controls": {},
+   "horizon_exits": 0,
+   "trial": {
+    "config": "Y5|8f35d4519206|cfg:a06543feac6c",
+    "new_trial": false,
+    "n_trials_total": 2575
+   },
+   "returns": "hidden on the debug split (never choose parameters on FINAL data)"
+  },
+  "R30|ALL": {
+   "config": "R30|ALL",
+   "params_hash": "4980a061b5b6",
+   "hypothesis": "Y5",
+   "host": "R30",
+   "sessions": [
+    "ASIA",
+    "EU",
+    "US"
+   ],
+   "candidate": false,
+   "n": 137,
+   "n_coins": 137,
+   "by_session_n": {
+    "ASIA": 92,
+    "EU": 6,
+    "US": 39
+   },
+   "by_day_type_n": {
+    "WEEKDAY": 137,
+    "WEEKEND": 0
+   },
+   "by_date_n": {
+    "2026-10-07": 38,
+    "2026-10-08": 99
+   },
+   "by_hour_n": {
+    "0": 18,
+    "1": 12,
+    "2": 15,
+    "3": 10,
+    "4": 10,
+    "5": 11,
+    "6": 10,
+    "7": 6,
+    "8": 4,
+    "9": 1,
+    "12": 1,
+    "16": 1,
+    "20": 10,
+    "21": 8,
+    "22": 5,
+    "23": 15
+   },
+   "by_tag_n": {
+    "R30": 137
+   },
+   "n_placebo": 2740,
+   "n_controls": {},
+   "horizon_exits": 0,
+   "trial": {
+    "config": "Y5|4980a061b5b6|cfg:a06543feac6c",
+    "new_trial": false,
+    "n_trials_total": 2575
+   },
+   "returns": "hidden on the debug split (never choose parameters on FINAL data)"
+  },
+  "M1|ASIA": {
+   "config": "M1|ASIA",
+   "params_hash": "a04304439c03",
+   "hypothesis": "Y5",
+   "host": "M1",
+   "sessions": [
+    "ASIA"
+   ],
+   "candidate": true,
+   "n": 18,
+   "n_coins": 18,
+   "by_session_n": {
+    "ASIA": 18,
+    "EU": 0,
+    "US": 0
+   },
+   "by_day_type_n": {
+    "WEEKDAY": 18,
+    "WEEKEND": 0
+   },
+   "by_date_n": {
+    "2026-10-08": 18
+   },
+   "by_hour_n": {
+    "0": 5,
+    "1": 2,
+    "2": 3,
+    "3": 4,
+    "4": 2,
+    "5": 1,
+    "6": 1
+   },
+   "by_tag_n": {
+    "OPERATOR": 18
+   },
+   "n_placebo": 217,
+   "n_controls": {
+    "unmatched": 360
+   },
+   "horizon_exits": 0,
+   "trial": {
+    "config": "Y5|a04304439c03|cfg:a06543feac6c",
+    "new_trial": false,
+    "n_trials_total": 2575
+   },
+   "n_clusters": 1,
+   "returns": "hidden on the debug split (never choose parameters on FINAL data)"
+  },
+  "M1|EU": {
+   "config": "M1|EU",
+   "params_hash": "b1f2311a61b5",
+   "hypothesis": "Y5",
+   "host": "M1",
+   "sessions": [
+    "EU"
+   ],
+   "candidate": true,
+   "n": 2,
+   "n_coins": 2,
+   "by_session_n": {
+    "ASIA": 0,
+    "EU": 2,
+    "US": 0
+   },
+   "by_day_type_n": {
+    "WEEKDAY": 2,
+    "WEEKEND": 0
+   },
+   "by_date_n": {
+    "2026-10-08": 2
+   },
+   "by_hour_n": {
+    "8": 2
+   },
+   "by_tag_n": {
+    "OPERATOR": 2
+   },
+   "n_placebo": 26,
+   "n_controls": {
+    "unmatched": 40
+   },
+   "horizon_exits": 0,
+   "trial": {
+    "config": "Y5|b1f2311a61b5|cfg:a06543feac6c",
+    "new_trial": false,
+    "n_trials_total": 2575
+   },
+   "n_clusters": 1,
+   "returns": "hidden on the debug split (never choose parameters on FINAL data)"
+  },
+  "M1|US": {
+   "config": "M1|US",
+   "params_hash": "6282a33afd53",
+   "hypothesis": "Y5",
+   "host": "M1",
+   "sessions": [
+    "US"
+   ],
+   "candidate": true,
+   "n": 4,
+   "n_coins": 4,
+   "by_session_n": {
+    "ASIA": 0,
+    "EU": 0,
+    "US": 4
+   },
+   "by_day_type_n": {
+    "WEEKDAY": 4,
+    "WEEKEND": 0
+   },
+   "by_date_n": {
+    "2026-10-07": 4
+   },
+   "by_hour_n": {
+    "21": 1,
+    "23": 3
+   },
+   "by_tag_n": {
+    "OPERATOR": 4
+   },
+   "n_placebo": 52,
+   "n_controls": {
+    "unmatched": 80
+   },
+   "horizon_exits": 0,
+   "trial": {
+    "config": "Y5|6282a33afd53|cfg:a06543feac6c",
+    "new_trial": false,
+    "n_trials_total": 2575
+   },
+   "n_clusters": 1,
+   "returns": "hidden on the debug split (never choose parameters on FINAL data)"
+  },
+  "M1|ALL": {
+   "config": "M1|ALL",
+   "params_hash": "f269fef79309",
+   "hypothesis": "Y5",
+   "host": "M1",
+   "sessions": [
+    "ASIA",
+    "EU",
+    "US"
+   ],
+   "candidate": false,
+   "n": 24,
+   "n_coins": 24,
+   "by_session_n": {
+    "ASIA": 18,
+    "EU": 2,
+    "US": 4
+   },
+   "by_day_type_n": {
+    "WEEKDAY": 24,
+    "WEEKEND": 0
+   },
+   "by_date_n": {
+    "2026-10-07": 4,
+    "2026-10-08": 20
+   },
+   "by_hour_n": {
+    "0": 5,
+    "1": 2,
+    "2": 3,
+    "3": 4,
+    "4": 2,
+    "5": 1,
+    "6": 1,
+    "8": 2,
+    "21": 1,
+    "23": 3
+   },
+   "by_tag_n": {
+    "OPERATOR": 24
+   },
+   "n_placebo": 300,
+   "n_controls": {
+    "unmatched": 480
+   },
+   "horizon_exits": 0,
+   "trial": {
+    "config": "Y5|f269fef79309|cfg:a06543feac6c",
+    "new_trial": false,
+    "n_trials_total": 2575
+   },
+   "n_clusters": 1,
+   "returns": "hidden on the debug split (never choose parameters on FINAL data)"
+  }
+ },
+ "n_trials_total": 2575,
+ "entries_per_day": {
+  "R30|ASIA": 176.812883708515,
+  "R30|EU": 11.531275024468368,
+  "R30|US": 74.95328765904439,
+  "R30|ASIA+EU": 188.34415873298335,
+  "R30|ASIA+US": 251.76617136755937,
+  "R30|EU+US": 86.48456268351276,
+  "R30|ALL": 263.2974463920277,
+  "M1|ASIA": 34.59382507340511,
+  "M1|EU": 3.843758341489456,
+  "M1|US": 7.687516682978912,
+  "M1|ALL": 46.12510009787347
+ },
+ "entries_per_session_day": {
+  "R30|ASIA": {
+   "ASIA": 92.0,
+   "EU": null,
+   "US": 0.0
+  },
+  "R30|EU": {
+   "ASIA": 0.0,
+   "EU": null,
+   "US": 0.0
+  },
+  "R30|US": {
+   "ASIA": 0.0,
+   "EU": null,
+   "US": 80.51612903225806
+  },
+  "R30|ASIA+EU": {
+   "ASIA": 92.0,
+   "EU": null,
+   "US": 0.0
+  },
+  "R30|ASIA+US": {
+   "ASIA": 92.0,
+   "EU": null,
+   "US": 80.51612903225806
+  },
+  "R30|EU+US": {
+   "ASIA": 0.0,
+   "EU": null,
+   "US": 80.51612903225806
+  },
+  "R30|ALL": {
+   "ASIA": 92.0,
+   "EU": null,
+   "US": 80.51612903225806
+  },
+  "M1|ASIA": {
+   "ASIA": 18.0,
+   "EU": null,
+   "US": 0.0
+  },
+  "M1|EU": {
+   "ASIA": 0.0,
+   "EU": null,
+   "US": 0.0
+  },
+  "M1|US": {
+   "ASIA": 0.0,
+   "EU": null,
+   "US": 8.258064516129032
+  },
+  "M1|ALL": {
+   "ASIA": 18.0,
+   "EU": null,
+   "US": 8.258064516129032
+  }
+ },
+ "decision": {
+  "verdict": "DEBUG",
+  "note": "mechanics and counts only; returns hidden"
+ },
+ "runtime_s": 96.6,
+ "overall": "PENDING (no official TRAIN run)"
+}

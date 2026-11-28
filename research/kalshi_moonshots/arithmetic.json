@@ -1,0 +1,159 @@
+{
+  "prepared_utc": "2026-10-13",
+  "scope": "Illustrative own calculations; not a backtest or evidence of an edge",
+  "fee_assumptions": "One fill on a fresh order, current general taker0.07 coefficient and multiplier1, model fee ceiling at6decimal places then cash charge ceiling at4decimal places; confirm exact market/series/API response",
+  "quotes": [
+    {
+      "one_contract": {
+        "price": "0.007",
+        "quantity": "1",
+        "model_fee": "0.000487",
+        "cash_debit": "0.0075",
+        "effective_total_fee": "0.0005",
+        "gross_payout_per_dollar": "133.3333333333333333333333333",
+        "break_even_win_probability": "0.0075"
+      },
+      "one_dollar_single_fill": {
+        "price": "0.007",
+        "quantity": "133.57",
+        "model_fee": "0.064992",
+        "cash_debit": "1.0000",
+        "effective_total_fee": "0.06501",
+        "gross_payout_per_dollar": "133.57",
+        "break_even_win_probability": "0.007486711087819121060118290035"
+      }
+    },
+    {
+      "one_contract": {
+        "price": "0.002",
+        "quantity": "1",
+        "model_fee": "0.000140",
+        "cash_debit": "0.0022",
+        "effective_total_fee": "0.0002",
+        "gross_payout_per_dollar": "454.5454545454545454545454545",
+        "break_even_win_probability": "0.0022"
+      },
+      "one_dollar_single_fill": {
+        "price": "0.002",
+        "quantity": "467.35",
+        "model_fee": "0.065299",
+        "cash_debit": "1.0000",
+        "effective_total_fee": "0.06530",
+        "gross_payout_per_dollar": "467.35",
+        "break_even_win_probability": "0.002139723975607146678078527870"
+      }
+    },
+    {
+      "one_contract": {
+        "price": "0.001",
+        "quantity": "1",
+        "model_fee": "0.000070",
+        "cash_debit": "0.0011",
+        "effective_total_fee": "0.0001",
+        "gross_payout_per_dollar": "909.0909090909090909090909091",
+        "break_even_win_probability": "0.0011"
+      },
+      "one_dollar_single_fill": {
+        "price": "0.001",
+        "quantity": "934.64",
+        "model_fee": "0.065360",
+        "cash_debit": "1.0000",
+        "effective_total_fee": "0.06536",
+        "gross_payout_per_dollar": "934.64",
+        "break_even_win_probability": "0.001069930668492681674227510057"
+      }
+    }
+  ],
+  "risk": {
+    "assumed_all_in_cost": 0.0011,
+    "hypothetical_probability": 0.0022,
+    "hypothetical_probability_status": "Assumed twice break-even; not observed or proven",
+    "no_win_probability_25_independent_bets": 0.9464278032156761,
+    "no_win_probability_100_independent_bets": 0.802324326668433,
+    "full_kelly_fraction_of_bankroll_spent": 0.0011012113324657122,
+    "quarter_kelly_fraction": 0.00027530283311642806,
+    "full_kelly_dollars_on_hypothetical_25_dollar_account": 0.027530283311642808,
+    "quarter_kelly_dollars_on_hypothetical_25_dollar_account": 0.006882570827910702
+  },
+  "power": [
+    {
+      "null_probability": 0.0011,
+      "true_probability": 0.00132,
+      "alternative_probability_multiple": 1.2,
+      "one_sided_alpha": 0.05,
+      "target_power": 0.8,
+      "search_grid": "n in positive multiples of 100; first qualifying n",
+      "first_qualifying_grid_point": {
+        "n": 153500,
+        "critical_success_count": 191,
+        "power": 0.8020331562192767
+      }
+    },
+    {
+      "null_probability": 0.0011,
+      "true_probability": 0.00132,
+      "alternative_probability_multiple": 1.2,
+      "one_sided_alpha": 0.00625,
+      "target_power": 0.8,
+      "search_grid": "n in positive multiples of 100; first qualifying n",
+      "first_qualifying_grid_point": {
+        "n": 273900,
+        "critical_success_count": 346,
+        "power": 0.8001310956609632
+      }
+    },
+    {
+      "null_probability": 0.0011,
+      "true_probability": 0.00165,
+      "alternative_probability_multiple": 1.5,
+      "one_sided_alpha": 0.05,
+      "target_power": 0.8,
+      "search_grid": "n in positive multiples of 100; first qualifying n",
+      "first_qualifying_grid_point": {
+        "n": 27400,
+        "critical_success_count": 40,
+        "power": 0.8005075955303415
+      }
+    },
+    {
+      "null_probability": 0.0011,
+      "true_probability": 0.00165,
+      "alternative_probability_multiple": 1.5,
+      "one_sided_alpha": 0.00625,
+      "target_power": 0.8,
+      "search_grid": "n in positive multiples of 100; first qualifying n",
+      "first_qualifying_grid_point": {
+        "n": 49200,
+        "critical_success_count": 74,
+        "power": 0.8018621276689705
+      }
+    },
+    {
+      "null_probability": 0.0011,
+      "true_probability": 0.0022,
+      "alternative_probability_multiple": 2,
+      "one_sided_alpha": 0.05,
+      "target_power": 0.8,
+      "search_grid": "n in positive multiples of 100; first qualifying n",
+      "first_qualifying_grid_point": {
+        "n": 8300,
+        "critical_success_count": 15,
+        "power": 0.8087464505536562
+      }
+    },
+    {
+      "null_probability": 0.0011,
+      "true_probability": 0.0022,
+      "alternative_probability_multiple": 2,
+      "one_sided_alpha": 0.00625,
+      "target_power": 0.8,
+      "search_grid": "n in positive multiples of 100; first qualifying n",
+      "first_qualifying_grid_point": {
+        "n": 14300,
+        "critical_success_count": 27,
+        "power": 0.8104535973487768
+      }
+    }
+  ],
+  "zero_wins_3000_one_sided_95pct_upper_probability": 0.0009980790119965555
+}

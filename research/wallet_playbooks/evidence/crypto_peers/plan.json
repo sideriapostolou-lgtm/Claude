@@ -1,0 +1,11 @@
+{
+  "written": "2026-10-13T18:57:40.503688+00:00",
+  "scope": "Exploratory hypotheses, five fixed known wallets. Latest 1000 all fills (2x500) +1000 taker fills + public daily chart; no historical parameter or profit optimization. Window metrics restrict to fully covered slug windows; no actual P&L computed. Public timestamp not execution timestamp.",
+  "wallets": {
+    "ce25": "0xce25e214d5cfe4f459cf67f08df581885aae7fdc",
+    "mo-money": "0x32ed2e546b187ca15e2841edc82b22c713cf8ec3",
+    "GoodFallen": "0x0ca4e9d27ff826a109ecbf74754fb66b93f277a6",
+    "DB5": "0xdb5ad26b68d77ae966d29e7180147272ab7a3965",
+    "rwo": "0xd189664c5308903476f9f079820431e4fd7d06f4"
+  }
+}

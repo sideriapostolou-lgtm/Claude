@@ -1,0 +1,17 @@
+{
+  "recorded_at_utc": "2026-10-15T18:59:37.366577+00:00",
+  "status": "Declared before rootresourcebenchmark; local acceptance not production speed certificate.",
+  "required_comparison": "Original base88 versuscandidate child, same existing fake inputs/config/clock and no-op log sink; repeatedinterleaved timings, compare decisions/state/durability separately. Sourcefingerprint startupread measured separately, not chargedperstep.",
+  "cases": {
+    "steady2windows": "Ordinary2pendingwindow childstep repeated, healthyfreshinputs; optionalinclude512recordframeparse",
+    "max32forecast": "32pending records at fixedslot maximumoneforecasteach; capped logsnoI/O",
+    "checkpoint": "maximumsupportednewobserver state includingboundedrecent/labels; compare state serialization size andrestoreacceptance"
+  },
+  "local_envelope": {
+    "steady_mean_extra_cpu_ms_max": 1.0,
+    "max32_due_p95_extra_cpu_ms_max": 10.0,
+    "new_state_bytes_max": 131072,
+    "max_event_bytes": 16384
+  },
+  "omissions": "No productioncontendedCPU/backpressure/uninterrupteddata/causalprofit inference; report allnegative oroutlier results. Parent/wire remainsunchanged."
+}

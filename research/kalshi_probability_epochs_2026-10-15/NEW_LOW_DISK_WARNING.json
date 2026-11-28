@@ -1,0 +1,31 @@
+{
+  "request": {
+    "projectId": "75750847-85c0-41a3-a2a7-b7f2201a51e9",
+    "deploymentId": "66e6e7e4-30d9-4628-a234-f2a8e97dad19",
+    "startDate": "2026-10-15T21:33:30Z",
+    "endDate": "2026-10-15T21:34:20Z",
+    "limit": 20
+  },
+  "before": {
+    "current_time": "2026-10-15 21:34:19 UTC"
+  },
+  "after": {
+    "current_time": "2026-10-15 21:34:19 UTC"
+  },
+  "native_count": 21,
+  "warning_originals": [
+    {
+      "timestamp": "2026-10-15T21:33:33.430156704Z",
+      "severity": "error",
+      "message": "2026-10-15T21:33:33Z WARNING nightcrawler.learn.recorder: learn_paused reason=low_disk free_mb=726",
+      "attributes": [
+        {
+          "key": "level",
+          "value": "\"error\""
+        }
+      ]
+    }
+  ],
+  "limitation": "General query returned21rows for20limit, saturated; only these positively observed warnings used, no absent-warning or full-startup coverage claim.",
+  "reported_unit": "MiB despite free_mb log label; threshold1GiB in learn/recorder.py, not probability collector"
+}

@@ -1,0 +1,16 @@
+{
+ "cells": [],
+ "coverage": {},
+ "decision": "NOT RUN: TRAIN shortlisted no cell",
+ "diagnostic": {},
+ "final": null,
+ "hyp": "S2",
+ "lag_s": 10,
+ "n_trials_total": 2999,
+ "prereg_sha256": "45f1000dd793b4867e56ce3e1f43a768c5465c332426231215534a696fa73e5f",
+ "selected": null,
+ "sigma_b": 7.54297561130444e-05,
+ "split": "val",
+ "stage": "val",
+ "utc": "2026-10-09T20:39:28+00:00"
+}

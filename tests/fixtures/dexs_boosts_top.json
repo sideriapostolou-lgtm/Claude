@@ -1,0 +1,60 @@
+[
+ {
+  "url": "https://dexscreener.com/solana/dwcxyhecsvzwgakdkpetzlfvbahutpgpzhbu4iempump",
+  "chainId": "solana",
+  "tokenAddress": "DwcXyhEcSvzWgakDKpetZLFvbAHutpGpzhbU4iempump",
+  "description": "BULLCRAFT, full browser voxel game built for the herd. Mine, build, craft and dig for gold built on minecraft",
+  "icon": "JoEkYOrOAqhG-gX5",
+  "header": "https://cdn.dexscreener.com/cms/images/7BCiUS-pidqDTHDj?width=900&height=300&fit=crop&quality=95&format=auto",
+  "openGraph": "https://cdn.dexscreener.com/token-images/og/solana/DwcXyhEcSvzWgakDKpetZLFvbAHutpGpzhbU4iempump?timestamp=1791473400000",
+  "links": [
+   {
+    "url": "https://www.bullcraft.site/"
+   },
+   {
+    "type": "telegram",
+    "url": "https://t.me/bullcraftonsol"
+   }
+  ],
+  "totalAmount": 500
+ },
+ {
+  "url": "https://dexscreener.com/robinhood/0x66a844fcbf4705dbde3c97394d5a4c9822e8f35b",
+  "chainId": "robinhood",
+  "tokenAddress": "0x66A844fcbf4705Dbde3c97394d5a4C9822E8F35b",
+  "description": "CURTAIN lets users shield USDG and eligible tokenized stocks into private notes, use selected DeFi workflows without exposing their full position, prove clean provenance through multiple providers, and share defined information when needed. Built for Robinhood Chain.",
+  "icon": "UKMmLS1ovxyhlfCB",
+  "header": "https://cdn.dexscreener.com/cms/images/ON3ry9m4qOdI4zeQ?width=900&height=300&fit=crop&quality=95&format=auto",
+  "openGraph": "https://cdn.dexscreener.com/token-images/og/robinhood/0x66a844fcbf4705dbde3c97394d5a4c9822e8f35b?timestamp=1791473400000",
+  "links": [
+   {
+    "url": "https://curtainrh.com"
+   },
+   {
+    "url": "https://github.com/curtainrh/curtain"
+   },
+   {
+    "url": "https://curtainrh.com/whitepaper"
+   }
+  ],
+  "totalAmount": 130
+ },
+ {
+  "url": "https://dexscreener.com/solana/5tcju6ynxhq5zra6tgndr6f7tk42mpufmee31csfpump",
+  "chainId": "solana",
+  "tokenAddress": "5tCju6YNxHq5zrA6tGndr6F7TK42mpUFmeE31cSFpump",
+  "icon": "EbaueTx12MFuBnyp",
+  "header": "https://cdn.dexscreener.com/cms/images/r_28v2zEiNB3n-uK?width=900&height=300&fit=crop&quality=95&format=auto",
+  "openGraph": "https://cdn.dexscreener.com/token-images/og/solana/5tCju6YNxHq5zrA6tGndr6F7TK42mpUFmeE31cSFpump?timestamp=1791473400000",
+  "links": [
+   {
+    "url": "https://x.com/SoyLaMejori/status/2103894236466761867"
+   },
+   {
+    "type": "twitter",
+    "url": "https://x.com/catwifswordsoll"
+   }
+  ],
+  "totalAmount": 100
+ }
+]

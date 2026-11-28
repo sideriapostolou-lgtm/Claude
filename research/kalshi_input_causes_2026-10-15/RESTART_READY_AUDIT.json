@@ -1,0 +1,467 @@
+{
+  "before_original_timestamp": "2026-10-15T17:18:07.746118528Z",
+  "after_ready_original_timestamp": "2026-10-15T17:24:57.754848013Z",
+  "configured_mode": "live",
+  "effective_mode": "live",
+  "authenticated": true,
+  "trading_now": true,
+  "waiting": "",
+  "reason": "balancing_only",
+  "account_age_s": 0.029250383377075195,
+  "cash_age_s": 0.356464147567749,
+  "selected_fields": 67,
+  "exact_equal": 67,
+  "fields": [
+    {
+      "path": "configured_mode",
+      "before": "live",
+      "after": "live",
+      "exact_equal": true
+    },
+    {
+      "path": "cash_usd",
+      "before": 30.4704,
+      "after": 30.4704,
+      "exact_equal": true
+    },
+    {
+      "path": "reserved_usd",
+      "before": 0.0,
+      "after": 0.0,
+      "exact_equal": true
+    },
+    {
+      "path": "open_risk_usd",
+      "before": 0.33,
+      "after": 0.33,
+      "exact_equal": true
+    },
+    {
+      "path": "open_cost_usd",
+      "before": 0.33,
+      "after": 0.33,
+      "exact_equal": true
+    },
+    {
+      "path": "at_risk_usd",
+      "before": 0.33,
+      "after": 0.33,
+      "exact_equal": true
+    },
+    {
+      "path": "open_orders",
+      "before": 0,
+      "after": 0,
+      "exact_equal": true
+    },
+    {
+      "path": "positions",
+      "before": 1,
+      "after": 1,
+      "exact_equal": true
+    },
+    {
+      "path": "day_stop_latched",
+      "before": false,
+      "after": false,
+      "exact_equal": true
+    },
+    {
+      "path": "integrity_error",
+      "before": null,
+      "after": null,
+      "exact_equal": true
+    },
+    {
+      "path": "integrity_reset",
+      "before": null,
+      "after": null,
+      "exact_equal": true
+    },
+    {
+      "path": "cleanup_pending",
+      "before": false,
+      "after": false,
+      "exact_equal": true
+    },
+    {
+      "path": "fee_precision_verified",
+      "before": true,
+      "after": true,
+      "exact_equal": true
+    },
+    {
+      "path": "fee_precision_usd",
+      "before": 0.0001,
+      "after": 0.0001,
+      "exact_equal": true
+    },
+    {
+      "path": "caps.window_usd",
+      "before": 10.0,
+      "after": 10.0,
+      "exact_equal": true
+    },
+    {
+      "path": "caps.open_usd",
+      "before": 20.0,
+      "after": 20.0,
+      "exact_equal": true
+    },
+    {
+      "path": "caps.day_stop_usd",
+      "before": 6.0,
+      "after": 6.0,
+      "exact_equal": true
+    },
+    {
+      "path": "caps.clip",
+      "before": 5.0,
+      "after": 5.0,
+      "exact_equal": true
+    },
+    {
+      "path": "caps.total_stop_usd",
+      "before": 10.0,
+      "after": 10.0,
+      "exact_equal": true
+    },
+    {
+      "path": "today.day",
+      "before": "2026-10-15",
+      "after": "2026-10-15",
+      "exact_equal": true
+    },
+    {
+      "path": "today.windows",
+      "before": 54,
+      "after": 54,
+      "exact_equal": true
+    },
+    {
+      "path": "today.fills",
+      "before": 271,
+      "after": 271,
+      "exact_equal": true
+    },
+    {
+      "path": "today.settled_windows",
+      "before": 54,
+      "after": 54,
+      "exact_equal": true
+    },
+    {
+      "path": "today.fees_usd",
+      "before": 0.8367,
+      "after": 0.8367,
+      "exact_equal": true
+    },
+    {
+      "path": "today.locked_usd",
+      "before": 4.571950769230758,
+      "after": 4.571950769230758,
+      "exact_equal": true
+    },
+    {
+      "path": "today.directional_usd",
+      "before": -9.065850769230767,
+      "after": -9.065850769230767,
+      "exact_equal": true
+    },
+    {
+      "path": "today.pnl_usd",
+      "before": -4.493900000000008,
+      "after": -4.493900000000008,
+      "exact_equal": true
+    },
+    {
+      "path": "today.worst_usd",
+      "before": -2.7667,
+      "after": -2.7667,
+      "exact_equal": true
+    },
+    {
+      "path": "today.take_attempts",
+      "before": 0,
+      "after": 0,
+      "exact_equal": true
+    },
+    {
+      "path": "today.take_fills",
+      "before": 0,
+      "after": 0,
+      "exact_equal": true
+    },
+    {
+      "path": "today.maker_orders",
+      "before": 3203,
+      "after": 3203,
+      "exact_equal": true
+    },
+    {
+      "path": "today.maker_fills",
+      "before": 197,
+      "after": 197,
+      "exact_equal": true
+    },
+    {
+      "path": "today.locks",
+      "before": 54,
+      "after": 54,
+      "exact_equal": true
+    },
+    {
+      "path": "today.lock_fills",
+      "before": 36,
+      "after": 36,
+      "exact_equal": true
+    },
+    {
+      "path": "total.day",
+      "before": null,
+      "after": null,
+      "exact_equal": true
+    },
+    {
+      "path": "total.windows",
+      "before": 165,
+      "after": 165,
+      "exact_equal": true
+    },
+    {
+      "path": "total.fills",
+      "before": 795,
+      "after": 795,
+      "exact_equal": true
+    },
+    {
+      "path": "total.settled_windows",
+      "before": 178,
+      "after": 178,
+      "exact_equal": true
+    },
+    {
+      "path": "total.fees_usd",
+      "before": 3.10792,
+      "after": 3.10792,
+      "exact_equal": true
+    },
+    {
+      "path": "total.locked_usd",
+      "before": 3.7507491208791066,
+      "after": 3.7507491208791066,
+      "exact_equal": true
+    },
+    {
+      "path": "total.directional_usd",
+      "before": -22.691749120879116,
+      "after": -22.691749120879116,
+      "exact_equal": true
+    },
+    {
+      "path": "total.pnl_usd",
+      "before": -18.94100000000001,
+      "after": -18.94100000000001,
+      "exact_equal": true
+    },
+    {
+      "path": "total.worst_usd",
+      "before": -2.9791999999999987,
+      "after": -2.9791999999999987,
+      "exact_equal": true
+    },
+    {
+      "path": "total.take_attempts",
+      "before": 39,
+      "after": 39,
+      "exact_equal": true
+    },
+    {
+      "path": "total.take_fills",
+      "before": 17,
+      "after": 17,
+      "exact_equal": true
+    },
+    {
+      "path": "total.maker_orders",
+      "before": 6622,
+      "after": 6622,
+      "exact_equal": true
+    },
+    {
+      "path": "total.maker_fills",
+      "before": 560,
+      "after": 560,
+      "exact_equal": true
+    },
+    {
+      "path": "total.locks",
+      "before": 135,
+      "after": 135,
+      "exact_equal": true
+    },
+    {
+      "path": "total.lock_fills",
+      "before": 108,
+      "after": 108,
+      "exact_equal": true
+    },
+    {
+      "path": "ladder.enabled",
+      "before": true,
+      "after": true,
+      "exact_equal": true
+    },
+    {
+      "path": "ladder.rung",
+      "before": 0,
+      "after": 0,
+      "exact_equal": true
+    },
+    {
+      "path": "ladder.ladder_rung",
+      "before": 0,
+      "after": 0,
+      "exact_equal": true
+    },
+    {
+      "path": "ladder.max_window_usd",
+      "before": 20.0,
+      "after": 20.0,
+      "exact_equal": true
+    },
+    {
+      "path": "ladder.configured_max_window_usd",
+      "before": 50000.0,
+      "after": 50000.0,
+      "exact_equal": true
+    },
+    {
+      "path": "ladder.top_rung",
+      "before": 2,
+      "after": 2,
+      "exact_equal": true
+    },
+    {
+      "path": "ladder.change_pending",
+      "before": false,
+      "after": false,
+      "exact_equal": true
+    },
+    {
+      "path": "ladder.recheck_pending",
+      "before": false,
+      "after": false,
+      "exact_equal": true
+    },
+    {
+      "path": "ladder.effective_from",
+      "before": null,
+      "after": null,
+      "exact_equal": true
+    },
+    {
+      "path": "ladder.pending_limits",
+      "before": null,
+      "after": null,
+      "exact_equal": true
+    },
+    {
+      "path": "ladder.rung_started_at",
+      "before": 1791923645.5061624,
+      "after": 1791923645.5061624,
+      "exact_equal": true
+    },
+    {
+      "path": "ladder.start_pnl_usd",
+      "before": -3.7461000000000073,
+      "after": -3.7461000000000073,
+      "exact_equal": true
+    },
+    {
+      "path": "ladder.last_change",
+      "before": null,
+      "after": null,
+      "exact_equal": true
+    },
+    {
+      "path": "ladder.limits.window_usd",
+      "before": 10.0,
+      "after": 10.0,
+      "exact_equal": true
+    },
+    {
+      "path": "ladder.limits.open_usd",
+      "before": 20.0,
+      "after": 20.0,
+      "exact_equal": true
+    },
+    {
+      "path": "ladder.limits.day_stop_usd",
+      "before": 6.0,
+      "after": 6.0,
+      "exact_equal": true
+    },
+    {
+      "path": "ladder.limits.clip",
+      "before": 5.0,
+      "after": 5.0,
+      "exact_equal": true
+    },
+    {
+      "path": "ladder.limits.total_stop_usd",
+      "before": 10.0,
+      "after": 10.0,
+      "exact_equal": true
+    }
+  ],
+  "used_controls": {
+    "resume": {
+      "returned_filtered_rows": 5,
+      "original_events": [
+        {
+          "timestamp": "2026-10-15T17:23:50.424690371Z",
+          "payload": {
+            "at": 1792085029.9433737,
+            "venue": "kalshi",
+            "state": "ignored; this value was already used",
+            "total_pnl_usd": -18.941000000000013,
+            "counted_from_usd": null,
+            "total_halted": false
+          }
+        }
+      ],
+      "nested_or_other_rows_excluded": 4
+    },
+    "day_reset": {
+      "returned_filtered_rows": 5,
+      "original_events": [
+        {
+          "timestamp": "2026-10-15T17:23:50.424697261Z",
+          "payload": {
+            "at": 1792085029.943387,
+            "venue": "kalshi",
+            "state": "ignored; this value was already used"
+          }
+        }
+      ],
+      "nested_or_other_rows_excluded": 4
+    },
+    "integrity": {
+      "returned_filtered_rows": 5,
+      "original_events": [
+        {
+          "timestamp": "2026-10-15T17:23:50.424693851Z",
+          "payload": {
+            "at": 1792085029.9433825,
+            "venue": "kalshi",
+            "code": null,
+            "state": "ignored; this value was already used"
+          }
+        }
+      ],
+      "nested_or_other_rows_excluded": 4
+    }
+  },
+  "gate": "Original ready status established; cold initial stale row explicitlyexcluded. All67selectedfinancial/history/cap/ladderfields equal before. Three original usedcontrols ignored, no new apply/reset. Not full volume/native ledger export."
+}

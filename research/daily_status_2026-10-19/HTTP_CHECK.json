@@ -1,0 +1,22 @@
+{
+  "checks": [
+    {
+      "at_utc": "2026-10-19T15:24:51.954245+00:00",
+      "path": "/healthz",
+      "credentials_used": false,
+      "status": 200
+    },
+    {
+      "at_utc": "2026-10-19T15:24:52.211981+00:00",
+      "path": "/api/page",
+      "credentials_used": false,
+      "status": 401
+    },
+    {
+      "at_utc": "2026-10-19T15:24:52.430915+00:00",
+      "path": "/api/town",
+      "credentials_used": false,
+      "status": 401
+    }
+  ]
+}

@@ -1,0 +1,1149 @@
+{
+  "status": "Read-only investigation and in-memory exploratory comparison only. No source/test/repo writes, no production query, no selected implementation or release.",
+  "base": "beea7bf09be5405612cd11e4fcd7ee6c5678d469",
+  "results": [
+    {
+      "windows": 2,
+      "actual_method": "KalshiLiveDesk.observe_market",
+      "evidence_state_equal": true,
+      "times": {
+        "original": {
+          "median_wall_ms": 0.010019,
+          "median_cpu_ms": 0.010099,
+          "samples": [
+            {
+              "wall_ms": 0.030798,
+              "cpu_ms": 0.029214
+            },
+            {
+              "wall_ms": 0.016922,
+              "cpu_ms": 0.017193
+            },
+            {
+              "wall_ms": 0.012815,
+              "cpu_ms": 0.012945
+            },
+            {
+              "wall_ms": 0.011131,
+              "cpu_ms": 0.011271
+            },
+            {
+              "wall_ms": 0.011041,
+              "cpu_ms": 0.011191
+            },
+            {
+              "wall_ms": 0.010239,
+              "cpu_ms": 0.01033
+            },
+            {
+              "wall_ms": 0.009728,
+              "cpu_ms": 0.009818
+            },
+            {
+              "wall_ms": 0.009408,
+              "cpu_ms": 0.009479
+            },
+            {
+              "wall_ms": 0.010019,
+              "cpu_ms": 0.010099
+            },
+            {
+              "wall_ms": 0.009578,
+              "cpu_ms": 0.009637
+            },
+            {
+              "wall_ms": 0.009458,
+              "cpu_ms": 0.009538
+            },
+            {
+              "wall_ms": 0.010079,
+              "cpu_ms": 0.01023
+            },
+            {
+              "wall_ms": 0.009538,
+              "cpu_ms": 0.009637
+            },
+            {
+              "wall_ms": 0.009999,
+              "cpu_ms": 0.010089
+            },
+            {
+              "wall_ms": 0.009537,
+              "cpu_ms": 0.009618
+            }
+          ]
+        },
+        "projection": {
+          "median_wall_ms": 0.009427,
+          "median_cpu_ms": 0.009517,
+          "samples": [
+            {
+              "wall_ms": 0.018775,
+              "cpu_ms": 0.018945
+            },
+            {
+              "wall_ms": 0.01071,
+              "cpu_ms": 0.01087
+            },
+            {
+              "wall_ms": 0.013285,
+              "cpu_ms": 0.013415
+            },
+            {
+              "wall_ms": 0.009427,
+              "cpu_ms": 0.009517
+            },
+            {
+              "wall_ms": 0.008866,
+              "cpu_ms": 0.008937
+            },
+            {
+              "wall_ms": 0.008836,
+              "cpu_ms": 0.008926
+            },
+            {
+              "wall_ms": 0.008696,
+              "cpu_ms": 0.008797
+            },
+            {
+              "wall_ms": 0.799954,
+              "cpu_ms": 0.800776
+            },
+            {
+              "wall_ms": 0.013075,
+              "cpu_ms": 0.013194
+            },
+            {
+              "wall_ms": 0.009659,
+              "cpu_ms": 0.009738
+            },
+            {
+              "wall_ms": 0.008997,
+              "cpu_ms": 0.009086
+            },
+            {
+              "wall_ms": 0.009288,
+              "cpu_ms": 0.009477
+            },
+            {
+              "wall_ms": 0.014898,
+              "cpu_ms": 0.015068
+            },
+            {
+              "wall_ms": 0.009328,
+              "cpu_ms": 0.009398
+            },
+            {
+              "wall_ms": 0.008526,
+              "cpu_ms": 0.008596
+            }
+          ]
+        }
+      }
+    },
+    {
+      "windows": 200,
+      "actual_method": "KalshiLiveDesk.observe_market",
+      "evidence_state_equal": true,
+      "times": {
+        "original": {
+          "median_wall_ms": 0.725574,
+          "median_cpu_ms": 0.726036,
+          "samples": [
+            {
+              "wall_ms": 0.794504,
+              "cpu_ms": 0.795125
+            },
+            {
+              "wall_ms": 0.790786,
+              "cpu_ms": 0.791498
+            },
+            {
+              "wall_ms": 0.772603,
+              "cpu_ms": 0.773183
+            },
+            {
+              "wall_ms": 0.855739,
+              "cpu_ms": 0.85699
+            },
+            {
+              "wall_ms": 0.716176,
+              "cpu_ms": 0.716468
+            },
+            {
+              "wall_ms": 0.733629,
+              "cpu_ms": 0.734021
+            },
+            {
+              "wall_ms": 0.838466,
+              "cpu_ms": 0.839578
+            },
+            {
+              "wall_ms": 0.746403,
+              "cpu_ms": 0.747295
+            },
+            {
+              "wall_ms": 0.692642,
+              "cpu_ms": 0.692904
+            },
+            {
+              "wall_ms": 0.719833,
+              "cpu_ms": 0.720255
+            },
+            {
+              "wall_ms": 0.703272,
+              "cpu_ms": 0.703594
+            },
+            {
+              "wall_ms": 0.68645,
+              "cpu_ms": 0.686572
+            },
+            {
+              "wall_ms": 0.725574,
+              "cpu_ms": 0.726036
+            },
+            {
+              "wall_ms": 0.704004,
+              "cpu_ms": 0.704296
+            },
+            {
+              "wall_ms": 0.705537,
+              "cpu_ms": 0.705788
+            }
+          ]
+        },
+        "projection": {
+          "median_wall_ms": 0.613613,
+          "median_cpu_ms": 0.613896,
+          "samples": [
+            {
+              "wall_ms": 0.613613,
+              "cpu_ms": 0.613896
+            },
+            {
+              "wall_ms": 0.611469,
+              "cpu_ms": 0.611732
+            },
+            {
+              "wall_ms": 0.603836,
+              "cpu_ms": 0.604008
+            },
+            {
+              "wall_ms": 0.650303,
+              "cpu_ms": 0.650896
+            },
+            {
+              "wall_ms": 0.616238,
+              "cpu_ms": 0.616651
+            },
+            {
+              "wall_ms": 0.596171,
+              "cpu_ms": 0.596323
+            },
+            {
+              "wall_ms": 0.617892,
+              "cpu_ms": 0.618084
+            },
+            {
+              "wall_ms": 0.608574,
+              "cpu_ms": 0.608827
+            },
+            {
+              "wall_ms": 0.591151,
+              "cpu_ms": 0.591284
+            },
+            {
+              "wall_ms": 0.626108,
+              "cpu_ms": 0.62637
+            },
+            {
+              "wall_ms": 0.620256,
+              "cpu_ms": 0.620849
+            },
+            {
+              "wall_ms": 0.608514,
+              "cpu_ms": 0.608807
+            },
+            {
+              "wall_ms": 0.61725,
+              "cpu_ms": 0.617613
+            },
+            {
+              "wall_ms": 0.59041,
+              "cpu_ms": 0.590543
+            },
+            {
+              "wall_ms": 0.617892,
+              "cpu_ms": 0.621421
+            }
+          ]
+        }
+      }
+    },
+    {
+      "windows": 1200,
+      "actual_method": "KalshiLiveDesk.observe_market",
+      "evidence_state_equal": true,
+      "times": {
+        "original": {
+          "median_wall_ms": 4.229461,
+          "median_cpu_ms": 4.230259,
+          "samples": [
+            {
+              "wall_ms": 4.51598,
+              "cpu_ms": 4.516754
+            },
+            {
+              "wall_ms": 4.202781,
+              "cpu_ms": 4.20366
+            },
+            {
+              "wall_ms": 4.229461,
+              "cpu_ms": 4.230259
+            },
+            {
+              "wall_ms": 4.270428,
+              "cpu_ms": 4.249846
+            },
+            {
+              "wall_ms": 4.283462,
+              "cpu_ms": 4.2843
+            },
+            {
+              "wall_ms": 4.263144,
+              "cpu_ms": 4.264243
+            },
+            {
+              "wall_ms": 4.404019,
+              "cpu_ms": 4.405326
+            },
+            {
+              "wall_ms": 4.227988,
+              "cpu_ms": 4.229137
+            },
+            {
+              "wall_ms": 4.317185,
+              "cpu_ms": 4.318254
+            },
+            {
+              "wall_ms": 4.147097,
+              "cpu_ms": 4.147815
+            },
+            {
+              "wall_ms": 4.138339,
+              "cpu_ms": 4.138969
+            },
+            {
+              "wall_ms": 4.240742,
+              "cpu_ms": 4.242031
+            },
+            {
+              "wall_ms": 4.188493,
+              "cpu_ms": 4.189513
+            },
+            {
+              "wall_ms": 4.171572,
+              "cpu_ms": 4.172231
+            },
+            {
+              "wall_ms": 4.131287,
+              "cpu_ms": 4.131987
+            }
+          ]
+        },
+        "projection": {
+          "median_wall_ms": 3.660812,
+          "median_cpu_ms": 3.661336,
+          "samples": [
+            {
+              "wall_ms": 3.660872,
+              "cpu_ms": 3.661336
+            },
+            {
+              "wall_ms": 3.667454,
+              "cpu_ms": 3.668229
+            },
+            {
+              "wall_ms": 3.767783,
+              "cpu_ms": 3.768647
+            },
+            {
+              "wall_ms": 3.647447,
+              "cpu_ms": 3.648253
+            },
+            {
+              "wall_ms": 3.77714,
+              "cpu_ms": 3.778395
+            },
+            {
+              "wall_ms": 3.733529,
+              "cpu_ms": 3.734494
+            },
+            {
+              "wall_ms": 3.660812,
+              "cpu_ms": 3.661538
+            },
+            {
+              "wall_ms": 3.596821,
+              "cpu_ms": 3.597428
+            },
+            {
+              "wall_ms": 3.636456,
+              "cpu_ms": 3.637111
+            },
+            {
+              "wall_ms": 3.806366,
+              "cpu_ms": 3.80764
+            },
+            {
+              "wall_ms": 4.115546,
+              "cpu_ms": 4.117148
+            },
+            {
+              "wall_ms": 3.611159,
+              "cpu_ms": 3.611844
+            },
+            {
+              "wall_ms": 3.616338,
+              "cpu_ms": 3.617204
+            },
+            {
+              "wall_ms": 3.587724,
+              "cpu_ms": 3.58823
+            },
+            {
+              "wall_ms": 3.59594,
+              "cpu_ms": 3.596566
+            }
+          ]
+        }
+      }
+    },
+    {
+      "windows": 2880,
+      "actual_method": "KalshiLiveDesk.observe_market",
+      "evidence_state_equal": true,
+      "times": {
+        "original": {
+          "median_wall_ms": 10.076542,
+          "median_cpu_ms": 10.077107,
+          "samples": [
+            {
+              "wall_ms": 11.225002,
+              "cpu_ms": 11.21338
+            },
+            {
+              "wall_ms": 10.006852,
+              "cpu_ms": 10.008239
+            },
+            {
+              "wall_ms": 10.584267,
+              "cpu_ms": 10.414928
+            },
+            {
+              "wall_ms": 9.923355,
+              "cpu_ms": 9.924092
+            },
+            {
+              "wall_ms": 10.076542,
+              "cpu_ms": 10.072028
+            },
+            {
+              "wall_ms": 17.650861,
+              "cpu_ms": 17.652623
+            },
+            {
+              "wall_ms": 10.22412,
+              "cpu_ms": 10.225494
+            },
+            {
+              "wall_ms": 10.227908,
+              "cpu_ms": 10.229092
+            },
+            {
+              "wall_ms": 9.887066,
+              "cpu_ms": 9.887954
+            },
+            {
+              "wall_ms": 10.075681,
+              "cpu_ms": 10.077107
+            },
+            {
+              "wall_ms": 10.009426,
+              "cpu_ms": 10.010413
+            },
+            {
+              "wall_ms": 10.347863,
+              "cpu_ms": 10.348956
+            },
+            {
+              "wall_ms": 9.902735,
+              "cpu_ms": 9.903663
+            },
+            {
+              "wall_ms": 10.11216,
+              "cpu_ms": 10.113195
+            },
+            {
+              "wall_ms": 10.004958,
+              "cpu_ms": 10.006155
+            }
+          ]
+        },
+        "projection": {
+          "median_wall_ms": 8.975904,
+          "median_cpu_ms": 8.977264,
+          "samples": [
+            {
+              "wall_ms": 9.119243,
+              "cpu_ms": 9.120411
+            },
+            {
+              "wall_ms": 8.848946,
+              "cpu_ms": 8.849796
+            },
+            {
+              "wall_ms": 9.054691,
+              "cpu_ms": 9.056211
+            },
+            {
+              "wall_ms": 8.975904,
+              "cpu_ms": 8.977264
+            },
+            {
+              "wall_ms": 9.03273,
+              "cpu_ms": 9.033398
+            },
+            {
+              "wall_ms": 9.161282,
+              "cpu_ms": 9.16257
+            },
+            {
+              "wall_ms": 9.026048,
+              "cpu_ms": 9.026946
+            },
+            {
+              "wall_ms": 9.086522,
+              "cpu_ms": 9.087961
+            },
+            {
+              "wall_ms": 8.913135,
+              "cpu_ms": 8.913855
+            },
+            {
+              "wall_ms": 8.755018,
+              "cpu_ms": 8.75571
+            },
+            {
+              "wall_ms": 9.101109,
+              "cpu_ms": 9.102407
+            },
+            {
+              "wall_ms": 8.885273,
+              "cpu_ms": 8.886424
+            },
+            {
+              "wall_ms": 8.941308,
+              "cpu_ms": 8.770699
+            },
+            {
+              "wall_ms": 8.966967,
+              "cpu_ms": 8.967997
+            },
+            {
+              "wall_ms": 8.76124,
+              "cpu_ms": 8.762122
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "guarded_dictcopy_results": [
+    {
+      "windows": 2,
+      "evidence_state_equal": true,
+      "method": "actual KalshiLiveDesk.observe_market",
+      "times": {
+        "original": {
+          "median_wall_ms": 0.013784999999999999,
+          "median_cpu_ms": 0.013691,
+          "samples": [
+            {
+              "wall_ms": 0.032281,
+              "cpu_ms": 0.030888
+            },
+            {
+              "wall_ms": 0.014858,
+              "cpu_ms": 0.014969
+            },
+            {
+              "wall_ms": 0.013274,
+              "cpu_ms": 0.013376
+            },
+            {
+              "wall_ms": 0.010931,
+              "cpu_ms": 0.011021
+            },
+            {
+              "wall_ms": 0.014917,
+              "cpu_ms": 0.015048
+            },
+            {
+              "wall_ms": 0.010871,
+              "cpu_ms": 0.010981
+            },
+            {
+              "wall_ms": 0.078568,
+              "cpu_ms": 0.079268
+            },
+            {
+              "wall_ms": 0.026029,
+              "cpu_ms": 0.014006
+            },
+            {
+              "wall_ms": 0.012072,
+              "cpu_ms": 0.012142
+            },
+            {
+              "wall_ms": 0.01057,
+              "cpu_ms": 0.01065
+            },
+            {
+              "wall_ms": 0.011151,
+              "cpu_ms": 0.011212
+            },
+            {
+              "wall_ms": 0.014296,
+              "cpu_ms": 0.014497
+            }
+          ]
+        },
+        "guarded_dictcopy": {
+          "median_wall_ms": 0.007078,
+          "median_cpu_ms": 0.0071385,
+          "samples": [
+            {
+              "wall_ms": 0.023053,
+              "cpu_ms": 0.023364
+            },
+            {
+              "wall_ms": 0.010419,
+              "cpu_ms": 0.010489
+            },
+            {
+              "wall_ms": 0.008285,
+              "cpu_ms": 0.008385
+            },
+            {
+              "wall_ms": 0.006863,
+              "cpu_ms": 0.006933
+            },
+            {
+              "wall_ms": 0.007033,
+              "cpu_ms": 0.007103
+            },
+            {
+              "wall_ms": 0.006873,
+              "cpu_ms": 0.006962
+            },
+            {
+              "wall_ms": 0.009778,
+              "cpu_ms": 0.009848
+            },
+            {
+              "wall_ms": 0.007744,
+              "cpu_ms": 0.007744
+            },
+            {
+              "wall_ms": 0.007123,
+              "cpu_ms": 0.007174
+            },
+            {
+              "wall_ms": 0.006662,
+              "cpu_ms": 0.006753
+            },
+            {
+              "wall_ms": 0.006702,
+              "cpu_ms": 0.006822
+            },
+            {
+              "wall_ms": 0.006823,
+              "cpu_ms": 0.006893
+            }
+          ]
+        }
+      }
+    },
+    {
+      "windows": 200,
+      "evidence_state_equal": true,
+      "method": "actual KalshiLiveDesk.observe_market",
+      "times": {
+        "original": {
+          "median_wall_ms": 0.76317,
+          "median_cpu_ms": 0.7638015,
+          "samples": [
+            {
+              "wall_ms": 0.815343,
+              "cpu_ms": 0.815793
+            },
+            {
+              "wall_ms": 0.793181,
+              "cpu_ms": 0.793903
+            },
+            {
+              "wall_ms": 0.748658,
+              "cpu_ms": 0.749139
+            },
+            {
+              "wall_ms": 1.438204,
+              "cpu_ms": 1.439208
+            },
+            {
+              "wall_ms": 0.75477,
+              "cpu_ms": 0.755361
+            },
+            {
+              "wall_ms": 0.716017,
+              "cpu_ms": 0.716208
+            },
+            {
+              "wall_ms": 0.789995,
+              "cpu_ms": 0.790967
+            },
+            {
+              "wall_ms": 0.763606,
+              "cpu_ms": 0.764177
+            },
+            {
+              "wall_ms": 0.712811,
+              "cpu_ms": 0.713061
+            },
+            {
+              "wall_ms": 0.796899,
+              "cpu_ms": 0.797699
+            },
+            {
+              "wall_ms": 0.756151,
+              "cpu_ms": 0.756903
+            },
+            {
+              "wall_ms": 0.762734,
+              "cpu_ms": 0.763426
+            }
+          ]
+        },
+        "guarded_dictcopy": {
+          "median_wall_ms": 0.3420935,
+          "median_cpu_ms": 0.342249,
+          "samples": [
+            {
+              "wall_ms": 0.369645,
+              "cpu_ms": 0.369871
+            },
+            {
+              "wall_ms": 0.34007,
+              "cpu_ms": 0.340285
+            },
+            {
+              "wall_ms": 0.341031,
+              "cpu_ms": 0.341177
+            },
+            {
+              "wall_ms": 0.376808,
+              "cpu_ms": 0.377225
+            },
+            {
+              "wall_ms": 0.343136,
+              "cpu_ms": 0.343311
+            },
+            {
+              "wall_ms": 0.38281,
+              "cpu_ms": 0.383306
+            },
+            {
+              "wall_ms": 0.387749,
+              "cpu_ms": 0.388135
+            },
+            {
+              "wall_ms": 0.341051,
+              "cpu_ms": 0.341187
+            },
+            {
+              "wall_ms": 0.385194,
+              "cpu_ms": 0.385761
+            },
+            {
+              "wall_ms": 0.333267,
+              "cpu_ms": 0.333312
+            },
+            {
+              "wall_ms": 0.34055,
+              "cpu_ms": 0.340586
+            },
+            {
+              "wall_ms": 0.338627,
+              "cpu_ms": 0.338783
+            }
+          ]
+        }
+      }
+    },
+    {
+      "windows": 1200,
+      "evidence_state_equal": true,
+      "method": "actual KalshiLiveDesk.observe_market",
+      "times": {
+        "original": {
+          "median_wall_ms": 4.6970875,
+          "median_cpu_ms": 4.693454,
+          "samples": [
+            {
+              "wall_ms": 5.278185,
+              "cpu_ms": 5.299055
+            },
+            {
+              "wall_ms": 4.367021,
+              "cpu_ms": 4.367887
+            },
+            {
+              "wall_ms": 5.008688,
+              "cpu_ms": 5.009444
+            },
+            {
+              "wall_ms": 4.344299,
+              "cpu_ms": 4.345123
+            },
+            {
+              "wall_ms": 4.992598,
+              "cpu_ms": 4.993284
+            },
+            {
+              "wall_ms": 4.342514,
+              "cpu_ms": 4.34304
+            },
+            {
+              "wall_ms": 4.970617,
+              "cpu_ms": 4.971142
+            },
+            {
+              "wall_ms": 4.427515,
+              "cpu_ms": 4.360993
+            },
+            {
+              "wall_ms": 4.96666,
+              "cpu_ms": 4.967396
+            },
+            {
+              "wall_ms": 4.418238,
+              "cpu_ms": 4.419512
+            },
+            {
+              "wall_ms": 5.080163,
+              "cpu_ms": 5.081099
+            },
+            {
+              "wall_ms": 4.319763,
+              "cpu_ms": 4.320559
+            }
+          ]
+        },
+        "guarded_dictcopy": {
+          "median_wall_ms": 2.0989065,
+          "median_cpu_ms": 2.0951265,
+          "samples": [
+            {
+              "wall_ms": 2.1114,
+              "cpu_ms": 2.112104
+            },
+            {
+              "wall_ms": 2.123863,
+              "cpu_ms": 2.124838
+            },
+            {
+              "wall_ms": 2.08988,
+              "cpu_ms": 2.090403
+            },
+            {
+              "wall_ms": 2.104838,
+              "cpu_ms": 2.105231
+            },
+            {
+              "wall_ms": 2.090721,
+              "cpu_ms": 2.091435
+            },
+            {
+              "wall_ms": 2.072236,
+              "cpu_ms": 2.072681
+            },
+            {
+              "wall_ms": 2.141017,
+              "cpu_ms": 2.141789
+            },
+            {
+              "wall_ms": 2.104637,
+              "cpu_ms": 2.105261
+            },
+            {
+              "wall_ms": 2.098135,
+              "cpu_ms": 2.098818
+            },
+            {
+              "wall_ms": 2.099678,
+              "cpu_ms": 2.0885
+            },
+            {
+              "wall_ms": 2.073048,
+              "cpu_ms": 2.073452
+            },
+            {
+              "wall_ms": 2.076154,
+              "cpu_ms": 2.076808
+            }
+          ]
+        }
+      }
+    },
+    {
+      "windows": 2880,
+      "evidence_state_equal": true,
+      "method": "actual KalshiLiveDesk.observe_market",
+      "times": {
+        "original": {
+          "median_wall_ms": 11.386841,
+          "median_cpu_ms": 11.387885,
+          "samples": [
+            {
+              "wall_ms": 12.879638,
+              "cpu_ms": 12.880101
+            },
+            {
+              "wall_ms": 10.508329,
+              "cpu_ms": 10.509293
+            },
+            {
+              "wall_ms": 11.983242,
+              "cpu_ms": 11.983908
+            },
+            {
+              "wall_ms": 10.79044,
+              "cpu_ms": 10.791862
+            },
+            {
+              "wall_ms": 12.205189,
+              "cpu_ms": 12.205972
+            },
+            {
+              "wall_ms": 10.598729,
+              "cpu_ms": 10.599674
+            },
+            {
+              "wall_ms": 12.200452,
+              "cpu_ms": 12.201174
+            },
+            {
+              "wall_ms": 10.453627,
+              "cpu_ms": 10.454974
+            },
+            {
+              "wall_ms": 12.17854,
+              "cpu_ms": 12.179894
+            },
+            {
+              "wall_ms": 10.554806,
+              "cpu_ms": 10.555651
+            },
+            {
+              "wall_ms": 12.198528,
+              "cpu_ms": 12.19921
+            },
+            {
+              "wall_ms": 10.518889,
+              "cpu_ms": 10.519473
+            }
+          ]
+        },
+        "guarded_dictcopy": {
+          "median_wall_ms": 5.065184,
+          "median_cpu_ms": 5.065879499999999,
+          "samples": [
+            {
+              "wall_ms": 5.086525,
+              "cpu_ms": 5.08744
+            },
+            {
+              "wall_ms": 5.051349,
+              "cpu_ms": 5.046523
+            },
+            {
+              "wall_ms": 14.02922,
+              "cpu_ms": 14.031492
+            },
+            {
+              "wall_ms": 5.047461,
+              "cpu_ms": 5.048207
+            },
+            {
+              "wall_ms": 5.095792,
+              "cpu_ms": 5.096526
+            },
+            {
+              "wall_ms": 5.207592,
+              "cpu_ms": 5.208796
+            },
+            {
+              "wall_ms": 5.053672,
+              "cpu_ms": 5.054238
+            },
+            {
+              "wall_ms": 5.363485,
+              "cpu_ms": 5.364818
+            },
+            {
+              "wall_ms": 5.076696,
+              "cpu_ms": 5.077521
+            },
+            {
+              "wall_ms": 5.037733,
+              "cpu_ms": 5.038658
+            },
+            {
+              "wall_ms": 5.029317,
+              "cpu_ms": 5.030223
+            },
+            {
+              "wall_ms": 5.040528,
+              "cpu_ms": 5.041124
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "source_commit": "beea7bf09be5405612cd11e4fcd7ee6c5678d469",
+  "best_candidate": {
+    "problem": "Repeated deep dataclass-to-dict traversal of full retained native Kalshi Window history in report/evidence paths consumes avoidable event-loop CPU. These rows contain only builtin scalar fields; recursive deepcopy buys no additional isolation for that native population.",
+    "safe_correction": "Separate projection helper imported ONLY by selected speeddesk.py/speeddesk_live.py report/evidence callsites. Exact native Kalshi Window + exactdict + field order/shape matches declared dataclass fields + every value exact builtin str/int/float/bool/None -> fresh dict copy. Otherwise execute original dataclasses.asdict. No cache, no removal/pruning, no changed timestamps, no fields omitted.",
+    "preferred_initial_scope": [
+      "src/nightcrawler/speeddesk_live.py:1046 (on_windows evidence rows)",
+      "src/nightcrawler/speeddesk_live.py:2355-2359 (observe_market all snapshot windows)",
+      "src/nightcrawler/speeddesk_live.py:2651 (scorecard windows)",
+      "src/nightcrawler/speeddesk.py:583-589 (practice evidence step; helper fastpath Kalshi only)",
+      "src/nightcrawler/speeddesk.py:362-365 (ended-window scorecard rows)"
+    ],
+    "root_to_select": "Root selects exact callsites after actual new WorkTrace/population evidence; actual constructor state/checkpoints may yield larger savings but broader dataclass support/durability checks should be separate.",
+    "hard_exclusions": [
+      "Do NOT edit speeddesk_model.py or kalshi_online_learning.py; learner fingerprint hashes those bytes and would disable preserved V1 history.",
+      "Do not replace non-Window conversions,financial/risk arithmetic/accounting/reservations or generic asdict globally.",
+      "Do not convert allvenues in fastpath; non-Kalshi Window must fall back to originalasdict if strict Polymarket scope is required.",
+      "No persistent mutable-state cache, history deletion, skipped callbacks/model advances, decimated evidence cadence, changed save/fsync/order journal behavior, altered strategythresholds/caps/stops/resume/vars."
+    ]
+  },
+  "production_evidence_support": [
+    {
+      "source": "research/kalshi_profitability_2026-10-14/LIVE_MIRROR_TWO_WINDOW_AUDIT.md:77",
+      "fact": "Actual prior reader-delay overlap contains practice_daily_reports255.766ms wall/247.091msCPU nestedcheckpoint461.188ms; later practice_state331.649ms with practice_panel324.841msCPU301.931ms.",
+      "limit": "Proves report/state CPU is material in a recorded population; does not isolate asdict cost or establish current population size."
+    },
+    {
+      "source": "research/kalshi_profitability_2026-10-14/WS_TIMING_TWO_WINDOW_AUDIT.md:69",
+      "fact": "Another captured reader-delay interval contains live_checkpoint520.629ms /305.329msCPU, mirror249.122ms /188.193msCPU plus practice work.",
+      "limit": "Nesteddurations are not additive and cannot be assigned solely to conversion."
+    },
+    {
+      "source": "docs/WORKLOG.md:17 (2026-10-15 17:50UTC entry)",
+      "fact": "Latest target diagnostic explicit_slug only and healthy dueBTC, 0forecasts/0scores; actualmainreader/EXEC issue remains open.",
+      "limit": "No uniquely proven upstream cause for explicitgap and no claim this projection prevents that exclusion."
+    }
+  ],
+  "source_mechanism": [
+    {
+      "ref": "src/nightcrawler/speeddesk.py:582-589",
+      "fact": "Every practice step creates asdict for every retained model Window before evidence.advance, even though windows have builtin scalar schema."
+    },
+    {
+      "ref": "src/nightcrawler/speeddesk.py:592",
+      "fact": "Same step invokes live.observe_market."
+    },
+    {
+      "ref": "src/nightcrawler/speeddesk_live.py:2353-2359",
+      "fact": "Live observer again converts every snapshot Window; snapshot retains all Kalshi model windows."
+    },
+    {
+      "ref": "src/nightcrawler/speeddesk_live.py:2388",
+      "fact": "Live controller step independently calls observe_market as well."
+    },
+    {
+      "ref": "src/nightcrawler/speeddesk.py:473-481",
+      "fact": "_refresh_live_windows copies all native Kalshi windows without history pruning. A new per-call projection sees those copies freshly; no temporal cache needed."
+    },
+    {
+      "ref": "src/nightcrawler/speeddesk.py:362-369",
+      "fact": "Every venue summary converts ended Window rows plus settlements before scorecard; daily_reports revisits prior-day summaries."
+    },
+    {
+      "ref": "src/nightcrawler/speeddesk_live.py:2650-2692",
+      "fact": "Live scorecard converts all ended windows; panel invokes real and twin scorecards, and daily reports repeat cohorts."
+    },
+    {
+      "ref": "src/nightcrawler/speeddesk_model.py:105-117",
+      "fact": "Declared native Window fields are slug,start,end,start_price,taker_coefficient,maker_coefficient,venue_start_price,tick_size,min_trade_qty,fee_rounding,venue; runtime can violate annotations so guard/fallback mandatory."
+    }
+  ],
+  "proposed_helper_sketch_not_source_patch": "FIELD_NAMES = tuple(field.name for field in dataclasses.fields(Window))\nATOMIC_TYPES = frozenset((str, int, float, bool, type(None)))\ndef window_row(window):\n    if type(window) is Window:\n        row = window.__dict__\n        if (type(row) is dict and tuple(row) == FIELD_NAMES\n                and all(type(value) in ATOMIC_TYPES for value in row.values())\n                and row[\"venue\"] == \"kalshi\"):\n            return row.copy()\n    return dataclasses.asdict(window)\n",
+  "exploratory_measurement_limits": [
+    "Actual KalshiLiveDesk.observe_market method, synthetic native histories,emptybooks/coldBTC evidence, no venue/network/account/order/persistence work.",
+    "New candidate functions monkeypatch module.asdict in isolated ephemeral Python process only; no repository source mutation.",
+    "Initial getattrs/tuple prototype gains only~15percent; second guarded dictionary-copy prototype gains~2.2x. Preserve both, do not hide weaker prototype.",
+    "Secondprototype measured keyset equality guard, not final field-order equality+Kalshi-only guard. Finalselectedhelper must benchmark exactbytes/guards; current timings are exploratory, not approvalgate results.",
+    "Twelve alternating baseline/candidate pairs per population; no preregistered pass threshold, machine contention was not rigorously excluded.",
+    "All complete evidence.state outputs equal for measured populations. No full-live-controller/trading/state persistence equivalence measured yet.",
+    "Actual production history/window counts unknown;200,1200,2880 rows are synthetic load populations,not a live measurement.",
+    "No claim of profitability, avoided fills/losses, sourcegapfix, all-delays-fixed or EXECcompletion."
+  ],
+  "required_reproducer_and_tests": [
+    "Pin original Window projection source and compare exact ordered dictitems/JSON output with proposed helper for ordinary Kalshi metadata,missingstrike,NaN/Inf,integers/bools,allnative scalar values accepted by current asdict; helper must not validate/repair inputs.",
+    "Native __dict__ reordered/deletedfield/extraattribute/samesize replacement must use original path and preserve exceptions/deepcopy; test subclass,customnestedmutablelist/dict/dataclass,str/int/floatsubclass,__deepcopy__ observable/raising,custommapping/dynamicdescriptor cases as supportedcontract.",
+    "Mutate or replace window fields between adjacent calls,on_windows,opening tick update,snapshotcopy andstate restoration; no cache survives and prior projected dict remainsisolated.",
+    "Non-Kalshi and unsupported Window shape use originalasdict. No change puremodel/learner bytes/fingerprint.",
+    "Paired actual SpeedRunner.step/live.observe_market/scorecard/fullpanel/checkpoint runs on same synthetic populatedhistory,match complete model,evidence,orderedreceipts,panels,decodedledger/mirror,receiptchain and save/fsynccadence; compare source clocks/callback order with existing golden/fairness tests.",
+    "Safetytests retain firstpostdelayrecheck,askdisappearance,booksourcefreshness,parentinvalidation,stoplatches/resumeconsumption/ownerseparation; no order/risk changes.",
+    "Finalperformance must use exact selectedhelper/allcallsites,alternate baseline/candidate,measure threadCPU/wall/allocation/retainedmemory at actualobservedpopulation plus bounds. Root controls fullsuite/mypy/changedRuff/independentreview/release."
+  ],
+  "other_candidates": [
+    {
+      "candidate": "Live panel positions O(P*I) repeated set construction",
+      "refs": [
+        "src/nightcrawler/speeddesk_live.py:2604-2605",
+        "src/nightcrawler/speeddesk_live.py:1733-1734",
+        "src/nightcrawler/speeddesk_live.py:1792",
+        "research/kalshi_profitability_2026-10-14/SCORECARD_GROUPING.md:34-36"
+      ],
+      "assessment": "Real algorithmic repetition; ephemeral native intent-window set once perpanel can preserve ordinary values with fallback. Production positions_count typically few/unverified; prior scorecard release explicitly left it unchanged. Lower priority without actualP/I density and profile."
+    },
+    {
+      "candidate": "Immediate controller wake on adverse status",
+      "refs": [
+        "src/nightcrawler/speeddesk_live.py:1073-1085",
+        "src/nightcrawler/speeddesk_live.py:1040-1043"
+      ],
+      "assessment": "on_status expires evidence/cancels twin but does not wake livecontroller, unlike tick/book; could delaycancel until idle step on no-data loss. Needs exact asyncwait/source proof and concretefake repro; notselected as mainreader3s correction, no measured currentimpact."
+    },
+    {
+      "candidate": "Prefilter windows by UTCscorecardday before asdict",
+      "refs": [
+        "src/nightcrawler/speeddesk_scorecard.py:47-67",
+        "src/nightcrawler/speeddesk_metrics.py:251-264"
+      ],
+      "assessment": "Potential larger gain but current scorecard counts malformedwindows globally beforedayfilter. Blind prefilter changes invalid-window/error semantics; needs exactnativefastpath+fallback and more scope. Do not implement as trivialfilter."
+    },
+    {
+      "candidate": "Delete retained history/skip emptyorder advance/persist cache",
+      "refs": [
+        "research/kalshi_profitability_2026-10-14/PRACTICE_ADVANCE_ANALYSIS.md:45-88"
+      ],
+      "assessment": "Rejected: changes reason maps/currentcallbackcancellation/fills/restarts/history/publicmutation contract. Do not revive."
+    }
+  ]
+}

@@ -1,0 +1,456 @@
+{
+  "summary": {
+    "windows": 15,
+    "wins": 8,
+    "losses": 7,
+    "actual_pnl": "-4.0182000000000007",
+    "fees": "0.2632",
+    "fill_totals_match": 14,
+    "prefix_count": 11,
+    "prefix_then_negative": 4,
+    "prefix_then_higher_actual": 4,
+    "prefix_positive_but_lower": 1,
+    "prefix_no_later_fills": 2,
+    "later_fill_rows": 34,
+    "later_fills_without_newer_intent_log": 0,
+    "unique_later_filled_orders_local_intent_not_after_prefix": 1,
+    "explicit_native_hash_count_and_arithmetic_assertions": 50
+  },
+  "windows": [
+    {
+      "window": "KXBTC15M-26OCT152015-15",
+      "actual_pnl": "0.02",
+      "fees": "0.0",
+      "fills_match": false,
+      "prefix": null,
+      "later": []
+    },
+    {
+      "window": "KXBTC15M-26OCT152030-30",
+      "actual_pnl": "0.11",
+      "fees": "0.0",
+      "fills_match": true,
+      "prefix": {
+        "stamp": "2026-10-16T00:15:59.318008547Z",
+        "floor": "0.050"
+      },
+      "later": [
+        {
+          "fill_id": "07244a55-22a9-aa06-d397-2044c50aa111",
+          "client_order_id": "nc-speed-8add448b5a034eacb99b5a563178de4a",
+          "intent_platform_timestamp": "2026-10-16T00:16:14.169145675Z",
+          "local_intent_at": "1792109773.3463447",
+          "new_intent_log_after_prefix": true,
+          "new_intent_local_at_after_prefix": true
+        },
+        {
+          "fill_id": "07244a5b-07e1-99ba-f459-736ba2bcfce6",
+          "client_order_id": "nc-speed-97e70665cf274d93aa16246f87f32783",
+          "intent_platform_timestamp": "2026-10-16T00:17:46.325931535Z",
+          "local_intent_at": "1792109855.941077",
+          "new_intent_log_after_prefix": true,
+          "new_intent_local_at_after_prefix": true
+        },
+        {
+          "fill_id": "07244a59-b109-a338-a1aa-94b0904f80b1",
+          "client_order_id": "nc-speed-77c77349a7ed4d5abced2c8fa722dd23",
+          "intent_platform_timestamp": "2026-10-16T00:18:01.530336920Z",
+          "local_intent_at": "1792109881.2658873",
+          "new_intent_log_after_prefix": true,
+          "new_intent_local_at_after_prefix": true
+        },
+        {
+          "fill_id": "07244a59-0ad1-a658-d00a-d91652d8cd05",
+          "client_order_id": "nc-speed-38bbd73108f24a38a36f660ef6f0199b",
+          "intent_platform_timestamp": "2026-10-16T00:18:22.250708599Z",
+          "local_intent_at": "1792109901.9922276",
+          "new_intent_log_after_prefix": true,
+          "new_intent_local_at_after_prefix": true
+        }
+      ]
+    },
+    {
+      "window": "KXBTC15M-26OCT152045-45",
+      "actual_pnl": "-0.5325",
+      "fees": "0.0525",
+      "fills_match": true,
+      "prefix": {
+        "stamp": "2026-10-16T00:33:15.351394279Z",
+        "floor": "0.200"
+      },
+      "later": [
+        {
+          "fill_id": "07244aa4-2941-a557-b5cb-3a3cb4bc274e",
+          "client_order_id": "nc-speed-8f381be4235544a0bd49b11d4d1f68f8",
+          "intent_platform_timestamp": "2026-10-16T00:34:07.366925818Z",
+          "local_intent_at": "1792110844.7776654",
+          "new_intent_log_after_prefix": true,
+          "new_intent_local_at_after_prefix": true
+        },
+        {
+          "fill_id": "07244aa6-1d11-b5dd-6c83-368fec4cb8e7",
+          "client_order_id": "nc-speed-1e23ef0ccf34490685a288743216adff",
+          "intent_platform_timestamp": "2026-10-16T00:34:43.674099202Z",
+          "local_intent_at": "1792110882.8555152",
+          "new_intent_log_after_prefix": true,
+          "new_intent_local_at_after_prefix": true
+        },
+        {
+          "fill_id": "07244ab8-c501-befd-da4a-fc20af44ac21",
+          "client_order_id": "nc-speed-2eb769339ae847c5aa467d6193708637",
+          "intent_platform_timestamp": "2026-10-16T00:41:05.113684303Z",
+          "local_intent_at": "1792111264.641366",
+          "new_intent_log_after_prefix": true,
+          "new_intent_local_at_after_prefix": true
+        }
+      ]
+    },
+    {
+      "window": "KXBTC15M-26OCT152100-00",
+      "actual_pnl": "1.7418000000000003",
+      "fees": "0.0132",
+      "fills_match": true,
+      "prefix": {
+        "stamp": "2026-10-16T00:56:01.594034031Z",
+        "floor": "1.7418"
+      },
+      "later": []
+    },
+    {
+      "window": "KXBTC15M-26OCT152115-15",
+      "actual_pnl": "0.705799999999999",
+      "fees": "0.0142",
+      "fills_match": true,
+      "prefix": {
+        "stamp": "2026-10-16T01:03:07.979596917Z",
+        "floor": "0.450"
+      },
+      "later": [
+        {
+          "fill_id": "07244acd-58a1-bcc7-a076-3f60a87d79ce",
+          "client_order_id": "nc-speed-6c9e5877c2cd439aa5502bdc431efa15",
+          "intent_platform_timestamp": "2026-10-16T01:03:29.539294053Z",
+          "local_intent_at": "1792112608.5921693",
+          "new_intent_log_after_prefix": true,
+          "new_intent_local_at_after_prefix": true
+        },
+        {
+          "fill_id": "07244ace-1609-9b8f-ef0a-65abe0f509c8",
+          "client_order_id": "nc-speed-9c4ed0b127e4498eb9267c764777bdfb",
+          "intent_platform_timestamp": "2026-10-16T01:03:41.990664442Z",
+          "local_intent_at": "1792112621.5886939",
+          "new_intent_log_after_prefix": true,
+          "new_intent_local_at_after_prefix": true
+        },
+        {
+          "fill_id": "07244acf-4cf1-b72c-eece-86ee94fda87f",
+          "client_order_id": "nc-speed-38fe5db6e76c43f7b01cb8f27923930c",
+          "intent_platform_timestamp": "2026-10-16T01:04:10.326576840Z",
+          "local_intent_at": "1792112649.9346843",
+          "new_intent_log_after_prefix": true,
+          "new_intent_local_at_after_prefix": true
+        },
+        {
+          "fill_id": "07244ac8-cf69-b8af-6091-9814c2d7a00c",
+          "client_order_id": "nc-speed-0da2165bd6f8462eaa1489f9eb7c0331",
+          "intent_platform_timestamp": "2026-10-16T01:04:37.936163038Z",
+          "local_intent_at": "1792112677.4248724",
+          "new_intent_log_after_prefix": true,
+          "new_intent_local_at_after_prefix": true
+        },
+        {
+          "fill_id": "07244b4f-be69-814f-7fed-789cbd33fb5b",
+          "client_order_id": "nc-speed-45a6c92685034898ae9f54e45fdec499",
+          "intent_platform_timestamp": "2026-10-16T01:11:00.483303210Z",
+          "local_intent_at": "1792113060.009821",
+          "new_intent_log_after_prefix": true,
+          "new_intent_local_at_after_prefix": true
+        }
+      ]
+    },
+    {
+      "window": "KXBTC15M-26OCT152130-30",
+      "actual_pnl": "-1.41",
+      "fees": "0.0",
+      "fills_match": true,
+      "prefix": {
+        "stamp": "2026-10-16T01:18:36.746385766Z",
+        "floor": "0.300"
+      },
+      "later": [
+        {
+          "fill_id": "07244b61-2231-8c19-debc-1b3e4d61c0c7",
+          "client_order_id": "nc-speed-0bd1f7d2e690453698c469fc942eb9b8",
+          "intent_platform_timestamp": "2026-10-16T01:19:30.805721118Z",
+          "local_intent_at": "1792113570.0153778",
+          "new_intent_log_after_prefix": true,
+          "new_intent_local_at_after_prefix": true
+        },
+        {
+          "fill_id": "07244b67-38e1-8219-4b49-573454bd39a2",
+          "client_order_id": "nc-speed-be72c362c5644b18bc2be9abaf3f9478",
+          "intent_platform_timestamp": "2026-10-16T01:19:36.707735613Z",
+          "local_intent_at": "1792113576.0048401",
+          "new_intent_log_after_prefix": true,
+          "new_intent_local_at_after_prefix": true
+        },
+        {
+          "fill_id": "07244b66-2009-a863-59f1-5dbfac2901dd",
+          "client_order_id": "nc-speed-2e2f7cb76c094176a1ed1223af0f28dd",
+          "intent_platform_timestamp": "2026-10-16T01:19:49.962168826Z",
+          "local_intent_at": "1792113589.6088185",
+          "new_intent_log_after_prefix": true,
+          "new_intent_local_at_after_prefix": true
+        }
+      ]
+    },
+    {
+      "window": "KXBTC15M-26OCT152145-45",
+      "actual_pnl": "0.2784",
+      "fees": "0.0816",
+      "fills_match": true,
+      "prefix": {
+        "stamp": "2026-10-16T01:31:13.923274319Z",
+        "floor": "0.400"
+      },
+      "later": [
+        {
+          "fill_id": "07244b0a-7451-a7dc-a5cf-bb7d931ce82d",
+          "client_order_id": "nc-speed-46db4fb99a2840208f09bcd45372fe6e",
+          "intent_platform_timestamp": "2026-10-16T01:32:47.140997076Z",
+          "local_intent_at": "1792114366.3466308",
+          "new_intent_log_after_prefix": true,
+          "new_intent_local_at_after_prefix": true
+        },
+        {
+          "fill_id": "07244b3b-7ca9-8305-238c-34913f2cef9f",
+          "client_order_id": "nc-speed-975ec7301557464e99b15767c64e19e0",
+          "intent_platform_timestamp": "2026-10-16T01:34:41.498368648Z",
+          "local_intent_at": "1792114481.1915119",
+          "new_intent_log_after_prefix": true,
+          "new_intent_local_at_after_prefix": true
+        },
+        {
+          "fill_id": "07244b3b-0499-87e1-0bf6-02c56af0bdd4",
+          "client_order_id": "nc-speed-c17238581dfb4fb0a7b4a6ca3da7f761",
+          "intent_platform_timestamp": "2026-10-16T01:34:49.138123519Z",
+          "local_intent_at": "1792114487.7871506",
+          "new_intent_log_after_prefix": true,
+          "new_intent_local_at_after_prefix": true
+        },
+        {
+          "fill_id": "07244b3d-bb79-b5e2-c333-0938b77f5dd4",
+          "client_order_id": "nc-speed-e389c497705d4261ab67bd31cf143b7b",
+          "intent_platform_timestamp": "2026-10-16T01:34:55.813943113Z",
+          "local_intent_at": "1792114495.5106044",
+          "new_intent_log_after_prefix": true,
+          "new_intent_local_at_after_prefix": true
+        },
+        {
+          "fill_id": "07244b24-e061-bfba-a50a-95bab8f5e3a5",
+          "client_order_id": "nc-speed-3edb1ca5225d4cafad48fff160d02517",
+          "intent_platform_timestamp": "2026-10-16T01:41:01.332790255Z",
+          "local_intent_at": "1792114860.0104034",
+          "new_intent_log_after_prefix": true,
+          "new_intent_local_at_after_prefix": true
+        }
+      ]
+    },
+    {
+      "window": "KXBTC15M-26OCT152200-00",
+      "actual_pnl": "1.6243",
+      "fees": "0.0357",
+      "fills_match": true,
+      "prefix": {
+        "stamp": "2026-10-16T01:48:42.434076131Z",
+        "floor": "0.400"
+      },
+      "later": [
+        {
+          "fill_id": "07244bf2-e629-a0b4-0aaa-d7b0ae29ba31",
+          "client_order_id": "nc-speed-aad2daeec4544969be27ccddedcd14b0",
+          "intent_platform_timestamp": "2026-10-16T01:48:42.435942087Z",
+          "local_intent_at": "1792115321.6146324",
+          "new_intent_log_after_prefix": true,
+          "new_intent_local_at_after_prefix": false
+        },
+        {
+          "fill_id": "07244bfd-c6f9-aa97-5019-b72340774113",
+          "client_order_id": "nc-speed-5f8e32145932408aaa27507e752eef7b",
+          "intent_platform_timestamp": "2026-10-16T01:48:55.336704718Z",
+          "local_intent_at": "1792115334.9606302",
+          "new_intent_log_after_prefix": true,
+          "new_intent_local_at_after_prefix": true
+        },
+        {
+          "fill_id": "07244bfe-69f9-9eaf-dcc1-39eb25810824",
+          "client_order_id": "nc-speed-11a77063d79c40f7a248149414993917",
+          "intent_platform_timestamp": "2026-10-16T01:49:08.911577500Z",
+          "local_intent_at": "1792115347.4271734",
+          "new_intent_log_after_prefix": true,
+          "new_intent_local_at_after_prefix": true
+        },
+        {
+          "fill_id": "07244bdd-2621-afe0-b7e7-d40ab28a2571",
+          "client_order_id": "nc-speed-f34d307076d9411dbee731424f72fd14",
+          "intent_platform_timestamp": "2026-10-16T01:56:01.588946222Z",
+          "local_intent_at": "1792115761.2470489",
+          "new_intent_log_after_prefix": true,
+          "new_intent_local_at_after_prefix": true
+        }
+      ]
+    },
+    {
+      "window": "KXBTC15M-26OCT152215-15",
+      "actual_pnl": "0.6338",
+      "fees": "0.0162",
+      "fills_match": true,
+      "prefix": {
+        "stamp": "2026-10-16T02:05:00.208624738Z",
+        "floor": "0.050"
+      },
+      "later": [
+        {
+          "fill_id": "07244ba0-3f91-8f21-f5d4-f9aa24c00d54",
+          "client_order_id": "nc-speed-84d87972d88d4d2b995904a20ed64a61",
+          "intent_platform_timestamp": "2026-10-16T02:05:42.608620458Z",
+          "local_intent_at": "1792116342.2662768",
+          "new_intent_log_after_prefix": true,
+          "new_intent_local_at_after_prefix": true
+        },
+        {
+          "fill_id": "07244ba0-db61-aec9-0402-56d13a888c81",
+          "client_order_id": "nc-speed-996f6374a978455a93fbe2d0409eef4e",
+          "intent_platform_timestamp": "2026-10-16T02:05:46.754160366Z",
+          "local_intent_at": "1792116344.879512",
+          "new_intent_log_after_prefix": true,
+          "new_intent_local_at_after_prefix": true
+        },
+        {
+          "fill_id": "07244ba2-94e1-8c28-bf5d-7c1db8b6c8fb",
+          "client_order_id": "nc-speed-1aae6d39c0314a5e9a7bfabec9862d0b",
+          "intent_platform_timestamp": "2026-10-16T02:06:20.727739684Z",
+          "local_intent_at": "1792116380.4761753",
+          "new_intent_log_after_prefix": true,
+          "new_intent_local_at_after_prefix": true
+        },
+        {
+          "fill_id": "07244b9a-7949-b4a4-83b9-c5956aa9c1c0",
+          "client_order_id": "nc-speed-a29d770e197949e89b788ef1dd493d82",
+          "intent_platform_timestamp": "2026-10-16T02:09:17.915302467Z",
+          "local_intent_at": "1792116557.571443",
+          "new_intent_log_after_prefix": true,
+          "new_intent_local_at_after_prefix": true
+        },
+        {
+          "fill_id": "07244b92-4fb9-8f48-0e1f-b094bd0bd07e",
+          "client_order_id": "nc-speed-4733929b10a84ccd95953a1c915c7b20",
+          "intent_platform_timestamp": "2026-10-16T02:11:01.283431711Z",
+          "local_intent_at": "1792116660.391311",
+          "new_intent_log_after_prefix": true,
+          "new_intent_local_at_after_prefix": true
+        }
+      ]
+    },
+    {
+      "window": "KXBTC15M-26OCT152230-30",
+      "actual_pnl": "-0.181",
+      "fees": "0.031",
+      "fills_match": true,
+      "prefix": {
+        "stamp": "2026-10-16T02:23:50.823116755Z",
+        "floor": "0.5500"
+      },
+      "later": [
+        {
+          "fill_id": "07244892-0219-a4d3-d4ed-3d441199d40d",
+          "client_order_id": "nc-speed-6efb079116774c36b9734f18aa75a187",
+          "intent_platform_timestamp": "2026-10-16T02:23:52.309365047Z",
+          "local_intent_at": "1792117431.663341",
+          "new_intent_log_after_prefix": true,
+          "new_intent_local_at_after_prefix": true
+        },
+        {
+          "fill_id": "07244892-0219-b60b-5d8f-c8f8d01acd09",
+          "client_order_id": "nc-speed-6efb079116774c36b9734f18aa75a187",
+          "intent_platform_timestamp": "2026-10-16T02:23:52.309365047Z",
+          "local_intent_at": "1792117431.663341",
+          "new_intent_log_after_prefix": true,
+          "new_intent_local_at_after_prefix": true
+        },
+        {
+          "fill_id": "0724489d-baa9-9511-7edb-6b17a4706afe",
+          "client_order_id": "nc-speed-0267dba54c2c4597b48be8d32f2928ea",
+          "intent_platform_timestamp": "2026-10-16T02:24:41.535167890Z",
+          "local_intent_at": "1792117480.867143",
+          "new_intent_log_after_prefix": true,
+          "new_intent_local_at_after_prefix": true
+        },
+        {
+          "fill_id": "07244898-b881-bb92-ba86-864cd2eeccc5",
+          "client_order_id": "nc-speed-04f44adc6d944bd1abd551406be86bc8",
+          "intent_platform_timestamp": "2026-10-16T02:26:03.064560472Z",
+          "local_intent_at": "1792117562.4075098",
+          "new_intent_log_after_prefix": true,
+          "new_intent_local_at_after_prefix": true
+        }
+      ]
+    },
+    {
+      "window": "KXBTC15M-26OCT152245-45",
+      "actual_pnl": "-1.23",
+      "fees": "0.0",
+      "fills_match": true,
+      "prefix": {
+        "stamp": "2026-10-16T02:30:40.815721742Z",
+        "floor": "0.300"
+      },
+      "later": [
+        {
+          "fill_id": "072448be-3a09-806d-6ff5-0a34bb92ab9e",
+          "client_order_id": "nc-speed-c3deb3c77c06488e834f2c2f6c31e9a5",
+          "intent_platform_timestamp": "2026-10-16T02:31:09.938358198Z",
+          "local_intent_at": "1792117869.560675",
+          "new_intent_log_after_prefix": true,
+          "new_intent_local_at_after_prefix": true
+        }
+      ]
+    },
+    {
+      "window": "KXBTC15M-26OCT152300-00",
+      "actual_pnl": "-1.2",
+      "fees": "0.0",
+      "fills_match": true,
+      "prefix": null,
+      "later": []
+    },
+    {
+      "window": "KXBTC15M-26OCT152315-15",
+      "actual_pnl": "-2.8509",
+      "fees": "0.0109",
+      "fills_match": true,
+      "prefix": null,
+      "later": []
+    },
+    {
+      "window": "KXBTC15M-26OCT152330-30",
+      "actual_pnl": "-1.9393",
+      "fees": "0.0073",
+      "fills_match": true,
+      "prefix": null,
+      "later": []
+    },
+    {
+      "window": "KXBTC15M-26OCT152345-45",
+      "actual_pnl": "0.2114",
+      "fees": "0.0006",
+      "fills_match": true,
+      "prefix": {
+        "stamp": "2026-10-16T03:41:00.901988924Z",
+        "floor": "0.2114"
+      },
+      "later": []
+    }
+  ],
+  "scope": "Native allowlisted receipt arithmetic/publication-order descriptive cohort only. No candidate P&L, simulated fills, or authoritative controller event timing."
+}

@@ -1,0 +1,76 @@
+{
+  "task": "Bounded TJR repeat reminder gate refresh",
+  "read_time_utc": "2026-10-15T15:39:19Z",
+  "scope": {
+    "repository": "sideriapostolou-lgtm/Claude",
+    "branch": "claude/nightcrawler-memecoin-bot-Gwnb1S",
+    "pinned_head": "91250c6598f4b866d7601ac0ead3e66ba55996cd",
+    "allowed_reads": [
+      "AGENTS.md",
+      "docs/COORDINATION.md",
+      "docs/WORKLOG.md"
+    ],
+    "exclusions": [
+      "Pages",
+      "data",
+      "tests",
+      "new research",
+      "notifications",
+      "schedule changes",
+      "repository edits",
+      "production queries"
+    ]
+  },
+  "source_records": {
+    "branch_resolution": {
+      "endpoint": "GET https://api.github.com/repos/sideriapostolou-lgtm/Claude/git/ref/heads/claude/nightcrawler-memecoin-bot-Gwnb1S",
+      "returned_ref": "refs/heads/claude/nightcrawler-memecoin-bot-Gwnb1S",
+      "head_sha": "91250c6598f4b866d7601ac0ead3e66ba55996cd",
+      "response": "success"
+    },
+    "docs": [
+      {
+        "path": "AGENTS.md",
+        "fetch_method": "github_fetch_file at ref 91250c6598f4b866d7601ac0ead3e66ba55996cd",
+        "blob_sha": "389266a51ccba3d21072371fd680bc8e4aff2af9",
+        "raw_response_ref": "https://github.com/sideriapostolou-lgtm/Claude/blob/91250c6598f4b866d7601ac0ead3e66ba55996cd/AGENTS.md",
+        "prior_raw_ref": "/workspace/shared/kalshi-status-20261015/doc1.raw.json (prior pin 8bf1acb)",
+        "local_base_git_blob_sha": "389266a51ccba3d21072371fd680bc8e4aff2af9",
+        "byte_identity": "Current GitHub blob matches local base and prior raw blob; prior raw can be reused, but is not described as a fresh response."
+      },
+      {
+        "path": "docs/COORDINATION.md",
+        "fetch_method": "github_fetch_file at ref 91250c6598f4b866d7601ac0ead3e66ba55996cd",
+        "blob_sha": "56a18a93a931ad1b42474b2dd3bc03f3691f2a31",
+        "raw_response_ref": "https://github.com/sideriapostolou-lgtm/Claude/blob/91250c6598f4b866d7601ac0ead3e66ba55996cd/docs/COORDINATION.md",
+        "prior_raw_ref": "/workspace/shared/kalshi-status-20261015/doc2.raw.json (prior pin 8bf1acb, blob 18ef9abbdfca3d7313226ca8bcfbbe2bfac99397)",
+        "local_base_git_blob_sha": "56a18a93a931ad1b42474b2dd3bc03f3691f2a31",
+        "byte_identity": "Current GitHub blob matches local base; it differs from prior 8bf1acb raw."
+      },
+      {
+        "path": "docs/WORKLOG.md",
+        "fetch_method": "github_fetch_file at ref 91250c6598f4b866d7601ac0ead3e66ba55996cd",
+        "blob_sha": "6d1fb82785d0696565f2e7b70afe340574046b6f",
+        "raw_response_ref": "https://github.com/sideriapostolou-lgtm/Claude/blob/91250c6598f4b866d7601ac0ead3e66ba55996cd/docs/WORKLOG.md",
+        "prior_raw_ref": "/workspace/shared/kalshi-status-20261015/doc3.raw.json (prior pin 8bf1acb, blob 6c19ee2800ef872b1a86f32ce4670d809a149052)",
+        "local_base_git_blob_sha": "6d1fb82785d0696565f2e7b70afe340574046b6f",
+        "byte_identity": "Current GitHub blob matches local base; it differs from prior 8bf1acb raw."
+      }
+    ]
+  },
+  "gate_assessment": {
+    "latest_current_queue_record": "Pinned COORD latest inbox is 2026-10-15 15:14 UTC / 8:14 AM PDT. EXEC-DELAY-001 remains open; PR47 release/restart evidence is separately complete; TJR-MNQ-001 remains blocked/unfinished.",
+    "prior_tjr_priority": "Explicit offline reprioritization remains recorded.",
+    "missing_tjr_inputs": "Authentic MNQZ2025 development bars and verified costs remain missing in the pinned status. Historical trades 0, P&L null, holdout unopened, paper not started, live disabled.",
+    "release_separation": "PR47 verified release/restart is distinct from still-open EXEC and missing TJR inputs. PR60 passive learner release does not provide the missing TJR source data.",
+    "changes_since_prior_pin": "The 91250c docs differ from 8bf1acb COORDINATION and WORKLOG blobs; the queue content at this exact pin retains the stated blockers. AGENTS blob is byte-identical to prior pin. No later/pending local docs were read or included.",
+    "status": "TJR gate remains blocked; unfinished. No PR47 or TJR completion claim added."
+  },
+  "actions": "Read-only GitHub fetches and local git blob-ID comparison only. No repo edits, production access, Pages/data/tests, schedule changes, or notifications.",
+  "root_preservation": {
+    "original_worker_receipt_name": "TJR_REPEAT_0837_PDT.json",
+    "root_verified_three_blob_ids": true,
+    "complete_same_pin_source_bodies": "../kalshi_profitability_2026-10-14/DAILY_STATUS_2026-10-15.zip: instructions-0.json, instructions-1.json, instructions-2.json; original earlier successful responses at identical source SHA/blob IDs retained; not relabeled as new raw response bodies.",
+    "queue_status": "Blocked/unfinished; no material new data or access, paper not started/live disabled, automation unchanged."
+  }
+}

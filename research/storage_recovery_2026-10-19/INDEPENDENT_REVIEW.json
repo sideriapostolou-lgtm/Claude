@@ -1,0 +1,55 @@
+{
+  "schema_version": 1,
+  "review_date_utc": "2026-10-19",
+  "reviewer": "recovery_review_oct19",
+  "scope": "Independent offline source review and synthetic local fixtures only; no production commands or data inspection.",
+  "verdict": "No blocking finding remains for publishing this bounded offline metadata inventory helper. This is not production execution authorization or a recovery/restart certificate.",
+  "sha256": {
+    "inventory_metadata.py": "e02812647346b2532a9cc0b8eb0287d9f08fdf7d2fbd6c7459bd72e388c4abad",
+    "test_inventory_metadata.py": "744456379c8e6a5cbcd4f4ae0509a6c4f492943e44bdc04c64f663b68c7e29b1",
+    "test_inventory_independent.py": "02fac0e16a54debacd0b60d9328bbba25a792879ae91abee10fe6c503f7ff99b"
+  },
+  "history": [
+    "Initial default Python pytest invocation failed because pytest was not installed in that interpreter; no packages installed. Existing nightcrawler-daily virtualenv used thereafter.",
+    "Initial independent fixture run after device-match source revision: 7 failed, 6 passed. The private fixtures incorrectly claimed mount device 0:1; all seven failures were expected source refusal before traversal, not source defects. Fixtures changed to actual temporary-root device.",
+    "Expanded independent suite against source 7af8b66a9cf53e1fecc0f54204db084f76fbcc26f2d9ababa2c6d1cf864bc8d0: 15 passed, 1 failed. Stacked same-device exact-root mount records selected the first identity and reached scandir. Reported to implementer and parent.",
+    "Implementer fixed ambiguous longest-prefix containing records by refusal, retaining a unique deeper mount over ambiguous ancestors. Final source hashes recorded above.",
+    "Private independent 16 cases plus implementer 46 cases: 62 passed in 0.80s.",
+    "Portable independent fixtures added beside helper, then formatted. Combined portable suite: 62 passed in 0.44s. Ruff initially flagged one unused fixture variable; renamed mi to _mi.",
+    "Final portable independent suite: 16 passed in 0.16s. Final Ruff: All checks passed!"
+  ],
+  "reproduction": {
+    "working_directory": "repository root",
+    "pytest": "python -m pytest -q research/storage_recovery_2026-10-19/test_inventory_independent.py research/storage_recovery_2026-10-19/test_inventory_metadata.py",
+    "ruff": "ruff check research/storage_recovery_2026-10-19/test_inventory_independent.py",
+    "validated_interpreter": "/workspace/nightcrawler-daily/.venv/bin/python",
+    "production_execution": false
+  },
+  "independent_cases": [
+    "Non-UTF8 filename round-trips through JSON; synthetic file content is absent.",
+    "Mount prefix collision does not exclude unrelated child paths; same-device nested mounted file is skipped.",
+    "Interrupted mountinfo reads and a symlink mountinfo input refuse before scanning.",
+    "Root and child directory swapped to symlink before open do not traverse replacement.",
+    "Hardlinked files across groups are counted once, attributed to first observed path.",
+    "Error rows exhaust shared result budget; long Unicode paths remain row bounded.",
+    "Descriptors close on root scandir, child scandir and mount read failures.",
+    "Parent-only mount fails exact-root requirement; exact device-matching root passes; mount options/source are not disclosed.",
+    "Stacked same-device exact-root mount ambiguity refuses before scandir."
+  ],
+  "reviewed_properties": [
+    "Componentwise no-follow directory descriptors and identity checks precede root fstatvfs. Data files are only statted; content reads are limited to bounded fixed mountinfo.",
+    "CLI fixed /data requires a unique exact containing mount with matching device. Imported fixture API defaults require_exact_mount=False and reports that choice; it still requires a unique device-matching containing mount.",
+    "Mount snapshot excludes listed nested mounts including same-device paths, and traversal excludes cross-device entries.",
+    "Entry, directory, depth, error, shared output-row, mountinfo-byte and cooperative elapsed budgets bound work. Inode dedup memory is bounded by entry count; output is row bounded rather than a separate fixed serialized-byte cap.",
+    "Only mount ID, parent ID, device, mountpoint and identity checks are exported; mount source/options are omitted.",
+    "Aggregate wording now correctly states observed sums, not a certified lower bound on current disk use."
+  ],
+  "limits": [
+    "Mountinfo is a bounded observation with no mount-namespace lock. Concurrent same-device mount additions or root/ancestor replacement after checks may evade the snapshot boundaries; this helper does not guarantee mount-namespace immutability.",
+    "Directory identity checks narrow races; filesystem observations are not atomic. Inode reuse or changing file size can affect observed deduplication and sums.",
+    "Hardlink totals belong to the first observed path; enumeration order and group attribution are not stable. Partial caps may leave counters/groups/largest at different observation boundaries.",
+    "Cooperative elapsed budget cannot interrupt a blocked kernel call. Row/path/depth bounds are not a hard fixed JSON byte budget.",
+    "partial=False means no detected stop/error/qualifying skip within these observations; it does not certify whole-volume completeness, financial state, Railway volume identity, profitability, or restart safety.",
+    "No production metadata, financial contents, credentials, network policy or production service was accessed or changed by this review."
+  ]
+}

@@ -1,0 +1,14 @@
+{
+  "commit": "2c9198fb69efd8ef9761d2fecf31d8dfc5a0b147",
+  "public_read_before": {
+    "current_time": "2026-10-15 19:37:18 UTC"
+  },
+  "public_read_after": {
+    "current_time": "2026-10-15 19:37:18 UTC"
+  },
+  "public_blob": "99ee0074ede390a6c9d66a9a78bd769880d2adfb",
+  "exact_original_native_bytes_match": true,
+  "before_declared_close": true,
+  "local_native_sha256": "1354fb3268e4acb4b3d1d0874fee2c64f444e535cdf1b4bc3e8b9a995e7ce3e1",
+  "docs_deployment": "SKIPPED; same8c8681a remainsSUCCESS, verifiedPOST_SLOT_DEPLOYMENTS.public-redacted.json"
+}

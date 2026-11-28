@@ -1,0 +1,335 @@
+{
+ "hypothesis": "K1",
+ "version": "k1-v1",
+ "stage": "train",
+ "split": "train",
+ "utc": "2026-10-09 15:26:23",
+ "provisional": false,
+ "debug_only": false,
+ "prereg_sha256": "3abd817ea823e06302b24d71e1942d2f529b9ab6d0afd035ca9610c89ebd8661",
+ "rerun_reason": null,
+ "coverage": {
+  "split": "train",
+  "bounds_utc": [
+   "2026-10-01 00:00:00",
+   "2026-10-05 00:00:00"
+  ],
+  "debug_only": false,
+  "graduates_in_split": 5435,
+  "tradeable": 3863,
+  "usable": 3863,
+  "excluded": {
+   "mayhem": 1422,
+   "not_sol_quoted": 150
+  },
+  "created_inexact": 943,
+  "has_create0": 943,
+  "chain_hours_scanned_frac": 1.0,
+  "days": [
+   {
+    "day": "2026-10-01",
+    "hours_in_split": 24,
+    "curve_hours": 24,
+    "b2_hours": 24,
+    "b2_hours_midrun": 0,
+    "coins_created": 1261,
+    "tradeable": 989,
+    "usable": 989,
+    "usable_frac": 1.0,
+    "partial": false
+   },
+   {
+    "day": "2026-10-02",
+    "hours_in_split": 24,
+    "curve_hours": 24,
+    "b2_hours": 24,
+    "b2_hours_midrun": 0,
+    "coins_created": 1255,
+    "tradeable": 933,
+    "usable": 933,
+    "usable_frac": 1.0,
+    "partial": false
+   },
+   {
+    "day": "2026-10-03",
+    "hours_in_split": 24,
+    "curve_hours": 24,
+    "b2_hours": 24,
+    "b2_hours_midrun": 0,
+    "coins_created": 1632,
+    "tradeable": 966,
+    "usable": 966,
+    "usable_frac": 1.0,
+    "partial": false
+   },
+   {
+    "day": "2026-10-04",
+    "hours_in_split": 24,
+    "curve_hours": 24,
+    "b2_hours": 24,
+    "b2_hours_midrun": 0,
+    "coins_created": 1287,
+    "tradeable": 975,
+    "usable": 975,
+    "usable_frac": 1.0,
+    "partial": false
+   }
+  ],
+  "days_expected": 4.0,
+  "days_full": 4,
+  "curve_span_utc": [
+   "2026-09-29 21:00:00",
+   "2026-10-09 02:00:00"
+  ],
+  "b2_span_utc": [
+   "2026-10-01 00:00:00",
+   "2026-10-05 04:00:00"
+  ],
+  "completeness_source": "raw_chunks",
+  "parquet_snapshot_utc": "2026-10-09 10:40:52",
+  "b2_hours_needed": 100,
+  "b2_hours_done": 100,
+  "b2_hours_midrun": [],
+  "sol_usd": {
+   "series_utc": [
+    "2026-09-15 00:00:00",
+    "2026-10-08 23:59:00"
+   ],
+   "constant_fallback": false,
+   "lookahead_coins": 0,
+   "stale_coins": 0
+  },
+  "power": {
+   "entry_bar_coins": {
+    "need": 40,
+    "have_usable_coins": 3863,
+    "ok": true
+   },
+   "x1_r0_trades_5_seeds": {
+    "need": 500,
+    "max_possible": 19315,
+    "ok": true
+   },
+   "g1_flagged_coins_val": {
+    "need": 200,
+    "max_possible": 3863,
+    "ok": true
+   }
+  },
+  "underpowered": false,
+  "complete": true,
+  "notes": [],
+  "from_flow": true
+ },
+ "n_coins": 3863,
+ "span_days": 4.0,
+ "deliberation": {
+  "coins": 3863,
+  "alive_at_decision": 1408,
+  "decided": 4224,
+  "undecided": 0,
+  "new_calls": 0,
+  "spent_usd": 0.0,
+  "buys": {
+   "panel": 0,
+   "solo-sonnet": 0,
+   "solo-haiku": 0
+  },
+  "budget_usd": 40.0,
+  "client": "RealDeskClient",
+  "cache": "K1/decisions"
+ },
+ "configs": {
+  "panel": {
+   "config": "panel",
+   "params_hash": "2d791bb28692",
+   "hypothesis": "K1",
+   "n": 0,
+   "n_coins": 0,
+   "by_stratum_n": {},
+   "n_placebo": 0,
+   "horizon_exits": 0,
+   "trial": {
+    "config": "K1|2d791bb28692|cfg:a06543feac6c",
+    "new_trial": true,
+    "n_trials_total": 2765
+   },
+   "reasons": {},
+   "mean": null,
+   "median": null,
+   "win_rate": null,
+   "sd": null,
+   "ci90": null,
+   "ci95": null,
+   "ci90_block": null,
+   "ci95_block": null,
+   "n_blocks": null,
+   "censored_share": null,
+   "top_coin_share": null,
+   "top3_coin_share": null,
+   "mean_without_top2": null,
+   "halves": null,
+   "mean_hold_min": null,
+   "deflated_sharpe": null,
+   "placebo": null,
+   "confidence_corr": null,
+   "stress": {
+    "costs_x1.5": null,
+    "rent_0.22": null,
+    "same_bar_exits": null,
+    "no_entry_bar_exits": null
+   },
+   "portfolio": {
+    "final_equity": 100.0,
+    "max_dd_pct": 0.0,
+    "taken": 0,
+    "skipped": 0
+   },
+   "by_stratum": {},
+   "direction": "UNDERPOWERED"
+  },
+  "solo-sonnet": {
+   "config": "solo-sonnet",
+   "params_hash": "f24855db56c0",
+   "hypothesis": "K1",
+   "n": 0,
+   "n_coins": 0,
+   "by_stratum_n": {},
+   "n_placebo": 0,
+   "horizon_exits": 0,
+   "trial": {
+    "config": "K1|f24855db56c0|cfg:a06543feac6c",
+    "new_trial": true,
+    "n_trials_total": 2766
+   },
+   "reasons": {},
+   "mean": null,
+   "median": null,
+   "win_rate": null,
+   "sd": null,
+   "ci90": null,
+   "ci95": null,
+   "ci90_block": null,
+   "ci95_block": null,
+   "n_blocks": null,
+   "censored_share": null,
+   "top_coin_share": null,
+   "top3_coin_share": null,
+   "mean_without_top2": null,
+   "halves": null,
+   "mean_hold_min": null,
+   "deflated_sharpe": null,
+   "placebo": null,
+   "confidence_corr": null,
+   "stress": {
+    "costs_x1.5": null,
+    "rent_0.22": null,
+    "same_bar_exits": null,
+    "no_entry_bar_exits": null
+   },
+   "portfolio": {
+    "final_equity": 100.0,
+    "max_dd_pct": 0.0,
+    "taken": 0,
+    "skipped": 0
+   },
+   "by_stratum": {},
+   "direction": "UNDERPOWERED"
+  },
+  "solo-haiku": {
+   "config": "solo-haiku",
+   "params_hash": "d0c0077d8902",
+   "hypothesis": "K1",
+   "n": 0,
+   "n_coins": 0,
+   "by_stratum_n": {},
+   "n_placebo": 0,
+   "horizon_exits": 0,
+   "trial": {
+    "config": "K1|d0c0077d8902|cfg:a06543feac6c",
+    "new_trial": true,
+    "n_trials_total": 2767
+   },
+   "reasons": {},
+   "mean": null,
+   "median": null,
+   "win_rate": null,
+   "sd": null,
+   "ci90": null,
+   "ci95": null,
+   "ci90_block": null,
+   "ci95_block": null,
+   "n_blocks": null,
+   "censored_share": null,
+   "top_coin_share": null,
+   "top3_coin_share": null,
+   "mean_without_top2": null,
+   "halves": null,
+   "mean_hold_min": null,
+   "deflated_sharpe": null,
+   "placebo": null,
+   "confidence_corr": null,
+   "stress": {
+    "costs_x1.5": null,
+    "rent_0.22": null,
+    "same_bar_exits": null,
+    "no_entry_bar_exits": null
+   },
+   "portfolio": {
+    "final_equity": 100.0,
+    "max_dd_pct": 0.0,
+    "taken": 0,
+    "skipped": 0
+   },
+   "by_stratum": {},
+   "direction": "UNDERPOWERED"
+  }
+ },
+ "decision": {
+  "rows": [
+   {
+    "config": "panel",
+    "powered": false,
+    "qualifies": false,
+    "n": 0,
+    "mean": null,
+    "ci90_lo": null,
+    "placebo_diff": null,
+    "direction": "UNDERPOWERED"
+   },
+   {
+    "config": "solo-sonnet",
+    "powered": false,
+    "qualifies": false,
+    "n": 0,
+    "mean": null,
+    "ci90_lo": null,
+    "placebo_diff": null,
+    "direction": "UNDERPOWERED"
+   },
+   {
+    "config": "solo-haiku",
+    "powered": false,
+    "qualifies": false,
+    "n": 0,
+    "mean": null,
+    "ci90_lo": null,
+    "placebo_diff": null,
+    "direction": "UNDERPOWERED"
+   }
+  ],
+  "primary_direction": {
+   "config": "panel",
+   "direction": "UNDERPOWERED"
+  },
+  "verdict": "UNDERPOWERED_TRAIN",
+  "reason": "no config reached >= 30 trades (best: 0)",
+  "shortlist": [],
+  "shortlist_hashes": [],
+  "shortlist_keys": [],
+  "shortlist_written": false
+ },
+ "runtime_s": 36.9,
+ "n_trials_total": 2767,
+ "overall": "UNDERPOWERED (TRAIN)"
+}

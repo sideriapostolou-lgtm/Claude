@@ -1,0 +1,137 @@
+{
+  "decision": "ACCEPT exact v3 source/test bytes for integration, contingent on root full-suite and release/runtime gates",
+  "reviewed_at_utc": "2026-10-15T21:15:27.802174+00:00",
+  "patch_sha256": "a8e548d85f2ee9ecaee349c4548273feaaa07de021dfabea376db1cd301dfc62",
+  "base_head": "72a4ddcc1a49f72f1d90973a9904c5312c9f59fd",
+  "files": {
+    "src/nightcrawler/kalshi_probability_epochs.py": {
+      "sha256": "495450c64b9402e2f9dfaa53756a51dbf44a5c75bf7245b6dc428271cddc708f",
+      "bytes": 13936
+    },
+    "src/nightcrawler/kalshi_probability_learning.py": {
+      "sha256": "43d8f527fd24aee3a7dbb33d848dcaaaf0e39089ab605deddad32dfabc1e35ab",
+      "bytes": 27111
+    },
+    "src/nightcrawler/kalshi_arena.py": {
+      "sha256": "52b983cb87ba6ec593124aef525b37b2ad48ce8cabba0325f6b813d52e7a0676",
+      "bytes": 137209
+    },
+    "src/nightcrawler/pagestate.py": {
+      "sha256": "d73eec093164c7a659f12b08226844fb58cfd01e96278585b255575ea8212479",
+      "bytes": 234901
+    },
+    "tests/test_kalshi_probability_epochs.py": {
+      "sha256": "671901f4d93506aeee614e22a171d99f92fc8725631a40c55f95009470a30d4d",
+      "bytes": 25325
+    },
+    "tests/test_kalshi_probability_arena.py": {
+      "sha256": "2f69e8c665b0b4d0277c398d4a7fa27aedfeecb544c1e32f9cb65a72cde8b4cb",
+      "bytes": 11571
+    },
+    "tests/test_kalshi_arena_page.py": {
+      "sha256": "2d922b6e2e586e7befa2b9d8f65c6477ea6ba36daf1e2f155198e04ecb516bfa",
+      "bytes": 23390
+    }
+  },
+  "source_fingerprint": "23e2ca80d3c04415256bf3fc237ba017d56733a59219d718e86c554eaa1f1d25",
+  "blocking_findings": [],
+  "checks": {
+    "all_seven_hashes_verified_before_and_after": true,
+    "frozen_patch_hash_verified": true,
+    "strict_probability_methods_AST_unchanged": true,
+    "tracked_source_changes_exact_allowlist": [
+      "src/nightcrawler/kalshi_arena.py",
+      "src/nightcrawler/kalshi_probability_learning.py",
+      "src/nightcrawler/pagestate.py"
+    ],
+    "focused_tests": "188 passed in 1.79s",
+    "adversarial": "malformed active preserves two valid archives; orphan disabled; JSON safe",
+    "receipts": "Exactly one real restart unknown, actual unknown count one; validation-only emissions suppressed",
+    "resource": {
+      "per_state_262144": true,
+      "joint_2MiB": true,
+      "full_panel_256KiB": true,
+      "checkpoint_p95_100ms": true,
+      "checkpoint_max_250ms": true,
+      "extra_frame_mean_1ms": true,
+      "save_sequence_and_durability_equal": true
+    },
+    "cpu_summary": {
+      "checkpoint_and_json": {
+        "n": 20,
+        "mean": 23.6916805,
+        "p95": 25.562234,
+        "max": 28.4044
+      },
+      "one_learner_state_and_json": {
+        "n": 20,
+        "mean": 2.0868160000000002,
+        "p95": 2.237098,
+        "max": 2.300356
+      },
+      "full_panel_and_json": {
+        "n": 20,
+        "mean": 0.4296349,
+        "p95": 0.542102,
+        "max": 0.58302
+      },
+      "startup_restore": {
+        "n": 10,
+        "mean": 91.7846528,
+        "p95": 124.64718,
+        "max": 124.64718
+      },
+      "steady_frame_extra": {
+        "n": 20,
+        "mean": 0.0142122975,
+        "p95": 0.01966852000000001,
+        "max": 0.020398290000000006
+      }
+    },
+    "bytes": {
+      "states_including_duplicated_legacy": [
+        77775,
+        78195,
+        78195,
+        78195,
+        78195,
+        77775
+      ],
+      "joint_optional": 436561,
+      "lineage_panel": 1667,
+      "full_arena_panel": 18815
+    }
+  },
+  "reviewed_behavior": [
+    "Fresh no-file bootstrap distinguished from loaded missing/null/malformed history.",
+    "Immutable validated legacy, contiguous archive prefix, current-only scoring and no archive callback path.",
+    "Original fatal disabled/rejected flags checked before source mismatch; no reactivation from blocked host.",
+    "Same-source restart strict annotations retained; A-B-A creates fresh ordinal and calibration.",
+    "Archive count/byte refusal is bounded, atomic and latched; original retained records survive valid rejection.",
+    "Archive validation uses unchanged strict restore on disposable silent probe; actual restart still emits actual receipt.",
+    "Constructor/method exception isolation preserves V1/residents and JSON save viability; child integration only.",
+    "Page summary uses bounded allowlist; startup lineage receipt keeps old five scores distinct from new current zero.",
+    "Original save sequence/durability preserved and hot callbacks remain directly on active observer."
+  ],
+  "limitations": [
+    "Root fresh full-suite run pending at this receipt; earlier v2 interrupted/source-changed run is not accepted.",
+    "Synthetic local CPU/sample screens do not establish production latency, scheduling, logging or fsync behavior.",
+    "Maximum retained counts and slug lengths exercised; not every possible float encoding is maximal.",
+    "Deleting both marker and envelope is undetectable locally; canonical hashes establish consistency, not authenticity.",
+    "Pre-host binary downgrade unsupported; rollback assertions apply only to epoch-aware hosts.",
+    "Malformed history retains only validated legacy/contiguous archive prefix; corrupt remainder is unrecovered.",
+    "No production API calls, full checkpoint/ledger export, deployed source verification, prospective score or profitability proof in this review.",
+    "Full deployment and predeclared future-window runtime evidence remain required after release."
+  ],
+  "evidence_sha256": {
+    "epoch_v3_resume_source_check.json": "675a7bea9025ea2ea28299e65525a40f10493766def42104859bc60d7eda1f65",
+    "epoch_resource_v3_resume.py": "4f57f60f1bf7da67028278a6010c1831244f89b9d800fdfb740adaa8a1a98b65",
+    "epoch_resource_v3_resume.json": "54efd92d4504b3e13149abcafc0b2e6350c4d7feca95aeb91c0e707b3b2b0668",
+    "epoch_resource_v3_resume.stdout": "c40885ca8967d8dd259d635cfcbd918b750bce3d1efe4fb0f0290c60f476ae2a",
+    "epoch_candidate_adversarial_v3_resume.py": "059f4f7bb447490794594ab4c56bbd9d45234c9f790dcf936750ccbbaebe7cbc",
+    "epoch_candidate_adversarial_v3_resume.stdout": "894f4dc341212b035b99704ccae562ffa7c86b54fb31bb892b0fff8d4d355008",
+    "epoch_probe_receipts.py": "240c17ecc79e9860a166463ffb85bb1991c8ab900593654cc30ac72bbe71208c",
+    "epoch_probe_receipts_v3_resume.stdout": "d8510302ccf914707684278cf70a13501f20130b7bfd0c8b488b0b06215d4c78",
+    "epoch_focused_v3_resume.stdout": "5b0d70553e0319f8c2ee20b7c97816e37b6a3f2b2e3b09f4b7f5d55c7062e8a5"
+  }
+}

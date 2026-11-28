@@ -1,0 +1,204 @@
+[
+  {
+    "ticker": "KXBTC15M-26SEP081300-00",
+    "tag": "NO_RECLAIM_80",
+    "requested_target_c": 80,
+    "entry_fill_count": "19.00",
+    "entry_vwap_c": "61.0000",
+    "opposite_close_count": "19.00",
+    "effective_exit_vwap_c": "70.0000",
+    "other_local_trade_records": [
+      {
+        "action": "sell",
+        "strategy": "ACCOUNT_SYNC",
+        "price_cents": 70
+      }
+    ]
+  },
+  {
+    "ticker": "KXBTC15M-26SEP082115-15",
+    "tag": "BTC_FADE_90",
+    "requested_target_c": 90,
+    "entry_fill_count": "47.00",
+    "entry_vwap_c": "50.0000",
+    "opposite_close_count": "47.00",
+    "effective_exit_vwap_c": "70.0000",
+    "other_local_trade_records": [
+      {
+        "action": "sell",
+        "strategy": "ACCOUNT_SYNC",
+        "price_cents": 70
+      }
+    ]
+  },
+  {
+    "ticker": "KXBTC15M-26SEP090100-00",
+    "tag": "BTC_FADE_90",
+    "requested_target_c": 90,
+    "entry_fill_count": "45.00",
+    "entry_vwap_c": "57.0000",
+    "opposite_close_count": "45.00",
+    "effective_exit_vwap_c": "70.0000",
+    "other_local_trade_records": [
+      {
+        "action": "sell",
+        "strategy": "ACCOUNT_SYNC",
+        "price_cents": 70
+      }
+    ]
+  },
+  {
+    "ticker": "KXBTC15M-26SEP090730-30",
+    "tag": "BTC_FADE_90",
+    "requested_target_c": 90,
+    "entry_fill_count": "42.00",
+    "entry_vwap_c": "63.0000",
+    "opposite_close_count": "42.00",
+    "effective_exit_vwap_c": "70.0000",
+    "other_local_trade_records": [
+      {
+        "action": "sell",
+        "strategy": "ACCOUNT_SYNC",
+        "price_cents": 70
+      }
+    ]
+  },
+  {
+    "ticker": "KXBTC15M-26SEP101915-15",
+    "tag": "BTC_FADE_90",
+    "requested_target_c": 90,
+    "entry_fill_count": "44.00",
+    "entry_vwap_c": "61.0000",
+    "opposite_close_count": "0",
+    "effective_exit_vwap_c": null,
+    "other_local_trade_records": []
+  },
+  {
+    "ticker": "KXBTC15M-26SEP111645-45",
+    "tag": "RECLAIM_70",
+    "requested_target_c": 70,
+    "entry_fill_count": "47.00",
+    "entry_vwap_c": "46.0000",
+    "opposite_close_count": "47.00",
+    "effective_exit_vwap_c": "70.0000",
+    "other_local_trade_records": [
+      {
+        "action": "sell",
+        "strategy": "ACCOUNT_SYNC",
+        "price_cents": 70
+      }
+    ]
+  },
+  {
+    "ticker": "KXBTC15M-26SEP112000-00",
+    "tag": "RECLAIM_70",
+    "requested_target_c": 70,
+    "entry_fill_count": "59.00",
+    "entry_vwap_c": "40.0000",
+    "opposite_close_count": "59.00",
+    "effective_exit_vwap_c": "70.0000",
+    "other_local_trade_records": [
+      {
+        "action": "sell",
+        "strategy": "ACCOUNT_SYNC",
+        "price_cents": 70
+      }
+    ]
+  },
+  {
+    "ticker": "KXBTC15M-26SEP130900-00",
+    "tag": "RECLAIM_70",
+    "requested_target_c": 70,
+    "entry_fill_count": "59.00",
+    "entry_vwap_c": "45.0000",
+    "opposite_close_count": "59.00",
+    "effective_exit_vwap_c": "70.0000",
+    "other_local_trade_records": [
+      {
+        "action": "sell",
+        "strategy": "ACCOUNT_SYNC",
+        "price_cents": 70
+      }
+    ]
+  },
+  {
+    "ticker": "KXBTC15M-26SEP140045-45",
+    "tag": "BTC_FADE_90",
+    "requested_target_c": 90,
+    "entry_fill_count": "63.00",
+    "entry_vwap_c": "47.0000",
+    "opposite_close_count": "63.00",
+    "effective_exit_vwap_c": "70.0000",
+    "other_local_trade_records": [
+      {
+        "action": "sell",
+        "strategy": "ACCOUNT_SYNC",
+        "price_cents": 70
+      }
+    ]
+  },
+  {
+    "ticker": "KXBTC15M-26SEP140430-30",
+    "tag": "BTC_FADE_90",
+    "requested_target_c": 90,
+    "entry_fill_count": "50.00",
+    "entry_vwap_c": "65.0000",
+    "opposite_close_count": "50.00",
+    "effective_exit_vwap_c": "70.0000",
+    "other_local_trade_records": [
+      {
+        "action": "sell",
+        "strategy": "ACCOUNT_SYNC",
+        "price_cents": 70
+      }
+    ]
+  },
+  {
+    "ticker": "KXBTC15M-26SEP151030-30",
+    "tag": "BTC_FADE_90",
+    "requested_target_c": 90,
+    "entry_fill_count": "67.00",
+    "entry_vwap_c": "49.0000",
+    "opposite_close_count": "67.00",
+    "effective_exit_vwap_c": "70.0000",
+    "other_local_trade_records": [
+      {
+        "action": "sell",
+        "strategy": "ACCOUNT_SYNC",
+        "price_cents": 70
+      }
+    ]
+  },
+  {
+    "ticker": "KXBTC15M-26SEP160030-30",
+    "tag": "BTC_FADE_90",
+    "requested_target_c": 90,
+    "entry_fill_count": "74.00",
+    "entry_vwap_c": "48.0000",
+    "opposite_close_count": "74.00",
+    "effective_exit_vwap_c": "70.0000",
+    "other_local_trade_records": [
+      {
+        "action": "sell",
+        "strategy": "ACCOUNT_SYNC",
+        "price_cents": 70
+      }
+    ]
+  },
+  {
+    "ticker": "KXBTC15M-26SEP161230-30",
+    "tag": "NO_RECLAIM_80",
+    "requested_target_c": 80,
+    "entry_fill_count": "63.00",
+    "entry_vwap_c": "61.0000",
+    "opposite_close_count": "63.00",
+    "effective_exit_vwap_c": "70.0000",
+    "other_local_trade_records": [
+      {
+        "action": "sell",
+        "strategy": "ACCOUNT_SYNC",
+        "price_cents": 70
+      }
+    ]
+  }
+]

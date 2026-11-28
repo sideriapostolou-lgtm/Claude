@@ -1,0 +1,234 @@
+"""Own offline fakes against project source; no account, feeds, or historical data.
+
+The identity assertion describes a PROPOSED versioned fidelity contract. Existing
+source explicitly documents the older window-wide approximation. A failure of
+that proposed contract is not a claim that the source violates its own old spec.
+"""
+
+from __future__ import annotations
+
+import json
+import sys
+import unittest
+from dataclasses import replace
+from typing import Any, cast
+from unittest.mock import patch
+
+from nightcrawler.speeddesk_live import Intent, KalshiLiveDesk
+from nightcrawler.speeddesk_model import (
+    Book,
+    Decision,
+    Holding,
+    Inventory,
+    Level,
+    PracticeDesk,
+    Side,
+    SpeedConfig,
+    Trade,
+    Window,
+)
+
+WINDOW = "KXBTC15M-SYNTHETIC"
+
+
+def refresh(desk: PracticeDesk, now: float, bid_size: float = 10) -> None:
+    desk.tick_btc(100, now)
+    for side in ("up", "down"):
+        desk.on_book(
+            Book(
+                WINDOW,
+                side,
+                (Level(0.3, bid_size),),
+                (Level(0.6, 100),),
+                now,
+                f"fake-{now}",
+                source="rest",
+                requested_at=now,
+            )
+        )
+
+
+def twin() -> PracticeDesk:
+    # Large fake caps isolate cancellation from risk constraints. They are not
+    # configuration changes and never reach a live/controller instance.
+    desk = PracticeDesk(SpeedConfig(window_usd=100, open_usd=100))
+    desk.add_window(
+        Window(
+            WINDOW,
+            1000,
+            1900,
+            100,
+            maker_coefficient=0,
+            venue_start_price=100,
+            venue="kalshi",
+        )
+    )
+    desk.inventory[WINDOW] = Inventory(Holding(10, 4), Holding(10, 4))
+    refresh(desk, 1010)
+    for side in ("up", "down"):
+        placed = desk.place(WINDOW, side, "rest", 0.3, 5, 0.5, 1010)
+        assert placed.event == "speeddesk_rest"
+    return desk
+
+
+class CancelHarness:
+    """Minimal receiver for actual project cancellation methods, no live init."""
+
+    def __init__(self, practice: PracticeDesk) -> None:
+        self.twin = practice
+        self.twin_kept: set[int] = set()
+        self.now = 1011.01
+        self.events: list[Decision] = []
+
+    def clock(self) -> float:
+        return self.now
+
+    def _twin_events(self, events: list[Decision]) -> None:
+        self.events.extend(events)
+
+    def _twin_cancel_window(self, window: str, reason: str) -> None:
+        KalshiLiveDesk._twin_cancel_window(cast(Any, self), window, reason)
+
+    def cancel(self, intent: Intent, reason: str) -> None:
+        KalshiLiveDesk._twin_cancel(cast(Any, self), intent, reason)
+
+
+def up_intent(twin_order_id: int = 1) -> Intent:
+    return Intent(
+        "fake-client-up",
+        WINDOW,
+        "up",
+        "rest",
+        0.3,
+        5,
+        0.5,
+        1010,
+        twin_order_id=twin_order_id,
+    )
+
+
+def print_sell(
+    desk: PracticeDesk, side: Side, size: float, now: float, identity: str
+) -> list[Decision]:
+    refresh(desk, now)
+    return desk.on_trade(
+        Trade(WINDOW, side, 0.3, size, now, identity, "sell", now), now
+    )
+
+
+def probe() -> dict[str, object]:
+    legacy, identity = twin(), twin()
+    print_sell(legacy, "down", 5, 1011, "first-five")
+    print_sell(identity, "down", 5, 1011, "first-five")
+    initial_queue = legacy.orders[2].queue_ahead
+    original_down_id = 2
+    old = CancelHarness(legacy)
+    old.cancel(up_intent(), "bid_above_fair")
+    legacy_preserved = original_down_id in legacy.orders
+    # Independent comparator changes cancellation scope only. Identical books,
+    # delays, fills, queue arithmetic and print acceptance remain unmodified.
+    identity.cancel_order(1011.01, 1, "bid_above_fair")
+    refresh(legacy, 1011.02)
+    replacement = legacy.place(WINDOW, "down", "rest", 0.3, 5, 0.5, 1011.02)
+    assert replacement.event == "speeddesk_rest"
+    reset_queue = legacy.orders[replacement.order_id].queue_ahead
+    old_events = print_sell(legacy, "down", 6, 1012, "next-six")
+    new_events = print_sell(identity, "down", 6, 1012, "next-six")
+    return {
+        "synthetic_only": True,
+        "proposed_contract": "an individual side cancel preserves another side's order identity and queue",
+        "current_documented_contract": "window-wide non-kept cancellations; explicitly approximate control",
+        "legacy_satisfies_proposed_contract": legacy_preserved,
+        "legacy_cancelled_ids": [event.order_id for event in old.events],
+        "down_queue_before_cancel": initial_queue,
+        "down_queue_after_replacement": reset_queue,
+        "same_subsequent_sell_print_size": 6,
+        "legacy_subsequent_simulated_fill": sum(
+            e.size for e in old_events if e.event == "speeddesk_fill"
+        ),
+        "identity_comparator_subsequent_simulated_fill": sum(
+            e.size for e in new_events if e.event == "speeddesk_fill"
+        ),
+        "not_a_profit_or_historical_fill_counterfactual": True,
+    }
+
+
+class LegacyCancellationFacts(unittest.TestCase):
+    def setUp(self) -> None:
+        self.enterContext(
+            patch("socket.socket", side_effect=AssertionError("network forbidden"))
+        )
+
+    def test_documented_legacy_cancel_removes_both_nonkept_sides(self) -> None:
+        harness = CancelHarness(twin())
+        harness.cancel(up_intent(), "bid_above_fair")
+        self.assertEqual([event.order_id for event in harness.events], [1, 2])
+        self.assertFalse(harness.twin.orders)
+
+    def test_unknown_mapping_also_collaterally_removes_existing_orders(self) -> None:
+        harness = CancelHarness(twin())
+        harness.cancel(up_intent(0), "reprice")
+        self.assertEqual([event.order_id for event in harness.events], [1, 2])
+
+    def test_no_pull_bid_is_kept_when_pull_off(self) -> None:
+        harness = CancelHarness(twin())
+        self.assertFalse(harness.twin_kept)
+        harness.cancel(up_intent(), "reprice")
+        self.assertFalse(harness.twin.orders)
+
+    def test_pull_keeps_exact_target_then_legacy_cancel_spares_kept_bid(self) -> None:
+        harness = CancelHarness(twin())
+        harness.cancel(up_intent(), "pull")
+        self.assertEqual(harness.twin_kept, {1})
+        self.assertEqual(set(harness.twin.orders), {1, 2})
+        harness.cancel(replace(up_intent(), side="down", twin_order_id=2), "reprice")
+        self.assertEqual(set(harness.twin.orders), {1})
+
+    def test_true_feed_gap_can_cancel_every_order_including_kept(self) -> None:
+        harness = CancelHarness(twin())
+        harness.cancel(up_intent(), "pull")
+        harness.twin.cancel(1011.02, WINDOW, "venue_feed_gap")
+        self.assertFalse(harness.twin.orders)
+
+    def test_queue_penalty_without_relaxing_any_print_or_fill_rule(self) -> None:
+        result = probe()
+        self.assertFalse(result["legacy_satisfies_proposed_contract"])
+        self.assertEqual(result["down_queue_before_cancel"], 5)
+        self.assertEqual(result["down_queue_after_replacement"], 10)
+        self.assertEqual(result["legacy_subsequent_simulated_fill"], 0)
+        self.assertEqual(result["identity_comparator_subsequent_simulated_fill"], 1)
+
+    def test_no_latency_qualified_print_means_no_fill(self) -> None:
+        desk = twin()
+        events = print_sell(desk, "down", 100, 1010.1, "too-early")
+        self.assertFalse([event for event in events if event.event == "speeddesk_fill"])
+        self.assertEqual(desk.orders[2].queue_ahead, 10)
+
+    def test_duplicate_sell_print_never_consumes_queue_twice(self) -> None:
+        desk = twin()
+        print_sell(desk, "down", 5, 1011, "same-print")
+        print_sell(desk, "down", 5, 1011, "same-print")
+        self.assertEqual(desk.orders[2].queue_ahead, 5)
+
+    def test_terminal_real_mapping_needs_an_independent_lifecycle_before_upgrade(
+        self,
+    ) -> None:
+        desk = twin()
+        # The live twin's default rest_ttl_s is zero. advance() only enforces
+        # common blocks; it does not evaluate individual fair/expiry rules.
+        self.assertEqual(desk.config.rest_ttl_s, 0)
+        refresh(desk, 1041)
+        desk.advance(1041)
+        self.assertEqual(set(desk.orders), {1, 2})
+        # A non-kept order with a now-terminal live counterpart is not scanned
+        # by _twin_unpulled. Removing collateral cleanup alone needs care.
+
+
+if __name__ == "__main__":
+    if "--probe" in sys.argv:
+        print(json.dumps(probe(), indent=2))
+    elif "--assert-proposed-identity" in sys.argv:
+        result = probe()
+        assert result["legacy_satisfies_proposed_contract"], result
+    else:
+        unittest.main()

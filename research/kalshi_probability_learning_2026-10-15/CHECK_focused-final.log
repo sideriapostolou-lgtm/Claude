@@ -1,0 +1,69 @@
+........................................................................ [ 22%]
+........................................................................ [ 44%]
+........................................................................ [ 67%]
+...................................................................F.... [ 89%]
+...........s......................                                       [100%]
+=================================== FAILURES ===================================
+______ test_a_flush_of_a_busy_market_costs_well_under_half_a_millisecond _______
+
+tmp_path = PosixPath('/tmp/pytest-of-agent/pytest-183/test_a_flush_of_a_busy_market_0')
+
+    def test_a_flush_of_a_busy_market_costs_well_under_half_a_millisecond(tmp_path: Path) -> None:
+        """The live loop's whole per-step cost with the real town running: 400 books a second of 25-level Kalshi ladders
+        (10 deltas a 50 ms step), prints and a moving price, in the live thread's own CPU time (another process on a
+        shared machine cannot fake it; the wall-clock lateness test is below)."""
+        link = ArenaLink(ArenaConfig(data_dir=tmp_path))
+        link.start()
+        try:
+            assert link.running and wait_for(lambda: (tmp_path / "kalshi_arena" / "panel.json").exists())
+            now = time.time()
+            window = Window("KXBTC15M-busy", now - 30, now + 870, None, taker_coefficient=0.07, maker_coefficient=0.0,
+                            venue_start_price=80_000, venue="kalshi", fee_rounding="kalshi")
+            ladders = Ladders(window.slug, depth=25)
+            cpu: list[float] = []
+            for step in range(200):
+                now = time.time()
+                for _ in range(10):
+                    for item in ladders.delta(now):
+                        link.feed_book(item)
+                link.feed_trade(Trade(window.slug, "up", 0.45, 2.0, now, f"t{step}", "sell", now))
+                snap = LiveSnapshot(windows=(window,), bitcoin_price=80_000.0 + step, bitcoin_at=now, sigma=0.0003,
+                                    maker_windows=frozenset({window.slug}))
+                started = time.thread_time_ns()
+                link.flush(snap)
+                cpu.append((time.thread_time_ns() - started) / 1e6)
+                time.sleep(0.05)
+            ordered = sorted(cpu)
+            median, high = ordered[len(ordered) // 2], ordered[int(0.99 * len(ordered))]
+            print(f"flush CPU ms: median {median:.3f} p99 {high:.3f} max {ordered[-1]:.3f}; link {link.telemetry()}")
+>           assert median < 0.25 and high < 0.5, (median, high)
+E           AssertionError: (0.12293, 0.534938)
+E           assert (0.12293 < 0.25 and 0.534938 < 0.5)
+
+tests/test_kalshi_arena_feed.py:312: AssertionError
+----------------------------- Captured stdout call -----------------------------
+2026-10-15T18:59:46Z INFO nightcrawler.kalshi_arena: kalshi_arena_hardened nice=19 sched=idle as_limit=1073741824 oom_score_adj=1000 applied=True
+2026-10-15T18:59:46Z INFO nightcrawler.kalshi_online_learning: kalshi_online_learning_status {"at":1792090786.8068554,"mode":"observe_only","live_application":false,"profitability_proven":false,"protocol":"kalshi-online-calibration-v1-h300-g5-b10-prior20","source_fingerprint":"b6112b7ef8955b20af734157c1e7f5ec533bf98f70e034558f06670578c391f2","learning":{"mode":"observe_only","enabled":true,"live_application":false,"profitability_proven":false,"protocol":"kalshi-online-calibration-v1-h300-g5-b10-prior20","source_fingerprint":"b6112b7ef8955b20af734157c1e7f5ec533bf98f70e034558f06670578c391f2","history_protocol":"kalshi-online-calibration-v1-h300-g5-b10-prior20","history_source_fingerprint":"b6112b7ef8955b20af734157c1e7f5ec533bf98f70e034558f06670578c391f2","forecast_horizon_s":300,"grace_s":5,"bins":10,"pending":0,"forecasts":0,"scored":0,"unknown":0,"brier_baseline":null,"brier_shadow":null,"error":null,"coverage":"quiet observations; full data coverage not certified","exclusions":{"startup_inside":0,"late":0,"invalid":0,"pregap":0,"terms_changed":0,"missing_label":0,"outcome_known":0,"invalid_label":0,"capacity":0}}}
+2026-10-15T18:59:46Z INFO nightcrawler.kalshi_probability_learning: kalshi_probability_learning_status {"at":1792090786.8062572,"mode":"observe_only","live_application":false,"profitability_proven":false,"protocol":"kalshi-probability-calibration-v2-h300-g5-b10-prior20","source_fingerprint":"15838e654f832da28511fe5e3bed8180d9afc17e381163f30ac4b0575c405221","learning":{"mode":"observe_only","enabled":true,"live_application":false,"profitability_proven":false,"protocol":"kalshi-probability-calibration-v2-h300-g5-b10-prior20","source_fingerprint":"15838e654f832da28511fe5e3bed8180d9afc17e381163f30ac4b0575c405221","history_protocol":"kalshi-probability-calibration-v2-h300-g5-b10-prior20","history_source_fingerprint":"15838e654f832da28511fe5e3bed8180d9afc17e381163f30ac4b0575c405221","forecast_horizon_s":300,"grace_s":5,"bins":10,"pending":0,"forecasts":0,"scored":0,"unknown":0,"brier_baseline":null,"brier_shadow":null,"error":null,"coverage":"conditional fresh-input probabilities; continuous coverage and profitability not certified","exclusions":{"startup_inside":0,"late":0,"invalid":0,"pregap":0,"terms_changed":0,"missing_label":0,"outcome_known":0,"invalid_label":0,"capacity":0,"invalid_batch":0,"invalid_strike":0}}}
+2026-10-15T18:59:46Z INFO nightcrawler.kalshi_arena: kalshi_arena_born resident=Live parent=- gen=1 style="edge 0.030, first 5, cap 0.990, imb 0.25, close 240s, lock@0.97"
+2026-10-15T18:59:46Z INFO nightcrawler.kalshi_arena: kalshi_arena_born resident=Bo-2 parent=Live gen=2 style="edge 0.025, first 6, cap 0.990, imb 0.25, close 230s, lock@0.97, wait 20s"
+2026-10-15T18:59:46Z INFO nightcrawler.kalshi_arena: kalshi_arena_born resident=Cy-3 parent=Live gen=2 style="edge 0.025, first 7, cap 0.990, imb 0.11, close 225s, no lock"
+2026-10-15T18:59:46Z INFO nightcrawler.kalshi_arena: kalshi_arena_born resident=Dex-4 parent=Live gen=2 style="edge 0.020, first 5, cap 0.970, imb 0.25, close 120s, lock@0.97, wait 10s"
+2026-10-15T18:59:46Z INFO nightcrawler.kalshi_arena: kalshi_arena_born resident=Eve-5 parent=Live gen=2 style="edge 0.030, first 4, cap 0.990, imb 0.25, close 230s, lock@0.97"
+2026-10-15T18:59:46Z INFO nightcrawler.kalshi_arena: kalshi_arena_born resident=Fin-6 parent=Live gen=2 style="edge 0.030, first 4, cap 0.990, imb 0.25, close 240s, lock@0.97, wait 15s"
+2026-10-15T18:59:46Z INFO nightcrawler.kalshi_arena: kalshi_arena_born resident=Gus-7 parent=- gen=1 style="edge 0.030, first 5, cap 0.980, imb 0.11, close 230s, lock@0.95, stop 470s@1.20, rounds, wait 45s, no first buy last 540s"
+2026-10-15T18:59:46Z INFO nightcrawler.kalshi_arena: kalshi_arena_born resident=Hal-8 parent=- gen=1 style="edge 0.060, first 3, cap 0.980, imb 0.11, close 165s, no lock, stop 560s@1.14, rounds, no first buy last 500s"
+2026-10-15T18:59:46Z INFO nightcrawler.kalshi_arena: kalshi_arena_born resident=Ivy-9 parent=- gen=1 style="edge 0.045, first 9, cap 0.955, imb 0.19, close 265s, no lock, rounds, wait 75s, no first buy last 600s"
+2026-10-15T18:59:46Z INFO nightcrawler.kalshi_arena: kalshi_arena_born resident=Jax-10 parent=- gen=1 style="edge 0.025, first 10, cap 0.950, imb 0.16, close 150s, lock@0.95, rounds, wait 145s"
+2026-10-15T18:59:46Z INFO nightcrawler.kalshi_arena: kalshi_arena_born resident=Kai-11 parent=- gen=1 style="edge 0.050, first 5, cap 0.970, imb 0.13, close 255s, lock@0.95, stop 640s@1.08, rounds, wait 10s"
+2026-10-15T18:59:46Z INFO nightcrawler.kalshi_arena: kalshi_arena_born resident=Lux-12 parent=- gen=1 style="edge 0.030, first 10, cap 0.980, imb 0.11, close 280s, no lock, stop 530s@1.25, wait 35s"
+2026-10-15T18:59:46Z INFO nightcrawler.kalshi_arena: kalshi_arena_town pid=844115 residents=12 control_rule=b509ccbffa26 regime=4324282d0e9c (practice only)
+2026-10-15T18:59:47Z INFO nightcrawler.kalshi_online_learning: kalshi_online_learning_unknown {"at":1792090787.0086474,"mode":"observe_only","live_application":false,"profitability_proven":false,"protocol":"kalshi-online-calibration-v1-h300-g5-b10-prior20","source_fingerprint":"b6112b7ef8955b20af734157c1e7f5ec533bf98f70e034558f06670578c391f2","window":"KXBTC15M-busy","reason":"startup_inside"}
+2026-10-15T18:59:47Z INFO nightcrawler.kalshi_arena: kalshi_learning_input_diagnostic {"diagnostic_schema":1,"mode":"observe_only","live_application":false,"profitability_proven":false,"arena_source_sha256":"f183d7f66de018126445effcde714992808a36527e7a30f35ad36782fdd55d7b","deployment_sha":null,"deployment_id":null,"deployment_identity":"unavailable_in_child","pid":844115,"instance":"ab4fd85110037fc22de908f5","protocol":"kalshi-online-calibration-v1-h300-g5-b10-prior20","source_fingerprint":"b6112b7ef8955b20af734157c1e7f5ec533bf98f70e034558f06670578c391f2","window":"KXBTC15M-busy","at":1792090787.0086474,"pending":{"start":1792090756.9182992,"end":1792091656.9182992,"elapsed_s":30.09034824371338,"forecast_none":true,"stored_pregap":null},"learner_method":"discover","observation":"terminated_before_advance","cause_history":"observed_since_admission","first_effective_cause":null,"last_effective_cause":null,"feed_ok":null,"feed_status":[false,false],"input_facts":{"bitcoin_age_s":null,"bitcoin_age_valid":null,"spot_valid":null,"sigma_valid":null},"disposition":"unknown","reason":"startup_inside","counter_delta_scope":"learner_call","counter_delta":{"forecasts":0,"unknown":1,"scored":0},"coverage":"child_observations_only; upstream cause and producer occurrence unavailable"}
+2026-10-15T18:59:47Z INFO nightcrawler.kalshi_probability_learning: kalshi_probability_learning_unknown {"at":1792090787.0086474,"mode":"observe_only","live_application":false,"profitability_proven":false,"protocol":"kalshi-probability-calibration-v2-h300-g5-b10-prior20","source_fingerprint":"15838e654f832da28511fe5e3bed8180d9afc17e381163f30ac4b0575c405221","window":"KXBTC15M-busy","reason":"startup_inside"}
+flush CPU ms: median 0.123 p99 0.535 max 0.832; link {'running': True, 'pid': 844115, 'put': 4200, 'dropped': 0, 'frames': 200, 'kib': 560, 'pending': 0, 'pending_peak': 21, 'blocked': 0, 'sliced': 0, 'flush_us_p50': 118, 'flush_us_p99': 529, 'flush_us_max': 825}
+2026-10-15T18:59:57Z INFO nightcrawler.kalshi_arena: kalshi_arena_stopped windows=0 void=1
+=========================== short test summary info ============================
+SKIPPED [1] tests/test_kalshi_arena_feed.py:794: wall-clock timing; set NIGHTCRAWLER_PERF_TESTS=1 to run
+FAILED tests/test_kalshi_arena_feed.py::test_a_flush_of_a_busy_market_costs_well_under_half_a_millisecond
+1 failed, 320 passed, 1 skipped in 31.25s

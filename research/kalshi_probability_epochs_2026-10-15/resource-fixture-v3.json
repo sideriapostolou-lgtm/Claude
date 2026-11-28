@@ -1,0 +1,18 @@
+{
+  "fixture_sha256": "52da05ecda8e352a4639c9c8194fc8b34c839b3d7c74b4bef006635b1e77001e",
+  "serialized_bytes": 432031,
+  "legacy_bytes": 71189,
+  "record_state_bytes": [
+    71189,
+    71990,
+    71990,
+    71990,
+    71990
+  ],
+  "lineage_panel_bytes": 1667,
+  "current_source": "23e2ca80d3c04415256bf3fc237ba017d56733a59219d718e86c554eaa1f1d25",
+  "imported_modules": [
+    "/workspace/nightcrawler-probability-epochs/src/nightcrawler/kalshi_probability_epochs.py",
+    "/workspace/nightcrawler-probability-epochs/src/nightcrawler/kalshi_probability_learning.py"
+  ]
+}

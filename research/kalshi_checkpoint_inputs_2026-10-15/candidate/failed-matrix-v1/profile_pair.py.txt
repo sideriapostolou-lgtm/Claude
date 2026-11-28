@@ -1,0 +1,258 @@
+"""Offline, private baseline measurements; never optimize/patch candidate behavior."""
+from __future__ import annotations
+import sys, os, socket, resource, signal, time, json, math, hashlib, threading, tempfile, statistics, logging, tracemalloc
+from pathlib import Path
+from collections import Counter, defaultdict
+from contextlib import ExitStack
+from unittest.mock import patch
+
+ROOT = Path('/workspace/nightcrawler-practice-checkpoint')
+OUT = Path('/workspace/private-handoffs/claude-2026-10-15/checkpoint-profile/candidate')
+resource.setrlimit(resource.RLIMIT_CPU, (58, 58))
+resource.setrlimit(resource.RLIMIT_AS, (256*1024**2, 256*1024**2))
+resource.setrlimit(resource.RLIMIT_FSIZE, (100*1024**2, 100*1024**2))
+def alarm(*_): raise TimeoutError('60s per-run wall budget')
+signal.signal(signal.SIGALRM, alarm)
+signal.alarm(60)
+DENIALS = []
+def deny(*a, **kw):
+    import traceback
+    DENIALS.append(traceback.format_stack(limit=8))
+    raise AssertionError('FORBIDDEN network/client construction')
+def audit(event, args):
+    if event.startswith('socket.') or event in {'http.client.connect','urllib.Request'}: deny()
+sys.addaudithook(audit)
+socket.socket = deny
+socket.create_connection = deny
+socket.getaddrinfo = deny
+from fakes import FakeClock
+from test_speeddesk_runtime import LocalFeeds
+from test_speeddesk_snapshot_cache import Companion
+from nightcrawler.config import Settings, Secret
+import nightcrawler.speeddesk as sd
+import nightcrawler.speeddesk_model as sm
+import nightcrawler.http as nh
+import nightcrawler.speeddesk_kalshi_client as kc
+from dataclasses import asdict, fields
+from datetime import datetime, UTC
+# Execute only original summary/checkpoint from immutable exact pre-candidate source.
+# Other runner methods are unchanged; separate globals keep conversion counters honest.
+VARIANT = sys.argv[3]
+LABEL = sys.argv[4]
+if VARIANT == 'baseline':
+    import ast, textwrap, types
+    original = (OUT.parent/'immutable_speeddesk_f77e1ad.py.txt').read_text()
+    source_class = next(n for n in ast.parse(original).body if isinstance(n, ast.ClassDef) and n.name=='SpeedRunner')
+    baseline = types.ModuleType('offline_original_speeddesk')
+    baseline.__dict__.update(vars(sd))
+    for method in ('summary','checkpoint'):
+        node=next(n for n in source_class.body if isinstance(n,ast.FunctionDef) and n.name==method)
+        start=min([node.lineno]+[d.lineno for d in node.decorator_list])-1
+        code=textwrap.dedent('\n'.join(original.splitlines()[start:node.end_lineno]))
+        exec(compile(code,'<immutable-f77e1ad-methods>','exec'),baseline.__dict__)
+    class BaselineRunner(sd.SpeedRunner):
+        summary=baseline.summary
+        checkpoint=baseline.checkpoint
+    baseline.SpeedRunner=BaselineRunner
+    sd=baseline
+IMPORT_BLOCKED_PROBES=list(DENIALS)
+DENIALS.clear()
+class PaperCompanion(Companion):
+    def panel(self): return {'mode':'paper','authenticated':False,'real_orders_available':False,'fixture':'inert'}
+class Clock(FakeClock):
+    calls = 0
+    def now(self):
+        self.calls += 1
+        return super().now()
+
+def disk_bytes(path): return sum(p.stat().st_size for p in path.rglob('*') if p.is_file())
+def sha(b): return hashlib.sha256(b).hexdigest()
+def encoded(v): return json.dumps(v,allow_nan=False,separators=(',',':')).encode()
+def measure(fn):
+    w,c=time.perf_counter_ns(),time.thread_time_ns()
+    value=fn()
+    return {'wall_ms':(time.perf_counter_ns()-w)/1e6,'thread_cpu_ms':(time.thread_time_ns()-c)/1e6}, value
+
+def fixture(path, days, perday):
+    base=datetime(2026,8,1,tzinfo=UTC).timestamp()
+    clock=Clock(base)
+    settings=Settings(data_dir=path,trading_mode='paper',polydesk_mode='paper',speeddesk_kalshi_mode='paper',
+                      speeddesk_kalshi_enabled=True,kalshi_arena_enabled=False)
+    assert all(not getattr(settings,f.name).reveal() for f in fields(settings) if isinstance(getattr(settings,f.name),Secret))
+    runner=sd.SpeedRunner(settings,threading.Event(),clock=clock,feed_factory=LocalFeeds,live_factory=PaperCompanion)
+    assert isinstance(runner.live,PaperCompanion) and runner.arena is None
+    def emit(event):
+        row=asdict(event)
+        if event.event=='speeddesk_fill': runner.evidence.fill({**row,'is_taker':False})
+        runner.record(event.event,row)
+    def order(window,placed):
+        n=runner.desk.next_order_id; runner.desk.next_order_id+=1
+        o=sm.PracticeOrder(n,window.slug,'up','rest',.4,1,1,placed,placed+.25,.5,.02,fee_rounding=window.fee_rounding)
+        runner.desk.orders[n]=o
+        runner.desk._count(placed,'rest_orders',window=window.slug)
+        runner.desk._count(placed,'rest_requested_shares',1,window=window.slug)
+        emit(runner.desk._event('speeddesk_rest',placed,window.slug,order=o))
+        return o
+    for d in range(days):
+        day=sm.utc_day(base+d*86400)
+        runner.observed[day]=3600.0 if d%2 else 86390.0
+        runner.feed_latency[day]=[240.0,3.0]
+        runner.venue_coverage[day]={v:{'fresh_data_seconds':1800.0,'maker_data_seconds':900.0} for v in sm.VENUES}
+        for venue in sm.VENUES:
+            for n in range(perday):
+                start=base+d*86400+n*3600
+                window=sm.Window(f'{venue}-{d}-{n}',start,start+900,80000,maker_coefficient=.02,
+                                 venue_start_price=80000 if venue=='kalshi' else None,venue=venue,
+                                 fee_rounding='kalshi' if venue=='kalshi' else 'half_even')
+                runner.desk.add_window(window)
+                runner.evidence.first_seen[window.slug]=start
+                runner.evidence.seconds[window.slug]=900 if n%3 else 450
+                runner.evidence.fresh_seconds[window.slug]=600 if n%3 else 300
+                if n%3==0:
+                    o=order(window,start+1)
+                    emit(runner.desk._fill(o,.25,start+2)); emit(runner.desk._fill(o,.5,start+3))
+                if n != perday-1: # retain unresolved ended windows, never turn missing outcomes into zeros
+                    for e in runner.desk.cancel(window.end,window.slug,'settled'): emit(e)
+                    result=runner.desk.settle(window.slug,n%2==0,window.end+1)
+                    runner.record('speeddesk_window',asdict(result))
+                runner.metrics.observe(venue,'btc_receipt_to_decision',start+1,10.0+n)
+    carries=[]
+    for venue in sm.VENUES:
+        start=base+days*86400-1
+        window=sm.Window(f'{venue}-carry',start,start+900,80000,maker_coefficient=.02,venue=venue,
+                         venue_start_price=80000 if venue=='kalshi' else None,
+                         fee_rounding='kalshi' if venue=='kalshi' else 'half_even')
+        runner.desk.add_window(window); carries.append(order(window,start))
+        runner.evidence.first_seen[window.slug]=start; runner.evidence.seconds[window.slug]=899
+        runner.evidence.fresh_seconds[window.slug]=100
+    clock.set(base+days*86400+3600)
+    return runner,clock,carries,emit
+
+def receipt_info(r):
+    rows=r.ledger.receipts()
+    return {'count':len(rows),'kinds':dict(Counter(x.kind for x in rows)),
+            'payload_bytes':sum(len(encoded(x.payload)) for x in rows),
+            'chain_valid':r.ledger.verify_chain()==(True,None),
+            'tail_hash': rows[-1].hash if rows else None}
+
+def main():
+    name, mode=sys.argv[1:3]
+    fixture_days,perday={'1day':(1,24),'7days':(7,24),'31days':(31,24),'older35days':(35,8),'zero':(1,1),'one':(1,1),'fixed7days':(1,24)}[name]
+    days=7 if name=='fixed7days' else fixture_days
+    result={'variant':VARIANT,'fixture':name,'mode':mode,'days':days,'windows_per_day_per_venue':perday,
+            'limits':{'wall_s':60,'rss_mib':256,'temp_disk_mib':100},'source_root':str(ROOT),'operations':{},'import_blocked_socket_probes':IMPORT_BLOCKED_PROBES}
+    with tempfile.TemporaryDirectory(prefix='scratch-',dir=OUT) as temp, ExitStack() as stack:
+        for cls in (nh.HttpClient,kc.KalshiClient): stack.enter_context(patch.object(cls,'__init__',deny))
+        # Explicit fakes are passed; all accidental production factories are also forbidden.
+        stack.enter_context(patch.object(sd.KalshiLiveDesk,'__init__',deny))
+        stack.enter_context(patch.object(sd.MarketFeeds,'__init__',deny))
+        r,clock,carries,emit=fixture(Path(temp),fixture_days,perday)
+        if name=='fixed7days':
+            r.started_at-=6*86400
+        if name=='one':
+            window=next(iter(r.desk.windows.values()))
+            result=r.desk.settle(window.slug,False,window.end+1)
+            r.record('speeddesk_window',asdict(result))
+        try:
+            inputstate={'model':r.desk.to_state(),'observed':r.observed,'evidence':r.evidence.state(),
+                        'coverage':r.venue_coverage,'latency':r.metrics.state(),'pending':r.pending}
+            result['input_bytes']=len(encoded(inputstate)); del inputstate
+            result['counts']={'windows':len(r.desk.windows),'settlements':len(r.desk.closed),
+                              'unresolved':len(r.desk.windows)-len(r.desk.closed),'evidence_fills':len(r.evidence.fills)}
+            counts=Counter(); durations=defaultdict(lambda:{'wall_ns':0,'thread_cpu_ns':0})
+            def wrap(original,label):
+                def observed(*a,**kw):
+                    key=label+':'+type(a[0]).__name__ if label.endswith('asdict') else label
+                    counts[key]+=1
+                    w,c=time.perf_counter_ns(),time.thread_time_ns()
+                    try: return original(*a,**kw)
+                    finally:
+                        durations[key]['wall_ns']+=time.perf_counter_ns()-w
+                        durations[key]['thread_cpu_ns']+=time.thread_time_ns()-c
+                return observed
+            def install_counts(s):
+                s.enter_context(patch.object(sd,'asdict',wrap(sd.asdict,'speeddesk.asdict')))
+                s.enter_context(patch.object(sm,'asdict',wrap(sm.asdict,'speeddesk_model.asdict')))
+                for obj,key in [(r,'summary'),(r,'daily_reports'),(r,'panel'),(r.evidence,'coverage'),(r.evidence,'complete_kalshi_day')]:
+                    s.enter_context(patch.object(obj,key,wrap(getattr(obj,key),key)))
+                s.enter_context(patch.object(sd,'window_scorecard',wrap(sd.window_scorecard,'window_scorecard')))
+            phases={}
+            def capture(phase):
+                import gzip
+                mirror=r.path.read_bytes()
+                rawkv=r.ledger._conn.execute('SELECT value FROM kv WHERE key=?',(sd.STATE_KEY,)).fetchone()[0].encode()
+                assert rawkv==mirror
+                rawreceipts=encoded([asdict(item) for item in r.ledger.receipts()])
+                phases[phase]={'mirror_sha256':sha(mirror),'kv_sha256':sha(rawkv),
+                               'ordered_receipts_sha256':sha(rawreceipts),'bytes':len(rawkv),'receipts_bytes':len(rawreceipts)}
+                if mode=='timing' and LABEL.endswith('-1'):
+                    for kind,data in [('mirror',mirror),('kv',rawkv),('receipts',rawreceipts)]:
+                        (OUT/f'{LABEL}.{phase}.{kind}.gz').write_bytes(gzip.compress(data,mtime=0))
+            first,_=measure(lambda:r.checkpoint(clock.now()))
+            capture('first')
+            result['first_full_sync_checkpoint']=first
+            result['first_receipts']=receipt_info(r)
+            # First next-day partial executions revise placement-day venue cohorts with real code/receipts.
+            for o in carries: emit(r.desk._fill(o,.25,clock.now()-3000))
+            correction,_=measure(lambda:r.checkpoint(clock.now()))
+            capture('correction')
+            result['correction_checkpoint']=correction
+            result['correction_receipts']=receipt_info(r)
+            assert result['correction_receipts']['kinds'].get('speeddesk_daily_correction',0)==1
+            if name=='older35days':
+                oldkeys=sorted(r.reports)[:4]
+                frozen={d:{v:{k:r.reports[d]['venues'][v][k] for k in ('latency','scorecard')} for v in sm.VENUES} for d in oldkeys}
+                r.evidence.advance(clock.now(),[asdict(w) for w in r.desk.windows.values()],set())
+                r.checkpoint(clock.now())
+                assert all(r.reports[d]['venues'][v][k]==frozen[d][v][k] for d in oldkeys for v in sm.VENUES for k in ('latency','scorecard'))
+                result['old_reports_preserved']=oldkeys
+            stable=r.path.read_bytes(); receipt_before=receipt_info(r)
+            functions={'checkpoint':lambda:r.checkpoint(clock.now()),'daily_reports':lambda:r.daily_reports(clock.now()),
+                       'summary':lambda:r.summary(sm.utc_day(clock.now()))}
+            for label,fn in functions.items():
+                samples=[]
+                with ExitStack() as instrument:
+                    counts.clear(); durations.clear(); calls=clock.calls
+                    if mode=='count':
+                        install_counts(instrument)
+                        r.ledger._conn.set_trace_callback(lambda statement:counts.update({'sql:'+statement.split()[0]:1}))
+                    if mode=='allocation': tracemalloc.start()
+                    for _ in range(1 if mode=='allocation' else 5):
+                        sample,value=measure(fn); samples.append(sample)
+                        if label=='summary': result['summary_bytes']=len(encoded(value))
+                        if resource.getrusage(resource.RUSAGE_SELF).ru_maxrss>256*1024: raise MemoryError('RSS cap')
+                        if disk_bytes(Path(temp))>100*1024**2: raise OSError('temp disk cap')
+                    memory=tracemalloc.get_traced_memory() if mode=='allocation' else None
+                    if mode=='allocation': tracemalloc.stop()
+                    if mode=='count': r.ledger._conn.set_trace_callback(None)
+                    row={'samples':samples,'clock_calls':clock.calls-calls}
+                    if mode=='count': row.update(calls=dict(counts),inclusive_function_times=dict(durations))
+                    if memory: row['tracemalloc_current_peak_bytes']=memory
+                    for metric in ('wall_ms','thread_cpu_ms'):
+                        vals=[x[metric] for x in samples]
+                        row[metric]={'median':statistics.median(vals),'p95_nearest_rank':sorted(vals)[math.ceil(.95*len(vals))-1]}
+                    result['operations'][label]=row
+            capture('steady')
+            result['output_phases']=phases
+            assert r.path.read_bytes()==stable
+            after=receipt_info(r); assert after==receipt_before and after['chain_valid']
+            saved=r.ledger.get_kv(sd.STATE_KEY)
+            assert len(saved['model']['closed'])==result['counts']['settlements']
+            assert len(saved['model']['windows'])==result['counts']['windows']
+            assert len(saved['reports'])==days
+            assert saved['mode']=='practice' and saved['panel']['kalshi_live']['mode']=='paper'
+            assert not DENIALS, DENIALS
+            result.update(mirror_bytes=len(stable),mirror_sha256=sha(stable),kv_json_bytes=r.ledger._conn.execute('SELECT length(CAST(value AS BLOB)) FROM kv WHERE key=?',(sd.STATE_KEY,)).fetchone()[0],
+                          reports_bytes=len(encoded(r.reports)),receipts=after,temp_disk_bytes=disk_bytes(Path(temp)),
+                          peak_rss_kib=resource.getrusage(resource.RUSAGE_SELF).ru_maxrss,
+                          history_retained=True,steady_output_bytes_identical=True,settings_source='explicit defaults; no from_env; no credentials',
+                          fake_companion=True,runtime_forbidden_attempts=len(DENIALS),runtime_client_constructions=0,status='passed')
+        finally: r.close()
+    signal.alarm(0)
+    print(json.dumps(result,sort_keys=True))
+if __name__=='__main__':
+    logging.disable(logging.CRITICAL)
+    try: main()
+    except BaseException as exc:
+        print(json.dumps({'status':'failed','type':type(exc).__name__,'error':str(exc)}))
+        raise
